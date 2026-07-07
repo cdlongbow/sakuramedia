@@ -48,7 +48,10 @@ Future<void> _showCollectionMemberContextMenu(
       if (openSource != null && label != null)
         PopupMenuItem<_MemberMenuAction>(
           value: _MemberMenuAction.openSource,
-          child: Text(label),
+          child: Text(
+            label,
+            style: resolveAppTextStyle(context, size: AppTextSize.s14),
+          ),
         ),
       PopupMenuItem<_MemberMenuAction>(
         value: _MemberMenuAction.remove,
@@ -56,9 +59,11 @@ Future<void> _showCollectionMemberContextMenu(
         // 删除项并列时退为常规色，让破坏性的「删除」独占红色、层级清晰。
         child: Text(
           removeLabel,
-          style: delete == null
-              ? TextStyle(color: context.appTextPalette.error)
-              : null,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s14,
+            tone: delete == null ? AppTextTone.error : AppTextTone.primary,
+          ),
         ),
       ),
       if (delete != null)
@@ -66,7 +71,11 @@ Future<void> _showCollectionMemberContextMenu(
           value: _MemberMenuAction.delete,
           child: Text(
             deleteLabel,
-            style: TextStyle(color: context.appTextPalette.error),
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s14,
+              tone: AppTextTone.error,
+            ),
           ),
         ),
     ],

@@ -299,6 +299,7 @@ class _MyAppState extends State<MyApp> {
         ),
       ],
       child: OKToast(
+        textStyle: kAppToastTextStyle,
         child: MaterialApp.router(
           title: 'SakuraMedia',
           debugShowCheckedModeBanner: false,

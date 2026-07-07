@@ -152,14 +152,20 @@ class VideoSummaryCard extends StatelessWidget {
       useRootNavigator: false,
       items: <PopupMenuEntry<_VideoCardAction>>[
         if (onAddToCollection != null)
-          const PopupMenuItem<_VideoCardAction>(
+          PopupMenuItem<_VideoCardAction>(
             value: _VideoCardAction.addToCollection,
-            child: Text('加入合集'),
+            child: Text(
+              '加入合集',
+              style: resolveAppTextStyle(context, size: AppTextSize.s14),
+            ),
           ),
         if (onDelete != null)
-          const PopupMenuItem<_VideoCardAction>(
+          PopupMenuItem<_VideoCardAction>(
             value: _VideoCardAction.delete,
-            child: Text('删除'),
+            child: Text(
+              '删除',
+              style: resolveAppTextStyle(context, size: AppTextSize.s14),
+            ),
           ),
       ],
     );

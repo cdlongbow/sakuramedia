@@ -161,14 +161,20 @@ class CollectionCoverCard extends StatelessWidget {
       useRootNavigator: false,
       items: <PopupMenuEntry<_CollectionMenuAction>>[
         if (edit != null)
-          const PopupMenuItem<_CollectionMenuAction>(
+          PopupMenuItem<_CollectionMenuAction>(
             value: _CollectionMenuAction.edit,
-            child: Text('编辑'),
+            child: Text(
+              '编辑',
+              style: resolveAppTextStyle(context, size: AppTextSize.s14),
+            ),
           ),
         if (delete != null)
-          const PopupMenuItem<_CollectionMenuAction>(
+          PopupMenuItem<_CollectionMenuAction>(
             value: _CollectionMenuAction.delete,
-            child: Text('删除'),
+            child: Text(
+              '删除',
+              style: resolveAppTextStyle(context, size: AppTextSize.s14),
+            ),
           ),
       ],
     );

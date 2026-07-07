@@ -31,6 +31,19 @@ export 'package:sakuramedia/widgets/app_text.dart';
 /// Noto fallback 而出现方块字。子集字体由 tool/subset_font.py 生成。
 const kAppFontFamily = 'NotoSansSC';
 
+/// oktoast 在 MaterialApp 之外用独立 overlay 树显示 toast, 拿不到 ThemeData
+/// 里的 fontFamily/fontVariations。Web 端 NotoSansSC 是可变字体, wght 轴不显式
+/// 设就停在 Thin 100(发丝细几乎看不见); 桌面/移动用系统字体不受影响。
+const TextStyle kAppToastTextStyle =
+    kIsWeb
+        ? TextStyle(
+          fontSize: 15,
+          color: Colors.white,
+          fontFamily: kAppFontFamily,
+          fontVariations: [FontVariation('wght', 400)],
+        )
+        : TextStyle(fontSize: 15, color: Colors.white);
+
 final sakuraThemeData = sakuraDesktopThemeData;
 
 const _desktopTextScale = AppTextScale.defaults();

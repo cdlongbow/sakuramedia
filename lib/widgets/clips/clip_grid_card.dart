@@ -169,21 +169,33 @@ class ClipGridCard extends StatelessWidget {
       useRootNavigator: false,
       items: <PopupMenuEntry<_ClipCardAction>>[
         if (openMovie != null)
-          const PopupMenuItem<_ClipCardAction>(
+          PopupMenuItem<_ClipCardAction>(
             value: _ClipCardAction.openMovie,
-            child: Text('影片'),
+            child: Text(
+              '影片',
+              style: resolveAppTextStyle(context, size: AppTextSize.s14),
+            ),
           ),
-        const PopupMenuItem<_ClipCardAction>(
+        PopupMenuItem<_ClipCardAction>(
           value: _ClipCardAction.addToCollection,
-          child: Text('加入合集'),
+          child: Text(
+            '加入合集',
+            style: resolveAppTextStyle(context, size: AppTextSize.s14),
+          ),
         ),
-        const PopupMenuItem<_ClipCardAction>(
+        PopupMenuItem<_ClipCardAction>(
           value: _ClipCardAction.rename,
-          child: Text('重命名'),
+          child: Text(
+            '重命名',
+            style: resolveAppTextStyle(context, size: AppTextSize.s14),
+          ),
         ),
-        const PopupMenuItem<_ClipCardAction>(
+        PopupMenuItem<_ClipCardAction>(
           value: _ClipCardAction.delete,
-          child: Text('删除'),
+          child: Text(
+            '删除',
+            style: resolveAppTextStyle(context, size: AppTextSize.s14),
+          ),
         ),
       ],
     );

@@ -16,15 +16,15 @@ import 'package:sakuramedia/features/shared/presentation/collection_playback_han
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
 import 'package:sakuramedia/widgets/media/masked_image.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_filmstrip_controller.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_play_split_layout.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_playback_mode.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_playback_page_mixin.dart';
-import 'package:sakuramedia/widgets/movie_player/episode_selector_overlay.dart';
-import 'package:sakuramedia/widgets/movie_player/merged_position_indicator.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_surface.dart';
-import 'package:sakuramedia/widgets/movie_player/themed_video_player.dart';
+import 'package:sakuramedia/widgets/media_player/collection_filmstrip_controller.dart';
+import 'package:sakuramedia/widgets/media_player/collection_play_split_layout.dart';
+import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/media_player/collection_playback_page_mixin.dart';
+import 'package:sakuramedia/widgets/media_player/episode_selector_overlay.dart';
+import 'package:sakuramedia/widgets/media_player/merged_position_indicator.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/media_player/themed_video_player.dart';
 
 /// 切片合集连播独立页面：media_kit 播放器（原生 Playlist 自动连播）占满画面，
 /// 底部控制条「选集」按钮唤出右侧滑出的剧集面板（当前高亮 / 点击跳转）。

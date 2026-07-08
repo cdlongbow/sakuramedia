@@ -9,7 +9,7 @@ import 'package:sakuramedia/features/videos/data/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/videos_api.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
 import 'package:sakuramedia/features/videos/presentation/mobile_video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/mobile_video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';

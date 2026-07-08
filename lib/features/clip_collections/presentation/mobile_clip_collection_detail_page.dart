@@ -16,7 +16,7 @@ import 'package:sakuramedia/features/clips/presentation/mobile_clip_actions_shee
 import 'package:sakuramedia/features/clips/presentation/mobile_clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/mobile_clip_player_page.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';

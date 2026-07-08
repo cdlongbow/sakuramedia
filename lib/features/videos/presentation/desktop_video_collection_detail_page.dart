@@ -20,7 +20,7 @@ import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
 import 'package:sakuramedia/widgets/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/movie_player/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
 import 'package:sakuramedia/widgets/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/videos/video_collection_sort_bar.dart';
 import 'package:sakuramedia/widgets/videos/video_quick_play_dialog.dart';

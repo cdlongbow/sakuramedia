@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:sakuramedia/features/movies/data/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 
 class MovieDetailThumbnailController extends ChangeNotifier {
   static const int defaultIntervalSeconds = 10;

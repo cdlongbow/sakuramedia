@@ -3,7 +3,7 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/paged_load_controller.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 typedef MovieSummaryPageFetcher =
     Future<PaginatedResponseDto<MovieListItemDto>> Function(

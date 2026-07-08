@@ -1,5 +1,5 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 class MovieMediaThumbnailDto {
   const MovieMediaThumbnailDto({

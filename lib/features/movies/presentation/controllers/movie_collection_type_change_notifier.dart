@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:sakuramedia/features/movies/data/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 
 class MovieCollectionTypeChange {
   const MovieCollectionTypeChange({

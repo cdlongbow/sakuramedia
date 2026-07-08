@@ -1,16 +1,16 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_result_dto.dart';
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_stream_update.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_result_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_stream_update.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_search_stream_update.dart';
-import 'package:sakuramedia/features/movies/data/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_collection_type_dto.dart';
-import 'package:sakuramedia/features/movies/data/parsed_movie_number_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
+import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_filter_state.dart';
 

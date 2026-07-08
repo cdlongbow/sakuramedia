@@ -3,7 +3,7 @@ import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_review_list_item_dto.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_review_period.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/paged_hot_review_controller.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

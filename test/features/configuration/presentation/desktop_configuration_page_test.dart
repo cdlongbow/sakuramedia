@@ -19,7 +19,7 @@ import 'package:sakuramedia/features/configuration/data/movie_desc_translation_s
 import 'package:sakuramedia/features/configuration/presentation/desktop_configuration_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/llm_settings_copy.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/movies/data/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 
 void main() {
   test('初始无变更', () {

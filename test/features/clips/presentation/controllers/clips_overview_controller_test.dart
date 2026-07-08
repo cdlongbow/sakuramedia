@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/clips_overview_controller.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clips_overview_controller.dart';
 
 MediaClipDto _clip(int id, {String title = ''}) => MediaClipDto(
   clipId: id,

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 
 /// 影片详情页「切片」区块的数据控制器。
 ///

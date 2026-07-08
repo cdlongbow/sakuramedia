@@ -8,12 +8,18 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
+import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/sheets/app_bottom_form_sheet.dart';
 
 class MobileMediaLibrariesPage extends StatefulWidget {
   const MobileMediaLibrariesPage({super.key});
@@ -116,16 +122,27 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
   }
 
   Future<void> _handleDeleteLibrary(MediaLibraryDto library) async {
-    final deletedLibraryId = await showMobileDeleteMediaLibraryDrawer(
+    final api = context.read<MediaLibrariesApi>();
+    final confirmed = await showAppConfirmDialog(
       context,
-      library: library,
+      title: '删除媒体库',
+      message: '确认删除媒体库"${library.name}"？删除后下载器等依赖该路径的配置可能失效，该操作不可恢复。',
+      danger: true,
+      confirmLabel: '删除',
+      dialogKey: const Key('mobile-media-library-delete-drawer'),
+      confirmKey: const Key('mobile-media-library-delete-confirm-button'),
+      failureFallback: '删除媒体库失败',
+      onConfirm: () async {
+        await api.deleteLibrary(library.id);
+      },
     );
-    if (!mounted || deletedLibraryId == null) {
+    if (!confirmed || !mounted) {
       return;
     }
+    showToast('媒体库已删除');
     setState(() {
       _libraries = _libraries
-          .where((item) => item.id != deletedLibraryId)
+          .where((item) => item.id != library.id)
           .toList(growable: false);
       _errorMessage = null;
     });
@@ -190,7 +207,12 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const _MobileMediaLibrariesNoticeCard(),
+                        const AppMobileNoticeCard(
+                          key: Key('mobile-media-libraries-notice-card'),
+                          leadingIcon: Icons.folder_open_outlined,
+                          title: '媒体库存储路径',
+                          description: '媒体库用于维护本地媒体存储根路径，下载器等模块会依赖这里的路径配置。',
+                        ),
                         SizedBox(height: spacing.md),
                         _buildContentSection(context),
                       ],
@@ -234,9 +256,12 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
       return const _MobileMediaLibraryLoadingSection();
     }
     if (_errorMessage != null) {
-      return _MobileMediaLibraryErrorSection(
+      return AppMobileSectionError(
+        key: const Key('mobile-media-libraries-error-state'),
+        title: '媒体库加载失败',
         message: _errorMessage!,
         onRetry: _loadLibraries,
+        retryButtonKey: const Key('mobile-media-libraries-retry-button'),
       );
     }
     if (_libraries.isEmpty) {
@@ -248,16 +273,87 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
       children: _libraries
           .expand(
             (library) => <Widget>[
-              _MobileMediaLibraryCard(
-                library: library,
-                onTap: () => _handleEditLibrary(library),
-                onMoreTap: () => _handleLibraryActions(library),
-              ),
+              _buildLibraryCard(context, library),
               if (library != _libraries.last)
                 SizedBox(height: context.appSpacing.sm),
             ],
           )
           .toList(growable: false),
+    );
+  }
+
+  Widget _buildLibraryCard(BuildContext context, MediaLibraryDto library) {
+    final spacing = context.appSpacing;
+    final colors = context.appColors;
+    final componentTokens = context.appComponentTokens;
+    final avatarSide = componentTokens.iconSizeXl + spacing.md;
+
+    return MobileEntityListCard(
+      outerKey: Key('mobile-media-library-card-${library.id}'),
+      bodyKey: Key('mobile-media-library-card-body-${library.id}'),
+      leading: Container(
+        width: avatarSide,
+        height: avatarSide,
+        decoration: BoxDecoration(
+          color: colors.surfaceMuted,
+          borderRadius: context.appRadius.mdBorder,
+        ),
+        child: Icon(
+          Icons.folder_open_outlined,
+          size: componentTokens.iconSizeMd,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      title: Text(
+        library.name,
+        style: resolveAppTextStyle(
+          context,
+          size: AppTextSize.s14,
+          weight: AppTextWeight.semibold,
+          tone: AppTextTone.primary,
+        ),
+      ),
+      body: [
+        SizedBox(height: spacing.xs),
+        Text(
+          library.rootPath,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.secondary,
+          ),
+        ),
+        SizedBox(height: spacing.sm),
+        Text(
+          'ID: ${library.id}',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.muted,
+          ),
+        ),
+        SizedBox(height: spacing.xs),
+        Text(
+          '更新时间: ${_formatUpdatedAt(library.updatedAt)}',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.muted,
+          ),
+        ),
+      ],
+      onTap: () => _handleEditLibrary(library),
+      trailingAction: AppIconButton(
+        key: Key('mobile-media-library-more-${library.id}'),
+        tooltip: '更多操作',
+        backgroundColor: colors.surfaceMuted,
+        borderColor: colors.borderSubtle,
+        onPressed: () => _handleLibraryActions(library),
+        icon: const Icon(Icons.more_horiz_rounded),
+      ),
     );
   }
 }
@@ -289,201 +385,7 @@ Future<MobileMediaLibraryAction?> showMobileMediaLibraryActionsDrawer(
   );
 }
 
-Future<int?> showMobileDeleteMediaLibraryDrawer(
-  BuildContext context, {
-  required MediaLibraryDto library,
-}) {
-  return showAppBottomDrawer<int>(
-    context: context,
-    drawerKey: const Key('mobile-media-library-delete-drawer'),
-    maxHeightFactor: 0.42,
-    builder:
-        (drawerContext) => _MobileDeleteMediaLibraryDrawer(library: library),
-  );
-}
-
 enum MobileMediaLibraryAction { edit, delete }
-
-class _MobileMediaLibrariesNoticeCard extends StatelessWidget {
-  const _MobileMediaLibrariesNoticeCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-media-libraries-notice-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.folder_open_outlined,
-            size: context.appComponentTokens.iconSizeMd,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(width: spacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '媒体库存储路径',
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.primary,
-                  ),
-                ),
-                SizedBox(height: spacing.xs),
-                Text(
-                  '媒体库用于维护本地媒体存储根路径，下载器等模块会依赖这里的路径配置。',
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileMediaLibraryCard extends StatelessWidget {
-  const _MobileMediaLibraryCard({
-    required this.library,
-    required this.onTap,
-    required this.onMoreTap,
-  });
-
-  final MediaLibraryDto library;
-  final VoidCallback onTap;
-  final VoidCallback onMoreTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: Key('mobile-media-library-card-${library.id}'),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                key: Key('mobile-media-library-card-body-${library.id}'),
-                borderRadius: context.appRadius.lgBorder,
-                onTap: onTap,
-                child: Padding(
-                  padding: EdgeInsets.all(spacing.md),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width:
-                            context.appComponentTokens.iconSizeXl + spacing.md,
-                        height:
-                            context.appComponentTokens.iconSizeXl + spacing.md,
-                        decoration: BoxDecoration(
-                          color: colors.surfaceMuted,
-                          borderRadius: context.appRadius.mdBorder,
-                        ),
-                        child: Icon(
-                          Icons.folder_open_outlined,
-                          size: context.appComponentTokens.iconSizeMd,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      SizedBox(width: spacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              library.name,
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s14,
-                                weight: AppTextWeight.semibold,
-                                tone: AppTextTone.primary,
-                              ),
-                            ),
-                            SizedBox(height: spacing.xs),
-                            Text(
-                              library.rootPath,
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s12,
-                                weight: AppTextWeight.regular,
-                                tone: AppTextTone.secondary,
-                              ),
-                            ),
-                            SizedBox(height: spacing.sm),
-                            Text(
-                              'ID: ${library.id}',
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s12,
-                                weight: AppTextWeight.regular,
-                                tone: AppTextTone.muted,
-                              ),
-                            ),
-                            SizedBox(height: spacing.xs),
-                            Text(
-                              '更新时间: ${_formatUpdatedAt(library.updatedAt)}',
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s12,
-                                weight: AppTextWeight.regular,
-                                tone: AppTextTone.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: spacing.sm, right: spacing.sm),
-            child: AppIconButton(
-              key: Key('mobile-media-library-more-${library.id}'),
-              tooltip: '更多操作',
-              backgroundColor: colors.surfaceMuted,
-              borderColor: colors.borderSubtle,
-              onPressed: onMoreTap,
-              icon: const Icon(Icons.more_horiz_rounded),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _MobileMediaLibraryLoadingSection extends StatelessWidget {
   const _MobileMediaLibraryLoadingSection();
@@ -524,77 +426,24 @@ class _MobileMediaLibrarySkeletonCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SkeletonBlock(
+          AppSkeletonBlock(
             width: context.appComponentTokens.iconSizeXl + spacing.md,
             height: context.appComponentTokens.iconSizeXl + spacing.md,
-            radius: context.appRadius.md,
+            radius: context.appRadius.mdBorder,
           ),
           SizedBox(width: spacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SkeletonBlock(width: 136, height: 16),
+                const AppSkeletonBlock(width: 136, height: 16),
                 SizedBox(height: spacing.xs),
-                const _SkeletonBlock(width: double.infinity, height: 14),
+                const AppSkeletonBlock(width: double.infinity, height: 14),
                 SizedBox(height: spacing.sm),
-                const _SkeletonBlock(width: 72, height: 12),
+                const AppSkeletonBlock(width: 72, height: 12),
                 SizedBox(height: spacing.xs),
-                const _SkeletonBlock(width: 148, height: 12),
+                const AppSkeletonBlock(width: 148, height: 12),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileMediaLibraryErrorSection extends StatelessWidget {
-  const _MobileMediaLibraryErrorSection({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-media-libraries-error-state'),
-      padding: EdgeInsets.all(spacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const AppEmptyState(message: '媒体库加载失败'),
-          SizedBox(height: spacing.sm),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              key: const Key('mobile-media-libraries-retry-button'),
-              label: '重试',
-              variant: AppButtonVariant.primary,
-              onPressed: onRetry,
             ),
           ),
         ],
@@ -676,75 +525,21 @@ class _MobileMediaLibraryEditorDrawerState
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                _isEditing ? '编辑媒体库' : '新增媒体库',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s16,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              SizedBox(height: spacing.xs),
-              Text(
-                '维护可供下载器等模块使用的本地媒体根路径。',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
-              SizedBox(height: spacing.lg),
-              MediaLibraryFormFields(
-                nameController: _nameController,
-                rootPathController: _rootPathController,
-                nameFocusNode: _nameFocusNode,
-                rootPathFocusNode: _rootPathFocusNode,
-                enabled: !_isSubmitting,
-                autovalidateMode: _autovalidateMode,
-                onRootPathSubmitted: (_) => _submit(),
-              ),
-              SizedBox(height: spacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: '取消',
-                      onPressed:
-                          _isSubmitting
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      key: const Key('mobile-media-library-submit-button'),
-                      label: '保存',
-                      variant: AppButtonVariant.primary,
-                      isLoading: _isSubmitting,
-                      onPressed: _submit,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+    return AppBottomFormSheet(
+      formKey: _formKey,
+      title: _isEditing ? '编辑媒体库' : '新增媒体库',
+      subtitle: '维护可供下载器等模块使用的本地媒体根路径。',
+      submitKey: const Key('mobile-media-library-submit-button'),
+      isSubmitting: _isSubmitting,
+      onSubmit: _submit,
+      body: MediaLibraryFormFields(
+        nameController: _nameController,
+        rootPathController: _rootPathController,
+        nameFocusNode: _nameFocusNode,
+        rootPathFocusNode: _rootPathFocusNode,
+        enabled: !_isSubmitting,
+        autovalidateMode: _autovalidateMode,
+        onRootPathSubmitted: (_) => _submit(),
       ),
     );
   }
@@ -854,101 +649,6 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
   }
 }
 
-class _MobileDeleteMediaLibraryDrawer extends StatefulWidget {
-  const _MobileDeleteMediaLibraryDrawer({required this.library});
-
-  final MediaLibraryDto library;
-
-  @override
-  State<_MobileDeleteMediaLibraryDrawer> createState() =>
-      _MobileDeleteMediaLibraryDrawerState();
-}
-
-class _MobileDeleteMediaLibraryDrawerState
-    extends State<_MobileDeleteMediaLibraryDrawer> {
-  bool _isSubmitting = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '删除媒体库',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s16,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: spacing.sm),
-        Text(
-          '确认删除媒体库“${widget.library.name}”？删除后下载器等依赖该路径的配置可能失效，该操作不可恢复。',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        SizedBox(height: spacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: '取消',
-                onPressed:
-                    _isSubmitting ? null : () => Navigator.of(context).pop(),
-              ),
-            ),
-            SizedBox(width: spacing.md),
-            Expanded(
-              child: AppButton(
-                key: const Key('mobile-media-library-delete-confirm-button'),
-                label: '删除',
-                variant: AppButtonVariant.danger,
-                isLoading: _isSubmitting,
-                onPressed: _deleteLibrary,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _deleteLibrary() async {
-    if (_isSubmitting) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      await context.read<MediaLibrariesApi>().deleteLibrary(widget.library.id);
-      if (!mounted) {
-        return;
-      }
-      showToast('媒体库已删除');
-      Navigator.of(context).pop(widget.library.id);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      showToast(apiErrorMessage(error, fallback: '删除媒体库失败'));
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
-  }
-}
-
 class _MobileDrawerActionRow extends StatelessWidget {
   const _MobileDrawerActionRow({
     super.key,
@@ -1010,30 +710,6 @@ class _MobileDrawerActionRow extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({
-    required this.width,
-    required this.height,
-    this.radius = 8,
-  });
-
-  final double width;
-  final double height;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

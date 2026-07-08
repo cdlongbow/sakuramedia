@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/configuration/data/api/download_clients_api
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
@@ -18,7 +19,12 @@ import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_info_block.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/sheets/app_bottom_form_sheet.dart';
 
 class MobileIndexersPage extends StatefulWidget {
   const MobileIndexersPage({super.key});
@@ -128,9 +134,12 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
         _indexers.isEmpty &&
         _downloadClients.isEmpty &&
         _apiKeyController.text.trim().isEmpty) {
-      return _MobileIndexersErrorSection(
+      return AppMobileSectionError(
+        key: const Key('mobile-indexers-error-state'),
+        title: '索引器加载失败',
         message: _errorMessage!,
         onRetry: _loadData,
+        retryButtonKey: const Key('mobile-indexers-retry-button'),
       );
     }
 
@@ -139,10 +148,25 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileIndexersOverviewCard(
-          indexerCount: _indexers.length,
-          boundIndexerCount: _boundIndexerCount,
-          hasApiKey: _apiKeyController.text.trim().isNotEmpty,
+        AppMobileNoticeCard(
+          key: const Key('mobile-indexers-overview-card'),
+          title: 'Jackett 负责统一管理索引器入口，并把资源请求投递到对应下载器。',
+          description: '先确认 API Key，再补齐每个索引器和下载器的绑定关系。',
+          stats: [
+            const AppMobileNoticeStat(label: '接入类型', value: 'Jackett'),
+            AppMobileNoticeStat(
+              label: 'API Key 状态',
+              value: _apiKeyController.text.trim().isNotEmpty ? '已配置' : '待配置',
+            ),
+            AppMobileNoticeStat(
+              label: '索引器数',
+              value: '${_indexers.length}',
+            ),
+            AppMobileNoticeStat(
+              label: '已绑定下载器',
+              value: '$_boundIndexerCount',
+            ),
+          ],
         ),
         SizedBox(height: spacing.md),
         _buildApiKeyCard(context),
@@ -271,16 +295,80 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
       children: _indexers
           .expand(
             (entry) => <Widget>[
-              _MobileIndexerCard(
-                entry: entry,
-                downloadClient: _resolveDownloadClient(entry),
-                onTap: () => _handleOpenIndexerDetail(entry),
-              ),
+              _buildIndexerCard(context, entry),
               if (entry != _indexers.last)
                 SizedBox(height: context.appSpacing.sm),
             ],
           )
           .toList(growable: false),
+    );
+  }
+
+  Widget _buildIndexerCard(BuildContext context, IndexerEntryDto entry) {
+    final spacing = context.appSpacing;
+    final colors = context.appColors;
+    final downloadClient = _resolveDownloadClient(entry);
+    final hasInvalidBinding =
+        entry.downloadClientId > 0 && downloadClient == null;
+
+    return MobileEntityListCard(
+      outerKey: Key('mobile-indexer-card-${entry.id}'),
+      bodyKey: Key('mobile-indexer-card-body-${entry.id}'),
+      leading: IndexerSourceAvatar(kind: entry.kind),
+      title: Text(
+        entry.name,
+        style: resolveAppTextStyle(
+          context,
+          size: AppTextSize.s14,
+          weight: AppTextWeight.semibold,
+          tone: AppTextTone.primary,
+        ),
+      ),
+      titleTrailing: IndexerKindBadge(kind: entry.kind),
+      body: [
+        SizedBox(height: spacing.xs),
+        Text(
+          entry.url,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.secondary,
+          ),
+        ),
+        SizedBox(height: spacing.sm),
+        Text(
+          '绑定下载器: ${downloadClient?.name ?? '未匹配'}',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.secondary,
+          ),
+        ),
+        if (hasInvalidBinding) ...[
+          SizedBox(height: spacing.sm),
+          Container(
+            key: Key('mobile-indexer-invalid-binding-${entry.id}'),
+            width: double.infinity,
+            padding: EdgeInsets.all(spacing.sm),
+            decoration: BoxDecoration(
+              color: colors.warningSurface,
+              borderRadius: context.appRadius.mdBorder,
+            ),
+            child: Text(
+              '绑定下载器已失效，请重新选择',
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.primary,
+              ),
+            ),
+          ),
+        ],
+      ],
+      onTap: () => _handleOpenIndexerDetail(entry),
     );
   }
 
@@ -430,18 +518,38 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
   }
 
   Future<void> _handleDeleteIndexer(IndexerEntryDto entry) async {
-    final saved = await showMobileDeleteIndexerDrawer(
+    final api = context.read<IndexerSettingsApi>();
+    final settingsType = _resolvedSettingsType;
+    final apiKey = _apiKeyController.text.trim();
+    final nextEntries = _indexers
+        .where((item) => item.id != entry.id)
+        .toList(growable: false);
+    IndexerSettingsDto? savedSettings;
+    final confirmed = await showAppConfirmDialog(
       context,
-      settingsType: _resolvedSettingsType,
-      apiKey: _apiKeyController.text.trim(),
-      entry: entry,
-      existingEntries: _indexers,
+      title: '删除索引器',
+      message: '确认删除索引器"${entry.name}"？删除后，该索引器将无法继续把资源请求投递到当前下载器。',
+      danger: true,
+      confirmLabel: '删除',
+      dialogKey: const Key('mobile-indexer-delete-drawer'),
+      confirmKey: const Key('mobile-indexer-delete-confirm-button'),
+      failureFallback: '删除索引器失败',
+      onConfirm: () async {
+        savedSettings = await api.updateSettings(
+          UpdateIndexerSettingsPayload(
+            type: settingsType,
+            apiKey: apiKey,
+            indexers: nextEntries,
+          ),
+        );
+      },
     );
-    if (!mounted || saved == null) {
+    if (!confirmed || !mounted || savedSettings == null) {
       return;
     }
+    showToast('索引器已删除');
     setState(() {
-      _applySettings(saved);
+      _applySettings(savedSettings!);
       _errorMessage = null;
     });
   }
@@ -504,159 +612,7 @@ Future<MobileIndexerDetailAction?> showMobileIndexerDetailDrawer(
   );
 }
 
-Future<IndexerSettingsDto?> showMobileDeleteIndexerDrawer(
-  BuildContext context, {
-  required String settingsType,
-  required String apiKey,
-  required IndexerEntryDto entry,
-  required List<IndexerEntryDto> existingEntries,
-}) {
-  return showAppBottomDrawer<IndexerSettingsDto>(
-    context: context,
-    drawerKey: const Key('mobile-indexer-delete-drawer'),
-    maxHeightFactor: 0.42,
-    builder: (drawerContext) {
-      return _MobileDeleteIndexerDrawer(
-        settingsType: settingsType,
-        apiKey: apiKey,
-        entry: entry,
-        existingEntries: existingEntries,
-      );
-    },
-  );
-}
-
 enum MobileIndexerDetailAction { edit, delete }
-
-class _MobileIndexersOverviewCard extends StatelessWidget {
-  const _MobileIndexersOverviewCard({
-    required this.indexerCount,
-    required this.boundIndexerCount,
-    required this.hasApiKey,
-  });
-
-  final int indexerCount;
-  final int boundIndexerCount;
-  final bool hasApiKey;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-indexers-overview-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Jackett 负责统一管理索引器入口，并把资源请求投递到对应下载器。',
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: spacing.xs),
-          Text(
-            '先确认 API Key，再补齐每个索引器和下载器的绑定关系。',
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          Row(
-            children: [
-              const Expanded(
-                child: _MobileIndexerOverviewStat(
-                  label: '接入类型',
-                  value: 'Jackett',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _MobileIndexerOverviewStat(
-                  label: 'API Key 状态',
-                  value: hasApiKey ? '已配置' : '待配置',
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: spacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: _MobileIndexerOverviewStat(
-                  label: '索引器数',
-                  value: '$indexerCount',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _MobileIndexerOverviewStat(
-                  label: '已绑定下载器',
-                  value: '$boundIndexerCount',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileIndexerOverviewStat extends StatelessWidget {
-  const _MobileIndexerOverviewStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s16,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _MobileIndexersGuideCard extends StatelessWidget {
   const _MobileIndexersGuideCard({required this.onOpenDownloaders});
@@ -709,122 +665,6 @@ class _MobileIndexersGuideCard extends StatelessWidget {
   }
 }
 
-class _MobileIndexerCard extends StatelessWidget {
-  const _MobileIndexerCard({
-    required this.entry,
-    required this.downloadClient,
-    required this.onTap,
-  });
-
-  final IndexerEntryDto entry;
-  final DownloadClientDto? downloadClient;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-    final hasInvalidBinding =
-        entry.downloadClientId > 0 && downloadClient == null;
-
-    return Container(
-      key: Key('mobile-indexer-card-${entry.id}'),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: Key('mobile-indexer-card-body-${entry.id}'),
-          borderRadius: context.appRadius.lgBorder,
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(spacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IndexerSourceAvatar(kind: entry.kind),
-                SizedBox(width: spacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              entry.name,
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s14,
-                                weight: AppTextWeight.semibold,
-                                tone: AppTextTone.primary,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: spacing.sm),
-                          IndexerKindBadge(kind: entry.kind),
-                        ],
-                      ),
-                      SizedBox(height: spacing.xs),
-                      Text(
-                        entry.url,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.secondary,
-                        ),
-                      ),
-                      SizedBox(height: spacing.sm),
-                      Text(
-                        '绑定下载器: ${downloadClient?.name ?? '未匹配'}',
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.secondary,
-                        ),
-                      ),
-                      if (hasInvalidBinding) ...[
-                        SizedBox(height: spacing.sm),
-                        Container(
-                          key: Key(
-                            'mobile-indexer-invalid-binding-${entry.id}',
-                          ),
-                          width: double.infinity,
-                          padding: EdgeInsets.all(spacing.sm),
-                          decoration: BoxDecoration(
-                            color: colors.warningSurface,
-                            borderRadius: context.appRadius.mdBorder,
-                          ),
-                          child: Text(
-                            '绑定下载器已失效，请重新选择',
-                            style: resolveAppTextStyle(
-                              context,
-                              size: AppTextSize.s12,
-                              weight: AppTextWeight.regular,
-                              tone: AppTextTone.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _MobileIndexersLoadingSection extends StatelessWidget {
   const _MobileIndexersLoadingSection();
 
@@ -857,59 +697,6 @@ class _MobileIndexersSkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.appColors.surfaceMuted,
         borderRadius: context.appRadius.lgBorder,
-      ),
-    );
-  }
-}
-
-class _MobileIndexersErrorSection extends StatelessWidget {
-  const _MobileIndexersErrorSection({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-indexers-error-state'),
-      padding: EdgeInsets.all(spacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const AppEmptyState(message: '索引器加载失败'),
-          SizedBox(height: spacing.sm),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              key: const Key('mobile-indexers-retry-button'),
-              label: '重试',
-              variant: AppButtonVariant.primary,
-              onPressed: onRetry,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -978,85 +765,31 @@ class _MobileIndexerEditorDrawerState
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                _isEditing ? '编辑索引器' : '新增索引器',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s16,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              SizedBox(height: spacing.xs),
-              Text(
-                '维护索引器地址、类别与下载器绑定关系。',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
-              SizedBox(height: spacing.lg),
-              IndexerEntryFormFields(
-                nameController: _nameController,
-                urlController: _urlController,
-                kind: _kind,
-                downloadClients: widget.downloadClients,
-                selectedDownloadClientId: _selectedDownloadClientId,
-                existingEntries: widget.existingEntries,
-                editingEntryId: widget.initialEntry?.id,
-                enabled: !_isSubmitting,
-                autovalidateMode: _autovalidateMode,
-                nameFocusNode: _nameFocusNode,
-                urlFocusNode: _urlFocusNode,
-                onKindChanged: (value) => setState(() => _kind = value),
-                onDownloadClientChanged:
-                    (value) => setState(() {
-                      _selectedDownloadClientId = value;
-                    }),
-                onSubmitted: _submit,
-              ),
-              SizedBox(height: spacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: '取消',
-                      onPressed:
-                          _isSubmitting
-                              ? null
-                              : () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      key: const Key('mobile-indexer-submit-button'),
-                      label: '保存',
-                      variant: AppButtonVariant.primary,
-                      isLoading: _isSubmitting,
-                      onPressed: _submit,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+    return AppBottomFormSheet(
+      formKey: _formKey,
+      title: _isEditing ? '编辑索引器' : '新增索引器',
+      subtitle: '维护索引器地址、类别与下载器绑定关系。',
+      submitKey: const Key('mobile-indexer-submit-button'),
+      isSubmitting: _isSubmitting,
+      onSubmit: _submit,
+      body: IndexerEntryFormFields(
+        nameController: _nameController,
+        urlController: _urlController,
+        kind: _kind,
+        downloadClients: widget.downloadClients,
+        selectedDownloadClientId: _selectedDownloadClientId,
+        existingEntries: widget.existingEntries,
+        editingEntryId: widget.initialEntry?.id,
+        enabled: !_isSubmitting,
+        autovalidateMode: _autovalidateMode,
+        nameFocusNode: _nameFocusNode,
+        urlFocusNode: _urlFocusNode,
+        onKindChanged: (value) => setState(() => _kind = value),
+        onDownloadClientChanged:
+            (value) => setState(() {
+              _selectedDownloadClientId = value;
+            }),
+        onSubmitted: _submit,
       ),
     );
   }
@@ -1197,12 +930,12 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
             ],
           ),
           SizedBox(height: spacing.lg),
-          _MobileIndexerDetailInfoBlock(
+          AppInfoBlock(
             label: '类别',
             value: entry.kind.toUpperCase(),
           ),
           SizedBox(height: spacing.sm),
-          _MobileIndexerDetailInfoBlock(
+          AppInfoBlock(
             label: '绑定下载器',
             value: downloadClient?.name ?? '未匹配',
           ),
@@ -1260,161 +993,3 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
   }
 }
 
-class _MobileIndexerDetailInfoBlock extends StatelessWidget {
-  const _MobileIndexerDetailInfoBlock({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileDeleteIndexerDrawer extends StatefulWidget {
-  const _MobileDeleteIndexerDrawer({
-    required this.settingsType,
-    required this.apiKey,
-    required this.entry,
-    required this.existingEntries,
-  });
-
-  final String settingsType;
-  final String apiKey;
-  final IndexerEntryDto entry;
-  final List<IndexerEntryDto> existingEntries;
-
-  @override
-  State<_MobileDeleteIndexerDrawer> createState() =>
-      _MobileDeleteIndexerDrawerState();
-}
-
-class _MobileDeleteIndexerDrawerState
-    extends State<_MobileDeleteIndexerDrawer> {
-  bool _isSubmitting = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '删除索引器',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s16,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: spacing.sm),
-        Text(
-          '确认删除索引器“${widget.entry.name}”？删除后，该索引器将无法继续把资源请求投递到当前下载器。',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        SizedBox(height: spacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: '取消',
-                onPressed:
-                    _isSubmitting ? null : () => Navigator.of(context).pop(),
-              ),
-            ),
-            SizedBox(width: spacing.md),
-            Expanded(
-              child: AppButton(
-                key: const Key('mobile-indexer-delete-confirm-button'),
-                label: '删除',
-                variant: AppButtonVariant.danger,
-                isLoading: _isSubmitting,
-                onPressed: _deleteIndexer,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _deleteIndexer() async {
-    if (_isSubmitting) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    final nextEntries = widget.existingEntries
-        .where((item) => item.id != widget.entry.id)
-        .toList(growable: false);
-
-    try {
-      final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: widget.settingsType,
-          apiKey: widget.apiKey,
-          indexers: nextEntries,
-        ),
-      );
-      if (!mounted) {
-        return;
-      }
-      showToast('索引器已删除');
-      Navigator.of(context).pop(saved);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      showToast(apiErrorMessage(error, fallback: '删除索引器失败'));
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
-  }
-}

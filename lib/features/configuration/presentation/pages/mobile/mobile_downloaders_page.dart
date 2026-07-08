@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/download_client_diagnostics_dialog.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/download_client_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/download_client_probe_controller.dart';
@@ -22,7 +23,13 @@ import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_info_block.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
+import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/navigation/app_tab_bar.dart';
+import 'package:sakuramedia/widgets/sheets/app_bottom_form_sheet.dart';
 
 /// 移动端下载器卡片的探针状态快照。
 /// - 会话内 in-memory,不落库;编辑保存/删除时清空对应 clientId 的条目。
@@ -181,10 +188,27 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _MobileDownloadersOverviewCard(
-                  clientCount: _clients.length,
-                  linkedLibraryCount: _linkedLibraryCount,
-                  savedPasswordCount: _savedPasswordCount,
+                AppMobileNoticeCard(
+                  key: const Key('mobile-downloaders-overview-card'),
+                  title: '下载器负责接收索引器推送的资源请求，并依赖媒体库路径映射完成落库。',
+                  description: '建议先确认媒体库路径，再补全 qBittorrent 保存路径与本地访问路径。',
+                  stats: [
+                    AppMobileNoticeStat(
+                      label: '已配置下载器数',
+                      value: '${_clients.length}',
+                      valueSize: AppTextSize.s18,
+                    ),
+                    AppMobileNoticeStat(
+                      label: '关联媒体库数',
+                      value: '$_linkedLibraryCount',
+                      valueSize: AppTextSize.s18,
+                    ),
+                    AppMobileNoticeStat(
+                      label: '已保存密码数',
+                      value: '$_savedPasswordCount',
+                      valueSize: AppTextSize.s18,
+                    ),
+                  ],
                 ),
                 SizedBox(height: spacing.md),
                 _buildDownloadersSection(context),
@@ -261,9 +285,12 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       return const _MobileDownloadersLoadingSection();
     }
     if (_errorMessage != null) {
-      return _MobileDownloadersErrorSection(
+      return AppMobileSectionError(
+        key: const Key('mobile-downloaders-error-state'),
+        title: '下载器加载失败',
         message: _errorMessage!,
         onRetry: _loadData,
+        retryButtonKey: const Key('mobile-downloaders-retry-button'),
       );
     }
     if (_clients.isEmpty) {
@@ -279,19 +306,131 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       children: _clients
           .expand(
             (client) => <Widget>[
-              _MobileDownloaderCard(
+              _buildDownloaderCard(
+                context,
                 client: client,
                 mediaLibrary: librariesById[client.mediaLibraryId],
-                probeSnapshot:
-                    _probeSnapshots[client.id] ??
+                probeSnapshot: _probeSnapshots[client.id] ??
                     const _MobileDownloaderProbeSnapshot(),
-                onTap: () => _handleShowDetail(client),
               ),
               if (client != _clients.last)
                 SizedBox(height: context.appSpacing.sm),
             ],
           )
           .toList(growable: false),
+    );
+  }
+
+  Widget _buildDownloaderCard(
+    BuildContext context, {
+    required DownloadClientDto client,
+    required MediaLibraryDto? mediaLibrary,
+    required _MobileDownloaderProbeSnapshot probeSnapshot,
+  }) {
+    final spacing = context.appSpacing;
+    final colors = context.appColors;
+    final componentTokens = context.appComponentTokens;
+    final avatarSide = componentTokens.iconSizeXl + spacing.md;
+    final passwordTone =
+        client.hasPassword ? AppBadgeTone.success : AppBadgeTone.warning;
+    final passwordLabel = client.hasPassword ? '已保存密码' : '待补密码';
+
+    return MobileEntityListCard(
+      outerKey: Key('mobile-downloader-card-${client.id}'),
+      bodyKey: Key('mobile-downloader-card-body-${client.id}'),
+      leading: Container(
+        width: avatarSide,
+        height: avatarSide,
+        decoration: BoxDecoration(
+          color: colors.surfaceMuted,
+          borderRadius: context.appRadius.mdBorder,
+        ),
+        child: Icon(
+          Icons.download_for_offline_outlined,
+          size: componentTokens.iconSizeMd,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+      title: Text(
+        client.name,
+        style: resolveAppTextStyle(
+          context,
+          size: AppTextSize.s14,
+          weight: AppTextWeight.semibold,
+          tone: AppTextTone.primary,
+        ),
+      ),
+      titleTrailing: AppBadge(
+        label: passwordLabel,
+        tone: passwordTone,
+        size: AppBadgeSize.compact,
+      ),
+      body: [
+        SizedBox(height: spacing.xs),
+        Text(
+          client.baseUrl,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.secondary,
+          ),
+        ),
+        SizedBox(height: spacing.sm),
+        _DownloaderMetaLine(label: '用户名', value: client.username),
+        SizedBox(height: spacing.xs),
+        _DownloaderMetaLine(
+          label: '目标媒体库',
+          value: mediaLibrary?.name ?? '未关联媒体库',
+        ),
+        SizedBox(height: spacing.xs),
+        _DownloaderMetaLine(
+          label: 'qBittorrent保存路径',
+          value: client.clientSavePath,
+        ),
+        SizedBox(height: spacing.xs),
+        _DownloaderMetaLine(label: '本地访问路径', value: client.localRootPath),
+        SizedBox(height: spacing.sm),
+        Wrap(
+          spacing: spacing.xs,
+          runSpacing: spacing.xs,
+          children: [
+            DownloadClientProbeStatusChip(
+              key: Key('mobile-downloader-card-probe-test-${client.id}'),
+              label: '连通性',
+              state: probeSnapshot.connectivityChipState,
+              detail: probeChipDetail(
+                probeSnapshot.connectivityChipState,
+                elapsedMs: probeSnapshot.connectivityResult?.elapsedMs,
+              ),
+              onTap: null,
+            ),
+            DownloadClientProbeStatusChip(
+              key: Key(
+                'mobile-downloader-card-probe-storage-test-${client.id}',
+              ),
+              label: '目录映射',
+              state: probeSnapshot.storageChipState,
+              detail: probeChipDetail(
+                probeSnapshot.storageChipState,
+                elapsedMs: probeSnapshot.storageResult?.elapsedMs,
+              ),
+              onTap: null,
+            ),
+          ],
+        ),
+        SizedBox(height: spacing.sm),
+        Text(
+          '更新时间: ${_formatUpdatedAt(client.updatedAt)}',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.muted,
+          ),
+        ),
+      ],
+      onTap: () => _handleShowDetail(client),
     );
   }
 
@@ -410,18 +549,29 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
   }
 
   Future<void> _handleDeleteClient(DownloadClientDto client) async {
-    final deletedClientId = await showMobileDeleteDownloaderDrawer(
+    final api = context.read<DownloadClientsApi>();
+    final confirmed = await showAppConfirmDialog(
       context,
-      client: client,
+      title: '删除下载器',
+      message: '确认删除下载器"${client.name}"？该操作不会删除已有下载任务，但索引器绑定关系可能需要重新调整。',
+      danger: true,
+      confirmLabel: '删除',
+      dialogKey: const Key('mobile-downloader-delete-drawer'),
+      confirmKey: const Key('mobile-downloader-delete-confirm-button'),
+      failureFallback: '删除下载器失败',
+      onConfirm: () async {
+        await api.deleteClient(client.id);
+      },
     );
-    if (!mounted || deletedClientId == null) {
+    if (!confirmed || !mounted) {
       return;
     }
+    showToast('下载器已删除');
     setState(() {
       _clients = _clients
-          .where((item) => item.id != deletedClientId)
+          .where((item) => item.id != client.id)
           .toList(growable: false);
-      _probeSnapshots.remove(deletedClientId);
+      _probeSnapshots.remove(client.id);
       _errorMessage = null;
     });
     unawaited(_syncDataInBackground());
@@ -543,302 +693,7 @@ Future<MobileDownloaderDetailAction?> _showMobileDownloaderDetailDrawer(
   );
 }
 
-Future<int?> showMobileDeleteDownloaderDrawer(
-  BuildContext context, {
-  required DownloadClientDto client,
-}) {
-  return showAppBottomDrawer<int>(
-    context: context,
-    drawerKey: const Key('mobile-downloader-delete-drawer'),
-    maxHeightFactor: 0.42,
-    builder: (drawerContext) {
-      return _MobileDeleteDownloaderDrawer(client: client);
-    },
-  );
-}
-
 enum MobileDownloaderDetailAction { edit, delete }
-
-class _MobileDownloadersOverviewCard extends StatelessWidget {
-  const _MobileDownloadersOverviewCard({
-    required this.clientCount,
-    required this.linkedLibraryCount,
-    required this.savedPasswordCount,
-  });
-
-  final int clientCount;
-  final int linkedLibraryCount;
-  final int savedPasswordCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-downloaders-overview-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '下载器负责接收索引器推送的资源请求，并依赖媒体库路径映射完成落库。',
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: spacing.xs),
-          Text(
-            '建议先确认媒体库路径，再补全 qBittorrent 保存路径与本地访问路径。',
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: _OverviewStatBlock(
-                  label: '已配置下载器数',
-                  value: '$clientCount',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _OverviewStatBlock(
-                  label: '关联媒体库数',
-                  value: '$linkedLibraryCount',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _OverviewStatBlock(
-                  label: '已保存密码数',
-                  value: '$savedPasswordCount',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OverviewStatBlock extends StatelessWidget {
-  const _OverviewStatBlock({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s18,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileDownloaderCard extends StatelessWidget {
-  const _MobileDownloaderCard({
-    required this.client,
-    required this.mediaLibrary,
-    required this.probeSnapshot,
-    required this.onTap,
-  });
-
-  final DownloadClientDto client;
-  final MediaLibraryDto? mediaLibrary;
-  final _MobileDownloaderProbeSnapshot probeSnapshot;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-    final passwordTone =
-        client.hasPassword ? AppBadgeTone.success : AppBadgeTone.warning;
-    final passwordLabel = client.hasPassword ? '已保存密码' : '待补密码';
-
-    return Container(
-      key: Key('mobile-downloader-card-${client.id}'),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          key: Key('mobile-downloader-card-body-${client.id}'),
-          borderRadius: context.appRadius.lgBorder,
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.all(spacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: context.appComponentTokens.iconSizeXl + spacing.md,
-                  height: context.appComponentTokens.iconSizeXl + spacing.md,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceMuted,
-                    borderRadius: context.appRadius.mdBorder,
-                  ),
-                  child: Icon(
-                    Icons.download_for_offline_outlined,
-                    size: context.appComponentTokens.iconSizeMd,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                SizedBox(width: spacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              client.name,
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s14,
-                                weight: AppTextWeight.semibold,
-                                tone: AppTextTone.primary,
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: spacing.sm),
-                          AppBadge(
-                            label: passwordLabel,
-                            tone: passwordTone,
-                            size: AppBadgeSize.compact,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: spacing.xs),
-                      Text(
-                        client.baseUrl,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.secondary,
-                        ),
-                      ),
-                      SizedBox(height: spacing.sm),
-                      _DownloaderMetaLine(label: '用户名', value: client.username),
-                      SizedBox(height: spacing.xs),
-                      _DownloaderMetaLine(
-                        label: '目标媒体库',
-                        value: mediaLibrary?.name ?? '未关联媒体库',
-                      ),
-                      SizedBox(height: spacing.xs),
-                      _DownloaderMetaLine(
-                        label: 'qBittorrent保存路径',
-                        value: client.clientSavePath,
-                      ),
-                      SizedBox(height: spacing.xs),
-                      _DownloaderMetaLine(
-                        label: '本地访问路径',
-                        value: client.localRootPath,
-                      ),
-                      SizedBox(height: spacing.sm),
-                      Wrap(
-                        spacing: spacing.xs,
-                        runSpacing: spacing.xs,
-                        children: [
-                          DownloadClientProbeStatusChip(
-                            key: Key(
-                              'mobile-downloader-card-probe-test-${client.id}',
-                            ),
-                            label: '连通性',
-                            state: probeSnapshot.connectivityChipState,
-                            detail: probeChipDetail(
-                              probeSnapshot.connectivityChipState,
-                              elapsedMs:
-                                  probeSnapshot.connectivityResult?.elapsedMs,
-                            ),
-                            onTap: null,
-                          ),
-                          DownloadClientProbeStatusChip(
-                            key: Key(
-                              'mobile-downloader-card-probe-storage-test-${client.id}',
-                            ),
-                            label: '目录映射',
-                            state: probeSnapshot.storageChipState,
-                            detail: probeChipDetail(
-                              probeSnapshot.storageChipState,
-                              elapsedMs: probeSnapshot.storageResult?.elapsedMs,
-                            ),
-                            onTap: null,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: spacing.sm),
-                      Text(
-                        '更新时间: ${_formatUpdatedAt(client.updatedAt)}',
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-}
 
 class _DownloaderMetaLine extends StatelessWidget {
   const _DownloaderMetaLine({required this.label, required this.value});
@@ -897,79 +752,26 @@ class _MobileDownloaderSkeletonCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SkeletonBlock(
+          AppSkeletonBlock(
             width: context.appComponentTokens.iconSizeXl + spacing.md,
             height: context.appComponentTokens.iconSizeXl + spacing.md,
-            radius: context.appRadius.md,
+            radius: context.appRadius.mdBorder,
           ),
           SizedBox(width: spacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SkeletonBlock(width: 116, height: 16),
+                const AppSkeletonBlock(width: 116, height: 16),
                 SizedBox(height: spacing.xs),
-                const _SkeletonBlock(width: 188, height: 12),
+                const AppSkeletonBlock(width: 188, height: 12),
                 SizedBox(height: spacing.sm),
-                const _SkeletonBlock(width: 132, height: 12),
+                const AppSkeletonBlock(width: 132, height: 12),
                 SizedBox(height: spacing.xs),
-                const _SkeletonBlock(width: 168, height: 12),
+                const AppSkeletonBlock(width: 168, height: 12),
                 SizedBox(height: spacing.xs),
-                const _SkeletonBlock(width: 148, height: 12),
+                const AppSkeletonBlock(width: 148, height: 12),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileDownloadersErrorSection extends StatelessWidget {
-  const _MobileDownloadersErrorSection({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-downloaders-error-state'),
-      padding: EdgeInsets.all(spacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const AppEmptyState(message: '下载器加载失败'),
-          SizedBox(height: spacing.sm),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              key: const Key('mobile-downloaders-retry-button'),
-              label: '重试',
-              variant: AppButtonVariant.primary,
-              onPressed: onRetry,
             ),
           ),
         ],
@@ -1191,99 +993,54 @@ class _MobileDownloaderEditorDrawerState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                _isEditing ? '编辑下载器' : '新增下载器',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s16,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              SizedBox(height: spacing.xs),
-              Text(
-                '维护下载器服务地址、路径映射和媒体库绑定关系。',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
-              SizedBox(height: spacing.lg),
-              DownloadClientFormFields(
-                nameController: _nameController,
-                baseUrlController: _baseUrlController,
-                usernameController: _usernameController,
-                passwordController: _passwordController,
-                clientSavePathController: _clientSavePathController,
-                localRootPathController: _localRootPathController,
-                libraries: widget.libraries,
-                selectedLibraryId: _selectedLibraryId,
-                onLibraryChanged: (value) {
-                  setState(() {
-                    _selectedLibraryId = value;
-                  });
-                },
-                isEditing: _isEditing,
-                enabled: !_busy,
-                autovalidateMode: _autovalidateMode,
-                nameFocusNode: _nameFocusNode,
-                baseUrlFocusNode: _baseUrlFocusNode,
-                usernameFocusNode: _usernameFocusNode,
-                passwordFocusNode: _passwordFocusNode,
-                clientSavePathFocusNode: _clientSavePathFocusNode,
-                localRootPathFocusNode: _localRootPathFocusNode,
-                onSubmitted: _submit,
-              ),
-              SizedBox(height: spacing.lg),
-              DownloadClientEditorProbeChips(
-                keyPrefix: 'mobile-downloader',
-                busy: _busy,
-                connectivityState: _probe.connectivityChipState,
-                storageState: _probe.storageChipState,
-                connectivityDetail: _probe.connectivityChipDetail(),
-                storageDetail: _probe.storageChipDetail(),
-                onConnectivityTap: _handleConnectivityChipTap,
-                onStorageTap: _handleStorageChipTap,
-              ),
-              SizedBox(height: spacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: '取消',
-                      onPressed:
-                          _busy ? null : () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      key: const Key('mobile-downloader-submit-button'),
-                      label: '保存',
-                      variant: AppButtonVariant.primary,
-                      isLoading: _isSubmitting,
-                      onPressed: _probe.busy ? null : _submit,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+    return AppBottomFormSheet(
+      formKey: _formKey,
+      title: _isEditing ? '编辑下载器' : '新增下载器',
+      subtitle: '维护下载器服务地址、路径映射和媒体库绑定关系。',
+      submitKey: const Key('mobile-downloader-submit-button'),
+      isSubmitting: _isSubmitting,
+      submitDisabled: _probe.busy,
+      onSubmit: _submit,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DownloadClientFormFields(
+            nameController: _nameController,
+            baseUrlController: _baseUrlController,
+            usernameController: _usernameController,
+            passwordController: _passwordController,
+            clientSavePathController: _clientSavePathController,
+            localRootPathController: _localRootPathController,
+            libraries: widget.libraries,
+            selectedLibraryId: _selectedLibraryId,
+            onLibraryChanged: (value) {
+              setState(() {
+                _selectedLibraryId = value;
+              });
+            },
+            isEditing: _isEditing,
+            enabled: !_busy,
+            autovalidateMode: _autovalidateMode,
+            nameFocusNode: _nameFocusNode,
+            baseUrlFocusNode: _baseUrlFocusNode,
+            usernameFocusNode: _usernameFocusNode,
+            passwordFocusNode: _passwordFocusNode,
+            clientSavePathFocusNode: _clientSavePathFocusNode,
+            localRootPathFocusNode: _localRootPathFocusNode,
+            onSubmitted: _submit,
           ),
-        ),
+          SizedBox(height: spacing.lg),
+          DownloadClientEditorProbeChips(
+            keyPrefix: 'mobile-downloader',
+            busy: _busy,
+            connectivityState: _probe.connectivityChipState,
+            storageState: _probe.storageChipState,
+            connectivityDetail: _probe.connectivityChipDetail(),
+            storageDetail: _probe.storageChipDetail(),
+            onConnectivityTap: _handleConnectivityChipTap,
+            onStorageTap: _handleStorageChipTap,
+          ),
+        ],
       ),
     );
   }
@@ -1625,21 +1382,21 @@ class _MobileDownloaderDetailDrawerState
             ],
           ),
           SizedBox(height: spacing.lg),
-          _DetailInfoBlock(label: '用户名', value: client.username),
+          AppInfoBlock(label: '用户名', value: client.username),
           SizedBox(height: spacing.sm),
-          _DetailInfoBlock(
+          AppInfoBlock(
             label: '目标媒体库',
             value: mediaLibrary?.name ?? '未关联媒体库',
           ),
           SizedBox(height: spacing.sm),
-          _DetailInfoBlock(
+          AppInfoBlock(
             label: 'qBittorrent保存路径',
             value: client.clientSavePath,
           ),
           SizedBox(height: spacing.sm),
-          _DetailInfoBlock(label: '本地访问路径', value: client.localRootPath),
+          AppInfoBlock(label: '本地访问路径', value: client.localRootPath),
           SizedBox(height: spacing.sm),
-          _DetailInfoBlock(
+          AppInfoBlock(
             label: '更新时间',
             value: _formatUpdatedAt(client.updatedAt),
           ),
@@ -1709,168 +1466,6 @@ class _MobileDownloaderDetailDrawerState
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DetailInfoBlock extends StatelessWidget {
-  const _DetailInfoBlock({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileDeleteDownloaderDrawer extends StatefulWidget {
-  const _MobileDeleteDownloaderDrawer({required this.client});
-
-  final DownloadClientDto client;
-
-  @override
-  State<_MobileDeleteDownloaderDrawer> createState() =>
-      _MobileDeleteDownloaderDrawerState();
-}
-
-class _MobileDeleteDownloaderDrawerState
-    extends State<_MobileDeleteDownloaderDrawer> {
-  bool _isSubmitting = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '删除下载器',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s16,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: spacing.sm),
-        Text(
-          '确认删除下载器“${widget.client.name}”？该操作不会删除已有下载任务，但索引器绑定关系可能需要重新调整。',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        SizedBox(height: spacing.xl),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(
-                label: '取消',
-                onPressed:
-                    _isSubmitting ? null : () => Navigator.of(context).pop(),
-              ),
-            ),
-            SizedBox(width: spacing.md),
-            Expanded(
-              child: AppButton(
-                key: const Key('mobile-downloader-delete-confirm-button'),
-                label: '删除',
-                variant: AppButtonVariant.danger,
-                isLoading: _isSubmitting,
-                onPressed: _deleteClient,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _deleteClient() async {
-    if (_isSubmitting) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      await context.read<DownloadClientsApi>().deleteClient(widget.client.id);
-      if (!mounted) {
-        return;
-      }
-      showToast('下载器已删除');
-      Navigator.of(context).pop(widget.client.id);
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      showToast(apiErrorMessage(error, fallback: '删除下载器失败'));
-      setState(() {
-        _isSubmitting = false;
-      });
-    }
-  }
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({
-    required this.width,
-    required this.height,
-    this.radius = 8,
-  });
-
-  final double width;
-  final double height;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

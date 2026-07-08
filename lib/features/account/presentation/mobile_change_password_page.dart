@@ -8,6 +8,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 
 class MobileChangePasswordPage extends StatefulWidget {
@@ -176,7 +177,11 @@ class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _NoticeCard(message: '修改密码后将立即退出当前登录，需要使用新密码重新登录。'),
+                    const AppMobileNoticeCard(
+                      key: Key('mobile-password-notice-card'),
+                      leadingIcon: Icons.info_outline_rounded,
+                      description: '修改密码后将立即退出当前登录，需要使用新密码重新登录。',
+                    ),
                     SizedBox(height: spacing.md),
                     _FormCard(
                       children: [
@@ -293,49 +298,6 @@ class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
   }
 }
 
-class _NoticeCard extends StatelessWidget {
-  const _NoticeCard({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-
-    return Container(
-      key: const Key('mobile-password-notice-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            size: context.appComponentTokens.iconSizeMd,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(width: spacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.secondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _FormCard extends StatelessWidget {
   const _FormCard({required this.children});

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/features/actors/presentation/desktop_actors_page.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/desktop/actors_page.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
-import 'package:sakuramedia/features/actors/presentation/mobile_actors_page.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/mobile/actors_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/desktop_configuration_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/desktop_discover_page.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/desktop_hot_reviews_page.dart';

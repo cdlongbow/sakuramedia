@@ -9,11 +9,11 @@ import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
-import 'package:sakuramedia/features/actors/presentation/desktop_actors_page.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/desktop/actors_page.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actors/actor_summary_card.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

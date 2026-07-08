@@ -10,10 +10,10 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
 import 'package:sakuramedia/features/videos/data/videos_api.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/movie_player/landscape_player_system_ui.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_surface.dart';
-import 'package:sakuramedia/widgets/movie_player/themed_video_player.dart';
+import 'package:sakuramedia/widgets/media_player/landscape_player_system_ui.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/media_player/themed_video_player.dart';
 
 /// 移动端单视频全屏横屏播放页：进入锁定横屏沉浸式、退出恢复原方向。
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
 
 /// 「层级二」播放器统一入口：把裸 [Video] 外面的三层控制主题嵌套
 /// （[MaterialVideoControlsTheme] + [MaterialDesktopVideoControlsTheme] + 控件 builder）

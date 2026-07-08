@@ -10,12 +10,12 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_playback_info.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_speed_button.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_subtitle_button.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_surface_controller.dart';
-import 'package:sakuramedia/widgets/movie_player/movie_player_surface_readiness.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_playback_info.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_speed_button.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_subtitle_button.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_surface_controller.dart';
+import 'package:sakuramedia/widgets/media_player/movie_player_surface_readiness.dart';
 
 class MoviePlayerSurface extends StatefulWidget {
   const MoviePlayerSurface({

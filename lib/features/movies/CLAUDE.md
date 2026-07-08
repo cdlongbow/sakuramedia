@@ -28,7 +28,7 @@
 
 - `MoviePlayerController` 最重:`resolvedPlayUrl` 经 `resolveMediaUrl(baseUrl)`;**字幕 `fetchMovieSubtitles` 可为 null**(非 JAV 源短路 `unsupported`,别假设总有字幕);进度上报 `Timer.periodic`(默认 5s)仅 position 变化才 PUT,**失败把 `_lastReported` 置 null 以便重试**(非 bug);startup 位置优先级 `initialPositionSeconds > 媒体 stored progress > 0`;dispose 时 `flushPlaybackProgress()`。
 - **`MobileMoviePlayerPage` 直接复用 `DesktopMoviePlayerPage`**(仅传 `useTouchOptimizedControls:true` + 横屏 system UI)——**改桌面播放器页同时影响移动**。
-- 播放器 UI 组件在 `lib/widgets/movie_player/`,有 url 切换竞态保护(`MoviePlayerSurfaceOpenCoordinator` + requestId)、大量需成对 dispose 的订阅/Timer——见该目录约定。
+- 播放器 UI 组件在 `lib/widgets/media_player/`,有 url 切换竞态保护(`MoviePlayerSurfaceOpenCoordinator` + requestId)、大量需成对 dispose 的订阅/Timer——见该目录约定。
 
 ## SSE 缩略图与系列导入
 

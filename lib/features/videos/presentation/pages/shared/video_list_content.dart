@@ -5,8 +5,8 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/app_paged_load_more_footer.dart';
-import 'package:sakuramedia/widgets/videos/video_filter_toolbar.dart';
-import 'package:sakuramedia/widgets/videos/video_summary_grid.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_filter_toolbar.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_grid.dart';
 
 /// 视频列表「排序条 + 总数 + 网格 + 分页底栏」的呈现层。
 ///

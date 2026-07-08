@@ -13,7 +13,7 @@ import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
 import 'package:sakuramedia/widgets/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/moments/moment_preview_dialog.dart';
 import 'package:sakuramedia/widgets/moments/moment_sort_header.dart';
-import 'package:sakuramedia/widgets/videos/video_quick_play_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/player/video_quick_play_dialog.dart';
 
 class DesktopMomentsPage extends StatefulWidget {
   const DesktopMomentsPage({super.key});

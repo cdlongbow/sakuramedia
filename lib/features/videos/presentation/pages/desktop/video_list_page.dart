@@ -10,9 +10,9 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/videos/presentation/add_to_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/create_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list_content.dart';
@@ -26,7 +26,7 @@ import 'package:sakuramedia/widgets/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/widgets/videos/video_quick_play_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/player/video_quick_play_dialog.dart';
 
 /// PornBox 主页：顶部「新建合集」，中部「视频合集」横滑区（参照切片页），
 /// 下方「全部视频」网格。导入入口统一收口到「媒体导入」页。

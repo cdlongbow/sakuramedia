@@ -1,74 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
-import 'package:sakuramedia/features/videos/presentation/create_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
 
-/// 目标合集选择器的呈现形态：桌面弹窗 / 移动端底部抽屉。
-enum PickVideoCollectionPresentation { dialog, bottomDrawer }
+/// 「加入合集」的呈现形态：桌面弹窗 / 移动端底部抽屉。
+enum AddToVideoCollectionPresentation { dialog, bottomDrawer }
 
-/// 选择一个目标视频合集（批量加入合集用）。返回选中的合集；取消返回 `null`。
-///
-/// 与单条即时加入的 [showAddToVideoCollectionDialog] 不同：本弹窗只负责「选中并返回」，
-/// 实际加入动作由调用方批量执行。
-Future<VideoCollectionDto?> showPickVideoCollectionDialog(
+/// 把视频加入某个视频合集。返回 `true` 表示成功加入。
+Future<bool?> showAddToVideoCollectionDialog(
   BuildContext context, {
-  PickVideoCollectionPresentation presentation =
-      PickVideoCollectionPresentation.dialog,
-  int? excludedCollectionId,
+  required int videoItemId,
+  AddToVideoCollectionPresentation presentation =
+      AddToVideoCollectionPresentation.dialog,
 }) {
   switch (presentation) {
-    case PickVideoCollectionPresentation.dialog:
-      return showDialog<VideoCollectionDto>(
+    case AddToVideoCollectionPresentation.dialog:
+      return showDialog<bool>(
         context: context,
-        builder: (dialogContext) => _PickVideoCollectionDialog(
-          excludedCollectionId: excludedCollectionId,
-        ),
+        builder: (dialogContext) =>
+            AddToVideoCollectionDialog(videoItemId: videoItemId),
       );
-    case PickVideoCollectionPresentation.bottomDrawer:
-      return showAppBottomDrawer<VideoCollectionDto>(
+    case AddToVideoCollectionPresentation.bottomDrawer:
+      return showAppBottomDrawer<bool>(
         context: context,
-        drawerKey: const Key('pick-video-collection-bottom-sheet'),
+        drawerKey: const Key('add-to-video-collection-bottom-sheet'),
         maxHeightFactor: 0.7,
-        builder: (sheetContext) => _PickVideoCollectionDialog(
-          presentation: PickVideoCollectionPresentation.bottomDrawer,
-          excludedCollectionId: excludedCollectionId,
+        builder: (sheetContext) => AddToVideoCollectionDialog(
+          videoItemId: videoItemId,
+          presentation: AddToVideoCollectionPresentation.bottomDrawer,
         ),
       );
   }
 }
 
-class _PickVideoCollectionDialog extends StatefulWidget {
-  const _PickVideoCollectionDialog({
-    this.presentation = PickVideoCollectionPresentation.dialog,
-    this.excludedCollectionId,
+class AddToVideoCollectionDialog extends StatefulWidget {
+  const AddToVideoCollectionDialog({
+    super.key,
+    required this.videoItemId,
+    this.presentation = AddToVideoCollectionPresentation.dialog,
   });
 
-  final PickVideoCollectionPresentation presentation;
-
-  /// 不在列表中显示的合集 id（用于「加入到另一个合集」时排除当前合集自身）。
-  final int? excludedCollectionId;
+  final int videoItemId;
+  final AddToVideoCollectionPresentation presentation;
 
   @override
-  State<_PickVideoCollectionDialog> createState() =>
-      _PickVideoCollectionDialogState();
+  State<AddToVideoCollectionDialog> createState() =>
+      _AddToVideoCollectionDialogState();
 }
 
-class _PickVideoCollectionDialogState
-    extends State<_PickVideoCollectionDialog> {
+class _AddToVideoCollectionDialogState
+    extends State<AddToVideoCollectionDialog> {
   late final VideoCollectionsApi _api;
   List<VideoCollectionDto> _collections = const <VideoCollectionDto>[];
   bool _isLoading = true;
   String? _error;
+  int? _busyCollectionId;
 
   bool get _isBottomDrawer =>
-      widget.presentation == PickVideoCollectionPresentation.bottomDrawer;
+      widget.presentation == AddToVideoCollectionPresentation.bottomDrawer;
 
   @override
   void initState() {
@@ -87,13 +84,8 @@ class _PickVideoCollectionDialogState
       if (!mounted) {
         return;
       }
-      final excluded = widget.excludedCollectionId;
       setState(() {
-        _collections = excluded == null
-            ? collections
-            : collections
-                .where((c) => c.id != excluded)
-                .toList(growable: false);
+        _collections = collections;
         _isLoading = false;
       });
     } catch (error) {
@@ -107,15 +99,34 @@ class _PickVideoCollectionDialogState
     }
   }
 
-  Future<void> _createAndPick() async {
+  Future<void> _addTo(VideoCollectionDto collection) async {
+    setState(() => _busyCollectionId = collection.id);
+    try {
+      await _api.addCollectionItem(
+        collectionId: collection.id,
+        videoItemId: widget.videoItemId,
+      );
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      showToast(apiErrorMessage(error, fallback: '加入合集失败'));
+      if (mounted) {
+        setState(() => _busyCollectionId = null);
+      }
+    }
+  }
+
+  Future<void> _createAndAdd() async {
     final created = await showVideoCollectionDialog(
       context,
       presentation: _isBottomDrawer
           ? VideoCollectionEditPresentation.bottomDrawer
           : VideoCollectionEditPresentation.dialog,
     );
-    if (created != null && mounted) {
-      Navigator.of(context).pop(created);
+    if (created != null) {
+      await _addTo(created);
     }
   }
 
@@ -159,7 +170,7 @@ class _PickVideoCollectionDialogState
             Expanded(
               child: AppButton(
                 label: '新建合集并加入',
-                onPressed: _createAndPick,
+                onPressed: _createAndAdd,
               ),
             ),
             SizedBox(width: spacing.md),
@@ -195,12 +206,19 @@ class _PickVideoCollectionDialogState
       separatorBuilder: (context, _) => SizedBox(height: context.appSpacing.xs),
       itemBuilder: (context, index) {
         final collection = _collections[index];
+        final isBusy = _busyCollectionId == collection.id;
         return ListTile(
-          key: Key('pick-collection-${collection.id}'),
+          key: Key('add-to-collection-${collection.id}'),
           title: Text(collection.name),
           subtitle: Text('${collection.itemCount} 个视频'),
-          trailing: const Icon(Icons.add),
-          onTap: () => Navigator.of(context).pop(collection),
+          trailing: isBusy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.add),
+          onTap: isBusy ? null : () => _addTo(collection),
         );
       },
     );

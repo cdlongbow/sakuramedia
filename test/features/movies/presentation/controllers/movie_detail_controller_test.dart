@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_controller.dart';
 
 void main() {

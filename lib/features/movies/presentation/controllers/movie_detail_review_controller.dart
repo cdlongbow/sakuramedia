@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/movies/data/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 
 class MovieDetailReviewController extends ChangeNotifier {
   MovieDetailReviewController({

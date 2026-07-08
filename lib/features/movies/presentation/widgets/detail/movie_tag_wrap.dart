@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
 
 class MovieTagWrap extends StatelessWidget {

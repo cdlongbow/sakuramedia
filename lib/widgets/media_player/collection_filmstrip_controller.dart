@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 
 /// 某集（按「实际可播列表」下标）的原始关键帧：`offsetSeconds` 是**该集自身播放时间轴**
 /// 的相对秒数（切片相对切片起点、pornbox 相对媒体起点，两者都对应「该集从 0 起播」）。

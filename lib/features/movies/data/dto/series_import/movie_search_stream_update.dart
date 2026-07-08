@@ -1,4 +1,4 @@
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 
 class MovieSearchStreamUpdate {

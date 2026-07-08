@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 class MovieDetailController extends ChangeNotifier {
   MovieDetailController({

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/actors/data/actor_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actors/actor_summary_grid.dart';

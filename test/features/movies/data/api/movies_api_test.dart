@@ -2,16 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/movies/data/movie_collection_type_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/data/movies_api.dart';
-import 'package:sakuramedia/features/movies/data/parsed_movie_number_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_filter_state.dart';
 
-import '../../../support/fake_http_client_adapter.dart';
+import '../../../../support/fake_http_client_adapter.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

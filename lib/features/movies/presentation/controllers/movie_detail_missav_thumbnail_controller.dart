@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_result_dto.dart';
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_stream_update.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_result_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_stream_update.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 
 enum MovieDetailMissavThumbnailState { idle, loading, success, empty, error }

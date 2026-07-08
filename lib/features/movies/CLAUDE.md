@@ -5,7 +5,14 @@
 ## 目录结构
 
 ```
-data/                    # 11 个 DTO + movies_api
+data/
+  api/                   # MoviesApi(唯一 API 类)
+  dto/                   # 按业务子域分组
+    listing/             # movie_list_item / parsed_movie_number
+    detail/              # movie_detail / movie_review / movie_collection_type
+    player/              # movie_subtitle
+    thumbnails/          # movie_media_thumbnail + MissAV 结果 + MissAV SSE 流
+    series_import/       # movie_search_stream_update(catalog 搜索共用)
 presentation/
   controllers/           # controller/notifier/state/mixin(17)
   pages/
@@ -18,7 +25,7 @@ presentation/
     series_import_dialog.dart
 ```
 
-**在其它 feature 内 import 时**:控制器/DTO 从 `features/movies/data|controllers/` 拿,不要从 `pages/` 拿(那是页面私域)。
+**在其它 feature 内 import 时**:DTO 从 `features/movies/data/dto/<子域>/` 拿,`MoviesApi` 从 `features/movies/data/api/` 拿,控制器从 `presentation/controllers/` 拿。不要从 `pages/` 拿(那是页面私域)。**这套 data 目录结构是仓库样板**,新 feature 可以照抄:`api/` + `dto/{按业务子域}/`(若 DTO 少于 5 个可以扁平放在 `dto/` 根)。
 
 ## 列表:筛选状态驱动(易踩第一名)
 

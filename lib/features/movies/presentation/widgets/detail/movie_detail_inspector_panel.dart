@@ -14,10 +14,10 @@ import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart'
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_stream_update.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_stream_update.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_missav_thumbnail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_magnet_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_review_controller.dart';

@@ -1,4 +1,4 @@
-import 'package:sakuramedia/features/movies/data/missav_thumbnail_result_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_result_dto.dart';
 
 class MissavThumbnailStreamUpdate {
   const MissavThumbnailStreamUpdate({

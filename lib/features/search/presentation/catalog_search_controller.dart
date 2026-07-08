@@ -6,7 +6,7 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
-import 'package:sakuramedia/features/actors/presentation/paged_actor_summary_controller.dart';
+import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';

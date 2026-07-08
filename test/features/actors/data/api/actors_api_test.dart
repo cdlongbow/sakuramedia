@@ -3,7 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
-import 'package:sakuramedia/features/actors/presentation/actor_filter_state.dart';
+import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 

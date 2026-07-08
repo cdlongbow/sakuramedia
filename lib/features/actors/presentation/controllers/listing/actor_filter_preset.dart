@@ -1,4 +1,4 @@
-import 'package:sakuramedia/features/actors/presentation/actor_filter_state.dart';
+import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 
 /// 移动端演员 tab 顶部 chip 的「快速筛选预设」。
 ///

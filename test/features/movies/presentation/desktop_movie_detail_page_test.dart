@@ -26,7 +26,7 @@ import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_detail_action_copy.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/desktop_movie_detail_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -46,7 +46,7 @@ void main() {
   test('movie detail page avoids page-level card decoration', () {
     final source =
         File(
-          'lib/features/movies/presentation/desktop_movie_detail_page.dart',
+          'lib/features/movies/presentation/pages/desktop/movie_detail_page.dart',
         ).readAsStringSync();
 
     expect(source, isNot(contains('boxShadow: context.appShadows.card')));

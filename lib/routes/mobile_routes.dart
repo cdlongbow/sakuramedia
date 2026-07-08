@@ -31,9 +31,9 @@ import 'package:sakuramedia/features/external_player/presentation/mobile_externa
 import 'package:sakuramedia/features/videos/presentation/mobile_video_collection_detail_page.dart';
 import 'package:sakuramedia/features/videos/presentation/mobile_video_collection_play_page.dart';
 import 'package:sakuramedia/features/videos/presentation/mobile_video_collections_page.dart';
-import 'package:sakuramedia/features/movies/presentation/mobile_movie_detail_page.dart';
-import 'package:sakuramedia/features/movies/presentation/mobile_movie_player_page.dart';
-import 'package:sakuramedia/features/movies/presentation/mobile_series_movies_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_system_overview_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/mobile_playlists_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/mobile_playlist_detail_page.dart';

@@ -7,7 +7,7 @@ import 'package:sakuramedia/features/clips/data/media_clip_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';

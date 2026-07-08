@@ -24,8 +24,8 @@ import 'package:sakuramedia/features/image_search/presentation/desktop_image_sea
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_copy.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/playlists/data/playlists_api.dart';

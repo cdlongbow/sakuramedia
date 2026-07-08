@@ -5,8 +5,8 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 
 class MovieDetailRemoteActionSpec {
   const MovieDetailRemoteActionSpec({

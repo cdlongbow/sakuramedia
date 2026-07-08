@@ -12,7 +12,7 @@ import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.d
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_filter_state.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 
 class MoviesApi {
   const MoviesApi({required ApiClient apiClient}) : _apiClient = apiClient;

@@ -34,8 +34,8 @@ import 'package:sakuramedia/widgets/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/media/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_inspector_dialog.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_preview_overlay.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 
 class DesktopMovieDetailPage extends StatefulWidget {
   const DesktopMovieDetailPage({super.key, required this.movieNumber});

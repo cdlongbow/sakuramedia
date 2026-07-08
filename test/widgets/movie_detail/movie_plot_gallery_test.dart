@@ -7,13 +7,13 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_gallery.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 
 void main() {
   test('movie plot gallery does not force fixed thumbnail width', () {
     final source =
         File(
-          'lib/widgets/movie_detail/movie_plot_gallery.dart',
+          'lib/features/movies/presentation/widgets/detail/movie_plot_gallery.dart',
         ).readAsStringSync();
 
     expect(

@@ -7,7 +7,7 @@ import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/paged_movie_summary_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/series_import_dialog.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/series_import_dialog.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/app_paged_load_more_footer.dart';

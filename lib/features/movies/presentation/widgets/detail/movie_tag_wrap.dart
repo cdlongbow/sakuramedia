@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_pill_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
 
 class MovieTagWrap extends StatelessWidget {
   const MovieTagWrap({super.key, required this.tags, this.onTagTap});

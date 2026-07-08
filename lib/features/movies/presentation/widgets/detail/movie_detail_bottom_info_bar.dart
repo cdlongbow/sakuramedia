@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_stat_row.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 
 enum MovieDetailBottomInfoBarVariant { desktopCard, mobileFullWidth }
 

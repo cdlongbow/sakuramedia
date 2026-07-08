@@ -33,9 +33,9 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_actor_wrap.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_hero_card.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_tag_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';
 
 import '../../../support/test_api_bundle.dart';

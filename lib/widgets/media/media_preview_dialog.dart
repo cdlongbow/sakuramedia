@@ -17,7 +17,7 @@ import 'package:sakuramedia/widgets/actors/actor_avatar.dart';
 import 'package:sakuramedia/widgets/media/media_preview_action_grid.dart';
 import 'package:sakuramedia/widgets/media/preview_dialog_surface.dart';
 import 'package:sakuramedia/widgets/media/preview_image_stage.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_thumbnail.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
 class MediaPreviewItem {
   const MediaPreviewItem({

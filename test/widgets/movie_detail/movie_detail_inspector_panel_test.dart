@@ -14,7 +14,7 @@ import 'package:sakuramedia/features/movies/data/movie_review_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_inspector_panel.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

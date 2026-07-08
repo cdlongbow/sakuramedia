@@ -32,7 +32,7 @@ import 'package:sakuramedia/widgets/clips/clip_selection_status_bar.dart';
 import 'package:sakuramedia/widgets/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/media/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/media/thumbnail_grid_column_resolver.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_preview_overlay.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/widgets/movie_player/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/search/catalog_search_stream_status_card.dart';

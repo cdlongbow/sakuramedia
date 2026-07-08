@@ -11,18 +11,18 @@ import 'package:sakuramedia/features/movies/presentation/controllers/movie_detai
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_actor_wrap.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_bottom_info_bar.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_number_bar.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_hero_card.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_section.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_stat_row.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_title.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_clip_strip.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_media_item_list.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_gallery.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_similar_movie_strip.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_tag_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_number_bar.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_section.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_title.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_clip_strip.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_item_list.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_similar_movie_strip.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
 typedef MovieDetailScrollViewBuilder =
     Widget Function(

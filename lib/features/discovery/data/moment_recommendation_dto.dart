@@ -1,5 +1,5 @@
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 class MomentRecommendationPageDto {
   const MomentRecommendationPageDto({

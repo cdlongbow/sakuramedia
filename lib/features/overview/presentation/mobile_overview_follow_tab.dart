@@ -3,10 +3,10 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/movies/data/movie_collection_type_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/paged_movie_summary_controller.dart';

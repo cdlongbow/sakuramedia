@@ -12,7 +12,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/desktop_movies_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/desktop/movies_page.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';

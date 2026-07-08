@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sakuramedia/features/movies/presentation/desktop_movie_player_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/movie_player/landscape_player_system_ui.dart';
 

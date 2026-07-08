@@ -10,8 +10,8 @@ import 'package:sakuramedia/features/media_import/presentation/desktop_media_imp
 import 'package:sakuramedia/features/activity/presentation/desktop_notifications_page.dart';
 import 'package:sakuramedia/features/moments/presentation/desktop_moments_page.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
-import 'package:sakuramedia/features/movies/presentation/desktop_movies_page.dart';
-import 'package:sakuramedia/features/movies/presentation/mobile_movies_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/desktop/movies_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/desktop_overview_page.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_skeleton_page.dart';
 import 'package:sakuramedia/features/clips/presentation/desktop_clips_page.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/features/movies/presentation/series_movies_content.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/series_movies_content.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';

@@ -20,8 +20,8 @@ import 'package:sakuramedia/features/movies/presentation/movie_detail_action_cop
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/movie_detail_page_content.dart';
-import 'package:sakuramedia/features/movies/presentation/mobile_movie_detail_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';

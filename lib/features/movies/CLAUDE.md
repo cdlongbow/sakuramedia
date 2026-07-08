@@ -14,18 +14,25 @@ data/
     thumbnails/          # movie_media_thumbnail + MissAV 结果 + MissAV SSE 流
     series_import/       # movie_search_stream_update(catalog 搜索共用)
 presentation/
-  controllers/           # controller/notifier/state/mixin(17)
+  controllers/           # 按业务子域分组(镜像 dto/)
+    detail/              # 7 个:detail_controller / magnet / missav_thumbnail /
+                         #       review / thumbnail / clips_controller / clip_section_mixin
+    listing/             # 4 个:filter_state / list_page_state /
+                         #       list_filterable_page_state / paged_movie_summary_controller
+    player/              # 2 个:player_controller / player_subtitle_state
+    notifiers/           # 3 个跨页 mutation 广播(collection_type / playability / subscription)
+    series_import/       # 1 个:series_import_controller
   pages/
     desktop/             # 4 个桌面页(文件名无 desktop_ 前缀)
     mobile/              # 5 个移动页(文件名无 mobile_ 前缀)
     shared/              # 3 个跨平台内容片段(movie_list_content 等)
   actions/               # 6 个详情动作/菜单/播放启动器
-  widgets/               # 详情页 + 系列导入弹窗
+  widgets/
     detail/              # 18 个 detail 页专用组件(从原 lib/widgets/movie_detail/ 迁入)
-    series_import_dialog.dart
+    series_import/       # 1 个:series_import_dialog
 ```
 
-**在其它 feature 内 import 时**:DTO 从 `features/movies/data/dto/<子域>/` 拿,`MoviesApi` 从 `features/movies/data/api/` 拿,控制器从 `presentation/controllers/` 拿。不要从 `pages/` 拿(那是页面私域)。**这套 data 目录结构是仓库样板**,新 feature 可以照抄:`api/` + `dto/{按业务子域}/`(若 DTO 少于 5 个可以扁平放在 `dto/` 根)。
+**在其它 feature 内 import 时**:DTO 从 `features/movies/data/dto/<子域>/` 拿,`MoviesApi` 从 `features/movies/data/api/` 拿,控制器从 `presentation/controllers/<子域>/` 拿(常见:全局 mutation notifier 走 `controllers/notifiers/`)。不要从 `pages/` 拿(那是页面私域)。**这套 data + controllers 双镜像子域的结构是仓库样板**,新 feature 可以照抄:`data/api/` + `data/dto/{按业务子域}/` + `presentation/controllers/{同样的子域}/`(若单目录少于 5 个文件可以扁平)。
 
 ## 列表:筛选状态驱动(易踩第一名)
 

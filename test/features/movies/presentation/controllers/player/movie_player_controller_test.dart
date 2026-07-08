@@ -3,7 +3,7 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_player_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

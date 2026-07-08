@@ -18,10 +18,10 @@ import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_missav_thumbnail_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_magnet_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_review_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/movie_detail_thumbnail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_missav_thumbnail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_magnet_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_review_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_thumbnail_controller.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';

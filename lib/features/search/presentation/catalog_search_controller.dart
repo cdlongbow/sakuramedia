@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/actors/presentation/paged_actor_summary_con
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 
 enum CatalogSearchKind { movies, actors }

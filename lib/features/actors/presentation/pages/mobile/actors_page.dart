@@ -8,7 +8,7 @@ import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_preset.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_list_page_state.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
-import 'package:sakuramedia/features/actors/presentation/mobile_actor_filter_drawer.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';

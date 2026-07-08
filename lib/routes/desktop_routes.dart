@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/features/actors/presentation/desktop_actor_detail_page.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';

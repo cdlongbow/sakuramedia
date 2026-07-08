@@ -10,7 +10,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_password_page.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_username_page.dart';
-import 'package:sakuramedia/features/actors/presentation/mobile_actor_detail_page.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';

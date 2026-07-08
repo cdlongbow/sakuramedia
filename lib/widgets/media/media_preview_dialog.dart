@@ -192,6 +192,8 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
       !_isLoadingMediaPoints &&
       _mediaPointsErrorMessage == null;
 
+  bool get _canPlay => widget.item.mediaId > 0 && widget.onPlay != null;
+
   @override
   Widget build(BuildContext context) {
     if (widget.presentation == MediaPreviewPresentation.bottomDrawer) {
@@ -260,11 +262,8 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
         MediaPreviewActionItem(
           label: '播放',
           icon: Icons.play_circle_outline_rounded,
-          visible: widget.item.mediaId > 0,
-          onTap:
-              widget.item.mediaId > 0 && widget.onPlay != null
-                  ? _handlePlay
-                  : null,
+          visible: _canPlay,
+          onTap: _canPlay ? _handlePlay : null,
         ),
         MediaPreviewActionItem(
           label: '影片详情',
@@ -301,6 +300,9 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
                   fullscreenImageKey: const Key(
                     'image-search-result-preview-fullscreen-image',
                   ),
+                  overlayChild: _canPlay
+                      ? _CenterPlayButton(onTap: _handlePlay)
+                      : null,
                 ),
                 Container(
                   key: const Key('image-search-result-preview-summary'),
@@ -342,6 +344,9 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
           onClose: () => Navigator.of(context).pop(),
           showCloseButton: false,
           enablePinchToFullscreen: false,
+          overlayChild: _canPlay
+              ? _CenterPlayButton(onTap: _handlePlay)
+              : null,
         ),
         Container(
           key: const Key('image-search-result-preview-summary'),
@@ -602,6 +607,46 @@ class _MediaPreviewSectionDivider extends StatelessWidget {
       height: 1,
       thickness: 1,
       color: context.appColors.borderSubtle.withValues(alpha: 0.72),
+    );
+  }
+}
+
+class _CenterPlayButton extends StatelessWidget {
+  const _CenterPlayButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconSize = context.appComponentTokens.iconSize4xl;
+    final padding = context.appSpacing.xs;
+    // Icon + padding 组成的正方形直径,ClipOval 保证 InkWell 的 hitTest
+    // 严格按圆形裁,四角 tap 穿透到底层的 AppPinchToFullscreenImage,
+    // 不抢移动端 drawer 分支的"点图放大"手势。
+    final diameter = iconSize + padding * 2;
+    return Positioned.fill(
+      child: Center(
+        child: SizedBox.square(
+          dimension: diameter,
+          child: ClipOval(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const Key('media-preview-center-play'),
+                onTap: onTap,
+                child: Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Icon(
+                    Icons.play_circle_outline_rounded,
+                    size: iconSize,
+                    color: Colors.white.withValues(alpha: 0.92),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

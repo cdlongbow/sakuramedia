@@ -227,20 +227,32 @@ void main() {
   });
 
   test('mobile notice cards use noticeSurface token', () {
-    const files = <String>[
+    // AppMobileNoticeCard 组件本身负责 noticeSurface 与去掉旧硬编码。
+    final noticeCardSource =
+        File('lib/widgets/app_shell/app_mobile_notice_card.dart')
+            .readAsStringSync();
+    expect(noticeCardSource, contains('colors.noticeSurface'));
+    expect(
+      noticeCardSource,
+      isNot(contains('primaryContainer.withValues(alpha: 0.42)')),
+    );
+
+    // 复用页面走 AppMobileNoticeCard 即可，不再要求每个页面自己写 noticeSurface。
+    const consumers = <String>[
       'lib/features/account/presentation/mobile_change_password_page.dart',
+      'lib/features/account/presentation/mobile_change_username_page.dart',
       'lib/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart',
       'lib/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart',
       'lib/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart',
       'lib/features/configuration/presentation/pages/mobile/mobile_llm_settings_page.dart',
+      'lib/features/playlists/presentation/pages/mobile/playlists_page.dart',
     ];
-
-    for (final path in files) {
+    for (final path in consumers) {
       final source = File(path).readAsStringSync();
-      expect(source, contains('colors.noticeSurface'));
       expect(
         source,
-        isNot(contains('primaryContainer.withValues(alpha: 0.42)')),
+        contains('AppMobileNoticeCard'),
+        reason: 'Expected $path to reuse AppMobileNoticeCard',
       );
     }
   });

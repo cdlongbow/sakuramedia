@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/account/presentation/account_profile_contro
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 
 class MobileChangeUsernamePage extends StatefulWidget {
@@ -189,7 +190,11 @@ class _MobileChangeUsernamePageState extends State<MobileChangeUsernamePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _NoticeCard(message: '用户名会用于登录和账号识别，保存后当前登录态保持不变。'),
+          const AppMobileNoticeCard(
+            key: Key('mobile-username-notice-card'),
+            leadingIcon: Icons.info_outline_rounded,
+            description: '用户名会用于登录和账号识别，保存后当前登录态保持不变。',
+          ),
           SizedBox(height: spacing.md),
           if (account != null) ...[
             _AccountSummaryCard(account: account),
@@ -266,50 +271,6 @@ class _MobileUsernameErrorSection extends StatelessWidget {
           onRetry: onRetry,
         ),
       ],
-    );
-  }
-}
-
-class _NoticeCard extends StatelessWidget {
-  const _NoticeCard({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-
-    return Container(
-      key: const Key('mobile-username-notice-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            size: context.appComponentTokens.iconSizeMd,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          SizedBox(width: spacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.secondary,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

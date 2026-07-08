@@ -14,6 +14,7 @@ import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 
 class MobileLlmSettingsPage extends StatefulWidget {
@@ -159,10 +160,28 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileLlmOverviewCard(
-          enabled: _enabled,
-          hasCompleteConfig: _hasCompleteConfig,
-          testState: _testState,
+        AppMobileNoticeCard(
+          key: const Key('mobile-llm-overview-card'),
+          title: '先确认服务地址和模型，再决定是否启用，并可直接用当前草稿发起测试。',
+          description: LlmSettingsCopy.sharedEndpointDescription,
+          stats: [
+            AppMobileNoticeStat(
+              label: '启用状态',
+              value: _enabled ? '已启用' : '已停用',
+            ),
+            AppMobileNoticeStat(
+              label: '配置完整度',
+              value: _hasCompleteConfig ? '可保存' : '待补齐',
+            ),
+            AppMobileNoticeStat(
+              label: '最近测试',
+              value: switch (_testState) {
+                _LlmConfigTestState.idle => '未测试',
+                _LlmConfigTestState.success => '测试通过',
+                _LlmConfigTestState.failure => '测试失败',
+              },
+            ),
+          ],
         ),
         SizedBox(height: spacing.md),
         _buildFormCard(context),
@@ -557,129 +576,6 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
     return value == value.roundToDouble()
         ? value.toInt().toString()
         : value.toString();
-  }
-}
-
-class _MobileLlmOverviewCard extends StatelessWidget {
-  const _MobileLlmOverviewCard({
-    required this.enabled,
-    required this.hasCompleteConfig,
-    required this.testState,
-  });
-
-  final bool enabled;
-  final bool hasCompleteConfig;
-  final _LlmConfigTestState testState;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-llm-overview-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '先确认服务地址和模型，再决定是否启用，并可直接用当前草稿发起测试。',
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: spacing.xs),
-          Text(
-            LlmSettingsCopy.sharedEndpointDescription,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ),
-          ),
-          SizedBox(height: spacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: _MobileLlmOverviewStat(
-                  label: '启用状态',
-                  value: enabled ? '已启用' : '已停用',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _MobileLlmOverviewStat(
-                  label: '配置完整度',
-                  value: hasCompleteConfig ? '可保存' : '待补齐',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _MobileLlmOverviewStat(
-                  label: '最近测试',
-                  value: switch (testState) {
-                    _LlmConfigTestState.idle => '未测试',
-                    _LlmConfigTestState.success => '测试通过',
-                    _LlmConfigTestState.failure => '测试失败',
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileLlmOverviewStat extends StatelessWidget {
-  const _MobileLlmOverviewStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s16,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

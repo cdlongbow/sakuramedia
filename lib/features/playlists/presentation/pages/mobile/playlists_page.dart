@@ -15,6 +15,7 @@ import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
+import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/sheets/app_mobile_confirm_actions.dart';
 import 'package:sakuramedia/widgets/playlists/playlist_banner_card.dart';
@@ -86,12 +87,27 @@ class _MobilePlaylistsPageState extends State<MobilePlaylistsPage> {
                             final customPlaylists = _controller.playlists
                                 .where((item) => !item.isSystem)
                                 .toList(growable: false);
-                            return _MobilePlaylistsNoticeCard(
-                              playlistCount: customPlaylists.length,
-                              movieCount: customPlaylists.fold<int>(
-                                0,
-                                (total, item) => total + item.movieCount,
-                              ),
+                            final movieCount = customPlaylists.fold<int>(
+                              0,
+                              (total, item) => total + item.movieCount,
+                            );
+                            return AppMobileNoticeCard(
+                              key: const Key('mobile-playlists-notice-card'),
+                              leadingIcon: Icons.playlist_play_rounded,
+                              title: '自定义播放列表管理',
+                              description: '这里集中维护可手动管理的播放列表，可继续进入详情查看片单内容。',
+                              stats: [
+                                AppMobileNoticeStat(
+                                  label: '自定义播放列表数',
+                                  value: '${customPlaylists.length}',
+                                  valueSize: AppTextSize.s18,
+                                ),
+                                AppMobileNoticeStat(
+                                  label: '收录影片总数',
+                                  value: '$movieCount',
+                                  valueSize: AppTextSize.s18,
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -261,134 +277,6 @@ Future<int?> showMobileDeletePlaylistDrawer(
     maxHeightFactor: 0.42,
     builder: (drawerContext) => _MobileDeletePlaylistDrawer(playlist: playlist),
   );
-}
-
-class _MobilePlaylistsNoticeCard extends StatelessWidget {
-  const _MobilePlaylistsNoticeCard({
-    required this.playlistCount,
-    required this.movieCount,
-  });
-
-  final int playlistCount;
-  final int movieCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-
-    return Container(
-      key: const Key('mobile-playlists-notice-card'),
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.noticeSurface,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.playlist_play_rounded,
-                size: context.appComponentTokens.iconSizeMd,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '自定义播放列表管理',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        weight: AppTextWeight.semibold,
-                        tone: AppTextTone.primary,
-                      ),
-                    ),
-                    SizedBox(height: spacing.xs),
-                    Text(
-                      '这里集中维护可手动管理的播放列表，可继续进入详情查看片单内容。',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s12,
-                        weight: AppTextWeight.regular,
-                        tone: AppTextTone.secondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: spacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: _PlaylistStatBlock(
-                  label: '自定义播放列表数',
-                  value: '$playlistCount',
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: _PlaylistStatBlock(
-                  label: '收录影片总数',
-                  value: '$movieCount',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PlaylistStatBlock extends StatelessWidget {
-  const _PlaylistStatBlock({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s18,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
-            ),
-          ),
-          SizedBox(height: context.appSpacing.xs),
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s10,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _MobilePlaylistManagementCard extends StatelessWidget {

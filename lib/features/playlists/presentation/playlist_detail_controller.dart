@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/playlists/data/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 
 class PlaylistDetailController extends ChangeNotifier {
   PlaylistDetailController({

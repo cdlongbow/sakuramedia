@@ -1,7 +1,7 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/playlists/data/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 
 class PlaylistsApi {
   const PlaylistsApi({required ApiClient apiClient}) : _apiClient = apiClient;

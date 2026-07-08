@@ -18,6 +18,13 @@
   <a href="https://tinypinglite.github.io/sakuramedia/"><strong>查看 Wiki</strong></a>
   ·
   <a href="https://tinypinglite.github.io/sakuramedia/guide/quick-start"><strong>快速开始</strong></a>
+  ·
+  <a href="https://github.com/tinypinglite/sakuramediabe"><strong>后端仓库</strong></a>
+</p>
+
+<p align="center">
+  本仓库为前端;后端(SakuraMediaBE)是独立项目,部署在 NAS 上,负责影片发现、订阅、下载、入库与媒体服务。<br />
+  后端地址:<a href="https://github.com/tinypinglite/sakuramediabe">github.com/tinypinglite/sakuramediabe</a>
 </p>
 
 <h2 align="center">特性</h2>
@@ -32,7 +39,7 @@
 
 <h2 align="center">是什么 / 不是什么</h2>
 
-SakuraMedia 面向 NAS 用户，原因在于它本身就是前后端分离的设计。后端需要部署在你的 NAS 中并长时间稳定运行，持续承担影片发现、订阅、自动化下载、入库、媒体服务和任务调度等能力，前端则负责把这些能力在 Web、桌面端和移动端统一呈现出来。
+SakuraMedia 面向 NAS 用户，原因在于它本身就是前后端分离的设计。后端（[SakuraMediaBE](https://github.com/tinypinglite/sakuramediabe)）需要部署在你的 NAS 中并长期稳定运行，持续承担影片发现、订阅、自动化下载、入库、媒体服务和任务调度等能力；本仓库作为前端，负责把这些能力在 Web、桌面端和移动端统一呈现出来。
 
 如果你用过早期的 `nastool` 或 `moviepilot`，可以把 SakuraMedia 理解为一种更完整的产品形态：`nastool + 媒体中心 + 全平台 App`。这只是帮助理解的类比，不代表 SakuraMedia 依赖 Jellyfin、Emby、Plex 之类的现成媒体服务器，也不是对它们的封装。当前 GitHub 上不少同类开源项目更多停留在刮削或外部播放源接入，SakuraMedia 更强调从发现、订阅、下载、入库到观看的一体化闭环；其中自动化下载能力依赖你自己配置可用的 indexer 和下载链路。SakuraMedia 本身不提供任何资源。
 

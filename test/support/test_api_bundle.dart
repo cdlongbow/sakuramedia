@@ -17,7 +17,7 @@ import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
+import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';

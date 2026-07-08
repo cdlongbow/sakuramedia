@@ -28,7 +28,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
-import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
+import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';

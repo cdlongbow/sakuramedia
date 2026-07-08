@@ -30,7 +30,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_skeleton_page.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
-import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
+import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/search/presentation/mobile_catalog_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';

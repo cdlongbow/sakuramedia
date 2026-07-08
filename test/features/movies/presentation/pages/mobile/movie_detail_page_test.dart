@@ -22,7 +22,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
-import 'package:sakuramedia/features/playlists/data/playlists_api.dart';
+import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';

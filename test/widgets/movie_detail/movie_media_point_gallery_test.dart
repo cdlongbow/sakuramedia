@@ -6,7 +6,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_media_point_gallery.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_point_gallery.dart';
 
 void main() {
   testWidgets('movie media point gallery shows empty state', (

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_number_bar.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_number_bar.dart';
 
 void main() {
   testWidgets('movie detail number bar renders interaction stats and summary', (

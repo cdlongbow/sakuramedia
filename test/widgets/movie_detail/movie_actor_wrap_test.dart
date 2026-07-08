@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_actor_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
 
 void main() {
   testWidgets('movie actor wrap uses airy actor spacing within the section', (

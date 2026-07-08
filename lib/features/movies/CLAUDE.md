@@ -22,7 +22,7 @@
 
 ## 检查器子控制器**不在本目录页面**
 
-详情页底部信息栏点击打开的"检查器"(评论/磁力/缩略图/MissAV 四 Tab)由 **`lib/widgets/movie_detail/movie_detail_inspector_panel.dart`** 在 `initState` new 出并持有这四个控制器:`MovieDetailReviewController`(自写分页)、`MovieDetailMagnetController`、`MovieDetailThumbnailController`、`MovieDetailMissavThumbnailController`(SSE 流式)。本目录有这些控制器文件,但**实例化方在 widgets 层**。改检查器行为两边都要看。
+详情页底部信息栏点击打开的"检查器"(评论/磁力/缩略图/MissAV 四 Tab)由 **`lib/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart`** 在 `initState` new 出并持有这四个控制器:`MovieDetailReviewController`(自写分页)、`MovieDetailMagnetController`、`MovieDetailThumbnailController`、`MovieDetailMissavThumbnailController`(SSE 流式)。本目录有这些控制器文件,但**实例化方在 widgets 层**。改检查器行为两边都要看。
 
 ## 播放器
 

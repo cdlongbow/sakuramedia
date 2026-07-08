@@ -38,9 +38,9 @@ import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/media/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/sheets/app_mobile_confirm_actions.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_inspector_dialog.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_bottom_info_bar.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_preview_overlay.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 
 class MobileMovieDetailPage extends StatefulWidget {
   const MobileMovieDetailPage({super.key, required this.movieNumber});

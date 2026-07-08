@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/media/masked_image.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_detail_hero_card.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 
 void main() {
   late SessionStore sessionStore;

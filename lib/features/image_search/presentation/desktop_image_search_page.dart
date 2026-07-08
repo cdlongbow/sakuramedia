@@ -33,7 +33,7 @@ import 'package:sakuramedia/widgets/image_search/image_search_result_grid.dart';
 import 'package:sakuramedia/widgets/image_search/image_search_result_preview_dialog.dart';
 import 'package:sakuramedia/widgets/media/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/movie_detail/movie_plot_thumbnail.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
 enum ImageSearchResultPreviewPresentation { dialog, bottomDrawer }
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
-import 'package:sakuramedia/features/actors/presentation/paged_actor_summary_controller.dart';
+import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

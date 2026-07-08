@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:sakuramedia/app/app_page_state_cache.dart';
-import 'package:sakuramedia/features/movies/data/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_filter_state.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_list_filterable_page_state.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/movie_subscription_change_notifier.dart';

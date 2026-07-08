@@ -1,4 +1,4 @@
-import 'package:sakuramedia/features/movies/data/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 /// 非 JAV 视频条目的列表项资源（`VideoItemListItemResource`）。
 ///

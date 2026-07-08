@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/clips/presentation/mobile_clip_confirm_drawer.dart';
+import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';

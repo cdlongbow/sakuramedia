@@ -8,8 +8,8 @@ import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_d
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/clips/presentation/mobile_clip_confirm_drawer.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';

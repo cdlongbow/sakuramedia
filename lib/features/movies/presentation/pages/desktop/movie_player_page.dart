@@ -8,7 +8,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/clips/presentation/create_clip_dialog.dart';
+import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';

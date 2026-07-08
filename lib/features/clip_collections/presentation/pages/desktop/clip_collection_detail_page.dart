@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/controllers/c
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';

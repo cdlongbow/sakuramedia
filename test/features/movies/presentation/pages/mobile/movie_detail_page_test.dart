@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
-import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';

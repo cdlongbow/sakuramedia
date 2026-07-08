@@ -14,7 +14,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/desktop/movies_pa
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/desktop_overview_page.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_skeleton_page.dart';
-import 'package:sakuramedia/features/clips/presentation/desktop_clips_page.dart';
+import 'package:sakuramedia/features/clips/presentation/pages/desktop/clips_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlists_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/desktop_rankings_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/mobile_rankings_page.dart';

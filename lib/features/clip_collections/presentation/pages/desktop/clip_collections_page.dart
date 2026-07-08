@@ -6,14 +6,14 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/clip_collections_overview_controller.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/create_clip_collection_dialog.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/clip_collections/clip_collection_delete_dialog.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/widgets/clip_collection_delete_dialog.dart';
 import 'package:sakuramedia/widgets/collections/collection_card.dart';
 
 /// 切片合集列表页：全部合集网格 + 新建 / 编辑 / 删除。

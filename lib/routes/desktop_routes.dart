@@ -14,9 +14,9 @@ import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_col
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_detail_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_play_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/desktop_playlist_detail_page.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/desktop_clip_collections_page.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/desktop_clip_collection_detail_page.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/desktop_clip_collection_play_page.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collections_page.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_detail_page.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';

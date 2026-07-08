@@ -8,7 +8,7 @@ import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart'
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
-import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collection_detail_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -22,8 +22,8 @@ import 'package:sakuramedia/widgets/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
 import 'package:sakuramedia/widgets/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/widgets/videos/video_collection_sort_bar.dart';
-import 'package:sakuramedia/widgets/videos/video_quick_play_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_sort_bar.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/player/video_quick_play_dialog.dart';
 
 /// 合集详情的成员排布方式：纵向列表（可拖序）或网格（侧重浏览）。
 enum _VideoLayout { list, grid }

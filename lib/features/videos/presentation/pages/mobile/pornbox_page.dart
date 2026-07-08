@@ -12,12 +12,12 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/videos/presentation/add_to_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/create_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_sort_drawer.dart';
-import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
@@ -35,7 +35,7 @@ import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/navigation/app_mobile_tab_header.dart';
 import 'package:sakuramedia/widgets/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/widgets/videos/video_summary_card.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_card.dart';
 
 /// 移动端 PornBox 主页（底部导航第 5 个 tab）：上方「视频合集」横滑区 + 下方「全部视频」
 /// 网格。数据层与桌面 `DesktopVideoListPage` 完全一致（复用缓存页状态 + 合集控制器 +

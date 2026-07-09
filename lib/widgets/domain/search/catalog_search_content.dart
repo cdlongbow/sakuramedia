@@ -25,6 +25,7 @@ class CatalogSearchContent extends StatelessWidget {
     required this.onActorTap,
     required this.onMovieSubscriptionTap,
     required this.onActorSubscriptionTap,
+    this.onFallbackToOnlineSearch,
   });
 
   final CatalogSearchController controller;
@@ -40,6 +41,7 @@ class CatalogSearchContent extends StatelessWidget {
   final ValueChanged<ActorListItemDto> onActorTap;
   final ValueChanged<MovieListItemDto> onMovieSubscriptionTap;
   final ValueChanged<ActorListItemDto> onActorSubscriptionTap;
+  final VoidCallback? onFallbackToOnlineSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +101,16 @@ class CatalogSearchContent extends StatelessWidget {
 
     switch (controller.activeKind) {
       case CatalogSearchKind.movies:
+        if (!controller.isOnlineSearchActive &&
+            controller.movieResults.isEmpty &&
+            onFallbackToOnlineSearch != null) {
+          return AppEmptyState(
+            icon: Icons.travel_explore,
+            message: '本地库未找到匹配影片，可尝试联网搜索',
+            retryLabel: '联网搜索',
+            onRetry: onFallbackToOnlineSearch,
+          );
+        }
         return MovieSummaryGrid(
           items: controller.movieResults,
           isLoading: false,

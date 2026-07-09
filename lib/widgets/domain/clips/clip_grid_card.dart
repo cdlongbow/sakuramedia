@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
 
 enum _ClipCardAction { openMovie, addToCollection, rename, delete }
 
@@ -154,48 +155,27 @@ class ClipGridCard extends StatelessWidget {
     BuildContext context,
     Offset globalPosition,
   ) async {
-    final navigator = Navigator.of(context);
-    final overlay =
-        navigator.overlay!.context.findRenderObject() as RenderBox;
-    final localPosition = overlay.globalToLocal(globalPosition);
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(localPosition, localPosition),
-      Offset.zero & overlay.size,
-    );
     final openMovie = onOpenMovie;
-    final action = await showMenu<_ClipCardAction>(
-      context: context,
-      position: position,
-      useRootNavigator: false,
-      items: <PopupMenuEntry<_ClipCardAction>>[
+    final action = await showAppCardContextMenu<_ClipCardAction>(
+      context,
+      globalPosition: globalPosition,
+      items: [
         if (openMovie != null)
-          PopupMenuItem<_ClipCardAction>(
+          const AppCardContextMenuItem(
             value: _ClipCardAction.openMovie,
-            child: Text(
-              '影片',
-              style: resolveAppTextStyle(context, size: AppTextSize.s14),
-            ),
+            label: '影片',
           ),
-        PopupMenuItem<_ClipCardAction>(
+        const AppCardContextMenuItem(
           value: _ClipCardAction.addToCollection,
-          child: Text(
-            '加入合集',
-            style: resolveAppTextStyle(context, size: AppTextSize.s14),
-          ),
+          label: '加入合集',
         ),
-        PopupMenuItem<_ClipCardAction>(
+        const AppCardContextMenuItem(
           value: _ClipCardAction.rename,
-          child: Text(
-            '重命名',
-            style: resolveAppTextStyle(context, size: AppTextSize.s14),
-          ),
+          label: '重命名',
         ),
-        PopupMenuItem<_ClipCardAction>(
+        const AppCardContextMenuItem(
           value: _ClipCardAction.delete,
-          child: Text(
-            '删除',
-            style: resolveAppTextStyle(context, size: AppTextSize.s14),
-          ),
+          label: '删除',
         ),
       ],
     );

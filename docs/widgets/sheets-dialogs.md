@@ -32,6 +32,16 @@
 - **别自己写**: 键盘顶起 padding、外层 scroll、Form key、双按钮布局——它都做好了。
 - **对应桌面**: 桌面等价形态是 `AppDesktopDialog` 内包 `Form + AppButton(primary)`;两端不共用同一份 sheet(移动端 SafeArea / keyboard 差异太大)。
 
+## AppFilterPopover(+ AppFilterPanelFooter)
+- **路径**: `lib/widgets/base/overlays/app_filter_popover.dart`
+- **用途**: 「触发按钮 + 展开筛选面板」外壳——LayerLink / OverlayEntry / 遮罩 / CompositedTransformFollower / 面板容器一次封死。actor / movie / ranking 三个 filter toolbar 全走它。
+- **AppFilterPopover required**: `triggerLabel` · `panelBuilder`(面板 body, 通常直接给 `*FilterSectionGroup`) · `panelKey`
+- **可选**: `footer`(通常传 `AppFilterPanelFooter`,ranking 不传) · `labelKey` · `isSelected` · `highlightWhenOpen`(默认 true; movie 传 false, 语义是"默认或自定义时高亮,与开合无关") · `enabled`(ranking 传 `!isLoading`) · `panelExtraWidth`(actor 180 / movie 260 / ranking 520) · `scrollViewKey`(movie 传测试锚点) · `onOpened`(movie 用来预取年份) · `initialTriggerSize`
+- **AppFilterPanelFooter required**: `isDefault` · `onReset`(为 null 时禁用)
+- **可选**: `defaultLabel` / `activeLabel` / `resetLabel`
+- **何时用**: 桌面「筛选按钮 → 弹出面板」的所有场景。移动端等价形态是 `showAppBottomDrawer` 挂 `*FilterSectionGroup`。
+- **别自己写**: OverlayEntry + `_scheduleOverlayRebuild` + `CompositedTransformFollower` + panel Container 这套壳。
+
 ## AppMobileConfirmActions
 - **路径**: `lib/widgets/base/overlays/app_mobile_confirm_actions.dart`
 - **用途**: 底抽屉里"取消 / 确认"这一条 row(左右并排、可 danger 变红、loading 转圈)。

@@ -137,6 +137,10 @@ class _MobileCatalogSearchPageState extends State<MobileCatalogSearchPage>
           onMovieSubscriptionTap:
               (movie) => _toggleMovieSubscription(movie.movieNumber),
           onActorSubscriptionTap: (actor) => _toggleActorSubscription(actor.id),
+          onFallbackToOnlineSearch: () {
+            setState(() => _pageState.useOnlineSearch = true);
+            _submitSearch();
+          },
         );
       },
     );

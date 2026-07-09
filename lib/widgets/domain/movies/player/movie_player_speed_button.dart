@@ -291,7 +291,7 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
     final label =
-        _displayHasExplicitSelection ? _formatRateLabel(_displayRate) : '倍速';
+        _displayHasExplicitSelection ? formatMoviePlayerPlaybackRateLabel(_displayRate) : '倍速';
 
     return MouseRegion(
       onEnter: _handleButtonEnter,
@@ -413,7 +413,7 @@ class _MoviePlayerSpeedMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
-    final label = _formatRateLabel(rate);
+    final label = formatMoviePlayerPlaybackRateLabel(rate);
     final selectedColor = resolveAppTextToneColor(context, AppTextTone.accent);
     final backgroundColor =
         hovered
@@ -482,7 +482,10 @@ class _MoviePlayerSpeedMenuItem extends StatelessWidget {
   }
 }
 
-String _formatRateLabel(double rate) {
+/// 播放速率 label 格式化: 0.5x / 1.0x / 1.75x。
+///
+/// 供 speed 按钮 / surface 的桌面 pill / 移动抽屉共用。
+String formatMoviePlayerPlaybackRateLabel(double rate) {
   final hundredths = (rate * 100).round();
   if (hundredths % 100 == 0 || hundredths % 50 == 0) {
     return '${rate.toStringAsFixed(1)}x';

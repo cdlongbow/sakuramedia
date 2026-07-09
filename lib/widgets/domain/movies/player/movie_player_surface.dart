@@ -1225,15 +1225,6 @@ List<Widget> buildMoviePlayerDesktopBottomControls({
   ];
 }
 
-@visibleForTesting
-String formatMoviePlayerPlaybackRateLabel(double rate) {
-  final hundredths = (rate * 100).round();
-  if (hundredths % 100 == 0 || hundredths % 50 == 0) {
-    return '${rate.toStringAsFixed(1)}x';
-  }
-  return '${rate.toStringAsFixed(2)}x';
-}
-
 class _MoviePlayerMobileDrawerToggleButton extends StatelessWidget {
   const _MoviePlayerMobileDrawerToggleButton({
     super.key,

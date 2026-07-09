@@ -21,9 +21,9 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
-import 'package:sakuramedia/widgets/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/moments/moment_preview_dialog.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 class DesktopDiscoverPage extends StatefulWidget {
   const DesktopDiscoverPage({super.key});

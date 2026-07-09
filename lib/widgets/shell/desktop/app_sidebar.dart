@@ -14,7 +14,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
-import 'package:sakuramedia/widgets/search/catalog_search_field.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({

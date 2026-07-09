@@ -14,7 +14,7 @@ import 'package:sakuramedia/features/search/presentation/catalog_search_page_sta
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
-import 'package:sakuramedia/widgets/search/catalog_search_content.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_content.dart';
 
 class MobileCatalogSearchPage extends StatefulWidget {
   const MobileCatalogSearchPage({

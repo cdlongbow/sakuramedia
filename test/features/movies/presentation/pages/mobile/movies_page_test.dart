@@ -16,7 +16,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 

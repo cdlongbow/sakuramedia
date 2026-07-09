@@ -10,9 +10,9 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/moments/moment_preview_dialog.dart';
-import 'package:sakuramedia/widgets/moments/moment_sort_header.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_sort_header.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/player/video_quick_play_dialog.dart';
 
 class DesktopMomentsPage extends StatefulWidget {

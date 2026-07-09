@@ -22,10 +22,10 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
-import 'package:sakuramedia/widgets/playlists/playlist_banner_card.dart';
-import 'package:sakuramedia/widgets/search/catalog_search_field.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
 class MobileOverviewSkeletonPage extends StatelessWidget {
   const MobileOverviewSkeletonPage({

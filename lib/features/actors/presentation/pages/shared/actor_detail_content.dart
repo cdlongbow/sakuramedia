@@ -18,8 +18,8 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/movies/movie_filter_toolbar.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_filter_toolbar.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 typedef ActorDetailBodyBuilder = Widget Function(
   BuildContext context,

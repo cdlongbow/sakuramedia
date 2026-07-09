@@ -8,7 +8,7 @@ import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clips_controller.dart';
-import 'package:sakuramedia/widgets/clips/clip_player_dialog.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_player_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 
 /// 影片详情页「切片」区块的交互动作集合，供桌面 / 移动两端详情页 `with` 复用，

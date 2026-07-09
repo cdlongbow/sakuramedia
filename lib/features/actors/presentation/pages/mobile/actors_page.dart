@@ -16,7 +16,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/actors/actor_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_tab_header.dart';
 
 class MobileActorsPage extends StatefulWidget {

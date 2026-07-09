@@ -28,11 +28,11 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/image_search/image_search_filter_panel.dart';
-import 'package:sakuramedia/widgets/image_search/image_search_result_grid.dart';
-import 'package:sakuramedia/widgets/image_search/image_search_result_preview_dialog.dart';
+import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_filter_panel.dart';
+import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_grid.dart';
+import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_preview_dialog.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
-import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
 enum ImageSearchResultPreviewPresentation { dialog, bottomDrawer }

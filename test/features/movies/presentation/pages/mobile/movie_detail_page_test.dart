@@ -30,7 +30,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 

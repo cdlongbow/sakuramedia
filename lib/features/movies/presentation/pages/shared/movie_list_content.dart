@@ -12,8 +12,8 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
-import 'package:sakuramedia/widgets/movies/movie_filter_toolbar.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_filter_toolbar.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 typedef MovieListBodyBuilder = Widget Function(
   BuildContext context,

@@ -16,8 +16,8 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
-import 'package:sakuramedia/widgets/playlists/playlist_banner_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
 class PlaylistDetailContent extends StatefulWidget {
   const PlaylistDetailContent({

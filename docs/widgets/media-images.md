@@ -81,7 +81,16 @@
 - **可选**: `layout`(默认 wrap) · `columns`(默认 3) · `spacing` · `tileWidth`(默认 92) · `gridKey`
 - **何时用**: 自建预览浮层的操作区。
 
-## 五、缩略图列数解析
+## 五、封面遮罩
+
+### AppCoverBottomShade
+- **路径**: `lib/widgets/base/media/images/app_cover_bottom_shade.dart`
+- **用途**: 封面底部"从中间往下加深"的渐变遮罩(`mediaOverlaySoft` → `mediaOverlayStrong`),保证浮层白字与图标可读。始终包 `IgnorePointer`,不吃点击。
+- **可选**: `stops`(默认 `[0.45, 0.72, 1]`; actor 卡传 `[0.42, 0.7, 1]` 稍强)
+- **何时用**: 卡片封面上叠"白色标题 / 图标"时。movie / actor / rankedMovie / video / collection member 都走它。
+- **别自己写**: `DecoratedBox + LinearGradient` 那套 gradient——别再复制粘贴。
+
+## 六、缩略图列数解析
 
 ### resolveThumbnailGridColumns(工具函数,非 widget)
 - **路径**: `lib/widgets/base/media/images/thumbnail_grid_column_resolver.dart`

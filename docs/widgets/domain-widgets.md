@@ -254,6 +254,7 @@
 ## 相关约定
 
 - **域内的展示件**(单域用)保留在 `lib/features/<域>/presentation/widgets/`,**不要**移到 `lib/widgets/<域>/`;真被两个 feature 借用了再上抬。
-- **卡片上下文菜单**:clip / collection 封面 / collection 成员 / video 四处**仍是复制粘贴**——各自私有 enum + `_showContextMenu(...)`,改观感 / 行为要**逐处同步**(见 `lib/widgets/CLAUDE.md` "⚠️ 重复实现多" 段)。
+- **卡片上下文菜单**:clip / collection 封面 / collection 成员 / video 四处**仍是复制粘贴**——各自私有 enum + `_showContextMenu(...)`,改观感 / 行为要**逐处同步**。
+- **SubscriptionHeartBadge**: `lib/widgets/domain/movies/subscription_heart_badge.dart`——movie / actor 卡片右上/左上角的心形订阅徽标(loader + Icon + hit region),两卡共用。移动端 IconButton 变体命中区不同,不走这里。
 - **多选勾选标记**统一走 `SelectionCheckBadge`(见 [data-loading.md](./data-loading.md)),别再自绘。
 - **筛选状态**:filter state 是纯数据模型,变化后驱动 controller `reload()`(见各域的 `feature/CLAUDE.md`)。本目录只是**渲染 UI**,不管状态。

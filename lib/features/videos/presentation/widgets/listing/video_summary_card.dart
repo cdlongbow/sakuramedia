@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
 /// 非 JAV 视频列表卡片：封面 + 标题，中部播放按钮，右键 / 长按弹菜单（加入合集 / 删除）。
@@ -64,7 +65,7 @@ class VideoSummaryCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           _VideoCover(videoId: video.id, coverImage: video.coverImage),
-          const _VideoCardBottomShade(),
+          const AppCoverBottomShade(),
           // 选择模式：整卡点击切换选中；非选择模式：整卡点击播放（落在浮层之下，避免吃掉菜单点击）。
           if (selectionMode)
             Positioned.fill(
@@ -269,26 +270,3 @@ class _VideoCover extends StatelessWidget {
   }
 }
 
-class _VideoCardBottomShade extends StatelessWidget {
-  const _VideoCardBottomShade();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            colors.mediaOverlaySoft.withValues(alpha: 0),
-            colors.mediaOverlaySoft,
-            colors.mediaOverlayStrong,
-          ],
-          stops: const [0.45, 0.72, 1],
-        ),
-      ),
-    );
-  }
-}

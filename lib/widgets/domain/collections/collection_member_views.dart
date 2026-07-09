@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_overlays.dart';
 
@@ -608,7 +609,7 @@ class CollectionMemberCard extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         _buildCover(context),
-        const _MemberCaptionShade(),
+        const AppCoverBottomShade(),
         const ClipPlayOverlay(),
         Positioned(
           left: spacing.md,
@@ -657,31 +658,6 @@ class CollectionMemberCard extends StatelessWidget {
   }
 }
 
-/// 标题压图模式下封面底部的渐变，保证浮层白字可读。
-class _MemberCaptionShade extends StatelessWidget {
-  const _MemberCaptionShade();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colors.mediaOverlaySoft.withValues(alpha: 0),
-              colors.mediaOverlaySoft,
-              colors.mediaOverlayStrong,
-            ],
-            stops: const [0.45, 0.72, 1],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// 封面缺图时的占位：muted 底色，可选居中图标（[icon] 为 `null` 时纯色）。
 class _CoverPlaceholder extends StatelessWidget {

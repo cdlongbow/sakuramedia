@@ -15,7 +15,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
-import 'package:sakuramedia/widgets/playlists/playlist_management_card.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_management_card.dart';
 
 class PlaylistsSection extends StatefulWidget {
   const PlaylistsSection({super.key, required this.active});

@@ -17,11 +17,11 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/moments/moment_grid.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
-import 'package:sakuramedia/widgets/moments/moment_preview_dialog.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 class MobileOverviewDiscoverTab extends StatefulWidget {
   const MobileOverviewDiscoverTab({super.key});

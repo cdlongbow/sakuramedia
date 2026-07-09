@@ -11,7 +11,7 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/playlists/playlist_banner_card.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
 class DesktopPlaylistsPage extends StatefulWidget {
   const DesktopPlaylistsPage({

@@ -28,14 +28,14 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/clips/clip_selection_status_bar.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_selection_status_bar.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/thumbnail_grid_column_resolver.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/widgets/media_player/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
-import 'package:sakuramedia/widgets/search/catalog_search_stream_status_card.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_stream_status_card.dart';
 
 class MovieDetailInspectorPanel extends StatefulWidget {
   const MovieDetailInspectorPanel({

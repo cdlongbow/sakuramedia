@@ -12,8 +12,8 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/actors/actor_filter_toolbar.dart';
-import 'package:sakuramedia/widgets/actors/actor_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_filter_toolbar.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class DesktopActorsPage extends StatefulWidget {
   const DesktopActorsPage({super.key});

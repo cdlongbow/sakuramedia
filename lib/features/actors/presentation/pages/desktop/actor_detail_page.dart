@@ -5,7 +5,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/pag
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/actors/actor_avatar.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
 
 class DesktopActorDetailPage extends StatefulWidget {
   const DesktopActorDetailPage({super.key, required this.actorId});

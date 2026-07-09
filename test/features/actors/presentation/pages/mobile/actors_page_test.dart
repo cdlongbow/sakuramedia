@@ -12,7 +12,7 @@ import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actors_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/actors/actor_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_summary_card.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 

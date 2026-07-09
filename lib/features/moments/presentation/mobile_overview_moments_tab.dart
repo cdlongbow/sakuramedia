@@ -15,11 +15,11 @@ import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/media/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/moments/moment_grid.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
-import 'package:sakuramedia/widgets/moments/moment_preview_dialog.dart';
-import 'package:sakuramedia/widgets/moments/moment_sort_header.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_sort_header.dart';
 
 class MobileOverviewMomentsTab extends StatefulWidget {
   const MobileOverviewMomentsTab({super.key});

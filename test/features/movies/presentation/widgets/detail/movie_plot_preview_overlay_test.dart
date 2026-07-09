@@ -11,7 +11,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
-import 'package:sakuramedia/widgets/media/preview_dialog_surface.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/preview_dialog_surface.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 
 void main() {

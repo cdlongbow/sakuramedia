@@ -14,7 +14,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
-import 'package:sakuramedia/widgets/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 class DesktopFollowPage extends StatefulWidget {
   const DesktopFollowPage({super.key});

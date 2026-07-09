@@ -50,7 +50,7 @@
 ## 三、媒体预览浮层(点小图 → 弹大浮层看细节)
 
 ### MediaPreviewDialog
-- **路径**: `lib/widgets/media/media_preview_dialog.dart`
+- **路径**: `lib/widgets/domain/media/preview/media_preview_dialog.dart`
 - **用途**: 通用**媒体项预览浮层**(自适应桌面 dialog / 移动底抽屉)——顶部主图 stage + 下方"操作"(搜相似 / 播放 / 打开影片详情 / 删除时刻)+ 影片信息 + 女优条。
 - **required**: `item: MediaPreviewItem`
 - **可选**: `onSearchSimilar` · `onPlay` · `onOpenMovieDetail` · `onPointRemoved` · `closeOnPointRemoved` · `presentation: dialog|bottomDrawer`
@@ -58,7 +58,7 @@
 - **别名 caller**: `MomentPreviewDialog` 和 `ImageSearchResultPreviewDialog` 是它的语义化包装。
 
 ### MomentPreviewDialog(相当于 MediaPreviewDialog 的语义 alias)
-- **路径**: `lib/widgets/moments/moment_preview_dialog.dart`
+- **路径**: `lib/widgets/domain/moments/moment_preview_dialog.dart`
 - 参数几乎与 `MediaPreviewDialog` 一致(`item`, `onSearchSimilar`, `onPlay`, `onOpenMovieDetail`, `onPointRemoved`, `closeOnPointRemoved`, `presentation`);语义清楚"这是时刻"。
 - **何时用**: 时刻列表 / 时刻库点击。
 
@@ -68,21 +68,21 @@
 ## 四、预览浮层的**积木**(自建预览时用)
 
 ### PreviewDialogSurface
-- **路径**: `lib/widgets/media/preview_dialog_surface.dart`
+- **路径**: `lib/widgets/domain/media/preview/preview_dialog_surface.dart`
 - **用途**: 预览类弹窗的**外壳**(比 `AppDesktopDialog` 多了预览语义的默认背景 / X 按钮布局)。
 - **required**: `child`
 - **可选**: `dialogKey` · `contentKey` · `width` / `height` / `constraints`(互斥) · `insetPadding` · `backgroundColor` · `showCloseButton` · `onClose`
 - **何时用**: 想自建一个"图 + 元信息"预览浮层,又不想吃 `MediaPreviewDialog` 内置那套 action grid 时。**一般用不到**——先看能不能直接用 `MediaPreviewDialog`。
 
 ### PreviewImageStage
-- **路径**: `lib/widgets/media/preview_image_stage.dart`
+- **路径**: `lib/widgets/domain/media/preview/preview_image_stage.dart`
 - **用途**: 预览浮层顶部那块"图 + 关闭按钮 + 可选 overlay"stage。
 - **required**: `imageUrl` · `height` · `onClose`
 - **可选**: `stageKey` / `imageKey` / `closeButtonKey` · `backgroundColor` · `fit` · `showCloseButton` · `overlayChild` · `enablePinchToFullscreen` · `fullscreenImageKey`
 - **何时用**: 自建预览浮层的图区域(会跟 `PreviewDialogSurface` 搭配用)。
 
 ### MediaPreviewActionGrid(+ `MediaPreviewActionTile`)
-- **路径**: `lib/widgets/media/media_preview_action_grid.dart`
+- **路径**: `lib/widgets/domain/media/preview/media_preview_action_grid.dart`
 - **用途**: 预览浮层下方"操作按钮网格",支持 wrap / fixedColumns / horizontalScroll 三种布局。
 - **required**: `actions: List<MediaPreviewActionItem>`
 - **可选**: `layout`(默认 wrap) · `columns`(默认 3) · `spacing` · `tileWidth`(默认 92) · `gridKey`

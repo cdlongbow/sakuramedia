@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/clips/clip_grid_card.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
 
 /// 影片详情页「切片」区块：横向滚动的切片卡条，四态与「相似影片」一致
 /// （骨架 → 错误+重试 → 空态 → 内容），内层复用 [ClipGridCard] 完整菜单。

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/actors/actor_avatar.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
 
 class MovieActorWrap extends StatelessWidget {
   const MovieActorWrap({super.key, required this.actors, this.onActorTap});

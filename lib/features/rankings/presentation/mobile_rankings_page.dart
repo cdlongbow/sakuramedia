@@ -20,8 +20,8 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_tab_header.dart';
-import 'package:sakuramedia/widgets/rankings/ranked_movie_summary_grid.dart';
-import 'package:sakuramedia/widgets/rankings/ranking_filter_sections.dart';
+import 'package:sakuramedia/features/rankings/presentation/widgets/ranked_movie_summary_grid.dart';
+import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filter_sections.dart';
 
 class MobileRankingsPage extends StatefulWidget {
   const MobileRankingsPage({super.key});

@@ -16,7 +16,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/playlists/playlist_management_card.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_management_card.dart';
 
 class MobilePlaylistsPage extends StatefulWidget {
   const MobilePlaylistsPage({super.key});

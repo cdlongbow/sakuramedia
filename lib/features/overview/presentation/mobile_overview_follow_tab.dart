@@ -17,7 +17,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/movies/mobile_follow_movie_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/mobile_follow_movie_card.dart';
 
 class MobileOverviewFollowTab extends StatefulWidget {
   const MobileOverviewFollowTab({super.key});

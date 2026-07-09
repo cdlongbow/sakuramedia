@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.da
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
 
 /// 非 JAV 视频列表卡片：封面 + 标题，中部播放按钮，右键 / 长按弹菜单（加入合集 / 删除）。
 ///
@@ -139,34 +140,19 @@ class VideoSummaryCard extends StatelessWidget {
     BuildContext context,
     Offset globalPosition,
   ) async {
-    final navigator = Navigator.of(context);
-    final overlay =
-        navigator.overlay!.context.findRenderObject() as RenderBox;
-    final localPosition = overlay.globalToLocal(globalPosition);
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(localPosition, localPosition),
-      Offset.zero & overlay.size,
-    );
-    final action = await showMenu<_VideoCardAction>(
-      context: context,
-      position: position,
-      useRootNavigator: false,
-      items: <PopupMenuEntry<_VideoCardAction>>[
+    final action = await showAppCardContextMenu<_VideoCardAction>(
+      context,
+      globalPosition: globalPosition,
+      items: [
         if (onAddToCollection != null)
-          PopupMenuItem<_VideoCardAction>(
+          const AppCardContextMenuItem(
             value: _VideoCardAction.addToCollection,
-            child: Text(
-              '加入合集',
-              style: resolveAppTextStyle(context, size: AppTextSize.s14),
-            ),
+            label: '加入合集',
           ),
         if (onDelete != null)
-          PopupMenuItem<_VideoCardAction>(
+          const AppCardContextMenuItem(
             value: _VideoCardAction.delete,
-            child: Text(
-              '删除',
-              style: resolveAppTextStyle(context, size: AppTextSize.s14),
-            ),
+            label: '删除',
           ),
       ],
     );

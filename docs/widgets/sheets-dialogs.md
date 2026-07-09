@@ -32,6 +32,15 @@
 - **别自己写**: 键盘顶起 padding、外层 scroll、Form key、双按钮布局——它都做好了。
 - **对应桌面**: 桌面等价形态是 `AppDesktopDialog` 内包 `Form + AppButton(primary)`;两端不共用同一份 sheet(移动端 SafeArea / keyboard 差异太大)。
 
+## showAppCardContextMenu&lt;T&gt;(+ AppCardContextMenuItem)
+- **路径**: `lib/widgets/base/overlays/app_card_context_menu.dart`
+- **签名**: `Future<T?> showAppCardContextMenu<T>({ required BuildContext context, required Offset globalPosition, required List<AppCardContextMenuItem<T>> items })`
+- **用途**: 卡片右键 / 长按上下文菜单。内部封装 root overlay 反解 globalPosition → RelativeRect 和 `showMenu(useRootNavigator: false, s14 Text)` 那套骨架。
+- **AppCardContextMenuItem required**: `value` · `label`; **可选**: `tone`(不传默认 primary; 危险动作传 `AppTextTone.error`)。
+- **何时用**: clip / collection 封面 / collection 成员 / video 卡片的右键 / 长按菜单。调用方**保留**自己的私有 enum、`items` 组装(含"回调为 null 则不加此项"逻辑)、`switch` 派发,只把弹菜单骨架换成本入口。
+- **手势外壳仍在调用方**: `onSecondaryTapDown` / `onLongPressStart`。
+- **别自己 `showMenu`**: 卡片场景一律走本入口。
+
 ## AppFilterPopover(+ AppFilterPanelFooter)
 - **路径**: `lib/widgets/base/overlays/app_filter_popover.dart`
 - **用途**: 「触发按钮 + 展开筛选面板」外壳——LayerLink / OverlayEntry / 遮罩 / CompositedTransformFollower / 面板容器一次封死。actor / movie / ranking 三个 filter toolbar 全走它。

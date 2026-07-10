@@ -5,7 +5,6 @@ import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -30,9 +29,9 @@ List<Widget> buildResourceTaskSlivers({
   if (controller.initialErrorMessage != null) {
     return <Widget>[
       SliverToBoxAdapter(
-        child: _ResourceTaskInitialError(
+        child: AppEmptyState(
           message: controller.initialErrorMessage!,
-          onRetry: controller.retryInitialize,
+          onRetry: () => controller.retryInitialize(),
         ),
       ),
     ];
@@ -82,9 +81,9 @@ List<Widget> buildResourceTaskSlivers({
       controller.activeRecords.isEmpty) {
     slivers.add(
       SliverToBoxAdapter(
-        child: _ResourceTaskListError(
+        child: AppEmptyState(
           message: controller.recordsLoadErrorMessage!,
-          onRetry: controller.refreshRecords,
+          onRetry: () => controller.refreshRecords(),
         ),
       ),
     );
@@ -173,28 +172,6 @@ class _ResourceTaskInitialLoading extends StatelessWidget {
   }
 }
 
-class _ResourceTaskInitialError extends StatelessWidget {
-  const _ResourceTaskInitialError({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppEmptyState(message: message),
-        SizedBox(height: context.appSpacing.md),
-        Center(child: AppButton(label: '重试', onPressed: () => onRetry())),
-      ],
-    );
-  }
-}
-
 class _ResourceTaskListLoading extends StatelessWidget {
   const _ResourceTaskListLoading();
 
@@ -210,30 +187,6 @@ class _ResourceTaskListLoading extends StatelessWidget {
             strokeWidth: context.appComponentTokens.movieCardLoaderStrokeWidth,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ResourceTaskListError extends StatelessWidget {
-  const _ResourceTaskListError({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: context.appSpacing.lg,
-        vertical: context.appSpacing.xl,
-      ),
-      child: Column(
-        children: [
-          AppEmptyState(message: message),
-          SizedBox(height: context.appSpacing.md),
-          AppButton(label: '重试', onPressed: () => onRetry()),
-        ],
       ),
     );
   }

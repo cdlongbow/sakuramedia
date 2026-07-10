@@ -13,6 +13,10 @@ import 'package:sakuramedia/features/activity/presentation/activity_center_contr
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_pane.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
+import 'package:sakuramedia/features/downloads/presentation/download_task_center_controller.dart';
+import 'package:sakuramedia/features/downloads/presentation/download_task_pane.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
@@ -34,9 +38,11 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
 
   late final ActivityCenterController _controller;
   late final ResourceTaskCenterController _resourceTaskController;
+  late final DownloadTaskCenterController _downloadTaskController;
   late final TabController _tabController;
   late final ScrollController _pageScrollController;
   bool _isViewportWorkScheduled = false;
+  ActivityTab? _lastActiveTab;
 
   @override
   void initState() {
@@ -49,9 +55,14 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
     _resourceTaskController = ResourceTaskCenterController(
       activityApi: activityApi,
     )..addListener(_handleControllerChanged);
-    _tabController = TabController(length: 2, vsync: this)
+    _downloadTaskController = DownloadTaskCenterController(
+      downloadsApi: context.read<DownloadsApi>(),
+      downloadClientsApi: context.read<DownloadClientsApi>(),
+    )..addListener(_handleControllerChanged);
+    _tabController = TabController(length: 3, vsync: this)
       ..addListener(_handleTabChanged);
     _pageScrollController = ScrollController()..addListener(_handlePageScroll);
+    _lastActiveTab = _controller.activeTab;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _scheduleViewportWork();
@@ -69,6 +80,9 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
     _resourceTaskController
       ..removeListener(_handleControllerChanged)
       ..dispose();
+    _downloadTaskController
+      ..removeListener(_handleControllerChanged)
+      ..dispose();
     _tabController
       ..removeListener(_handleTabChanged)
       ..dispose();
@@ -82,17 +96,36 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
     if (_tabController.indexIsChanging) {
       final nextTab = ActivityTab.values[_tabController.index];
       _controller.setActiveTab(nextTab);
-      if (nextTab == ActivityTab.resourceTasks &&
-          !_resourceTaskController.initialized &&
-          !_resourceTaskController.isInitialLoading) {
-        unawaited(_resourceTaskController.initialize());
-      }
     }
   }
 
   void _syncTabSelection() {
     if (_tabController.index != _controller.activeTab.index) {
       _tabController.animateTo(_controller.activeTab.index);
+    }
+    _handleActiveTabDiff();
+  }
+
+  /// 收敛 tab 切换的副作用：手势切 tab、程序化 setActiveTab（如 triggerJob）
+  /// 都过这条路径。切进 → initialize/connect；切走下载 → disconnect。
+  void _handleActiveTabDiff() {
+    final nextTab = _controller.activeTab;
+    if (nextTab == _lastActiveTab) {
+      return;
+    }
+    final previousTab = _lastActiveTab;
+    _lastActiveTab = nextTab;
+
+    if (nextTab == ActivityTab.resourceTasks &&
+        !_resourceTaskController.initialized &&
+        !_resourceTaskController.isInitialLoading) {
+      unawaited(_resourceTaskController.initialize());
+    }
+    if (nextTab == ActivityTab.downloadTasks) {
+      unawaited(_downloadTaskController.initialize());
+      unawaited(_downloadTaskController.connectStream());
+    } else if (previousTab == ActivityTab.downloadTasks) {
+      _downloadTaskController.disconnectStream();
     }
   }
 
@@ -141,6 +174,13 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
             !_resourceTaskController.isLoadingMoreRecords &&
             _resourceTaskController.recordsLoadMoreErrorMessage == null) {
           unawaited(_resourceTaskController.loadMoreRecords());
+        }
+        break;
+      case ActivityTab.downloadTasks:
+        if (_downloadTaskController.hasMore &&
+            !_downloadTaskController.isLoadingMore &&
+            _downloadTaskController.loadMoreErrorMessage == null) {
+          unawaited(_downloadTaskController.loadMore());
         }
         break;
     }
@@ -193,6 +233,10 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
       ActivityTab.resourceTasks => buildResourceTaskSlivers(
         context: context,
         controller: _resourceTaskController,
+      ),
+      ActivityTab.downloadTasks => buildDownloadTaskSlivers(
+        context: context,
+        controller: _downloadTaskController,
       ),
     };
   }
@@ -316,6 +360,7 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
       animation: Listenable.merge(<Listenable>[
         _controller,
         _resourceTaskController,
+        _downloadTaskController,
       ]),
       builder: (context, _) {
         return Stack(
@@ -335,6 +380,10 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
                           Tab(
                             key: Key('activity-tab-resource-tasks'),
                             text: '资源任务',
+                          ),
+                          Tab(
+                            key: Key('activity-tab-download-tasks'),
+                            text: '下载任务',
                           ),
                         ],
                       ),

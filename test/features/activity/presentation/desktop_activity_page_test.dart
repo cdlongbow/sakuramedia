@@ -9,6 +9,8 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
@@ -446,6 +448,102 @@ void main() {
   });
 
   testWidgets(
+    'download tab is lazy — no /download-tasks requests until switched to',
+    (WidgetTester tester) async {
+      _setDesktopViewport(tester);
+      final sessionStore = await _createSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      addTearDown(sessionStore.dispose);
+
+      _enqueueActivityState(bundle);
+
+      await _pumpActivityPage(tester, bundle: bundle);
+
+      expect(bundle.adapter.hitCount('GET', '/download-tasks'), 0);
+      expect(bundle.adapter.hitCount('GET', '/download-tasks/stream'), 0);
+      expect(bundle.adapter.hitCount('GET', '/download-clients'), 0);
+    },
+  );
+
+  testWidgets(
+    'switching to 下载任务 tab loads list, connects stream, renders card',
+    (WidgetTester tester) async {
+      _setDesktopViewport(tester);
+      final sessionStore = await _createSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      addTearDown(sessionStore.dispose);
+
+      _enqueueActivityState(bundle);
+      _enqueueDownloadTaskState(
+        bundle,
+        items: <Map<String, dynamic>>[_downloadTaskJson(id: 11)],
+      );
+
+      await _pumpActivityPage(tester, bundle: bundle);
+      await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('download-client-speed-bar')), findsOneWidget);
+      expect(find.byKey(const Key('download-task-11')), findsOneWidget);
+      expect(bundle.adapter.hitCount('GET', '/download-tasks'), 1);
+      expect(bundle.adapter.hitCount('GET', '/download-tasks/stream'), 1);
+
+      // 切回任务 tab 触发 downloadTask disconnect + 清 reconnect timer。
+      await tester.tap(find.byKey(const Key('activity-tab-tasks')));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'delete confirm with delete_files checkbox forwards double confirm query',
+    (WidgetTester tester) async {
+      _setDesktopViewport(tester);
+      final sessionStore = await _createSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      addTearDown(sessionStore.dispose);
+
+      _enqueueActivityState(bundle);
+      _enqueueDownloadTaskState(
+        bundle,
+        items: <Map<String, dynamic>>[_downloadTaskJson(id: 11)],
+      );
+      bundle.adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/download-tasks/11',
+        statusCode: 204,
+      );
+
+      await _pumpActivityPage(tester, bundle: bundle);
+      await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('download-task-delete-11')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const Key('download-task-delete-files-checkbox')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+
+      final deleteReq = bundle.adapter.requests.lastWhere(
+        (r) => r.path == '/download-tasks/11' && r.method == 'DELETE',
+      );
+      expect(deleteReq.uri.queryParameters['delete_files'], 'true');
+      expect(deleteReq.uri.queryParameters['confirm_delete_files'], 'true');
+      expect(find.byKey(const Key('download-task-11')), findsNothing);
+
+      // 切回任务 tab 触发 downloadTask disconnect + 清 reconnect timer。
+      await tester.tap(find.byKey(const Key('activity-tab-tasks')));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
     'tasks tab auto loads task history on scroll and retries failure',
     (WidgetTester tester) async {
       _setDesktopViewport(tester);
@@ -535,6 +633,8 @@ Future<void> _pumpActivityPage(
           value: bundle.activityEventStreamClient,
         ),
         Provider<ActivityApi>.value(value: bundle.activityApi),
+        Provider<DownloadsApi>.value(value: bundle.downloadsApi),
+        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
       ],
       child: OKToast(
         child: MaterialApp(
@@ -662,6 +762,66 @@ Map<String, dynamic> _jobJson({
     'cron_expr': '0 2 * * *',
     'manual_trigger_allowed': manualTriggerAllowed,
     'last_task_run': lastTaskRun,
+  };
+}
+
+void _enqueueDownloadTaskState(
+  TestApiBundle bundle, {
+  required List<Map<String, dynamic>> items,
+}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/download-tasks',
+    body: <String, dynamic>{
+      'items': items,
+      'page': 1,
+      'page_size': 20,
+      'total': items.length,
+    },
+  );
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/download-clients',
+    body: <Map<String, dynamic>>[
+      {
+        'id': 2,
+        'name': 'qb-main',
+        'base_url': 'http://qb:8080',
+        'username': 'admin',
+        'client_save_path': '/downloads',
+        'local_root_path': '/mnt/qb',
+        'media_library_id': 1,
+        'has_password': true,
+      },
+    ],
+  );
+  // 不加 keepOpen：流发一次 heartbeat 就正常关闭，
+  // 控制器会调度 1s 重连 timer；测试完成前需切走 tab 或让 widget dispose
+  // 来取消 timer + subscription。
+  bundle.adapter.enqueueSse(
+    method: 'GET',
+    path: '/download-tasks/stream',
+    chunks: const <String>[
+      'event: heartbeat\n'
+          'data: {}\n\n',
+    ],
+  );
+}
+
+Map<String, dynamic> _downloadTaskJson({required int id}) {
+  return <String, dynamic>{
+    'id': id,
+    'client_id': 2,
+    'movie_number': 'ABC-00$id',
+    'name': 'ABC-00$id',
+    'info_hash': 'hash-$id',
+    'save_path': '/mnt/qb/$id',
+    'progress': 0.4,
+    'download_state': 'downloading',
+    'import_status': 'pending',
+    'import_status_label': '等待导入',
+    'created_at': '2026-07-10T08:0$id:00Z',
+    'updated_at': '2026-07-10T08:0$id:00Z',
   };
 }
 

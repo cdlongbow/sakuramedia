@@ -138,6 +138,210 @@ void main() {
       },
     );
 
+    test('getDownloadTasks assembles query and parses paginated tasks', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-tasks',
+        body: {
+          'items': [
+            {
+              'id': 11,
+              'client_id': 2,
+              'movie_number': 'ABC-001',
+              'name': 'ABC-001',
+              'info_hash': 'aa',
+              'save_path': '/mnt/a',
+              'progress': 0.3,
+              'download_state': 'downloading',
+              'import_status': 'pending',
+              'import_status_label': '等待导入',
+              'created_at': '2026-03-10T08:10:00Z',
+              'updated_at': '2026-03-10T08:11:00Z',
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      );
+
+      final result = await bundle.downloadsApi.getDownloadTasks(
+        page: 1,
+        pageSize: 20,
+        sort: 'created_at:desc',
+      );
+
+      final request = bundle.adapter.requests.single;
+      expect(request.path, '/download-tasks');
+      expect(request.uri.queryParameters['page'], '1');
+      expect(request.uri.queryParameters['page_size'], '20');
+      expect(request.uri.queryParameters['sort'], 'created_at:desc');
+      expect(result.items.single.id, 11);
+      expect(result.items.single.importStatusLabel, '等待导入');
+    });
+
+    test('pauseDownloadTask calls /pause and parses action result', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-tasks/42/pause',
+        body: {'task_id': 42, 'action': 'pause', 'status': 'ok'},
+      );
+
+      final result = await bundle.downloadsApi.pauseDownloadTask(42);
+
+      expect(bundle.adapter.requests.single.path, '/download-tasks/42/pause');
+      expect(result.action, 'pause');
+      expect(result.status, 'ok');
+    });
+
+    test('resumeDownloadTask forwards 409 as ApiException', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-tasks/9/resume',
+        statusCode: 409,
+        body: {
+          'error': {
+            'code': 'download_task_remote_missing',
+            'message': '任务在下载器中已不存在',
+          },
+        },
+      );
+
+      expect(
+        () => bundle.downloadsApi.resumeDownloadTask(9),
+        throwsA(
+          isA<ApiException>().having(
+            (error) => error.error?.code,
+            'error.code',
+            'download_task_remote_missing',
+          ),
+        ),
+      );
+    });
+
+    test('deleteDownloadTask without delete_files sends only delete_files=false',
+        () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/download-tasks/7',
+        statusCode: 204,
+      );
+
+      await bundle.downloadsApi.deleteDownloadTask(7);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.uri.queryParameters['delete_files'], 'false');
+      expect(
+        request.uri.queryParameters.containsKey('confirm_delete_files'),
+        isFalse,
+      );
+    });
+
+    test('deleteDownloadTask with delete_files sends both confirm params',
+        () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/download-tasks/7',
+        statusCode: 204,
+      );
+
+      await bundle.downloadsApi.deleteDownloadTask(7, deleteFiles: true);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.uri.queryParameters['delete_files'], 'true');
+      expect(request.uri.queryParameters['confirm_delete_files'], 'true');
+    });
+
+    test('streamDownloadTasks maps snapshot/updated/removed frames', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueSse(
+        method: 'GET',
+        path: '/download-tasks/stream',
+        chunks: <String>[
+          'event: snapshot\n'
+              'data: {"client_id":2,"items":[{"task_id":11,"client_id":2,"movie_number":"ABC-001","name":"ABC-001","info_hash":"aa","progress":0.4,"raw_state":"downloading","download_state":"downloading","download_speed_bytes":1024,"uploaded_speed_bytes":128,"downloaded_bytes":500,"total_size_bytes":1250,"eta_seconds":120}]}\n\n',
+          'event: download_task_updated\n'
+              'data: {"task_id":11,"client_id":2,"movie_number":"ABC-001","name":"ABC-001","info_hash":"aa","progress":0.6,"raw_state":"downloading","download_state":"downloading","download_speed_bytes":2048,"uploaded_speed_bytes":256,"downloaded_bytes":750,"total_size_bytes":1250,"eta_seconds":60}\n\n',
+          'event: download_task_removed\n'
+              'data: {"task_id":11,"client_id":2,"info_hash":"aa"}\n\n',
+          'event: heartbeat\n'
+              'data: {}\n\n',
+        ],
+      );
+
+      final events = await bundle.downloadsApi
+          .streamDownloadTasks(clientId: 2)
+          .toList();
+
+      expect(events, hasLength(4));
+      expect(events[0].isSnapshot, isTrue);
+      expect(events[0].snapshotItems.single.uploadedSpeedBytes, 128);
+      expect(events[1].isTaskUpdated, isTrue);
+      expect(events[1].progress?.progress, closeTo(0.6, 1e-9));
+      expect(events[1].progress?.uploadedSpeedBytes, 256);
+      expect(events[2].isTaskRemoved, isTrue);
+      expect(events[2].removed?.taskId, 11);
+      expect(events[3].isHeartbeat, isTrue);
+
+      final recorded = bundle.adapter.requests.single;
+      expect(recorded.uri.queryParameters['client_id'], '2');
+    });
+
+    test(
+      'streamDownloadTasks splits download_client_status into transfer vs health',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueSse(
+          method: 'GET',
+          path: '/download-tasks/stream',
+          chunks: <String>[
+            'event: download_client_status\n'
+                'data: {"client_id":2,"download_speed_bytes":1024,"upload_speed_bytes":128,"connection_status":"connected"}\n\n',
+            'event: download_client_status\n'
+                'data: {"client_id":2,"status":"unavailable","message":"qb offline"}\n\n',
+          ],
+        );
+
+        final events = await bundle.downloadsApi
+            .streamDownloadTasks()
+            .toList();
+
+        expect(events, hasLength(2));
+        expect(events[0].isClientTransfer, isTrue);
+        expect(events[0].clientTransfer?.uploadSpeedBytes, 128);
+        expect(events[0].clientTransfer?.connectionStatus, 'connected');
+        expect(events[1].isClientHealth, isTrue);
+        expect(events[1].clientHealth?.isAvailable, isFalse);
+        expect(events[1].clientHealth?.message, 'qb offline');
+      },
+    );
+
     test(
       'createDownloadRequest converts backend error to ApiException',
       () async {

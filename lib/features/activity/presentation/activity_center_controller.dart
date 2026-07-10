@@ -13,7 +13,7 @@ import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 
-enum ActivityTab { tasks, resourceTasks }
+enum ActivityTab { tasks, resourceTasks, downloadTasks }
 
 enum ActivityConnectionState { connecting, live, reconnecting, polling }
 

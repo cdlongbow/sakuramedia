@@ -11,6 +11,7 @@ class DownloadTaskDto {
     required this.progress,
     required this.downloadState,
     required this.importStatus,
+    required this.importStatusLabel,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -24,6 +25,7 @@ class DownloadTaskDto {
   final double progress;
   final String downloadState;
   final String importStatus;
+  final String importStatusLabel;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -38,11 +40,50 @@ class DownloadTaskDto {
       progress: (json['progress'] as num?)?.toDouble() ?? 0,
       downloadState: json['download_state'] as String? ?? '',
       importStatus: json['import_status'] as String? ?? '',
+      importStatusLabel: json['import_status_label'] as String? ?? '',
       createdAt: asDateTime(json['created_at']),
       updatedAt: asDateTime(json['updated_at']),
     );
   }
+
+  DownloadTaskDto copyWith({
+    int? id,
+    int? clientId,
+    Object? movieNumber = _sentinel,
+    String? name,
+    String? infoHash,
+    String? savePath,
+    double? progress,
+    String? downloadState,
+    String? importStatus,
+    String? importStatusLabel,
+    Object? createdAt = _sentinel,
+    Object? updatedAt = _sentinel,
+  }) {
+    return DownloadTaskDto(
+      id: id ?? this.id,
+      clientId: clientId ?? this.clientId,
+      movieNumber: identical(movieNumber, _sentinel)
+          ? this.movieNumber
+          : movieNumber as String?,
+      name: name ?? this.name,
+      infoHash: infoHash ?? this.infoHash,
+      savePath: savePath ?? this.savePath,
+      progress: progress ?? this.progress,
+      downloadState: downloadState ?? this.downloadState,
+      importStatus: importStatus ?? this.importStatus,
+      importStatusLabel: importStatusLabel ?? this.importStatusLabel,
+      createdAt: identical(createdAt, _sentinel)
+          ? this.createdAt
+          : createdAt as DateTime?,
+      updatedAt: identical(updatedAt, _sentinel)
+          ? this.updatedAt
+          : updatedAt as DateTime?,
+    );
+  }
 }
+
+const Object _sentinel = Object();
 
 class DownloadRequestResponseDto {
   const DownloadRequestResponseDto({required this.task, required this.created});

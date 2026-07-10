@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 
+import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_dto.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/sse_decoder.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:web/web.dart'
     as web
     show
@@ -21,23 +22,21 @@ import 'package:web/web.dart'
         RequestInit,
         Response;
 
-import 'package:sakuramedia/core/network/api_client.dart';
-
 @JS('fetch')
 external JSPromise<web.Response> _fetch(
   web.RequestInfo input, [
   web.RequestInit init,
 ]);
 
-ActivityEventStreamClient createPlatformActivityEventStreamClient({
+SseEventStreamClient createPlatformSseEventStreamClient({
   required ApiClient apiClient,
   required SessionStore sessionStore,
 }) {
-  return _WebActivityEventStreamClient(sessionStore: sessionStore);
+  return _WebSseEventStreamClient(sessionStore: sessionStore);
 }
 
-class _WebActivityEventStreamClient implements ActivityEventStreamClient {
-  _WebActivityEventStreamClient({required SessionStore sessionStore})
+class _WebSseEventStreamClient implements SseEventStreamClient {
+  _WebSseEventStreamClient({required SessionStore sessionStore})
     : _sessionStore = sessionStore;
 
   final SessionStore _sessionStore;
@@ -46,25 +45,27 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
   bool _isDisposed = false;
 
   @override
-  Stream<ApiSseEvent> connect({required int afterEventId}) async* {
+  Stream<ApiSseEvent> connect(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async* {
     if (_isDisposed) {
-      throw const ActivityEventStreamUnsupportedException(
-        'stream client closed',
-      );
+      throw const SseEventStreamUnsupportedException('stream client closed');
     }
     if (_sessionStore.baseUrl.isEmpty || _sessionStore.accessToken.isEmpty) {
       throw ApiException.unauthorized(
         code: 'unauthorized',
-        message: 'Activity stream requires an authenticated session',
+        message: 'Event stream requires an authenticated session',
       );
     }
 
+    final requestUri = _buildStreamUri(path, queryParameters);
     final abortController = web.AbortController();
     _openRequestAbortControllers.add(abortController);
     try {
       final response =
           await _fetch(
-            _buildStreamUri(afterEventId).toString().toJS,
+            requestUri.toString().toJS,
             web.RequestInit(
               method: 'GET',
               credentials: 'same-origin',
@@ -85,7 +86,7 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
 
       final bodyStream = response.body;
       if (bodyStream == null) {
-        throw const ActivityEventStreamUnsupportedException(
+        throw const SseEventStreamUnsupportedException(
           'ReadableStream is unavailable in the current browser environment',
         );
       }
@@ -93,6 +94,7 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
       yield* _bodyToStream(
         response,
         abortController,
+        requestUri,
       ).transform(const SseDecoder());
     } finally {
       _openRequestAbortControllers.remove(abortController);
@@ -108,15 +110,28 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
     _isDisposed = true;
   }
 
-  Uri _buildStreamUri(int afterEventId) {
+  Uri _buildStreamUri(String path, Map<String, dynamic>? queryParameters) {
     final baseUrl = _sessionStore.baseUrl.trim();
     final normalizedBaseUrl =
         baseUrl.endsWith('/')
             ? baseUrl.substring(0, baseUrl.length - 1)
             : baseUrl;
-    return Uri.parse('$normalizedBaseUrl/system/events/stream').replace(
-      queryParameters: <String, String>{'after_event_id': '$afterEventId'},
-    );
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final uri = Uri.parse('$normalizedBaseUrl$normalizedPath');
+    if (queryParameters == null || queryParameters.isEmpty) {
+      return uri;
+    }
+    final stringified = <String, String>{};
+    queryParameters.forEach((key, value) {
+      if (value == null) {
+        return;
+      }
+      stringified[key] = value.toString();
+    });
+    if (stringified.isEmpty) {
+      return uri;
+    }
+    return uri.replace(queryParameters: stringified);
   }
 
   ApiException _mapErrorResponse(int statusCode, String body) {
@@ -155,8 +170,8 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
   Stream<Uint8List> _bodyToStream(
     web.Response response,
     web.AbortController abortController,
+    Uri requestUri,
   ) {
-    final requestUri = _buildStreamUri(0);
     return Stream<Uint8List>.multi(
       (controller) => _readStreamBody(
         requestUri: requestUri,
@@ -177,7 +192,7 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
         response.body?.getReader() as web.ReadableStreamDefaultReader?;
     if (reader == null) {
       controller.addError(
-        const ActivityEventStreamUnsupportedException(
+        const SseEventStreamUnsupportedException(
           'ReadableStream reader is unavailable in the current browser environment',
         ),
       );
@@ -240,10 +255,10 @@ class _WebActivityEventStreamClient implements ActivityEventStreamClient {
 
   Object _mapReaderError(Object error, Uri requestUri) {
     if (error case web.DOMException(name: 'AbortError')) {
-      return ApiException(message: 'Activity stream aborted', statusCode: null);
+      return ApiException(message: 'Event stream aborted', statusCode: null);
     }
     if (error is ApiException ||
-        error is ActivityEventStreamUnsupportedException) {
+        error is SseEventStreamUnsupportedException) {
       return error;
     }
     return ApiException(message: error.toString());

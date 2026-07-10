@@ -1,4 +1,5 @@
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
@@ -38,6 +39,7 @@ class TestApiBundle {
     required this.downloadClientsApi,
     required this.discoveryApi,
     required this.downloadsApi,
+    required this.sseEventStreamClient,
     required this.indexerSettingsApi,
     required this.mediaApi,
     required this.mediaImportApi,
@@ -63,6 +65,7 @@ class TestApiBundle {
   final DownloadClientsApi downloadClientsApi;
   final DiscoveryApi discoveryApi;
   final DownloadsApi downloadsApi;
+  final SseEventStreamClient sseEventStreamClient;
   final IndexerSettingsApi indexerSettingsApi;
   final MediaApi mediaApi;
   final MediaImportApi mediaImportApi;
@@ -78,6 +81,7 @@ class TestApiBundle {
 
   void dispose() {
     activityEventStreamClient.dispose();
+    sseEventStreamClient.dispose();
     apiClient.dispose();
   }
 }
@@ -85,6 +89,10 @@ class TestApiBundle {
 Future<TestApiBundle> createTestApiBundle(SessionStore sessionStore) async {
   final apiClient = ApiClient(sessionStore: sessionStore);
   final activityEventStreamClient = createActivityEventStreamClient(
+    apiClient: apiClient,
+    sessionStore: sessionStore,
+  );
+  final sseEventStreamClient = createSseEventStreamClient(
     apiClient: apiClient,
     sessionStore: sessionStore,
   );
@@ -118,7 +126,11 @@ Future<TestApiBundle> createTestApiBundle(SessionStore sessionStore) async {
     configApi: ConfigApi(apiClient: apiClient),
     downloadClientsApi: DownloadClientsApi(apiClient: apiClient),
     discoveryApi: DiscoveryApi(apiClient: apiClient),
-    downloadsApi: DownloadsApi(apiClient: apiClient),
+    downloadsApi: DownloadsApi(
+      apiClient: apiClient,
+      streamClient: sseEventStreamClient,
+    ),
+    sseEventStreamClient: sseEventStreamClient,
     indexerSettingsApi: IndexerSettingsApi(apiClient: apiClient),
     mediaApi: MediaApi(apiClient: apiClient),
     mediaImportApi: MediaImportApi(apiClient: apiClient),

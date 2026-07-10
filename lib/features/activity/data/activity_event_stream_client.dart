@@ -1,23 +1,14 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client_stub.dart'
-    if (dart.library.js_interop) 'package:sakuramedia/features/activity/data/activity_event_stream_client_web.dart';
 
-class ActivityEventStreamUnsupportedException implements Exception {
-  const ActivityEventStreamUnsupportedException([this.message]);
+/// 兼容别名：活动流的 Unsupported 异常上提到 core 后，保留别名让现有 catch 逻辑不改。
+typedef ActivityEventStreamUnsupportedException
+    = SseEventStreamUnsupportedException;
 
-  final String? message;
-
-  @override
-  String toString() {
-    if (message == null || message!.trim().isEmpty) {
-      return 'ActivityEventStreamUnsupportedException';
-    }
-    return 'ActivityEventStreamUnsupportedException: $message';
-  }
-}
-
+/// 活动流客户端：把 core 的通用 SSE 客户端包装成固定连 `/system/events/stream`
+/// 的 `connect({afterEventId})` API，避免调用方感知路径与查询参数。
 abstract class ActivityEventStreamClient {
   Stream<ApiSseEvent> connect({required int afterEventId});
 
@@ -28,8 +19,28 @@ ActivityEventStreamClient createActivityEventStreamClient({
   required ApiClient apiClient,
   required SessionStore sessionStore,
 }) {
-  return createPlatformActivityEventStreamClient(
+  final inner = createSseEventStreamClient(
     apiClient: apiClient,
     sessionStore: sessionStore,
   );
+  return _ActivityEventStreamClient(inner);
+}
+
+class _ActivityEventStreamClient implements ActivityEventStreamClient {
+  _ActivityEventStreamClient(this._inner);
+
+  final SseEventStreamClient _inner;
+
+  @override
+  Stream<ApiSseEvent> connect({required int afterEventId}) {
+    return _inner.connect(
+      '/system/events/stream',
+      queryParameters: <String, dynamic>{'after_event_id': afterEventId},
+    );
+  }
+
+  @override
+  void dispose() {
+    _inner.dispose();
+  }
 }

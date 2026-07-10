@@ -680,6 +680,7 @@ Future<void> _pumpInspectorPanel(
                       progress: 0,
                       downloadState: '',
                       importStatus: '',
+                      importStatusLabel: '',
                       createdAt: null,
                       updatedAt: null,
                     ),

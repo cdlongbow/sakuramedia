@@ -8,6 +8,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/account/data/account_api.dart';
@@ -145,6 +146,14 @@ class _MyAppState extends State<MyApp> {
                   ApiClient(sessionStore: context.read<SessionStore>()),
           dispose: (context, client) => client.dispose(),
         ),
+        Provider<SseEventStreamClient>(
+          create:
+              (context) => createSseEventStreamClient(
+                apiClient: context.read<ApiClient>(),
+                sessionStore: context.read<SessionStore>(),
+              ),
+          dispose: (context, client) => client.dispose(),
+        ),
         Provider<AuthApi>(
           create:
               (context) => AuthApi(
@@ -187,7 +196,10 @@ class _MyAppState extends State<MyApp> {
         ),
         Provider<DownloadsApi>(
           create:
-              (context) => DownloadsApi(apiClient: context.read<ApiClient>()),
+              (context) => DownloadsApi(
+                apiClient: context.read<ApiClient>(),
+                streamClient: context.read<SseEventStreamClient>(),
+              ),
         ),
         Provider<IndexerSettingsApi>(
           create:

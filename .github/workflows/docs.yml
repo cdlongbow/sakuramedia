@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'wiki/**'
+      - 'scripts/generate-star-history.mjs'
+      - '.github/workflows/docs.yml'
+  schedule:
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -33,6 +37,12 @@ jobs:
       - name: Install dependencies
         working-directory: wiki
         run: npm install
+
+      - name: Generate star history SVGs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: node scripts/generate-star-history.mjs
 
       - name: Build
         working-directory: wiki

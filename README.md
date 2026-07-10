@@ -67,11 +67,11 @@ SakuraMedia 面向 NAS 用户，原因在于它本身就是前后端分离的设
 <h2 align="center">Star History</h2>
 
 <p align="center">
-  <a href="https://star-history.com/#tinypinglite/sakuramedia&Date">
+  <a href="https://github.com/tinypinglite/sakuramedia/stargazers">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tinypinglite/sakuramedia&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tinypinglite/sakuramedia&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=tinypinglite/sakuramedia&type=Date" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://tinypinglite.github.io/sakuramedia/star-history-dark.svg" />
+      <source media="(prefers-color-scheme: light)" srcset="https://tinypinglite.github.io/sakuramedia/star-history-light.svg" />
+      <img alt="Star History Chart" src="https://tinypinglite.github.io/sakuramedia/star-history-light.svg" />
     </picture>
   </a>
 </p>

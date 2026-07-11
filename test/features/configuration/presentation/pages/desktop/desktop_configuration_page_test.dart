@@ -146,6 +146,8 @@ void main() {
         find.byKey(const Key('configuration-llm-base-url-field')),
         findsOneWidget,
       );
+      expect(find.text('启用'), findsOneWidget);
+      expect(find.text('停用'), findsOneWidget);
       expect(
         find.byKey(const Key('configuration-llm-test-button')),
         findsOneWidget,

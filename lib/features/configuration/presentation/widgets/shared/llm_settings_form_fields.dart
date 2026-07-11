@@ -59,6 +59,7 @@ class LlmSettingsFormFields extends StatelessWidget {
           controller: controller.modelController,
           label: '模型',
           hintText: LlmSettingsCopy.modelHintText,
+          helperText: LlmSettingsCopy.modelRecommendationText,
           enabled: fieldsEnabled,
           autovalidateMode: autovalidateMode,
           validator: llmModelError,

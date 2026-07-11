@@ -163,6 +163,10 @@ void main() {
       expect(bundle.adapter.hitCount('GET', '/config'), 1);
       expect(find.text(LlmSettingsCopy.baseUrlHelperText), findsOneWidget);
       expect(find.text(LlmSettingsCopy.modelHintText), findsOneWidget);
+      expect(
+        find.text(LlmSettingsCopy.modelRecommendationText),
+        findsOneWidget,
+      );
     });
 
     testWidgets('confirms before leaving dirty advanced settings tab', (

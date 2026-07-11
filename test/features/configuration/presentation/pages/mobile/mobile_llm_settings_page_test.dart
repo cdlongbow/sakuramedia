@@ -52,6 +52,7 @@ void main() {
     );
     expect(find.text(LlmSettingsCopy.baseUrlHelperText), findsOneWidget);
     expect(find.text(LlmSettingsCopy.modelHintText), findsOneWidget);
+    expect(find.text(LlmSettingsCopy.modelRecommendationText), findsOneWidget);
   });
 
   testWidgets('shows llm example config hints when draft is empty', (
@@ -63,6 +64,7 @@ void main() {
 
     expect(find.text(LlmSettingsCopy.baseUrlHelperText), findsOneWidget);
     expect(find.text(LlmSettingsCopy.modelHintText), findsOneWidget);
+    expect(find.text(LlmSettingsCopy.modelRecommendationText), findsOneWidget);
   });
 
   testWidgets('shows fatal error and retries successfully', (

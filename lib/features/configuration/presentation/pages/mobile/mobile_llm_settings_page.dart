@@ -219,7 +219,7 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
                 Expanded(
                   child: AppButton(
                     key: const Key('mobile-llm-enabled-button'),
-                    label: '已启用',
+                    label: '启用',
                     variant: AppButtonVariant.secondary,
                     isSelected: enabled,
                     onPressed:
@@ -230,7 +230,7 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
                 Expanded(
                   child: AppButton(
                     key: const Key('mobile-llm-disabled-button'),
-                    label: '已停用',
+                    label: '停用',
                     variant: AppButtonVariant.secondary,
                     isSelected: !enabled,
                     onPressed:

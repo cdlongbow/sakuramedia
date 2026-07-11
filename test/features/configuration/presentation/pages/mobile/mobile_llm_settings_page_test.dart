@@ -44,6 +44,8 @@ void main() {
     expect(find.byKey(const Key('mobile-llm-form-card')), findsOneWidget);
     expect(find.byKey(const Key('mobile-llm-test-button')), findsOneWidget);
     expect(find.byKey(const Key('mobile-llm-save-button')), findsOneWidget);
+    expect(find.text('启用'), findsOneWidget);
+    expect(find.text('停用'), findsOneWidget);
     expect(find.text('可保存'), findsOneWidget);
     expect(find.text(LlmSettingsCopy.sharedUsageDescription), findsOneWidget);
     expect(

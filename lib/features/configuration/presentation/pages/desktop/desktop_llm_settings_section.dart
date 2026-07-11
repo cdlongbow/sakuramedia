@@ -165,7 +165,7 @@ class _DesktopLlmSettingsSectionState extends State<DesktopLlmSettingsSection> {
                 width: 180,
                 child: AppButton(
                   key: const Key('configuration-llm-enabled-button'),
-                  label: '已启用',
+                  label: '启用',
                   variant: AppButtonVariant.secondary,
                   isSelected: enabled,
                   onPressed: busy ? null : () => _controller.updateEnabled(true),
@@ -176,7 +176,7 @@ class _DesktopLlmSettingsSectionState extends State<DesktopLlmSettingsSection> {
                 width: 180,
                 child: AppButton(
                   key: const Key('configuration-llm-disabled-button'),
-                  label: '已停用',
+                  label: '停用',
                   variant: AppButtonVariant.secondary,
                   isSelected: !enabled,
                   onPressed:

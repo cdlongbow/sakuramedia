@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_library_login_flow.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -62,6 +63,21 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
   }
 
   Future<void> _createLibrary() async {
+    final backend = await showMediaLibraryBackendPicker(context);
+    if (!mounted || backend == null) {
+      return;
+    }
+    if (backend == MediaLibraryBackend.cloud115) {
+      final created = await showCloud115LibraryLoginFlow(context);
+      if (!mounted || created == null) {
+        return;
+      }
+      showToast('115 媒体库已创建');
+      widget.onLibrariesChanged();
+      await _loadLibraries();
+      return;
+    }
+
     final payload = await showDialog<CreateMediaLibraryPayload>(
       context: context,
       builder: (dialogContext) => const MediaLibraryDialog(title: '新增媒体库'),
@@ -80,12 +96,24 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
     }
   }
 
+  Future<void> _reauthLibrary(MediaLibraryDto library) async {
+    final updated = await showCloud115LibraryLoginFlow(
+      context,
+      reauthLibrary: library,
+    );
+    if (!mounted || updated == null) {
+      return;
+    }
+    showToast('115 媒体库认证已更新');
+    widget.onLibrariesChanged();
+    await _loadLibraries();
+  }
+
   Future<void> _editLibrary(MediaLibraryDto library) async {
     final payload = await showDialog<UpdateMediaLibraryPayload>(
       context: context,
-      builder:
-          (dialogContext) =>
-              MediaLibraryDialog(title: '编辑媒体库', initialLibrary: library),
+      builder: (dialogContext) =>
+          MediaLibraryDialog(title: '编辑媒体库', initialLibrary: library),
     );
     if (!mounted || payload == null) {
       return;
@@ -93,9 +121,9 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 
     try {
       await context.read<MediaLibrariesApi>().updateLibrary(
-        libraryId: library.id,
-        payload: payload,
-      );
+            libraryId: library.id,
+            payload: payload,
+          );
       showToast('媒体库已更新');
       widget.onLibrariesChanged();
       await _loadLibraries();
@@ -134,7 +162,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '媒体库用于维护本地媒体存储根路径，下载器等模块会依赖这里的路径配置。',
+          '媒体库用于管理本地目录或网盘存储；下载器等本地模块仅使用本地媒体库。',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -153,9 +181,13 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
               for (final library in _libraries)
                 AppSettingCell(
                   key: Key('media-library-card-${library.id}'),
-                  icon: Icons.folder_open_outlined,
+                  icon: library.isCloud115
+                      ? Icons.cloud_outlined
+                      : Icons.folder_open_outlined,
                   title: library.name,
-                  subtitle: library.rootPath,
+                  subtitle: library.isCloud115
+                      ? '115 网盘 · ${library.cloud115App.label}'
+                      : library.rootPath,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -169,6 +201,14 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
                         ),
                       ),
                       SizedBox(width: spacing.sm),
+                      if (library.isCloud115) ...[
+                        AppInlineActionButton(
+                          key: Key('media-library-reauth-${library.id}'),
+                          icon: Icons.refresh_rounded,
+                          onTap: () => _reauthLibrary(library),
+                        ),
+                        SizedBox(width: spacing.xs),
+                      ],
                       AppInlineActionButton(
                         key: Key('media-library-edit-${library.id}'),
                         icon: Icons.edit_outlined,
@@ -206,7 +246,8 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 }
 
 class MediaLibraryDialog extends StatefulWidget {
-  const MediaLibraryDialog({super.key, required this.title, this.initialLibrary});
+  const MediaLibraryDialog(
+      {super.key, required this.title, this.initialLibrary});
 
   final String title;
   final MediaLibraryDto? initialLibrary;
@@ -289,6 +330,7 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
               nameController: _nameController,
               rootPathController: _rootPathController,
               rootPathEnabled: !_isEditing,
+              showRootPath: widget.initialLibrary?.isCloud115 != true,
               labelBuilder: (context, label) => Text(
                 label,
                 style: resolveAppTextStyle(

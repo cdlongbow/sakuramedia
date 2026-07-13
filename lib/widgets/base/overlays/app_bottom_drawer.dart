@@ -11,6 +11,7 @@ Future<T?> showAppBottomDrawer<T>({
   bool useSafeArea = true,
   bool ignoreTopSafeArea = false,
   bool enableDrag = true,
+  bool isDismissible = true,
   bool showHandle = true,
 }) {
   final shouldUseRouteSafeArea = useSafeArea && !ignoreTopSafeArea;
@@ -22,6 +23,7 @@ Future<T?> showAppBottomDrawer<T>({
     useSafeArea: shouldUseRouteSafeArea,
     showDragHandle: false,
     enableDrag: enableDrag,
+    isDismissible: isDismissible,
     backgroundColor: context.appColors.surfaceCard,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(

@@ -46,9 +46,9 @@ void main() {
       find.byKey(const Key('mobile-media-libraries-notice-card')),
       findsOneWidget,
     );
-    expect(find.text('媒体库存储路径'), findsOneWidget);
+    expect(find.text('媒体库存储'), findsOneWidget);
     expect(
-      find.text('媒体库用于维护本地媒体存储根路径，下载器等模块会依赖这里的路径配置。'),
+      find.text('媒体库可使用本地目录或 115 网盘；下载器等本地模块仅使用本地媒体库。'),
       findsOneWidget,
     );
     expect(
@@ -86,12 +86,44 @@ void main() {
     );
     expect(find.text('媒体库加载失败，请稍后重试。'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('mobile-media-libraries-retry-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-libraries-retry-button')));
     await tester.pump();
     await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('mobile-media-libraries-empty-state')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('cloud115 card shows login app and reauth action', (
+    WidgetTester tester,
+  ) async {
+    _enqueueMediaLibraries(
+      _bundle,
+      libraries: const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 8,
+          'name': '115 主账号',
+          'backend': 'cloud115',
+          'backend_config': <String, dynamic>{
+            'root_cid': 'cid-root',
+            'app': 'alipaymini',
+          },
+          'created_at': '2026-07-14T09:30:00Z',
+          'updated_at': '2026-07-14T10:30:00Z',
+        },
+      ],
+    );
+
+    await _pumpPage(tester);
+
+    expect(find.text('115 网盘 · 支付宝小程序'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('mobile-media-library-more-8')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-media-library-action-reauth')),
       findsOneWidget,
     );
   });
@@ -128,7 +160,8 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('creates media library and syncs list', (WidgetTester tester) async {
+  testWidgets('creates media library and syncs list',
+      (WidgetTester tester) async {
     _enqueueMediaLibraries(_bundle, libraries: const <Map<String, dynamic>>[]);
     _bundle.adapter.enqueueJson(
       method: 'POST',
@@ -156,7 +189,10 @@ void main() {
 
     await _pumpPage(tester);
 
-    await tester.tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-library-backend-local')));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('media-library-name-field')),
@@ -166,7 +202,8 @@ void main() {
       find.byKey(const Key('media-library-root-path-field')),
       '/media/library/archive',
     );
-    await tester.tap(find.byKey(const Key('mobile-media-library-submit-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-submit-button')));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -175,7 +212,10 @@ void main() {
           request.method == 'POST' && request.path == '/media-libraries',
     );
     expect(postRequest.body['name'], 'Archive Library');
-    expect(postRequest.body['root_path'], '/media/library/archive');
+    expect(postRequest.body['backend'], 'local');
+    expect(postRequest.body['backend_config'], {
+      'root_path': '/media/library/archive',
+    });
     expect(find.text('Archive Library'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
@@ -187,7 +227,10 @@ void main() {
 
     await _pumpPage(tester);
 
-    await tester.tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-library-backend-local')));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('media-library-name-field')),
@@ -197,7 +240,8 @@ void main() {
       find.byKey(const Key('media-library-root-path-field')),
       'relative/path',
     );
-    await tester.tap(find.byKey(const Key('mobile-media-library-submit-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-submit-button')));
     await tester.pumpAndSettle();
 
     expect(find.text('请输入路径'), findsOneWidget);
@@ -229,7 +273,10 @@ void main() {
 
     await _pumpPage(tester);
 
-    await tester.tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-libraries-create-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-library-backend-local')));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('media-library-name-field')),
@@ -239,7 +286,8 @@ void main() {
       find.byKey(const Key('media-library-root-path-field')),
       '/media/library/main',
     );
-    await tester.tap(find.byKey(const Key('mobile-media-library-submit-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-submit-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -299,7 +347,8 @@ void main() {
       find.byKey(const Key('media-library-name-field')),
       'Main Library Updated',
     );
-    await tester.tap(find.byKey(const Key('mobile-media-library-submit-button')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-submit-button')));
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -322,13 +371,15 @@ void main() {
 
     await tester.tap(find.byKey(const Key('mobile-media-library-more-1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('mobile-media-library-action-delete')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-action-delete')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
 
     expect(_bundle.adapter.hitCount('DELETE', '/media-libraries/1'), 0);
-    expect(find.byKey(const Key('mobile-media-library-card-1')), findsOneWidget);
+    expect(
+        find.byKey(const Key('mobile-media-library-card-1')), findsOneWidget);
   });
 
   testWidgets('deletes media library from action sheet and syncs list', (
@@ -346,7 +397,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('mobile-media-library-more-1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('mobile-media-library-action-delete')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-action-delete')));
     await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('mobile-media-library-delete-confirm-button')),
@@ -386,7 +438,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('mobile-media-library-more-1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('mobile-media-library-action-delete')));
+    await tester
+        .tap(find.byKey(const Key('mobile-media-library-action-delete')));
     await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('mobile-media-library-delete-confirm-button')),
@@ -395,7 +448,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('媒体库仍被业务数据引用，无法删除'), findsOneWidget);
-    expect(find.byKey(const Key('mobile-media-library-card-1')), findsOneWidget);
+    expect(
+        find.byKey(const Key('mobile-media-library-card-1')), findsOneWidget);
     expect(
       find.byKey(const Key('mobile-media-library-delete-drawer')),
       findsOneWidget,
@@ -411,7 +465,8 @@ Future<void> _pumpPage(
   await tester.pumpWidget(
     MultiProvider(
       providers: [
-        Provider<MediaLibrariesApi>.value(value: api ?? _bundle.mediaLibrariesApi),
+        Provider<MediaLibrariesApi>.value(
+            value: api ?? _bundle.mediaLibrariesApi),
       ],
       child: OKToast(
         child: MaterialApp(
@@ -450,8 +505,7 @@ void _enqueueMediaLibraries(
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/media-libraries',
-    body:
-        libraries ??
+    body: libraries ??
         const <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 1,

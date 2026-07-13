@@ -1,9 +1,10 @@
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/features/configuration/data/dto/cloud115_qr_login_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 
 class MediaLibrariesApi {
   const MediaLibrariesApi({required ApiClient apiClient})
-    : _apiClient = apiClient;
+      : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -35,5 +36,46 @@ class MediaLibrariesApi {
 
   Future<void> deleteLibrary(int libraryId) {
     return _apiClient.deleteNoContent('/media-libraries/$libraryId');
+  }
+
+  Future<Cloud115QrTokenDto> getCloud115QrToken() async {
+    final response = await _apiClient.post(
+      '/media-libraries/cloud115/qrlogin/token',
+    );
+    return Cloud115QrTokenDto.fromJson(response);
+  }
+
+  Future<Cloud115QrStatusDto> pollCloud115QrStatus(
+    Cloud115QrTokenDto token,
+  ) async {
+    final response = await _apiClient.post(
+      '/media-libraries/cloud115/qrlogin/status',
+      data: token.toStatusRequestJson(),
+      receiveTimeout: const Duration(seconds: 45),
+    );
+    return Cloud115QrStatusDto.fromJson(response);
+  }
+
+  Future<MediaLibraryDto> createCloud115Library(
+    Cloud115LibraryCreatePayload payload,
+  ) async {
+    final response = await _apiClient.post(
+      '/media-libraries/cloud115',
+      data: payload.toJson(),
+      receiveTimeout: const Duration(seconds: 60),
+    );
+    return MediaLibraryDto.fromJson(response);
+  }
+
+  Future<MediaLibraryDto> reauthCloud115Library({
+    required int libraryId,
+    required Cloud115LibraryReauthPayload payload,
+  }) async {
+    final response = await _apiClient.post(
+      '/media-libraries/cloud115/$libraryId/reauth',
+      data: payload.toJson(),
+      receiveTimeout: const Duration(seconds: 60),
+    );
+    return MediaLibraryDto.fromJson(response);
   }
 }

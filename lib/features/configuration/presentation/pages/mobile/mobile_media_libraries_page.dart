@@ -8,6 +8,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_library_login_flow.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -85,9 +86,21 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
   }
 
   Future<void> _handleCreateLibrary() async {
-    final createdLibrary = await showMobileMediaLibraryEditorDrawer(context);
+    final backend = await showMediaLibraryBackendPicker(context);
+    if (!mounted || backend == null) {
+      return;
+    }
+    final MediaLibraryDto? createdLibrary;
+    if (backend == MediaLibraryBackend.cloud115) {
+      createdLibrary = await showCloud115LibraryLoginFlow(context);
+    } else {
+      createdLibrary = await showMobileMediaLibraryEditorDrawer(context);
+    }
     if (!mounted || createdLibrary == null) {
       return;
+    }
+    if (backend == MediaLibraryBackend.cloud115) {
+      showToast('115 媒体库已创建');
     }
     _upsertLibrary(createdLibrary);
     unawaited(_syncLibrariesInBackground());
@@ -116,9 +129,24 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
     switch (action) {
       case MobileMediaLibraryAction.edit:
         await _handleEditLibrary(library);
+      case MobileMediaLibraryAction.reauth:
+        await _handleReauthLibrary(library);
       case MobileMediaLibraryAction.delete:
         await _handleDeleteLibrary(library);
     }
+  }
+
+  Future<void> _handleReauthLibrary(MediaLibraryDto library) async {
+    final updated = await showCloud115LibraryLoginFlow(
+      context,
+      reauthLibrary: library,
+    );
+    if (!mounted || updated == null) {
+      return;
+    }
+    showToast('115 媒体库认证已更新');
+    _upsertLibrary(updated);
+    unawaited(_syncLibrariesInBackground());
   }
 
   Future<void> _handleDeleteLibrary(MediaLibraryDto library) async {
@@ -206,8 +234,8 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
                         const AppNoticeCard(
                           key: Key('mobile-media-libraries-notice-card'),
                           leadingIcon: Icons.folder_open_outlined,
-                          title: '媒体库存储路径',
-                          description: '媒体库用于维护本地媒体存储根路径，下载器等模块会依赖这里的路径配置。',
+                          title: '媒体库存储',
+                          description: '媒体库可使用本地目录或 115 网盘；下载器等本地模块仅使用本地媒体库。',
                         ),
                         SizedBox(height: spacing.md),
                         _buildContentSection(context),
@@ -298,7 +326,9 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
           borderRadius: context.appRadius.mdBorder,
         ),
         child: Icon(
-          Icons.folder_open_outlined,
+          library.isCloud115
+              ? Icons.cloud_outlined
+              : Icons.folder_open_outlined,
           size: componentTokens.iconSizeMd,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -315,7 +345,9 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
       body: [
         SizedBox(height: spacing.xs),
         Text(
-          library.rootPath,
+          library.isCloud115
+              ? '115 网盘 · ${library.cloud115App.label}'
+              : library.rootPath,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -365,9 +397,8 @@ Future<MediaLibraryDto?> showMobileMediaLibraryEditorDrawer(
     context: context,
     drawerKey: const Key('mobile-media-library-editor-drawer'),
     heightFactor: 0.68,
-    builder:
-        (drawerContext) =>
-            _MobileMediaLibraryEditorDrawer(initialLibrary: initialLibrary),
+    builder: (drawerContext) =>
+        _MobileMediaLibraryEditorDrawer(initialLibrary: initialLibrary),
   );
 }
 
@@ -378,13 +409,13 @@ Future<MobileMediaLibraryAction?> showMobileMediaLibraryActionsDrawer(
   return showAppBottomDrawer<MobileMediaLibraryAction>(
     context: context,
     drawerKey: const Key('mobile-media-library-actions-drawer'),
-    maxHeightFactor: 0.34,
-    builder:
-        (drawerContext) => _MobileMediaLibraryActionsDrawer(library: library),
+    maxHeightFactor: library.isCloud115 ? 0.48 : 0.34,
+    builder: (drawerContext) =>
+        _MobileMediaLibraryActionsDrawer(library: library),
   );
 }
 
-enum MobileMediaLibraryAction { edit, delete }
+enum MobileMediaLibraryAction { edit, reauth, delete }
 
 class _MobileMediaLibraryLoadingSection extends StatelessWidget {
   const _MobileMediaLibraryLoadingSection();
@@ -474,10 +505,9 @@ class _MobileMediaLibraryEditorDrawerState
 
   bool get _isEditing => widget.initialLibrary != null;
 
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -506,7 +536,9 @@ class _MobileMediaLibraryEditorDrawerState
     return AppBottomFormSheet(
       formKey: _formKey,
       title: _isEditing ? '编辑媒体库' : '新增媒体库',
-      subtitle: '维护可供下载器等模块使用的本地媒体根路径。',
+      subtitle: widget.initialLibrary?.isCloud115 == true
+          ? '媒体库名称可修改，115 登录平台请通过重新认证更新。'
+          : '维护可供下载器等模块使用的本地媒体根路径。',
       submitKey: const Key('mobile-media-library-submit-button'),
       isSubmitting: _isSubmitting,
       onSubmit: _submit,
@@ -517,6 +549,7 @@ class _MobileMediaLibraryEditorDrawerState
         rootPathFocusNode: _rootPathFocusNode,
         enabled: !_isSubmitting,
         rootPathEnabled: !_isEditing,
+        showRootPath: widget.initialLibrary?.isCloud115 != true,
         autovalidateMode: _autovalidateMode,
         onRootPathSubmitted: (_) => _submit(),
       ),
@@ -549,13 +582,12 @@ class _MobileMediaLibraryEditorDrawerState
 
     try {
       final api = context.read<MediaLibrariesApi>();
-      final library =
-          _isEditing
-              ? await api.updateLibrary(
-                libraryId: widget.initialLibrary!.id,
-                payload: value.toUpdatePayload(),
-              )
-              : await api.createLibrary(value.toCreatePayload());
+      final library = _isEditing
+          ? await api.updateLibrary(
+              libraryId: widget.initialLibrary!.id,
+              payload: value.toUpdatePayload(),
+            )
+          : await api.createLibrary(value.toCreatePayload());
       if (!mounted) {
         return;
       }
@@ -599,7 +631,9 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
         ),
         SizedBox(height: spacing.xs),
         Text(
-          library.rootPath,
+          library.isCloud115
+              ? '115 网盘 · ${library.cloud115App.label}'
+              : library.rootPath,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -614,14 +648,24 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
           label: '编辑媒体库',
           onTap: () => Navigator.of(context).pop(MobileMediaLibraryAction.edit),
         ),
+        if (library.isCloud115) ...[
+          SizedBox(height: spacing.sm),
+          _MobileDrawerActionRow(
+            key: const Key('mobile-media-library-action-reauth'),
+            icon: Icons.refresh_rounded,
+            label: '重新认证',
+            onTap: () =>
+                Navigator.of(context).pop(MobileMediaLibraryAction.reauth),
+          ),
+        ],
         SizedBox(height: spacing.sm),
         _MobileDrawerActionRow(
           key: const Key('mobile-media-library-action-delete'),
           icon: Icons.delete_outline_rounded,
           label: '删除媒体库',
           tone: AppTextTone.error,
-          onTap:
-              () => Navigator.of(context).pop(MobileMediaLibraryAction.delete),
+          onTap: () =>
+              Navigator.of(context).pop(MobileMediaLibraryAction.delete),
         ),
       ],
     );
@@ -693,4 +737,3 @@ class _MobileDrawerActionRow extends StatelessWidget {
     );
   }
 }
-

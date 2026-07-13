@@ -72,9 +72,11 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
         return;
       }
       setState(() {
-        _libraries = libraries;
+        _libraries = libraries
+            .where((library) => library.isLocal)
+            .toList(growable: false);
         _selectedLibraryId ??=
-            libraries.isNotEmpty ? libraries.first.id : null;
+            _libraries.isNotEmpty ? _libraries.first.id : null;
       });
     } catch (_) {
       // 媒体库加载失败时，下拉为空，开始导入按钮保持禁用。
@@ -195,8 +197,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
           key: const Key('media-import-picker-up-button'),
           icon: const Icon(Icons.arrow_upward_rounded),
           tooltip: '上一级',
-          onPressed:
-              canGoUp ? () => unawaited(_browse(listing!.parent)) : null,
+          onPressed: canGoUp ? () => unawaited(_browse(listing!.parent)) : null,
         ),
         SizedBox(width: spacing.sm),
         Expanded(
@@ -250,8 +251,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
               AppButton(
                 label: '重试',
                 size: AppButtonSize.small,
-                onPressed: () =>
-                    unawaited(_browse(_listing?.path)),
+                onPressed: () => unawaited(_browse(_listing?.path)),
               ),
             ],
           ),
@@ -271,9 +271,8 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
         final entry = listing.entries[index];
         return _EntryRow(
           entry: entry,
-          onTap: entry.isDirectory
-              ? () => unawaited(_browse(entry.path))
-              : null,
+          onTap:
+              entry.isDirectory ? () => unawaited(_browse(entry.path)) : null,
         );
       },
     );
@@ -349,9 +348,7 @@ class _EntryRow extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isDir
-                  ? Icons.folder_rounded
-                  : Icons.movie_outlined,
+              isDir ? Icons.folder_rounded : Icons.movie_outlined,
               size: context.appComponentTokens.iconSizeSm,
               color: isDir
                   ? context.appTextPalette.accent

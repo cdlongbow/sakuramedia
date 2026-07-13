@@ -79,12 +79,11 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
 
   bool get _hasLibraries => _libraries.isNotEmpty;
 
-  int get _linkedLibraryCount =>
-      _clients
-          .map((item) => item.mediaLibraryId)
-          .where((item) => item > 0)
-          .toSet()
-          .length;
+  int get _linkedLibraryCount => _clients
+      .map((item) => item.mediaLibraryId)
+      .where((item) => item > 0)
+      .toSet()
+      .length;
 
   int get _savedPasswordCount =>
       _clients.where((item) => item.hasPassword).length;
@@ -251,10 +250,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                       : AppBadgeTone.warning,
                   showShadow: true,
                   actionLabel: '前往媒体库',
-                  onActionTap:
-                      () => GoRouter.of(
-                        context,
-                      ).push(mobileSettingsMediaLibrariesPath),
+                  onActionTap: () => GoRouter.of(
+                    context,
+                  ).push(mobileSettingsMediaLibrariesPath),
                 ),
                 SizedBox(height: spacing.md),
                 MobileConfigOnboardingCard(
@@ -282,9 +280,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                       : AppBadgeTone.warning,
                   showShadow: true,
                   actionLabel: '查看索引器',
-                  onActionTap:
-                      () =>
-                          GoRouter.of(context).push(mobileSettingsIndexersPath),
+                  onActionTap: () =>
+                      GoRouter.of(context).push(mobileSettingsIndexersPath),
                 ),
               ],
             ),
@@ -500,7 +497,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = results[1] as List<MediaLibraryDto>;
+        _libraries = (results[1] as List<MediaLibraryDto>)
+            .where((library) => library.isLocal)
+            .toList(growable: false);
         _indexerSettings = results[2] as IndexerSettingsDto;
         _isLoading = false;
         _errorMessage = null;
@@ -528,7 +527,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = results[1] as List<MediaLibraryDto>;
+        _libraries = (results[1] as List<MediaLibraryDto>)
+            .where((library) => library.isLocal)
+            .toList(growable: false);
         _indexerSettings = results[2] as IndexerSettingsDto;
         _errorMessage = null;
       });
@@ -596,8 +597,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       client: client,
       mediaLibrary: _libraryById(client.mediaLibraryId),
       initialSnapshot:
-          _probeSnapshots[client.id] ??
-          const _MobileDownloaderProbeSnapshot(),
+          _probeSnapshots[client.id] ?? const _MobileDownloaderProbeSnapshot(),
       onConnectivityResult: (result) =>
           _mergeConnectivityResult(client.id, result),
       onStorageResult: (result) => _mergeStorageResult(client.id, result),
@@ -625,7 +625,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = results[1] as List<MediaLibraryDto>;
+        _libraries = (results[1] as List<MediaLibraryDto>)
+            .where((library) => library.isLocal)
+            .toList(growable: false);
         _indexerSettings = results[2] as IndexerSettingsDto;
         _errorMessage = null;
       });
@@ -831,10 +833,9 @@ class _MobileDownloaderEditorDrawerState
 
   bool get _busy => _isSubmitting || _probe.busy;
 
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -973,13 +974,12 @@ class _MobileDownloaderEditorDrawerState
 
     try {
       final api = context.read<DownloadClientsApi>();
-      final client =
-          _isEditing
-              ? await api.updateClient(
-                clientId: widget.initialClient!.id,
-                payload: value.toUpdatePayload(),
-              )
-              : await api.createClient(value.toCreatePayload());
+      final client = _isEditing
+          ? await api.updateClient(
+              clientId: widget.initialClient!.id,
+              payload: value.toUpdatePayload(),
+            )
+          : await api.createClient(value.toCreatePayload());
       if (!mounted) {
         return;
       }
@@ -1043,7 +1043,8 @@ class _MobileDownloaderEditorDrawerState
       context: context,
       probe: _probe,
       runTest: () => api.probeStorageTestClient(payload),
-      openDialog: (result) => _openStorageDialog(result, payload, value.baseUrl),
+      openDialog: (result) =>
+          _openStorageDialog(result, payload, value.baseUrl),
     );
   }
 
@@ -1220,10 +1221,9 @@ class _MobileDownloaderDetailDrawerState
               ),
               AppBadge(
                 label: passwordLabel,
-                tone:
-                    client.hasPassword
-                        ? AppBadgeTone.success
-                        : AppBadgeTone.warning,
+                tone: client.hasPassword
+                    ? AppBadgeTone.success
+                    : AppBadgeTone.warning,
                 size: AppBadgeSize.compact,
               ),
             ],
@@ -1288,10 +1288,9 @@ class _MobileDownloaderDetailDrawerState
                   key: const Key('mobile-downloader-detail-edit-button'),
                   label: '编辑',
                   variant: AppButtonVariant.primary,
-                  onPressed:
-                      busy
-                          ? null
-                          : () => Navigator.of(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.of(
                             context,
                           ).pop(MobileDownloaderDetailAction.edit),
                 ),
@@ -1302,10 +1301,9 @@ class _MobileDownloaderDetailDrawerState
                   key: const Key('mobile-downloader-detail-delete-button'),
                   label: '删除',
                   variant: AppButtonVariant.danger,
-                  onPressed:
-                      busy
-                          ? null
-                          : () => Navigator.of(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.of(
                             context,
                           ).pop(MobileDownloaderDetailAction.delete),
                 ),
@@ -1317,4 +1315,3 @@ class _MobileDownloaderDetailDrawerState
     );
   }
 }
-

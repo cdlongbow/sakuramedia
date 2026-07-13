@@ -791,6 +791,8 @@ void main() {
         find.byKey(const Key('configuration-media-library-create-button')),
       );
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('media-library-backend-local')));
+      await tester.pumpAndSettle();
 
       await tester.enterText(
         find.byKey(const Key('media-library-name-field')),
@@ -808,7 +810,10 @@ void main() {
             request.method == 'POST' && request.path == '/media-libraries',
       );
       expect(postRequest.body['name'], 'Archive Library');
-      expect(postRequest.body['root_path'], '/media/library/archive');
+      expect(postRequest.body['backend'], 'local');
+      expect(postRequest.body['backend_config'], {
+        'root_path': '/media/library/archive',
+      });
       expect(find.text('Archive Library'), findsWidgets);
       await tester.pump(const Duration(seconds: 3));
     });
@@ -1002,6 +1007,8 @@ void main() {
         find.byKey(const Key('configuration-media-library-create-button')),
       );
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('media-library-backend-local')));
+      await tester.pumpAndSettle();
 
       await tester.enterText(
         find.byKey(const Key('media-library-name-field')),
@@ -1046,6 +1053,8 @@ void main() {
       await tester.tap(
         find.byKey(const Key('configuration-media-library-create-button')),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('media-library-backend-local')));
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -1588,24 +1597,22 @@ void main() {
         findsOneWidget,
       );
 
-      final usernameRows =
-          tester
-              .elementList(
-                find.ancestor(
-                  of: find.byKey(const Key('download-client-username-field')),
-                  matching: find.byType(Row),
-                ),
-              )
-              .toSet();
-      final passwordRows =
-          tester
-              .elementList(
-                find.ancestor(
-                  of: find.byKey(const Key('download-client-password-field')),
-                  matching: find.byType(Row),
-                ),
-              )
-              .toSet();
+      final usernameRows = tester
+          .elementList(
+            find.ancestor(
+              of: find.byKey(const Key('download-client-username-field')),
+              matching: find.byType(Row),
+            ),
+          )
+          .toSet();
+      final passwordRows = tester
+          .elementList(
+            find.ancestor(
+              of: find.byKey(const Key('download-client-password-field')),
+              matching: find.byType(Row),
+            ),
+          )
+          .toSet();
       expect(usernameRows.intersection(passwordRows), isNotEmpty);
 
       await tester.enterText(

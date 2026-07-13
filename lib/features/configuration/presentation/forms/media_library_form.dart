@@ -3,8 +3,8 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-typedef MediaLibraryFieldLabelBuilder =
-    Widget Function(BuildContext context, String label);
+typedef MediaLibraryFieldLabelBuilder = Widget Function(
+    BuildContext context, String label);
 
 class MediaLibraryFormValue {
   const MediaLibraryFormValue({required this.name, required this.rootPath});
@@ -70,6 +70,7 @@ class MediaLibraryFormFields extends StatelessWidget {
     this.rootPathFieldKey = const Key('media-library-root-path-field'),
     this.fieldSpacing,
     this.rootPathEnabled = true,
+    this.showRootPath = true,
   });
 
   final TextEditingController nameController;
@@ -86,6 +87,7 @@ class MediaLibraryFormFields extends StatelessWidget {
 
   /// 编辑时置为 false — 根路径显示为只读禁用态（保留可见性，禁用可编辑）。
   final bool rootPathEnabled;
+  final bool showRootPath;
 
   @override
   Widget build(BuildContext context) {
@@ -111,24 +113,26 @@ class MediaLibraryFormFields extends StatelessWidget {
             onFieldSubmitted: (_) => rootPathFocusNode?.requestFocus(),
           ),
         ),
-        SizedBox(height: resolvedFieldSpacing),
-        ..._buildField(
-          context,
-          label: '根路径',
-          field: AppTextField(
-            fieldKey: rootPathFieldKey,
-            controller: rootPathController,
-            focusNode: rootPathFocusNode,
-            enabled: enabled && rootPathEnabled,
-            label: labelBuilder == null ? '根路径' : null,
-            hintText: '填映射到容器内的路径，例如: /mnt/medialibray1',
-            helperText: rootPathEnabled ? null : '根路径创建后不可修改',
-            validator: rootPathEnabled ? validateMediaLibraryRootPath : null,
-            autovalidateMode: autovalidateMode,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: onRootPathSubmitted,
+        if (showRootPath) ...[
+          SizedBox(height: resolvedFieldSpacing),
+          ..._buildField(
+            context,
+            label: '根路径',
+            field: AppTextField(
+              fieldKey: rootPathFieldKey,
+              controller: rootPathController,
+              focusNode: rootPathFocusNode,
+              enabled: enabled && rootPathEnabled,
+              label: labelBuilder == null ? '根路径' : null,
+              hintText: '填映射到容器内的路径，例如: /mnt/medialibray1',
+              helperText: rootPathEnabled ? null : '根路径创建后不可修改',
+              validator: rootPathEnabled ? validateMediaLibraryRootPath : null,
+              autovalidateMode: autovalidateMode,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: onRootPathSubmitted,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

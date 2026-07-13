@@ -105,8 +105,10 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
         return;
       }
       setState(() {
-        _libraries = libraries;
-        _libraryId ??= libraries.isNotEmpty ? libraries.first.id : null;
+        _libraries = libraries
+            .where((library) => library.isLocal)
+            .toList(growable: false);
+        _libraryId ??= _libraries.isNotEmpty ? _libraries.first.id : null;
       });
     } catch (_) {
       // 媒体库加载失败时下拉为空，开始导入按钮校验时给出提示。
@@ -288,8 +290,7 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
                     label: '选择此目录',
                     size: AppTextButtonSize.xSmall,
                     isSelected: _sourcePath == listing.path,
-                    onPressed: () =>
-                        setState(() => _sourcePath = listing.path),
+                    onPressed: () => setState(() => _sourcePath = listing.path),
                   ),
               ],
             ),
@@ -344,9 +345,7 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
           key: Key('video-import-entry-${entry.path}'),
           dense: true,
           leading: Icon(
-            entry.isDirectory
-                ? Icons.folder_outlined
-                : Icons.movie_outlined,
+            entry.isDirectory ? Icons.folder_outlined : Icons.movie_outlined,
             color: context.appTextPalette.secondary,
           ),
           title: Text(
@@ -357,7 +356,9 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
           selected: isSelected,
           trailing: entry.isVideo
               ? Icon(
-                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  isSelected
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   size: context.appComponentTokens.iconSizeSm,
                 )
               : null,
@@ -410,8 +411,7 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
         AppSelectField<int>(
           key: const Key('video-import-library-select'),
           label: '导入到媒体库',
-          placeholder:
-              _libraries.isEmpty ? '暂无媒体库，请先在系统设置中添加' : '请选择媒体库',
+          placeholder: _libraries.isEmpty ? '暂无媒体库，请先在系统设置中添加' : '请选择媒体库',
           value: _libraryId,
           items: _libraries
               .map(
@@ -462,8 +462,7 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
         SizedBox(height: context.appSpacing.sm),
         AppSelectField<int?>(
           value: _collectionId,
-          placeholder:
-              _collections.isEmpty ? '暂无合集，点右上「新建合集」' : '请选择合集',
+          placeholder: _collections.isEmpty ? '暂无合集，点右上「新建合集」' : '请选择合集',
           items: <DropdownMenuItem<int?>>[
             for (final collection in _collections)
               DropdownMenuItem<int?>(

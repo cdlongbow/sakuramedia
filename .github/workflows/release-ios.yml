@@ -33,7 +33,12 @@ jobs:
         run: flutter test
 
       - name: Build iOS app archive input (no codesign)
-        run: flutter build ios --release --no-codesign
+        shell: bash
+        run: |
+          # 从 git tag 注入版本：v0.3.7 -> 0.3.7；pubspec 的 version 仅占位，实际以 tag 为准
+          # --build-number 用 run_number 保证 CFBundleVersion 单调递增
+          VERSION="${GITHUB_REF_NAME#v}"
+          flutter build ios --release --no-codesign --build-name="$VERSION" --build-number="${{ github.run_number }}"
 
       - name: Pre-sign and collect SideStore-ready iOS IPA
         run: |

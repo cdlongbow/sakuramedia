@@ -79,7 +79,12 @@ jobs:
           } > android/key.properties
 
       - name: Build Android release APK
-        run: flutter build apk --release
+        shell: bash
+        run: |
+          # 从 git tag 注入版本：v0.3.7 -> 0.3.7；pubspec 的 version 仅占位，实际以 tag 为准
+          # --build-number 用 run_number 保证 versionCode 单调递增
+          VERSION="${GITHUB_REF_NAME#v}"
+          flutter build apk --release --build-name="$VERSION" --build-number="${{ github.run_number }}"
 
       - name: Package release APK
         run: |

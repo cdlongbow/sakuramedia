@@ -127,6 +127,11 @@ Future<MediaLibraryDto?> showCloud115LibraryLoginFlow(
   );
 }
 
+const List<Cloud115LoginApp> _visibleCloud115LoginApps = <Cloud115LoginApp>[
+  Cloud115LoginApp.alipaymini,
+  Cloud115LoginApp.web,
+];
+
 enum _Cloud115FlowStep { configuration, qr }
 
 enum _Cloud115QrPhase {
@@ -423,7 +428,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
             key: const Key('cloud115-login-app-field'),
             label: '登录平台',
             value: _selectedApp,
-            items: Cloud115LoginApp.values
+            items: _visibleCloud115LoginApps
                 .map(
                   (app) => DropdownMenuItem<Cloud115LoginApp>(
                     value: app,

@@ -75,7 +75,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       <int, _MobileDownloaderProbeSnapshot>{};
 
   bool get _hasLinkedIndexer =>
-      _indexerSettings.indexers.any((item) => item.downloadClientId > 0);
+      _indexerSettings.indexers.any((item) => item.downloadClients.isNotEmpty);
 
   bool get _hasLibraries => _libraries.isNotEmpty;
 
@@ -191,8 +191,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
               children: [
                 AppNoticeCard(
                   key: const Key('mobile-downloaders-overview-card'),
-                  title: '下载器负责接收索引器推送的资源请求，并依赖媒体库路径映射完成落库。',
-                  description: '建议先确认媒体库路径，再补全 qBittorrent 保存路径与本地访问路径。',
+                  title: '下载入口负责接收索引器推送的资源请求，并把任务交给 qBittorrent 或 115。',
+                  description: 'qBittorrent 需要配置路径映射；115 离线入口直接复用云媒体库登录状态。',
                   stats: [
                     AppNoticeStat(
                       label: '已配置下载器数',
@@ -205,7 +205,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                       valueSize: AppTextSize.s18,
                     ),
                     AppNoticeStat(
-                      label: '已保存密码数',
+                      label: 'qB 已保存密码数',
                       value: '$_savedPasswordCount',
                       valueSize: AppTextSize.s18,
                     ),
@@ -242,8 +242,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                 MobileConfigOnboardingCard(
                   key: const Key('mobile-downloaders-guide-step-libraries'),
                   title: '先准备媒体库',
-                  description: '媒体库用于维护本地存储根路径，下载器创建前需要先明确映射位置。',
-                  tip: '关键字段：媒体库名称、根路径。',
+                  description: 'qBittorrent 入口绑定本地媒体库；115 离线入口绑定已登录的 115 媒体库。',
+                  tip: '先确认媒体库类型与目标下载方式一致。',
                   badgeLabel: _hasLibraries ? '已配置' : '待配置',
                   badgeTone: _hasLibraries
                       ? AppBadgeTone.success
@@ -258,8 +258,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                 MobileConfigOnboardingCard(
                   key: const Key('mobile-downloaders-guide-step-downloaders'),
                   title: '再配置下载器',
-                  description: '下载器负责接收索引器推送的资源请求，并映射 qBittorrent 下载路径。',
-                  tip: '关键字段：服务地址、qBittorrent 保存路径、本地访问路径。',
+                  description: '下载入口负责接收索引器推送的资源请求，并选择实际执行下载的服务。',
+                  tip: 'qBittorrent 需填写连接与路径；115 离线只需选择对应云媒体库。',
                   badgeLabel: _clients.isNotEmpty ? '已配置' : '待配置',
                   badgeTone: _clients.isNotEmpty
                       ? AppBadgeTone.success
@@ -345,9 +345,16 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
     final avatarSide = componentTokens.iconSizeXl + spacing.md;
-    final passwordTone =
-        client.hasPassword ? AppBadgeTone.success : AppBadgeTone.warning;
-    final passwordLabel = client.hasPassword ? '已保存密码' : '待补密码';
+    final passwordTone = client.isCloud115
+        ? AppBadgeTone.info
+        : client.hasPassword
+            ? AppBadgeTone.success
+            : AppBadgeTone.warning;
+    final passwordLabel = client.isCloud115
+        ? client.kind.label
+        : client.hasPassword
+            ? '已保存密码'
+            : '待补密码';
 
     return MobileEntityListCard(
       outerKey: Key('mobile-downloader-card-${client.id}'),
@@ -360,7 +367,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
           borderRadius: context.appRadius.mdBorder,
         ),
         child: Icon(
-          Icons.download_for_offline_outlined,
+          client.isCloud115
+              ? Icons.cloud_outlined
+              : Icons.download_for_offline_outlined,
           size: componentTokens.iconSizeMd,
           color: Theme.of(context).colorScheme.primary,
         ),
@@ -382,7 +391,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       body: [
         SizedBox(height: spacing.xs),
         Text(
-          client.baseUrl,
+          client.isCloud115 ? '使用媒体库账号提交 115 离线下载' : client.baseUrl,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -391,34 +400,42 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
           ),
         ),
         SizedBox(height: spacing.sm),
-        _DownloaderMetaLine(label: '用户名', value: client.username),
-        SizedBox(height: spacing.xs),
+        if (client.isQbittorrent) ...[
+          _DownloaderMetaLine(label: '用户名', value: client.username),
+          SizedBox(height: spacing.xs),
+        ],
         _DownloaderMetaLine(
           label: '目标媒体库',
           value: mediaLibrary?.name ?? '未关联媒体库',
         ),
-        SizedBox(height: spacing.xs),
-        _DownloaderMetaLine(
-          label: 'qBittorrent保存路径',
-          value: client.clientSavePath,
-        ),
-        SizedBox(height: spacing.xs),
-        _DownloaderMetaLine(label: '本地访问路径', value: client.localRootPath),
+        if (client.isQbittorrent) ...[
+          SizedBox(height: spacing.xs),
+          _DownloaderMetaLine(
+            label: 'qBittorrent保存路径',
+            value: client.clientSavePath,
+          ),
+          SizedBox(height: spacing.xs),
+          _DownloaderMetaLine(
+            label: '本地访问路径',
+            value: client.localRootPath,
+          ),
+        ],
         SizedBox(height: spacing.sm),
         Wrap(
           spacing: spacing.xs,
           runSpacing: spacing.xs,
           children: [
-            DownloadClientProbeStatusChip(
-              key: Key('mobile-downloader-card-probe-test-${client.id}'),
-              label: '连通性',
-              state: probeSnapshot.connectivityChipState,
-              detail: probeChipDetail(
-                probeSnapshot.connectivityChipState,
-                elapsedMs: probeSnapshot.connectivityResult?.elapsedMs,
+            if (client.isQbittorrent)
+              DownloadClientProbeStatusChip(
+                key: Key('mobile-downloader-card-probe-test-${client.id}'),
+                label: '连通性',
+                state: probeSnapshot.connectivityChipState,
+                detail: probeChipDetail(
+                  probeSnapshot.connectivityChipState,
+                  elapsedMs: probeSnapshot.connectivityResult?.elapsedMs,
+                ),
+                onTap: null,
               ),
-              onTap: null,
-            ),
             DownloadClientProbeStatusChip(
               key: Key(
                 'mobile-downloader-card-probe-storage-test-${client.id}',
@@ -497,9 +514,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = (results[1] as List<MediaLibraryDto>)
-            .where((library) => library.isLocal)
-            .toList(growable: false);
+        _libraries = results[1] as List<MediaLibraryDto>;
         _indexerSettings = results[2] as IndexerSettingsDto;
         _isLoading = false;
         _errorMessage = null;
@@ -527,9 +542,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = (results[1] as List<MediaLibraryDto>)
-            .where((library) => library.isLocal)
-            .toList(growable: false);
+        _libraries = results[1] as List<MediaLibraryDto>;
         _indexerSettings = results[2] as IndexerSettingsDto;
         _errorMessage = null;
       });
@@ -625,9 +638,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = (results[1] as List<MediaLibraryDto>)
-            .where((library) => library.isLocal)
-            .toList(growable: false);
+        _libraries = results[1] as List<MediaLibraryDto>;
         _indexerSettings = results[2] as IndexerSettingsDto;
         _errorMessage = null;
       });
@@ -825,6 +836,7 @@ class _MobileDownloaderEditorDrawerState
   late final FocusNode _clientSavePathFocusNode;
   late final FocusNode _localRootPathFocusNode;
   late int? _selectedLibraryId;
+  late DownloadClientKind _kind;
   bool _hasAttemptedSubmit = false;
   bool _isSubmitting = false;
   late final DownloadClientProbeController _probe;
@@ -841,6 +853,7 @@ class _MobileDownloaderEditorDrawerState
   void initState() {
     super.initState();
     final initialClient = widget.initialClient;
+    _kind = initialClient?.kind ?? DownloadClientKind.qbittorrent;
     _nameController = TextEditingController(text: initialClient?.name ?? '');
     _baseUrlController = TextEditingController(
       text: initialClient?.baseUrl ?? '',
@@ -894,7 +907,9 @@ class _MobileDownloaderEditorDrawerState
     return AppBottomFormSheet(
       formKey: _formKey,
       title: _isEditing ? '编辑下载器' : '新增下载器',
-      subtitle: '维护下载器服务地址、路径映射和媒体库绑定关系。',
+      subtitle: _kind == DownloadClientKind.cloud115
+          ? '选择 115 媒体库即可启用离线下载。'
+          : '维护下载器服务地址、路径映射和媒体库绑定关系。',
       submitKey: const Key('mobile-downloader-submit-button'),
       isSubmitting: _isSubmitting,
       submitDisabled: _probe.busy,
@@ -910,6 +925,13 @@ class _MobileDownloaderEditorDrawerState
             clientSavePathController: _clientSavePathController,
             localRootPathController: _localRootPathController,
             libraries: widget.libraries,
+            kind: _kind,
+            onKindChanged: (value) {
+              setState(() {
+                _kind = value;
+                _selectedLibraryId = null;
+              });
+            },
             selectedLibraryId: _selectedLibraryId,
             onLibraryChanged: (value) {
               setState(() {
@@ -927,17 +949,19 @@ class _MobileDownloaderEditorDrawerState
             localRootPathFocusNode: _localRootPathFocusNode,
             onSubmitted: _submit,
           ),
-          SizedBox(height: spacing.lg),
-          DownloadClientEditorProbeChips(
-            keyPrefix: 'mobile-downloader',
-            busy: _busy,
-            connectivityState: _probe.connectivityChipState,
-            storageState: _probe.storageChipState,
-            connectivityDetail: _probe.connectivityChipDetail(),
-            storageDetail: _probe.storageChipDetail(),
-            onConnectivityTap: _handleConnectivityChipTap,
-            onStorageTap: _handleStorageChipTap,
-          ),
+          if (_kind == DownloadClientKind.qbittorrent) ...[
+            SizedBox(height: spacing.lg),
+            DownloadClientEditorProbeChips(
+              keyPrefix: 'mobile-downloader',
+              busy: _busy,
+              connectivityState: _probe.connectivityChipState,
+              storageState: _probe.storageChipState,
+              connectivityDetail: _probe.connectivityChipDetail(),
+              storageDetail: _probe.storageChipDetail(),
+              onConnectivityTap: _handleConnectivityChipTap,
+              onStorageTap: _handleStorageChipTap,
+            ),
+          ],
         ],
       ),
     );
@@ -963,6 +987,7 @@ class _MobileDownloaderEditorDrawerState
     });
 
     final value = DownloadClientFormValue.fromControllers(
+      kind: _kind,
       nameController: _nameController,
       baseUrlController: _baseUrlController,
       usernameController: _usernameController,
@@ -1007,6 +1032,7 @@ class _MobileDownloaderEditorDrawerState
       return null;
     }
     return DownloadClientFormValue.fromControllers(
+      kind: _kind,
       nameController: _nameController,
       baseUrlController: _baseUrlController,
       usernameController: _usernameController,
@@ -1183,7 +1209,11 @@ class _MobileDownloaderDetailDrawerState
     final spacing = context.appSpacing;
     final client = widget.client;
     final mediaLibrary = widget.mediaLibrary;
-    final passwordLabel = client.hasPassword ? '已保存密码' : '待补密码';
+    final passwordLabel = client.isCloud115
+        ? client.kind.label
+        : client.hasPassword
+            ? '已保存密码'
+            : '待补密码';
     final busy = _probe.busy;
 
     return SingleChildScrollView(
@@ -1208,7 +1238,7 @@ class _MobileDownloaderDetailDrawerState
                     ),
                     SizedBox(height: spacing.xs),
                     Text(
-                      client.baseUrl,
+                      client.isCloud115 ? '115 离线下载' : client.baseUrl,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,
@@ -1221,27 +1251,37 @@ class _MobileDownloaderDetailDrawerState
               ),
               AppBadge(
                 label: passwordLabel,
-                tone: client.hasPassword
-                    ? AppBadgeTone.success
-                    : AppBadgeTone.warning,
+                tone: client.isCloud115
+                    ? AppBadgeTone.info
+                    : client.hasPassword
+                        ? AppBadgeTone.success
+                        : AppBadgeTone.warning,
                 size: AppBadgeSize.compact,
               ),
             ],
           ),
           SizedBox(height: spacing.lg),
-          AppInfoBlock(label: '用户名', value: client.username),
-          SizedBox(height: spacing.sm),
+          AppInfoBlock(label: '类型', value: client.kind.label),
+          if (client.isQbittorrent) ...[
+            SizedBox(height: spacing.sm),
+            AppInfoBlock(label: '用户名', value: client.username),
+          ],
           AppInfoBlock(
             label: '目标媒体库',
             value: mediaLibrary?.name ?? '未关联媒体库',
           ),
-          SizedBox(height: spacing.sm),
-          AppInfoBlock(
-            label: 'qBittorrent保存路径',
-            value: client.clientSavePath,
-          ),
-          SizedBox(height: spacing.sm),
-          AppInfoBlock(label: '本地访问路径', value: client.localRootPath),
+          if (client.isQbittorrent) ...[
+            SizedBox(height: spacing.sm),
+            AppInfoBlock(
+              label: 'qBittorrent保存路径',
+              value: client.clientSavePath,
+            ),
+            SizedBox(height: spacing.sm),
+            AppInfoBlock(
+              label: '本地访问路径',
+              value: client.localRootPath,
+            ),
+          ],
           SizedBox(height: spacing.sm),
           AppInfoBlock(
             label: '更新时间',
@@ -1262,13 +1302,14 @@ class _MobileDownloaderDetailDrawerState
             spacing: spacing.sm,
             runSpacing: spacing.sm,
             children: [
-              DownloadClientProbeStatusChip(
-                key: const Key('mobile-downloader-detail-probe-test-button'),
-                label: '连通性',
-                state: _probe.connectivityChipState,
-                detail: _probe.connectivityChipDetail(),
-                onTap: busy ? null : _handleConnectivityAction,
-              ),
+              if (client.isQbittorrent)
+                DownloadClientProbeStatusChip(
+                  key: const Key('mobile-downloader-detail-probe-test-button'),
+                  label: '连通性',
+                  state: _probe.connectivityChipState,
+                  detail: _probe.connectivityChipDetail(),
+                  onTap: busy ? null : _handleConnectivityAction,
+                ),
               DownloadClientProbeStatusChip(
                 key: const Key(
                   'mobile-downloader-detail-probe-storage-test-button',

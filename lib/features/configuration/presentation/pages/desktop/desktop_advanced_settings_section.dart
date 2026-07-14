@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/validation/url_validators.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
@@ -62,6 +63,10 @@ class _DesktopAdvancedSettingsSectionState
   String? _errorMessage;
   String _loggingLevel = _defaultLoggingLevel;
   String _savedLoggingLevel = _defaultLoggingLevel;
+  List<DownloadClientKind> _preferredClientKinds = const <DownloadClientKind>[
+    DownloadClientKind.qbittorrent,
+    DownloadClientKind.cloud115,
+  ];
 
   ConfigApi get _api => context.read<ConfigApi>();
 
@@ -143,6 +148,8 @@ class _DesktopAdvancedSettingsSectionState
         SizedBox(height: spacing.xl),
         _buildSchedulerCard(context),
         SizedBox(height: spacing.xl),
+        _buildDownloadsCard(context),
+        SizedBox(height: spacing.xl),
         _buildOtherCard(context),
       ],
     );
@@ -204,8 +211,8 @@ class _DesktopAdvancedSettingsSectionState
                   keyboardType: TextInputType.number,
                   suffix: const _UnitSuffix(label: '分钟'),
                   tightSuffix: true,
-                  validator:
-                      (value) => _positiveIntError(value, label: '合集时长阈值'),
+                  validator: (value) =>
+                      _positiveIntError(value, label: '合集时长阈值'),
                   onChanged: (_) => _markDirty(_AdvancedCardKind.media),
                 ),
                 AppTextField(
@@ -431,7 +438,7 @@ class _DesktopAdvancedSettingsSectionState
     final spacing = context.appSpacing;
     return AppContentCard(
       key: const Key('configuration-advanced-other-card'),
-      title: '其他',
+      title: '下载清理与日志',
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
       headerTrailing: _CardBadges(
@@ -480,18 +487,17 @@ class _DesktopAdvancedSettingsSectionState
                         child: Text(level),
                       ),
                   ],
-                  onChanged:
-                      _savingCards.contains(_AdvancedCardKind.other)
-                          ? null
-                          : (value) {
-                            if (value == null || value == _loggingLevel) {
-                              return;
-                            }
-                            setState(() {
-                              _loggingLevel = value;
-                            });
-                            _markDirty(_AdvancedCardKind.other);
-                          },
+                  onChanged: _savingCards.contains(_AdvancedCardKind.other)
+                      ? null
+                      : (value) {
+                          if (value == null || value == _loggingLevel) {
+                            return;
+                          }
+                          setState(() {
+                            _loggingLevel = value;
+                          });
+                          _markDirty(_AdvancedCardKind.other);
+                        },
                 ),
               ],
             ),
@@ -504,6 +510,84 @@ class _DesktopAdvancedSettingsSectionState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDownloadsCard(BuildContext context) {
+    final spacing = context.appSpacing;
+    final selectedKind = _preferredClientKinds.first;
+    return AppContentCard(
+      key: const Key('configuration-advanced-download-preference-card'),
+      title: '下载偏好',
+      padding: EdgeInsets.all(spacing.lg),
+      headerBottomSpacing: spacing.md,
+      headerTrailing: _CardBadges(
+        badges: [
+          const AppBadge(label: '调度重启', tone: AppBadgeTone.warning),
+          if (_dirtyCards.contains(_AdvancedCardKind.downloads))
+            const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardTip(
+            icon: Icons.priority_high_rounded,
+            message:
+                '未显式选择下载器时，系统按此顺序自动选择。手动搜索和提交会立即使用新偏好；自动下载任务需重启 APS 调度进程后生效。',
+          ),
+          SizedBox(height: spacing.lg),
+          AppSelectField<DownloadClientKind>(
+            key: const Key(
+              'configuration-advanced-preferred-download-client-field',
+            ),
+            label: '首选下载器',
+            value: selectedKind,
+            items: [
+              for (final kind in DownloadClientKind.values)
+                DropdownMenuItem<DownloadClientKind>(
+                  value: kind,
+                  child: Text(kind.label),
+                ),
+            ],
+            onChanged: _savingCards.contains(_AdvancedCardKind.downloads)
+                ? null
+                : (value) {
+                    if (value == null || value == selectedKind) {
+                      return;
+                    }
+                    setState(() {
+                      _preferredClientKinds = <DownloadClientKind>[
+                        value,
+                        ...DownloadClientKind.values.where(
+                          (kind) => kind != value,
+                        ),
+                      ];
+                    });
+                    _markDirty(_AdvancedCardKind.downloads);
+                  },
+          ),
+          SizedBox(height: spacing.sm),
+          Text(
+            '${_preferredClientKinds.last.label} 会作为候补下载器。',
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.muted,
+            ),
+          ),
+          SizedBox(height: spacing.lg),
+          _buildActions(
+            context,
+            buttonKey: const Key(
+              'configuration-advanced-download-preference-save-button',
+            ),
+            isSaving: _savingCards.contains(_AdvancedCardKind.downloads),
+            onSave: _handleSaveDownloads,
+          ),
+        ],
       ),
     );
   }
@@ -537,10 +621,9 @@ class _DesktopAdvancedSettingsSectionState
         final layout = context.appLayoutTokens;
         final minTwoColumnWidth = layout.filterFieldWidthXl * 2 + spacing.md;
         final useTwoColumns = constraints.maxWidth >= minTwoColumnWidth;
-        final fieldWidth =
-            useTwoColumns
-                ? (constraints.maxWidth - spacing.md) / 2
-                : constraints.maxWidth;
+        final fieldWidth = useTwoColumns
+            ? (constraints.maxWidth - spacing.md) / 2
+            : constraints.maxWidth;
         return Wrap(
           spacing: spacing.md,
           runSpacing: spacing.md,
@@ -612,27 +695,50 @@ class _DesktopAdvancedSettingsSectionState
     if (!(_mediaFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(_AdvancedCardKind.media, <String, dynamic>{
-      'media': _buildMediaPayload(),
-    }, (values) => _applyMedia(values.media));
+    await _savePartial(
+        _AdvancedCardKind.media,
+        <String, dynamic>{
+          'media': _buildMediaPayload(),
+        },
+        (values) => _applyMedia(values.media));
   }
 
   Future<void> _handleSaveMetadata() async {
     if (!(_metadataFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(_AdvancedCardKind.metadata, <String, dynamic>{
-      'metadata': _buildMetadataPayload(),
-    }, (values) => _applyMetadata(values.metadata));
+    await _savePartial(
+        _AdvancedCardKind.metadata,
+        <String, dynamic>{
+          'metadata': _buildMetadataPayload(),
+        },
+        (values) => _applyMetadata(values.metadata));
   }
 
   Future<void> _handleSaveScheduler() async {
     if (!(_schedulerFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(_AdvancedCardKind.scheduler, <String, dynamic>{
-      'scheduler': _buildSchedulerPayload(),
-    }, (values) => _applyScheduler(values.scheduler));
+    await _savePartial(
+        _AdvancedCardKind.scheduler,
+        <String, dynamic>{
+          'scheduler': _buildSchedulerPayload(),
+        },
+        (values) => _applyScheduler(values.scheduler));
+  }
+
+  Future<void> _handleSaveDownloads() async {
+    await _savePartial(
+      _AdvancedCardKind.downloads,
+      <String, dynamic>{
+        'downloads': <String, dynamic>{
+          'preferred_client_kinds': _preferredClientKinds
+              .map((kind) => kind.wireValue)
+              .toList(growable: false),
+        },
+      },
+      (values) => _applyDownloads(values.downloads),
+    );
   }
 
   Future<void> _handleSaveOther() async {
@@ -717,7 +823,7 @@ class _DesktopAdvancedSettingsSectionState
       ),
       'allowed_min_video_file_size':
           _parseInt(_allowedMinVideoFileSizeController.text) *
-          _bytesPerMegabyte,
+              _bytesPerMegabyte,
     };
   }
 
@@ -792,13 +898,13 @@ class _DesktopAdvancedSettingsSectionState
   void _applyDownloads(AdvancedDownloadsConfigDto downloads) {
     _smallFileCleanupThresholdController.text =
         downloads.smallFileCleanupThresholdMb.toString();
+    _preferredClientKinds = downloads.preferredClientKinds;
   }
 
   void _applyLogging(AdvancedLoggingConfigDto logging) {
-    _loggingLevel =
-        _loggingLevels.contains(logging.level)
-            ? logging.level
-            : _defaultLoggingLevel;
+    _loggingLevel = _loggingLevels.contains(logging.level)
+        ? logging.level
+        : _defaultLoggingLevel;
     _savedLoggingLevel = _loggingLevel;
   }
 
@@ -842,11 +948,10 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   String? _cronError(String? value) {
-    final parts =
-        (value?.trim() ?? '')
-            .split(RegExp(r'\s+'))
-            .where((part) => part.isNotEmpty)
-            .toList();
+    final parts = (value?.trim() ?? '')
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
     if (parts.length != _cronPartCount) {
       return '请输入 5 位标准 cron';
     }
@@ -874,10 +979,9 @@ class _DesktopAdvancedSettingsSectionState
     if (values.isEmpty) {
       return includeOthersRule ? '尚未识别条目；规则：下划线转横线、大写、去 PPV- 前缀。' : '尚未识别条目';
     }
-    final previewValues =
-        normalizeOthersNumber
-            ? values.map(_normalizeOthersNumberFeature).toList()
-            : values;
+    final previewValues = normalizeOthersNumber
+        ? values.map(_normalizeOthersNumberFeature).toList()
+        : values;
     final visibleValues = previewValues.take(_previewItemCount).join(', ');
     final suffix = previewValues.length > _previewItemCount ? ', ...' : '';
     final summary = '已识别 ${previewValues.length} 条：$visibleValues$suffix';
@@ -903,7 +1007,7 @@ class _DesktopAdvancedSettingsSectionState
   }
 }
 
-enum _AdvancedCardKind { media, metadata, scheduler, other }
+enum _AdvancedCardKind { media, metadata, scheduler, downloads, other }
 
 /// 根据 `PATCH /config` 响应里的 `pending_restart` 列表拼保存成功后的 toast 文案。
 ///

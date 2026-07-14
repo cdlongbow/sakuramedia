@@ -374,14 +374,13 @@ void main() {
     await tester.tap(find.text('PT (私有)').last);
     await tester.pumpAndSettle();
     await tester.ensureVisible(
-      find.byKey(const Key('indexer-entry-download-client-field')),
+      find.byKey(const Key('indexer-download-client-1')),
     );
-    await tester.tap(
-      find.byKey(const Key('indexer-entry-download-client-field')),
+    await tester.tap(find.byKey(const Key('indexer-download-client-1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('mobile-indexer-submit-button')),
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('client-a').last);
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('mobile-indexer-submit-button')));
     await tester.pump();
     await tester.pumpAndSettle();
@@ -390,8 +389,91 @@ void main() {
       (request) =>
           request.method == 'PATCH' && request.path == '/indexer-settings',
     );
-    expect(patchRequest.body['indexers'][0]['download_client_id'], 1);
+    expect(patchRequest.body['indexers'][0]['download_client_ids'], <int>[1]);
     expect(find.text('M-Team'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('BT indexer can bind qBittorrent and cloud115 together', (
+    WidgetTester tester,
+  ) async {
+    _enqueueIndexersData(
+      _bundle,
+      clients: <Map<String, dynamic>>[
+        ..._defaultClients,
+        _cloudDownloadClient,
+      ],
+      apiKey: 'secret-key',
+      indexers: const <Map<String, dynamic>>[],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'PATCH',
+      path: '/indexer-settings',
+      body: _buildSettingsJson(
+        apiKey: 'secret-key',
+        indexers: const <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 3,
+            'name': 'DMHY',
+            'url': 'https://dmhy.example/api',
+            'kind': 'bt',
+            'download_clients': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 1,
+                'name': 'client-a',
+                'kind': 'qbittorrent',
+              },
+              <String, dynamic>{
+                'id': 8,
+                'name': '115 主账号',
+                'kind': 'cloud115',
+              },
+            ],
+          },
+        ],
+      ),
+    );
+
+    await _pumpPage(tester);
+    await tester.tap(find.byKey(const Key('mobile-indexers-create-button')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('indexer-entry-name-field')),
+      'DMHY',
+    );
+    await tester.enterText(
+      find.byKey(const Key('indexer-entry-url-field')),
+      'https://dmhy.example/api',
+    );
+    expect(
+      find.byKey(const Key('indexer-download-client-8')),
+      findsNothing,
+    );
+    await tester.tap(find.text('BT (公网)').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('indexer-download-client-1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('indexer-download-client-8')),
+    );
+    await tester.tap(find.byKey(const Key('indexer-download-client-8')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('mobile-indexer-submit-button')),
+    );
+    await tester.tap(find.byKey(const Key('mobile-indexer-submit-button')));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final patchRequest = _bundle.adapter.requests.firstWhere(
+      (request) =>
+          request.method == 'PATCH' && request.path == '/indexer-settings',
+    );
+    expect(
+      patchRequest.body['indexers'][0]['download_client_ids'],
+      <int>[1, 8],
+    );
+    expect(find.textContaining('client-a、115 主账号'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -439,6 +521,9 @@ void main() {
     await tester.enterText(
       find.byKey(const Key('indexer-entry-url-field')),
       'https://mt-updated.example/api',
+    );
+    await tester.ensureVisible(
+      find.byKey(const Key('mobile-indexer-submit-button')),
     );
     await tester.tap(find.byKey(const Key('mobile-indexer-submit-button')));
     await tester.pump();
@@ -504,12 +589,15 @@ void main() {
         find.byKey(const Key('indexer-entry-url-field')),
         'not-url',
       );
+      await tester.ensureVisible(
+        find.byKey(const Key('mobile-indexer-submit-button')),
+      );
       await tester.tap(find.byKey(const Key('mobile-indexer-submit-button')));
       await tester.pumpAndSettle();
 
       expect(find.text('索引器名称重复'), findsOneWidget);
       expect(find.text('请输入合法的 http/https 地址'), findsOneWidget);
-      expect(find.text('请选择下载器'), findsWidgets);
+      expect(find.text('请至少选择一个下载器'), findsWidgets);
       expect(_bundle.adapter.hitCount('PATCH', '/indexer-settings'), 0);
     },
   );
@@ -564,12 +652,11 @@ void main() {
         find.byKey(const Key('mobile-indexer-detail-edit-button')),
       );
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('indexer-entry-download-client-field')),
+      await tester.tap(find.byKey(const Key('indexer-download-client-1')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('mobile-indexer-submit-button')),
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('client-a').last);
-      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('mobile-indexer-submit-button')));
       await tester.pump();
       await tester.pumpAndSettle();
@@ -578,7 +665,7 @@ void main() {
         (request) =>
             request.method == 'PATCH' && request.path == '/indexer-settings',
       );
-      expect(patchRequest.body['indexers'][0]['download_client_id'], 1);
+      expect(patchRequest.body['indexers'][0]['download_client_ids'], <int>[1]);
       expect(
         find.byKey(const Key('mobile-indexer-invalid-binding-1')),
         findsNothing,
@@ -640,18 +727,30 @@ Map<String, dynamic> _buildSettingsJson({
   return <String, dynamic>{
     'type': 'jackett',
     'api_key': apiKey,
-    'indexers':
-        indexers ??
-        const <Map<String, dynamic>>[
+    'indexers': (indexers ??
+            const <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 1,
+                'name': '馒头',
+                'url': 'https://mt.example/api',
+                'kind': 'pt',
+                'download_client_id': 1,
+                'download_client_name': 'client-a',
+              },
+            ])
+        .map((entry) {
+      if (entry.containsKey('download_clients')) return entry;
+      return <String, dynamic>{
+        ...entry,
+        'download_clients': <Map<String, dynamic>>[
           <String, dynamic>{
-            'id': 1,
-            'name': '馒头',
-            'url': 'https://mt.example/api',
-            'kind': 'pt',
-            'download_client_id': 1,
-            'download_client_name': 'client-a',
+            'id': entry['download_client_id'],
+            'name': entry['download_client_name'],
+            'kind': 'qbittorrent',
           },
         ],
+      };
+    }).toList(growable: false),
   };
 }
 
@@ -659,6 +758,7 @@ Map<String, dynamic> _buildClientJson({int id = 1, String name = 'client-a'}) {
   return <String, dynamic>{
     'id': id,
     'name': name,
+    'kind': 'qbittorrent',
     'base_url': 'http://qb.local:8080',
     'username': 'alice',
     'client_save_path': '/downloads/a',
@@ -674,6 +774,7 @@ const List<Map<String, dynamic>> _defaultClients = <Map<String, dynamic>>[
   <String, dynamic>{
     'id': 1,
     'name': 'client-a',
+    'kind': 'qbittorrent',
     'base_url': 'http://qb.local:8080',
     'username': 'alice',
     'client_save_path': '/downloads/a',
@@ -684,6 +785,20 @@ const List<Map<String, dynamic>> _defaultClients = <Map<String, dynamic>>[
     'updated_at': '2026-03-08T10:30:00Z',
   },
 ];
+
+const Map<String, dynamic> _cloudDownloadClient = <String, dynamic>{
+  'id': 8,
+  'name': '115 主账号',
+  'kind': 'cloud115',
+  'base_url': null,
+  'username': null,
+  'client_save_path': null,
+  'local_root_path': null,
+  'media_library_id': 8,
+  'has_password': false,
+  'created_at': '2026-07-15T08:00:00Z',
+  'updated_at': '2026-07-15T08:00:00Z',
+};
 
 Future<SessionStore> _buildLoggedInSessionStore() async {
   final store = SessionStore.inMemory();

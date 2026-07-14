@@ -698,6 +698,7 @@ void main() {
         find.byKey(const Key('configuration-playlist-description-field')),
         'Updated',
       );
+      await tester.ensureVisible(find.text('保存').last);
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
 
@@ -802,6 +803,7 @@ void main() {
         find.byKey(const Key('media-library-root-path-field')),
         '/media/library/archive',
       );
+      await tester.ensureVisible(find.text('保存').last);
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
 
@@ -1762,6 +1764,7 @@ void main() {
         find.byKey(const Key('download-client-username-field')),
         'bob',
       );
+      await tester.ensureVisible(find.text('保存').last);
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
 
@@ -1827,6 +1830,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Main Library').last);
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('保存').last);
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
 
@@ -1994,7 +1998,7 @@ void main() {
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
 
-      expect(find.text('请选择下载器'), findsWidgets);
+      expect(find.text('请至少选择一个下载器'), findsWidgets);
     });
 
     testWidgets(
@@ -2015,8 +2019,13 @@ void main() {
                 'name': 'mteam',
                 'url': 'https://mirror.example.com/torznab',
                 'kind': 'pt',
-                'download_client_id': 1,
-                'download_client_name': 'client-a',
+                'download_clients': [
+                  {
+                    'id': 1,
+                    'name': 'client-a',
+                    'kind': 'qbittorrent',
+                  },
+                ],
               },
             ],
           },
@@ -2038,11 +2047,7 @@ void main() {
           find.byKey(const Key('indexer-entry-url-field')),
           'https://mirror.example.com/torznab',
         );
-        await tester.tap(
-          find.byKey(const Key('indexer-entry-download-client-field')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('client-a').last);
+        await tester.tap(find.byKey(const Key('indexer-download-client-1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('保存').last);
         await tester.pumpAndSettle();
@@ -2055,7 +2060,10 @@ void main() {
           (request) =>
               request.method == 'PATCH' && request.path == '/indexer-settings',
         );
-        expect(patchRequest.body['indexers'][0]['download_client_id'], 1);
+        expect(
+          patchRequest.body['indexers'][0]['download_client_ids'],
+          <int>[1],
+        );
         expect(find.textContaining('下载器: client-a'), findsOneWidget);
         await tester.pump(const Duration(seconds: 3));
       },
@@ -2128,8 +2136,13 @@ void main() {
               'name': 'mteam',
               'url': 'https://mirror.example.com/torznab',
               'kind': 'pt',
-              'download_client_id': 2,
-              'download_client_name': 'client-b',
+              'download_clients': [
+                {
+                  'id': 2,
+                  'name': 'client-b',
+                  'kind': 'qbittorrent',
+                },
+              ],
             },
           ],
         },
@@ -2142,11 +2155,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('client-a'), findsWidgets);
-      await tester.tap(
-        find.byKey(const Key('indexer-entry-download-client-field')),
-      );
+      await tester.tap(find.byKey(const Key('indexer-download-client-1')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('client-b').last);
+      await tester.tap(find.byKey(const Key('indexer-download-client-2')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
@@ -2159,7 +2170,10 @@ void main() {
         (request) =>
             request.method == 'PATCH' && request.path == '/indexer-settings',
       );
-      expect(patchRequest.body['indexers'][0]['download_client_id'], 2);
+      expect(
+        patchRequest.body['indexers'][0]['download_client_ids'],
+        <int>[2],
+      );
       expect(find.textContaining('下载器: client-b'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
     });
@@ -2202,11 +2216,7 @@ void main() {
         find.byKey(const Key('indexer-entry-url-field')),
         'https://mirror.example.com/torznab',
       );
-      await tester.tap(
-        find.byKey(const Key('indexer-entry-download-client-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('client-a').last);
+      await tester.tap(find.byKey(const Key('indexer-download-client-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
@@ -2404,6 +2414,7 @@ const List<Map<String, Object?>> _defaultDownloadClients = [
   {
     'id': 1,
     'name': 'client-a',
+    'kind': 'qbittorrent',
     'base_url': 'http://localhost:8080',
     'username': 'alice',
     'client_save_path': '/downloads/a',
@@ -2416,6 +2427,7 @@ const List<Map<String, Object?>> _defaultDownloadClients = [
   {
     'id': 2,
     'name': 'client-b',
+    'kind': 'qbittorrent',
     'base_url': 'http://localhost:8081',
     'username': 'bob',
     'client_save_path': '/downloads/b',
@@ -2434,7 +2446,23 @@ void _enqueueIndexerSettings(
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/indexer-settings',
-    body: {'type': 'jackett', 'api_key': 'secret-key', 'indexers': indexers},
+    body: {
+      'type': 'jackett',
+      'api_key': 'secret-key',
+      'indexers': indexers.map((entry) {
+        if (entry.containsKey('download_clients')) return entry;
+        return <String, Object?>{
+          ...entry,
+          'download_clients': <Map<String, Object?>>[
+            <String, Object?>{
+              'id': entry['download_client_id'],
+              'name': entry['download_client_name'],
+              'kind': 'qbittorrent',
+            },
+          ],
+        };
+      }).toList(growable: false),
+    },
   );
 }
 
@@ -2520,7 +2548,10 @@ Map<String, dynamic> _buildAdvancedConfigResponseJson() {
         for (final key in AdvancedSchedulerConfigDto.cronKeys)
           '${key}_cron': '0 2 * * *',
       },
-      'downloads': <String, dynamic>{'small_file_cleanup_threshold_mb': 256},
+      'downloads': <String, dynamic>{
+        'small_file_cleanup_threshold_mb': 256,
+        'preferred_client_kinds': <String>['qbittorrent', 'cloud115'],
+      },
       'logging': <String, dynamic>{'level': 'INFO'},
     },
     'effects': <String, dynamic>{

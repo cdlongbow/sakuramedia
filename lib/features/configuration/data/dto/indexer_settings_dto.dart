@@ -1,19 +1,45 @@
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
+
+class IndexerBoundClientDto {
+  const IndexerBoundClientDto({
+    required this.id,
+    required this.name,
+    required this.kind,
+  });
+
+  final int id;
+  final String name;
+  final DownloadClientKind kind;
+
+  factory IndexerBoundClientDto.fromJson(Map<String, dynamic> json) {
+    return IndexerBoundClientDto(
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      kind: DownloadClientKindX.fromWire(json['kind']),
+    );
+  }
+}
+
 class IndexerEntryDto {
   const IndexerEntryDto({
     required this.id,
     required this.name,
     required this.url,
     required this.kind,
-    required this.downloadClientId,
-    required this.downloadClientName,
+    required this.downloadClients,
   });
 
   final int id;
   final String name;
   final String url;
   final String kind;
-  final int downloadClientId;
-  final String downloadClientName;
+  final List<IndexerBoundClientDto> downloadClients;
+
+  List<int> get downloadClientIds =>
+      downloadClients.map((client) => client.id).toList(growable: false);
+
+  String get downloadClientNames =>
+      downloadClients.map((client) => client.name).join('、');
 
   factory IndexerEntryDto.fromJson(Map<String, dynamic> json) {
     return IndexerEntryDto(
@@ -21,8 +47,7 @@ class IndexerEntryDto {
       name: json['name'] as String? ?? '',
       url: json['url'] as String? ?? '',
       kind: json['kind'] as String? ?? '',
-      downloadClientId: json['download_client_id'] as int? ?? 0,
-      downloadClientName: json['download_client_name'] as String? ?? '',
+      downloadClients: _parseBoundClients(json['download_clients']),
     );
   }
 
@@ -31,8 +56,22 @@ class IndexerEntryDto {
       'name': name,
       'url': url,
       'kind': kind,
-      'download_client_id': downloadClientId,
+      'download_client_ids': downloadClientIds,
     };
+  }
+
+  static List<IndexerBoundClientDto> _parseBoundClients(dynamic value) {
+    if (value is! List) return const <IndexerBoundClientDto>[];
+    return value
+        .whereType<Map>()
+        .map(
+          (item) => IndexerBoundClientDto.fromJson(
+            item.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+            ),
+          ),
+        )
+        .toList(growable: false);
   }
 }
 
@@ -49,20 +88,19 @@ class IndexerSettingsDto {
 
   factory IndexerSettingsDto.fromJson(Map<String, dynamic> json) {
     final rawIndexers = json['indexers'];
-    final indexers =
-        rawIndexers is List
-            ? rawIndexers
-                .whereType<Map>()
-                .map(
-                  (entry) => IndexerEntryDto.fromJson(
-                    entry.map(
-                      (dynamic key, dynamic value) =>
-                          MapEntry(key.toString(), value),
-                    ),
-                  ),
-                )
-                .toList(growable: false)
-            : const <IndexerEntryDto>[];
+    final indexers = rawIndexers is List
+        ? rawIndexers
+            .whereType<Map>()
+            .map(
+              (entry) => IndexerEntryDto.fromJson(
+                entry.map(
+                  (dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value),
+                ),
+              ),
+            )
+            .toList(growable: false)
+        : const <IndexerEntryDto>[];
     return IndexerSettingsDto(
       type: json['type'] as String? ?? '',
       apiKey: json['api_key'] as String? ?? '',
@@ -145,15 +183,13 @@ class IndexerConnectionTestResultDto {
       indexersChecked: json['indexers_checked'] as int? ?? 0,
       resultCount: json['result_count'] as int? ?? 0,
       elapsedMs: json['elapsed_ms'] as int? ?? 0,
-      error:
-          rawError is Map
-              ? IndexerConnectionTestErrorDto.fromJson(
-                rawError.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value),
-                ),
-              )
-              : null,
+      error: rawError is Map
+          ? IndexerConnectionTestErrorDto.fromJson(
+              rawError.map(
+                (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+              ),
+            )
+          : null,
     );
   }
 }

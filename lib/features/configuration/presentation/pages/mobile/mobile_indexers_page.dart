@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -49,8 +50,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
 
   bool get _hasDownloadClients => _downloadClients.isNotEmpty;
 
-  int get _boundIndexerCount =>
-      _indexers.where((item) => _resolveDownloadClient(item) != null).length;
+  int get _boundIndexerCount => _indexers.where(_boundClientsStillExist).length;
 
   String get _resolvedSettingsType {
     final trimmed = _settingsType.trim();
@@ -125,10 +125,9 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
                 label: '新增索引器',
                 variant: AppButtonVariant.primary,
                 icon: const Icon(Icons.add_rounded),
-                onPressed:
-                    !_isLoading && _hasDownloadClients
-                        ? _handleCreateIndexer
-                        : null,
+                onPressed: !_isLoading && _hasDownloadClients
+                    ? _handleCreateIndexer
+                    : null,
               ),
             ),
           ),
@@ -183,8 +182,8 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
             title: '请先在下载器页创建下载器',
             description: '索引器需要先绑定下载器，影片详情里的资源投递才能生效。',
             actionLabel: '前往下载器',
-            onActionTap:
-                () => GoRouter.of(context).push(mobileSettingsDownloadersPath),
+            onActionTap: () =>
+                GoRouter.of(context).push(mobileSettingsDownloadersPath),
           ),
           SizedBox(height: spacing.md),
         ],
@@ -224,10 +223,9 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
               ),
               AppBadge(
                 label: _apiKeyController.text.trim().isEmpty ? '待配置' : '已配置',
-                tone:
-                    _apiKeyController.text.trim().isEmpty
-                        ? AppBadgeTone.warning
-                        : AppBadgeTone.success,
+                tone: _apiKeyController.text.trim().isEmpty
+                    ? AppBadgeTone.warning
+                    : AppBadgeTone.success,
                 size: AppBadgeSize.compact,
               ),
             ],
@@ -307,9 +305,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
   Widget _buildIndexerCard(BuildContext context, IndexerEntryDto entry) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
-    final downloadClient = _resolveDownloadClient(entry);
-    final hasInvalidBinding =
-        entry.downloadClientId > 0 && downloadClient == null;
+    final hasInvalidBinding = !_boundClientsStillExist(entry);
 
     return MobileEntityListCard(
       outerKey: Key('mobile-indexer-card-${entry.id}'),
@@ -338,7 +334,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
         ),
         SizedBox(height: spacing.sm),
         Text(
-          '绑定下载器: ${downloadClient?.name ?? '未匹配'}',
+          '绑定下载器: ${entry.downloadClientNames.isEmpty ? '未匹配' : entry.downloadClientNames}',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -440,12 +436,12 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
 
     try {
       final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: _resolvedSettingsType,
-          apiKey: apiKey,
-          indexers: _indexers,
-        ),
-      );
+            UpdateIndexerSettingsPayload(
+              type: _resolvedSettingsType,
+              apiKey: apiKey,
+              indexers: _indexers,
+            ),
+          );
       if (!mounted) {
         return;
       }
@@ -497,7 +493,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     final action = await showMobileIndexerDetailDrawer(
       context,
       entry: entry,
-      downloadClient: _resolveDownloadClient(entry),
+      hasInvalidBinding: !_boundClientsStillExist(entry),
     );
     if (!mounted || action == null) {
       return;
@@ -532,9 +528,8 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     final api = context.read<IndexerSettingsApi>();
     final settingsType = _resolvedSettingsType;
     final apiKey = _apiKeyController.text.trim();
-    final nextEntries = _indexers
-        .where((item) => item.id != entry.id)
-        .toList(growable: false);
+    final nextEntries =
+        _indexers.where((item) => item.id != entry.id).toList(growable: false);
     IndexerSettingsDto? savedSettings;
     final confirmed = await showAppConfirmDialog(
       context,
@@ -605,8 +600,10 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
           current.name != previous.name ||
           current.url != previous.url ||
           current.kind != previous.kind ||
-          current.downloadClientId != previous.downloadClientId ||
-          current.downloadClientName != previous.downloadClientName) {
+          !listEquals(
+            current.downloadClientIds,
+            previous.downloadClientIds,
+          )) {
         return true;
       }
     }
@@ -626,13 +623,10 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     return null;
   }
 
-  DownloadClientDto? _resolveDownloadClient(IndexerEntryDto entry) {
-    for (final client in _downloadClients) {
-      if (client.id == entry.downloadClientId) {
-        return client;
-      }
-    }
-    return null;
+  bool _boundClientsStillExist(IndexerEntryDto entry) {
+    final existingIds = _downloadClients.map((client) => client.id).toSet();
+    return entry.downloadClients.isNotEmpty &&
+        entry.downloadClientIds.every(existingIds.contains);
   }
 }
 
@@ -663,7 +657,7 @@ Future<IndexerSettingsDto?> showMobileIndexerEditorDrawer(
 Future<MobileIndexerDetailAction?> showMobileIndexerDetailDrawer(
   BuildContext context, {
   required IndexerEntryDto entry,
-  required DownloadClientDto? downloadClient,
+  required bool hasInvalidBinding,
 }) {
   return showAppBottomDrawer<MobileIndexerDetailAction>(
     context: context,
@@ -672,7 +666,7 @@ Future<MobileIndexerDetailAction?> showMobileIndexerDetailDrawer(
     builder: (drawerContext) {
       return _MobileIndexerDetailDrawer(
         entry: entry,
-        downloadClient: downloadClient,
+        hasInvalidBinding: hasInvalidBinding,
       );
     },
   );
@@ -729,16 +723,15 @@ class _MobileIndexerEditorDrawerState
   late final FocusNode _nameFocusNode;
   late final FocusNode _urlFocusNode;
   late String _kind;
-  late int? _selectedDownloadClientId;
+  late List<int> _selectedDownloadClientIds;
   bool _hasAttemptedSubmit = false;
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.initialEntry != null;
 
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -749,7 +742,9 @@ class _MobileIndexerEditorDrawerState
     _nameFocusNode = FocusNode();
     _urlFocusNode = FocusNode();
     _kind = initialEntry?.kind ?? 'pt';
-    _selectedDownloadClientId = initialEntry?.downloadClientId;
+    _selectedDownloadClientIds = List<int>.of(
+      initialEntry?.downloadClientIds ?? const <int>[],
+    );
   }
 
   @override
@@ -775,18 +770,28 @@ class _MobileIndexerEditorDrawerState
         urlController: _urlController,
         kind: _kind,
         downloadClients: widget.downloadClients,
-        selectedDownloadClientId: _selectedDownloadClientId,
+        selectedDownloadClientIds: _selectedDownloadClientIds,
         existingEntries: widget.existingEntries,
         editingEntryId: widget.initialEntry?.id,
         enabled: !_isSubmitting,
         autovalidateMode: _autovalidateMode,
         nameFocusNode: _nameFocusNode,
         urlFocusNode: _urlFocusNode,
-        onKindChanged: (value) => setState(() => _kind = value),
-        onDownloadClientChanged:
-            (value) => setState(() {
-              _selectedDownloadClientId = value;
-            }),
+        onKindChanged: (value) => setState(() {
+          _kind = value;
+          if (value == 'pt') {
+            final qbIds = widget.downloadClients
+                .where((client) => client.isQbittorrent)
+                .map((client) => client.id)
+                .toSet();
+            _selectedDownloadClientIds = _selectedDownloadClientIds
+                .where(qbIds.contains)
+                .toList(growable: false);
+          }
+        }),
+        onDownloadClientsChanged: (value) => setState(() {
+          _selectedDownloadClientIds = value;
+        }),
         onSubmitted: _submit,
       ),
     );
@@ -820,8 +825,7 @@ class _MobileIndexerEditorDrawerState
       name: _nameController.text.trim(),
       url: _urlController.text.trim(),
       kind: _kind,
-      downloadClientId: _selectedDownloadClientId ?? 0,
-      downloadClientName: _downloadClientNameFor(_selectedDownloadClientId),
+      downloadClients: _selectedDownloadClients(),
     );
     final nextEntries = List<IndexerEntryDto>.of(widget.existingEntries);
     final existingIndex = nextEntries.indexWhere(
@@ -839,12 +843,12 @@ class _MobileIndexerEditorDrawerState
 
     try {
       final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: widget.settingsType,
-          apiKey: widget.apiKey,
-          indexers: nextEntries,
-        ),
-      );
+            UpdateIndexerSettingsPayload(
+              type: widget.settingsType,
+              apiKey: widget.apiKey,
+              indexers: nextEntries,
+            ),
+          );
       if (!mounted) {
         return;
       }
@@ -863,34 +867,36 @@ class _MobileIndexerEditorDrawerState
     }
   }
 
-  String _downloadClientNameFor(int? clientId) {
-    if (clientId == null) {
-      return '';
-    }
-    for (final client in widget.downloadClients) {
-      if (client.id == clientId) {
-        return client.name;
-      }
-    }
-    return '';
+  List<IndexerBoundClientDto> _selectedDownloadClients() {
+    final clientsById = <int, DownloadClientDto>{
+      for (final client in widget.downloadClients) client.id: client,
+    };
+    return _selectedDownloadClientIds
+        .map((id) => clientsById[id])
+        .whereType<DownloadClientDto>()
+        .map(
+          (client) => IndexerBoundClientDto(
+            id: client.id,
+            name: client.name,
+            kind: client.kind,
+          ),
+        )
+        .toList(growable: false);
   }
 }
 
 class _MobileIndexerDetailDrawer extends StatelessWidget {
   const _MobileIndexerDetailDrawer({
     required this.entry,
-    required this.downloadClient,
+    required this.hasInvalidBinding,
   });
 
   final IndexerEntryDto entry;
-  final DownloadClientDto? downloadClient;
+  final bool hasInvalidBinding;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final hasInvalidBinding =
-        entry.downloadClientId > 0 && downloadClient == null;
-
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -930,7 +936,12 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
           SizedBox(height: spacing.lg),
           AppInfoBlock(label: '类别', value: entry.kind.toUpperCase()),
           SizedBox(height: spacing.sm),
-          AppInfoBlock(label: '绑定下载器', value: downloadClient?.name ?? '未匹配'),
+          AppInfoBlock(
+            label: '绑定下载器',
+            value: entry.downloadClientNames.isEmpty
+                ? '未匹配'
+                : entry.downloadClientNames,
+          ),
           if (hasInvalidBinding) ...[
             SizedBox(height: spacing.sm),
             Container(
@@ -959,10 +970,9 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
                   key: const Key('mobile-indexer-detail-edit-button'),
                   label: '编辑',
                   variant: AppButtonVariant.primary,
-                  onPressed:
-                      () => Navigator.of(
-                        context,
-                      ).pop(MobileIndexerDetailAction.edit),
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pop(MobileIndexerDetailAction.edit),
                 ),
               ),
               SizedBox(width: spacing.md),
@@ -971,10 +981,9 @@ class _MobileIndexerDetailDrawer extends StatelessWidget {
                   key: const Key('mobile-indexer-detail-delete-button'),
                   label: '删除',
                   variant: AppButtonVariant.danger,
-                  onPressed:
-                      () => Navigator.of(
-                        context,
-                      ).pop(MobileIndexerDetailAction.delete),
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pop(MobileIndexerDetailAction.delete),
                 ),
               ),
             ],

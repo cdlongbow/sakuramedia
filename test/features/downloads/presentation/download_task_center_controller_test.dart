@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_center_controller.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 
@@ -79,6 +80,7 @@ void main() {
         {
           'id': 2,
           'name': 'qb-main',
+          'kind': 'qbittorrent',
           'base_url': 'http://qb:8080',
           'username': 'admin',
           'client_save_path': '/downloads',
@@ -350,8 +352,8 @@ void main() {
 
     await controller.deleteTask(1, deleteFiles: true);
 
-    final deleteReq = bundle.adapter.requests
-        .lastWhere((r) => r.path == '/download-tasks/1' && r.method == 'DELETE');
+    final deleteReq = bundle.adapter.requests.lastWhere(
+        (r) => r.path == '/download-tasks/1' && r.method == 'DELETE');
     expect(deleteReq.uri.queryParameters['delete_files'], 'true');
     expect(deleteReq.uri.queryParameters['confirm_delete_files'], 'true');
     expect(controller.items, isEmpty);
@@ -519,6 +521,7 @@ void main() {
         {
           'id': 2,
           'name': 'qb-main',
+          'kind': 'qbittorrent',
           'base_url': 'http://qb:8080',
           'username': 'admin',
           'client_save_path': '/downloads',
@@ -528,11 +531,12 @@ void main() {
         },
         {
           'id': 3,
-          'name': 'qb-backup',
-          'base_url': 'http://qb2:8080',
-          'username': 'admin',
-          'client_save_path': '/downloads',
-          'local_root_path': '/mnt/qb2',
+          'name': '115-main',
+          'kind': 'cloud115',
+          'base_url': null,
+          'username': null,
+          'client_save_path': null,
+          'local_root_path': null,
           'media_library_id': 1,
           'has_password': true,
         },
@@ -548,7 +552,8 @@ void main() {
     expect(controller.clientOptions, hasLength(2));
     expect(
       controller.clientOptions.map((c) => c.name),
-      containsAll(<String>['qb-main', 'qb-backup']),
+      containsAll(<String>['qb-main', '115-main']),
     );
+    expect(controller.clientKindOf(3), DownloadClientKind.cloud115);
   });
 }

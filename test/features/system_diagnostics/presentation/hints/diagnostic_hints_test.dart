@@ -35,8 +35,15 @@ IndexerEntryDto _entry({
     name: 'e$id',
     url: url,
     kind: 'jackett',
-    downloadClientId: clientId,
-    downloadClientName: 'c',
+    downloadClients: clientId > 0
+        ? <IndexerBoundClientDto>[
+            IndexerBoundClientDto(
+              id: clientId,
+              name: 'c',
+              kind: DownloadClientKind.qbittorrent,
+            ),
+          ]
+        : const <IndexerBoundClientDto>[],
   );
 }
 

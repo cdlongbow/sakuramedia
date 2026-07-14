@@ -247,6 +247,70 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('creates cloud115 downloader without qBittorrent fields', (
+    WidgetTester tester,
+  ) async {
+    _enqueueDownloadersData(
+      _bundle,
+      clients: const <Map<String, dynamic>>[],
+      libraries: _cloudLibraries,
+      indexers: const <Map<String, dynamic>>[],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-clients',
+      body: _cloudClientJson,
+    );
+    _enqueueDownloadersData(
+      _bundle,
+      clients: const <Map<String, dynamic>>[_cloudClientJson],
+      libraries: _cloudLibraries,
+      indexers: const <Map<String, dynamic>>[],
+    );
+
+    await _pumpPage(tester);
+    await tester.tap(find.byKey(const Key('mobile-downloaders-create-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('download-client-kind-field')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('115 离线').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('download-client-base-url-field')),
+      findsNothing,
+    );
+    await tester.enterText(
+      find.byKey(const Key('download-client-name-field')),
+      '115 主账号',
+    );
+    await tester.tap(
+      find.byKey(const Key('download-client-media-library-field')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('115 云盘').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('mobile-downloader-submit-button')),
+    );
+    await tester.tap(find.byKey(const Key('mobile-downloader-submit-button')));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    final request = _bundle.adapter.requests.firstWhere(
+      (request) =>
+          request.method == 'POST' && request.path == '/download-clients',
+    );
+    expect(request.body, <String, dynamic>{
+      'name': '115 主账号',
+      'kind': 'cloud115',
+      'media_library_id': 8,
+    });
+    expect(find.text('115 主账号'), findsOneWidget);
+    expect(find.textContaining('115 离线下载'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('validates fields before create submit', (
     WidgetTester tester,
   ) async {
@@ -496,18 +560,30 @@ void _enqueueDownloadersData(
     body: <String, dynamic>{
       'type': 'builtin',
       'api_key': '',
-      'indexers':
-          indexers ??
-          const <Map<String, dynamic>>[
+      'indexers': (indexers ??
+              const <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': 1,
+                  'name': '馒头',
+                  'url': 'https://mt.example/api',
+                  'kind': 'pt',
+                  'download_client_id': 1,
+                  'download_client_name': 'client-a',
+                },
+              ])
+          .map((entry) {
+        if (entry.containsKey('download_clients')) return entry;
+        return <String, dynamic>{
+          ...entry,
+          'download_clients': <Map<String, dynamic>>[
             <String, dynamic>{
-              'id': 1,
-              'name': '馒头',
-              'url': 'https://mt.example/api',
-              'kind': 'pt',
-              'download_client_id': 1,
-              'download_client_name': 'client-a',
+              'id': entry['download_client_id'],
+              'name': entry['download_client_name'],
+              'kind': 'qbittorrent',
             },
           ],
+        };
+      }).toList(growable: false),
     },
   );
 }
@@ -525,6 +601,7 @@ Map<String, dynamic> _buildClientJson({
   return <String, dynamic>{
     'id': id,
     'name': name,
+    'kind': 'qbittorrent',
     'base_url': baseUrl,
     'username': username,
     'client_save_path': clientSavePath,
@@ -545,6 +622,34 @@ const List<Map<String, dynamic>> _defaultLibraries = <Map<String, dynamic>>[
     'updated_at': '2026-03-08T10:30:00Z',
   },
 ];
+
+const List<Map<String, dynamic>> _cloudLibraries = <Map<String, dynamic>>[
+  <String, dynamic>{
+    'id': 8,
+    'name': '115 云盘',
+    'backend': 'cloud115',
+    'backend_config': <String, dynamic>{
+      'root_cid': '100',
+      'app': 'alipaymini',
+    },
+    'created_at': '2026-07-15T08:00:00Z',
+    'updated_at': '2026-07-15T08:00:00Z',
+  },
+];
+
+const Map<String, dynamic> _cloudClientJson = <String, dynamic>{
+  'id': 8,
+  'name': '115 主账号',
+  'kind': 'cloud115',
+  'base_url': null,
+  'username': null,
+  'client_save_path': null,
+  'local_root_path': null,
+  'media_library_id': 8,
+  'has_password': false,
+  'created_at': '2026-07-15T08:00:00Z',
+  'updated_at': '2026-07-15T08:00:00Z',
+};
 
 Future<SessionStore> _buildLoggedInSessionStore() async {
   final store = SessionStore.inMemory();

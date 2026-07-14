@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 
 import '../../../support/test_api_bundle.dart';
@@ -22,6 +23,11 @@ void main() {
             'indexer_kind': 'pt',
             'resolved_client_id': 2,
             'resolved_client_name': 'qb-main',
+            'resolved_client_kind': 'qbittorrent',
+            'download_clients': [
+              {'id': 2, 'name': 'qb-main', 'kind': 'qbittorrent'},
+              {'id': 3, 'name': '115-main', 'kind': 'cloud115'},
+            ],
             'movie_number': 'ABC-001',
             'title': 'ABC-001 4K 中文字幕',
             'size_bytes': 12884901888,
@@ -43,6 +49,11 @@ void main() {
       expect(request.uri.queryParameters.containsKey('indexer_kind'), isFalse);
       expect(results.single.title, 'ABC-001 4K 中文字幕');
       expect(results.single.resolvedClientName, 'qb-main');
+      expect(results.single.resolvedClientKind, DownloadClientKind.qbittorrent);
+      expect(results.single.downloadClients, hasLength(2));
+      expect(results.single.downloadClients.last.id, 3);
+      expect(results.single.downloadClients.last.kind,
+          DownloadClientKind.cloud115);
       expect(results.single.tags, ['4K', '中字']);
     });
 
@@ -138,7 +149,8 @@ void main() {
       },
     );
 
-    test('getDownloadTasks assembles query and parses paginated tasks', () async {
+    test('getDownloadTasks assembles query and parses paginated tasks',
+        () async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
@@ -277,7 +289,8 @@ void main() {
       );
     });
 
-    test('deleteDownloadTask without delete_files sends only delete_files=false',
+    test(
+        'deleteDownloadTask without delete_files sends only delete_files=false',
         () async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
@@ -338,9 +351,8 @@ void main() {
         ],
       );
 
-      final events = await bundle.downloadsApi
-          .streamDownloadTasks(clientId: 2)
-          .toList();
+      final events =
+          await bundle.downloadsApi.streamDownloadTasks(clientId: 2).toList();
 
       expect(events, hasLength(4));
       expect(events[0].isSnapshot, isTrue);
@@ -374,9 +386,7 @@ void main() {
           ],
         );
 
-        final events = await bundle.downloadsApi
-            .streamDownloadTasks()
-            .toList();
+        final events = await bundle.downloadsApi.streamDownloadTasks().toList();
 
         expect(events, hasLength(2));
         expect(events[0].isClientTransfer, isTrue);

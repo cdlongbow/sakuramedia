@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/format/transfer_speed.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_center_controller.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
@@ -77,11 +78,9 @@ List<Widget> buildDownloadTaskSlivers({
         child: AppEmptyState(
           message: hasFilter ? '没有符合筛选条件的下载任务' : '暂无下载任务',
           icon: hasFilter ? Icons.search_off_rounded : Icons.download_outlined,
-          onRetry:
-              hasFilter
-                  ? () =>
-                      controller.applyFilter(DownloadTaskFilterState.initial)
-                  : null,
+          onRetry: hasFilter
+              ? () => controller.applyFilter(DownloadTaskFilterState.initial)
+              : null,
           retryLabel: '清除筛选',
           retryKey: const Key('download-empty-clear-filter'),
         ),
@@ -153,9 +152,8 @@ class _DownloadClientSpeedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final transfers =
-        controller.clientTransfers.values.toList()
-          ..sort((a, b) => a.clientId.compareTo(b.clientId));
+    final transfers = controller.clientTransfers.values.toList()
+      ..sort((a, b) => a.clientId.compareTo(b.clientId));
     final hasAnyLiveData = transfers.isNotEmpty;
     final totalDown = controller.totalDownloadSpeedBytes;
     final totalUp = controller.totalUploadSpeedBytes;
@@ -310,6 +308,8 @@ class _DownloadTaskCard extends StatelessWidget {
     final downloadState = row.downloadState;
     final isPending = controller.isTaskPending(task.id);
     final isImportRunning = task.importStatus == 'running';
+    final clientKind = controller.clientKindOf(task.clientId);
+    final isCloud115 = clientKind == DownloadClientKind.cloud115;
     final movieNumber = task.movieNumber;
     final hasMovieNumber = (movieNumber ?? '').isNotEmpty;
     final displayTitle = _resolveDisplayTitle(task);
@@ -462,39 +462,38 @@ class _DownloadTaskCard extends StatelessWidget {
                           ),
                         ),
                         // 已完成不显示暂停/恢复；做种态可以暂停（停止上传）。
-                        if (downloadState == 'paused')
+                        if (!isCloud115 && downloadState == 'paused')
                           AppIconButton(
                             key: Key('download-task-resume-${task.id}'),
                             icon: const Icon(Icons.play_arrow_rounded),
                             tooltip: '恢复',
-                            onPressed:
-                                isPending
-                                    ? null
-                                    : () =>
-                                        _resume(context, controller, task.id),
+                            onPressed: isPending
+                                ? null
+                                : () => _resume(context, controller, task.id),
                           )
-                        else if (downloadState != 'completed')
+                        else if (!isCloud115 && downloadState != 'completed')
                           AppIconButton(
                             key: Key('download-task-pause-${task.id}'),
                             icon: const Icon(Icons.pause_rounded),
                             tooltip: '暂停',
-                            onPressed:
-                                isPending
-                                    ? null
-                                    : () =>
-                                        _pause(context, controller, task.id),
+                            onPressed: isPending
+                                ? null
+                                : () => _pause(context, controller, task.id),
                           ),
-                        if (downloadState != 'completed')
+                        if (!isCloud115 && downloadState != 'completed')
                           SizedBox(width: context.appSpacing.xs),
                         AppIconButton(
                           key: Key('download-task-delete-${task.id}'),
                           icon: const Icon(Icons.delete_outline_rounded),
                           tooltip: isImportRunning ? '任务正在导入，无法删除' : '删除',
-                          onPressed:
-                              (isPending || isImportRunning)
-                                  ? null
-                                  : () =>
-                                      _confirmDelete(context, controller, task),
+                          onPressed: (isPending || isImportRunning)
+                              ? null
+                              : () => _confirmDelete(
+                                    context,
+                                    controller,
+                                    task,
+                                    isCloud115: isCloud115,
+                                  ),
                         ),
                       ],
                     ),
@@ -512,13 +511,12 @@ class _DownloadTaskCard extends StatelessWidget {
             child: _DownloadTaskCover(
               coverUrl: coverUrl,
               movieNumber: hasMovieNumber ? movieNumber : null,
-              onTap:
-                  hasMovieNumber
-                      ? () => context.pushDesktopMovieDetail(
+              onTap: hasMovieNumber
+                  ? () => context.pushDesktopMovieDetail(
                         movieNumber: movieNumber!,
                         fallbackPath: desktopActivityPath,
                       )
-                      : null,
+                  : null,
             ),
           ),
         ],
@@ -536,18 +534,18 @@ class _DownloadTaskCard extends StatelessWidget {
 }
 
 TextStyle _statTextStyle(BuildContext context) => resolveAppTextStyle(
-  context,
-  size: AppTextSize.s12,
-  weight: AppTextWeight.regular,
-  tone: AppTextTone.muted,
-);
+      context,
+      size: AppTextSize.s12,
+      weight: AppTextWeight.regular,
+      tone: AppTextTone.muted,
+    );
 
 TextStyle _footnoteTextStyle(BuildContext context) => resolveAppTextStyle(
-  context,
-  size: AppTextSize.s10,
-  weight: AppTextWeight.regular,
-  tone: AppTextTone.tertiary,
-);
+      context,
+      size: AppTextSize.s10,
+      weight: AppTextWeight.regular,
+      tone: AppTextTone.tertiary,
+    );
 
 /// 进度条颜色：下载中用品牌强调色（用户主动关注）；做种/已完成/暂停用中性灰
 /// 避免"血条"式视觉抢眼；失败态用主题 error；其余中性。
@@ -647,11 +645,9 @@ Future<void> _resume(
   }
 }
 
-Future<void> _confirmDelete(
-  BuildContext context,
-  DownloadTaskCenterController controller,
-  DownloadTaskDto task,
-) async {
+Future<void> _confirmDelete(BuildContext context,
+    DownloadTaskCenterController controller, DownloadTaskDto task,
+    {required bool isCloud115}) async {
   var deleteFiles = false;
   await showAppConfirmDialog(
     context,
@@ -662,6 +658,7 @@ Future<void> _confirmDelete(
     confirmLabel: '删除',
     failureFallback: '删除失败',
     extraContent: _DeleteFilesCheckbox(
+      isCloud115: isCloud115,
       onChanged: (value) => deleteFiles = value,
     ),
     onConfirm: () async {
@@ -689,15 +686,25 @@ String _downloadErrorMessage(Object error, {required String fallback}) {
         return '该任务不受本系统管理';
       case 'download_task_import_running':
         return '任务正在导入，无法删除';
+      case 'download_task_action_unsupported':
+        return '115 离线任务不支持暂停或恢复';
+      case 'cloud115_offline_quota_exceeded':
+        return '115 本月离线下载配额已用尽';
+      case 'cloud115_offline_task_exists_unmanaged':
+        return '该资源已存在于 115 的非托管目录，无法接管';
     }
   }
   return apiErrorMessage(error, fallback: fallback);
 }
 
 class _DeleteFilesCheckbox extends StatefulWidget {
-  const _DeleteFilesCheckbox({required this.onChanged});
+  const _DeleteFilesCheckbox({
+    required this.onChanged,
+    required this.isCloud115,
+  });
 
   final ValueChanged<bool> onChanged;
+  final bool isCloud115;
 
   @override
   State<_DeleteFilesCheckbox> createState() => _DeleteFilesCheckboxState();
@@ -736,7 +743,7 @@ class _DeleteFilesCheckboxState extends State<_DeleteFilesCheckbox> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '同时删除下载器里的种子文件',
+                    widget.isCloud115 ? '同时删除 115 中已下载的文件' : '同时删除下载器里的种子文件',
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -746,7 +753,7 @@ class _DeleteFilesCheckboxState extends State<_DeleteFilesCheckbox> {
                   ),
                   SizedBox(height: context.appSpacing.xs / 2),
                   Text(
-                    '不影响已导入媒体库的文件',
+                    widget.isCloud115 ? '已导入媒体库的文件不受影响' : '不影响已导入媒体库的文件',
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s10,
@@ -774,6 +781,7 @@ String _labelForDownloadState(String state) {
     'stalled' => '等待资源',
     'checking' => '校验中',
     'queued' => '排队中',
+    'abandoned' => '已放弃跟踪',
     _ => state.isEmpty ? '未知' : state,
   };
 }
@@ -789,6 +797,7 @@ AppBadgeTone _toneForDownloadState(String state) {
     'stalled' => AppBadgeTone.warning,
     'checking' => AppBadgeTone.info,
     'queued' => AppBadgeTone.neutral,
+    'abandoned' => AppBadgeTone.warning,
     _ => AppBadgeTone.neutral,
   };
 }
@@ -899,10 +908,9 @@ class _DownloadFilterBarState extends State<_DownloadFilterBar> {
                   ),
                 )
                 .toList(growable: false),
-            onChanged:
-                isBusy
-                    ? null
-                    : (value) => controller.applyFilter(
+            onChanged: isBusy
+                ? null
+                : (value) => controller.applyFilter(
                       controller.filter.copyWith(
                         stateFilter: value ?? DownloadTaskStateFilter.all,
                       ),
@@ -922,13 +930,15 @@ class _DownloadFilterBarState extends State<_DownloadFilterBar> {
                 for (final option in clientOptions)
                   DropdownMenuItem<int?>(
                     value: option.id,
-                    child: Text(option.name, overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      '${option.name} · ${option.kind.label}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
-              onChanged:
-                  isBusy
-                      ? null
-                      : (value) => controller.applyFilter(
+              onChanged: isBusy
+                  ? null
+                  : (value) => controller.applyFilter(
                         controller.filter.copyWith(clientId: value),
                       ),
             ),

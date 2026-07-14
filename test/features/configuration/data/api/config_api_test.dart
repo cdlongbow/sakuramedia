@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 
 import '../../../../support/test_api_bundle.dart';
 
@@ -24,6 +25,10 @@ void main() {
       expect(resource.metadata.javdbHost, 'jdforrepam.com');
       expect(resource.scheduler.crons['download_task_sync'], '* * * * *');
       expect(resource.downloads.smallFileCleanupThresholdMb, 256);
+      expect(resource.downloads.preferredClientKinds, <DownloadClientKind>[
+        DownloadClientKind.qbittorrent,
+        DownloadClientKind.cloud115,
+      ]);
       expect(resource.logging.level, 'INFO');
       expect(resource.effects['media'], 'hot');
       expect(resource.effects.containsKey('database'), isFalse);
@@ -112,7 +117,10 @@ Map<String, dynamic> _buildConfigResourceJson({
           '${key}_cron':
               key == 'download_task_sync' ? '* * * * *' : '0 2 * * *',
       },
-      'downloads': <String, dynamic>{'small_file_cleanup_threshold_mb': 256},
+      'downloads': <String, dynamic>{
+        'small_file_cleanup_threshold_mb': 256,
+        'preferred_client_kinds': <String>['qbittorrent', 'cloud115'],
+      },
       'logging': <String, dynamic>{'level': 'INFO'},
       'database': <String, dynamic>{
         'url': 'postgresql://user:password@postgres:5432/sakuramedia',

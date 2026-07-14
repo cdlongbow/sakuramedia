@@ -78,9 +78,7 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
       }
       setState(() {
         _clients = results[0] as List<DownloadClientDto>;
-        _libraries = (results[1] as List<MediaLibraryDto>)
-            .where((library) => library.isLocal)
-            .toList(growable: false);
+        _libraries = results[1] as List<MediaLibraryDto>;
         _initialized = true;
         _needsReload = false;
         _isLoading = false;
@@ -208,9 +206,11 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
                   onDelete: () => _deleteClient(client),
                   runTest: () =>
                       context.read<DownloadClientsApi>().testClient(client.id),
-                  runStorageTest: () => context
-                      .read<DownloadClientsApi>()
-                      .storageTestClient(client.id),
+                  runStorageTest: client.isQbittorrent
+                      ? () => context
+                          .read<DownloadClientsApi>()
+                          .storageTestClient(client.id)
+                      : null,
                 ),
             ],
           ),
@@ -250,7 +250,7 @@ class DownloadClientCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final Future<DownloadClientTestResultDto> Function() runTest;
-  final Future<DownloadClientStorageTestResultDto> Function() runStorageTest;
+  final Future<DownloadClientStorageTestResultDto> Function()? runStorageTest;
 
   @override
   State<DownloadClientCard> createState() => _DownloadClientCardState();
@@ -298,10 +298,12 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
   }
 
   Future<void> _handleStorageChipTap() {
+    final runStorageTest = widget.runStorageTest;
+    if (runStorageTest == null) return Future<void>.value();
     return handleProbeStorageTap(
       context: context,
       probe: _probe,
-      runTest: widget.runStorageTest,
+      runTest: runStorageTest,
       openDialog: _openStorageDialog,
     );
   }
@@ -322,12 +324,14 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
   Future<void> _openStorageDialog(
     DownloadClientStorageTestResultDto result,
   ) async {
+    final runStorageTest = widget.runStorageTest;
+    if (runStorageTest == null) return;
     await showDialog<void>(
       context: context,
       builder: (_) => DownloadClientStorageTestResultDialog(
         initialResult: result,
         clientBaseUrl: widget.client.baseUrl,
-        onRerun: widget.runStorageTest,
+        onRerun: runStorageTest,
         onResultChanged: _probe.applyStorageResult,
       ),
     );
@@ -349,7 +353,11 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
         children: [
           Row(
             children: [
-              const AppSettingIconBox(icon: Icons.cloud_download_outlined),
+              AppSettingIconBox(
+                icon: client.isCloud115
+                    ? Icons.cloud_outlined
+                    : Icons.cloud_download_outlined,
+              ),
               SizedBox(width: spacing.md),
               Expanded(
                 child: Column(
@@ -369,7 +377,7 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
                     ),
                     SizedBox(height: spacing.xs),
                     Text(
-                      client.baseUrl,
+                      client.isCloud115 ? '115 离线下载' : client.baseUrl,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: resolveAppTextStyle(
@@ -391,15 +399,17 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
                 tooltip: _probe.connectivityTooltip(),
                 onTap: busy ? null : _handleConnectivityChipTap,
               ),
-              SizedBox(width: spacing.xs),
-              DownloadClientProbeStatusChip(
-                key: Key('download-client-storage-test-${client.id}'),
-                label: '目录映射',
-                state: _probe.storageChipState,
-                detail: _probe.storageChipDetail(),
-                tooltip: _probe.storageTooltip(),
-                onTap: busy ? null : _handleStorageChipTap,
-              ),
+              if (client.isQbittorrent) ...[
+                SizedBox(width: spacing.xs),
+                DownloadClientProbeStatusChip(
+                  key: Key('download-client-storage-test-${client.id}'),
+                  label: '目录映射',
+                  state: _probe.storageChipState,
+                  detail: _probe.storageChipDetail(),
+                  tooltip: _probe.storageTooltip(),
+                  onTap: busy ? null : _handleStorageChipTap,
+                ),
+              ],
               SizedBox(width: spacing.sm),
               AppInlineActionButton(
                 key: Key('download-client-edit-${client.id}'),
@@ -421,22 +431,28 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
               spacing: spacing.md,
               runSpacing: spacing.sm,
               children: [
-                AppInfoPill(label: '用户名', value: client.username),
+                AppInfoPill(label: '类型', value: client.kind.label),
                 AppInfoPill(
                   label: '媒体库',
                   value: mediaLibrary == null
                       ? '未匹配 (${client.mediaLibraryId})'
                       : mediaLibrary.name,
                 ),
-                AppInfoPill(
-                  label: 'qBittorrent保存路径',
-                  value: client.clientSavePath,
-                ),
-                AppInfoPill(label: '本地访问路径', value: client.localRootPath),
-                AppInfoPill(
-                  label: '密码',
-                  value: client.hasPassword ? '已设置' : '未设置',
-                ),
+                if (client.isQbittorrent) ...[
+                  AppInfoPill(label: '用户名', value: client.username),
+                  AppInfoPill(
+                    label: 'qBittorrent保存路径',
+                    value: client.clientSavePath,
+                  ),
+                  AppInfoPill(
+                    label: '本地访问路径',
+                    value: client.localRootPath,
+                  ),
+                  AppInfoPill(
+                    label: '密码',
+                    value: client.hasPassword ? '已设置' : '未设置',
+                  ),
+                ],
               ],
             ),
           ),
@@ -472,6 +488,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
   late final TextEditingController _clientSavePathController;
   late final TextEditingController _localRootPathController;
   int? _selectedLibraryId;
+  late DownloadClientKind _kind;
   late final DownloadClientProbeController _probe;
 
   bool get _isEditing => widget.initialClient != null;
@@ -480,6 +497,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
   void initState() {
     super.initState();
     final initial = widget.initialClient;
+    _kind = initial?.kind ?? DownloadClientKind.qbittorrent;
     _nameController = TextEditingController(text: initial?.name ?? '');
     _baseUrlController = TextEditingController(text: initial?.baseUrl ?? '');
     _usernameController = TextEditingController(text: initial?.username ?? '');
@@ -528,6 +546,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
 
   DownloadClientFormValue _snapshotFormValue() {
     return DownloadClientFormValue.fromControllers(
+      kind: _kind,
       nameController: _nameController,
       baseUrlController: _baseUrlController,
       usernameController: _usernameController,
@@ -645,6 +664,11 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
                 clientSavePathController: _clientSavePathController,
                 localRootPathController: _localRootPathController,
                 libraries: widget.libraries,
+                kind: _kind,
+                onKindChanged: (value) => setState(() {
+                  _kind = value;
+                  _selectedLibraryId = null;
+                }),
                 selectedLibraryId: _selectedLibraryId,
                 onLibraryChanged: (value) => setState(() {
                   _selectedLibraryId = value;
@@ -654,17 +678,19 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
                 credentialsLayout: DownloadClientCredentialsLayout.horizontal,
                 onSubmitted: _submit,
               ),
-              SizedBox(height: spacing.lg),
-              DownloadClientEditorProbeChips(
-                keyPrefix: 'download-client-dialog',
-                busy: busy,
-                connectivityState: _probe.connectivityChipState,
-                storageState: _probe.storageChipState,
-                connectivityDetail: _probe.connectivityChipDetail(),
-                storageDetail: _probe.storageChipDetail(),
-                onConnectivityTap: _handleConnectivityChipTap,
-                onStorageTap: _handleStorageChipTap,
-              ),
+              if (_kind == DownloadClientKind.qbittorrent) ...[
+                SizedBox(height: spacing.lg),
+                DownloadClientEditorProbeChips(
+                  keyPrefix: 'download-client-dialog',
+                  busy: busy,
+                  connectivityState: _probe.connectivityChipState,
+                  storageState: _probe.storageChipState,
+                  connectivityDetail: _probe.connectivityChipDetail(),
+                  storageDetail: _probe.storageChipDetail(),
+                  onConnectivityTap: _handleConnectivityChipTap,
+                  onStorageTap: _handleStorageChipTap,
+                ),
+              ],
               SizedBox(height: spacing.xl),
               Row(
                 children: [

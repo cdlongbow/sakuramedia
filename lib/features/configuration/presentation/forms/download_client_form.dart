@@ -7,6 +7,7 @@ import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
 class DownloadClientFormValue {
   const DownloadClientFormValue({
+    required this.kind,
     required this.name,
     required this.baseUrl,
     required this.username,
@@ -17,6 +18,7 @@ class DownloadClientFormValue {
   });
 
   factory DownloadClientFormValue.fromControllers({
+    required DownloadClientKind kind,
     required TextEditingController nameController,
     required TextEditingController baseUrlController,
     required TextEditingController usernameController,
@@ -26,6 +28,7 @@ class DownloadClientFormValue {
     required int? mediaLibraryId,
   }) {
     return DownloadClientFormValue(
+      kind: kind,
       name: nameController.text.trim(),
       baseUrl: baseUrlController.text.trim(),
       username: usernameController.text.trim(),
@@ -37,6 +40,7 @@ class DownloadClientFormValue {
   }
 
   final String name;
+  final DownloadClientKind kind;
   final String baseUrl;
   final String username;
   final String password;
@@ -47,16 +51,22 @@ class DownloadClientFormValue {
   CreateDownloadClientPayload toCreatePayload() {
     return CreateDownloadClientPayload(
       name: name,
-      baseUrl: baseUrl,
-      username: username,
-      password: password,
-      clientSavePath: clientSavePath,
-      localRootPath: localRootPath,
+      kind: kind,
+      baseUrl: kind == DownloadClientKind.qbittorrent ? baseUrl : null,
+      username: kind == DownloadClientKind.qbittorrent ? username : null,
+      password: kind == DownloadClientKind.qbittorrent ? password : null,
+      clientSavePath:
+          kind == DownloadClientKind.qbittorrent ? clientSavePath : null,
+      localRootPath:
+          kind == DownloadClientKind.qbittorrent ? localRootPath : null,
       mediaLibraryId: mediaLibraryId!,
     );
   }
 
   UpdateDownloadClientPayload toUpdatePayload() {
+    if (kind == DownloadClientKind.cloud115) {
+      return UpdateDownloadClientPayload(name: name);
+    }
     return UpdateDownloadClientPayload(
       name: name,
       baseUrl: baseUrl,
@@ -175,6 +185,8 @@ class DownloadClientFormFields extends StatelessWidget {
     required this.clientSavePathController,
     required this.localRootPathController,
     required this.libraries,
+    required this.kind,
+    required this.onKindChanged,
     required this.selectedLibraryId,
     required this.onLibraryChanged,
     required this.isEditing,
@@ -199,6 +211,8 @@ class DownloadClientFormFields extends StatelessWidget {
   final TextEditingController clientSavePathController;
   final TextEditingController localRootPathController;
   final List<MediaLibraryDto> libraries;
+  final DownloadClientKind kind;
+  final ValueChanged<DownloadClientKind> onKindChanged;
   final int? selectedLibraryId;
   final ValueChanged<int?> onLibraryChanged;
   final bool isEditing;
@@ -220,10 +234,36 @@ class DownloadClientFormFields extends StatelessWidget {
     final spacing = context.appSpacing;
     final resolvedFieldSpacing = fieldSpacing ?? spacing.lg;
     final credentialsFields = _buildCredentialsFields(context);
+    final eligibleLibraries = libraries
+        .where(
+          (library) => kind == DownloadClientKind.cloud115
+              ? library.isCloud115
+              : library.isLocal,
+        )
+        .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        AppSelectField<DownloadClientKind>(
+          key: const Key('download-client-kind-field'),
+          value: kind,
+          items: DownloadClientKind.values
+              .map(
+                (item) => DropdownMenuItem<DownloadClientKind>(
+                  value: item,
+                  child: Text(item.label),
+                ),
+              )
+              .toList(growable: false),
+          label: '下载方式',
+          onChanged: enabled && !isEditing
+              ? (value) {
+                  if (value != null) onKindChanged(value);
+                }
+              : null,
+        ),
+        SizedBox(height: resolvedFieldSpacing),
         AppTextField(
           fieldKey: const Key('download-client-name-field'),
           controller: nameController,
@@ -234,56 +274,60 @@ class DownloadClientFormFields extends StatelessWidget {
           validator: validateDownloadClientName,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) => baseUrlFocusNode?.requestFocus(),
+          onFieldSubmitted: (_) => kind == DownloadClientKind.qbittorrent
+              ? baseUrlFocusNode?.requestFocus()
+              : onSubmitted?.call(),
         ),
-        SizedBox(height: resolvedFieldSpacing),
-        AppTextField(
-          fieldKey: const Key('download-client-base-url-field'),
-          controller: baseUrlController,
-          focusNode: baseUrlFocusNode,
-          enabled: enabled,
-          label: '服务地址',
-          hintText: '填写完整内网地址，例如：http://192.168.1.2:8080',
-          validator: validateDownloadClientBaseUrl,
-          autovalidateMode: autovalidateMode,
-          textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) => usernameFocusNode?.requestFocus(),
-        ),
-        SizedBox(height: resolvedFieldSpacing),
-        credentialsFields,
-        SizedBox(height: resolvedFieldSpacing),
-        AppTextField(
-          fieldKey: const Key('download-client-client-save-path-field'),
-          controller: clientSavePathController,
-          focusNode: clientSavePathFocusNode,
-          enabled: enabled,
-          label: 'qBittorrent保存路径',
-          hintText: '填写 qBittorrent 容器内使用的路径，例如：/downloads',
-          helperText: 'qBittorrent 实际保存文件时使用的路径',
-          validator: validateDownloadClientClientSavePath,
-          autovalidateMode: autovalidateMode,
-          textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) => localRootPathFocusNode?.requestFocus(),
-        ),
-        SizedBox(height: resolvedFieldSpacing),
-        AppTextField(
-          fieldKey: const Key('download-client-local-root-path-field'),
-          controller: localRootPathController,
-          focusNode: localRootPathFocusNode,
-          enabled: enabled,
-          label: '本地访问路径',
-          hintText: '填写 SakuraMediaBE 中的实际下载绝对路径，例如:/mnt/downloads',
-          helperText: '注意确保和 qBittorrent 的下载路径在宿主机上是同一个路径.',
-          validator: validateDownloadClientLocalRootPath,
-          autovalidateMode: autovalidateMode,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => onSubmitted?.call(),
-        ),
+        if (kind == DownloadClientKind.qbittorrent) ...[
+          SizedBox(height: resolvedFieldSpacing),
+          AppTextField(
+            fieldKey: const Key('download-client-base-url-field'),
+            controller: baseUrlController,
+            focusNode: baseUrlFocusNode,
+            enabled: enabled,
+            label: '服务地址',
+            hintText: '填写完整内网地址，例如：http://192.168.1.2:8080',
+            validator: validateDownloadClientBaseUrl,
+            autovalidateMode: autovalidateMode,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => usernameFocusNode?.requestFocus(),
+          ),
+          SizedBox(height: resolvedFieldSpacing),
+          credentialsFields,
+          SizedBox(height: resolvedFieldSpacing),
+          AppTextField(
+            fieldKey: const Key('download-client-client-save-path-field'),
+            controller: clientSavePathController,
+            focusNode: clientSavePathFocusNode,
+            enabled: enabled,
+            label: 'qBittorrent保存路径',
+            hintText: '填写 qBittorrent 容器内使用的路径，例如：/downloads',
+            helperText: 'qBittorrent 实际保存文件时使用的路径',
+            validator: validateDownloadClientClientSavePath,
+            autovalidateMode: autovalidateMode,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => localRootPathFocusNode?.requestFocus(),
+          ),
+          SizedBox(height: resolvedFieldSpacing),
+          AppTextField(
+            fieldKey: const Key('download-client-local-root-path-field'),
+            controller: localRootPathController,
+            focusNode: localRootPathFocusNode,
+            enabled: enabled,
+            label: '本地访问路径',
+            hintText: '填写 SakuraMediaBE 中的实际下载绝对路径，例如:/mnt/downloads',
+            helperText: '注意确保和 qBittorrent 的下载路径在宿主机上是同一个路径.',
+            validator: validateDownloadClientLocalRootPath,
+            autovalidateMode: autovalidateMode,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => onSubmitted?.call(),
+          ),
+        ],
         SizedBox(height: resolvedFieldSpacing),
         AppSelectField<int>(
           key: const Key('download-client-media-library-field'),
           value: selectedLibraryId,
-          items: libraries
+          items: eligibleLibraries
               .map(
                 (library) => DropdownMenuItem<int>(
                   value: library.id,
@@ -292,19 +336,37 @@ class DownloadClientFormFields extends StatelessWidget {
               )
               .toList(growable: false),
           label: '目标媒体库',
-          placeholder: libraries.isEmpty ? '请先准备媒体库' : '请选择目标媒体库',
-          onChanged: enabled && libraries.isNotEmpty ? onLibraryChanged : null,
+          placeholder: eligibleLibraries.isEmpty
+              ? '请先准备${kind == DownloadClientKind.cloud115 ? ' 115' : '本地'}媒体库'
+              : '请选择目标媒体库',
+          onChanged: enabled &&
+                  (!isEditing || kind == DownloadClientKind.qbittorrent) &&
+                  eligibleLibraries.isNotEmpty
+              ? onLibraryChanged
+              : null,
           validator: (value) => value == null ? '请选择目标媒体库' : null,
         ),
-        SizedBox(height: spacing.xs),
-        Text(
-          '本地访问路径需和目标媒体库根路径位于同一块物理盘，硬链接才会生效。',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            tone: AppTextTone.muted,
+        if (kind == DownloadClientKind.qbittorrent) ...[
+          SizedBox(height: spacing.xs),
+          Text(
+            '本地访问路径需和目标媒体库根路径位于同一块物理盘，硬链接才会生效。',
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              tone: AppTextTone.muted,
+            ),
           ),
-        ),
+        ] else ...[
+          SizedBox(height: spacing.xs),
+          Text(
+            '使用媒体库的 115 登录状态提交离线下载，无需填写服务器地址和路径。',
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              tone: AppTextTone.muted,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -331,9 +393,8 @@ class DownloadClientFormFields extends StatelessWidget {
       hintText: '输入用于登录下载器的密码',
       helperText: isEditing ? '留空则保持原密码不变' : null,
       obscureText: true,
-      validator:
-          (value) =>
-              validateDownloadClientPassword(value, isEditing: isEditing),
+      validator: (value) =>
+          validateDownloadClientPassword(value, isEditing: isEditing),
       autovalidateMode: autovalidateMode,
       textInputAction: TextInputAction.next,
       onFieldSubmitted: (_) => clientSavePathFocusNode?.requestFocus(),

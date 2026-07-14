@@ -40,11 +40,11 @@ class SystemDiagnosticsController extends ChangeNotifier {
     required IndexerSettingsApi indexerSettingsApi,
     required StatusApi statusApi,
     required MovieDescTranslationSettingsApi llmApi,
-  }) : _mediaLibrariesApi = mediaLibrariesApi,
-       _downloadClientsApi = downloadClientsApi,
-       _indexerSettingsApi = indexerSettingsApi,
-       _statusApi = statusApi,
-       _llmApi = llmApi {
+  })  : _mediaLibrariesApi = mediaLibrariesApi,
+        _downloadClientsApi = downloadClientsApi,
+        _indexerSettingsApi = indexerSettingsApi,
+        _statusApi = statusApi,
+        _llmApi = llmApi {
     _categories = _buildInitialCategories();
   }
 
@@ -249,8 +249,8 @@ class SystemDiagnosticsController extends ChangeNotifier {
           displayName: '下载器',
           status: DiagnosticItemStatus.unhealthy,
           summary: '尚未配置任何下载器',
-          cause: '还没有配置 qBittorrent 下载器，影片详情里的下载按钮会全部 disabled。',
-          fixHint: '在「下载器」页新增一个 qBittorrent 客户端，绑定媒体库。',
+          cause: '还没有配置任何下载入口，影片详情无法选择目标下载器。',
+          fixHint: '在「下载器」页新增 qBittorrent 或 115 离线下载入口，并绑定对应媒体库。',
           impact: '影片详情无法投递下载；索引器也拿不到下载出口。',
           fixTarget: const DiagnosticFixTarget.configurationTab(2),
         ),
@@ -260,7 +260,7 @@ class SystemDiagnosticsController extends ChangeNotifier {
     return Future.wait<DiagnosticItemState>([
       for (final client in clients) ...<Future<DiagnosticItemState>>[
         _probeDownloaderConnectivity(client),
-        _probeDownloaderStorage(client),
+        if (client.isQbittorrent) _probeDownloaderStorage(client),
       ],
     ]);
   }
@@ -277,12 +277,13 @@ class SystemDiagnosticsController extends ChangeNotifier {
           itemKey: 'downloader-connectivity-${client.id}',
           displayName: '${client.name} · 连通性',
           elapsedMs: result.elapsedMs,
-          summary: _downloaderVersionSummary(result),
+          summary: client.isCloud115
+              ? '115 登录状态正常'
+              : _downloaderVersionSummary(result),
         );
       }
       final hintKey = resolveDownloaderConnectivityHintKey(result.error);
-      final hint =
-          downloaderConnectivityHints[hintKey] ??
+      final hint = downloaderConnectivityHints[hintKey] ??
           downloaderConnectivityHints['unknown']!;
       return _fromHint(
         kind: DiagnosticItemKind.downloaderConnectivity,
@@ -325,10 +326,9 @@ class SystemDiagnosticsController extends ChangeNotifier {
       final hint =
           downloaderStorageHints[hintKey] ?? downloaderStorageHints['unknown']!;
       // 业务上 healthy 但带 warnings（例如硬链接不支持）→ 落 warning，不阻塞。
-      final status =
-          result.healthy
-              ? DiagnosticItemStatus.warning
-              : DiagnosticItemStatus.unhealthy;
+      final status = result.healthy
+          ? DiagnosticItemStatus.warning
+          : DiagnosticItemStatus.unhealthy;
       return _fromHint(
         kind: DiagnosticItemKind.downloaderStorage,
         itemKey: 'downloader-storage-${client.id}',
@@ -336,12 +336,9 @@ class SystemDiagnosticsController extends ChangeNotifier {
         status: status,
         hint: hint,
         elapsedMs: result.elapsedMs,
-        summary:
-            result.warnings.isNotEmpty
-                ? result.warnings.first
-                : (status == DiagnosticItemStatus.unhealthy
-                    ? '存储映射不通'
-                    : '存在告警'),
+        summary: result.warnings.isNotEmpty
+            ? result.warnings.first
+            : (status == DiagnosticItemStatus.unhealthy ? '存储映射不通' : '存在告警'),
       );
     } catch (_) {
       return _fromHint(
@@ -427,10 +424,9 @@ class SystemDiagnosticsController extends ChangeNotifier {
 
   Future<DiagnosticItemState> _probeMetadataProvider(String provider) async {
     final displayName = provider == _javdbItemKey ? 'JavDB' : 'DMM';
-    final kind =
-        provider == _javdbItemKey
-            ? DiagnosticItemKind.javdb
-            : DiagnosticItemKind.dmm;
+    final kind = provider == _javdbItemKey
+        ? DiagnosticItemKind.javdb
+        : DiagnosticItemKind.dmm;
     final started = DateTime.now();
     try {
       final result = await _statusApi.testMetadataProvider(provider);
@@ -455,10 +451,9 @@ class SystemDiagnosticsController extends ChangeNotifier {
         status: DiagnosticItemStatus.unhealthy,
         hint: javdbHints[hintKey] ?? javdbHints['unknown']!,
         elapsedMs: elapsed,
-        summary:
-            result.error?.message.isNotEmpty == true
-                ? _shortenError(result.error!.message)
-                : '接口返回不健康',
+        summary: result.error?.message.isNotEmpty == true
+            ? _shortenError(result.error!.message)
+            : '接口返回不健康',
       );
     } catch (_) {
       return _fromHint(

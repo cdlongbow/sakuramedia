@@ -3,8 +3,8 @@ import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
-import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
 String? validateIndexerNameField(
   String? value, {
@@ -38,8 +38,8 @@ String? validateIndexerUrlField(String? value) {
   return null;
 }
 
-String? validateIndexerDownloadClientField(int? value) {
-  return value == null ? '请选择下载器' : null;
+String? validateIndexerDownloadClientsField(List<int>? value) {
+  return value == null || value.isEmpty ? '请至少选择一个下载器' : null;
 }
 
 bool isValidIndexerHttpUrl(String value) {
@@ -75,9 +75,9 @@ class IndexerEntryFormFields extends StatelessWidget {
     required this.urlController,
     required this.kind,
     required this.downloadClients,
-    required this.selectedDownloadClientId,
+    required this.selectedDownloadClientIds,
     required this.onKindChanged,
-    required this.onDownloadClientChanged,
+    required this.onDownloadClientsChanged,
     this.existingEntries = const <IndexerEntryDto>[],
     this.editingEntryId,
     this.enabled = true,
@@ -91,9 +91,9 @@ class IndexerEntryFormFields extends StatelessWidget {
   final TextEditingController urlController;
   final String kind;
   final List<DownloadClientDto> downloadClients;
-  final int? selectedDownloadClientId;
+  final List<int> selectedDownloadClientIds;
   final ValueChanged<String> onKindChanged;
-  final ValueChanged<int?> onDownloadClientChanged;
+  final ValueChanged<List<int>> onDownloadClientsChanged;
   final List<IndexerEntryDto> existingEntries;
   final int? editingEntryId;
   final bool enabled;
@@ -119,12 +119,11 @@ class IndexerEntryFormFields extends StatelessWidget {
           enabled: enabled,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.next,
-          validator:
-              (value) => validateIndexerNameField(
-                value,
-                existingEntries: existingEntries,
-                editingEntryId: editingEntryId,
-              ),
+          validator: (value) => validateIndexerNameField(
+            value,
+            existingEntries: existingEntries,
+            editingEntryId: editingEntryId,
+          ),
         ),
         SizedBox(height: spacing.lg),
         const IndexerFormFieldLabel(label: '资源地址 (URL)'),
@@ -166,24 +165,74 @@ class IndexerEntryFormFields extends StatelessWidget {
           ],
         ),
         SizedBox(height: spacing.lg),
-        AppSelectField<int>(
+        KeyedSubtree(
           key: const Key('indexer-entry-download-client-field'),
-          value: selectedDownloadClientId,
-          items: downloadClients
-              .map(
-                (client) => DropdownMenuItem<int>(
-                  value: client.id,
-                  child: Text(client.name),
-                ),
-              )
-              .toList(growable: false),
-          label: '绑定下载器',
-          placeholder: downloadClients.isEmpty ? '请先在下载器页创建下载器' : '请选择下载器',
-          onChanged:
-              enabled && downloadClients.isNotEmpty
-                  ? onDownloadClientChanged
-                  : null,
-          validator: validateIndexerDownloadClientField,
+          child: FormField<List<int>>(
+            key: ValueKey<String>(
+              '$kind:${selectedDownloadClientIds.join(',')}',
+            ),
+            initialValue: selectedDownloadClientIds,
+            validator: validateIndexerDownloadClientsField,
+            builder: (field) {
+              final availableClients = downloadClients
+                  .where((client) => kind == 'bt' || client.isQbittorrent)
+                  .toList(growable: false);
+              void toggle(DownloadClientDto client) {
+                if (!enabled) return;
+                final next = List<int>.of(selectedDownloadClientIds);
+                if (!next.remove(client.id)) next.add(client.id);
+                field.didChange(next);
+                onDownloadClientsChanged(next);
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const IndexerFormFieldLabel(label: '绑定下载器'),
+                  SizedBox(height: spacing.sm),
+                  if (availableClients.isEmpty)
+                    AppSettingsGroup(
+                      children: [
+                        AppSettingCell(
+                          title: kind == 'pt'
+                              ? '没有可用的 qBittorrent 下载器'
+                              : '请先在下载器页创建下载器',
+                          subtitle: kind == 'pt' ? 'PT 索引器不支持 115 离线下载' : null,
+                        ),
+                      ],
+                    )
+                  else
+                    AppSettingsGroup(
+                      children: [
+                        for (final client in availableClients)
+                          AppSettingCell(
+                            key: Key('indexer-download-client-${client.id}'),
+                            title: client.name,
+                            subtitle: client.kind.label,
+                            trailing: Checkbox(
+                              value:
+                                  selectedDownloadClientIds.contains(client.id),
+                              onChanged: enabled ? (_) => toggle(client) : null,
+                            ),
+                            onTap: enabled ? () => toggle(client) : null,
+                          ),
+                      ],
+                    ),
+                  if (field.hasError) ...[
+                    SizedBox(height: spacing.xs),
+                    Text(
+                      field.errorText!,
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s12,
+                        tone: AppTextTone.error,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ),
       ],
     );
@@ -201,10 +250,9 @@ class IndexerSourceAvatar extends StatelessWidget {
     final layoutTokens = context.appLayoutTokens;
     final backgroundColor =
         kind == 'bt' ? colors.selectionSurface : colors.errorSurface;
-    final foregroundColor =
-        kind == 'bt'
-            ? context.appTextPalette.accent
-            : colors.errorAccentForeground;
+    final foregroundColor = kind == 'bt'
+        ? context.appTextPalette.accent
+        : colors.errorAccentForeground;
     final icon =
         kind == 'bt' ? Icons.language_rounded : Icons.cloud_download_outlined;
 
@@ -261,10 +309,9 @@ class IndexerKindOptionButton extends StatelessWidget {
     final backgroundColor =
         selected ? colors.selectionSurface : colors.surfaceMuted;
     final borderColor = selected ? colors.selectionBorder : colors.borderSubtle;
-    final foregroundColor =
-        selected
-            ? context.appTextPalette.accent
-            : context.appTextPalette.secondary;
+    final foregroundColor = selected
+        ? context.appTextPalette.accent
+        : context.appTextPalette.secondary;
 
     return InkWell(
       onTap: enabled ? onTap : null,

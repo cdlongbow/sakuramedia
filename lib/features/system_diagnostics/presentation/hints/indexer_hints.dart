@@ -30,14 +30,14 @@ const Map<String, DiagnosticHint> indexerHints = <String, DiagnosticHint>{
     fixTarget: DiagnosticFixTarget.configurationTab(3),
   ),
   'entry-client-missing': DiagnosticHint(
-    cause: '有索引器条目没绑定下载器（downloadClientId 为空 / 为 0）。',
-    fixHint: '打开「索引器」页，对没有绑定下载器的 entry 选择一个下载器。',
-    impact: '这些 entry 搜到的磁力无法派发到 qBittorrent，用户点下载会 400。',
+    cause: '有索引器条目没有绑定任何下载器。',
+    fixHint: '打开「索引器」页，为对应条目至少选择一个下载入口。',
+    impact: '这些条目搜到的资源无法派发下载。',
     fixTarget: DiagnosticFixTarget.configurationTab(3),
   ),
   'entry-client-stale': DiagnosticHint(
-    cause: '有索引器条目绑定的下载器已被删除，还留着悬空的 downloadClientId。',
-    fixHint: '打开「索引器」页，把这些 entry 重新绑定到一个存在的下载器。',
+    cause: '有索引器条目绑定的下载器已被删除。',
+    fixHint: '打开「索引器」页，重新选择有效的下载入口。',
     impact: '这些 entry 搜到的磁力无法派发，用户点下载会因下载器不存在直接失败。',
     fixTarget: DiagnosticFixTarget.configurationTab(3),
   ),
@@ -71,10 +71,10 @@ String? resolveIndexerConfigHintKey({
     if (entry.url.trim().isEmpty || !_isHttpUrl(entry.url)) {
       return 'entry-url-invalid';
     }
-    if (entry.downloadClientId <= 0) {
+    if (entry.downloadClients.isEmpty) {
       return 'entry-client-missing';
     }
-    if (!existingIds.contains(entry.downloadClientId)) {
+    if (!entry.downloadClientIds.every(existingIds.contains)) {
       return 'entry-client-stale';
     }
   }

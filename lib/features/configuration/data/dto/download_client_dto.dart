@@ -1,9 +1,29 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 
+enum DownloadClientKind { qbittorrent, cloud115 }
+
+extension DownloadClientKindX on DownloadClientKind {
+  String get wireValue => switch (this) {
+        DownloadClientKind.qbittorrent => 'qbittorrent',
+        DownloadClientKind.cloud115 => 'cloud115',
+      };
+
+  String get label => switch (this) {
+        DownloadClientKind.qbittorrent => 'qBittorrent',
+        DownloadClientKind.cloud115 => '115 离线',
+      };
+
+  static DownloadClientKind fromWire(dynamic value) => switch (value) {
+        'cloud115' => DownloadClientKind.cloud115,
+        _ => DownloadClientKind.qbittorrent,
+      };
+}
+
 class DownloadClientDto {
   const DownloadClientDto({
     required this.id,
     required this.name,
+    this.kind = DownloadClientKind.qbittorrent,
     required this.baseUrl,
     required this.username,
     required this.clientSavePath,
@@ -16,6 +36,7 @@ class DownloadClientDto {
 
   final int id;
   final String name;
+  final DownloadClientKind kind;
   final String baseUrl;
   final String username;
   final String clientSavePath;
@@ -25,10 +46,14 @@ class DownloadClientDto {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  bool get isQbittorrent => kind == DownloadClientKind.qbittorrent;
+  bool get isCloud115 => kind == DownloadClientKind.cloud115;
+
   factory DownloadClientDto.fromJson(Map<String, dynamic> json) {
     return DownloadClientDto(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
+      kind: DownloadClientKindX.fromWire(json['kind']),
       baseUrl: json['base_url'] as String? ?? '',
       username: json['username'] as String? ?? '',
       clientSavePath: json['client_save_path'] as String? ?? '',
@@ -44,30 +69,33 @@ class DownloadClientDto {
 class CreateDownloadClientPayload {
   const CreateDownloadClientPayload({
     required this.name,
-    required this.baseUrl,
-    required this.username,
-    required this.password,
-    required this.clientSavePath,
-    required this.localRootPath,
+    this.kind = DownloadClientKind.qbittorrent,
     required this.mediaLibraryId,
+    this.baseUrl,
+    this.username,
+    this.password,
+    this.clientSavePath,
+    this.localRootPath,
   });
 
   final String name;
-  final String baseUrl;
-  final String username;
-  final String password;
-  final String clientSavePath;
-  final String localRootPath;
+  final DownloadClientKind kind;
+  final String? baseUrl;
+  final String? username;
+  final String? password;
+  final String? clientSavePath;
+  final String? localRootPath;
   final int mediaLibraryId;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'name': name,
-      'base_url': baseUrl,
-      'username': username,
-      'password': password,
-      'client_save_path': clientSavePath,
-      'local_root_path': localRootPath,
+      'kind': kind.wireValue,
+      if (baseUrl != null) 'base_url': baseUrl,
+      if (username != null) 'username': username,
+      if (password != null) 'password': password,
+      if (clientSavePath != null) 'client_save_path': clientSavePath,
+      if (localRootPath != null) 'local_root_path': localRootPath,
       'media_library_id': mediaLibraryId,
     };
   }
@@ -213,10 +241,9 @@ class DownloadClientTestResultDto {
       elapsedMs: asInt(json['elapsed_ms']),
       version: asStringOrNull(json['version'], trim: true),
       webApiVersion: asStringOrNull(json['web_api_version'], trim: true),
-      error:
-          errorMap == null
-              ? null
-              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error: errorMap == null
+          ? null
+          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -251,10 +278,9 @@ class DownloadClientStorageDirectoryMappingResultDto {
       probeRemoteDir: json['probe_remote_dir'] as String? ?? '',
       probeLocalDir: json['probe_local_dir'] as String? ?? '',
       sentinelVisibleToQb: json['sentinel_visible_to_qb'] as bool? ?? false,
-      error:
-          errorMap == null
-              ? null
-              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error: errorMap == null
+          ? null
+          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -283,10 +309,9 @@ class DownloadClientStorageHardlinkResultDto {
       supported: json['supported'] as bool? ?? false,
       sourcePath: json['source_path'] as String? ?? '',
       targetPath: json['target_path'] as String? ?? '',
-      error:
-          errorMap == null
-              ? null
-              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error: errorMap == null
+          ? null
+          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -326,10 +351,9 @@ class DownloadClientStorageTestResultDto {
       clientName: json['client_name'] as String? ?? '',
       elapsedMs: asInt(json['elapsed_ms']),
       warnings: warnings,
-      directoryMapping:
-          DownloadClientStorageDirectoryMappingResultDto.fromJson(
-            asMap(json['directory_mapping']),
-          ),
+      directoryMapping: DownloadClientStorageDirectoryMappingResultDto.fromJson(
+        asMap(json['directory_mapping']),
+      ),
       hardlink: DownloadClientStorageHardlinkResultDto.fromJson(
         asMap(json['hardlink']),
       ),

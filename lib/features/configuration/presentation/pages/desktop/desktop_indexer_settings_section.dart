@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -30,10 +31,8 @@ class IndexerSettingsSection extends StatefulWidget {
 
 class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
     with
-        SectionLoaderMixin<
-          (IndexerSettingsDto, List<DownloadClientDto>),
-          IndexerSettingsSection
-        > {
+        SectionLoaderMixin<(IndexerSettingsDto, List<DownloadClientDto>),
+            IndexerSettingsSection> {
   static const List<String> _supportedTypes = <String>['jackett'];
 
   final TextEditingController _apiKeyController = TextEditingController();
@@ -51,7 +50,7 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
 
   @override
   Future<(IndexerSettingsDto, List<DownloadClientDto>)>
-  fetchSectionData() async {
+      fetchSectionData() async {
     final futures = await Future.wait<Object>([
       context.read<IndexerSettingsApi>().getSettings(),
       context.read<DownloadClientsApi>().getClients(),
@@ -148,8 +147,10 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
           current.name != previous.name ||
           current.url != previous.url ||
           current.kind != previous.kind ||
-          current.downloadClientId != previous.downloadClientId ||
-          current.downloadClientName != previous.downloadClientName) {
+          !listEquals(
+            current.downloadClientIds,
+            previous.downloadClientIds,
+          )) {
         return true;
       }
     }
@@ -192,8 +193,8 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
         showToast('索引器类型仅支持 pt 或 bt');
         return;
       }
-      if (item.downloadClientId <= 0) {
-        showToast('请为每个索引器选择下载器');
+      if (item.downloadClients.isEmpty) {
+        showToast('请为每个索引器至少选择一个下载器');
         return;
       }
     }
@@ -203,12 +204,12 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
     });
     try {
       final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: type,
-          apiKey: apiKey,
-          indexers: _indexers,
-        ),
-      );
+            UpdateIndexerSettingsPayload(
+              type: type,
+              apiKey: apiKey,
+              indexers: _indexers,
+            ),
+          );
       if (!mounted) {
         return;
       }
@@ -242,11 +243,10 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
   Future<void> _createIndexer() async {
     final result = await showDialog<IndexerEntryDto>(
       context: context,
-      builder:
-          (dialogContext) => IndexerEntryDialog(
-            title: '新增索引器',
-            downloadClients: _downloadClients,
-          ),
+      builder: (dialogContext) => IndexerEntryDialog(
+        title: '新增索引器',
+        downloadClients: _downloadClients,
+      ),
     );
     if (result == null) {
       return;
@@ -260,12 +260,11 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
   Future<void> _editIndexer(int index) async {
     final result = await showDialog<IndexerEntryDto>(
       context: context,
-      builder:
-          (dialogContext) => IndexerEntryDialog(
-            title: '编辑索引器',
-            downloadClients: _downloadClients,
-            initialEntry: _indexers[index],
-          ),
+      builder: (dialogContext) => IndexerEntryDialog(
+        title: '编辑索引器',
+        downloadClients: _downloadClients,
+        initialEntry: _indexers[index],
+      ),
     );
     if (result == null) {
       return;
@@ -294,17 +293,14 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
 
   Widget _buildLoaded(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
-    final filteredIndexers =
-        query.isEmpty
-            ? _indexers
-            : _indexers
-                .where((item) {
-                  final source =
-                      '${item.name} ${item.url} ${item.kind} ${item.downloadClientName}'
-                          .toLowerCase();
-                  return source.contains(query);
-                })
-                .toList(growable: false);
+    final filteredIndexers = query.isEmpty
+        ? _indexers
+        : _indexers.where((item) {
+            final source =
+                '${item.name} ${item.url} ${item.kind} ${item.downloadClientNames}'
+                    .toLowerCase();
+            return source.contains(query);
+          }).toList(growable: false);
 
     final spacing = context.appSpacing;
     return Column(
@@ -495,7 +491,7 @@ class IndexerEntryCard extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs),
                 Text(
-                  '下载器: ${entry.downloadClientName}',
+                  '下载器: ${entry.downloadClientNames}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: resolveAppTextStyle(
@@ -548,7 +544,7 @@ class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _urlController;
   late String _kind;
-  int? _selectedDownloadClientId;
+  late List<int> _selectedDownloadClientIds;
 
   @override
   void initState() {
@@ -560,7 +556,9 @@ class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
       text: widget.initialEntry?.url ?? '',
     );
     _kind = widget.initialEntry?.kind ?? 'pt';
-    _selectedDownloadClientId = widget.initialEntry?.downloadClientId;
+    _selectedDownloadClientIds = List<int>.of(
+      widget.initialEntry?.downloadClientIds ?? const <int>[],
+    );
   }
 
   @override
@@ -574,31 +572,32 @@ class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    final downloadClientName = _downloadClientNameFor(
-      _selectedDownloadClientId,
-    );
     Navigator.of(context).pop(
       IndexerEntryDto(
         id: widget.initialEntry?.id ?? 0,
         name: _nameController.text.trim(),
         url: _urlController.text.trim(),
         kind: _kind,
-        downloadClientId: _selectedDownloadClientId!,
-        downloadClientName: downloadClientName,
+        downloadClients: _selectedDownloadClients(),
       ),
     );
   }
 
-  String _downloadClientNameFor(int? clientId) {
-    if (clientId == null) {
-      return '';
-    }
-    for (final client in widget.downloadClients) {
-      if (client.id == clientId) {
-        return client.name;
-      }
-    }
-    return '';
+  List<IndexerBoundClientDto> _selectedDownloadClients() {
+    final clientsById = <int, DownloadClientDto>{
+      for (final client in widget.downloadClients) client.id: client,
+    };
+    return _selectedDownloadClientIds
+        .map((id) => clientsById[id])
+        .whereType<DownloadClientDto>()
+        .map(
+          (client) => IndexerBoundClientDto(
+            id: client.id,
+            name: client.name,
+            kind: client.kind,
+          ),
+        )
+        .toList(growable: false);
   }
 
   @override
@@ -634,12 +633,22 @@ class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
               urlController: _urlController,
               kind: _kind,
               downloadClients: widget.downloadClients,
-              selectedDownloadClientId: _selectedDownloadClientId,
-              onKindChanged: (value) => setState(() => _kind = value),
-              onDownloadClientChanged:
-                  (value) => setState(() {
-                    _selectedDownloadClientId = value;
-                  }),
+              selectedDownloadClientIds: _selectedDownloadClientIds,
+              onKindChanged: (value) => setState(() {
+                _kind = value;
+                if (value == 'pt') {
+                  final qbIds = widget.downloadClients
+                      .where((client) => client.isQbittorrent)
+                      .map((client) => client.id)
+                      .toSet();
+                  _selectedDownloadClientIds = _selectedDownloadClientIds
+                      .where(qbIds.contains)
+                      .toList(growable: false);
+                }
+              }),
+              onDownloadClientsChanged: (value) => setState(() {
+                _selectedDownloadClientIds = value;
+              }),
               onSubmitted: _submit,
             ),
             SizedBox(height: spacing.xl),

@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -322,6 +324,84 @@ void main() {
     },
   );
 
+  testWidgets('magnet candidate submits the explicitly selected downloader', (
+    WidgetTester tester,
+  ) async {
+    const candidate = DownloadCandidateDto(
+      source: 'jackett',
+      indexerName: 'dmhy',
+      indexerKind: 'bt',
+      resolvedClientId: 2,
+      resolvedClientName: 'qb-main',
+      downloadClients: <DownloadCandidateClientDto>[
+        DownloadCandidateClientDto(
+          id: 2,
+          name: 'qb-main',
+          kind: DownloadClientKind.qbittorrent,
+        ),
+        DownloadCandidateClientDto(
+          id: 3,
+          name: '115-main',
+          kind: DownloadClientKind.cloud115,
+        ),
+      ],
+      movieNumber: 'ABC-001',
+      title: 'ABC-001 中文字幕',
+      sizeBytes: 1024,
+      seeders: 8,
+      magnetUrl: 'magnet:?xt=urn:btih:abcdef',
+      torrentUrl: '',
+      tags: <String>[],
+    );
+    int? submittedClientId;
+
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 520,
+      fetchMovieReviews: ({
+        required String movieNumber,
+        required int page,
+        required int pageSize,
+        required MovieReviewSort sort,
+      }) async =>
+          const <MovieReviewDto>[],
+      searchCandidates: ({
+        required String movieNumber,
+        String? indexerKind,
+      }) async =>
+          const <DownloadCandidateDto>[candidate],
+      createDownloadRequest: ({
+        required String movieNumber,
+        required int clientId,
+        required DownloadCandidateDto candidate,
+      }) async {
+        submittedClientId = clientId;
+        return DownloadRequestResponseDto(
+          task: _emptyDownloadTask(clientId: clientId),
+          created: true,
+        );
+      },
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('磁力搜索'));
+    await tester.pumpAndSettle();
+    await tester
+        .tap(find.byKey(const Key('movie-detail-magnet-search-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(Key('movie-detail-magnet-client-${candidate.submitKey}')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('115-main · 115 离线').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('movie-detail-magnet-submit-0')));
+    await tester.pumpAndSettle();
+
+    expect(submittedClientId, 3);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets(
     'movie detail inspector thumbnail tab toggles clip selection mode',
     (WidgetTester tester) async {
@@ -374,7 +454,6 @@ void main() {
       );
     },
   );
-
 }
 
 Future<void> _pumpInspectorPanel(
@@ -386,71 +465,80 @@ Future<void> _pumpInspectorPanel(
     required int page,
     required int pageSize,
     required MovieReviewSort sort,
-  })
-  fetchMovieReviews,
+  }) fetchMovieReviews,
   Future<List<DownloadCandidateDto>> Function({
     required String movieNumber,
     String? indexerKind,
-  })?
-  searchCandidates,
+  })? searchCandidates,
+  Future<DownloadRequestResponseDto> Function({
+    required String movieNumber,
+    required int clientId,
+    required DownloadCandidateDto candidate,
+  })? createDownloadRequest,
 }) async {
   final sessionStore = SessionStore.inMemory();
   await tester.pumpWidget(
     ChangeNotifierProvider<SessionStore>.value(
       value: sessionStore,
-      child: MaterialApp(
-        theme:
-            platform == null
-                ? sakuraThemeData
-                : sakuraThemeData.copyWith(platform: platform),
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 960,
-              height: panelHeight,
-              child: MovieDetailInspectorPanel(
-                movieNumber: 'ABC-001',
-                selectedMedia: null,
-                fetchMovieReviews: fetchMovieReviews,
-                fetchMediaThumbnails: ({required int mediaId}) async {
-                  return const <MovieMediaThumbnailDto>[];
-                },
-                searchCandidates:
-                    searchCandidates ??
-                    ({required String movieNumber, String? indexerKind}) async {
-                      return const <DownloadCandidateDto>[];
-                    },
-                createDownloadRequest: ({
-                  required String movieNumber,
-                  required int clientId,
-                  required DownloadCandidateDto candidate,
-                }) async {
-                  return const DownloadRequestResponseDto(
-                    task: DownloadTaskDto(
-                      id: 0,
-                      clientId: 0,
-                      movieNumber: null,
-                      name: '',
-                      infoHash: '',
-                      savePath: '',
-                      progress: 0,
-                      downloadState: '',
-                      importStatus: '',
-                      importStatusLabel: '',
-                      createdAt: null,
-                      updatedAt: null,
-                    ),
-                    created: false,
-                  );
-                },
-                onClose: () {},
-                showCloseButton: false,
+      child: OKToast(
+        child: MaterialApp(
+          theme: platform == null
+              ? sakuraThemeData
+              : sakuraThemeData.copyWith(platform: platform),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 960,
+                height: panelHeight,
+                child: MovieDetailInspectorPanel(
+                  movieNumber: 'ABC-001',
+                  selectedMedia: null,
+                  fetchMovieReviews: fetchMovieReviews,
+                  fetchMediaThumbnails: ({required int mediaId}) async {
+                    return const <MovieMediaThumbnailDto>[];
+                  },
+                  searchCandidates: searchCandidates ??
+                      (
+                          {required String movieNumber,
+                          String? indexerKind}) async {
+                        return const <DownloadCandidateDto>[];
+                      },
+                  createDownloadRequest: createDownloadRequest ??
+                      ({
+                        required String movieNumber,
+                        required int clientId,
+                        required DownloadCandidateDto candidate,
+                      }) async =>
+                          DownloadRequestResponseDto(
+                            task: _emptyDownloadTask(clientId: clientId),
+                            created: false,
+                          ),
+                  onClose: () {},
+                  showCloseButton: false,
+                ),
               ),
             ),
           ),
         ),
       ),
     ),
+  );
+}
+
+DownloadTaskDto _emptyDownloadTask({required int clientId}) {
+  return DownloadTaskDto(
+    id: 0,
+    clientId: clientId,
+    movieNumber: null,
+    name: '',
+    infoHash: '',
+    savePath: '',
+    progress: 0,
+    downloadState: '',
+    importStatus: '',
+    importStatusLabel: '',
+    createdAt: null,
+    updatedAt: null,
   );
 }
 
@@ -461,8 +549,7 @@ int _expectedSkeletonCount(double availableHeight) {
   const skeletonLineHeight = 12.0;
   const skeletonLineCount = 3;
   const internalGapCount = 2;
-  final itemHeight =
-      (spacingMd * 2) +
+  final itemHeight = (spacingMd * 2) +
       (skeletonLineHeight * skeletonLineCount) +
       (spacingXs * internalGapCount);
   final estimatedCount =

@@ -8,9 +8,9 @@ enum MovieDetailMagnetSortDirection { asc, desc }
 
 extension MovieDetailMagnetSortFieldValue on MovieDetailMagnetSortField {
   String get label => switch (this) {
-    MovieDetailMagnetSortField.sizeBytes => '文件大小',
-    MovieDetailMagnetSortField.seeders => '做种人数',
-  };
+        MovieDetailMagnetSortField.sizeBytes => '文件大小',
+        MovieDetailMagnetSortField.seeders => '做种人数',
+      };
 }
 
 extension MovieDetailMagnetSortDirectionValue
@@ -29,14 +29,12 @@ class MovieDetailMagnetController extends ChangeNotifier {
   final Future<List<DownloadCandidateDto>> Function({
     required String movieNumber,
     String? indexerKind,
-  })
-  searchCandidates;
+  }) searchCandidates;
   final Future<DownloadRequestResponseDto> Function({
     required String movieNumber,
     required int clientId,
     required DownloadCandidateDto candidate,
-  })
-  createDownloadRequest;
+  }) createDownloadRequest;
 
   List<DownloadCandidateDto> _items = const <DownloadCandidateDto>[];
   MovieDetailMagnetSortField _selectedSortField =
@@ -102,8 +100,9 @@ class MovieDetailMagnetController extends ChangeNotifier {
   }
 
   Future<DownloadRequestResponseDto> submitCandidate(
-    DownloadCandidateDto candidate,
-  ) async {
+    DownloadCandidateDto candidate, {
+    required int clientId,
+  }) async {
     if (_submittingCandidateKey != null) {
       throw StateError('download request already running');
     }
@@ -114,7 +113,7 @@ class MovieDetailMagnetController extends ChangeNotifier {
     try {
       return await createDownloadRequest(
         movieNumber: movieNumber,
-        clientId: candidate.resolvedClientId,
+        clientId: clientId,
         candidate: candidate,
       );
     } finally {
@@ -126,11 +125,11 @@ class MovieDetailMagnetController extends ChangeNotifier {
   int _compareCandidate(DownloadCandidateDto left, DownloadCandidateDto right) {
     final primary = switch (_selectedSortField) {
       MovieDetailMagnetSortField.sizeBytes => left.sizeBytes.compareTo(
-        right.sizeBytes,
-      ),
+          right.sizeBytes,
+        ),
       MovieDetailMagnetSortField.seeders => left.seeders.compareTo(
-        right.seeders,
-      ),
+          right.seeders,
+        ),
     };
     final directionalPrimary =
         _selectedSortDirection.isAscending ? primary : -primary;

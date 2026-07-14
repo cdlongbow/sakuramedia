@@ -44,10 +44,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('movie detail page avoids page-level card decoration', () {
-    final source =
-        File(
-          'lib/features/movies/presentation/pages/desktop/movie_detail_page.dart',
-        ).readAsStringSync();
+    final source = File(
+      'lib/features/movies/presentation/pages/desktop/movie_detail_page.dart',
+    ).readAsStringSync();
 
     expect(source, isNot(contains('boxShadow: context.appShadows.card')));
     expect(
@@ -180,12 +179,11 @@ void main() {
     final makerBottom =
         tester.getBottomLeft(find.text('厂商 · S1 NO.1 STYLE')).dy;
     final directorTop = tester.getTopLeft(find.text('导演 · 紋℃')).dy;
-    final metaGroupBottom =
-        tester
-            .getBottomLeft(
-              find.byKey(const Key('movie-detail-inline-meta-group')),
-            )
-            .dy;
+    final metaGroupBottom = tester
+        .getBottomLeft(
+          find.byKey(const Key('movie-detail-inline-meta-group')),
+        )
+        .dy;
     final tagTop = tester.getTopLeft(find.text('标签')).dy;
     final tagWrapBottom = tester.getBottomLeft(find.byType(MovieTagWrap)).dy;
     final actorTop = tester.getTopLeft(find.text('演员')).dy;
@@ -648,18 +646,16 @@ void main() {
       routes: [
         GoRoute(
           path: '/desktop/library/movies/:movieNumber/player',
-          builder:
-              (context, state) => Text(
-                'player:${state.uri.toString()}',
-                textDirection: TextDirection.ltr,
-              ),
+          builder: (context, state) => Text(
+            'player:${state.uri.toString()}',
+            textDirection: TextDirection.ltr,
+          ),
         ),
         GoRoute(
           path: '/desktop/library/movies/:movieNumber',
-          builder:
-              (context, state) => DesktopMovieDetailPage(
-                movieNumber: state.pathParameters['movieNumber']!,
-              ),
+          builder: (context, state) => DesktopMovieDetailPage(
+            movieNumber: state.pathParameters['movieNumber']!,
+          ),
         ),
       ],
       initialLocation: '/desktop/library/movies/ABC-001',
@@ -731,16 +727,15 @@ void main() {
       routes: [
         GoRoute(
           path: '/desktop/library/movies/ABC-001',
-          builder:
-              (_, __) => const DesktopMovieDetailPage(movieNumber: 'ABC-001'),
+          builder: (_, __) =>
+              const DesktopMovieDetailPage(movieNumber: 'ABC-001'),
         ),
         GoRoute(
           path: '/desktop/library/movies/:movieNumber',
-          builder:
-              (context, state) => Text(
-                'movie:${state.pathParameters['movieNumber']}',
-                textDirection: TextDirection.ltr,
-              ),
+          builder: (context, state) => Text(
+            'movie:${state.pathParameters['movieNumber']}',
+            textDirection: TextDirection.ltr,
+          ),
         ),
       ],
       initialLocation: '/desktop/library/movies/ABC-001',
@@ -814,18 +809,16 @@ void main() {
         routes: [
           GoRoute(
             path: desktopImageSearchPath,
-            builder:
-                (context, state) => const Text(
-                  'image-search',
-                  textDirection: TextDirection.ltr,
-                ),
+            builder: (context, state) => const Text(
+              'image-search',
+              textDirection: TextDirection.ltr,
+            ),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -845,10 +838,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -972,10 +965,9 @@ void main() {
           tester.getBottomLeft(find.byKey(const Key('movie-detail-title'))).dy;
       final movieNumberBottom =
           tester.getBottomLeft(find.byKey(const Key('movie-detail-number'))).dy;
-      final interactionTop =
-          tester
-              .getTopLeft(find.byKey(const Key('movie-detail-interaction-row')))
-              .dy;
+      final interactionTop = tester
+          .getTopLeft(find.byKey(const Key('movie-detail-interaction-row')))
+          .dy;
       final summaryTop =
           tester.getTopLeft(find.byKey(const Key('movie-detail-summary'))).dy;
       final titleText = tester.widget<Text>(
@@ -1827,7 +1819,7 @@ void main() {
       _defaultMagnetTitles,
     );
     expect(find.text('ABC-001 4K 中文字幕'), findsOneWidget);
-    expect(find.text('下载器: qb-main'), findsWidgets);
+    expect(find.text('qb-main · qBittorrent'), findsWidgets);
     expect(find.text('做种: 35'), findsOneWidget);
     expect(find.text('体积: 12.0 GB'), findsOneWidget);
   });
@@ -2384,18 +2376,16 @@ void main() {
         routes: [
           GoRoute(
             path: '/desktop/library/movies/:movieNumber/player',
-            builder:
-                (context, state) => Text(
-                  'player:${state.uri.toString()}',
-                  textDirection: TextDirection.ltr,
-                ),
+            builder: (context, state) => Text(
+              'player:${state.uri.toString()}',
+              textDirection: TextDirection.ltr,
+            ),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -2415,10 +2405,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -2487,18 +2477,16 @@ void main() {
         routes: [
           GoRoute(
             path: desktopImageSearchPath,
-            builder:
-                (context, state) => const Text(
-                  'image-search',
-                  textDirection: TextDirection.ltr,
-                ),
+            builder: (context, state) => const Text(
+              'image-search',
+              textDirection: TextDirection.ltr,
+            ),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -2518,10 +2506,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -2756,18 +2744,16 @@ void main() {
         routes: [
           GoRoute(
             path: desktopImageSearchPath,
-            builder:
-                (context, state) => const Text(
-                  'image-search',
-                  textDirection: TextDirection.ltr,
-                ),
+            builder: (context, state) => const Text(
+              'image-search',
+              textDirection: TextDirection.ltr,
+            ),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -2787,10 +2773,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -2859,22 +2845,21 @@ void main() {
           GoRoute(
             path: desktopImageSearchPath,
             builder: (context, state) {
-              final draftId =
-                  state.uri.queryParameters['draftId'] ??
+              final draftId = state.uri.queryParameters['draftId'] ??
                   state.uri.queryParameters['draft-id'];
               final draft = draftStore.get(draftId);
               final currentMovieNumber =
                   state.uri.queryParameters['currentMovieNumber'] ??
-                  state.uri.queryParameters['current-movie-number'];
+                      state.uri.queryParameters['current-movie-number'];
               final currentMovieScopeRaw =
                   state.uri.queryParameters['currentMovieScope'] ??
-                  state.uri.queryParameters['current-movie-scope'] ??
-                  ImageSearchCurrentMovieScope.all.name;
-              final currentMovieScope = ImageSearchCurrentMovieScope.values
-                  .firstWhere(
-                    (scope) => scope.name == currentMovieScopeRaw,
-                    orElse: () => ImageSearchCurrentMovieScope.all,
-                  );
+                      state.uri.queryParameters['current-movie-scope'] ??
+                      ImageSearchCurrentMovieScope.all.name;
+              final currentMovieScope =
+                  ImageSearchCurrentMovieScope.values.firstWhere(
+                (scope) => scope.name == currentMovieScopeRaw,
+                orElse: () => ImageSearchCurrentMovieScope.all,
+              );
               return DesktopImageSearchPage(
                 initialFileName: draft?.fileName,
                 initialFileBytes: draft?.bytes,
@@ -2886,10 +2871,9 @@ void main() {
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -2914,10 +2898,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -3026,23 +3010,21 @@ void main() {
         GoRoute(
           path: '/desktop/library/movies/:movieNumber/player',
           name: 'desktop-movie-player',
-          builder:
-              (context, state) => Scaffold(
-                body: Column(
-                  children: [
-                    Text('player:${state.pathParameters['movieNumber']}'),
-                    Text('media:${state.uri.queryParameters['mediaId']}'),
-                  ],
-                ),
-              ),
+          builder: (context, state) => Scaffold(
+            body: Column(
+              children: [
+                Text('player:${state.pathParameters['movieNumber']}'),
+                Text('media:${state.uri.queryParameters['mediaId']}'),
+              ],
+            ),
+          ),
         ),
         GoRoute(
           path: '/desktop/library/movies/:movieNumber',
           name: 'desktop-movie-detail',
-          builder:
-              (context, state) => DesktopMovieDetailPage(
-                movieNumber: state.pathParameters['movieNumber']!,
-              ),
+          builder: (context, state) => DesktopMovieDetailPage(
+            movieNumber: state.pathParameters['movieNumber']!,
+          ),
         ),
       ],
       initialLocation: '/desktop/library/movies/ABC-001',
@@ -3162,17 +3144,15 @@ void main() {
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
             name: 'desktop-movie-detail',
-            builder:
-                (context, state) => DesktopMovieDetailPage(
-                  movieNumber: state.pathParameters['movieNumber']!,
-                ),
+            builder: (context, state) => DesktopMovieDetailPage(
+              movieNumber: state.pathParameters['movieNumber']!,
+            ),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber/player',
             name: 'desktop-movie-player',
-            builder:
-                (context, state) =>
-                    Text('player:${state.pathParameters['movieNumber']}'),
+            builder: (context, state) =>
+                Text('player:${state.pathParameters['movieNumber']}'),
           ),
         ],
         initialLocation: '/desktop/library/movies/ABC-001',
@@ -3188,10 +3168,10 @@ void main() {
             ChangeNotifierProvider<ClipMutationChangeNotifier>(
               create: (_) => ClipMutationChangeNotifier(),
             ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
             ChangeNotifierProvider(
               create: (_) => MovieCollectionTypeChangeNotifier(),
             ),
@@ -3271,8 +3251,8 @@ void main() {
               (widget) =>
                   widget.key is ValueKey<String> &&
                   (widget.key! as ValueKey<String>).value.startsWith(
-                    'movie-actor-',
-                  ),
+                        'movie-actor-',
+                      ),
             ),
           )
           .evaluate()
@@ -3312,23 +3292,21 @@ void main() {
         GoRoute(
           path: '/desktop/library/movies/:movieNumber',
           name: 'desktop-movie-detail',
-          builder:
-              (context, state) => DesktopMovieDetailPage(
-                movieNumber: state.pathParameters['movieNumber']!,
-              ),
+          builder: (context, state) => DesktopMovieDetailPage(
+            movieNumber: state.pathParameters['movieNumber']!,
+          ),
         ),
         GoRoute(
           path: '/desktop/library/actors/:actorId',
           name: 'desktop-actor-detail',
-          builder:
-              (context, state) => Scaffold(
-                body: Column(
-                  children: [
-                    Text('actor:${state.pathParameters['actorId']}'),
-                    Text('extra:${state.extra as String?}'),
-                  ],
-                ),
-              ),
+          builder: (context, state) => Scaffold(
+            body: Column(
+              children: [
+                Text('actor:${state.pathParameters['actorId']}'),
+                Text('extra:${state.extra as String?}'),
+              ],
+            ),
+          ),
         ),
       ],
       initialLocation: '/desktop/library/movies/ABC-001',
@@ -3386,11 +3364,12 @@ void main() {
       '刷新互动数',
       '翻译影片介绍',
     ];
-    final orderedLabels = List<String>.from(labels)..sort((left, right) {
-      final leftDy = tester.getTopLeft(find.text(left)).dy;
-      final rightDy = tester.getTopLeft(find.text(right)).dy;
-      return leftDy.compareTo(rightDy);
-    });
+    final orderedLabels = List<String>.from(labels)
+      ..sort((left, right) {
+        final leftDy = tester.getTopLeft(find.text(left)).dy;
+        final rightDy = tester.getTopLeft(find.text(right)).dy;
+        return leftDy.compareTo(rightDy);
+      });
     expect(orderedLabels, labels);
   });
 
@@ -3639,6 +3618,14 @@ List<Map<String, dynamic>> _downloadCandidatesJson({
         'indexer_kind': 'pt',
         'resolved_client_id': 2,
         'resolved_client_name': 'qb-main',
+        'resolved_client_kind': 'qbittorrent',
+        'download_clients': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 2,
+            'name': 'qb-main',
+            'kind': 'qbittorrent',
+          },
+        ],
         'movie_number': 'ABC-001',
         'title': 'ABC-001 PT 无码版',
         'size_bytes': 2147483648,
@@ -3653,6 +3640,14 @@ List<Map<String, dynamic>> _downloadCandidatesJson({
         'indexer_kind': 'pt',
         'resolved_client_id': 2,
         'resolved_client_name': 'qb-main',
+        'resolved_client_kind': 'qbittorrent',
+        'download_clients': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 2,
+            'name': 'qb-main',
+            'kind': 'qbittorrent',
+          },
+        ],
         'movie_number': 'ABC-001',
         'title': 'ABC-001 PT 1080P',
         'size_bytes': 4294967296,
@@ -3671,6 +3666,14 @@ List<Map<String, dynamic>> _downloadCandidatesJson({
       'indexer_kind': 'bt',
       'resolved_client_id': 2,
       'resolved_client_name': 'qb-main',
+      'resolved_client_kind': 'qbittorrent',
+      'download_clients': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 2,
+          'name': 'qb-main',
+          'kind': 'qbittorrent',
+        },
+      ],
       'movie_number': 'ABC-001',
       'title': 'ABC-001 高码率收藏版',
       'size_bytes': 17179869184,
@@ -3685,6 +3688,14 @@ List<Map<String, dynamic>> _downloadCandidatesJson({
       'indexer_kind': 'bt',
       'resolved_client_id': 2,
       'resolved_client_name': 'qb-main',
+      'resolved_client_kind': 'qbittorrent',
+      'download_clients': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 2,
+          'name': 'qb-main',
+          'kind': 'qbittorrent',
+        },
+      ],
       'movie_number': 'ABC-001',
       'title': 'ABC-001 4K 中文字幕',
       'size_bytes': 12884901888,
@@ -3699,6 +3710,14 @@ List<Map<String, dynamic>> _downloadCandidatesJson({
       'indexer_kind': 'bt',
       'resolved_client_id': 2,
       'resolved_client_name': 'qb-main',
+      'resolved_client_kind': 'qbittorrent',
+      'download_clients': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 2,
+          'name': 'qb-main',
+          'kind': 'qbittorrent',
+        },
+      ],
       'movie_number': 'ABC-001',
       'title': 'ABC-001 无码流出版',
       'size_bytes': 8589934592,
@@ -3801,8 +3820,7 @@ Map<String, dynamic> _movieDetailJson({
     'summary': summary,
     'desc_zh': descZh,
     'desc': desc,
-    'actors':
-        actors ??
+    'actors': actors ??
         <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 1,
@@ -3814,8 +3832,7 @@ Map<String, dynamic> _movieDetailJson({
             'profile_image': null,
           },
         ],
-    'tags':
-        tags ??
+    'tags': tags ??
         <Map<String, dynamic>>[
           <String, dynamic>{'tag_id': 1, 'name': '剧情'},
           <String, dynamic>{'tag_id': 2, 'name': '偶像'},
@@ -3827,8 +3844,7 @@ Map<String, dynamic> _movieDetailJson({
       'medium': '/files/images/movies/ABC-001/thin-medium.jpg',
       'large': '/files/images/movies/ABC-001/thin-large.jpg',
     },
-    'plot_images':
-        plotImages ??
+    'plot_images': plotImages ??
         <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 12,

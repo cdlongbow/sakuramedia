@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_task_stream_event_dto.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
@@ -13,10 +14,15 @@ import 'package:sakuramedia/features/downloads/presentation/download_task_filter
 
 /// 供筛选栏下拉展示的下载客户端选项：id + 展示名。
 class DownloadClientOption {
-  const DownloadClientOption({required this.id, required this.name});
+  const DownloadClientOption({
+    required this.id,
+    required this.name,
+    required this.kind,
+  });
 
   final int id;
   final String name;
+  final DownloadClientKind kind;
 }
 
 /// 下载任务的实时连接状态。
@@ -41,10 +47,9 @@ class DownloadTaskRowState {
   }) {
     return DownloadTaskRowState(
       task: task ?? this.task,
-      live:
-          identical(live, _sentinel)
-              ? this.live
-              : live as DownloadTaskProgressDto?,
+      live: identical(live, _sentinel)
+          ? this.live
+          : live as DownloadTaskProgressDto?,
     );
   }
 
@@ -81,10 +86,9 @@ class DownloadClientTransferState {
       downloadSpeedBytes: downloadSpeedBytes ?? this.downloadSpeedBytes,
       uploadSpeedBytes: uploadSpeedBytes ?? this.uploadSpeedBytes,
       isAvailable: isAvailable ?? this.isAvailable,
-      unavailableMessage:
-          identical(unavailableMessage, _sentinel)
-              ? this.unavailableMessage
-              : unavailableMessage as String?,
+      unavailableMessage: identical(unavailableMessage, _sentinel)
+          ? this.unavailableMessage
+          : unavailableMessage as String?,
     );
   }
 }
@@ -94,8 +98,8 @@ class DownloadTaskCenterController extends ChangeNotifier {
   DownloadTaskCenterController({
     required DownloadsApi downloadsApi,
     required DownloadClientsApi downloadClientsApi,
-  }) : _downloadsApi = downloadsApi,
-       _downloadClientsApi = downloadClientsApi;
+  })  : _downloadsApi = downloadsApi,
+        _downloadClientsApi = downloadClientsApi;
 
   static const int _pageSize = 20;
   static const Duration _mergeDebounce = Duration(milliseconds: 800);
@@ -156,6 +160,7 @@ class DownloadTaskCenterController extends ChangeNotifier {
   final Map<int, DownloadClientTransferState> _clientTransfers =
       <int, DownloadClientTransferState>{};
   final Map<int, String> _clientNames = <int, String>{};
+  final Map<int, DownloadClientKind> _clientKinds = <int, DownloadClientKind>{};
 
   final Set<int> _pendingActionTaskIds = <int>{};
 
@@ -199,6 +204,10 @@ class DownloadTaskCenterController extends ChangeNotifier {
 
   String clientNameOf(int clientId) {
     return _clientNames[clientId] ?? '客户端 #$clientId';
+  }
+
+  DownloadClientKind clientKindOf(int clientId) {
+    return _clientKinds[clientId] ?? DownloadClientKind.qbittorrent;
   }
 
   DownloadTaskFilterState get filter => _filter;
@@ -259,8 +268,7 @@ class DownloadTaskCenterController extends ChangeNotifier {
     }
     _filter = next;
     // filter 变了要重启 SSE：因为 movie_number / client_id 是后端订阅参数，直接换掉旧订阅。
-    final wasStreamOn =
-        _streamState == DownloadTaskStreamState.live ||
+    final wasStreamOn = _streamState == DownloadTaskStreamState.live ||
         _streamState == DownloadTaskStreamState.connecting ||
         _streamState == DownloadTaskStreamState.reconnecting ||
         _streamState == DownloadTaskStreamState.polling;
@@ -466,10 +474,17 @@ class DownloadTaskCenterController extends ChangeNotifier {
         return;
       }
       _clientOptions = clients
-          .map((c) => DownloadClientOption(id: c.id, name: c.name))
+          .map(
+            (client) => DownloadClientOption(
+              id: client.id,
+              name: client.name,
+              kind: client.kind,
+            ),
+          )
           .toList(growable: false);
       for (final client in clients) {
         _clientNames[client.id] = client.name;
+        _clientKinds[client.id] = client.kind;
       }
       _notifySafely();
     } catch (_) {
@@ -611,8 +626,7 @@ class DownloadTaskCenterController extends ChangeNotifier {
           if (transfer == null) {
             break;
           }
-          final existing =
-              _clientTransfers[transfer.clientId] ??
+          final existing = _clientTransfers[transfer.clientId] ??
               DownloadClientTransferState(clientId: transfer.clientId);
           _clientTransfers[transfer.clientId] = existing.copyWith(
             downloadSpeedBytes: transfer.downloadSpeedBytes,
@@ -625,8 +639,7 @@ class DownloadTaskCenterController extends ChangeNotifier {
           if (health == null) {
             break;
           }
-          final existing =
-              _clientTransfers[health.clientId] ??
+          final existing = _clientTransfers[health.clientId] ??
               DownloadClientTransferState(clientId: health.clientId);
           _clientTransfers[health.clientId] = existing.copyWith(
             isAvailable: health.isAvailable,
@@ -802,11 +815,10 @@ class DownloadTaskCenterController extends ChangeNotifier {
     _streamState = DownloadTaskStreamState.reconnecting;
     _notifySafely();
 
-    final delay =
-        _reconnectDelays[_reconnectAttempt.clamp(
-          0,
-          _reconnectDelays.length - 1,
-        )];
+    final delay = _reconnectDelays[_reconnectAttempt.clamp(
+      0,
+      _reconnectDelays.length - 1,
+    )];
     _reconnectAttempt += 1;
     _cancelReconnectTimer();
     _reconnectTimer = Timer(delay, () async {

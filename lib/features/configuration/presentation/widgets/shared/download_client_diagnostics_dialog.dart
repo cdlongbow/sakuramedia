@@ -13,7 +13,13 @@ import 'package:sakuramedia/widgets/base/forms/app_info_pill.dart';
 /// - [healthy]:成功,绿色 tone;不弹窗
 /// - [warning]:业务健康但带 warnings(仅存储探针),橙色 tone;首次自动弹一次详情
 /// - [unhealthy]:失败,红色 tone;首次自动弹一次详情
-enum DownloadClientProbeChipState { notTested, probing, healthy, warning, unhealthy }
+enum DownloadClientProbeChipState {
+  notTested,
+  probing,
+  healthy,
+  warning,
+  unhealthy
+}
 
 DownloadClientProbeChipState probeChipStateFromConnectivity(
   DownloadClientTestResultDto result,
@@ -67,17 +73,16 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
     final tap = disabled ? null : onTap;
     // onTap 为 null(只读态)时用 IgnorePointer,让上层 InkWell/GestureDetector
     // 接管点击 —— 移动卡片场景下整卡都可点开详情抽屉。
-    final Widget interactive =
-        tap == null
-            ? IgnorePointer(child: content)
-            : MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: tap,
-                child: content,
-              ),
-            );
+    final Widget interactive = tap == null
+        ? IgnorePointer(child: content)
+        : MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: tap,
+              child: content,
+            ),
+          );
 
     if (tooltip == null || tooltip!.isEmpty) return interactive;
     return Tooltip(message: tooltip!, child: interactive);
@@ -181,6 +186,9 @@ class _DownloadClientTestResultDialogState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final isCloud115 = _result.baseUrl.trim().isEmpty &&
+        _result.version == null &&
+        _result.webApiVersion == null;
     return AppDesktopDialog(
       dialogKey: const Key('download-client-diagnostics-dialog'),
       width: context.appLayoutTokens.dialogWidthMd,
@@ -190,7 +198,9 @@ class _DownloadClientTestResultDialogState
         children: [
           _DiagnosticsHeader(
             title: '连通性检测',
-            subtitle: '${_result.clientName} · ${_result.baseUrl}',
+            subtitle: isCloud115
+                ? '${_result.clientName} · 115 登录状态'
+                : '${_result.clientName} · ${_result.baseUrl}',
             healthy: _result.healthy,
             elapsedMs: _result.elapsedMs,
           ),
@@ -209,14 +219,21 @@ class _DownloadClientTestResultDialogState
                     spacing: spacing.md,
                     runSpacing: spacing.sm,
                     children: [
-                      AppInfoPill(
-                        label: 'qBittorrent 版本',
-                        value: _result.version ?? '未知',
-                      ),
-                      AppInfoPill(
-                        label: 'Web API 版本',
-                        value: _result.webApiVersion ?? '未知',
-                      ),
+                      if (isCloud115)
+                        const AppInfoPill(
+                          label: '检测项',
+                          value: '115 登录状态正常',
+                        )
+                      else ...[
+                        AppInfoPill(
+                          label: 'qBittorrent 版本',
+                          value: _result.version ?? '未知',
+                        ),
+                        AppInfoPill(
+                          label: 'Web API 版本',
+                          value: _result.webApiVersion ?? '未知',
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -468,10 +485,9 @@ class _HealthyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final background =
-        healthy
-            ? context.appColors.successSurface
-            : context.appColors.errorSurface;
+    final background = healthy
+        ? context.appColors.successSurface
+        : context.appColors.errorSurface;
     final tone = healthy ? AppTextTone.success : AppTextTone.error;
     final label = healthy ? '正常' : '异常';
     return Container(

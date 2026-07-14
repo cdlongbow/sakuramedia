@@ -45,6 +45,7 @@ Map<String, dynamic> _clientDto({int id = 1, String name = 'qb'}) {
   return <String, dynamic>{
     'id': id,
     'name': name,
+    'kind': 'qbittorrent',
     'base_url': 'http://qb.example',
     'username': 'user',
     'client_save_path': '/dl',
@@ -69,13 +70,12 @@ Map<String, dynamic> _connectivityResult({
     'elapsed_ms': 20,
     'version': healthy ? '5.0.4' : null,
     'web_api_version': healthy ? '2.11' : null,
-    'error':
-        errorType == null
-            ? null
-            : <String, dynamic>{
-              'type': errorType,
-              'message': errorMessage ?? '',
-            },
+    'error': errorType == null
+        ? null
+        : <String, dynamic>{
+            'type': errorType,
+            'message': errorMessage ?? '',
+          },
   };
 }
 
@@ -94,10 +94,9 @@ Map<String, dynamic> _storageResult({required bool healthy, int clientId = 1}) {
       'probe_remote_dir': '/dl/.p',
       'probe_local_dir': '/mnt/dl/.p',
       'sentinel_visible_to_qb': healthy,
-      'error':
-          healthy
-              ? null
-              : <String, dynamic>{'type': 'mapping', 'message': 'nope'},
+      'error': healthy
+          ? null
+          : <String, dynamic>{'type': 'mapping', 'message': 'nope'},
     },
     'hardlink': <String, dynamic>{
       'status': 'ok',
@@ -117,7 +116,19 @@ Map<String, dynamic> _indexerSettings({
   return <String, dynamic>{
     'type': type,
     'api_key': apiKey,
-    'indexers': entries,
+    'indexers': entries.map((entry) {
+      if (entry.containsKey('download_clients')) return entry;
+      return <String, dynamic>{
+        ...entry,
+        'download_clients': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': entry['download_client_id'],
+            'name': entry['download_client_name'],
+            'kind': 'qbittorrent',
+          },
+        ],
+      };
+    }).toList(growable: false),
   };
 }
 
@@ -136,13 +147,12 @@ Map<String, dynamic> _indexerConnectionTest({
     'indexers_checked': indexersChecked,
     'result_count': resultCount,
     'elapsed_ms': elapsedMs,
-    'error':
-        errorType == null
-            ? null
-            : <String, dynamic>{
-              'type': errorType,
-              'message': errorMessage ?? '',
-            },
+    'error': errorType == null
+        ? null
+        : <String, dynamic>{
+            'type': errorType,
+            'message': errorMessage ?? '',
+          },
   };
 }
 
@@ -308,6 +318,83 @@ void main() {
     final indexer = _find(c, (i) => i.kind == DiagnosticItemKind.indexer);
     expect(indexer.status, DiagnosticItemStatus.healthy);
     expect(indexer.summary, contains('2 条候选'));
+  });
+
+  test('cloud115 downloader probes login state without storage test', () async {
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      body: <Map<String, dynamic>>[_library()],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 8,
+          'name': '115 主账号',
+          'kind': 'cloud115',
+          'base_url': null,
+          'username': null,
+          'client_save_path': null,
+          'local_root_path': null,
+          'media_library_id': 1,
+          'has_password': false,
+        },
+      ],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients/8/test',
+      body: <String, dynamic>{
+        ..._connectivityResult(healthy: true, clientId: 8),
+        'client_name': '115 主账号',
+        'base_url': null,
+        'version': null,
+        'web_api_version': null,
+      },
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/indexer-settings',
+      body: _indexerSettings(
+        entries: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 1,
+            'name': 'dmhy',
+            'url': 'https://jackett.example/api',
+            'kind': 'bt',
+            'download_clients': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': 8,
+                'name': '115 主账号',
+                'kind': 'cloud115',
+              },
+            ],
+          },
+        ],
+      ),
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/indexer-settings/test',
+      body: _indexerConnectionTest(healthy: true),
+    );
+    _enqueueIndependentProbes();
+
+    final controller = _newController();
+    await controller.runAll();
+
+    expect(
+      _bundle.adapter.hitCount('POST', '/download-clients/8/storage-test'),
+      0,
+    );
+    final connectivity = _find(
+      controller,
+      (item) => item.itemKey == 'downloader-connectivity-8',
+    );
+    expect(connectivity.status, DiagnosticItemStatus.healthy);
+    expect(connectivity.summary, '115 登录状态正常');
   });
 
   test('媒体库空 → 下载器 + 索引器全部 blocked，不发多余请求', () async {

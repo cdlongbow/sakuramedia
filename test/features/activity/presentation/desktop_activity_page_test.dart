@@ -485,7 +485,8 @@ void main() {
       await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('download-client-speed-bar')), findsOneWidget);
+      expect(
+          find.byKey(const Key('download-client-speed-bar')), findsOneWidget);
       expect(find.byKey(const Key('download-task-11')), findsOneWidget);
       expect(bundle.adapter.hitCount('GET', '/download-tasks'), 1);
       expect(bundle.adapter.hitCount('GET', '/download-tasks/stream'), 1);
@@ -495,6 +496,34 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  testWidgets('cloud115 task hides unsupported pause action', (
+    WidgetTester tester,
+  ) async {
+    _setDesktopViewport(tester);
+    final sessionStore = await _createSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+
+    _enqueueActivityState(bundle);
+    _enqueueDownloadTaskState(
+      bundle,
+      items: <Map<String, dynamic>>[_downloadTaskJson(id: 11)],
+      cloud115: true,
+    );
+
+    await _pumpActivityPage(tester, bundle: bundle);
+    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('115 主账号'), findsWidgets);
+    expect(find.byKey(const Key('download-task-pause-11')), findsNothing);
+    expect(find.byKey(const Key('download-task-delete-11')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('activity-tab-tasks')));
+    await tester.pumpAndSettle();
+  });
 
   testWidgets(
     'delete confirm with delete_files checkbox forwards double confirm query',
@@ -773,6 +802,7 @@ Map<String, dynamic> _jobJson({
 void _enqueueDownloadTaskState(
   TestApiBundle bundle, {
   required List<Map<String, dynamic>> items,
+  bool cloud115 = false,
 }) {
   bundle.adapter.enqueueJson(
     method: 'GET',
@@ -790,11 +820,12 @@ void _enqueueDownloadTaskState(
     body: <Map<String, dynamic>>[
       {
         'id': 2,
-        'name': 'qb-main',
-        'base_url': 'http://qb:8080',
-        'username': 'admin',
-        'client_save_path': '/downloads',
-        'local_root_path': '/mnt/qb',
+        'name': cloud115 ? '115 主账号' : 'qb-main',
+        'kind': cloud115 ? 'cloud115' : 'qbittorrent',
+        'base_url': cloud115 ? null : 'http://qb:8080',
+        'username': cloud115 ? null : 'admin',
+        'client_save_path': cloud115 ? null : '/downloads',
+        'local_root_path': cloud115 ? null : '/mnt/qb',
         'media_library_id': 1,
         'has_password': true,
       },

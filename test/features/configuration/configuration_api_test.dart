@@ -110,6 +110,48 @@ void main() {
       expect(bundle.adapter.requests[2].body.containsKey('password'), isFalse);
     });
 
+    test('cloud115 download client only sends name, kind and media library',
+        () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-clients',
+        statusCode: 201,
+        body: <String, dynamic>{
+          'id': 8,
+          'name': '115 主账号',
+          'kind': 'cloud115',
+          'base_url': null,
+          'username': null,
+          'client_save_path': null,
+          'local_root_path': null,
+          'media_library_id': 12,
+          'has_password': false,
+          'created_at': '2026-07-15T08:00:00Z',
+          'updated_at': '2026-07-15T08:00:00Z',
+        },
+      );
+
+      final created = await bundle.downloadClientsApi.createClient(
+        const CreateDownloadClientPayload(
+          name: '115 主账号',
+          kind: DownloadClientKind.cloud115,
+          mediaLibraryId: 12,
+        ),
+      );
+
+      expect(created.kind, DownloadClientKind.cloud115);
+      expect(created.baseUrl, isEmpty);
+      expect(bundle.adapter.requests.single.body, <String, dynamic>{
+        'name': '115 主账号',
+        'kind': 'cloud115',
+        'media_library_id': 12,
+      });
+    });
+
     test('download clients diagnostic apis map endpoints and results',
         () async {
       final sessionStore = await _buildLoggedInSessionStore();
@@ -645,8 +687,9 @@ void main() {
               'name': 'mteam',
               'url': 'https://example.com/torznab',
               'kind': 'pt',
-              'download_client_id': 2,
-              'download_client_name': 'qb-main',
+              'download_clients': [
+                {'id': 2, 'name': 'qb-main', 'kind': 'qbittorrent'},
+              ],
             },
           ],
         },
@@ -663,8 +706,9 @@ void main() {
               'name': 'mteam',
               'url': 'https://example.com/torznab',
               'kind': 'pt',
-              'download_client_id': 2,
-              'download_client_name': 'qb-main',
+              'download_clients': [
+                {'id': 2, 'name': 'qb-main', 'kind': 'qbittorrent'},
+              ],
             },
           ],
         },
@@ -681,8 +725,13 @@ void main() {
               name: 'mteam',
               url: 'https://example.com/torznab',
               kind: 'pt',
-              downloadClientId: 2,
-              downloadClientName: '',
+              downloadClients: [
+                IndexerBoundClientDto(
+                  id: 2,
+                  name: 'qb-main',
+                  kind: DownloadClientKind.qbittorrent,
+                ),
+              ],
             ),
           ],
         ),
@@ -690,14 +739,14 @@ void main() {
 
       expect(settings.apiKey, 'secret-key');
       expect(settings.indexers.single.id, 1);
-      expect(settings.indexers.single.downloadClientId, 2);
-      expect(settings.indexers.single.downloadClientName, 'qb-main');
+      expect(settings.indexers.single.downloadClientIds, [2]);
+      expect(settings.indexers.single.downloadClientNames, 'qb-main');
       expect(updated.apiKey, 'updated-key');
-      expect(updated.indexers.single.downloadClientName, 'qb-main');
+      expect(updated.indexers.single.downloadClientNames, 'qb-main');
       expect(bundle.adapter.requests[1].body['api_key'], 'updated-key');
       expect(
-        bundle.adapter.requests[1].body['indexers'][0]['download_client_id'],
-        2,
+        bundle.adapter.requests[1].body['indexers'][0]['download_client_ids'],
+        [2],
       );
     });
 
@@ -789,8 +838,8 @@ void main() {
         });
 
         expect(settings.indexers.single.id, 0);
-        expect(settings.indexers.single.downloadClientId, 0);
-        expect(settings.indexers.single.downloadClientName, '');
+        expect(settings.indexers.single.downloadClientIds, isEmpty);
+        expect(settings.indexers.single.downloadClientNames, '');
       },
     );
 

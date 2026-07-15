@@ -18,6 +18,7 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
     required this.emptySectionVerticalPadding,
     required this.inlineIconPadding,
     required this.directoryBrowserHeight,
+    required this.qrImageSize,
   });
 
   const AppLayoutTokens.defaults()
@@ -33,7 +34,8 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
       dialogInsetPadding = 24,
       emptySectionVerticalPadding = 48,
       inlineIconPadding = 5,
-      directoryBrowserHeight = 280;
+      directoryBrowserHeight = 280,
+      qrImageSize = 224;
 
   final double inlineActionButtonSize;
   final double panelIconContainerSize;
@@ -51,6 +53,9 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
   /// 能显示 ≥5 行条目而不至于挤压 transferMode 与警告条。
   final double directoryBrowserHeight;
 
+  /// 二维码图像的正方形边长（用于 115 扫码登录等场景）。
+  final double qrImageSize;
+
   @override
   AppLayoutTokens copyWith({
     double? inlineActionButtonSize,
@@ -66,6 +71,7 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
     double? emptySectionVerticalPadding,
     double? inlineIconPadding,
     double? directoryBrowserHeight,
+    double? qrImageSize,
   }) {
     return AppLayoutTokens(
       inlineActionButtonSize:
@@ -86,6 +92,7 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
       inlineIconPadding: inlineIconPadding ?? this.inlineIconPadding,
       directoryBrowserHeight:
           directoryBrowserHeight ?? this.directoryBrowserHeight,
+      qrImageSize: qrImageSize ?? this.qrImageSize,
     );
   }
 
@@ -123,6 +130,7 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
           lerpDouble(inlineIconPadding, other.inlineIconPadding, t)!,
       directoryBrowserHeight:
           lerpDouble(directoryBrowserHeight, other.directoryBrowserHeight, t)!,
+      qrImageSize: lerpDouble(qrImageSize, other.qrImageSize, t)!,
     );
   }
 }

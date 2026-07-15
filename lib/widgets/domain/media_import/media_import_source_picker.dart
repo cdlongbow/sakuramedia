@@ -23,6 +23,11 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 /// 一个可导入的目录，并选择 `transferMode`。被 JAV `/import-jobs` 与非 JAV
 /// `/video-imports` 两条导入弹窗共同复用。
 ///
+/// ⚠️ **胶水层例外（与 `MediaPreviewDialog` 同类）**：
+/// 本组件位于 `widgets/domain/`，但会自行 `context.read<MediaImportApi>()`
+/// 与 `context.read<MediaLibrariesApi>()` 发起真实 HTTP 请求（目录浏览、翻页），
+/// 并自持 loading/error state。复用时 caller 无需再包一层控制器。
+///
 /// 边界：
 /// - **不含**媒体库下拉——由 caller 自行渲染并驱动。picker 通过 [selectedLibrary]
 ///   感知当前库；库变化时自动重置浏览状态并把 mode 回落到该库的默认值。
@@ -469,11 +474,7 @@ class _MediaImportSourcePickerState extends State<MediaImportSourcePicker> {
 
   Widget _buildBrowserBody(BuildContext context) {
     if (_isBrowsing) {
-      return Center(
-        child: CircularProgressIndicator(
-          strokeWidth: context.appComponentTokens.movieCardLoaderStrokeWidth,
-        ),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
     if (_browseError != null) {
       return Padding(

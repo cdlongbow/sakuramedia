@@ -16,85 +16,8 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
-
-Future<MediaLibraryBackend?> showMediaLibraryBackendPicker(
-  BuildContext context,
-) {
-  Widget buildBody(BuildContext modalContext) {
-    final spacing = modalContext.appSpacing;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '选择存储类型',
-          style: resolveAppTextStyle(
-            modalContext,
-            size: AppTextSize.s18,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: spacing.xs),
-        Text(
-          '媒体库创建后不能切换存储类型。',
-          style: resolveAppTextStyle(
-            modalContext,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        SizedBox(height: spacing.lg),
-        AppSettingsGroup(
-          children: [
-            AppSettingCell(
-              key: const Key('media-library-backend-local'),
-              icon: Icons.folder_open_outlined,
-              title: '本地存储',
-              subtitle: '使用后端服务器可访问的本地目录',
-              trailing: const AppSettingCellChevron(),
-              onTap: () => Navigator.of(
-                modalContext,
-              ).pop(MediaLibraryBackend.local),
-            ),
-            AppSettingCell(
-              key: const Key('media-library-backend-cloud115'),
-              icon: Icons.cloud_outlined,
-              title: '115 网盘',
-              subtitle: '扫码登录并使用 115 网盘存储媒体',
-              trailing: const AppSettingCellChevron(),
-              onTap: () => Navigator.of(
-                modalContext,
-              ).pop(MediaLibraryBackend.cloud115),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
-  if (platform == AppPlatform.mobile) {
-    return showAppBottomDrawer<MediaLibraryBackend>(
-      context: context,
-      drawerKey: const Key('media-library-backend-picker-drawer'),
-      maxHeightFactor: 0.48,
-      builder: buildBody,
-    );
-  }
-  return showDialog<MediaLibraryBackend>(
-    context: context,
-    builder: (dialogContext) => AppDesktopDialog(
-      dialogKey: const Key('media-library-backend-picker-dialog'),
-      width: dialogContext.appLayoutTokens.dialogWidthMd,
-      child: buildBody(dialogContext),
-    ),
-  );
-}
 
 Future<MediaLibraryDto?> showCloud115LibraryLoginFlow(
   BuildContext context, {
@@ -603,13 +526,15 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
   Widget _buildQrImage(BuildContext context) {
     final colors = context.appColors;
     final image = _qrImageBytes;
+    final size = context.appLayoutTokens.qrImageSize;
     return Container(
       key: const Key('cloud115-login-qr-container'),
-      width: 224,
-      height: 224,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       padding: EdgeInsets.all(context.appSpacing.sm),
       decoration: BoxDecoration(
+        // QR 强白底：扫码要求高对比，不走主题色（暗色模式下也需要保持白）。
         color: Colors.white,
         borderRadius: context.appRadius.mdBorder,
         border: Border.all(color: colors.borderSubtle),

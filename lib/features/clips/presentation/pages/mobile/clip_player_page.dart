@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/landscape_player_system_ui.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
@@ -63,7 +64,7 @@ class _MobileClipPlayerPageState extends State<MobileClipPlayerPage> {
       setState(() => _hasResolvedUrl = false);
       return;
     }
-    final player = Player();
+    final player = ThrottlingPlayer();
     final controller = VideoController(
       player,
       configuration: const VideoControllerConfiguration(hwdec: 'auto'),

@@ -25,6 +25,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicat
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 
 /// 切片合集连播独立页面：media_kit 播放器（原生 Playlist 自动连播）占满画面，
 /// 底部控制条「选集」按钮唤出右侧滑出的剧集面板（当前高亮 / 点击跳转）。
@@ -112,7 +113,7 @@ class _DesktopClipCollectionPlayPageState
         return;
       }
       final startIndex = resolvedStartIndex.clamp(0, medias.length - 1);
-      final player = Player();
+      final player = ThrottlingPlayer();
       final videoController = VideoController(
         player,
         configuration: const VideoControllerConfiguration(hwdec: 'auto'),

@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/landscape_player_system
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 
 /// 移动端单视频全屏横屏播放页：进入锁定横屏沉浸式、退出恢复原方向。
 ///
@@ -88,7 +89,7 @@ class _MobileVideoPlayerPageState extends State<MobileVideoPlayerPage> {
         });
         return;
       }
-      final player = Player();
+      final player = ThrottlingPlayer();
       final controller = VideoController(
         player,
         configuration: const VideoControllerConfiguration(hwdec: 'auto'),

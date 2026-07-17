@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
@@ -81,7 +82,7 @@ class _QuickPlayDialogState extends State<QuickPlayDialog> {
         });
         return;
       }
-      final player = Player();
+      final player = ThrottlingPlayer();
       final controller = VideoController(
         player,
         configuration: const VideoControllerConfiguration(hwdec: 'auto'),

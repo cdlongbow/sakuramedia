@@ -11,6 +11,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
+import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
@@ -335,7 +336,7 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   @override
   void initState() {
     super.initState();
-    _player = Player(configuration: buildMoviePlayerConfiguration());
+    _player = ThrottlingPlayer(configuration: buildMoviePlayerConfiguration());
     _controller = VideoController(
       _player,
       configuration: const VideoControllerConfiguration(hwdec: 'auto'),

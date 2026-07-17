@@ -85,6 +85,13 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
     seekBarPositionColor: theme.colorScheme.primary,
     seekBarHeight: 6,
     seekBarThumbSize: 14,
+    // media_kit_video 的 MaterialDesktopVolumeButton 内部用 AnimatedSwitcher 做
+    // 音量图标切换动画；Flutter 有个已知 bug（flutter/flutter#121336）：动画过渡期间
+    // 若同 key 的 widget 被快速再次触发切换，会在内部 Stack 里堆出两份相同 key，
+    // 触发 "Duplicate keys found" 断言并连带炸出一串 layout 错误。触发场景是拖动
+    // seek bar 造成的高频状态更新，音量图标切换本身不需要过渡动画（用户感知不到），
+    // 直接设为 0 让切换在单帧内完成，从根上避开这条过渡期叠加窗口。
+    volumeBarTransitionDuration: Duration.zero,
     displaySeekBar: displaySeekBar,
     topButtonBar: topControls,
     topButtonBarMargin: EdgeInsets.fromLTRB(

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
 
 void main() {
   group('MoviePlayerPlaybackInfoSnapshot builder', () {
@@ -141,6 +144,143 @@ void main() {
 
       expect(actual, isNull);
     });
+
+    test('marks cloud115 + hls file-format as HLS source', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+        originalUrl:
+            'https://backend.example.com/media/1/stream?expires=1&signature=x',
+        fileFormat: 'hls',
+        hlsBitrate: 3000000,
+        videoParams: const VideoParams(dw: 1920, dh: 1080),
+        bufferCacheDurationSeconds: 12.3,
+        bufferForwardBytes: 8 * 1024 * 1024,
+        downloadRateBytesPerSecond: 2.5 * 1024 * 1024,
+      );
+
+      expect(snapshot.playbackSourceKindLabel, 'HLS · demuxer=hls');
+      expect(snapshot.playbackSourceHostLabel, 'backend.example.com');
+      expect(snapshot.playbackSourceRequestPathLabel, '/media/1/stream');
+      expect(snapshot.playbackSourceQualityLabel, '1080p · 3.00 Mbps');
+      expect(snapshot.playbackSourceBufferLabel, '12.3s / 8.0 MB');
+      expect(snapshot.playbackSourceDownloadRateLabel, '2.5 MB/s');
+      expect(snapshot.playbackSourceDegradedHint, isNull);
+    });
+
+    test(
+      'marks cloud115 + non-hls file-format as direct-degraded with hint',
+      () {
+        final snapshot = _buildMinimalSnapshot(
+          mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+          originalUrl:
+              'https://backend.example.com/media/1/stream?expires=1&signature=x',
+          fileFormat: 'mov,mp4,m4a,3gp,3g2,mj2',
+        );
+
+        expect(
+          snapshot.playbackSourceKindLabel,
+          '直链（HLS 不可用） · demuxer=mov,mp4,m4a,3gp,3g2,mj2',
+        );
+        expect(snapshot.playbackSourceQualityLabel, isNull);
+        expect(
+          snapshot.playbackSourceDegradedHint,
+          'HLS 不可用，可能因未转码 / 账号非 VIP，已回落到原画直链',
+        );
+      },
+    );
+
+    test('marks local media regardless of file-format', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.local,
+        originalUrl:
+            'https://backend.example.com/media/9/stream?expires=1&signature=x',
+        fileFormat: 'matroska,webm',
+      );
+
+      expect(
+        snapshot.playbackSourceKindLabel,
+        '本地文件 · demuxer=matroska,webm',
+      );
+      expect(snapshot.playbackSourceDegradedHint, isNull);
+      expect(snapshot.playbackSourceQualityLabel, isNull);
+    });
+
+    test(
+      'hides host / path when originalUrl cannot yield them',
+      () {
+        final snapshot = _buildMinimalSnapshot(
+          mediaOrigin: MoviePlayerPlaybackMediaOrigin.unknown,
+          originalUrl: '',
+          fileFormat: null,
+        );
+
+        expect(snapshot.playbackSourceKindLabel, '--');
+        expect(snapshot.playbackSourceHostLabel, isNull);
+        expect(snapshot.playbackSourceRequestPathLabel, isNull);
+      },
+    );
+
+    test('keeps port in host when non-standard', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.local,
+        originalUrl: 'http://192.168.1.10:8000/media/3/stream?expires=1',
+        fileFormat: 'mov,mp4,m4a,3gp,3g2,mj2',
+      );
+
+      expect(snapshot.playbackSourceHostLabel, '192.168.1.10:8000');
+      expect(snapshot.playbackSourceRequestPathLabel, '/media/3/stream');
+    });
+
+    test('formats hls quality with kbps fallback for small bitrates', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+        originalUrl: 'https://a.example.com/media/1/stream',
+        fileFormat: 'hls',
+        hlsBitrate: 800000,
+        videoParams: const VideoParams(dw: 854, dh: 480),
+      );
+
+      expect(snapshot.playbackSourceQualityLabel, '480p · 800 Kbps');
+    });
+
+    test('hides download rate row when rate is unknown', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+        originalUrl: 'https://a.example.com/media/1/stream',
+        fileFormat: 'hls',
+        hlsBitrate: 3000000,
+        videoParams: const VideoParams(dw: 1920, dh: 1080),
+      );
+
+      expect(snapshot.playbackSourceDownloadRateLabel, isNull);
+    });
+  });
+
+  group('parseDemuxerForwardBytes', () {
+    test('extracts fw-bytes from mpv-style map string', () {
+      expect(
+        parseDemuxerForwardBytes(
+          '{cache-end=123.4, fw-bytes=8388608, cache-duration=12.3}',
+        ),
+        8388608,
+      );
+    });
+
+    test('extracts fw-bytes from JSON-style string', () {
+      expect(
+        parseDemuxerForwardBytes('{"fw-bytes": 1024, "cache-duration": 3.4}'),
+        1024,
+      );
+    });
+
+    test('returns null when key missing', () {
+      expect(parseDemuxerForwardBytes('{cache-duration=12.3}'), isNull);
+    });
+
+    test('returns null for null / empty input', () {
+      expect(parseDemuxerForwardBytes(null), isNull);
+      expect(parseDemuxerForwardBytes(''), isNull);
+    });
   });
 
   group('MoviePlayerPlaybackInfoPanel', () {
@@ -217,5 +357,181 @@ void main() {
       expect(find.text('58.50 fps'), findsOneWidget);
       expect(find.text('累计 120 · 近1s 2'), findsOneWidget);
     });
+
+    testWidgets('renders playback source rows and skips null fields', (
+      WidgetTester tester,
+    ) async {
+      final notifier = ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
+        _buildMinimalSnapshot(
+          mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+          originalUrl: 'https://backend.example.com/media/1/stream?expires=1',
+          fileFormat: 'hls',
+          hlsBitrate: 3000000,
+          videoParams: const VideoParams(dw: 1920, dh: 1080),
+          bufferCacheDurationSeconds: 12.3,
+          bufferForwardBytes: 8 * 1024 * 1024,
+        ),
+      );
+      addTearDown(notifier.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox.expand(
+              child: MoviePlayerPlaybackInfoPanel(infoListenable: notifier),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('播放源'), findsOneWidget);
+      expect(find.text('HLS · demuxer=hls'), findsOneWidget);
+      expect(find.text('backend.example.com'), findsOneWidget);
+      expect(find.text('/media/1/stream'), findsOneWidget);
+      expect(find.text('1080p · 3.00 Mbps'), findsOneWidget);
+      expect(find.text('12.3s / 8.0 MB'), findsOneWidget);
+      // 无下载速率 → 不渲染该行
+      expect(
+        find.byKey(
+          const Key('movie-player-info-value-playback-source-download-rate'),
+        ),
+        findsNothing,
+      );
+      // HLS 场景无降级 hint
+      expect(
+        find.byKey(
+          const Key('movie-player-info-playback-source-degraded-hint'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('shows degraded hint on direct-degraded snapshot', (
+      WidgetTester tester,
+    ) async {
+      final notifier = ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
+        _buildMinimalSnapshot(
+          mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+          originalUrl: 'https://backend.example.com/media/1/stream',
+          fileFormat: 'mov,mp4,m4a,3gp,3g2,mj2',
+        ),
+      );
+      addTearDown(notifier.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox.expand(
+              child: MoviePlayerPlaybackInfoPanel(infoListenable: notifier),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(
+          const Key('movie-player-info-playback-source-degraded-hint'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('HLS 不可用，可能因未转码 / 账号非 VIP，已回落到原画直链'),
+        findsOneWidget,
+      );
+      // 档位行不渲染
+      expect(
+        find.byKey(
+          const Key('movie-player-info-value-playback-source-quality'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('copy button writes value to clipboard', (
+      WidgetTester tester,
+    ) async {
+      String? copied;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      });
+      addTearDown(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      });
+
+      final notifier = ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
+        _buildMinimalSnapshot(
+          mediaOrigin: MoviePlayerPlaybackMediaOrigin.cloud115,
+          originalUrl: 'https://backend.example.com/media/1/stream',
+          fileFormat: 'hls',
+        ),
+      );
+      addTearDown(notifier.dispose);
+
+      await tester.pumpWidget(
+        OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox.expand(
+                child: MoviePlayerPlaybackInfoPanel(infoListenable: notifier),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(
+        find.byKey(
+          const Key('movie-player-info-copy-playback-source-host'),
+        ),
+      );
+      // toast 会 schedule 一个自动关闭 timer；把它跑完防 "pending timers"。
+      await tester.pumpAndSettle(const Duration(seconds: 3));
+
+      expect(copied, 'backend.example.com');
+    });
   });
+}
+
+MoviePlayerPlaybackInfoSnapshot _buildMinimalSnapshot({
+  required MoviePlayerPlaybackMediaOrigin mediaOrigin,
+  required String originalUrl,
+  required String? fileFormat,
+  double? hlsBitrate,
+  VideoParams videoParams = const VideoParams(),
+  double? bufferCacheDurationSeconds,
+  int? bufferForwardBytes,
+  double? downloadRateBytesPerSecond,
+}) {
+  return buildMoviePlayerPlaybackInfoSnapshot(
+    track: const Track(),
+    videoParams: videoParams,
+    audioParams: const AudioParams(),
+    audioBitrate: null,
+    videoBitrate: null,
+    estimatedVfFps: null,
+    hwdecCurrent: null,
+    renderDropFrameCount: null,
+    decoderDropFrameCount: null,
+    delayedFrameCount: null,
+    mistimedFrameCount: null,
+    renderDropFramePerSecond: null,
+    decoderDropFramePerSecond: null,
+    delayedFramePerSecond: null,
+    mistimedFramePerSecond: null,
+    mediaOrigin: mediaOrigin,
+    originalUrl: originalUrl,
+    fileFormat: fileFormat,
+    hlsBitrate: hlsBitrate,
+    bufferCacheDurationSeconds: bufferCacheDurationSeconds,
+    bufferForwardBytes: bufferForwardBytes,
+    downloadRateBytesPerSecond: downloadRateBytesPerSecond,
+  );
 }

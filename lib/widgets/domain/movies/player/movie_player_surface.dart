@@ -102,6 +102,28 @@ String moviePlayerPlaybackErrorMessage(MoviePlayerMediaSourceKind sourceKind) {
   };
 }
 
+/// 从 libmpv `demuxer-cache-state` 的 stringified value 里挖 `fw-bytes`。
+/// media_kit `getProperty` 返回的是 mpv 的字符串化输出，形如
+/// `{cache-end=..., fw-bytes=8388608, ...}` 或 JSON 化 `{"fw-bytes": 8388608}`；
+/// 用正则宽松匹配数字，任何解析失败都回落 null 让"下载速率"行自动隐藏。
+@visibleForTesting
+int? parseDemuxerForwardBytes(String? raw) {
+  if (raw == null || raw.isEmpty) {
+    return null;
+  }
+  final match = RegExp(
+    r'''["']?fw-bytes["']?\s*[:=]\s*(\d+)''',
+  ).firstMatch(raw);
+  if (match == null) {
+    return null;
+  }
+  final parsed = int.tryParse(match.group(1) ?? '');
+  if (parsed == null || parsed < 0) {
+    return null;
+  }
+  return parsed;
+}
+
 abstract class MoviePlayerSurfacePlaybackDriver {
   Future<void> open(
     String resolvedUrl, {
@@ -312,6 +334,13 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   double? _previousDecoderFrameDropCount;
   double? _previousVoDelayedFrameCount;
   double? _previousMistimedFrameCount;
+  String? _currentFileFormat;
+  double? _currentHlsBitrate;
+  double? _currentDemuxerCacheDurationSeconds;
+  int? _currentDemuxerForwardBytes;
+  double? _currentDownloadRateBytesPerSecond;
+  int? _previousDemuxerForwardBytes;
+  DateTime? _previousDemuxerBytesSampleAt;
   MoviePlayerMobileDrawerType? _activeMobileDrawer;
   Duration? _pendingInitialSeek;
   bool _resumePromptVisible = false;
@@ -670,6 +699,13 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
     _previousDecoderFrameDropCount = null;
     _previousVoDelayedFrameCount = null;
     _previousMistimedFrameCount = null;
+    _currentFileFormat = null;
+    _currentHlsBitrate = null;
+    _currentDemuxerCacheDurationSeconds = null;
+    _currentDemuxerForwardBytes = null;
+    _currentDownloadRateBytesPerSecond = null;
+    _previousDemuxerForwardBytes = null;
+    _previousDemuxerBytesSampleAt = null;
     _refreshPlaybackInfoSnapshot();
   }
 
@@ -690,11 +726,30 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       decoderDropFramePerSecond: _decoderFrameDropPerSecond,
       delayedFramePerSecond: _voDelayedFramePerSecond,
       mistimedFramePerSecond: _mistimedFramePerSecond,
+      mediaOrigin: _resolveMediaOrigin(widget.mediaSourceKind),
+      originalUrl: widget.resolvedUrl,
+      fileFormat: _currentFileFormat,
+      hlsBitrate: _currentHlsBitrate,
+      bufferCacheDurationSeconds: _currentDemuxerCacheDurationSeconds,
+      bufferForwardBytes: _currentDemuxerForwardBytes,
+      downloadRateBytesPerSecond: _currentDownloadRateBytesPerSecond,
     );
     if (_playbackInfoNotifier.value == snapshot) {
       return;
     }
     _playbackInfoNotifier.value = snapshot;
+  }
+
+  MoviePlayerPlaybackMediaOrigin _resolveMediaOrigin(
+    MoviePlayerMediaSourceKind sourceKind,
+  ) {
+    return switch (sourceKind) {
+      MoviePlayerMediaSourceKind.local => MoviePlayerPlaybackMediaOrigin.local,
+      MoviePlayerMediaSourceKind.cloud115 =>
+        MoviePlayerPlaybackMediaOrigin.cloud115,
+      MoviePlayerMediaSourceKind.unknown =>
+        MoviePlayerPlaybackMediaOrigin.unknown,
+    };
   }
 
   Future<void> _refreshNativePlaybackInfo() async {
@@ -711,6 +766,10 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
         _getNativePlayerProperty('decoder-frame-drop-count'),
         _getNativePlayerProperty('vo-delayed-frame-count'),
         _getNativePlayerProperty('mistimed-frame-count'),
+        _getNativePlayerProperty('file-format'),
+        _getNativePlayerProperty('hls-bitrate'),
+        _getNativePlayerProperty('demuxer-cache-duration'),
+        _getNativePlayerProperty('demuxer-cache-state'),
       ]);
       if (!mounted) {
         return;
@@ -720,6 +779,10 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       final decoderFrameDropCount = _parseNativeCounter(results[4]);
       final voDelayedFrameCount = _parseNativeCounter(results[5]);
       final mistimedFrameCount = _parseNativeCounter(results[6]);
+      final fileFormat = results[7];
+      final hlsBitrate = _parseNativeDouble(results[8]);
+      final cacheDurationSeconds = _parseNativeDouble(results[9]);
+      final forwardBytes = parseDemuxerForwardBytes(results[10]);
       final previousSampleAt = _previousPlaybackCounterSampleAt;
       final elapsedSeconds = previousSampleAt == null
           ? null
@@ -732,6 +795,16 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       _currentDecoderFrameDropCount = decoderFrameDropCount;
       _currentVoDelayedFrameCount = voDelayedFrameCount;
       _currentMistimedFrameCount = mistimedFrameCount;
+      _currentFileFormat = fileFormat;
+      _currentHlsBitrate = hlsBitrate;
+      _currentDemuxerCacheDurationSeconds = cacheDurationSeconds;
+      _currentDemuxerForwardBytes = forwardBytes;
+      _currentDownloadRateBytesPerSecond = _computeDownloadRatePerSecond(
+        currentBytes: forwardBytes,
+        previousBytes: _previousDemuxerForwardBytes,
+        previousSampleAt: _previousDemuxerBytesSampleAt,
+        now: now,
+      );
       _frameDropPerSecond = _computeCounterDeltaPerSecond(
         currentValue: frameDropCount,
         previousValue: _previousFrameDropCount,
@@ -757,10 +830,42 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       _previousDecoderFrameDropCount = decoderFrameDropCount;
       _previousVoDelayedFrameCount = voDelayedFrameCount;
       _previousMistimedFrameCount = mistimedFrameCount;
+      if (forwardBytes != null) {
+        _previousDemuxerForwardBytes = forwardBytes;
+        _previousDemuxerBytesSampleAt = now;
+      }
       _refreshPlaybackInfoSnapshot();
     } finally {
       _isRefreshingNativePlaybackInfo = false;
     }
+  }
+
+  double? _computeDownloadRatePerSecond({
+    required int? currentBytes,
+    required int? previousBytes,
+    required DateTime? previousSampleAt,
+    required DateTime now,
+  }) {
+    if (currentBytes == null ||
+        previousBytes == null ||
+        previousSampleAt == null) {
+      return null;
+    }
+    final elapsedSeconds =
+        now.difference(previousSampleAt).inMilliseconds / 1000;
+    if (elapsedSeconds <= 0) {
+      return null;
+    }
+    final delta = currentBytes - previousBytes;
+    if (delta <= 0) {
+      // 缓冲被消费掉可能出现负 delta；负数不当作速率对外暴露。
+      return null;
+    }
+    final rate = delta / elapsedSeconds;
+    if (!rate.isFinite || rate <= 0) {
+      return null;
+    }
+    return rate;
   }
 
   Future<String?> _getNativePlayerProperty(String property) async {

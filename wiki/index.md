@@ -16,9 +16,6 @@ hero:
       text: GitHub
       link: https://github.com/tinypinglite/sakuramedia
     - theme: alt
-      text: 电报群
-      link: https://t.me/+xIsN2OZvbM4wYzIx
-    - theme: alt
       text: 下载离线 Wiki
       link: https://tinypinglite.github.io/sakuramedia/downloads/sakuramedia-wiki.zip
 

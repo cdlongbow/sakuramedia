@@ -45,11 +45,6 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/tinypinglite/sakuramedia' },
-      {
-        icon: 'telegram',
-        link: 'https://t.me/+xIsN2OZvbM4wYzIx',
-        ariaLabel: 'Telegram 群',
-      },
     ],
 
     search: {

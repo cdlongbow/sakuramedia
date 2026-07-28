@@ -265,6 +265,10 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
       factory: $DesktopMediaImportRouteData._fromState,
     ),
     GoRouteData.$route(
+      path: '/desktop/system/movie-subscriptions',
+      factory: $DesktopMovieSubscriptionsRouteData._fromState,
+    ),
+    GoRouteData.$route(
       path: '/desktop/system/diagnostics',
       factory: $DesktopSystemDiagnosticsRouteData._fromState,
     ),
@@ -707,6 +711,28 @@ mixin $DesktopMediaImportRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/system/media-import');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopMovieSubscriptionsRouteData on GoRouteData {
+  static DesktopMovieSubscriptionsRouteData _fromState(GoRouterState state) =>
+      const DesktopMovieSubscriptionsRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/desktop/system/movie-subscriptions');
 
   @override
   void go(BuildContext context) => context.go(location);

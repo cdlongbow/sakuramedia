@@ -33,6 +33,15 @@ Future<MovieSubscriptionBatchResultDto> unwiredMovieBatchSubscription({
   );
 }
 
+/// 取消订阅是否被后端以「该影片存在本地 media」为由拒绝。
+///
+/// 顶层函数而非私有方法：订阅管理页（Riverpod 侧）也要做同一判定，两处各写一份
+/// 错误码字面量的话，后端改码时必然漏掉一处。
+bool isMovieSubscriptionBlockedByMedia(Object error) {
+  return error is ApiException &&
+      error.error?.code == 'movie_subscription_has_media';
+}
+
 enum MovieSubscriptionToggleStatus {
   subscribed,
   unsubscribed,
@@ -169,7 +178,7 @@ mixin MovieSubscribableListMixin<T> on PagedLoadController<T> {
       onSubscriptionChanged?.call(movieNumber: movieNumber, isSubscribed: true);
       return const MovieSubscriptionToggleResult.subscribed();
     } catch (error) {
-      if (_isBlockedByMedia(error)) {
+      if (isMovieSubscriptionBlockedByMedia(error)) {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
@@ -371,10 +380,5 @@ mixin MovieSubscribableListMixin<T> on PagedLoadController<T> {
       skippedMovieNotFoundNumbers: skippedNotFound,
       skippedHasMediaNumbers: skippedHasMedia,
     );
-  }
-
-  bool _isBlockedByMedia(Object error) {
-    return error is ApiException &&
-        error.error?.code == 'movie_subscription_has_media';
   }
 }

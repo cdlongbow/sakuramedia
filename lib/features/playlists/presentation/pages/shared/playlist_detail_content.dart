@@ -18,6 +18,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_stat
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
@@ -271,14 +272,7 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-          child: SizedBox(
-            width: context.appComponentTokens.movieCardLoaderSize,
-            height: context.appComponentTokens.movieCardLoaderSize,
-            child: CircularProgressIndicator(
-              strokeWidth:
-                  context.appComponentTokens.movieCardLoaderStrokeWidth,
-            ),
-          ),
+          child: const AppInlineSpinner(),
         ),
       );
     }

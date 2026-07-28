@@ -1061,6 +1061,51 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 
 新增共享组件：`lib/widgets/videos/`（`VideoSummaryCard` / `VideoSummaryGrid` / `VideoFilterSectionGroup`（双端共用的筛选分节，取代原 `VideoFilterToolbar`） / `VideoCollectionFilterSectionGroup`（双端共用的合集排序分节，取代原 `VideoCollectionSortBar`））；合集成员行 `CollectionMemberRow` 新增 `reorderable`（默认 `true`，非手动排序时传 `false` 以隐藏拖拽手柄）；视频域专属选择器 `PersonSelectorPanel` 在 `lib/features/videos/presentation/`。`TagSelectorPanel` 新增可选 `showMatchModeToggle`（默认 `true`，影片侧不变；视频域传 `false`）。
 
+### 6.16 订阅管理页
+
+订阅管理页是「管理」分区下的一级导航页，**仅桌面端**（`/desktop/system/movie-subscriptions`，Web 复用桌面实现）。移动端不提供入口——它是运维视图，处理动作（批量重置、批量取消订阅、看索引器错误详情）都不是手机上的场景。它回答的是**「我订的片怎么还没下来」**——展示每部订阅影片的资源查询进展，并提供把卡住的影片放回查询队列的入口。数据源是后端 `/movie-subscriptions` 三端点（列表 / 状态计数 / 重置查询状态）。
+
+与影片页 `status=subscribed` 筛选的区别：影片页是海报墙，只答「订没订」；本页是运维台，答「查到第几次、有没有被放弃、索引器报没报错、试死了几个种子」——这些字段只在本域 schema 里有。
+
+状态与分段签：
+
+- 后端七状态由**同一个** SQL CASE 判定，严格互斥，各签计数之和恒等于总数
+- 分段签顺序**按可操作性排**而非后端 CASE 优先级：`缺资源 · 已放弃 · 导入失败 · 查询出错 · 待查 · 下载中 · 已入库 · 全部`。订阅只增不减、`imported` 常年占九成以上，把「全部 / 已入库」摆最左等于让用户每次先滑过用不上的签
+- **默认落在「缺资源」**（`MovieSubscriptionFilterState.initial`），不是「全部」
+- 标签自带计数角标，来自独立的 `movieSubscriptionStatusCountsProvider`——它挂了只退化成没有数字的纯文字签，列表照常可用
+- 只有「已放弃 / 导入失败 / 查询出错」且计数 > 0 时把**计数**染成 warning 色（需要人工介入才有进展）；「缺资源」刻意留中性——它是默认签又占比最大，染色只会淹没真正要处理的那几态
+- ⚠️ **「导入失败」（`import_failed`）与「查询出错」（`failed`）是两回事**：前者文件已下好、卡在入库；后者索引器调用出错、压根还没找到资源。文案必须分开念，别都写成「失败」。「导入失败」的行**禁用「重置查询」按钮**并在 tooltip 里说清原因——用户的第一直觉恰恰是「那我重下一遍」，而那正是没用的动作
+- 后端按「**导入还在不在途**」二分活跃任务，所以「导入失败」这一档也包含「导入跑完却零产出」（整包只有小于阈值的样本文件）。**tooltip 因此不写"去看失败原因"**——那种情况压根没有错误可看。且后端目前没有暴露重试导入的端点，这一档**给不出可点的修复出口**，只能把状况说清
+
+页面结构（`MovieSubscriptionListSection`）：
+
+- **底色沿用壳层的 `surfaceElevated`（纯白），本页不自铺灰底。** 曾试过铺 `surfacePage`（#F5F5F5）走「灰底浮白卡」的分组卡片范式，实测观感更差：灰块从顶栏底下一整片压到底、把分段签也裹进去，与上方白色顶栏硬切一刀；且本 app 所有桌面页（媒体管理 / 活动中心 / 下载任务 / 各海报墙页）都坐在壳层白底上，单这一页变灰本身就是不协调。**卡片边界交给 `AppLeftCoverCard` 自带的 `borderSubtle` 细边**——它本就是为白底容器设计的（媒体管理页同款）。结论：本仓库的桌面页**统一坐白底**，需要「灰底浮卡」时先想清楚是不是要连壳层一起改，别只改一页
+- 顶部 `AppTabBar` 状态分段签，**固定在滚动区之上**（它是本页导航，滚下去还得滚回来才能换签）。七个签超过了「顶部 tab ≤5」的经验上限，但这里**不该改用「左分类 + 右内容」**：一来页面已经在桌面壳的左侧导航栏里，再加一层左栏就是双层左栏；二来状态是**筛选维度**而非分类导航，横向分段签正是国内订单页的心智（全部/待付款/待发货…），换成左栏反而失真
+- 下方 `AppListHeader`：筛选入口收「搜索 + 排序」（`MovieSubscriptionFilterSectionGroup`，就地浮层；搜索回车生效、排序七档走 `AppSelectField`），信息槽放总数，操作槽放「重置全部（N）」（**仅「已放弃」签出现**）、「选择」、「刷新」
+- 列表为 `AppLeftCoverCard` 行卡片，**不传 `fixedItemExtent`**（错误行条件渲染 + 进度行会换行，行高本就不固定）
+
+行卡片三行，一行答一个问题：
+
+1. **这是哪部片**：番号（s14 semibold，本页操作单位是番号不是片名）+ 标题（s12 secondary）+ 右上角状态 `AppBadge`
+2. **求片走到哪了**：`新片 · 持续查询中`（`is_fresh` 时 `attempt_count` 恒为 0，展示次数会被误读成「一次都没查过」）或 `已查 N/M 次` · `N 天前查过` · `N 个种子已判死`。前两支**都用 muted 文本、不给新片加彩色 badge**——它们占同一个槽、答同一个问题，视觉权重就该一样；一行里的彩色元素也因此收敛到「状态徽标 + 死种告警」最多两个
+3. **背景信息 + 操作**：发行 / 订阅时间 / 本地媒体数靠左，「重置查询」「取消订阅」两个 `AppIconButton`（`regular` = 44 见方）靠右
+
+`status=failed` 时在 2、3 之间插一行索引器错误详情（单行省略 + Tooltip 看全文）。
+
+交互与状态一致性：
+
+- 常规态整卡点击 = 打开影片详情；多选态整卡点击 = 切换选中、行内操作按钮收起（两套入口并存会让「我这一下改了哪些」不可预期）
+- 多选态用 `AppSelectionHeaderToolbar` **原地改写整条顶栏**（不在筛选行下方另起一行）。将来若要补移动端，参考 videos / actors 的做法（`onFilterTap` 弹底部抽屉 + `AppListHeader.selection` + 贴底 `AppSelectionBottomBar`）——现在**不预留没有调用方的分支**
+- 批量重置**不弹确认**（可逆的加法，最坏只多打一轮索引器）；批量取消订阅、一键重置全部**弹确认**
+- 单条取消订阅也不弹确认（可逆、不删文件），结果走 `showMovieSubscriptionFeedback`；批量取消订阅走后端「部分成功」语义，被跳过的番号**保持选中**并复用 `showMovieSubscriptionBatchFeedback` 展开清单
+- 重置成功后就地打补丁：条目回「待查」，当前分段签容不下它就移除并扣减总数——不整页重拉
+- 取消订阅广播到全局 `MovieSubscriptionChangeNotifier`；反向广播经 `movieSubscriptionEventsProvider` 回来时就地摘行。页面离屏时该订阅被 Riverpod 挂起，但事件会缓冲、回来时补投，不会丢
+- 空态按状态分文案：待办三态为空是**好消息**（「没有缺资源的订阅」+「查看全部订阅」出口），不用「暂无数据」的失败口吻
+
+新增 token：`subscriptionRowCoverWidth`（桌面 168）、`subscriptionRowMinHeight`（桌面 132）。移动档位按 `AppComponentTokens` 的类型要求同样给了值（116 / 108），但本页无移动端，当前用不到。
+
+状态管理走 Riverpod（`MovieSubscriptionManager` + `PagedAsyncNotifierMixin`），是本仓库第一个**从零就用 Riverpod** 的完整页面。
+
 ## 7. 共享组件基线
 
 ### 7.1 AppButton

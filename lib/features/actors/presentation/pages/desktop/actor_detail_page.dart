@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/pag
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
 
@@ -162,14 +163,9 @@ class _ActorSubscriptionBadge extends StatelessWidget {
       child: Center(
         child:
             isUpdating
-                ? SizedBox(
-                  width: componentTokens.movieCardLoaderSize,
-                  height: componentTokens.movieCardLoaderSize,
-                  child: CircularProgressIndicator(
-                    key: Key('actor-detail-subscription-loading-$actorId'),
-                    strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
-                    color: colors.subscriptionHeartIcon,
-                  ),
+                ? AppInlineSpinner(
+                  key: Key('actor-detail-subscription-loading-$actorId'),
+                  color: colors.subscriptionHeartIcon,
                 )
                 : Icon(
                   isSubscribed

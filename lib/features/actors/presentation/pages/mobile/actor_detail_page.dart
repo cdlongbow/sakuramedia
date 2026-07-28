@@ -9,6 +9,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 
 class MobileActorDetailPage extends StatefulWidget {
   const MobileActorDetailPage({super.key, required this.actorId});
@@ -175,16 +176,9 @@ class _MobileActorSubscriptionBadge extends StatelessWidget {
       child: Center(
         child:
             isUpdating
-                ? SizedBox(
-                  width: componentTokens.movieCardLoaderSize,
-                  height: componentTokens.movieCardLoaderSize,
-                  child: CircularProgressIndicator(
-                    key: Key(
-                      'mobile-actor-detail-subscription-loading-$actorId',
-                    ),
-                    strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
-                    color: colors.subscriptionHeartIcon,
-                  ),
+                ? AppInlineSpinner(
+                  key: Key('mobile-actor-detail-subscription-loading-$actorId'),
+                  color: colors.subscriptionHeartIcon,
                 )
                 : Icon(
                   isSubscribed

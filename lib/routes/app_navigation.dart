@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/overview/presentation/mobile_overview_skele
 import 'package:sakuramedia/features/clips/presentation/pages/desktop/clips_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlists_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/desktop_rankings_page.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/mobile_rankings_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_list_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/pornbox_page.dart';
@@ -291,6 +292,20 @@ const List<_NavSeed> _desktopNavSeeds = [
     ],
   ),
   _NavSeed(
+    id: 'movie-subscriptions',
+    label: '订阅管理',
+    icon: Icons.bookmark_added_outlined,
+    section: '管理',
+    items: [
+      _NavItemSeed(
+        slug: 'system/movie-subscriptions',
+        label: '订阅管理',
+        icon: Icons.bookmark_added_outlined,
+        description: '订阅影片的资源查询进展：缺资源、已放弃、查询出错的集中处理台。',
+      ),
+    ],
+  ),
+  _NavSeed(
     id: 'notifications',
     label: '通知',
     icon: Icons.notifications_none_outlined,
@@ -323,6 +338,8 @@ final Map<String, WidgetBuilder> _desktopRouteBuilders =
       desktopNotificationsPath: (_) => const DesktopNotificationsPage(),
       desktopConfigurationPath: (_) => const DesktopConfigurationPage(),
       desktopMediaImportPath: (_) => const DesktopMediaImportPage(),
+      desktopMovieSubscriptionsPath:
+          (_) => const DesktopMovieSubscriptionsPage(),
     };
 
 final Map<String, WidgetBuilder> _mobileRouteBuilders = <String, WidgetBuilder>{

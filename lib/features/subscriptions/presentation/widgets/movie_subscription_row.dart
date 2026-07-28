@@ -1,0 +1,457 @@
+import 'package:flutter/material.dart';
+import 'package:sakuramedia/core/format/relative_time_label.dart';
+import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
+import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
+import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
+
+/// 订阅管理列表的单行卡片：封面贴左的白卡（[AppLeftCoverCard]），右侧三行信息。
+///
+/// 信息层次自上而下，一行答一个问题：
+/// 1. **这是哪部片**：番号（主）+ 标题（次）+ 右上角状态徽标；
+/// 2. **求片走到哪了**：新片 / 已查几次、上次查询多久以前、试死了几个种子——
+///    这一行是整个页面存在的理由，别的影片列表都给不出；
+/// 3. **背景信息 + 操作**：发行 / 订阅时间靠左，重置 / 取消订阅靠右。
+///
+/// `status == failed` 时在 2、3 之间插一行索引器错误详情。
+///
+/// 手势分两态：常规态整卡点击 = 打开影片详情；多选态整卡点击 = 切换选中、行内
+/// 操作按钮隐藏。**不做「整卡点击即选中」**——这一页的番号是可点进详情的实体，
+/// 把详情入口藏进封面会让人找不到。
+class MovieSubscriptionRow extends StatelessWidget {
+  const MovieSubscriptionRow({
+    super.key,
+    required this.item,
+    required this.selectionMode,
+    required this.isSelected,
+    required this.isPending,
+    required this.onTap,
+    required this.onResetSearch,
+    required this.onUnsubscribe,
+  });
+
+  final MovieSubscriptionListItemDto item;
+  final bool selectionMode;
+  final bool isSelected;
+
+  /// 该行有动作在飞：操作按钮换成转圈，避免重复点击。
+  final bool isPending;
+
+  /// 常规态 = 打开影片详情；多选态 = 切换选中。由调用方按 [selectionMode] 决定。
+  final VoidCallback onTap;
+
+  final VoidCallback onResetSearch;
+  final VoidCallback onUnsubscribe;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final componentTokens = context.appComponentTokens;
+    final lastError = item.lastError;
+
+    return AppLeftCoverCard(
+      key: Key('movie-subscription-row-${item.movieNumber}'),
+      coverWidth: componentTokens.subscriptionRowCoverWidth,
+      bodyMinHeight: componentTokens.subscriptionRowMinHeight,
+      bodyPadding: EdgeInsets.symmetric(
+        horizontal: spacing.lg,
+        vertical: spacing.md,
+      ),
+      selected: selectionMode && isSelected,
+      onTap: onTap,
+      cover: _CoverSlot(
+        item: item,
+        selectionMode: selectionMode,
+        isSelected: isSelected,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _HeadingLine(item: item),
+          SizedBox(height: spacing.md),
+          _SearchProgressLine(item: item),
+          if (lastError != null && lastError.isNotEmpty) ...[
+            SizedBox(height: spacing.sm),
+            _LastErrorLine(item: item, message: lastError),
+          ],
+          SizedBox(height: spacing.sm),
+          _FooterLine(
+            item: item,
+            selectionMode: selectionMode,
+            isPending: isPending,
+            onResetSearch: onResetSearch,
+            onUnsubscribe: onUnsubscribe,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 封面 slot：横版封面铺满裁切；无图时占位。
+///
+/// 多选态在左上角叠 [SelectionCheckBadge]——未选也显示空心圈，让「现在能勾选」
+/// 这件事在每一行上都可见，而不是只在选中后才有反馈。
+class _CoverSlot extends StatelessWidget {
+  const _CoverSlot({
+    required this.item,
+    required this.selectionMode,
+    required this.isSelected,
+  });
+
+  final MovieSubscriptionListItemDto item;
+  final bool selectionMode;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = item.coverImage?.bestAvailableUrl.trim();
+    final Widget image =
+        url != null && url.isNotEmpty
+            ? MaskedImage(
+              key: Key('movie-subscription-cover-${item.movieNumber}'),
+              url: url,
+              fit: BoxFit.cover,
+            )
+            : Container(
+              key: Key(
+                'movie-subscription-cover-placeholder-${item.movieNumber}',
+              ),
+              color: context.appColors.surfaceMuted,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.movie_creation_outlined,
+                size: context.appComponentTokens.iconSize2xl,
+                color: context.appTextPalette.muted,
+              ),
+            );
+
+    if (!selectionMode) {
+      return image;
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        image,
+        PositionedDirectional(
+          top: context.appSpacing.sm,
+          start: context.appSpacing.sm,
+          child: SelectionCheckBadge(isSelected: isSelected),
+        ),
+      ],
+    );
+  }
+}
+
+/// 标题行：番号（主）+ 标题（次），右上角贴状态徽标。
+///
+/// 番号在上、标题在下——这一页的操作单位是番号（重置 / 取消订阅 / 反馈清单都按
+/// 番号说话），不是片名。
+class _HeadingLine extends StatelessWidget {
+  const _HeadingLine({required this.item});
+
+  final MovieSubscriptionListItemDto item;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.movieNumber,
+                key: Key('movie-subscription-row-number-${item.movieNumber}'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s14,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.primary,
+                ),
+              ),
+              SizedBox(height: spacing.xs),
+              Text(
+                item.displayTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s12,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.secondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: spacing.sm),
+        AppBadge(
+          key: Key('movie-subscription-row-status-${item.movieNumber}'),
+          label: item.status.label,
+          tone: _statusBadgeTone(item.status),
+          size: AppBadgeSize.compact,
+        ),
+      ],
+    );
+  }
+}
+
+/// 状态徽标配色。
+///
+/// 语义分档而不是逐个上色：**出错要人管的**（导入失败 / 查询出错）红，**次数用尽要人
+/// 管的**（已放弃）橙，**在进行中的**（下载中 / 待查）信息蓝，**已完成的**（已入库）
+/// 成功绿，**还在等的**（缺资源）中性。缺资源刻意留中性——它是默认签、占比最大，
+/// 全页染色只会让真正要处理的那几态淹没在色块里。
+AppBadgeTone _statusBadgeTone(MovieSubscriptionStatus status) {
+  return switch (status) {
+    MovieSubscriptionStatus.imported => AppBadgeTone.success,
+    MovieSubscriptionStatus.importFailed => AppBadgeTone.error,
+    MovieSubscriptionStatus.downloading => AppBadgeTone.info,
+    MovieSubscriptionStatus.exhausted => AppBadgeTone.warning,
+    MovieSubscriptionStatus.failed => AppBadgeTone.error,
+    MovieSubscriptionStatus.missing => AppBadgeTone.neutral,
+    MovieSubscriptionStatus.pending => AppBadgeTone.info,
+    MovieSubscriptionStatus.unknown => AppBadgeTone.neutral,
+  };
+}
+
+/// 「重置查询」按钮禁用时的原因文案。
+///
+/// 说清"为什么这里点不了"比让按钮凭空变灰强——尤其导入失败这一档，用户的第一直觉
+/// 恰恰是"那我重下一遍"，而那正是没用的动作。
+String _resetDisabledReason(MovieSubscriptionStatus status) {
+  return switch (status) {
+    // 不提"去看导入失败原因"：这一档也包含"导入跑完却零产出"（任务 import_status=completed，
+    // 压根没有错误可看）。而且后端目前**没有暴露重试导入的端点**，给不出可点的出口。
+    MovieSubscriptionStatus.importFailed => '文件已经下好了，但一个媒体都没能入库——重新找种子没用，要排查的是导入环节',
+    MovieSubscriptionStatus.imported => '已入库的影片无需重新查询资源',
+    MovieSubscriptionStatus.downloading => '已经找到种子了，等它下完',
+    _ => '该状态无需重新查询资源',
+  };
+}
+
+/// 求片进度行：新片 / 查询次数 + 上次查询时间 + 死种数。
+class _SearchProgressLine extends StatelessWidget {
+  const _SearchProgressLine({required this.item});
+
+  final MovieSubscriptionListItemDto item;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final mutedStyle = resolveAppTextStyle(
+      context,
+      size: AppTextSize.s12,
+      weight: AppTextWeight.regular,
+      tone: AppTextTone.muted,
+    );
+    final lastSearchedAt = item.lastSearchedAt;
+
+    return Wrap(
+      spacing: spacing.sm,
+      runSpacing: spacing.xs,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        // 新片每轮都查、不计次数、永不放弃，attempt_count 恒为 0——展示次数会误导
+        // 成「一次都没查过」，所以两种口径必须分开说。
+        //
+        // 两支都用 muted 文本、不给新片加彩色 badge：它们占同一个槽、答同一个问题
+        // （查了几次），视觉权重就该一样；差异由文字承担。一行里彩色元素也因此收敛到
+        // 「状态徽标 + 死种告警」最多两个。
+        if (item.isFresh)
+          Text(
+            '新片 · 持续查询中',
+            key: Key('movie-subscription-row-fresh-${item.movieNumber}'),
+            style: mutedStyle,
+          )
+        else if (item.attemptLimit > 0)
+          Text(
+            '已查 ${item.attemptCount}/${item.attemptLimit} 次',
+            key: Key('movie-subscription-row-attempts-${item.movieNumber}'),
+            style: mutedStyle,
+          ),
+        Text(
+          lastSearchedAt == null
+              ? '尚未查询'
+              : formatRelativeTimeLabel(lastSearchedAt, suffix: '查过'),
+          style: mutedStyle,
+        ),
+        if (item.deadDownloadTaskCount > 0)
+          AppBadge(
+            key: Key('movie-subscription-row-dead-${item.movieNumber}'),
+            label: '${item.deadDownloadTaskCount} 个种子已判死',
+            tone: AppBadgeTone.warning,
+            size: AppBadgeSize.compact,
+          ),
+      ],
+    );
+  }
+}
+
+/// 索引器错误详情行（仅 `status == failed`）。
+///
+/// 单行省略 + Tooltip 看全文：错误原文可能很长，铺开会把整行卡片撑变形，而它对
+/// 大多数用户只是「出错了，下轮会自己重试」的注脚。
+class _LastErrorLine extends StatelessWidget {
+  const _LastErrorLine({required this.item, required this.message});
+
+  final MovieSubscriptionListItemDto item;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final palette = context.appTextPalette;
+    return Tooltip(
+      message: message,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: context.appComponentTokens.iconSize3xs,
+            color: palette.error,
+          ),
+          SizedBox(width: spacing.xs),
+          Expanded(
+            child: Text(
+              message,
+              key: Key('movie-subscription-row-error-${item.movieNumber}'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 底行：左侧背景信息（发行 / 订阅 / 本地媒体），右侧行内操作。
+class _FooterLine extends StatelessWidget {
+  const _FooterLine({
+    required this.item,
+    required this.selectionMode,
+    required this.isPending,
+    required this.onResetSearch,
+    required this.onUnsubscribe,
+  });
+
+  final MovieSubscriptionListItemDto item;
+  final bool selectionMode;
+  final bool isPending;
+  final VoidCallback onResetSearch;
+  final VoidCallback onUnsubscribe;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final palette = context.appTextPalette;
+    final mutedStyle = resolveAppTextStyle(
+      context,
+      size: AppTextSize.s12,
+      weight: AppTextWeight.regular,
+      tone: AppTextTone.muted,
+    );
+    final subscribedAt = item.subscribedAt;
+    final facts = <String>[
+      if (item.releaseDate != null) '发行 ${item.releaseDate}',
+      if (subscribedAt != null)
+        formatRelativeTimeLabel(subscribedAt, suffix: '订阅'),
+      if (item.mediaCount > 0) '本地 ${item.mediaCount} 个媒体',
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.event_outlined,
+          size: context.appComponentTokens.iconSize3xs,
+          color: palette.muted,
+        ),
+        SizedBox(width: spacing.xs),
+        Expanded(
+          child: Text(
+            facts.isEmpty ? '暂无发行与订阅信息' : facts.join(' · '),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: mutedStyle,
+          ),
+        ),
+        // 多选态收起行内操作：批量动作走顶栏 / 底部条，两套入口并存会让「我这一下
+        // 到底改了哪些」变得不可预期。
+        if (!selectionMode) ...[
+          SizedBox(width: spacing.sm),
+          if (isPending)
+            const AppInlineSpinner()
+          else
+            _RowActions(
+              item: item,
+              onResetSearch: onResetSearch,
+              onUnsubscribe: onUnsubscribe,
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _RowActions extends StatelessWidget {
+  const _RowActions({
+    required this.item,
+    required this.onResetSearch,
+    required this.onUnsubscribe,
+  });
+
+  final MovieSubscriptionListItemDto item;
+  final VoidCallback onResetSearch;
+  final VoidCallback onUnsubscribe;
+
+  @override
+  Widget build(BuildContext context) {
+    final canReset = item.canResetSearch;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // regular = iconSizeMd + md*2 = 44，达到 iOS HIG 最小点按尺寸。行内操作
+        // 双端同一份，移动端用 compact 会挤成 26 见方、点不准。
+        AppIconButton(
+          key: Key('movie-subscription-row-reset-${item.movieNumber}'),
+          icon: const Icon(Icons.restart_alt_rounded),
+          size: AppIconButtonSize.regular,
+          // 禁用时也留 tooltip：说清「为什么这里点不了」比让按钮凭空变灰强。
+          tooltip:
+              canReset
+                  ? '重置资源查询状态，让它重新去找别的种子'
+                  : _resetDisabledReason(item.status),
+          semanticLabel: '重置资源查询状态',
+          onPressed: canReset ? onResetSearch : null,
+        ),
+        AppIconButton(
+          key: Key('movie-subscription-row-unsubscribe-${item.movieNumber}'),
+          icon: const Icon(Icons.bookmark_remove_outlined),
+          size: AppIconButtonSize.regular,
+          tooltip: '取消订阅',
+          semanticLabel: '取消订阅',
+          onPressed: onUnsubscribe,
+        ),
+      ],
+    );
+  }
+}

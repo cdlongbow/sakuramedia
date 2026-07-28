@@ -54,6 +54,7 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     this.skeletonLineCount = 6,
     this.footerTopSpacing,
     this.fixedItemExtent,
+    this.emptyBuilder,
   }) : assert(fixedItemExtent == null || fixedItemExtent > 0);
 
   final AsyncValue<S> asyncState;
@@ -74,6 +75,13 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   /// scroll offset，不必为已经离开视口的行做 dead-reckoning 测量。
   final double? fixedItemExtent;
 
+  /// 自定义空态；不传走 [AppEmptyState] + [emptyMessage]。
+  ///
+  /// 用于空态本身要带引导动作的场景——例如订阅管理页停在「缺资源」分段签且一条
+  /// 都没有时，"没有卡住的订阅"是**好消息**，该顺手给一个「查看全部订阅」的去处，
+  /// 而不是甩一行灰字。[emptyMessage] 仍需提供，作为无 builder 时的兜底文案。
+  final WidgetBuilder? emptyBuilder;
+
   @override
   Widget build(BuildContext context) {
     if (asyncState.isLoading && !asyncState.hasValue) {
@@ -93,7 +101,13 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
 
     final paged = pagedOf(asyncState.requireValue);
     if (paged.items.isEmpty) {
-      return SliverToBoxAdapter(child: AppEmptyState(message: emptyMessage));
+      final builder = emptyBuilder;
+      return SliverToBoxAdapter(
+        child:
+            builder != null
+                ? builder(context)
+                : AppEmptyState(message: emptyMessage),
+      );
     }
 
     final spacing = context.appSpacing;

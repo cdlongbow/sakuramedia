@@ -107,7 +107,7 @@ void main() {
   });
 
   test('desktop navigation tree contains moments entry', () {
-    expect(desktopNavGroups.length, 15);
+    expect(desktopNavGroups.length, 16);
     expect(desktopNavGroups.map((group) => group.label), [
       '概览',
       '发现',
@@ -123,6 +123,7 @@ void main() {
       '系统设置',
       '媒体导入',
       '活动中心',
+      '订阅管理',
       '通知',
     ]);
     // 人物已彻底移除、视频合集并入 PornBox 页（不再独占侧栏 seed），
@@ -142,6 +143,7 @@ void main() {
       desktopConfigurationPath,
       desktopMediaImportPath,
       desktopActivityPath,
+      desktopMovieSubscriptionsPath,
       desktopNotificationsPath,
     ]);
   });

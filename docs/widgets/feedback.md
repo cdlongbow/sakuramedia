@@ -53,6 +53,13 @@
 - **可选**: `posterKey`(内层 DecoratedBox 的 Key, 通常拼 `xxx-skeleton-poster-$index`) · `aspectRatio`(不传 = video masonry, 传 = movieCardAspectRatio)
 - **何时用**: 需要「四态卡片网格」骨架时。别再手写"圆角 + 灰色内框"。
 
+## AppInlineSpinner
+- **路径**: `lib/widgets/base/feedback/app_inline_spinner.dart`
+- **用途**: 行内小转圈 —— `movieCardLoaderSize` 见方 + `movieCardLoaderStrokeWidth` 线宽的 `CircularProgressIndicator`。
+- **可选**: `color`(不传走主题 primary；订阅心形等有专属语义色的位置才传)
+- **何时用**: 「某个小控件正在忙」——卡片上的订阅心形、列表行的动作按钮、加载更多页脚。演员详情(桌面/移动)、播放列表详情此前各写了一份逐字相同的 `SizedBox + CircularProgressIndicator`，已收口到这里。
+- **何时不用**: 整页 / 整区块加载态 → `AppSectionSkeleton` / `AppMobileSkeletonList` 等骨架屏。转圈只用于局部、短时的忙碌指示。
+
 ## showAppConfirmDialog
 - **路径**: `lib/widgets/base/feedback/app_confirm_dialog.dart`
 - **用途**: **自适应**确认框——一套 API 双端通用。

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -133,17 +134,10 @@ class _DesktopSystemDiagnosticsPageState
       return '尚未检测。点右上角开始一次完整检测。';
     }
     if (c.unhealthyCount > 0) {
-      return '上次检测：${_formatMoment(c.lastRunAt!)} · ${c.unhealthyCount} 项异常';
+      return '上次检测：${formatRelativeTimeLabel(c.lastRunAt!)} · '
+          '${c.unhealthyCount} 项异常';
     }
-    return '上次检测：${_formatMoment(c.lastRunAt!)} · 全部通过';
-  }
-
-  static String _formatMoment(DateTime moment) {
-    final diff = DateTime.now().difference(moment);
-    if (diff.inSeconds < 60) return '刚刚';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前';
-    if (diff.inHours < 24) return '${diff.inHours} 小时前';
-    return '${diff.inDays} 天前';
+    return '上次检测：${formatRelativeTimeLabel(c.lastRunAt!)} · 全部通过';
   }
 
   DiagnosticItemDetailAction? _detailActionFor(DiagnosticItemState item) {

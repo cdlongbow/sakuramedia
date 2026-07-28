@@ -37,6 +37,10 @@ import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
 import 'package:sakuramedia/features/tags/data/tags_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
@@ -245,6 +249,11 @@ class _MyAppState extends State<MyApp> {
         Provider<MoviesApi>(
           create: (context) => MoviesApi(apiClient: context.read<ApiClient>()),
         ),
+        Provider<MovieSubscriptionsApi>(
+          create:
+              (context) =>
+                  MovieSubscriptionsApi(apiClient: context.read<ApiClient>()),
+        ),
         Provider<TagsApi>(
           create: (context) => TagsApi(apiClient: context.read<ApiClient>()),
         ),
@@ -323,6 +332,15 @@ class _MyAppState extends State<MyApp> {
               ),
               downloadClientsApiProvider.overrideWithValue(
                 context.read<DownloadClientsApi>(),
+              ),
+              moviesApiProvider.overrideWithValue(context.read<MoviesApi>()),
+              movieSubscriptionsApiProvider.overrideWithValue(
+                context.read<MovieSubscriptionsApi>(),
+              ),
+              // 跨页订阅广播的「单一广播源」：Provider 侧与 Riverpod 侧共用同一个
+              // ChangeNotifier 实例，两侧 report 的变更彼此都能收到。
+              movieSubscriptionBroadcasterProvider.overrideWithValue(
+                context.read<MovieSubscriptionChangeNotifier>(),
               ),
             ],
             child: OKToast(

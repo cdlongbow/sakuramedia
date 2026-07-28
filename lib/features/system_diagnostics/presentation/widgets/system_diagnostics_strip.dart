@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -213,18 +214,10 @@ class _SystemDiagnosticsStripState extends State<SystemDiagnosticsStrip> {
   }
 
   String _buildFooterLine(SystemDiagnosticsController c) {
-    final rel = _formatRelativeTime(c.lastRunAt!);
+    final rel = formatRelativeTimeLabel(c.lastRunAt!, suffix: '检测');
     if (c.unhealthyCount > 0) {
       return '$rel · ${c.unhealthyCount} 项异常';
     }
     return '$rel · 全部通过';
-  }
-
-  static String _formatRelativeTime(DateTime moment) {
-    final diff = DateTime.now().difference(moment);
-    if (diff.inSeconds < 60) return '刚刚检测';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} 分钟前检测';
-    if (diff.inHours < 24) return '${diff.inHours} 小时前检测';
-    return '${diff.inDays} 天前检测';
   }
 }

@@ -1,4 +1,5 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
 /// 导入方式：本地支持 `auto/cleanup-source`，115 支持 `copy/cleanup-source`。
 enum TransferMode { auto, cleanupSource, copy }
@@ -57,6 +58,10 @@ class FailedFileDto {
   /// 仅 `file` 类型可重导/删除/重命名。
   bool get isActionable => kind == FailedFileKind.file;
 
+  /// 任务级失败（作业整体中断，`path` 通常是目录/CID）。这类条目没有文件级重导
+  /// 入口，只能按原参数整个重新导入。
+  bool get isJobLevel => kind == FailedFileKind.job;
+
   factory FailedFileDto.fromJson(Map<String, dynamic> json) {
     return FailedFileDto(
       path: json['path'] as String? ?? '',
@@ -82,6 +87,12 @@ abstract class ImportJobCardData {
   DateTime? get finishedAt;
   bool get isCloud115;
   bool get canMutateFailedSource;
+
+  /// 从作业字段还原出的导入来源；`null` = 字段不足以还原，不提供「重新导入」。
+  ///
+  /// 用于任务级失败（`kind=job`）作业的整体重跑——这类作业没有可逐个重导的失败
+  /// 文件，只能按原参数新建一个导入作业。
+  MediaImportSource? get reimportSource;
 
   /// 终态（completed / failed）才允许失败文件的删除/重命名/重导。
   bool get isTerminal;
@@ -145,6 +156,17 @@ class ImportJobListItemDto implements ImportJobCardData {
 
   @override
   bool get canMutateFailedSource => !isCloud115;
+
+  /// cloud115 作业按 `sourceCid` 还原（`sourcePath` 会被后端改写成可读面包屑，
+  /// 回传无意义）；本地作业按 `sourcePath` 还原。
+  @override
+  MediaImportSource? get reimportSource {
+    final cid = sourceCid;
+    if (cid != null) {
+      return cid.isEmpty ? null : MediaImportSource.cloud115(cid);
+    }
+    return sourcePath.isEmpty ? null : MediaImportSource.local(sourcePath);
+  }
 
   @override
   String get displaySourcePath {

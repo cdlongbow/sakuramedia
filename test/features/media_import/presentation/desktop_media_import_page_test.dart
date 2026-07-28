@@ -321,6 +321,142 @@ void main() {
     expect(find.text('重导'), findsOneWidget);
     expect(find.text('重命名'), findsNothing);
     expect(find.text('删除'), findsNothing);
+    // 失败项都是 kind=file → 走文件级重导，不出「重新导入」。
+    expect(find.byKey(const Key('media-import-reimport-9')), findsNothing);
+  });
+
+  testWidgets('任务级失败（kind=job）的 115 作业出「重新导入」，按 source_cid 重建来源', (
+    tester,
+  ) async {
+    _setDesktopViewport(tester);
+    final sessionStore = await _createSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+
+    final job = _jobJson(
+      id: 11,
+      taskRunId: 61,
+      state: 'failed',
+      failed: 1,
+      sourcePath: '根目录/sakuramedia_downloads',
+      sourceCid: 'cid-crashed',
+      transferMode: 'cleanup-source',
+      failedFiles: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'path': '根目录/sakuramedia_downloads',
+          'reason': 'import_job_crashed',
+          'detail': 'http 400 on GET https://webapi.115.com/category/get',
+          'kind': 'job',
+        },
+      ],
+    );
+    _enqueueJobsPage(bundle, jobs: <Map<String, dynamic>>[job], total: 1);
+    _enqueueBootstrapAndStream(bundle);
+    _enqueueVideoJobsPage(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/import-jobs/11',
+      body: job,
+    );
+
+    await _pumpPage(tester, bundle: bundle);
+    await tester.tap(find.byKey(const Key('media-import-job-toggle-11')));
+    await tester.pumpAndSettle();
+
+    // 任务级条目没有文件级操作，「重导全部失败」不出现，只留整体重新导入。
+    expect(find.text('任务级'), findsOneWidget);
+    expect(find.byKey(const Key('media-import-retry-all-11')), findsNothing);
+    expect(find.text('重导'), findsNothing);
+    final reimport = find.byKey(const Key('media-import-reimport-11'));
+    expect(reimport, findsOneWidget);
+
+    // 点击后按原参数新建作业，并刷新列表。
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/import-jobs',
+      body: <String, dynamic>{
+        'import_job_id': 12,
+        'task_run_id': 62,
+        'status': 'pending',
+      },
+    );
+    _enqueueJobsPage(bundle, jobs: <Map<String, dynamic>>[job], total: 1);
+
+    await tester.tap(reimport);
+    await tester.pumpAndSettle();
+
+    final posted = bundle.adapter.requests.firstWhere(
+      (request) => request.method == 'POST' && request.path == '/import-jobs',
+    );
+    expect(posted.body, <String, dynamic>{
+      'library_id': 1,
+      'source_cid': 'cid-crashed',
+      'transfer_mode': 'cleanup-source',
+    });
+
+    await _drainToast(tester);
+  });
+
+  testWidgets('任务级失败的本地作业按 source_path 重建来源', (tester) async {
+    _setDesktopViewport(tester);
+    final sessionStore = await _createSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+
+    final job = _jobJson(
+      id: 13,
+      taskRunId: 71,
+      state: 'failed',
+      failed: 1,
+      sourcePath: '/mnt/incoming/movies',
+      failedFiles: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'path': '/mnt/incoming/movies',
+          'reason': 'import_job_interrupted',
+          'detail': '',
+          'kind': 'job',
+        },
+      ],
+    );
+    _enqueueJobsPage(bundle, jobs: <Map<String, dynamic>>[job], total: 1);
+    _enqueueBootstrapAndStream(bundle);
+    _enqueueVideoJobsPage(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/import-jobs/13',
+      body: job,
+    );
+
+    await _pumpPage(tester, bundle: bundle);
+    await tester.tap(find.byKey(const Key('media-import-job-toggle-13')));
+    await tester.pumpAndSettle();
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/import-jobs',
+      body: <String, dynamic>{
+        'import_job_id': 14,
+        'task_run_id': 72,
+        'status': 'pending',
+      },
+    );
+    _enqueueJobsPage(bundle, jobs: <Map<String, dynamic>>[job], total: 1);
+
+    await tester.tap(find.byKey(const Key('media-import-reimport-13')));
+    await tester.pumpAndSettle();
+
+    final posted = bundle.adapter.requests.firstWhere(
+      (request) => request.method == 'POST' && request.path == '/import-jobs',
+    );
+    expect(posted.body, <String, dynamic>{
+      'library_id': 1,
+      'source_path': '/mnt/incoming/movies',
+      'transfer_mode': 'auto',
+    });
+
+    await _drainToast(tester);
   });
 
   testWidgets('纯跳过作业（failed=0、skipped>0）也能展开，渲染中文原因 + 已跳过徽标', (tester) async {
@@ -423,6 +559,13 @@ Future<void> _pumpPage(
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+}
+
+/// 等 oktoast 的自动消失定时器到期。操作类用例会弹 toast，若不排空，
+/// `_pumpPage` 的 teardown 卸载组件时会撞上 "A Timer is still pending" 断言。
+Future<void> _drainToast(WidgetTester tester) async {
+  await tester.pump(const Duration(seconds: 5));
+  await tester.pumpAndSettle();
 }
 
 void _setDesktopViewport(

@@ -1,5 +1,6 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
 export 'package:sakuramedia/features/media_import/data/import_job_dto.dart'
     show TransferMode, TransferModeX, FailedFileDto, FailedFileKind;
@@ -12,6 +13,7 @@ class VideoImportJobListItemDto implements ImportJobCardData {
     required this.id,
     required this.sourcePath,
     required this.sourceCid,
+    required this.sourceFid,
     required this.libraryId,
     required this.collectionId,
     required this.taskRunId,
@@ -33,6 +35,10 @@ class VideoImportJobListItemDto implements ImportJobCardData {
 
   /// 115 目录导入的 CID；本地导入为 null。用于区分作业来源类型。
   final String? sourceCid;
+
+  /// 115 单文件导入的 FID。前端暂不支持以单文件为来源发起导入，故只用于识别
+  /// 这类作业并关掉「重新导入」入口。
+  final String? sourceFid;
   @override
   String get displaySourcePath => sourcePath;
   final int libraryId;
@@ -63,6 +69,20 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   @override
   bool get canMutateFailedSource => false;
 
+  /// 115 目录作业按 `sourceCid` 还原、本地作业按 `sourcePath` 还原；单文件（FID）
+  /// 来源前端没有对应的导入请求形状，直接判为不可还原。
+  @override
+  MediaImportSource? get reimportSource {
+    if (sourceFid != null) {
+      return null;
+    }
+    final cid = sourceCid;
+    if (cid != null) {
+      return cid.isEmpty ? null : MediaImportSource.cloud115(cid);
+    }
+    return sourcePath.isEmpty ? null : MediaImportSource.local(sourcePath);
+  }
+
   /// 终态（completed / failed）才允许失败文件的重导。
   @override
   bool get isTerminal => state == 'completed' || state == 'failed';
@@ -72,6 +92,7 @@ class VideoImportJobListItemDto implements ImportJobCardData {
       id: asInt(json['id']),
       sourcePath: json['source_path'] as String? ?? '',
       sourceCid: json['source_cid'] as String?,
+      sourceFid: json['source_fid'] as String?,
       libraryId: asInt(json['library_id']),
       collectionId: asIntOrNull(json['collection_id']),
       taskRunId: asIntOrNull(json['task_run_id']),
@@ -95,6 +116,7 @@ class VideoImportJobDto extends VideoImportJobListItemDto
     required super.id,
     required super.sourcePath,
     required super.sourceCid,
+    required super.sourceFid,
     required super.libraryId,
     required super.collectionId,
     required super.taskRunId,
@@ -140,6 +162,7 @@ class VideoImportJobDto extends VideoImportJobListItemDto
       id: base.id,
       sourcePath: base.sourcePath,
       sourceCid: base.sourceCid,
+      sourceFid: base.sourceFid,
       libraryId: base.libraryId,
       collectionId: base.collectionId,
       taskRunId: base.taskRunId,

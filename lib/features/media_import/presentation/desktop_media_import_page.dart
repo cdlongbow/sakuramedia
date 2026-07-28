@@ -39,6 +39,10 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
   final ScrollController _scrollController = ScrollController();
   final Set<int> _expandedJav = <int>{};
   final Set<int> _expandedPorn = <int>{};
+  // 「重新导入」是新建作业，而 115 来源后端不建 task_run mutex（只有本地来源有
+  // 同库同源 409 兜底），连点会造出重复作业——提交期间锁住按钮。
+  final Set<int> _reimportingJav = <int>{};
+  final Set<int> _reimportingPorn = <int>{};
 
   @override
   void initState() {
@@ -300,6 +304,8 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
     // 失败源文件的删除/重命名是 JAV 专属能力；PornBox 作业只保留「重导」。
     final javController =
         controller is MediaImportController ? controller : null;
+    final reimporting =
+        controller == _pornController ? _reimportingPorn : _reimportingJav;
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final job = controller.jobs[index];
@@ -325,6 +331,11 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
                     ? null
                     : (path, name) =>
                         _renameFile(javController, job.id, path, name),
+            onReimport:
+                job.reimportSource == null
+                    ? null
+                    : () => _reimport(controller, job.id),
+            isReimporting: reimporting.contains(job.id),
             onReloadDetail:
                 () => unawaited(controller.ensureDetail(job.id, force: true)),
           ),
@@ -351,6 +362,22 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
       return;
     }
     showToast(error ?? '已提交重导任务');
+  }
+
+  /// 任务级失败作业的整体重跑：按原参数新建一个导入作业。
+  Future<void> _reimport(ImportJobsViewController controller, int jobId) async {
+    final reimporting =
+        controller == _pornController ? _reimportingPorn : _reimportingJav;
+    if (reimporting.contains(jobId)) {
+      return;
+    }
+    setState(() => reimporting.add(jobId));
+    final error = await controller.reimportJob(jobId);
+    if (!mounted) {
+      return;
+    }
+    setState(() => reimporting.remove(jobId));
+    showToast(error ?? '已按原参数提交重新导入');
   }
 
   Future<void> _deleteFile(

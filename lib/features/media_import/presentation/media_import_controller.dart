@@ -237,6 +237,24 @@ class MediaImportController extends ChangeNotifier
     }
   }
 
+  /// 按原参数重新发起一次导入（任务级失败作业的唯一补救手段）。成功返回 `null`。
+  ///
+  /// 来源还原规则收在 `ImportJobListItemDto.reimportSource` 里，这里只负责取快照
+  /// 并复用 [triggerImport]（含 115 登录失效的专用文案）。
+  @override
+  Future<String?> reimportJob(int jobId) async {
+    final index = _jobs.indexWhere((item) => item.id == jobId);
+    final source = index < 0 ? null : _jobs[index].reimportSource;
+    if (source == null) {
+      return '该作业无法重新导入，请刷新后重试。';
+    }
+    return triggerImport(
+      libraryId: _jobs[index].libraryId,
+      source: source,
+      transferMode: _jobs[index].transferMode,
+    );
+  }
+
   /// 删除失败源文件（JAV 本地作业专属，不在 [ImportJobsViewController] 接口内）。
   /// 成功返回 `null`。
   Future<String?> deleteFailedFile(int jobId, {required String path}) async {

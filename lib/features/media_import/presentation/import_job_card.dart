@@ -27,6 +27,8 @@ class ImportJobCard extends StatelessWidget {
     required this.onRetryFile,
     this.onDeleteFile,
     this.onRenameFile,
+    this.onReimport,
+    this.isReimporting = false,
     required this.onReloadDetail,
   });
 
@@ -43,6 +45,10 @@ class ImportJobCard extends StatelessWidget {
   /// 删除/重命名失败源文件（JAV 本地作业专属）；传 `null` 时对应按钮不渲染。
   final void Function(String path)? onDeleteFile;
   final void Function(String path, String currentName)? onRenameFile;
+
+  /// 按原参数整体重新导入；传 `null`（来源无法还原）时按钮不渲染。
+  final VoidCallback? onReimport;
+  final bool isReimporting;
   final VoidCallback onReloadDetail;
 
   @override
@@ -194,19 +200,42 @@ class ImportJobCard extends StatelessWidget {
     }
 
     final actionable = loaded.actionableFailedFiles;
+    // 作业级补救动作：按文件重导（有可重导文件时）与整体重新导入（任务级失败时）。
+    // 两者同级，收在同一行；同时出现时只让「重导全部失败」占主按钮，避免抢焦点。
+    final canRetryAll = actionable.isNotEmpty && loaded.isTerminal;
+    final canReimport =
+        onReimport != null &&
+        loaded.isTerminal &&
+        loaded.failedFiles.any((file) => file.isJobLevel);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (actionable.isNotEmpty && loaded.isTerminal) ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppButton(
-              key: Key('media-import-retry-all-${job.id}'),
-              label: '重导全部失败（${actionable.length}）',
-              size: AppButtonSize.small,
-              variant: AppButtonVariant.primary,
-              onPressed: onRetryAll,
-            ),
+        if (canRetryAll || canReimport) ...[
+          Wrap(
+            spacing: context.appSpacing.sm,
+            runSpacing: context.appSpacing.xs,
+            children: [
+              if (canRetryAll)
+                AppButton(
+                  key: Key('media-import-retry-all-${job.id}'),
+                  label: '重导全部失败（${actionable.length}）',
+                  size: AppButtonSize.small,
+                  variant: AppButtonVariant.primary,
+                  onPressed: onRetryAll,
+                ),
+              if (canReimport)
+                AppButton(
+                  key: Key('media-import-reimport-${job.id}'),
+                  label: '重新导入',
+                  size: AppButtonSize.small,
+                  variant:
+                      canRetryAll
+                          ? AppButtonVariant.secondary
+                          : AppButtonVariant.primary,
+                  isLoading: isReimporting,
+                  onPressed: onReimport,
+                ),
+            ],
           ),
           SizedBox(height: context.appSpacing.sm),
         ],

@@ -25,4 +25,10 @@ abstract class ImportJobsViewController implements Listenable {
   Future<void> loadMore();
   Future<void> ensureDetail(int jobId, {bool force});
   Future<String?> retryFailedFiles(int jobId, {List<String>? files});
+
+  /// 按原参数（来源 + 媒体库 + 导入方式）**新建**一个导入作业。
+  ///
+  /// 用于任务级失败（`kind=job`）作业——它们没有可逐个重导的失败文件，只能整体
+  /// 重跑。成功返回 `null`，失败返回中文错误信息。
+  Future<String?> reimportJob(int jobId);
 }

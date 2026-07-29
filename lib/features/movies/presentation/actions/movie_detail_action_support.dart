@@ -16,7 +16,8 @@ class MovieDetailRemoteActionSpec {
     this.resetPreview = false,
   });
 
-  final Future<MovieDetailDto> Function(MoviesApi api) request;
+  // 返回 null 表示排队型动作（202）：只提示已提交，不回填影片详情。
+  final Future<MovieDetailDto?> Function(MoviesApi api) request;
   final String successMessage;
   final String failureMessage;
   final bool resetPreview;
@@ -85,16 +86,21 @@ MovieDetailRemoteActionSpec? movieDetailRemoteActionSpecFor({
       );
     case MovieDetailActionType.syncInteraction:
       return MovieDetailRemoteActionSpec(
-        request: (api) => api.syncMovieInteraction(movieNumber: movieNumber),
-        successMessage: '影片互动数已同步',
-        failureMessage: '刷新影片互动数失败',
+        request: (api) async {
+          await api.syncMovieInteraction(movieNumber: movieNumber);
+          return null;
+        },
+        successMessage: '互动数同步任务已提交，完成后刷新可见',
+        failureMessage: '提交互动数同步失败',
       );
     case MovieDetailActionType.translateDescription:
       return MovieDetailRemoteActionSpec(
-        request:
-            (api) => api.translateMovieDescription(movieNumber: movieNumber),
-        successMessage: '影片介绍已翻译',
-        failureMessage: '翻译影片介绍失败',
+        request: (api) async {
+          await api.translateMovieDescription(movieNumber: movieNumber);
+          return null;
+        },
+        successMessage: '翻译任务已提交，完成后刷新可见',
+        failureMessage: '提交翻译任务失败',
       );
   }
 }
@@ -123,13 +129,15 @@ Future<bool> executeMovieDetailRemoteAction({
     if (!context.mounted) {
       return false;
     }
-    final applyResult = applyReturnedMovieDetail(
-      controller: controller,
-      movie: movie,
-      selectedMediaId: selectedMediaId,
-      resetPreview: spec.resetPreview,
-    );
-    onMovieApplied(applyResult);
+    if (movie != null) {
+      final applyResult = applyReturnedMovieDetail(
+        controller: controller,
+        movie: movie,
+        selectedMediaId: selectedMediaId,
+        resetPreview: spec.resetPreview,
+      );
+      onMovieApplied(applyResult);
+    }
     showToast(spec.successMessage);
     return true;
   } catch (error) {

@@ -79,8 +79,8 @@ void main() {
       expectedPath: '/movies/ABC-001/interaction-sync',
     );
 
-    expect(spec.successMessage, '影片互动数已同步');
-    expect(spec.failureMessage, '刷新影片互动数失败');
+    expect(spec.successMessage, '互动数同步任务已提交，完成后刷新可见');
+    expect(spec.failureMessage, '提交互动数同步失败');
     expect(spec.resetPreview, isFalse);
   });
 
@@ -92,8 +92,8 @@ void main() {
         expectedPath: '/movies/ABC-001/desc-translation',
       );
 
-      expect(spec.successMessage, '影片介绍已翻译');
-      expect(spec.failureMessage, '翻译影片介绍失败');
+      expect(spec.successMessage, '翻译任务已提交，完成后刷新可见');
+      expect(spec.failureMessage, '提交翻译任务失败');
       expect(spec.resetPreview, isFalse);
     },
   );

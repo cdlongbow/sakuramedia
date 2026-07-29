@@ -402,6 +402,31 @@ class ResourceTaskCenterController extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  /// 统一资源任务操作（Wave 4）：按后端 available_actions 触发，成功后刷新列表与计数。
+  ///
+  /// 返回后端提示语（用于 toast）；失败时抛出，由调用方转错误文案。
+  Future<String> applyRecordAction({
+    required String taskKey,
+    required String action,
+    required List<int> resourceIds,
+  }) async {
+    final response = await _activityApi.applyResourceTaskAction(
+      taskKey: taskKey,
+      action: action,
+      resourceIds: resourceIds,
+    );
+    final accepted =
+        (response['accepted_resource_ids'] as List<dynamic>? ?? const [])
+            .length;
+    final skipped = (response['skipped'] as List<dynamic>? ?? const []).length;
+    final taskRunId = response['task_run_id'];
+    await Future.wait([refreshRecords(), refreshDefinitions()]);
+    final suffix = taskRunId != null ? '，已生成任务 #$taskRunId' : '';
+    return skipped == 0
+        ? '已受理 $accepted 项$suffix'
+        : '已受理 $accepted 项、跳过 $skipped 项$suffix';
+  }
+
   Future<void> refreshRecords() async {
     final key = _activeTaskKey;
     if (key == null) {

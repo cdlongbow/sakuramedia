@@ -129,22 +129,18 @@ class MoviesApi {
     return MovieDetailDto.fromJson(response);
   }
 
-  Future<MovieDetailDto> translateMovieDescription({
+  /// 202 入队（任务架构 Wave 3）：执行在后台 worker，响应只带 task_run 信息。
+  Future<void> translateMovieDescription({
     required String movieNumber,
   }) async {
-    final response = await _apiClient.post(
-      '/movies/$movieNumber/desc-translation',
-    );
-    return MovieDetailDto.fromJson(response);
+    await _apiClient.post('/movies/$movieNumber/desc-translation');
   }
 
-  Future<MovieDetailDto> syncMovieInteraction({
+  /// 202 入队（任务架构 Wave 3）：执行在后台 worker，响应只带 task_run 信息。
+  Future<void> syncMovieInteraction({
     required String movieNumber,
   }) async {
-    final response = await _apiClient.post(
-      '/movies/$movieNumber/interaction-sync',
-    );
-    return MovieDetailDto.fromJson(response);
+    await _apiClient.post('/movies/$movieNumber/interaction-sync');
   }
 
   Future<MovieDetailDto> recomputeMovieHeat({

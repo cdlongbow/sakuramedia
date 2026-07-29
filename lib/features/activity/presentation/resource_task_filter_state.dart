@@ -1,5 +1,14 @@
 /// 资源任务记录的状态筛选项。`all` 表示不带 `state` 查询参数。
-enum ResourceTaskRecordStateFilter { all, pending, running, succeeded, failed }
+enum ResourceTaskRecordStateFilter {
+  all,
+  pending,
+  running,
+  succeeded,
+  failed,
+  failedRetryable,
+  failedTerminal,
+  exhausted,
+}
 
 extension ResourceTaskRecordStateFilterValue on ResourceTaskRecordStateFilter {
   String get label => switch (this) {
@@ -8,6 +17,9 @@ extension ResourceTaskRecordStateFilterValue on ResourceTaskRecordStateFilter {
     ResourceTaskRecordStateFilter.running => '运行中',
     ResourceTaskRecordStateFilter.succeeded => '已成功',
     ResourceTaskRecordStateFilter.failed => '失败',
+    ResourceTaskRecordStateFilter.failedRetryable => '失败（待重试）',
+    ResourceTaskRecordStateFilter.failedTerminal => '失败（终态）',
+    ResourceTaskRecordStateFilter.exhausted => '已放弃',
   };
 
   String? get apiValue => switch (this) {
@@ -16,6 +28,9 @@ extension ResourceTaskRecordStateFilterValue on ResourceTaskRecordStateFilter {
     ResourceTaskRecordStateFilter.running => 'running',
     ResourceTaskRecordStateFilter.succeeded => 'succeeded',
     ResourceTaskRecordStateFilter.failed => 'failed',
+    ResourceTaskRecordStateFilter.failedRetryable => 'failed_retryable',
+    ResourceTaskRecordStateFilter.failedTerminal => 'failed_terminal',
+    ResourceTaskRecordStateFilter.exhausted => 'exhausted',
   };
 }
 

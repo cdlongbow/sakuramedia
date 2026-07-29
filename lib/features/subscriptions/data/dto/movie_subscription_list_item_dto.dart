@@ -23,6 +23,7 @@ class MovieSubscriptionListItemDto {
     this.lastError,
     this.deadDownloadTaskCount = 0,
     this.mediaCount = 0,
+    this.importOperation,
   });
 
   final String movieNumber;
@@ -55,6 +56,9 @@ class MovieSubscriptionListItemDto {
 
   final int mediaCount;
 
+  /// `import_failed` 档的可操作上下文：最新导入作业与后端计算的可用动作。
+  final MovieSubscriptionImportOperationDto? importOperation;
+
   factory MovieSubscriptionListItemDto.fromJson(Map<String, dynamic> json) {
     final coverImage = asMapOrNull(json['cover_image']);
     return MovieSubscriptionListItemDto(
@@ -73,6 +77,9 @@ class MovieSubscriptionListItemDto {
       lastError: asStringOrNull(json['last_error'], trim: true),
       deadDownloadTaskCount: asInt(json['dead_download_task_count']),
       mediaCount: asInt(json['media_count']),
+      importOperation: MovieSubscriptionImportOperationDto.fromJsonOrNull(
+        asMapOrNull(json['import_operation']),
+      ),
     );
   }
 
@@ -117,6 +124,54 @@ class MovieSubscriptionListItemDto {
       attemptLimit: attemptLimit,
       deadDownloadTaskCount: deadDownloadTaskCount,
       mediaCount: mediaCount,
+    );
+  }
+}
+
+
+/// `import_failed` 档的最新导入作业上下文；`availableActions` 由后端计算，
+/// 前端只按枚举渲染（open_import_job / retry_failed_files / rerun_import）。
+class MovieSubscriptionImportOperationDto {
+  const MovieSubscriptionImportOperationDto({
+    required this.importJobId,
+    required this.state,
+    this.importedCount = 0,
+    this.skippedCount = 0,
+    this.failedCount = 0,
+    this.retryableFileCount = 0,
+    this.availableActions = const <String>[],
+  });
+
+  final int importJobId;
+  final String state;
+  final int importedCount;
+  final int skippedCount;
+  final int failedCount;
+
+  /// 可重导（kind=file）失败条目数：为 0 时后端不会下发 retry_failed_files。
+  final int retryableFileCount;
+  final List<String> availableActions;
+
+  bool get canRetryFailedFiles => availableActions.contains('retry_failed_files');
+  bool get canRerun => availableActions.contains('rerun_import');
+
+  static MovieSubscriptionImportOperationDto? fromJsonOrNull(
+    Map<String, dynamic>? json,
+  ) {
+    if (json == null) {
+      return null;
+    }
+    return MovieSubscriptionImportOperationDto(
+      importJobId: asInt(json['import_job_id']),
+      state: asStringOrNull(json['state']) ?? '',
+      importedCount: asInt(json['imported_count']),
+      skippedCount: asInt(json['skipped_count']),
+      failedCount: asInt(json['failed_count']),
+      retryableFileCount: asInt(json['retryable_file_count']),
+      availableActions:
+          (json['available_actions'] as List<dynamic>? ?? const [])
+              .map((value) => value.toString())
+              .toList(),
     );
   }
 }

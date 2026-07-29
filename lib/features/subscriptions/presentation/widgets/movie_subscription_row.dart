@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/theme.dart';
@@ -231,9 +235,9 @@ AppBadgeTone _statusBadgeTone(MovieSubscriptionStatus status) {
 /// 恰恰是"那我重下一遍"，而那正是没用的动作。
 String _resetDisabledReason(MovieSubscriptionStatus status) {
   return switch (status) {
-    // 不提"去看导入失败原因"：这一档也包含"导入跑完却零产出"（任务 import_status=completed，
-    // 压根没有错误可看）。而且后端目前**没有暴露重试导入的端点**，给不出可点的出口。
-    MovieSubscriptionStatus.importFailed => '文件已经下好了，但一个媒体都没能入库——重新找种子没用，要排查的是导入环节',
+    // 这一档的补救出口是右侧的导入操作按钮（重试失败文件 / 整作业重跑，按后端
+    // available_actions 显示），重置查询只会白打一轮索引器。
+    MovieSubscriptionStatus.importFailed => '文件已经下好了，但没能入库——用右侧导入操作补救，重新找种子没用',
     MovieSubscriptionStatus.imported => '已入库的影片无需重新查询资源',
     MovieSubscriptionStatus.downloading => '已经找到种子了，等它下完',
     _ => '该状态无需重新查询资源',
@@ -423,12 +427,61 @@ class _RowActions extends StatelessWidget {
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
 
+  Future<void> _runImportAction(
+    BuildContext context, {
+    required Future<void> Function(MediaImportApi api) request,
+    required String successMessage,
+    required String failureMessage,
+  }) async {
+    try {
+      await request(context.read<MediaImportApi>());
+      showToast(successMessage);
+    } catch (error) {
+      showToast(apiErrorMessage(error, fallback: failureMessage));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final canReset = item.canResetSearch;
+    final importOperation =
+        item.status == MovieSubscriptionStatus.importFailed
+            ? item.importOperation
+            : null;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // 导入补救出口（Wave 4）：按后端 available_actions 渲染，绝不伪造重试按钮。
+        if (importOperation != null && importOperation.canRetryFailedFiles)
+          AppIconButton(
+            key: Key('movie-subscription-row-retry-import-${item.movieNumber}'),
+            icon: const Icon(Icons.build_circle_outlined),
+            size: AppIconButtonSize.regular,
+            tooltip: '重导 ${importOperation.retryableFileCount} 个失败文件（作业 #${importOperation.importJobId}）',
+            semanticLabel: '重导失败文件',
+            onPressed: () => _runImportAction(
+              context,
+              request: (api) => api.retryFailedFiles(importOperation.importJobId),
+              successMessage: '重导任务已提交，可在导入中心跟进',
+              failureMessage: '提交重导失败',
+            ),
+          ),
+        if (importOperation != null && importOperation.canRerun)
+          AppIconButton(
+            key: Key('movie-subscription-row-rerun-import-${item.movieNumber}'),
+            icon: const Icon(Icons.replay_circle_filled_outlined),
+            size: AppIconButtonSize.regular,
+            tooltip: importOperation.retryableFileCount > 0
+                ? '整作业重跑（作业 #${importOperation.importJobId}）'
+                : '上次导入零产出（跳过 ${importOperation.skippedCount} 个文件），整作业重跑一次',
+            semanticLabel: '整作业重跑',
+            onPressed: () => _runImportAction(
+              context,
+              request: (api) => api.rerunImportJob(importOperation.importJobId),
+              successMessage: '重跑任务已提交，可在导入中心跟进',
+              failureMessage: '提交重跑失败',
+            ),
+          ),
         // regular = iconSizeMd + md*2 = 44，达到 iOS HIG 最小点按尺寸。行内操作
         // 双端同一份，移动端用 compact 会挤成 26 见方、点不准。
         AppIconButton(

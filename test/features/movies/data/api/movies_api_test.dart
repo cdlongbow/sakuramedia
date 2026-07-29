@@ -1334,21 +1334,25 @@ void main() {
   test(
     'translateMovieDescription posts to desc translation endpoint',
     () async {
+      // 202 入队（任务架构 Wave 3）：响应是 task_run 信息，客户端不解析影片详情。
       adapter.enqueueJson(
         method: 'POST',
         path: '/movies/ABC-001/desc-translation',
-        statusCode: 200,
-        body: movieDetailBody(title: 'Translated movie'),
+        statusCode: 202,
+        body: <String, dynamic>{
+          'movie_id': 1,
+          'movie_number': 'ABC-001',
+          'task_key': 'movie_desc_translation',
+          'task_run_id': 9,
+          'status': 'accepted',
+        },
       );
 
-      final detail = await moviesApi.translateMovieDescription(
-        movieNumber: 'ABC-001',
-      );
+      await moviesApi.translateMovieDescription(movieNumber: 'ABC-001');
 
       final request = adapter.requests.single;
       expect(request.method, 'POST');
       expect(request.path, '/movies/ABC-001/desc-translation');
-      expect(detail.title, 'Translated movie');
     },
   );
 
@@ -1381,19 +1385,25 @@ void main() {
   );
 
   test('syncMovieInteraction posts to interaction sync endpoint', () async {
+    // 202 入队（任务架构 Wave 3）：响应是 task_run 信息，客户端不解析影片详情。
     adapter.enqueueJson(
       method: 'POST',
       path: '/movies/ABC-001/interaction-sync',
-      statusCode: 200,
-      body: movieDetailBody(title: 'Synced movie'),
+      statusCode: 202,
+      body: <String, dynamic>{
+        'movie_id': 1,
+        'movie_number': 'ABC-001',
+        'task_key': 'movie_interaction_sync',
+        'task_run_id': 9,
+        'status': 'accepted',
+      },
     );
 
-    final detail = await moviesApi.syncMovieInteraction(movieNumber: 'ABC-001');
+    await moviesApi.syncMovieInteraction(movieNumber: 'ABC-001');
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
     expect(request.path, '/movies/ABC-001/interaction-sync');
-    expect(detail.title, 'Synced movie');
   });
 
   test('syncMovieInteraction preserves backend ApiException payload', () async {

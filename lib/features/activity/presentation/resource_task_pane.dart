@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/media_thumbnail_reset_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
@@ -9,6 +10,7 @@ import 'package:sakuramedia/features/activity/presentation/resource_task_filter_
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -126,6 +128,18 @@ List<Widget> buildResourceTaskSlivers({
               inSelectionMode: inSelectionMode,
               isBatchSelectable: isBatchSelectable,
               isBatchSelected: isBatchSelected,
+              onAction: (action) async {
+                try {
+                  final message = await controller.applyRecordAction(
+                    taskKey: record.taskKey,
+                    action: action,
+                    resourceIds: [record.resourceId],
+                  );
+                  showToast(message);
+                } catch (error) {
+                  showToast(apiErrorMessage(error, fallback: '操作失败'));
+                }
+              },
               onTap: () {
                 if (inSelectionMode) {
                   if (!isBatchSelectable) {
@@ -610,6 +624,7 @@ class _ResourceTaskRecordTile extends StatelessWidget {
     this.inSelectionMode = false,
     this.isBatchSelectable = false,
     this.isBatchSelected = false,
+    this.onAction,
   });
 
   final ResourceTaskRecordDto record;
@@ -618,6 +633,9 @@ class _ResourceTaskRecordTile extends StatelessWidget {
   final bool inSelectionMode;
   final bool isBatchSelectable;
   final bool isBatchSelected;
+
+  /// 统一操作回调（Wave 4）：按后端 available_actions 渲染按钮，非多选态可用。
+  final void Function(String action)? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -733,7 +751,19 @@ class _ResourceTaskRecordTile extends StatelessWidget {
               Wrap(
                 spacing: context.appSpacing.sm,
                 runSpacing: context.appSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
+                  if (!inSelectionMode && onAction != null)
+                    for (final action in record.availableActions)
+                      AppTextButton(
+                        key: Key(
+                          'resource-task-action-$action-${record.recordKey}',
+                        ),
+                        label: _labelForResourceTaskAction(action),
+                        size: AppTextButtonSize.small,
+                        backgroundStyle: AppTextButtonBackgroundStyle.muted,
+                        onPressed: () => onAction!(action),
+                      ),
                   AppBadge(
                     label: '尝试 ${record.attemptCount} 次',
                     tone: AppBadgeTone.neutral,
@@ -1093,17 +1123,31 @@ String _labelForResourceTaskState(String state) {
     'running' => '运行中',
     'succeeded' => '已成功',
     'failed' => '失败',
+    // kernel 记账任务（任务架构 Wave 2 起）的失败三分。
+    'failed_retryable' => '失败（待重试）',
+    'failed_terminal' => '失败（终态）',
+    'exhausted' => '已放弃',
     _ => state.isEmpty ? '未知' : state,
   };
 }
 
 AppBadgeTone _toneForResourceTaskState(String state) {
   return switch (state) {
-    'failed' => AppBadgeTone.error,
+    'failed' || 'failed_retryable' || 'failed_terminal' => AppBadgeTone.error,
+    'exhausted' => AppBadgeTone.warning,
     'succeeded' => AppBadgeTone.success,
     'running' => AppBadgeTone.primary,
     'pending' => AppBadgeTone.warning,
     _ => AppBadgeTone.neutral,
+  };
+}
+
+String _labelForResourceTaskAction(String action) {
+  return switch (action) {
+    'retry_now' => '立即重试',
+    'rerun' => '强制重跑',
+    'reset_retry_budget' => '重置重试预算',
+    _ => action,
   };
 }
 

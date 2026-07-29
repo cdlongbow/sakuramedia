@@ -73,6 +73,12 @@ class MediaImportApi {
     return ImportJobTriggerResponseDto.fromJson(response);
   }
 
+  /// 整作业重跑：不论上次成败按原源整目录重扫（completed 零产出的恢复通路）。
+  Future<ImportJobTriggerResponseDto> rerunImportJob(int importJobId) async {
+    final response = await _apiClient.post('/import-jobs/$importJobId/rerun');
+    return ImportJobTriggerResponseDto.fromJson(response);
+  }
+
   /// 删除失败源文件，返回更新后的作业详情。
   Future<ImportJobDto> deleteFailedFile(
     int importJobId, {

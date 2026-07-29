@@ -49,6 +49,7 @@ class ResourceTaskRecordDto {
     required this.createdAt,
     required this.updatedAt,
     required this.resource,
+    this.availableActions = const <String>[],
   });
 
   final String taskKey;
@@ -66,7 +67,18 @@ class ResourceTaskRecordDto {
   final DateTime? updatedAt;
   final ResourceTaskResourceSummaryDto? resource;
 
-  bool get isFailed => state == 'failed';
+  /// 后端按状态矩阵计算的可用操作（retry_now / rerun / reset_retry_budget），
+  /// 前端只按枚举渲染，不再按 task_key 硬编码按钮。
+  final List<String> availableActions;
+
+  bool get canRetryNow => availableActions.contains('retry_now');
+  bool get canRerun => availableActions.contains('rerun');
+
+  bool get isFailed =>
+      state == 'failed' ||
+      state == 'failed_retryable' ||
+      state == 'failed_terminal' ||
+      state == 'exhausted';
   bool get isRunning => state == 'running';
   bool get isPending => state == 'pending';
   bool get isSucceeded => state == 'succeeded';
@@ -111,6 +123,10 @@ class ResourceTaskRecordDto {
       lastTriggerType: _stringOrNull(json['last_trigger_type']),
       createdAt: asDateTime(json['created_at']),
       updatedAt: asDateTime(json['updated_at']),
+      availableActions:
+          (json['available_actions'] as List<dynamic>? ?? const [])
+              .map((value) => value.toString())
+              .toList(),
       resource:
           rawResource is Map
               ? ResourceTaskResourceSummaryDto.fromJson(

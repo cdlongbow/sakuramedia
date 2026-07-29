@@ -6,6 +6,9 @@ class ResourceTaskStateCountsDto {
     required this.running,
     required this.succeeded,
     required this.failed,
+    this.failedRetryable = 0,
+    this.failedTerminal = 0,
+    this.exhausted = 0,
   });
 
   static const ResourceTaskStateCountsDto empty = ResourceTaskStateCountsDto(
@@ -20,7 +23,16 @@ class ResourceTaskStateCountsDto {
   final int succeeded;
   final int failed;
 
-  int get total => pending + running + succeeded + failed;
+  // kernel 记账任务（任务架构 Wave 2 起）的失败三分。
+  final int failedRetryable;
+  final int failedTerminal;
+  final int exhausted;
+
+  /// 全部失败态合计：旧 failed + kernel 三分，tab 徽标与"失败"口径统一用它。
+  int get failedTotal => failed + failedRetryable + failedTerminal + exhausted;
+
+  int get total =>
+      pending + running + succeeded + failed + failedRetryable + failedTerminal + exhausted;
 
   factory ResourceTaskStateCountsDto.fromJson(Map<String, dynamic> json) {
     return ResourceTaskStateCountsDto(
@@ -28,6 +40,9 @@ class ResourceTaskStateCountsDto {
       running: asInt(json['running']),
       succeeded: asInt(json['succeeded']),
       failed: asInt(json['failed']),
+      failedRetryable: asInt(json['failed_retryable']),
+      failedTerminal: asInt(json['failed_terminal']),
+      exhausted: asInt(json['exhausted']),
     );
   }
 

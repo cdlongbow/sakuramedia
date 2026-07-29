@@ -172,6 +172,25 @@ class ActivityApi {
     return MediaThumbnailResetResultDto.fromJson(response);
   }
 
+  /// 统一资源任务操作（任务架构 Wave 4）：retry_now / rerun / reset_retry_budget。
+  ///
+  /// 后端判定可执行性并允许部分成功；retry_now / rerun 会入队一个带 only_ids 的
+  /// 可跟踪 run（响应携带 task_run_id）。
+  Future<Map<String, dynamic>> applyResourceTaskAction({
+    required String taskKey,
+    required String action,
+    required List<int> resourceIds,
+  }) async {
+    return _apiClient.post(
+      '/system/resource-task-actions',
+      data: <String, dynamic>{
+        'task_key': taskKey,
+        'action': action,
+        'resource_ids': resourceIds,
+      },
+    );
+  }
+
   Stream<ActivityStreamEvent> streamEvents({required int afterEventId}) {
     return _streamClient
         .connect(afterEventId: afterEventId)

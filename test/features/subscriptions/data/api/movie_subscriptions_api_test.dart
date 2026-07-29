@@ -94,6 +94,7 @@ void main() {
       body: _page(
         items: <Map<String, dynamic>>[
           <String, dynamic>{
+            'movie_id': 321,
             'movie_number': 'ABP-123',
             'title': 'Original Title',
             'title_zh': '中文标题',
@@ -123,6 +124,7 @@ void main() {
     final response = await api.getSubscriptions();
 
     final item = response.items.single;
+    expect(item.movieId, 321);
     expect(item.movieNumber, 'ABP-123');
     expect(item.displayTitle, '中文标题');
     expect(item.coverImage?.bestAvailableUrl, '/covers/7-large.jpg');
@@ -154,6 +156,8 @@ void main() {
     final item = (await api.getSubscriptions()).items.single;
 
     expect(item.status, MovieSubscriptionStatus.unknown);
+    // 老响应缺 movie_id 时容错为 0（调用方按 >0 判可用）。
+    expect(item.movieId, 0);
     expect(item.title, '');
     expect(item.titleZh, '');
     // 标题全空时回落番号，列表不会出现空白行。
@@ -165,7 +169,7 @@ void main() {
     expect(item.deadDownloadTaskCount, 0);
   });
 
-  test('已入库 / 下载中 / 导入失败的条目不允许重置查询', () async {
+  test('仅缺资源 / 已放弃 / 查询出错允许重置查询', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/movie-subscriptions',
@@ -176,8 +180,13 @@ void main() {
           // 文件已在盘上，重新找种子只会白下一遍。
           <String, dynamic>{'movie_number': 'A-3', 'status': 'import_failed'},
           <String, dynamic>{'movie_number': 'A-4', 'status': 'exhausted'},
+          // 待查的投影是 pending，统一 action 会按 state_not_actionable 跳过，
+          // 前端不给按钮。
+          <String, dynamic>{'movie_number': 'A-5', 'status': 'pending'},
+          <String, dynamic>{'movie_number': 'A-6', 'status': 'missing'},
+          <String, dynamic>{'movie_number': 'A-7', 'status': 'failed'},
         ],
-        total: 4,
+        total: 7,
       ),
     );
 
@@ -188,6 +197,9 @@ void main() {
     expect(items[2].status, MovieSubscriptionStatus.importFailed);
     expect(items[2].canResetSearch, isFalse);
     expect(items[3].canResetSearch, isTrue);
+    expect(items[4].canResetSearch, isFalse);
+    expect(items[5].canResetSearch, isTrue);
+    expect(items[6].canResetSearch, isTrue);
   });
 
   test('import_failed 与 failed 是两个不同状态，文案不能混', () {
@@ -233,37 +245,8 @@ void main() {
     expect(sum, counts.total);
   });
 
-  test('resetSearchState 按番号提交，reset_all_exhausted 默认 false', () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 2},
-    );
-
-    final result = await api.resetSearchState(
-      movieNumbers: const <String>['ABP-123', 'STARS-001'],
-    );
-
-    expect(result.resetCount, 2);
-    final payload = adapter.requests.single.body as Map<String, dynamic>;
-    expect(payload['movie_numbers'], <String>['ABP-123', 'STARS-001']);
-    expect(payload['reset_all_exhausted'], isFalse);
-  });
-
-  test('resetSearchState 可只提交 reset_all_exhausted', () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 12},
-    );
-
-    final result = await api.resetSearchState(resetAllExhausted: true);
-
-    expect(result.resetCount, 12);
-    final payload = adapter.requests.single.body as Map<String, dynamic>;
-    expect(payload['movie_numbers'], isEmpty);
-    expect(payload['reset_all_exhausted'], isTrue);
-  });
+  // 重置资源查询状态已迁统一 action（POST /system/resource-task-actions），
+  // 请求拼装与响应解析由 test/features/activity/data/activity_api_test.dart 覆盖。
 }
 
 Map<String, dynamic> _page({

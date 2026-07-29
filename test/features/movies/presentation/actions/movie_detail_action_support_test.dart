@@ -76,7 +76,13 @@ void main() {
   test('movieDetailRemoteActionSpecFor maps sync interaction action', () async {
     final spec = await _runRemoteActionSpec(
       action: MovieDetailActionType.syncInteraction,
-      expectedPath: '/movies/ABC-001/interaction-sync',
+      expectedPath: '/system/resource-task-actions',
+      movieId: 77,
+      expectedBody: <String, dynamic>{
+        'task_key': 'movie_interaction_sync',
+        'action': 'rerun',
+        'resource_ids': <int>[77],
+      },
     );
 
     expect(spec.successMessage, '互动数同步任务已提交，完成后刷新可见');
@@ -89,7 +95,13 @@ void main() {
     () async {
       final spec = await _runRemoteActionSpec(
         action: MovieDetailActionType.translateDescription,
-        expectedPath: '/movies/ABC-001/desc-translation',
+        expectedPath: '/system/resource-task-actions',
+        movieId: 77,
+        expectedBody: <String, dynamic>{
+          'task_key': 'movie_desc_translation',
+          'action': 'rerun',
+          'resource_ids': <int>[77],
+        },
       );
 
       expect(spec.successMessage, '翻译任务已提交，完成后刷新可见');
@@ -97,6 +109,23 @@ void main() {
       expect(spec.resetPreview, isFalse);
     },
   );
+
+  test('queue-style specs refuse to run without an integer movie id', () {
+    // 老后端详情响应不带 id 时（movieId 缺省 0），不能拿 0 去打统一 action
+    // 端点——request 直接抛错，由 executeMovieDetailRemoteAction 的 catch
+    // 转 failureMessage toast。
+    final spec = movieDetailRemoteActionSpecFor(
+      action: MovieDetailActionType.translateDescription,
+      movieNumber: 'ABC-001',
+    )!;
+
+    expect(
+      () => spec.request(
+        MoviesApi(apiClient: ApiClient(sessionStore: SessionStore.inMemory())),
+      ),
+      throwsStateError,
+    );
+  });
 
   test(
     'applyReturnedMovieDetail keeps selected media when still present',
@@ -217,6 +246,8 @@ void main() {
 Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
   required MovieDetailActionType action,
   required String expectedPath,
+  int movieId = 0,
+  Map<String, dynamic>? expectedBody,
 }) async {
   final sessionStore = SessionStore.inMemory();
   await sessionStore.saveBaseUrl('https://api.example.com');
@@ -231,7 +262,11 @@ Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
   apiClient.rawRefreshDio.httpClientAdapter = adapter;
   final moviesApi = MoviesApi(apiClient: apiClient);
   final spec =
-      movieDetailRemoteActionSpecFor(action: action, movieNumber: 'ABC-001')!;
+      movieDetailRemoteActionSpecFor(
+        action: action,
+        movieNumber: 'ABC-001',
+        movieId: movieId,
+      )!;
   adapter.enqueueJson(
     method: 'POST',
     path: expectedPath,
@@ -268,6 +303,9 @@ Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
 
   await spec.request(moviesApi);
   expect(adapter.requests.single.path, expectedPath);
+  if (expectedBody != null) {
+    expect(adapter.requests.single.body, expectedBody);
+  }
   apiClient.dispose();
   return spec;
 }

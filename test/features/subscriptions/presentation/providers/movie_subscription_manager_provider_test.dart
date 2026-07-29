@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/activity/data/activity_api.dart';
+import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_subscribable_list_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
@@ -50,6 +53,15 @@ void main() {
           MovieSubscriptionsApi(apiClient: apiClient),
         ),
         moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
+        activityApiProvider.overrideWithValue(
+          ActivityApi(
+            apiClient: apiClient,
+            streamClient: createActivityEventStreamClient(
+              apiClient: apiClient,
+              sessionStore: sessionStore,
+            ),
+          ),
+        ),
         movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
       ],
       retry: (_, __) => null,
@@ -182,8 +194,8 @@ void main() {
     await primeFirstPage();
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 1},
+      path: '/system/resource-task-actions',
+      body: _actionResult(accepted: <int>[1]),
     );
 
     final result = await container
@@ -233,8 +245,8 @@ void main() {
 
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 1},
+      path: '/system/resource-task-actions',
+      body: _actionResult(accepted: <int>[1]),
     );
     await notifier.resetSearch('A-1');
 
@@ -271,23 +283,28 @@ void main() {
 
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 1},
+      path: '/system/resource-task-actions',
+      body: _actionResult(accepted: <int>[1]),
     );
     final result = await notifier.batchResetSearch();
 
     expect(result.affectedCount, 1);
-    expect(
-      adapter.requests.last.body,
-      containsPair('movie_numbers', <String>['A-1']),
+    final actionRequest = adapter.requests.firstWhere(
+      (request) => request.path == '/system/resource-task-actions',
     );
+    expect(actionRequest.body, containsPair('resource_ids', <int>[1]));
+    expect(
+      actionRequest.body,
+      containsPair('task_key', 'subscribed_movie_auto_download'),
+    );
+    expect(actionRequest.body, containsPair('action', 'reset_retry_budget'));
   });
 
   test('重置失败保留原列表并回传中文错误', () async {
     await primeFirstPage();
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
+      path: '/system/resource-task-actions',
       statusCode: 500,
       body: <String, dynamic>{'detail': 'boom'},
     );
@@ -408,8 +425,10 @@ void main() {
 
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
-      body: <String, dynamic>{'reset_count': 12},
+      path: '/system/resource-task-actions',
+      body: _actionResult(
+        accepted: List<int>.generate(12, (index) => index + 100),
+      ),
     );
     adapter.enqueueJson(
       method: 'GET',
@@ -420,19 +439,31 @@ void main() {
     final result = await notifier.resetAllExhausted();
 
     expect(result.affectedCount, 12);
-    expect(
-      adapter.requests
-          .firstWhere(
-            (request) =>
-                request.path == '/movie-subscriptions/search-resets',
-          )
-          .body,
-      containsPair('reset_all_exhausted', true),
+    final actionRequest = adapter.requests.firstWhere(
+      (request) => request.path == '/system/resource-task-actions',
     );
+    // 批量按状态圈定：不带 resource_ids 键，state 圈 exhausted。
+    expect(actionRequest.body, isNot(contains('resource_ids')));
+    expect(actionRequest.body, containsPair('state', 'exhausted'));
+    expect(actionRequest.body, containsPair('action', 'reset_retry_budget'));
     final state = container.read(movieSubscriptionManagerProvider).requireValue;
     expect(state.paged.items, isEmpty);
     expect(state.runningBatchAction, isNull);
   });
+}
+
+/// 番号尾号即 movie_id（A-1 → 1），让统一 action 的 resource_ids 断言可预测。
+int _movieIdFor(String number) => int.parse(number.split('-').last);
+
+/// 统一 action 的成功响应体。
+Map<String, dynamic> _actionResult({required List<int> accepted}) {
+  return <String, dynamic>{
+    'task_key': 'subscribed_movie_auto_download',
+    'action': 'reset_retry_budget',
+    'task_run_id': null,
+    'accepted_resource_ids': accepted,
+    'skipped': <Map<String, dynamic>>[],
+  };
 }
 
 Map<String, dynamic> _item({
@@ -443,6 +474,7 @@ Map<String, dynamic> _item({
   String? lastSearchedAt,
 }) {
   return <String, dynamic>{
+    'movie_id': _movieIdFor(number),
     'movie_number': number,
     'title': 'Title $number',
     'title_zh': '',

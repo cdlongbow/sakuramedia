@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/activity/data/activity_api.dart';
+import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
@@ -57,6 +60,15 @@ void main() {
             ),
             moviesApiProvider.overrideWithValue(
               MoviesApi(apiClient: apiClient),
+            ),
+            activityApiProvider.overrideWithValue(
+              ActivityApi(
+                apiClient: apiClient,
+                streamClient: createActivityEventStreamClient(
+                  apiClient: apiClient,
+                  sessionStore: sessionStore,
+                ),
+              ),
             ),
             movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
           ],
@@ -348,6 +360,8 @@ Map<String, dynamic> _item({
   bool isFresh = false,
 }) {
   return <String, dynamic>{
+    // 页面测试不打重置请求，id 只需非零占位。
+    'movie_id': number.hashCode.abs() % 100000 + 1,
     'movie_number': number,
     'title': 'Title $number',
     'title_zh': '中文 $number',

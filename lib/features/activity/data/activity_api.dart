@@ -7,8 +7,8 @@ import 'package:sakuramedia/features/activity/data/activity_event_stream_client.
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_stream_event.dart';
-import 'package:sakuramedia/features/activity/data/media_thumbnail_reset_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/notification_read_result_dto.dart';
+import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
@@ -162,33 +162,29 @@ class ActivityApi {
     );
   }
 
-  Future<MediaThumbnailResetResultDto> resetFailedMediaThumbnailStates({
-    required List<int> resourceIds,
-  }) async {
-    final response = await _apiClient.post(
-      '/system/resource-task-states/media_thumbnail_generation/reset',
-      data: <String, dynamic>{'resource_ids': resourceIds},
-    );
-    return MediaThumbnailResetResultDto.fromJson(response);
-  }
-
   /// 统一资源任务操作（任务架构 Wave 4）：retry_now / rerun / reset_retry_budget。
   ///
-  /// 后端判定可执行性并允许部分成功；retry_now / rerun 会入队一个带 only_ids 的
-  /// 可跟踪 run（响应携带 task_run_id）。
-  Future<Map<String, dynamic>> applyResourceTaskAction({
+  /// 资源级操作的唯一入口（旧任务专用端点已删）。后端判定可执行性并允许部分成功；
+  /// retry_now / rerun 会入队一个带 only_ids 的可跟踪 run（响应携带 task_run_id）。
+  ///
+  /// [resourceIds] 缺省时按 [state] 圈定整批目标（仅 reset_retry_budget 支持，
+  /// state 缺省 = 三个失败态全部）；两者不应同时缺省。
+  Future<ResourceTaskActionResultDto> applyResourceTaskAction({
     required String taskKey,
     required String action,
-    required List<int> resourceIds,
+    List<int>? resourceIds,
+    String? state,
   }) async {
-    return _apiClient.post(
+    final response = await _apiClient.post(
       '/system/resource-task-actions',
       data: <String, dynamic>{
         'task_key': taskKey,
         'action': action,
-        'resource_ids': resourceIds,
+        if (resourceIds != null) 'resource_ids': resourceIds,
+        if (state != null && state.trim().isNotEmpty) 'state': state,
       },
     );
+    return ResourceTaskActionResultDto.fromJson(response);
   }
 
   Stream<ActivityStreamEvent> streamEvents({required int afterEventId}) {

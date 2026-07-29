@@ -129,7 +129,7 @@ class ActivityCenterController extends ChangeNotifier {
     _jobErrorMessage = null;
     _taskRefreshErrorMessage = null;
     _connectionState = ActivityConnectionState.connecting;
-    _connectionMessage = '正在同步活动中心';
+    _connectionMessage = '正在同步任务中心';
     _notifySafely();
 
     try {
@@ -144,7 +144,7 @@ class ActivityCenterController extends ChangeNotifier {
       await _connectStream();
     } catch (error) {
       _isInitialLoading = false;
-      _initialErrorMessage = apiErrorMessage(error, fallback: '活动中心加载失败，请稍后重试');
+      _initialErrorMessage = apiErrorMessage(error, fallback: '任务中心加载失败，请稍后重试');
       _connectionState = ActivityConnectionState.reconnecting;
       _connectionMessage = null;
       _isLoadingJobs = false;

@@ -20,6 +20,7 @@ const String desktopVideoCollectionsPath = '/desktop/library/video-collections';
 const String desktopRankingsPath = '/desktop/library/rankings';
 const String desktopHotReviewsPath = '/desktop/library/hot-reviews';
 const String desktopActivityPath = '/desktop/system/activity';
+const String desktopMediaPath = '/desktop/system/media';
 const String desktopNotificationsPath = '/desktop/system/notifications';
 const String desktopConfigurationPath = '/desktop/system/configuration';
 const String desktopMediaImportPath = '/desktop/system/media-import';

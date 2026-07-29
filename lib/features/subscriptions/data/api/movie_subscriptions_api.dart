@@ -1,16 +1,17 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
-import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_search_reset_result_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status_counts_dto.dart';
 
-/// 影片订阅**管理**（读 + 重置资源查询状态）。
+/// 影片订阅**管理**（只读）。
 ///
-/// 订阅的写入侧不在这里：单条订阅 / 取消订阅走 `MoviesApi.subscribeMovie` /
+/// 写入侧全部不在这里：单条订阅 / 取消订阅走 `MoviesApi.subscribeMovie` /
 /// `unsubscribeMovie`，批量取消订阅走 `MoviesApi.batchUnsubscribeMovies`
-/// （`POST /movies/unsubscriptions`）。后端刻意没有在 `/movie-subscriptions` 下平行
-/// 造一套写端点，前端也不要在本类里补。
+/// （`POST /movies/unsubscriptions`），**重置资源查询状态走统一 action**
+/// （`ActivityApi.applyResourceTaskAction`，task_key
+/// `subscribed_movie_auto_download`，旧 `search-resets` 端点已删）。后端刻意
+/// 没有在 `/movie-subscriptions` 下平行造写端点，前端也不要在本类里补。
 class MovieSubscriptionsApi {
   const MovieSubscriptionsApi({required ApiClient apiClient})
     : _apiClient = apiClient;
@@ -59,22 +60,4 @@ class MovieSubscriptionsApi {
     return MovieSubscriptionStatusCountsDto.fromJson(response);
   }
 
-  /// `POST /movie-subscriptions/search-resets`：把影片放回资源查询队列。
-  ///
-  /// [resetAllExhausted] 为 true 时后端忽略 [movieNumbers]，重置全部「已放弃」的
-  /// 订阅影片。两者都为空 / false 时后端返回 422 `invalid_movie_subscription_reset`
-  /// ——调用方应先判空，别把这个当作校验入口。
-  Future<MovieSubscriptionSearchResetResultDto> resetSearchState({
-    List<String> movieNumbers = const <String>[],
-    bool resetAllExhausted = false,
-  }) async {
-    final response = await _apiClient.post(
-      '/movie-subscriptions/search-resets',
-      data: <String, dynamic>{
-        'movie_numbers': movieNumbers,
-        'reset_all_exhausted': resetAllExhausted,
-      },
-    );
-    return MovieSubscriptionSearchResetResultDto.fromJson(response);
-  }
 }

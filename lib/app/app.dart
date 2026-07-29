@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
@@ -334,6 +335,9 @@ class _MyAppState extends State<MyApp> {
                 context.read<DownloadClientsApi>(),
               ),
               moviesApiProvider.overrideWithValue(context.read<MoviesApi>()),
+              activityApiProvider.overrideWithValue(
+                context.read<ActivityApi>(),
+              ),
               movieSubscriptionsApiProvider.overrideWithValue(
                 context.read<MovieSubscriptionsApi>(),
               ),

@@ -16,7 +16,7 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 /// **底色沿用壳层的 `surfaceElevated`（纯白），本页不自铺灰底。** 试过铺
 /// `surfacePage`（#F5F5F5）让白卡浮起来——观感上确实分层更清楚，但代价是灰块从顶栏
 /// 底下一整片压到底、把分段签也裹进去，跟上方白色顶栏硬切一刀；而且本 app 所有桌面页
-/// （媒体管理 / 活动中心 / 下载任务）都坐在壳层白底上，单这一页变灰本身就是不协调。
+/// （媒体管理 / 任务中心）都坐在壳层白底上，单这一页变灰本身就是不协调。
 /// 卡片边界交给 [AppLeftCoverCard] 自带的 `borderSubtle` 细边——它本来就是为白底容器
 /// 设计的（媒体管理页同款）。
 class DesktopMovieSubscriptionsPage extends ConsumerWidget {

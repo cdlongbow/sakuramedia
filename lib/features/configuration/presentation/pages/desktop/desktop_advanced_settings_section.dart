@@ -1103,7 +1103,7 @@ const Map<String, String> _cronCopy = <String, String>{
   'movie_similarity_recompute': '影片相似度离线重算',
   'moment_recommendation_generate': '推荐时刻生成',
   'daily_recommendation_generate': '每日推荐快照生成',
-  'activity_cleanup': '活动中心数据清理',
+  'activity_cleanup': '任务中心数据清理',
 };
 
 const Map<String, String> _cronFieldHelper = <String, String>{
@@ -1127,5 +1127,5 @@ const Map<String, String> _cronFieldHelper = <String, String>{
   'movie_similarity_recompute': '离线重算影片相似度。',
   'moment_recommendation_generate': '生成推荐时刻。',
   'daily_recommendation_generate': '生成每日推荐快照。',
-  'activity_cleanup': '清理活动中心数据。',
+  'activity_cleanup': '清理任务中心的通知与任务运行数据。',
 };

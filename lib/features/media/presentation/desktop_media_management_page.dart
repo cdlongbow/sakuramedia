@@ -9,8 +9,10 @@ import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_rapid_upload_history_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/rapid_upload_target_library_dialog.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/invalid_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/rapid_upload_history_section.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
@@ -19,47 +21,46 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
-/// 「媒体管理」桌面页（Riverpod）：
-/// - 顶部 `AppTabBar` 两栏：媒体列表 / 秒传批次；
+/// 「媒体管理」桌面页（Riverpod，侧边栏「管理」区独立页）：
+/// - 顶部 `AppTabBar` 三栏：媒体列表 / 失效巡检 / 秒传批次；
 /// - 媒体列表 tab：[MediaListSection]（Riverpod Consumer；含筛选头 + 列表 + 秒传）；
+/// - 失效巡检 tab：[InvalidMediaSection]（原「媒体维护」页体，双端可复用）；
 /// - 秒传批次 tab：[RapidUploadHistorySection]（Riverpod Consumer）；
 /// - Timer 8s 轮询 running 批次，全部终态后自停。
-///
-/// 挂在系统设置左侧「媒体管理」tab 下，是姊妹页 `DesktopMediaMaintenancePage` 的邻居。
 class DesktopMediaManagementPage extends HookConsumerWidget {
-  const DesktopMediaManagementPage({super.key, this.active = true});
+  const DesktopMediaManagementPage({super.key});
 
-  /// 作为系统设置页 tab 嵌入时用于懒加载：仅在 tab 激活后才 watch provider 触发请求。
-  final bool active;
-
-  static const int _batchTabIndex = 1;
+  static const int _maintenanceTabIndex = 1;
+  static const int _batchTabIndex = 2;
   static const Duration _runningBatchPollInterval = Duration(seconds: 8);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 页面级 view 生命周期对象：全部走 hooks。
-    final tabController = useTabController(initialLength: 2);
+    final tabController = useTabController(initialLength: 3);
     // useListenable 触发 rebuild，读取 tabController.index 让 body 分派。
     useListenable(tabController);
     final currentTab = tabController.index;
-    final isBatchTab = currentTab == _batchTabIndex;
 
     // 单一共享 ScrollController：AppPageFrame 用；滚到底按当前 tab 分派 loadMore，
-    // 避免两个分页 provider 同时监听同一 scroll 互相打架。
+    // 避免多个分页 provider 同时监听同一 scroll 互相打架。
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
-        if (isBatchTab) {
-          unawaited(
-            ref.read(mediaRapidUploadHistoryProvider.notifier).loadMore(),
-          );
-        } else {
-          unawaited(ref.read(mediaBrowseProvider.notifier).loadMore());
+        switch (currentTab) {
+          case _batchTabIndex:
+            unawaited(
+              ref.read(mediaRapidUploadHistoryProvider.notifier).loadMore(),
+            );
+          case _maintenanceTabIndex:
+            unawaited(ref.read(invalidMediaProvider.notifier).loadMore());
+          default:
+            unawaited(ref.read(mediaBrowseProvider.notifier).loadMore());
         }
       },
-      enabled: active,
-      // isBatchTab 改变时重绑 listener 让最新闭包生效（虽然 useRef 已保证最新，
+      enabled: true,
+      // currentTab 改变时重绑 listener 让最新闭包生效（虽然 useRef 已保证最新，
       // 但把 tab 加入 keys 更贴合 hook 心智模型）。
-      keys: [isBatchTab],
+      keys: [currentTab],
     );
 
     // 切 tab 时回到顶部，避免新 tab 沿用上一个的滚动位置误触发 loadMore。
@@ -101,13 +102,6 @@ class DesktopMediaManagementPage extends HookConsumerWidget {
     final isBatchDeleting = useState<bool>(false);
     final retryingBatchId = useState<int?>(null);
 
-    // active 懒加载：非 active 时只挂骨架，不 watch provider（不触发 build）。
-    if (!active) {
-      return const SizedBox.shrink(
-        key: Key('desktop-media-management-page-inactive'),
-      );
-    }
-
     final spacing = context.appSpacing;
     // 顶栏刷新按钮与 Cmd/Ctrl+R 都触发 _refreshAll（媒体列表 + 秒传批次 + 媒体库）。
     return AppPageRefreshScope(
@@ -120,39 +114,40 @@ class DesktopMediaManagementPage extends HookConsumerWidget {
             controller: tabController,
             tabs: const [
               Tab(key: Key('media-management-tab-list'), text: '媒体列表'),
+              Tab(key: Key('media-management-tab-maintenance'), text: '失效巡检'),
               Tab(key: Key('media-management-tab-batches'), text: '秒传批次'),
             ],
           ),
           SizedBox(height: spacing.lg),
           Expanded(
-            child:
-                isBatchTab
-                    ? RapidUploadHistorySection(
-                      scrollController: scrollController,
-                      retryingBatchId: retryingBatchId.value,
-                      onRetry:
-                          (batch) =>
-                              _retryBatch(context, ref, batch, retryingBatchId),
-                    )
-                    : MediaListSection(
-                      scrollController: scrollController,
-                      isTriggering: isTriggeringUpload.value,
-                      isDeleting: isBatchDeleting.value,
-                      onRapidUpload:
-                          () => _openRapidUploadDialog(
-                            context,
-                            ref,
-                            isTriggeringUpload,
-                          ),
-                      onBatchDelete:
-                          () => _openBatchDeleteDialog(
-                            context,
-                            ref,
-                            isBatchDeleting,
-                          ),
-                      // 复合刷新：媒体列表 + 秒传批次 + 媒体库。
-                      onRefresh: () => _refreshAll(ref),
+            child: switch (currentTab) {
+              _batchTabIndex => RapidUploadHistorySection(
+                scrollController: scrollController,
+                retryingBatchId: retryingBatchId.value,
+                onRetry:
+                    (batch) =>
+                        _retryBatch(context, ref, batch, retryingBatchId),
+              ),
+              _maintenanceTabIndex => InvalidMediaSection(
+                key: const Key('media-management-invalid-media-section'),
+                scrollController: scrollController,
+              ),
+              _ => MediaListSection(
+                scrollController: scrollController,
+                isTriggering: isTriggeringUpload.value,
+                isDeleting: isBatchDeleting.value,
+                onRapidUpload:
+                    () => _openRapidUploadDialog(
+                      context,
+                      ref,
+                      isTriggeringUpload,
                     ),
+                onBatchDelete:
+                    () => _openBatchDeleteDialog(context, ref, isBatchDeleting),
+                // 复合刷新：媒体列表 + 失效巡检 + 秒传批次 + 媒体库。
+                onRefresh: () => _refreshAll(ref),
+              ),
+            },
           ),
         ],
       ),
@@ -181,6 +176,7 @@ class DesktopMediaManagementPage extends HookConsumerWidget {
   Future<void> _refreshAll(WidgetRef ref) async {
     final results = await Future.wait<String?>([
       ref.read(mediaBrowseProvider.notifier).refresh(),
+      ref.read(invalidMediaProvider.notifier).refresh(),
       ref.read(mediaRapidUploadHistoryProvider.notifier).refresh(),
       ref.read(mediaLibrariesProvider.notifier).refresh(),
     ]);

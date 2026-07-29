@@ -12,7 +12,8 @@ part of 'movie_subscription_manager_provider.dart';
 ///
 /// 职责边界：
 /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-/// - **重置**资源查询状态走 `MovieSubscriptionsApi.resetSearchState`；
+/// - **重置**资源查询状态走统一 action（`ActivityApi.applyResourceTaskAction`，
+///   task_key `subscribed_movie_auto_download`、action `reset_retry_budget`）；
 /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
 ///   端点，这里也不绕过它。
 ///
@@ -28,7 +29,8 @@ final movieSubscriptionManagerProvider = MovieSubscriptionManagerProvider._();
 ///
 /// 职责边界：
 /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-/// - **重置**资源查询状态走 `MovieSubscriptionsApi.resetSearchState`；
+/// - **重置**资源查询状态走统一 action（`ActivityApi.applyResourceTaskAction`，
+///   task_key `subscribed_movie_auto_download`、action `reset_retry_budget`）；
 /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
 ///   端点，这里也不绕过它。
 ///
@@ -46,7 +48,8 @@ final class MovieSubscriptionManagerProvider
   ///
   /// 职责边界：
   /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-  /// - **重置**资源查询状态走 `MovieSubscriptionsApi.resetSearchState`；
+  /// - **重置**资源查询状态走统一 action（`ActivityApi.applyResourceTaskAction`，
+  ///   task_key `subscribed_movie_auto_download`、action `reset_retry_budget`）；
   /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
   ///   端点，这里也不绕过它。
   ///
@@ -74,13 +77,14 @@ final class MovieSubscriptionManagerProvider
 }
 
 String _$movieSubscriptionManagerHash() =>
-    r'ffceadd5e48d57427a95fb305cc10a15b3908575';
+    r'7af2f35ff819460580a4240e10baec07be1c93f4';
 
 /// 「订阅管理」页的列表控制器。
 ///
 /// 职责边界：
 /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-/// - **重置**资源查询状态走 `MovieSubscriptionsApi.resetSearchState`；
+/// - **重置**资源查询状态走统一 action（`ActivityApi.applyResourceTaskAction`，
+///   task_key `subscribed_movie_auto_download`、action `reset_retry_budget`）；
 /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
 ///   端点，这里也不绕过它。
 ///

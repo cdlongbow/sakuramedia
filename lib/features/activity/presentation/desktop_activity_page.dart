@@ -454,7 +454,7 @@ class _InitialLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ActivitySection(
-      title: '活动中心',
+      title: '任务中心',
       child: SizedBox(
         width: double.infinity,
         height: 220,
@@ -477,7 +477,7 @@ class _InitialErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ActivitySection(
-      title: '活动中心',
+      title: '任务中心',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

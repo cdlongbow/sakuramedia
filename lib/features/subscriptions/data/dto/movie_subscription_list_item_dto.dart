@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_s
 /// [MovieImageDto] 只是因为封面结构相同。
 class MovieSubscriptionListItemDto {
   const MovieSubscriptionListItemDto({
+    required this.movieId,
     required this.movieNumber,
     required this.title,
     required this.titleZh,
@@ -25,6 +26,12 @@ class MovieSubscriptionListItemDto {
     this.mediaCount = 0,
     this.importOperation,
   });
+
+  /// 统一 action 协议（`POST /system/resource-task-actions`）的操作主键。
+  ///
+  /// 行内/多选/广播仍以 [movieNumber] 为标识（Key、跨页补丁都按番号建模），
+  /// 本字段只在调 API 时把选中番号映射成整数 `resource_ids`。
+  final int movieId;
 
   final String movieNumber;
   final String title;
@@ -62,6 +69,7 @@ class MovieSubscriptionListItemDto {
   factory MovieSubscriptionListItemDto.fromJson(Map<String, dynamic> json) {
     final coverImage = asMapOrNull(json['cover_image']);
     return MovieSubscriptionListItemDto(
+      movieId: asInt(json['movie_id']),
       movieNumber: asStringOrNull(json['movie_number']) ?? '',
       title: asStringOrNull(json['title']) ?? '',
       titleZh: asStringOrNull(json['title_zh']) ?? '',
@@ -97,21 +105,23 @@ class MovieSubscriptionListItemDto {
   ///
   /// 已入库的片不再参与资源查询，重置它只会平白多打一轮索引器；下载中的片已经
   /// 找到种子，重置同样无意义；**导入失败的片文件已经在盘上，卡的是入库那一步，
-  /// 让它去重新找种子只会白下一遍**。其余四态（缺资源 / 已放弃 / 查询出错 / 待查）
-  /// 都允许重置——「待查」重置是空操作但无害，保持规则简单。
+  /// 让它去重新找种子只会白下一遍**。「待查」在统一 action 协议下会被后端按
+  /// `state_not_actionable` 跳过（投影是 pending，不属三个失败态），所以也不给
+  /// 按钮。只剩三态（缺资源 / 已放弃 / 查询出错）允许重置。
   bool get canResetSearch =>
-      status != MovieSubscriptionStatus.imported &&
-      status != MovieSubscriptionStatus.importFailed &&
-      status != MovieSubscriptionStatus.downloading;
+      status == MovieSubscriptionStatus.missing ||
+      status == MovieSubscriptionStatus.exhausted ||
+      status == MovieSubscriptionStatus.failed;
 
   /// 重置资源查询状态后的本地投影，供列表就地打补丁、不整页重拉。
   ///
-  /// 后端的重置就是**删掉这条影片的 `ResourceTaskState` 行**，让它回到「从未查
-  /// 过」——所以这里精确对齐那个终态：状态回 `pending`、次数归零、上次查询与
-  /// 错误清空。[deadDownloadTaskCount] **保留不动**：重置不放开选种黑名单，已判
-  /// 死的种子仍然是死的。
+  /// 统一 action 的 `reset_retry_budget` 语义是**保留历史、重开预算**（回
+  /// `pending`、本轮计数归零、`retry_round + 1`），所以这里对齐那个终态：状态回
+  /// `pending`、次数归零、上次查询与错误清空。[deadDownloadTaskCount] **保留
+  /// 不动**：重置不放开选种黑名单，已判死的种子仍然是死的。
   MovieSubscriptionListItemDto afterSearchReset() {
     return MovieSubscriptionListItemDto(
+      movieId: movieId,
       movieNumber: movieNumber,
       title: title,
       titleZh: titleZh,

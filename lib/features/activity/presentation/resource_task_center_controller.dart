@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
-import 'package:sakuramedia/features/activity/data/media_thumbnail_reset_result_dto.dart';
+import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_filter_state.dart';
@@ -297,19 +297,20 @@ class ResourceTaskCenterController extends ChangeNotifier {
     _notifySafely();
   }
 
-  /// 触发批量 reset,返回后端结果供调用方组织提示文案。
+  /// 触发批量 reset（统一 action `reset_retry_budget`），返回后端结果供调用方
+  /// 组织提示文案。
   ///
-  /// 后端是**部分成功**语义:合格记录被重置并回报在 `resource_ids` 里,不合格的
-  /// 只出现在 `skipped` 中,全部不合格时也返回 200(`reset_count == 0`)。因此这里
-  /// 只移除 `resource_ids` 里真正被重置的记录——**不能**在 `resource_ids` 为空时
-  /// 回落成"整批已重置",那会把没重置的记录也从列表里抹掉。
+  /// 后端是**部分成功**语义:合格记录被重置并回报在 `accepted_resource_ids` 里,
+  /// 不合格的只出现在 `skipped` 中,全部不合格时也返回 200(accepted 为空)。因此
+  /// 这里只移除真正被重置的记录——**不能**在 accepted 为空时回落成"整批已重置",
+  /// 那会把没重置的记录也从列表里抹掉。
   ///
   /// 被跳过的项保留选中态并停在选择模式,方便用户看到是哪几条没成功;全部成功
   /// 才退出选择模式。传输/协议层失败仍保持已选并 `rethrow`,让调用方(通常是
   /// `showAppConfirmDialog(onConfirm:)`)兜底 toast + 保留 dialog。
   ///
   /// 未发起请求(非媒体 tab / 无选中 / 正在重置)时返回 `null`。
-  Future<MediaThumbnailResetResultDto?> resetSelectedFailed() async {
+  Future<ResourceTaskActionResultDto?> resetSelectedFailed() async {
     if (_isResetting ||
         _activeTaskKey != kMediaThumbnailTaskKey ||
         _selectedResourceIds.isEmpty) {
@@ -319,14 +320,16 @@ class ResourceTaskCenterController extends ChangeNotifier {
     _isResetting = true;
     _notifySafely();
     try {
-      final result = await _activityApi.resetFailedMediaThumbnailStates(
+      final result = await _activityApi.applyResourceTaskAction(
+        taskKey: kMediaThumbnailTaskKey,
+        action: 'reset_retry_budget',
         resourceIds: ids,
       );
       if (_disposed) {
         return result;
       }
-      final resetIds = result.resourceIds.toSet();
-      _applySuccessfulReset(resetIds, result.resetCount);
+      final resetIds = result.acceptedResourceIds.toSet();
+      _applySuccessfulReset(resetIds, result.acceptedCount);
       _isResetting = false;
       // 被跳过的仍留在列表里,保持选中让用户能定位;其余从选中集合里剔除。
       final keepSelected = _selectedResourceIds
@@ -410,18 +413,16 @@ class ResourceTaskCenterController extends ChangeNotifier {
     required String action,
     required List<int> resourceIds,
   }) async {
-    final response = await _activityApi.applyResourceTaskAction(
+    final result = await _activityApi.applyResourceTaskAction(
       taskKey: taskKey,
       action: action,
       resourceIds: resourceIds,
     );
-    final accepted =
-        (response['accepted_resource_ids'] as List<dynamic>? ?? const [])
-            .length;
-    final skipped = (response['skipped'] as List<dynamic>? ?? const []).length;
-    final taskRunId = response['task_run_id'];
+    final accepted = result.acceptedCount;
+    final skipped = result.skippedCount;
     await Future.wait([refreshRecords(), refreshDefinitions()]);
-    final suffix = taskRunId != null ? '，已生成任务 #$taskRunId' : '';
+    final suffix =
+        result.taskRunId != null ? '，已生成任务 #${result.taskRunId}' : '';
     return skipped == 0
         ? '已受理 $accepted 项$suffix'
         : '已受理 $accepted 项、跳过 $skipped 项$suffix';

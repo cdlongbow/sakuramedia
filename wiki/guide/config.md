@@ -269,7 +269,7 @@ enabled = ["示例插件ID"]
 
 - **这一节不走设置页**。插件配置可能含凭据，而且 API 和调度器两个进程要加载同一份注册表，所以它既不能在网页上读、也不能在网页上改，只能手动改 `config.toml`。
 - 改完（启用、停用、调 cron、改插件配置）都需要**重启整个 `sakuramedia` 服务**，只重启调度器不够。
-- 停用插件不会删掉它已经产生的任务运行记录，历史在活动中心里仍然查得到。
+- 停用插件不会删掉它已经产生的任务运行记录，历史在任务中心里仍然查得到。
 - 插件注册的任务会和内置任务一起出现在任务列表里，运行规则完全一致。
 
 ## `[scheduler]`
@@ -332,7 +332,7 @@ activity_notification_read_retention_days = 3
 | `movie_similarity_recompute_cron` | 影片相似度离线重算频率 |
 | `moment_recommendation_generate_cron` | 推荐时刻生成频率 |
 | `daily_recommendation_generate_cron` | 每日推荐快照生成频率 |
-| `activity_cleanup_cron` | 活动中心数据清理频率 |
+| `activity_cleanup_cron` | 任务中心数据清理频率 |
 | `activity_event_retention_days` | 活动事件保留天数 |
 | `activity_task_run_retention_per_key` | 每个任务键保留的运行记录条数 |
 | `activity_notification_read_retention_days` | 已读通知保留天数 |

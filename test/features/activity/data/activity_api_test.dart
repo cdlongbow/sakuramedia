@@ -289,46 +289,104 @@ void main() {
   });
 
   test(
-    'resetFailedMediaThumbnailStates posts resource ids and maps result',
+    'applyResourceTaskAction posts resource ids and maps result',
     () async {
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        path: '/system/resource-task-actions',
         body: <String, dynamic>{
           'task_key': 'media_thumbnail_generation',
-          'state': 'pending',
-          'reset_count': 2,
-          'resource_ids': <int>[101, 202],
+          'action': 'reset_retry_budget',
+          'task_run_id': null,
+          'accepted_resource_ids': <int>[101, 202],
+          'skipped': <Map<String, dynamic>>[
+            <String, dynamic>{'resource_id': 303, 'reason': 'media_invalid'},
+          ],
         },
       );
 
-      final result = await bundle.activityApi.resetFailedMediaThumbnailStates(
-        resourceIds: <int>[101, 202],
+      final result = await bundle.activityApi.applyResourceTaskAction(
+        taskKey: 'media_thumbnail_generation',
+        action: 'reset_retry_budget',
+        resourceIds: <int>[101, 202, 303],
       );
 
       expect(result.taskKey, 'media_thumbnail_generation');
-      expect(result.state, 'pending');
-      expect(result.resetCount, 2);
-      expect(result.resourceIds, <int>[101, 202]);
+      expect(result.action, 'reset_retry_budget');
+      expect(result.taskRunId, isNull);
+      expect(result.acceptedResourceIds, <int>[101, 202]);
+      expect(result.acceptedCount, 2);
+      expect(result.skippedCount, 1);
+      expect(result.skipped.single.resourceId, 303);
+      expect(result.skipped.single.reasonLabel, '媒体已失效');
 
       final request = bundle.adapter.requests.single;
       expect(request.method.toUpperCase(), 'POST');
-      expect(
-        request.path,
-        '/system/resource-task-states/media_thumbnail_generation/reset',
-      );
+      expect(request.path, '/system/resource-task-actions');
       expect(request.body, <String, dynamic>{
-        'resource_ids': <int>[101, 202],
+        'task_key': 'media_thumbnail_generation',
+        'action': 'reset_retry_budget',
+        'resource_ids': <int>[101, 202, 303],
       });
-      expect(
-        bundle.adapter.hitCount(
-          'POST',
-          '/system/resource-task-states/media_thumbnail_generation/reset',
-        ),
-        1,
-      );
     },
   );
+
+  test(
+    'applyResourceTaskAction omits resource ids and scopes by state',
+    () async {
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/resource-task-actions',
+        body: <String, dynamic>{
+          'task_key': 'subscribed_movie_auto_download',
+          'action': 'reset_retry_budget',
+          'task_run_id': null,
+          'accepted_resource_ids': <int>[7, 8, 9],
+          'skipped': <Map<String, dynamic>>[],
+        },
+      );
+
+      final result = await bundle.activityApi.applyResourceTaskAction(
+        taskKey: 'subscribed_movie_auto_download',
+        action: 'reset_retry_budget',
+        state: 'exhausted',
+      );
+
+      expect(result.acceptedCount, 3);
+      expect(result.hasSkipped, isFalse);
+
+      // 批量按状态圈定：请求体不携带 resource_ids 键。
+      final request = bundle.adapter.requests.single;
+      expect(request.body, <String, dynamic>{
+        'task_key': 'subscribed_movie_auto_download',
+        'action': 'reset_retry_budget',
+        'state': 'exhausted',
+      });
+    },
+  );
+
+  test('applyResourceTaskAction returns trackable run for rerun', () async {
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/system/resource-task-actions',
+      body: <String, dynamic>{
+        'task_key': 'movie_desc_translation',
+        'action': 'rerun',
+        'task_run_id': 42,
+        'accepted_resource_ids': <int>[11],
+        'skipped': <Map<String, dynamic>>[],
+      },
+    );
+
+    final result = await bundle.activityApi.applyResourceTaskAction(
+      taskKey: 'movie_desc_translation',
+      action: 'rerun',
+      resourceIds: <int>[11],
+    );
+
+    expect(result.taskRunId, 42);
+    expect(result.acceptedResourceIds, <int>[11]);
+  });
 
   test('streamEvents maps notification, task and read payloads', () async {
     bundle.adapter.enqueueSse(

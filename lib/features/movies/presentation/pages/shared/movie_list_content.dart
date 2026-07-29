@@ -141,7 +141,7 @@ class _MovieListContentState extends State<MovieListContent>
     setState(() {
       widget.pageState.filterState = nextState;
     });
-    // 切筛选跨结果集，选中态失去意义 —— 对齐活动中心样板行为。
+    // 切筛选跨结果集，选中态失去意义 —— 对齐任务中心样板行为。
     if (selectionMode) {
       exitSelection();
     }

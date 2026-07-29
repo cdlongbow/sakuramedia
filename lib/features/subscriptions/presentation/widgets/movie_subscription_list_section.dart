@@ -413,7 +413,7 @@ class _EmptyState extends ConsumerWidget {
       MovieSubscriptionStatus.downloading => (
         Icons.download_outlined,
         '没有正在下载的订阅',
-        '找到种子的影片会出现在这里，进度可以去活动中心看。',
+        '找到种子的影片会出现在这里，进度可以去任务中心看。',
       ),
       MovieSubscriptionStatus.imported => (
         Icons.inbox_outlined,

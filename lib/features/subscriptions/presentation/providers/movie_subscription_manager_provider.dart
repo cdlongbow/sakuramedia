@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
+import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_subscribable_list_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
@@ -24,7 +26,8 @@ Duration? noMovieSubscriptionManagerRetry(int retryCount, Object error) => null;
 ///
 /// 职责边界：
 /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-/// - **重置**资源查询状态走 `MovieSubscriptionsApi.resetSearchState`；
+/// - **重置**资源查询状态走统一 action（`ActivityApi.applyResourceTaskAction`，
+///   task_key `subscribed_movie_auto_download`、action `reset_retry_budget`）；
 /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
 ///   端点，这里也不绕过它。
 ///
@@ -228,9 +231,14 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
     }
   }
 
+  /// 统一 action 协议里订阅资源查询的 task_key（与后端 job 同名）。
+  static const String _searchTaskKey = 'subscribed_movie_auto_download';
+
   /// 一键把全部「已放弃」的影片放回查询队列（不依赖多选）。
   ///
-  /// 影响面可能很大且跨页，走完整 [reload] 而不是就地补丁。
+  /// 走统一 action 的「缺省 resource_ids + state 圈定」批量形态（仅
+  /// reset_retry_budget 支持）。影响面可能很大且跨页，走完整 [reload] 而不是
+  /// 就地补丁。
   Future<MovieSubscriptionActionResult> resetAllExhausted() async {
     final current = state.value;
     if (current != null && current.isBatchRunning) {
@@ -239,8 +247,12 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
     _setBatchAction(MovieSubscriptionBatchAction.resetAllExhausted);
     try {
       final response = await ref
-          .read(movieSubscriptionsApiProvider)
-          .resetSearchState(resetAllExhausted: true);
+          .read(activityApiProvider)
+          .applyResourceTaskAction(
+            taskKey: _searchTaskKey,
+            action: 'reset_retry_budget',
+            state: 'exhausted',
+          );
       unawaited(
         ref.read(movieSubscriptionStatusCountsProvider.notifier).refresh(),
       );
@@ -251,34 +263,64 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
               selectedMovieNumbers: const <String>{},
             ),
       );
-      return MovieSubscriptionActionResult.success(response.resetCount);
+      return MovieSubscriptionActionResult.success(response.acceptedCount);
     } catch (error) {
       return MovieSubscriptionActionResult.failure(
-        apiErrorMessage(error, fallback: '重置资源查询状态失败'),
+        _resetErrorMessage(error),
       );
     } finally {
       _setBatchAction(null);
     }
   }
 
-  /// 调重置端点 + 就地补丁：命中行回到「待查」，若当前分段签容不下它就移除。
+  /// 调统一 action + 就地补丁：**只有后端受理的行**回到「待查」，被跳过的
+  /// （已取消订阅 / 状态已变等）原样保留；若当前分段签容不下重置行就移除。
   Future<MovieSubscriptionActionResult> _resetSearch(
     List<String> movieNumbers,
   ) async {
-    try {
-      await ref
-          .read(movieSubscriptionsApiProvider)
-          .resetSearchState(movieNumbers: movieNumbers);
-    } catch (error) {
-      return MovieSubscriptionActionResult.failure(
-        apiErrorMessage(error, fallback: '重置资源查询状态失败'),
-      );
+    // 统一 action 收整数 movie id：经当前列表把番号映射成 id。选中项必然来自
+    // 已加载列表，映射不会失配；万一列表已被外部补丁摘行，缺失项直接跳过。
+    final items =
+        state.value?.paged.items ?? const <MovieSubscriptionListItemDto>[];
+    final numbers = movieNumbers.toSet();
+    final numberById = <int, String>{
+      for (final item in items)
+        if (numbers.contains(item.movieNumber) && item.movieId > 0)
+          item.movieId: item.movieNumber,
+    };
+    if (numberById.isEmpty) {
+      return const MovieSubscriptionActionResult.success(0);
     }
-    _applySearchReset(movieNumbers.toSet());
+    final ResourceTaskActionResultDto result;
+    try {
+      result = await ref
+          .read(activityApiProvider)
+          .applyResourceTaskAction(
+            taskKey: _searchTaskKey,
+            action: 'reset_retry_budget',
+            resourceIds: numberById.keys.toList(growable: false),
+          );
+    } catch (error) {
+      return MovieSubscriptionActionResult.failure(_resetErrorMessage(error));
+    }
+    final acceptedNumbers =
+        result.acceptedResourceIds
+            .map((id) => numberById[id])
+            .whereType<String>()
+            .toSet();
+    if (acceptedNumbers.isNotEmpty) {
+      _applySearchReset(acceptedNumbers);
+    }
     unawaited(
       ref.read(movieSubscriptionStatusCountsProvider.notifier).refresh(),
     );
-    return MovieSubscriptionActionResult.success(movieNumbers.length);
+    return MovieSubscriptionActionResult.success(result.acceptedCount);
+  }
+
+  String _resetErrorMessage(Object error) {
+    return isResourceTaskActionConflict(error)
+        ? '已有重置操作在执行中，请稍后再试'
+        : apiErrorMessage(error, fallback: '重置资源查询状态失败');
   }
 
   // --- 取消订阅 --------------------------------------------------------------

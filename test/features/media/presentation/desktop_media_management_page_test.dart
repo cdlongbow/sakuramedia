@@ -8,7 +8,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/media/presentation/desktop_media_maintenance_page.dart';
+import 'package:sakuramedia/features/media/presentation/desktop_media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -16,6 +16,8 @@ import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
+/// 「媒体管理」三 tab 页测试。失效巡检用例迁自原 `desktop_media_maintenance_page_test`
+/// （维护页并入本页后删除），pump 后先切到「失效巡检」tab 再断言。
 void main() {
   late SessionStore sessionStore;
   late ApiClient apiClient;
@@ -36,11 +38,70 @@ void main() {
     apiClient.rawDio.httpClientAdapter = adapter;
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
     mediaApi = MediaApi(apiClient: apiClient);
+
+    // 页面挂载即建媒体列表 tab（watch mediaBrowseProvider）与秒传轮询监听
+    // （ref.listen mediaRapidUploadHistoryProvider），给这两个端点常驻空响应，
+    // 让失效巡检用例不必逐个排队。
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/media',
+      body: _emptyPage(),
+    );
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/media/rapid-uploads',
+      body: _emptyPage(),
+    );
   });
 
   tearDown(() {
     apiClient.dispose();
     sessionStore.dispose();
+  });
+
+  testWidgets('renders three tabs and lazy-loads invalid media on demand', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: _invalidMediaPage(total: 0, items: const []),
+    );
+
+    await _pumpPage(
+      tester,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+      sessionStore: sessionStore,
+      switchToMaintenanceTab: false,
+    );
+
+    expect(
+      find.byKey(const Key('desktop-media-management-page')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('media-management-tab-list')), findsOneWidget);
+    expect(
+      find.byKey(const Key('media-management-tab-maintenance')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-management-tab-batches')),
+      findsOneWidget,
+    );
+    // 失效巡检 tab 未激活前不发请求。
+    expect(adapter.hitCount('GET', '/media/invalid'), 0);
+
+    await tester.tap(
+      find.byKey(const Key('media-management-tab-maintenance')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('GET', '/media/invalid'), 1);
+    expect(
+      find.byKey(const Key('media-management-invalid-media-section')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows empty state for empty invalid media list', (tester) async {
@@ -57,10 +118,6 @@ void main() {
       sessionStore: sessionStore,
     );
 
-    expect(
-      find.byKey(const Key('desktop-media-maintenance-page')),
-      findsOneWidget,
-    );
     expect(find.text('当前没有失效媒体'), findsOneWidget);
     expect(find.text('共 0 条失效媒体'), findsOneWidget);
   });
@@ -156,7 +213,7 @@ void main() {
     );
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(DesktopMediaMaintenancePage)),
+      tester.element(find.byType(DesktopMediaManagementPage)),
     );
     for (var page = 2; page <= itemCount ~/ pageSize; page++) {
       await tester.runAsync(
@@ -170,13 +227,12 @@ void main() {
       container.read(invalidMediaProvider).requireValue.paged.items,
       hasLength(itemCount),
     );
-    expect(find.byType(SliverList), findsOneWidget);
     expect(find.byKey(const Key('invalid-media-check-80')), findsNothing);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('invalid-media-check-80')),
       600,
-      scrollable: find.byType(Scrollable),
+      scrollable: _invalidMediaScrollable(),
     );
     await tester.pumpAndSettle();
 
@@ -458,13 +514,13 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('invalid-media-delete-20')),
       500,
-      scrollable: find.byType(Scrollable),
+      scrollable: _invalidMediaScrollable(),
     );
     await tester.pump();
     await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(DesktopMediaMaintenancePage)),
+      tester.element(find.byType(DesktopMediaManagementPage)),
     );
     expect(
       container
@@ -485,12 +541,23 @@ void main() {
   });
 }
 
+/// 失效巡检 tab 内的滚动体（页面还有 TabBar 等其它 Scrollable，不能裸用 byType）。
+Finder _invalidMediaScrollable() {
+  return find
+      .descendant(
+        of: find.byKey(const Key('invalid-media-scroll-view')),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+}
+
 Future<void> _pumpPage(
   WidgetTester tester, {
   required MediaApi mediaApi,
   required ApiClient apiClient,
   required SessionStore sessionStore,
   MediaLibrariesApi? mediaLibrariesApi,
+  bool switchToMaintenanceTab = true,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -517,7 +584,7 @@ Future<void> _pumpPage(
         child: MaterialApp(
           theme: sakuraThemeData,
           home: const OKToast(
-            child: Scaffold(body: DesktopMediaMaintenancePage()),
+            child: Scaffold(body: DesktopMediaManagementPage()),
           ),
         ),
       ),
@@ -525,6 +592,14 @@ Future<void> _pumpPage(
   );
   await tester.pump();
   await tester.pumpAndSettle();
+
+  if (switchToMaintenanceTab) {
+    await tester.tap(
+      find.byKey(const Key('media-management-tab-maintenance')),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+  }
 }
 
 class _EmptyMediaLibrariesApi extends MediaLibrariesApi {
@@ -533,6 +608,15 @@ class _EmptyMediaLibrariesApi extends MediaLibrariesApi {
   @override
   Future<List<MediaLibraryDto>> getLibraries() async =>
       const <MediaLibraryDto>[];
+}
+
+Map<String, dynamic> _emptyPage() {
+  return <String, dynamic>{
+    'items': const <Map<String, dynamic>>[],
+    'page': 1,
+    'page_size': 20,
+    'total': 0,
+  };
 }
 
 Map<String, dynamic> _invalidMediaPage({

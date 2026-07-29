@@ -2,6 +2,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 
 class MovieDetailDto {
   const MovieDetailDto({
+    this.id = 0,
     required this.javdbId,
     required this.movieNumber,
     required this.title,
@@ -32,6 +33,11 @@ class MovieDetailDto {
     required this.mediaItems,
     required this.playlists,
   });
+
+  /// 影片整数主键，统一资源任务操作（`resource_ids`）的寻址键。
+  ///
+  /// 老后端响应缺该字段时为 0，调用方按 `> 0` 判可用。
+  final int id;
 
   final String javdbId;
   final String movieNumber;
@@ -83,6 +89,8 @@ class MovieDetailDto {
 
   factory MovieDetailDto.fromJson(Map<String, dynamic> json) {
     return MovieDetailDto(
+      // 兼容两种键名：详情资源用 `id`，若后端沿用订阅列表的 `movie_id` 也认。
+      id: _intFromJson(json['id']) ?? _intFromJson(json['movie_id']) ?? 0,
       javdbId: json['javdb_id'] as String? ?? '',
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',

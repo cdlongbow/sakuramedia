@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/actors/presentation/pages/mobile/actors_pag
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_configuration_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/desktop_discover_page.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/desktop_hot_reviews_page.dart';
+import 'package:sakuramedia/features/media/presentation/desktop_media_management_page.dart';
 import 'package:sakuramedia/features/media_import/presentation/desktop_media_import_page.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_notifications_page.dart';
 import 'package:sakuramedia/features/moments/presentation/desktop_moments_page.dart';
@@ -250,16 +251,16 @@ const List<_NavSeed> _desktopNavSeeds = [
     ],
   ),
   _NavSeed(
-    id: 'configuration',
-    label: '系统设置',
-    icon: Icons.settings_suggest_outlined,
+    id: 'media',
+    label: '媒体管理',
+    icon: Icons.video_settings_outlined,
     section: '管理',
     items: [
       _NavItemSeed(
-        slug: 'system/configuration',
-        label: '系统设置',
-        icon: Icons.settings_suggest_outlined,
-        description: '媒体库、下载器、索引器、账号安全与失效媒体维护等系统配置的统一入口。',
+        slug: 'system/media',
+        label: '媒体管理',
+        icon: Icons.video_settings_outlined,
+        description: '媒体文件浏览、失效巡检与秒传批次的统一入口。',
       ),
     ],
   ),
@@ -279,15 +280,15 @@ const List<_NavSeed> _desktopNavSeeds = [
   ),
   _NavSeed(
     id: 'activity',
-    label: '活动中心',
+    label: '任务中心',
     icon: Icons.bolt_outlined,
     section: '管理',
     items: [
       _NavItemSeed(
         slug: 'system/activity',
-        label: '活动中心',
+        label: '任务中心',
         icon: Icons.bolt_outlined,
-        description: '后台任务状态与在线活动流的统一入口。',
+        description: '后台任务、元数据任务与下载任务的统一入口，所有操作回执的落点。',
       ),
     ],
   ),
@@ -319,6 +320,20 @@ const List<_NavSeed> _desktopNavSeeds = [
       ),
     ],
   ),
+  _NavSeed(
+    id: 'configuration',
+    label: '系统设置',
+    icon: Icons.settings_suggest_outlined,
+    section: '管理',
+    items: [
+      _NavItemSeed(
+        slug: 'system/configuration',
+        label: '系统设置',
+        icon: Icons.settings_suggest_outlined,
+        description: '媒体库、下载器、索引器、账号安全等系统配置的统一入口。',
+      ),
+    ],
+  ),
 ];
 
 final Map<String, WidgetBuilder> _desktopRouteBuilders =
@@ -335,6 +350,7 @@ final Map<String, WidgetBuilder> _desktopRouteBuilders =
       desktopRankingsPath: (_) => const DesktopRankingsPage(),
       desktopHotReviewsPath: (_) => const DesktopHotReviewsPage(),
       desktopActivityPath: (_) => const DesktopActivityPage(),
+      desktopMediaPath: (_) => const DesktopMediaManagementPage(),
       desktopNotificationsPath: (_) => const DesktopNotificationsPage(),
       desktopConfigurationPath: (_) => const DesktopConfigurationPage(),
       desktopMediaImportPath: (_) => const DesktopMediaImportPage(),

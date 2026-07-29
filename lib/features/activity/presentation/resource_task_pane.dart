@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
-import 'package:sakuramedia/features/activity/data/media_thumbnail_reset_result_dto.dart';
+import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
@@ -137,7 +137,11 @@ List<Widget> buildResourceTaskSlivers({
                   );
                   showToast(message);
                 } catch (error) {
-                  showToast(apiErrorMessage(error, fallback: '操作失败'));
+                  showToast(
+                    isResourceTaskActionConflict(error)
+                        ? '已有相同操作在执行中，请稍后再试'
+                        : apiErrorMessage(error, fallback: '操作失败'),
+                  );
                 }
               },
               onTap: () {
@@ -511,7 +515,7 @@ class _ResourceTaskSelectionBar extends StatelessWidget {
     if (selectedCount == 0) {
       return;
     }
-    MediaThumbnailResetResultDto? result;
+    ResourceTaskActionResultDto? result;
     final confirmed = await showAppConfirmDialog(
       context,
       title: '重置生成状态',
@@ -531,10 +535,10 @@ class _ResourceTaskSelectionBar extends StatelessWidget {
     showToast(_resetResultMessage(resolved));
   }
 
-  /// 后端是部分成功语义：`reset_count == 0` 也是 200，要按「没有可重置」提示，
+  /// 后端是部分成功语义：accepted 为空也是 200，要按「没有可重置」提示，
   /// 而不是当成功。跳过项仍留在列表里且保持选中，文案只做汇总。
-  static String _resetResultMessage(MediaThumbnailResetResultDto result) {
-    final resetCount = result.resetCount;
+  static String _resetResultMessage(ResourceTaskActionResultDto result) {
+    final resetCount = result.acceptedCount;
     final skippedCount = result.skippedCount;
     if (skippedCount <= 0) {
       return resetCount > 0 ? '已重置 $resetCount 条' : '没有可重置的任务';

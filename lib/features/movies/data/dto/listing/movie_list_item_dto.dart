@@ -47,6 +47,7 @@ class MovieImageDto {
 
 class MovieListItemDto {
   const MovieListItemDto({
+    this.id = 0,
     required this.javdbId,
     required this.movieNumber,
     required this.title,
@@ -62,6 +63,10 @@ class MovieListItemDto {
     required this.canPlay,
     this.similarityScore,
   });
+
+  /// 影片整数主键（2026-07 起后端在所有影片卡片下发），统一资源任务操作
+  /// （`resource_ids`）的寻址键。老响应缺字段时为 0，调用方按 `> 0` 判可用。
+  final int id;
 
   final String javdbId;
   final String movieNumber;
@@ -103,6 +108,8 @@ class MovieListItemDto {
     double? similarityScore,
   }) {
     return MovieListItemDto(
+      // id 是不可变主键，copyWith 不开放改写、只透传（漏传会被默认 0 抹掉）。
+      id: id,
       javdbId: javdbId ?? this.javdbId,
       movieNumber: movieNumber ?? this.movieNumber,
       title: title ?? this.title,
@@ -122,6 +129,7 @@ class MovieListItemDto {
 
   factory MovieListItemDto.fromJson(Map<String, dynamic> json) {
     return MovieListItemDto(
+      id: _intFromJson(json['id']) ?? 0,
       javdbId: json['javdb_id'] as String? ?? '',
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',

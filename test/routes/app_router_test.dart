@@ -107,7 +107,8 @@ void main() {
   });
 
   test('desktop navigation tree contains moments entry', () {
-    expect(desktopNavGroups.length, 16);
+    expect(desktopNavGroups.length, 17);
+    // 管理区顺序：媒体管理 / 媒体导入 / 任务中心 / 订阅管理 / 通知 / 系统设置。
     expect(desktopNavGroups.map((group) => group.label), [
       '概览',
       '发现',
@@ -120,11 +121,12 @@ void main() {
       'PornBox',
       '排行榜',
       '热评',
-      '系统设置',
+      '媒体管理',
       '媒体导入',
-      '活动中心',
+      '任务中心',
       '订阅管理',
       '通知',
+      '系统设置',
     ]);
     // 人物已彻底移除、视频合集并入 PornBox 页（不再独占侧栏 seed），
     // 故两者均不在 nav 生成的 route spec 列表中。
@@ -140,11 +142,12 @@ void main() {
       desktopVideosPath,
       desktopRankingsPath,
       desktopHotReviewsPath,
-      desktopConfigurationPath,
+      desktopMediaPath,
       desktopMediaImportPath,
       desktopActivityPath,
       desktopMovieSubscriptionsPath,
       desktopNotificationsPath,
+      desktopConfigurationPath,
     ]);
   });
 

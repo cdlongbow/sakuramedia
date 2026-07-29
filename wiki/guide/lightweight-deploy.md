@@ -227,7 +227,7 @@ docker compose up -d
 5. 如果启用了以图搜图，缩略图会异步进入向量索引
 6. 如果启用了翻译，会异步补 `title_zh` / `desc_zh`
 
-进度可以在「活动中心 → 任务中心」看。
+进度可以在「任务中心 → 后台任务」看。
 
 ### 3. 跑一次组件诊断（可选）
 
@@ -252,7 +252,7 @@ docker compose up -d
 2. 把 qB 的下载目录挂载进 SakuraMedia 容器，路径规划见[进阶部署 → 推荐部署思路](/guide/docker#推荐部署思路)
 3. 在 SakuraMedia 里添加下载器 + 配 Jackett，参考[快速开始 → 添加 qBittorrent 下载器](/guide/quick-start#_2-添加-qbittorrent-下载器)
 
-添加完成后，**你之前订阅过的、本地还没有媒体的影片**会在下一次「已订阅缺失影片自动下载」任务里自动进入下载队列（默认凌晨 2:30 跑一次，也可以在活动中心手动触发一次 `auto-download-subscribed-movies`）。
+添加完成后，**你之前订阅过的、本地还没有媒体的影片**会在下一次「已订阅缺失影片自动下载」任务里自动进入下载队列（默认凌晨 2:30 跑一次，也可以在任务中心手动触发一次 `auto-download-subscribed-movies`）。
 
 ## 相关页面
 

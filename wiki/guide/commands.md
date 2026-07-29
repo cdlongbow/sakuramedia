@@ -142,7 +142,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands scan-med
 - 文件不存在时会把 `media.valid` 修正为 `false`
 - 文件存在但视频信息缺失时，会补齐编码、码率等信息
 
-如果你想把这次巡检作为“后台任务”记录到活动中心里，建议用后面的 `aps scan-media-files` 版本。
+如果你想把这次巡检作为“后台任务”记录到任务中心里，建议用后面的 `aps scan-media-files` 版本。
 
 ## 存量数据迁移
 
@@ -244,7 +244,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands migrate-
 docker exec --user app -w /app sakuramedia python -m src.start.commands aps <task-name>
 ```
 
-这类命令通常会把执行记录写进活动中心 / 任务中心，更适合观察进度和结果。
+这类命令通常会把执行记录写进任务中心，更适合观察进度和结果。
 
 ### 同步订阅女优影片
 
@@ -429,7 +429,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands aps opti
 docker exec --user app -w /app sakuramedia python -m src.start.commands aps scan-media-files
 ```
 
-这条命令和前面的普通 `scan-media-files` 作用相近，但它会以“后台任务”的形式运行，更方便在活动中心里看进度和结果。
+这条命令和前面的普通 `scan-media-files` 作用相近，但它会以“后台任务”的形式运行，更方便在任务中心里看进度和结果。
 
 ## 外部服务测试命令
 

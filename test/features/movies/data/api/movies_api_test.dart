@@ -93,6 +93,7 @@ void main() {
       body: <String, dynamic>{
         'items': [
           <String, dynamic>{
+            'id': 77,
             'javdb_id': 'MovieA1',
             'movie_number': 'ABC-001',
             'title': 'Movie 1',
@@ -128,6 +129,7 @@ void main() {
     expect(request.uri.queryParameters['actor_id'], isNull);
     expect(request.uri.queryParameters['page'], '1');
     expect(request.uri.queryParameters['page_size'], '24');
+    expect(page.items.single.id, 77);
     expect(page.items.single.movieNumber, 'ABC-001');
     expect(page.items.single.titleZh, '电影 1');
     expect(page.items.single.preferredTitle, '电影 1');
@@ -824,6 +826,7 @@ void main() {
       path: '/movies/ABC-001',
       statusCode: 200,
       body: <String, dynamic>{
+        'id': 77,
         'javdb_id': 'MovieA1',
         'movie_number': 'ABC-001',
         'title': 'Movie 1',
@@ -976,6 +979,7 @@ void main() {
     final detail = await moviesApi.getMovieDetail(movieNumber: 'ABC-001');
 
     expect(detail, isA<MovieDetailDto>());
+    expect(detail.id, 77);
     expect(detail.movieNumber, 'ABC-001');
     expect(detail.title, 'Movie 1');
     expect(detail.titleZh, '电影 1');
@@ -1332,27 +1336,32 @@ void main() {
   });
 
   test(
-    'translateMovieDescription posts to desc translation endpoint',
+    'translateMovieDescription posts rerun to unified action endpoint',
     () async {
-      // 202 入队（任务架构 Wave 3）：响应是 task_run 信息，客户端不解析影片详情。
+      // 统一 action（任务架构 Wave 4）：rerun + resource_ids 寻址，响应带
+      // task_run_id，客户端不解析影片详情。
       adapter.enqueueJson(
         method: 'POST',
-        path: '/movies/ABC-001/desc-translation',
-        statusCode: 202,
+        path: '/system/resource-task-actions',
         body: <String, dynamic>{
-          'movie_id': 1,
-          'movie_number': 'ABC-001',
           'task_key': 'movie_desc_translation',
+          'action': 'rerun',
           'task_run_id': 9,
-          'status': 'accepted',
+          'accepted_resource_ids': <int>[1],
+          'skipped': <Map<String, dynamic>>[],
         },
       );
 
-      await moviesApi.translateMovieDescription(movieNumber: 'ABC-001');
+      await moviesApi.translateMovieDescription(movieId: 1);
 
       final request = adapter.requests.single;
       expect(request.method, 'POST');
-      expect(request.path, '/movies/ABC-001/desc-translation');
+      expect(request.path, '/system/resource-task-actions');
+      expect(request.body, <String, dynamic>{
+        'task_key': 'movie_desc_translation',
+        'action': 'rerun',
+        'resource_ids': <int>[1],
+      });
     },
   );
 
@@ -1361,55 +1370,58 @@ void main() {
     () async {
       adapter.enqueueJson(
         method: 'POST',
-        path: '/movies/ABC-001/desc-translation',
-        statusCode: 422,
+        path: '/system/resource-task-actions',
+        statusCode: 409,
         body: <String, dynamic>{
           'error': <String, dynamic>{
-            'code': 'movie_desc_missing',
-            'message': '缺少描述',
+            'code': 'resource_task_action_conflict',
+            'message': '已有相同任务执行中',
           },
         },
       );
 
       expect(
-        () => moviesApi.translateMovieDescription(movieNumber: 'ABC-001'),
+        () => moviesApi.translateMovieDescription(movieId: 1),
         throwsA(
           isA<ApiException>().having(
             (ApiException error) => error.error?.code,
             'error.code',
-            'movie_desc_missing',
+            'resource_task_action_conflict',
           ),
         ),
       );
     },
   );
 
-  test('syncMovieInteraction posts to interaction sync endpoint', () async {
-    // 202 入队（任务架构 Wave 3）：响应是 task_run 信息，客户端不解析影片详情。
+  test('syncMovieInteraction posts rerun to unified action endpoint', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movies/ABC-001/interaction-sync',
-      statusCode: 202,
+      path: '/system/resource-task-actions',
       body: <String, dynamic>{
-        'movie_id': 1,
-        'movie_number': 'ABC-001',
         'task_key': 'movie_interaction_sync',
+        'action': 'rerun',
         'task_run_id': 9,
-        'status': 'accepted',
+        'accepted_resource_ids': <int>[1],
+        'skipped': <Map<String, dynamic>>[],
       },
     );
 
-    await moviesApi.syncMovieInteraction(movieNumber: 'ABC-001');
+    await moviesApi.syncMovieInteraction(movieId: 1);
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
-    expect(request.path, '/movies/ABC-001/interaction-sync');
+    expect(request.path, '/system/resource-task-actions');
+    expect(request.body, <String, dynamic>{
+      'task_key': 'movie_interaction_sync',
+      'action': 'rerun',
+      'resource_ids': <int>[1],
+    });
   });
 
   test('syncMovieInteraction preserves backend ApiException payload', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movies/ABC-001/interaction-sync',
+      path: '/system/resource-task-actions',
       statusCode: 502,
       body: <String, dynamic>{
         'error': <String, dynamic>{
@@ -1420,7 +1432,7 @@ void main() {
     );
 
     expect(
-      () => moviesApi.syncMovieInteraction(movieNumber: 'ABC-001'),
+      () => moviesApi.syncMovieInteraction(movieId: 1),
       throwsA(
         isA<ApiException>().having(
           (ApiException error) => error.error?.code,

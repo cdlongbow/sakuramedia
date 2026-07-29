@@ -129,18 +129,38 @@ class MoviesApi {
     return MovieDetailDto.fromJson(response);
   }
 
-  /// 202 入队（任务架构 Wave 3）：执行在后台 worker，响应只带 task_run 信息。
-  Future<void> translateMovieDescription({
-    required String movieNumber,
-  }) async {
-    await _apiClient.post('/movies/$movieNumber/desc-translation');
+  /// 入队翻译任务（统一 action，任务架构 Wave 4）：执行在后台 worker。
+  ///
+  /// 旧 `/movies/{number}/desc-translation` 端点已删，改走资源级操作唯一入口。
+  /// `rerun` 是强制语义：已翻译的影片也会重译，从未记账的影片后端自动播种状态行。
+  /// 连点被 mutex 顶 409（`resource_task_action_conflict`）。
+  Future<void> translateMovieDescription({required int movieId}) async {
+    await _applyMovieResourceTaskRerun(
+      taskKey: 'movie_desc_translation',
+      movieId: movieId,
+    );
   }
 
-  /// 202 入队（任务架构 Wave 3）：执行在后台 worker，响应只带 task_run 信息。
-  Future<void> syncMovieInteraction({
-    required String movieNumber,
+  /// 入队互动数同步任务（统一 action）；语义同 [translateMovieDescription]。
+  Future<void> syncMovieInteraction({required int movieId}) async {
+    await _applyMovieResourceTaskRerun(
+      taskKey: 'movie_interaction_sync',
+      movieId: movieId,
+    );
+  }
+
+  Future<void> _applyMovieResourceTaskRerun({
+    required String taskKey,
+    required int movieId,
   }) async {
-    await _apiClient.post('/movies/$movieNumber/interaction-sync');
+    await _apiClient.post(
+      '/system/resource-task-actions',
+      data: <String, dynamic>{
+        'task_key': taskKey,
+        'action': 'rerun',
+        'resource_ids': <int>[movieId],
+      },
+    );
   }
 
   Future<MovieDetailDto> recomputeMovieHeat({

@@ -253,6 +253,10 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
       factory: $DesktopActivityRouteData._fromState,
     ),
     GoRouteData.$route(
+      path: '/desktop/system/media',
+      factory: $DesktopMediaRouteData._fromState,
+    ),
+    GoRouteData.$route(
       path: '/desktop/system/notifications',
       factory: $DesktopNotificationsRouteData._fromState,
     ),
@@ -648,6 +652,27 @@ mixin $DesktopActivityRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/system/activity');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopMediaRouteData on GoRouteData {
+  static DesktopMediaRouteData _fromState(GoRouterState state) =>
+      const DesktopMediaRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/system/media');
 
   @override
   void go(BuildContext context) => context.go(location);

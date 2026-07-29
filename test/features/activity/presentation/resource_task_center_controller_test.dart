@@ -614,18 +614,19 @@ void main() {
 
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        path: '/system/resource-task-actions',
         body: <String, dynamic>{
           'task_key': 'media_thumbnail_generation',
-          'state': 'pending',
-          'reset_count': 2,
-          'resource_ids': <int>[701, 702],
+          'action': 'reset_retry_budget',
+          'task_run_id': null,
+          'accepted_resource_ids': <int>[701, 702],
+          'skipped': <Map<String, dynamic>>[],
         },
       );
 
       final result = await controller.resetSelectedFailed();
 
-      expect(result?.resetCount, 2);
+      expect(result?.acceptedCount, 2);
       expect(controller.selectionMode, isFalse);
       expect(controller.selectedCount, 0);
       expect(controller.isResetting, isFalse);
@@ -665,23 +666,25 @@ void main() {
 
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        path: '/system/resource-task-actions',
         body: <String, dynamic>{
           'task_key': 'media_thumbnail_generation',
-          'state': 'pending',
-          'reset_count': 1,
-          'resource_ids': <int>[901],
-          'skipped_count': 2,
+          'action': 'reset_retry_budget',
+          'task_run_id': null,
+          'accepted_resource_ids': <int>[901],
           'skipped': <Map<String, dynamic>>[
             <String, dynamic>{'resource_id': 902, 'reason': 'media_invalid'},
-            <String, dynamic>{'resource_id': 903, 'reason': 'not_failed'},
+            <String, dynamic>{
+              'resource_id': 903,
+              'reason': 'state_not_actionable',
+            },
           ],
         },
       );
 
       final result = await controller.resetSelectedFailed();
 
-      expect(result?.resetCount, 1);
+      expect(result?.acceptedCount, 1);
       expect(result?.skippedCount, 2);
       expect(controller.isResetting, isFalse);
       // 只有 901 真正被重置 → 只有它从列表里移除。
@@ -714,16 +717,15 @@ void main() {
       controller.toggleRecordSelection(951);
       controller.toggleRecordSelection(952);
 
-      // 后端部分成功语义：全部不合格时仍返回 200 + reset_count = 0。
+      // 后端部分成功语义：全部不合格时仍返回 200 + accepted 为空。
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        path: '/system/resource-task-actions',
         body: <String, dynamic>{
           'task_key': 'media_thumbnail_generation',
-          'state': 'pending',
-          'reset_count': 0,
-          'resource_ids': <int>[],
-          'skipped_count': 2,
+          'action': 'reset_retry_budget',
+          'task_run_id': null,
+          'accepted_resource_ids': <int>[],
           'skipped': <Map<String, dynamic>>[
             <String, dynamic>{'resource_id': 951, 'reason': 'media_not_found'},
             <String, dynamic>{'resource_id': 952, 'reason': 'media_invalid'},
@@ -733,7 +735,7 @@ void main() {
 
       final result = await controller.resetSelectedFailed();
 
-      expect(result?.resetCount, 0);
+      expect(result?.acceptedCount, 0);
       // 一条都没重置 → 列表原封不动（旧实现会在这里把两条全抹掉）。
       expect(
         controller.activeRecords.map((r) => r.resourceId),
@@ -761,7 +763,7 @@ void main() {
 
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        path: '/system/resource-task-actions',
         statusCode: 422,
         body: <String, dynamic>{'message': '仅允许重置失败的媒体缩略图任务'},
       );

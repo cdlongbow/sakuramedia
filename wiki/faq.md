@@ -94,7 +94,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands reset-ac
 - 再把缩略图写入图片搜索索引
 - 如果还没生成缩略图，或者缩略图还没完成索引，搜索会成功返回，但结果可能为空
 
-如果你不想等晚间自动任务，可以到活动中心，依次执行媒体缩略图生成 和 以图搜图缩略图向量索引。 然后再进行以图搜图。
+如果你不想等晚间自动任务，可以到任务中心，依次执行媒体缩略图生成 和 以图搜图缩略图向量索引。 然后再进行以图搜图。
 
 ### 为什么本地影片很少的时候，以图搜图几乎搜不出东西？
 
@@ -368,7 +368,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands reset-ac
 - [后台任务](/guide/tasks)
 - [常用命令](/guide/commands)
 
-## 活动中心
+## 任务中心
 
 ### 通知中心和任务中心分别看什么？
 
@@ -386,11 +386,11 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands reset-ac
 
 ### 我已经执行了命令，在哪里看运行进度？
 
-结论：优先去活动中心或任务中心看。
+结论：优先去任务中心看。
 
 说明：
 
-- 通过 `aps ...` 触发的任务，通常会在活动中心 / 任务中心留下运行记录
+- 通过 `aps ...` 触发的任务，通常会在任务中心留下运行记录
 - 你可以在那里看到运行中、成功、失败以及部分进度信息
 - 如果是纯 CLI 命令而不是后台任务形式，也可以直接结合容器日志一起看
 

@@ -4,15 +4,9 @@
 如果你还没有把服务跑起来，建议先看“快速开始”。这页更适合已经完成第一次部署、准备继续理解系统行为的用户。
 
 
-### 路径都要写容器内路径
+### 配置中出现的路径都要写容器内路径
 
 只要配置项里出现“路径”，默认都应该写容器内看到的路径，而不是宿主机路径。
-
-例如：
-
-- 正确：`/data/cache/assets`
-- 正确：`/mnt/volume1/media/sakuramedia`
-- 错误：`/Users/xxx/...`
 
 ## 配置总览
 
@@ -49,7 +43,7 @@ enable_docs = false
 建议：
 
 - 普通使用场景保持 `false`
-- 只有你需要直接访问后端 API 文档时再改成 `true`
+- 只有你需要查看测试后端 API 文档时再改成 `true`
 
 ## `[database]`
 
@@ -89,9 +83,7 @@ url = "postgresql://用户名:密码@192.168.x.x:5432/sakuramedia"
 - 数据库需要你自己提前建好（`CREATE DATABASE sakuramedia`），表结构会在容器启动时自动建
 - 用外部 PG 后，compose 里内置的 `postgres` 服务可以整段删掉，同时删掉 `sakuramedia` 服务的 `depends_on`
 
-::: warning 从老版本（SQLite / MySQL）升级
-新版本已移除 SQLite 和 MySQL 支持。如果你的 `config.toml` 里还是 `engine = "sqlite"` 或 `engine = "mysql"`，服务会在启动时直接报配置错误。请按上面的说明把 `[database]` 改成 PostgreSQL，旧库数据无法迁移.
-:::
+
 
 ## `[auth]`
 
@@ -116,11 +108,9 @@ refresh_token_expire_minutes = 10080
 | `algorithm` | `HS256` | JWT 签名算法 |
 | `access_token_expire_minutes` | `43200` | Access Token 过期时间，单位分钟 |
 | `refresh_token_expire_minutes` | `10080` | Refresh Token 过期时间，单位分钟 |
+| `secret_key` | 随机 | 初次部署时随机生成 |
 
-说明：
-
-- `username` 和 `password` 主要用于第一次登录
-- 登录后建议在 app 里修改账号密码
+**`username` 和 `password` 仅用于第一次登录，登录后在系统设置里修改账号密码**
 
 
 
@@ -148,7 +138,7 @@ media_clip_ffmpeg_timeout_seconds = 120
 
 | 字段 | 作用 |
 |---|---|
-| `others_number_features` | 合集影片番号特征关键词。合集判定**只看这份番号前缀清单**，不再按影片时长判定 |
+| `others_number_features` | 合集影片番号特征关键词，命中关键词的影片会在后台自动判定为合集影片。 |
 | `inner_sub_tags` | 识别“内嵌字幕”的标签关键词 |
 | `blueray_tags` | 识别“蓝光 / 高清版本”的标签关键词 |
 | `uncensored_tags` | 识别“无码资源”的标签关键词 |
@@ -157,14 +147,11 @@ media_clip_ffmpeg_timeout_seconds = 120
 | `import_image_root_path` | 导入时缓存图片的目录 |
 | `subtitle_root_path` | 字幕目录，用于整理导入时从影片资源同级目录识别到的字幕文件 |
 | `max_thumbnail_process_count` | 缩略图生成任务的最大并发数 |
-| `media_clip_root_path` | 用户切片（ffmpeg 切出的独立 mp4）的存储目录；与来源媒体解耦，删除媒体不会删除切片文件，建议单独挂卷持久化 |
+| `media_clip_root_path` | 用户切片（ffmpeg 切出的独立 mp4）的存储目录。 |
 | `media_clip_max_duration_seconds` | 用户可圈选的切片最大时长（秒），仅约束圈选区间长度 |
 | `media_clip_ffmpeg_timeout_seconds` | 单次 ffmpeg 切片的墙钟超时（秒），坏文件 / 慢挂载卡死时杀进程回收 |
 
-建议：
 
-- 这组配置第一次部署通常不要动
-- 只有当你明确知道自己的资源命名、字幕规则或缩略图性能瓶颈时，再调整
 
 ## `[metadata]`
 
@@ -190,19 +177,12 @@ import_metadata_max_workers = 3
 | `javdb_host` | JavDB API 域名，不带协议头 |
 | `javdb_username` | JavDB 账号，用于抓取需登录的 TOP250 榜单（全部 / 有码 / 无码 / FC2 / 各年度）；留空则不抓 TOP250 |
 | `javdb_password` | JavDB 账号密码，与 `javdb_username` 配套使用 |
-| `proxy` | DMM 与 GFriends 共用的 HTTP 代理地址；JavDB 默认直连 |
+| `proxy` | DMM 与 GFriends 共用的 HTTP 代理地址，需要是一个日本节点的 HTTP 代理；JavDB 不会走代理。 |
 | `gfriends_filetree_url` | GFriends 文件树索引地址 |
 | `gfriends_cdn_base_url` | GFriends CDN 根地址 |
 | `gfriends_filetree_cache_path` | GFriends 文件树本地缓存路径 |
 | `gfriends_filetree_cache_ttl_hours` | 文件树缓存有效期，单位小时 |
 | `import_metadata_max_workers` | 导入本地影片时抓取元数据的并发线程数 |
-
-建议：
-
-- 大多数元数据抓取场景只需要配置 `proxy` 用于抓取DMM
-- `proxy` 同时用于 DMM 描述抓取和 GFriends 头像资源访问，DMM 需要你自行分流到日本代理节点。⚠️Javdb请求不走代理。
-- `javdb_host`、GFriends 相关地址通常不建议随便改
-- `javdb_username` / `javdb_password` 是可选项，只在需要 JavDB TOP250 榜单时填写；两者都留空时 TOP250 不会被抓取，填错时会在通知中心收到一条登录失败提醒
 
 ## `[movie_info_translation]`
 
@@ -240,11 +220,7 @@ connect_timeout_seconds = 3
 
 ## `[plugins]`
 
-这一组控制「仓库内插件」的启用。插件是随后端代码一起分发的可选能力，启用后可以往调度器里注入额外的后台任务。
-
-::: tip 绝大多数用户不用管这一节
-当前发行版里没有内置可启用的插件，保持默认（不写这一节）即可。这里写出来只是让你知道它存在，以及为什么它在设置页里看不到。
-:::
+这一组控制「仓库内插件」的启用。目前无可选插件，未来可能会有。
 
 ```toml
 [plugins]
@@ -264,13 +240,6 @@ enabled = ["示例插件ID"]
 | `enabled` | 要启用的插件 ID 列表。**只有列在这里的插件才会被加载**，光有代码或光有配置都不会生效 |
 | `job_crons` | 按插件 ID 分组，覆盖该插件所注册任务的 cron；不写就用插件自带的默认 cron |
 | `settings` | 按插件 ID 分组的插件私有配置，具体字段由插件自己定义 |
-
-要注意：
-
-- **这一节不走设置页**。插件配置可能含凭据，而且 API 和调度器两个进程要加载同一份注册表，所以它既不能在网页上读、也不能在网页上改，只能手动改 `config.toml`。
-- 改完（启用、停用、调 cron、改插件配置）都需要**重启整个 `sakuramedia` 服务**，只重启调度器不够。
-- 停用插件不会删掉它已经产生的任务运行记录，历史在任务中心里仍然查得到。
-- 插件注册的任务会和内置任务一起出现在任务列表里，运行规则完全一致。
 
 ## `[scheduler]`
 
@@ -344,10 +313,6 @@ activity_notification_read_retention_days = 3
 
 这一组控制下载链路的公共行为：小文件清理、下载器偏好顺序，以及 115 离线下载相关的节流与放弃策略。
 
-::: tip 走[轻量部署](/guide/lightweight-deploy)可以完全忽略这一节
-你既没启用 qBittorrent 下载器、也没接 115 离线下载时，这里的所有字段都不会生效，保持默认即可。
-:::
-
 ```toml
 [downloads]
 small_file_cleanup_threshold_mb = 256
@@ -365,13 +330,9 @@ cloud115_rapid_upload_min_interval_seconds = 1.0
 | `small_file_cleanup_threshold_mb` | `256` | 下载任务里小于该体积（MB）的文件会被当作无效文件清理，配合 `[scheduler].download_small_file_cleanup_cron` 定时执行 |
 | `progress_stream_poll_interval_seconds` | `1.0` | 下载进度实时推送时，轮询 qBittorrent 的间隔（秒）。取值范围 `0.2`–`10`，调太低只会白白加重 qB Web API 负担 |
 | `cloud115_progress_poll_interval_seconds` | `8.0` | 下载进度实时推送时，轮询 115 离线列表的间隔（秒）。取值范围 `2`–`60`，**不允许低于 2 秒**——这是公网 API 且有风控 |
-| `preferred_client_kinds` | `["qbittorrent", "cloud115"]` | 下载器类型的全局偏好顺序。一条索引器同时绑了多个下载器时，按这个顺序挑；不在列表里的类型排最后。它只影响挑选顺序，不是白名单，选中的下载器执行失败也**不会**自动换下一个。**把 `cloud115` 提到第一位，还会切换「已订阅缺失影片自动下载」的选种策略**（见 [常见问题](/faq#auto-download-candidate-selection)） |
+| `preferred_client_kinds` | `["qbittorrent", "cloud115"]` | 下载器类型的全局偏好顺序。一条索引器同时绑了多个下载器时，按这个顺序挑。 |
 | `cloud115_offline_abandon_hours` | `24` | 115 离线任务超过这个小时数还没完成，本地就放弃：停止轮询并通知你，但**不会**去清理 115 那边的任务 |
 | `cloud115_rapid_upload_min_interval_seconds` | `1.0` | 批量秒传时对 115 接口的全局限速，相邻请求最小间隔（秒）。取值范围 `0`–`10`，`0` 表示关闭限速。115 接口前面有 WAF，阈值大约 1–2 次/秒，默认值就是照这个来的，**不建议调低** |
-
-::: warning 改完要重启 `aps` 进程
-`[downloads]` 的生效档位是「重启调度器」。特别是改了 `preferred_client_kinds` 之后，后台自动下载任务要等 `aps` 进程重启才会用上新顺序。
-:::
 
 ## `[media_import]`
 
@@ -437,7 +398,7 @@ optimize_on_job_end = true
 | `inference_timeout_seconds` | 推理服务总超时秒数 |
 | `inference_connect_timeout_seconds` | 推理服务建连超时秒数 |
 | `inference_api_key` | 推理服务 Bearer Token |
-| `inference_batch_size` | 索引任务调用远端推理时的批大小 |
+| `inference_batch_size` | 索引任务调用远端推理时的批大小，CPU 和 OpenVINO Joytag 内部是串行，Cuda 版本是并行。 |
 | `session_ttl_seconds` | 搜索会话有效期 |
 | `default_page_size` | 默认每页结果数 |
 | `max_page_size` | 最大每页结果数 |

@@ -124,7 +124,7 @@ class MediaLibraryFormFields extends StatelessWidget {
               focusNode: rootPathFocusNode,
               enabled: enabled && rootPathEnabled,
               label: labelBuilder == null ? '根路径' : null,
-              hintText: '填映射到容器内的路径，例如: /mnt/medialibray1',
+              hintText: '填容器内的路径，例如: /mnt/volume1/media/sakuramedia',
               helperText: rootPathEnabled ? null : '根路径创建后不可修改',
               validator: rootPathEnabled ? validateMediaLibraryRootPath : null,
               autovalidateMode: autovalidateMode,

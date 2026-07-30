@@ -1,208 +1,16 @@
-# 进阶部署
+---
+outline: [2, 4]
 
-这页不是“第一次上手指南”，而是给已经看过快速开始、准备把部署做稳做全的用户看的。重点是把这些高频问题一次讲清楚：
+---
 
-- 单硬盘和多硬盘怎么规划
-- `compose.yaml` 里每一项到底在做什么
-- SakuraMedia 自己需要看到哪些路径
-- Intel 平台下 `openvino` 应该怎么开
-- NVIDIA 平台下 `cuda` 应该怎么开
+### Joytag推理服务 GPU方案
 
-## 这页解决什么问题
+#### 1. Intel核显
 
-如果你现在已经能用 `quick-start` 把服务跑起来，这一页主要帮助你解决下面这些“第二阶段问题”：
-
-- 不止一块媒体盘时该怎么挂载
-- 为什么建议把媒体根目录整体挂进 SakuraMedia 容器
-- `client_save_path` 和 `local_root_path` 到底应该怎么配
-- `joytag-infer` 除了 CPU 版，Intel 或 NVIDIA 平台还有没有更合适的方案
-
-如果你还没完成第一次部署，建议先看“快速开始”。
-
-## 推荐部署思路
-
-::: danger 媒体目录必须挂载到 `/mnt` 下
-挂载影片 / 媒体目录时，**容器内路径必须位于 `/mnt` 下**（例如 `/mnt/volume1/media`、`/mnt/volume2/media`）。也就是说，`volumes` 里媒体相关挂载的冒号右侧必须以 `/mnt/` 开头：
-
-```yaml
-volumes:
-  - /mnt/volume1/media:/mnt/volume1/media   # ✅ 正确：容器内路径在 /mnt 下
-  # - /your/path:/data/media                # ❌ 错误：容器内路径不在 /mnt 下
-```
-
-原因是：导入已有媒体时，后端的目录浏览 API 只能从 `/mnt` 这个根开始往下浏览。如果你把媒体目录挂到 `/data`、`/media` 等其他位置，在 SakuraMedia 里就根本看不到、也选不到它们，自然也无法导入历史影片。本页所有示例都遵循这一约定。
-:::
-
-### 单硬盘推荐方案
-
-如果你当前只有一块主要媒体盘，最推荐的思路是：
-
-- 用 SSD 存运行数据
-- 用一块容量盘存媒体文件和下载目录
-- 把媒体根目录整体挂进 SakuraMedia 容器
-
-例如：
-
-- 运行数据目录：`/mnt/ssd/sakuramedia`
-- 媒体根目录：`/mnt/volume1/media`
-
-媒体根目录下再分：
-
-```text
-/mnt/volume1/media
-├── av
-├── downloads
-└── sakuramedia
-```
-
-这样做的优点是：
-
-- 历史媒体、下载目录和新媒体库都在一个统一挂载根下
-- 容器内外路径更容易保持一致
-- 后面创建媒体库和配置下载器时最不容易绕晕
-
-### 多硬盘推荐方案
-
-如果你有多块媒体盘，不建议把所有历史资源强行混到一个目录里。更稳的做法是：
-
-- 运行数据仍然统一放在 SSD
-- 每块媒体盘保留自己的历史目录和下载目录
-- 每块媒体盘各自建立一个 SakuraMedia 媒体库目录
-
-例如：
-
-```text
-/mnt/volume1/media
-├── av
-├── downloads
-└── sakuramedia
-
-/mnt/volume2/media
-├── av
-├── downloads
-└── sakuramedia
-```
-
-然后在 SakuraMedia 里：
-
-- 每块盘建一个媒体库
-- 每块盘建一个下载器映射
-- 下载器指向对应盘的媒体库
-
-这样做会比“一套下载器混多个盘”更稳定，也更容易排查路径问题。
-
-### 为什么建议整体挂媒体根目录
-
-推荐直接把：
-
-```bash
-/mnt/volume1/media
-```
-
-整体挂进 SakuraMedia 容器，而不是只挂一个子目录。
-
-原因很简单：
-
-- SakuraMedia 既要看到已有影片
-- 也要看到下载目录
-- 还要看到新媒体库目录
-
-如果你只挂其中一部分，后面自动导入、媒体库配置、历史导入通常都会变复杂。
-
-### 为什么建议统一宿主机路径和容器路径
-
-只要条件允许，建议在 SakuraMedia 容器里继续使用原样路径：
-
-```bash
-/mnt/volume1/media:/mnt/volume1/media
-```
-
-这样做的好处是：
-
-- 文档里写的路径和容器里看到的路径一致
-- 创建媒体库时不用再做一次脑内映射
-- `local_root_path` 更不容易填错
-
-## 多硬盘部署
-
-### 推荐方式
-
-如果你有多块媒体盘，推荐按“每块盘一套媒体库 + 一套下载器配置”的思路来做。
-
-例如：
-
-- 盘 1：`/mnt/volume1/media`
-- 盘 2：`/mnt/volume2/media`
-
-在 `compose.yaml` 里都挂进去：
-
-```yaml
-volumes:
-  - /mnt/volume1/media:/mnt/volume1/media
-  - /mnt/volume2/media:/mnt/volume2/media
-```
-
-然后在 SakuraMedia 里分别创建：
-
-- `媒体库 A -> /mnt/volume1/media/sakuramedia`
-- `媒体库 B -> /mnt/volume2/media/sakuramedia`
-
-### 下载器和媒体库如何对应
-
-最推荐的做法是：
-
-- 盘 1 的下载器指向盘 1 的媒体库
-- 盘 2 的下载器指向盘 2 的媒体库
-
-这样每个下载器只负责自己那块盘，后面定位问题会清晰很多。
-
-配完之后可以在「总览」页跑一次「组件诊断」：每个下载器都有独立的存储检测项，会分别实测各自「下载目录 → 媒体库」的目录映射和硬链接，哪块盘的路径没对上一眼就能看出来。
-
-### 同一个 qB 客户端能不能服务多个媒体库
-
-可以，但前提是你自己已经把不同盘的下载目录区分清楚。
-
-在 SakuraMedia 里，更推荐的做法仍然是：
-
-- 每块盘建立一个下载器配置
-- 每个下载器只对应一块盘的媒体库
-- `local_root_path` 明确指向那块盘自己的下载目录
-
-如果你不想把路径关系搞复杂，宁愿多建几个清晰的下载器配置，也不要让一个配置同时承担太多目录职责。
-
-## OpenVINO 方案
-
-这一节只讨论 Intel 平台。NVIDIA 平台见下文的 CUDA 方案。
-
-### 什么时候考虑 OpenVINO
-
-如果你已经用 CPU 版把系统跑通，并且满足下面任一条件，就可以考虑试 `openvino`：
+如果你已经用 CPU 版把系统跑通，并且满足下面条件，可以考虑试 `openvino`：
 
 - 机器是 Intel CPU
 - 机器有 Intel 核显
-- 图片搜索推理速度对你来说太慢
-
-### 最小 `joytag-infer` 片段
-
-#### Intel CPU 优先方案
-
-```yaml
-  joytag-infer:
-    image: tinyping/joytag-infer:openvino
-    container_name: joytag-infer
-    restart: unless-stopped
-    environment:
-      JOYTAG_INFER_BACKEND: "openvino"
-      JOYTAG_INFER_OPENVINO_DEVICE_TYPE: "CPU"
-      JOYTAG_INFER_MODEL_PATH: "/data/lib/joytag/model_vit_768.onnx"
-      JOYTAG_INFER_API_KEY: ""
-    volumes:
-      - ./docker-data/joytag:/data/lib/joytag
-    ports:
-      - "8001:8001"
-```
-
-#### Intel 核显尝试方案
 
 ```yaml
   joytag-infer:
@@ -219,44 +27,20 @@ volumes:
     devices:
       - /dev/dri:/dev/dri
     ports:
-      - "8001:8001"
+      - "8001:8001" # 如果你想要在其他机器部署 Joytag 推理服务可以映射端口， 然后修改配置文件中的 joytag 相关配置。
 ```
 
-### `JOYTAG_INFER_OPENVINO_DEVICE_TYPE` 怎么选
-
-- `CPU`
-  最稳，最适合先验证 OpenVINO 是否正常
-- `GPU`
-  适合已配置好 Intel 核显直通并希望优先使用 GPU 推理
-
-注意：当前容器只支持 `CPU` 或 `GPU`，不要设置为 `AUTO`。
-
-建议顺序：
-
-1. 先用 CPU 版把整套服务跑通
-2. 再切到 `openvino + CPU`
-3. 最后再尝试 `openvino + GPU`
-
-## CUDA 方案
+#### 2. CUDA 方案
 
 如果你的机器装了 NVIDIA 独立显卡，可以用 `cuda` 版本的 `joytag-infer`，把图片搜索推理跑在 GPU 上。
 
-### 什么时候考虑 CUDA
-
-满足下面任一条件时可以试 `cuda`：
-
-- 机器装了 NVIDIA 独立显卡
-- 图片搜索推理速度对你来说太慢
-
-### 前置条件
+##### 前置条件
 
 部署 `cuda` 版前，宿主机需要先满足：
 
 - 已经装好 NVIDIA 驱动，`nvidia-smi` 能正常输出 GPU 信息
 - 驱动版本不低于 `550`（这是 CUDA 12.4 runtime 的最低要求）
 - 已经装好 `nvidia-container-toolkit`，并且把 `nvidia` runtime 注册到了 Docker
-
-### 最小 `joytag-infer` 片段
 
 ```yaml
   joytag-infer:
@@ -273,7 +57,7 @@ volumes:
     volumes:
       - ./docker-data/joytag:/data/lib/joytag
     ports:
-      - "8001:8001"
+      - "8001:8001" # 如果你想要在其他机器部署 Joytag 推理服务可以映射端口， 然后修改配置文件中的 joytag 相关配置。
 ```
 
 这里有几个容易踩坑的点：
@@ -282,74 +66,3 @@ volumes:
 - `NVIDIA_VISIBLE_DEVICES` 和 `NVIDIA_DRIVER_CAPABILITIES` 是 nvidia runtime 用来决定挂哪些设备和库的开关，不要省略
 - `JOYTAG_INFER_BACKEND` 必须显式写成 `cuda`。容器启动时会硬校验 CUDA 是否真的可用，CUDA 不可用就直接抛错退出，不会静默回退到 CPU
 
-## 部署后如何检查是否正常
-
-部署完成后，建议至少检查这几件事：
-
-### 1. 容器状态是否正常
-
-```bash
-docker compose ps
-```
-
-至少要确认：
-
-- `sakuramedia`
-- `sakuramedia-postgres`
-- `sakuramedia-web`
-- `joytag-infer`
-- `qdrant`
-
-都已经正常启动。
-
-如果 `sakuramedia` 一直在重启，先看它的日志：卡在 `Waiting for database to become ready...` 说明数据库还没就绪或连接串不对，检查 `postgres` 容器状态和 `config.toml` 的 `[database].url`。
-
-### 2. Web 能不能打开
-
-浏览器访问：
-
-```bash
-http://<你的NAS地址>:38080
-```
-
-能打开登录页，说明 Web 基本可用。
-
-### 3. 登录和配置能不能保存
-
-建议实际做一次：
-
-- 登录
-- 创建媒体库
-- 添加下载器
-- 保存 Jackett 配置
-
-如果这些配置能保存，说明后端、数据库和主要页面链路都正常。
-
-具体怎么配见[快速开始 → 首次登录后的最小初始化](/guide/quick-start#_6-首次登录后的最小初始化)。
-
-### 4. 跑一次组件诊断
-
-完成上一步配置后，在「总览」页顶部找到「组件诊断」横条，点「开始检测」（桌面端和 Web 端都有），一键检测：
-
-- 媒体库、下载器连通性与存储（**目录映射 + 硬链接实测**，跨盘挂载、路径没对上会直接暴露）
-- 索引器配置完整性 + Jackett 连通
-- JavDB / DMM 外部数据源
-- LLM 翻译接口与 JoyTag 推理服务
-
-检测不通过的项会给出「可能原因 / 怎么改 / 影响」，并能直接跳到配置页对应位置。这一步能替代大部分逐项手动排查；下面两步留给诊断覆盖不到、或需要看日志确认的场景。
-
-### 5. 搜索是否正常
-
-第一次可以尝试：
-
-- 搜影片番号
-- 开启 `联网` 搜一次
-- 再搜同一条数据确认本地已入库
-
-如果这一套能通，说明最基本的数据写入链路没问题。
-
-### 6. `joytag-infer` 是否读到模型
-
-组件诊断的 JoyTag 项会实际探测推理服务是否响应，先以它的结果为准。
-
-如果它报异常，再看 `joytag-infer` 容器日志，确认是不是模型缺失或启动失败。

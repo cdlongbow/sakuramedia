@@ -203,7 +203,7 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands reset-ac
 - 你**保留**的是：影片浏览、订阅（作为「关注 / 上新追踪」用）、已有媒体一键导入、播放、缩略图、切片、以图搜图、字幕、翻译、女优信息
 - 「组件诊断」里下载器和索引器会显示「未配置」，这是**预期状态**，不是错误
 
-想走这条路径，看 [轻量部署（不用自动下载）](/guide/lightweight-deploy)，那里有专门的精简 compose 示例和最小初始化步骤。
+compose 里不配 qBittorrent 和 Jackett 即可，后端不会因此启动失败。
 
 将来想加自动下载，随时补上 qB + Jackett 即可，历史订阅 / 媒体全都在，不用重装、不用迁移数据。
 

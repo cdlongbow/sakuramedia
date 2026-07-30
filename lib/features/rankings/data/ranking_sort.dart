@@ -1,4 +1,4 @@
-export 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart'
+export 'package:sakuramedia/features/shared/data/sort_direction.dart'
     show SortDirection, SortDirectionX;
 
 enum RankingSortField { rank, heat }

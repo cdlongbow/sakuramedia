@@ -1,3 +1,10 @@
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+
+// SortDirection 已抬到 lib/features/shared/data/sort_direction.dart，
+// 这里 re-export 保持 movies 域现有 import 路径不变。
+export 'package:sakuramedia/features/shared/data/sort_direction.dart'
+    show SortDirection, SortDirectionX;
+
 enum MovieStatusFilter { all, subscribed, playable }
 
 extension MovieStatusFilterX on MovieStatusFilter {
@@ -87,20 +94,6 @@ extension MovieSortFieldX on MovieSortField {
     MovieSortField.scoreNumber => '评分人数',
     MovieSortField.wantWatchCount => '想看人数',
     MovieSortField.heat => '热度',
-  };
-}
-
-enum SortDirection { asc, desc }
-
-extension SortDirectionX on SortDirection {
-  String get apiValue => switch (this) {
-    SortDirection.asc => 'asc',
-    SortDirection.desc => 'desc',
-  };
-
-  String get label => switch (this) {
-    SortDirection.asc => '升序',
-    SortDirection.desc => '降序',
   };
 }
 

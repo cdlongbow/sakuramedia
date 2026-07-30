@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -10,6 +11,10 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_detail_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
+import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_resolution_options_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
+import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/theme.dart';
@@ -17,8 +22,10 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
@@ -46,6 +53,9 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
   late final PlaylistDetailController _detailController;
   late final PagedMovieSummaryController _moviesController;
   late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
+  late final PlaylistsApi _playlistsApi;
+  late final PlaylistResolutionOptionsController _resolutionOptionsController;
+  PlaylistFilterState _filterState = PlaylistFilterState.initial;
 
   @override
   String get batchKeyPrefix => 'playlist-detail';
@@ -65,21 +75,28 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
   @override
   void initState() {
     super.initState();
-    final playlistsApi = context.read<PlaylistsApi>();
+    _playlistsApi = context.read<PlaylistsApi>();
     final moviesApi = context.read<MoviesApi>();
     _subscriptionChangeNotifier =
         context.read<MovieSubscriptionChangeNotifier>();
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
     _detailController = PlaylistDetailController(
       playlistId: widget.playlistId,
-      fetchPlaylistDetail: playlistsApi.getPlaylistDetail,
+      fetchPlaylistDetail: _playlistsApi.getPlaylistDetail,
     )..load();
+    _resolutionOptionsController = PlaylistResolutionOptionsController(
+      playlistsApi: _playlistsApi,
+      playlistId: widget.playlistId,
+    );
     _moviesController = PagedMovieSummaryController(
+      // 筛选状态惰性读取：UI 改完 `_filterState` 后必须 reload() 才会重新走闭包。
       fetchPage:
-          (page, pageSize) => playlistsApi.getPlaylistMovies(
+          (page, pageSize) => _playlistsApi.getPlaylistMovies(
             playlistId: widget.playlistId,
             page: page,
             pageSize: pageSize,
+            sort: _filterState.sortExpression,
+            resolution: _filterState.resolution?.apiValue,
           ),
       subscribeMovie: moviesApi.subscribeMovie,
       unsubscribeMovie: moviesApi.unsubscribeMovie,
@@ -101,6 +118,7 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
     _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
     _detailController.dispose();
     _moviesController.dispose();
+    _resolutionOptionsController.dispose();
     super.dispose();
   }
 
@@ -158,26 +176,11 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: context.appSpacing.sm),
+                padding: EdgeInsets.only(bottom: context.appSpacing.sm),
                 child:
                     selectionMode
                         ? buildBatchSelectionToolbar()
-                        : Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${playlist.movieCount} 部影片',
-                                style: resolveAppTextStyle(
-                                  context,
-                                  size: AppTextSize.s14,
-                                  weight: AppTextWeight.regular,
-                                  tone: AppTextTone.secondary,
-                                ),
-                              ),
-                            ),
-                            buildEnterSelectionButton(),
-                          ],
-                        ),
+                        : _buildListHeader(context),
               ),
             ),
             MovieSummarySliver(
@@ -198,7 +201,9 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
                   (movie) => _moviesController.isSubscriptionUpdating(
                     movie.movieNumber,
                   ),
-              emptyMessage: '暂无影片数据',
+              emptyMessage: _filterState.isDefault
+                  ? '暂无影片数据'
+                  : '当前筛选条件下暂无匹配影片',
               selectionMode: selectionMode,
               isMovieSelected: (movie) => isSelected(movie.movieNumber),
               onMovieSelectedChanged:
@@ -245,12 +250,85 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
       await Future.wait<void>([
         _detailController.refresh(),
         _moviesController.refresh(),
+        _resolutionOptionsController.refresh(),
       ]);
     } catch (_) {
       if (mounted) {
         showToast('刷新失败');
       }
     }
+  }
+
+  /// 列表顶栏：与影片 / 女优列表共用同一条 `AppListHeader`。
+  /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
+  ///
+  /// 分辨率状态通过 [_resolutionOptionsController]（`ChangeNotifier`）传给两端
+  /// 面板，桌面/移动都实时跟随后端返回：抽屉不再是打开那一刻的快照，抽屉里
+  /// 的重试按钮也能正确刷新数据。
+  Widget _buildListHeader(BuildContext context) {
+    final isMobile =
+        Provider.of<AppPlatform?>(context, listen: false) ==
+        AppPlatform.mobile;
+    return AppListHeader(
+      filterButtonKey: const Key('playlist-detail-filter-trigger'),
+      filterLabel: _filterState.triggerLabel,
+      filterPanelKey: const Key('playlist-detail-filter-panel'),
+      onFilterTap: isMobile ? () => unawaited(_openFilterDrawer()) : null,
+      filterPanelBuilder:
+          isMobile
+              ? null
+              : (_) => PlaylistFilterSectionGroup(
+                filterState: _filterState,
+                onChanged: _applyFilter,
+                resolutionOptions: _resolutionOptionsController,
+              ),
+      onFilterPanelOpened:
+          isMobile ? null : () => unawaited(_resolutionOptionsController.ensureLoaded()),
+      filterPanelFooter: AppFilterPanelFooter(
+        isDefault: _filterState.isDefault,
+        onReset: _resetFilters,
+      ),
+      informationSlots: [
+        AppListHeaderInfo(
+          key: const Key('playlist-detail-total'),
+          label: '${_detailController.playlist?.movieCount ?? 0} 部影片',
+        ),
+      ],
+      actionSlots: [buildEnterSelectionButton()],
+    );
+  }
+
+  void _applyFilter(PlaylistFilterState nextState) {
+    if (nextState.matches(_filterState)) {
+      return;
+    }
+    setState(() => _filterState = nextState);
+    // 切筛选跨结果集，选中态失去意义。
+    if (selectionMode) {
+      exitSelection();
+    }
+    final controller = _moviesController;
+    if (controller.scrollController.hasClients) {
+      controller.scrollController.jumpTo(0);
+    }
+    unawaited(controller.reload());
+  }
+
+  void _resetFilters() {
+    _applyFilter(PlaylistFilterState.initial);
+  }
+
+  Future<void> _openFilterDrawer() async {
+    // 分辨率状态通过 controller 订阅，抽屉打开时若还没加载过就触发一次，
+    // 加载中/失败/成功的 UI 都由 filter sections 内部随 controller 实时更新，
+    // 这里不再需要「先 await 再弹」的规避。
+    unawaited(_resolutionOptionsController.ensureLoaded());
+    await showMobilePlaylistFilterDrawer(
+      context,
+      current: _filterState,
+      onChanged: _applyFilter,
+      resolutionOptions: _resolutionOptionsController,
+    );
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {

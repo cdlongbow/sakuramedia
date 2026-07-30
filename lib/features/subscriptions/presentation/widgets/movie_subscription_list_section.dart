@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/shared/presentation/providers/paged_async_n
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -45,12 +46,15 @@ class MovieSubscriptionListSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final spacing = context.appSpacing;
     return CustomScrollView(
       key: const Key('movie-subscriptions-scroll-view'),
       controller: scrollController,
       slivers: [
         const SliverToBoxAdapter(child: _ListHeader()),
-        SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
+        SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
+        const SliverToBoxAdapter(child: _queryExplanationTip),
+        SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
         _ListBodySliver(onOpenMovie: onOpenMovie),
       ],
     );
@@ -317,6 +321,17 @@ Future<void> _confirmBatchUnsubscribe(
   if (!context.mounted) return;
   await showMovieSubscriptionBatchFeedback(context, result, subscribe: false);
 }
+
+// --- 查询说明 ----------------------------------------------------------------
+
+const _queryExplanationTip = AppNoticeCard(
+  leadingIcon: Icons.info_outline_rounded,
+  description: '订阅影片后，系统通过定时任务在索引器中搜索可下载资源，找到后自动提交下载。'
+      '新片（发行 90 天内）每轮查询、不限次数；'
+      '老片默认至多查 3 次，用尽则标记「已放弃」，需手动重置后重新排队。'
+      '查询出错不消耗次数，下一轮自动重试。'
+      '重置不会清除种子黑名单——已判死的种子不再重试，系统会去寻找新的种子。',
+);
 
 // --- 列表体 -----------------------------------------------------------------
 

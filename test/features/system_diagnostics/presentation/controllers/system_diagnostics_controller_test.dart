@@ -70,12 +70,13 @@ Map<String, dynamic> _connectivityResult({
     'elapsed_ms': 20,
     'version': healthy ? '5.0.4' : null,
     'web_api_version': healthy ? '2.11' : null,
-    'error': errorType == null
-        ? null
-        : <String, dynamic>{
-            'type': errorType,
-            'message': errorMessage ?? '',
-          },
+    'error':
+        errorType == null
+            ? null
+            : <String, dynamic>{
+              'type': errorType,
+              'message': errorMessage ?? '',
+            },
   };
 }
 
@@ -94,9 +95,10 @@ Map<String, dynamic> _storageResult({required bool healthy, int clientId = 1}) {
       'probe_remote_dir': '/dl/.p',
       'probe_local_dir': '/mnt/dl/.p',
       'sentinel_visible_to_qb': healthy,
-      'error': healthy
-          ? null
-          : <String, dynamic>{'type': 'mapping', 'message': 'nope'},
+      'error':
+          healthy
+              ? null
+              : <String, dynamic>{'type': 'mapping', 'message': 'nope'},
     },
     'hardlink': <String, dynamic>{
       'status': 'ok',
@@ -116,19 +118,21 @@ Map<String, dynamic> _indexerSettings({
   return <String, dynamic>{
     'type': type,
     'api_key': apiKey,
-    'indexers': entries.map((entry) {
-      if (entry.containsKey('download_clients')) return entry;
-      return <String, dynamic>{
-        ...entry,
-        'download_clients': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'id': entry['download_client_id'],
-            'name': entry['download_client_name'],
-            'kind': 'qbittorrent',
-          },
-        ],
-      };
-    }).toList(growable: false),
+    'indexers': entries
+        .map((entry) {
+          if (entry.containsKey('download_clients')) return entry;
+          return <String, dynamic>{
+            ...entry,
+            'download_clients': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': entry['download_client_id'],
+                'name': entry['download_client_name'],
+                'kind': 'qbittorrent',
+              },
+            ],
+          };
+        })
+        .toList(growable: false),
   };
 }
 
@@ -147,12 +151,13 @@ Map<String, dynamic> _indexerConnectionTest({
     'indexers_checked': indexersChecked,
     'result_count': resultCount,
     'elapsed_ms': elapsedMs,
-    'error': errorType == null
-        ? null
-        : <String, dynamic>{
-            'type': errorType,
-            'message': errorMessage ?? '',
-          },
+    'error':
+        errorType == null
+            ? null
+            : <String, dynamic>{
+              'type': errorType,
+              'message': errorMessage ?? '',
+            },
   };
 }
 
@@ -176,27 +181,43 @@ Map<String, dynamic> _configWithLlm({
   };
 }
 
+/// 对齐后端 `StatusMetadataProviderTestResource`：带 movie_number / elapsed_ms，
+/// error 带结构化 type（`StatusMetadataProviderTestError`）。
 Map<String, dynamic> _providerTest({
   required bool healthy,
   String provider = 'javdb',
+  String errorType = 'metadata_request_error',
+  String errorMessage = 'metadata request failed: GET https://example ()',
 }) {
   return <String, dynamic>{
     'healthy': healthy,
+    'checked_at': '2026-07-11T08:00:00Z',
     'provider': provider,
-    'error': healthy ? null : <String, dynamic>{'message': 'login required'},
+    'movie_number': 'SSNI-888',
+    'elapsed_ms': 42,
+    'error':
+        healthy
+            ? null
+            : <String, dynamic>{'type': errorType, 'message': errorMessage},
   };
 }
 
+/// 对齐后端 `StatusImageSearchResource`。向量库那一节后端也会返回，但前端不做
+/// 独立诊断项，所以这里不造它。
 Map<String, dynamic> _imageSearchStatus({required bool joyTagHealthy}) {
   return <String, dynamic>{
-    'healthy': true,
+    'healthy': joyTagHealthy,
+    'checked_at': '2026-07-11T08:00:00Z',
     'joytag': <String, dynamic>{
       'healthy': joyTagHealthy,
       'used_device': joyTagHealthy ? 'cuda:0' : null,
+      'endpoint': 'http://joytag:8000',
+      'error': joyTagHealthy ? null : 'model file not found',
     },
     'indexing': <String, dynamic>{
       'pending_thumbnails': 0,
       'failed_thumbnails': 0,
+      'success_thumbnails': 15295,
     },
   };
 }
@@ -365,11 +386,7 @@ void main() {
             'url': 'https://jackett.example/api',
             'kind': 'bt',
             'download_clients': <Map<String, dynamic>>[
-              <String, dynamic>{
-                'id': 8,
-                'name': '115 主账号',
-                'kind': 'cloud115',
-              },
+              <String, dynamic>{'id': 8, 'name': '115 主账号', 'kind': 'cloud115'},
             ],
           },
         ],
@@ -446,8 +463,9 @@ void main() {
       body: _connectivityResult(
         healthy: false,
         clientId: 1,
-        errorType: 'auth',
-        errorMessage: 'unauthorized',
+        // 后端 qB 只发这一种 type，认证/网络靠 message 尽力细分。
+        errorType: 'qbittorrent_request_error',
+        errorMessage: 'Login authorization failed.',
       ),
     );
     _bundle.adapter.enqueueJson(
@@ -496,7 +514,7 @@ void main() {
     expect(idx.status, DiagnosticItemStatus.healthy);
     expect(idx.summary, contains('未返回候选'));
 
-    // 下载器 1 连通性 → unhealthy，命中 auth-error hint。
+    // 下载器 1 连通性 → unhealthy，命中 qB auth 细分 hint。
     final c1 = _find(
       c,
       (i) =>
@@ -504,7 +522,9 @@ void main() {
           i.itemKey == 'downloader-connectivity-1',
     );
     expect(c1.status, DiagnosticItemStatus.unhealthy);
-    expect(c1.cause, contains('拒绝了当前的用户名 / 密码'));
+    expect(c1.cause, contains('不认这个账号密码'));
+    // 状态短句用后端 message，而不是内部 type 名。
+    expect(c1.summary, 'Login authorization failed.');
   });
 
   test('下载器全挂 → 索引器 blocked', () async {
@@ -523,7 +543,7 @@ void main() {
       path: '/download-clients/1/test',
       body: _connectivityResult(
         healthy: false,
-        errorType: 'timeout',
+        errorType: 'qbittorrent_request_error',
         errorMessage: 'connect timed out',
       ),
     );
@@ -720,6 +740,247 @@ void main() {
     await Future.wait<void>([first, second]);
 
     expect(_bundle.adapter.hitCount('GET', '/media-libraries'), 1);
+  });
+
+  // 只跑独立探针的最小骨架：媒体库有 1 个、下载器 0 个，Stage C/D 不产生额外请求。
+  Future<SystemDiagnosticsController> _runWithProbes({
+    required void Function() enqueueProbes,
+  }) async {
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      body: <Map<String, dynamic>>[_library()],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: <Map<String, dynamic>>[],
+    );
+    enqueueProbes();
+    final c = _newController();
+    await c.runAll();
+    return c;
+  }
+
+  group('元数据源：按后端 error.type 出文案，JavDB / DMM 不共用', () {
+    test('DMM 番号搜不到 → 不再说"需要日本 IP 代理"，而是指向解析规则', () async {
+      final c = await _runWithProbes(
+        enqueueProbes: () => _enqueueIndependentProbes(dmmHealthy: false),
+      );
+
+      final dmm = _find(c, (i) => i.kind == DiagnosticItemKind.dmm);
+      expect(dmm.status, DiagnosticItemStatus.unhealthy);
+    });
+
+    test('DMM metadata_not_found → 归因到改版/下架，且不给代理 fixTarget', () async {
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-libraries',
+        body: <Map<String, dynamic>>[_library()],
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-clients',
+        body: <Map<String, dynamic>>[],
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/metadata-providers/javdb/test',
+        body: _providerTest(healthy: true, provider: 'javdb'),
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/metadata-providers/dmm/test',
+        body: _providerTest(
+          healthy: false,
+          provider: 'dmm',
+          errorType: 'metadata_not_found',
+          errorMessage: 'DMM 未找到对应番号: SSNI-888',
+        ),
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/config',
+        body: _configWithLlm(),
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/movie-desc-translation-settings/test',
+        body: <String, dynamic>{'ok': true},
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/image-search',
+        body: _imageSearchStatus(joyTagHealthy: true),
+      );
+
+      final c = _newController();
+      await c.runAll();
+
+      final dmm = _find(c, (i) => i.kind == DiagnosticItemKind.dmm);
+      expect(dmm.status, DiagnosticItemStatus.unhealthy);
+      expect(dmm.fixHint, contains('DMM 改版'));
+      expect(dmm.fixHint, contains('改配置没用'));
+      expect(dmm.fixTarget, isNull, reason: '搜不到番号跟代理无关，不该给一个点了没用的跳转');
+      // 后端 message 直接透出，前端不再截断成"接口返回不健康"。
+      expect(dmm.summary, contains('SSNI-888'));
+      // 后端量的耗时被用上，而不是前端在 await 两端掐表。
+      expect(dmm.elapsedMs, 42);
+    });
+
+    test('JavDB 请求失败 → 说明它不走代理并导向 wiki，不给跳转按钮', () async {
+      final c = await _runWithProbes(
+        enqueueProbes: () => _enqueueIndependentProbes(javdbHealthy: false),
+      );
+
+      final javdb = _find(c, (i) => i.kind == DiagnosticItemKind.javdb);
+      expect(javdb.status, DiagnosticItemStatus.unhealthy);
+      expect(javdb.fixHint, contains('不走代理'));
+      expect(javdb.fixHint, contains('wiki'));
+      // 「JavDB API 域名」不是该让用户改的字段，所以不给跳转。
+      expect(javdb.fixTarget, isNull);
+    });
+
+    test('探测端点本身 500 → 用"后端故障"文案，不套站点结论', () async {
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-libraries',
+        body: <Map<String, dynamic>>[_library()],
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-clients',
+        body: <Map<String, dynamic>>[],
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/metadata-providers/javdb/test',
+        statusCode: 500,
+        body: <String, dynamic>{
+          'error': <String, dynamic>{'code': 'internal', 'message': 'boom'},
+        },
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/metadata-providers/dmm/test',
+        body: _providerTest(healthy: true, provider: 'dmm'),
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/config',
+        body: _configWithLlm(),
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/movie-desc-translation-settings/test',
+        body: <String, dynamic>{'ok': true},
+      );
+      _bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/image-search',
+        body: _imageSearchStatus(joyTagHealthy: true),
+      );
+
+      final c = _newController();
+      await c.runAll();
+
+      final javdb = _find(c, (i) => i.kind == DiagnosticItemKind.javdb);
+      expect(javdb.status, DiagnosticItemStatus.unhealthy);
+      expect(javdb.cause, contains('后端没有响应'));
+      // 旧实现在这里套的是 proxy-required，会让用户去查一个 JavDB 根本不用的代理。
+      expect(javdb.fixHint, isNot(contains('代理')));
+    });
+  });
+
+  test('JoyTag 挂了 → 状态短句带上后端给的失败原因', () async {
+    final c = await _runWithProbes(
+      enqueueProbes: () => _enqueueIndependentProbes(joyTagHealthy: false),
+    );
+
+    final joyTag = _find(c, (i) => i.kind == DiagnosticItemKind.joyTag);
+    expect(joyTag.status, DiagnosticItemStatus.unhealthy);
+    // 后端带了 error，比前端硬编码的"模型未就绪"有用。
+    expect(joyTag.summary, 'model file not found');
+  });
+
+  test('LLM 上游报错 → 按 error_code 出文案，而不是一律 unknown', () async {
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      body: <Map<String, dynamic>>[_library()],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: <Map<String, dynamic>>[],
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/metadata-providers/javdb/test',
+      body: _providerTest(healthy: true, provider: 'javdb'),
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/metadata-providers/dmm/test',
+      body: _providerTest(healthy: true, provider: 'dmm'),
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/config',
+      body: _configWithLlm(),
+    );
+    // 后端失败时抛 ApiError(status, error_code, message)，不是 {ok: false}。
+    _bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/movie-desc-translation-settings/test',
+      statusCode: 502,
+      body: <String, dynamic>{
+        'error': <String, dynamic>{
+          'code': 'movie_desc_translation_failed',
+          'message': 'Incorrect API key provided',
+        },
+      },
+    );
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/image-search',
+      body: _imageSearchStatus(joyTagHealthy: true),
+    );
+
+    final c = _newController();
+    await c.runAll();
+
+    final llm = _find(c, (i) => i.kind == DiagnosticItemKind.llm);
+    expect(llm.status, DiagnosticItemStatus.unhealthy);
+    expect(llm.summary, 'Incorrect API key provided');
+    expect(llm.fixHint, contains('不要带 /v1'));
+    expect(llm.fixTarget?.configurationTabIndex, 5);
+  });
+
+  test('媒体库列表接口失败 → 不再谎报"还没有配置媒体库"', () async {
+    _bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      statusCode: 500,
+      body: <String, dynamic>{
+        'error': <String, dynamic>{
+          'code': 'internal_error',
+          'message': '数据库连接失败',
+        },
+      },
+    );
+    _enqueueIndependentProbes();
+
+    final c = _newController();
+    await c.runAll();
+
+    final ml = _find(c, (i) => i.kind == DiagnosticItemKind.mediaLibrary);
+    expect(ml.status, DiagnosticItemStatus.unhealthy);
+    expect(ml.cause, contains('后端没有正常响应'));
+    expect(ml.cause, isNot(contains('还没有配置任何媒体库')));
+    expect(ml.summary, '数据库连接失败');
+    // 这一条不该给"去建媒体库"的跳转。
+    expect(ml.fixTarget, isNull);
   });
 
   test('LLM 关掉总开关 → warning，不发 test 请求', () async {

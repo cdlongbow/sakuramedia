@@ -199,8 +199,8 @@ import_metadata_max_workers = 3
 
 建议：
 
-- 大多数元数据抓取场景只需要配置 `proxy`
-- `proxy` 同时用于 DMM 描述抓取和 GFriends 头像资源访问，DMM 需要你自行分流到日本代理节点
+- 大多数元数据抓取场景只需要配置 `proxy` 用于抓取DMM
+- `proxy` 同时用于 DMM 描述抓取和 GFriends 头像资源访问，DMM 需要你自行分流到日本代理节点。⚠️Javdb请求不走代理。
 - `javdb_host`、GFriends 相关地址通常不建议随便改
 - `javdb_username` / `javdb_password` 是可选项，只在需要 JavDB TOP250 榜单时填写；两者都留空时 TOP250 不会被抓取，填错时会在通知中心收到一条登录失败提醒
 

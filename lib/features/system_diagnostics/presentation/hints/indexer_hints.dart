@@ -4,55 +4,52 @@ import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_fix_targ
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagnostic_hints.dart';
 
 /// 索引器（Jackett）先校验静态配置，再进行真实搜索连通性检测。
+///
+/// 「索引器」在配置页分类列表里的索引（`desktop_configuration_page.dart`）。
+const DiagnosticFixTarget _indexerTarget = DiagnosticFixTarget.configurationTab(
+  3,
+);
+
+/// `entries-empty`（前端读配置发现没条目）与 `no_indexers_configured`（后端发起
+/// 搜索时发现没条目）在用户眼里是同一件事，共用一条文案。
+const DiagnosticHint _noIndexersHint = DiagnosticHint(
+  cause: '还没有添加任何站点。',
+  fixHint: '在「索引器」页至少添加一个站点，并给它绑定一个下载器。',
+  fixTarget: _indexerTarget,
+);
+
 const Map<String, DiagnosticHint> indexerHints = <String, DiagnosticHint>{
   'type-missing': DiagnosticHint(
-    cause: '还没有选择索引器类型（Jackett/Prowlarr 等）。',
-    fixHint: '打开「索引器」页，选择当前部署的索引器类型并填 API Key。',
-    impact: '影片详情投递下载、以及索引器搜索通道都不可用。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: '还没有选择索引器类型。',
+    fixHint: '在「索引器」页选择你部署的类型并填上 API Key。',
+    fixTarget: _indexerTarget,
   ),
   'api-key-missing': DiagnosticHint(
-    cause: '索引器 API Key 还是空的。',
-    fixHint: '登录 Jackett 面板顶部会显示 API Key，复制回来填进「索引器」页；如果换 Jackett 实例了也要重新配。',
-    impact: '所有 Jackett 相关搜索会立刻 401 失败。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: 'API Key 没填。',
+    fixHint: 'API Key 在 Jackett 面板顶部，复制到「索引器」页。换了 Jackett 也要重新填。',
+    fixTarget: _indexerTarget,
   ),
-  'entries-empty': DiagnosticHint(
-    cause: '没有配置任何索引器条目，Jackett 有 API Key 但没接任何 tracker。',
-    fixHint: '在「索引器」页添加至少一个 tracker（PT 站或公开索引器），并绑定一个下载器。',
-    impact: '影片详情里点搜索会一直返回空结果，不管本地还是联网。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
-  ),
+  'entries-empty': _noIndexersHint,
   'entry-url-invalid': DiagnosticHint(
-    cause: '有索引器条目的 URL 是空的或不是合法 HTTP(S) 地址。',
-    fixHint: '在「索引器」页检查每一条 entry 的 URL，重新复制 Jackett 的 tracker 链接。',
-    impact: '带非法 URL 的 tracker 会在搜索时抛异常，可能顺带拖垮同一批的其它搜索。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: '有站点的地址是空的，或者格式不对。',
+    fixHint: '在「索引器」页检查每个站点的地址，从 Jackett 里重新复制一遍。',
+    fixTarget: _indexerTarget,
   ),
   'entry-client-missing': DiagnosticHint(
-    cause: '有索引器条目没有绑定任何下载器。',
-    fixHint: '打开「索引器」页，为对应条目至少选择一个下载入口。',
-    impact: '这些条目搜到的资源无法派发下载。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: '有站点没有绑定下载器。',
+    fixHint: '在「索引器」页给它选一个下载器。',
+    fixTarget: _indexerTarget,
   ),
   'entry-client-stale': DiagnosticHint(
-    cause: '有索引器条目绑定的下载器已被删除。',
-    fixHint: '打开「索引器」页，重新选择有效的下载入口。',
-    impact: '这些 entry 搜到的磁力无法派发，用户点下载会因下载器不存在直接失败。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: '有站点绑定的下载器已经被删了。',
+    fixHint: '在「索引器」页给它重新选一个下载器。',
+    fixTarget: _indexerTarget,
   ),
-  'no-indexers-configured': DiagnosticHint(
-    cause: '服务器上尚未保存任何索引器条目，无法向 Jackett 发起真实搜索。',
-    fixHint: '在「索引器」页添加至少一个 tracker 并保存配置后，再重新测试。',
-    impact: '影片详情中的索引器搜索没有可用来源，无法返回下载候选。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
-  ),
+  'no-indexers-configured': _noIndexersHint,
   'jackett-request-error': DiagnosticHint(
-    cause: 'Jackett 未能完成本次真实 Torznab 搜索，可能是服务不可达、API Key 无效或索引器地址异常。',
-    fixHint:
-        '检查 Jackett 服务地址与网络连通性，确认 API Key 有效，并核对每个 tracker 的 Torznab 地址后重新测试。',
-    impact: '影片详情的索引器搜索会失败，无法获取可投递到下载器的候选资源。',
-    fixTarget: DiagnosticFixTarget.configurationTab(3),
+    cause: '搜索测试失败了。',
+    fixHint: '确认 Jackett 能访问，然后在「索引器」页核对 API Key 和各站点地址。',
+    fixTarget: _indexerTarget,
   ),
 };
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Icons;
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -11,6 +12,7 @@ import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
+import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_category_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_fix_target.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_kind.dart';
@@ -40,11 +42,11 @@ class SystemDiagnosticsController extends ChangeNotifier {
     required IndexerSettingsApi indexerSettingsApi,
     required StatusApi statusApi,
     required MovieDescTranslationSettingsApi llmApi,
-  })  : _mediaLibrariesApi = mediaLibrariesApi,
-        _downloadClientsApi = downloadClientsApi,
-        _indexerSettingsApi = indexerSettingsApi,
-        _statusApi = statusApi,
-        _llmApi = llmApi {
+  }) : _mediaLibrariesApi = mediaLibrariesApi,
+       _downloadClientsApi = downloadClientsApi,
+       _indexerSettingsApi = indexerSettingsApi,
+       _statusApi = statusApi,
+       _llmApi = llmApi {
     _categories = _buildInitialCategories();
   }
 
@@ -206,14 +208,15 @@ class SystemDiagnosticsController extends ChangeNotifier {
         elapsedMs: elapsed,
         summary: _mediaLibrarySummary(libraries),
       );
-    } catch (_) {
+    } catch (error) {
+      // 请求本身失败 ≠ 没配媒体库，用另一份 hint，否则会误导用户去建媒体库。
       return _fromHint(
         kind: DiagnosticItemKind.mediaLibrary,
         itemKey: _mediaLibraryItemKey,
         displayName: '媒体库',
         status: DiagnosticItemStatus.unhealthy,
-        hint: mediaLibraryEmptyHint,
-        summary: '接口调用失败',
+        hint: mediaLibraryProbeFailedHint,
+        summary: _shortenError(apiErrorMessage(error, fallback: '读取媒体库列表失败')),
       );
     }
   }
@@ -249,9 +252,8 @@ class SystemDiagnosticsController extends ChangeNotifier {
           displayName: '下载器',
           status: DiagnosticItemStatus.unhealthy,
           summary: '尚未配置任何下载器',
-          cause: '还没有配置任何下载入口，影片详情无法选择目标下载器。',
-          fixHint: '在「下载器」页新增 qBittorrent 或 115 离线下载入口，并绑定对应媒体库。',
-          impact: '影片详情无法投递下载；索引器也拿不到下载出口。',
+          cause: '还没有配置下载器。',
+          fixHint: '在「下载器」页添加 qBittorrent 或 115 离线下载，并绑定媒体库。',
           fixTarget: const DiagnosticFixTarget.configurationTab(2),
         ),
       ];
@@ -277,13 +279,15 @@ class SystemDiagnosticsController extends ChangeNotifier {
           itemKey: 'downloader-connectivity-${client.id}',
           displayName: '${client.name} · 连通性',
           elapsedMs: result.elapsedMs,
-          summary: client.isCloud115
-              ? '115 登录状态正常'
-              : _downloaderVersionSummary(result),
+          summary:
+              client.isCloud115
+                  ? '115 登录状态正常'
+                  : _downloaderVersionSummary(result),
         );
       }
       final hintKey = resolveDownloaderConnectivityHintKey(result.error);
-      final hint = downloaderConnectivityHints[hintKey] ??
+      final hint =
+          downloaderConnectivityHints[hintKey] ??
           downloaderConnectivityHints['unknown']!;
       return _fromHint(
         kind: DiagnosticItemKind.downloaderConnectivity,
@@ -292,17 +296,22 @@ class SystemDiagnosticsController extends ChangeNotifier {
         status: DiagnosticItemStatus.unhealthy,
         hint: hint,
         elapsedMs: result.elapsedMs,
-        summary:
-            result.error?.type.isNotEmpty == true ? result.error!.type : '连通失败',
+        // 后端的 message 比 type 对用户有用得多（type 只有三种、还都是内部名）。
+        summary: _errorSummary(
+          result.error?.message,
+          result.error?.type,
+          fallback: '连通失败',
+        ),
       );
-    } catch (_) {
+    } catch (error) {
+      // 探测接口本身失败 ≠ 下载器不通，别把后端故障说成下载器网络问题。
       return _fromHint(
         kind: DiagnosticItemKind.downloaderConnectivity,
         itemKey: 'downloader-connectivity-${client.id}',
         displayName: '${client.name} · 连通性',
         status: DiagnosticItemStatus.unhealthy,
-        hint: downloaderConnectivityHints['network-error']!,
-        summary: '请求异常',
+        hint: downloaderConnectivityHints['probe-request-failed']!,
+        summary: _shortenError(apiErrorMessage(error, fallback: '连通性探测请求失败')),
       );
     }
   }
@@ -326,9 +335,10 @@ class SystemDiagnosticsController extends ChangeNotifier {
       final hint =
           downloaderStorageHints[hintKey] ?? downloaderStorageHints['unknown']!;
       // 业务上 healthy 但带 warnings（例如硬链接不支持）→ 落 warning，不阻塞。
-      final status = result.healthy
-          ? DiagnosticItemStatus.warning
-          : DiagnosticItemStatus.unhealthy;
+      final status =
+          result.healthy
+              ? DiagnosticItemStatus.warning
+              : DiagnosticItemStatus.unhealthy;
       return _fromHint(
         kind: DiagnosticItemKind.downloaderStorage,
         itemKey: 'downloader-storage-${client.id}',
@@ -336,18 +346,16 @@ class SystemDiagnosticsController extends ChangeNotifier {
         status: status,
         hint: hint,
         elapsedMs: result.elapsedMs,
-        summary: result.warnings.isNotEmpty
-            ? result.warnings.first
-            : (status == DiagnosticItemStatus.unhealthy ? '存储映射不通' : '存在告警'),
+        summary: _storageSummary(result, status: status),
       );
-    } catch (_) {
+    } catch (error) {
       return _fromHint(
         kind: DiagnosticItemKind.downloaderStorage,
         itemKey: 'downloader-storage-${client.id}',
         displayName: '${client.name} · 目录映射',
         status: DiagnosticItemStatus.unhealthy,
-        hint: downloaderStorageHints['unknown']!,
-        summary: '请求异常',
+        hint: downloaderStorageHints['probe-request-failed']!,
+        summary: _shortenError(apiErrorMessage(error, fallback: '存储探测请求失败')),
       );
     }
   }
@@ -422,47 +430,48 @@ class SystemDiagnosticsController extends ChangeNotifier {
     }
   }
 
+  /// JavDB / DMM 共用一个端点，但**不共用一套 hint**——两者的代理语义与职责完全不同，
+  /// 详见 `metadata_provider_hints.dart` 顶部说明。
   Future<DiagnosticItemState> _probeMetadataProvider(String provider) async {
     final displayName = provider == _javdbItemKey ? 'JavDB' : 'DMM';
-    final kind = provider == _javdbItemKey
-        ? DiagnosticItemKind.javdb
-        : DiagnosticItemKind.dmm;
-    final started = DateTime.now();
+    final kind =
+        provider == _javdbItemKey
+            ? DiagnosticItemKind.javdb
+            : DiagnosticItemKind.dmm;
+    final hints = metadataProviderHints(provider);
     try {
       final result = await _statusApi.testMetadataProvider(provider);
-      final elapsed = DateTime.now().difference(started).inMilliseconds;
+      // 后端已经量过耗时（含内部重试），比前端在 await 两端掐表准。
       if (result.healthy) {
         return DiagnosticItemState.healthy(
           kind: kind,
           itemKey: provider,
           displayName: displayName,
-          elapsedMs: elapsed,
-          summary: '连通正常',
+          elapsedMs: result.elapsedMs,
+          summary: _metadataProviderHealthySummary(result),
         );
       }
-      final hintKey = resolveMetadataProviderHintKey(
-        provider: provider,
-        error: result.error,
-      );
+      final hintKey = resolveMetadataProviderHintKey(result.error);
       return _fromHint(
         kind: kind,
         itemKey: provider,
         displayName: displayName,
         status: DiagnosticItemStatus.unhealthy,
-        hint: javdbHints[hintKey] ?? javdbHints['unknown']!,
-        elapsedMs: elapsed,
-        summary: result.error?.message.isNotEmpty == true
-            ? _shortenError(result.error!.message)
-            : '接口返回不健康',
+        hint: hints[hintKey]!,
+        elapsedMs: result.elapsedMs,
+        summary: _metadataProviderErrorSummary(result),
       );
-    } catch (_) {
+    } catch (error) {
+      // 后端探测端点本身挂了：既不是 JavDB 也不是 DMM 的问题，不能套站点文案。
       return _fromHint(
         kind: kind,
         itemKey: provider,
         displayName: displayName,
         status: DiagnosticItemStatus.unhealthy,
-        hint: javdbHints['proxy-required']!,
-        summary: '请求异常',
+        hint: hints['probe-request-failed']!,
+        summary: _shortenError(
+          apiErrorMessage(error, fallback: '$displayName 探测请求失败'),
+        ),
       );
     }
   }
@@ -471,14 +480,14 @@ class SystemDiagnosticsController extends ChangeNotifier {
     final MovieDescTranslationSettingsDto settings;
     try {
       settings = await _llmApi.getSettings();
-    } catch (_) {
+    } catch (error) {
       return _fromHint(
         kind: DiagnosticItemKind.llm,
         itemKey: _llmItemKey,
         displayName: 'LLM 翻译',
         status: DiagnosticItemStatus.unhealthy,
         hint: llmHints['unknown']!,
-        summary: 'LLM 配置读取失败',
+        summary: _shortenError(apiErrorMessage(error, fallback: 'LLM 配置读取失败')),
       );
     }
 
@@ -526,61 +535,69 @@ class SystemDiagnosticsController extends ChangeNotifier {
           summary: '模型 ${settings.model} 可用',
         );
       }
+      // 后端只在成功时返回 ok:true，失败走 HTTP 错误（下面的 catch）。
+      // 走到这里说明响应结构不是预期的 {ok: true}。
       return _fromHint(
         kind: DiagnosticItemKind.llm,
         itemKey: _llmItemKey,
         displayName: 'LLM 翻译',
         status: DiagnosticItemStatus.unhealthy,
-        hint: llmHints['unknown']!,
+        hint: llmHints[LlmErrorCode.invalidResponse]!,
         elapsedMs: elapsed,
-        summary: '测试请求失败',
+        summary: '测试接口未返回 ok',
       );
-    } catch (_) {
+    } catch (error) {
+      // 后端把失败原因放在 ApiError.code 里（movie_desc_translation_*），
+      // 按它分派才能给出可执行的建议，别一律落 unknown。
+      final elapsed = DateTime.now().difference(started).inMilliseconds;
       return _fromHint(
         kind: DiagnosticItemKind.llm,
         itemKey: _llmItemKey,
         displayName: 'LLM 翻译',
         status: DiagnosticItemStatus.unhealthy,
-        hint: llmHints['unknown']!,
-        summary: '测试请求异常',
+        hint: llmHints[resolveLlmHintKey(error)]!,
+        elapsedMs: elapsed,
+        summary: _shortenError(apiErrorMessage(error, fallback: 'LLM 测试请求失败')),
       );
     }
   }
 
   Future<DiagnosticItemState> _probeJoyTag() async {
     final started = DateTime.now();
+    final StatusImageSearchDto status;
     try {
-      final status = await _statusApi.getImageSearchStatus();
-      final elapsed = DateTime.now().difference(started).inMilliseconds;
-      if (status.joyTag.healthy) {
-        final device = status.joyTag.usedDevice;
-        return DiagnosticItemState.healthy(
-          kind: DiagnosticItemKind.joyTag,
-          itemKey: _joyTagItemKey,
-          displayName: 'JoyTag 推理',
-          elapsedMs: elapsed,
-          summary: device == null || device.isEmpty ? '模型加载正常' : '推理设备：$device',
-        );
-      }
+      status = await _statusApi.getImageSearchStatus();
+    } catch (error) {
       return _fromHint(
         kind: DiagnosticItemKind.joyTag,
         itemKey: _joyTagItemKey,
         displayName: 'JoyTag 推理',
         status: DiagnosticItemStatus.unhealthy,
-        hint: joyTagHints['unhealthy']!,
-        elapsedMs: elapsed,
-        summary: '模型未就绪',
-      );
-    } catch (_) {
-      return _fromHint(
-        kind: DiagnosticItemKind.joyTag,
-        itemKey: _joyTagItemKey,
-        displayName: 'JoyTag 推理',
-        status: DiagnosticItemStatus.unhealthy,
-        hint: joyTagHints['unhealthy']!,
-        summary: '状态接口异常',
+        hint: joyTagHints['status-unavailable']!,
+        summary: _shortenError(apiErrorMessage(error, fallback: '检测请求失败')),
       );
     }
+    final elapsed = DateTime.now().difference(started).inMilliseconds;
+    if (status.joyTag.healthy) {
+      final device = status.joyTag.usedDevice;
+      return DiagnosticItemState.healthy(
+        kind: DiagnosticItemKind.joyTag,
+        itemKey: _joyTagItemKey,
+        displayName: 'JoyTag 推理',
+        elapsedMs: elapsed,
+        summary: device == null || device.isEmpty ? '模型加载正常' : '推理设备：$device',
+      );
+    }
+    return _fromHint(
+      kind: DiagnosticItemKind.joyTag,
+      itemKey: _joyTagItemKey,
+      displayName: 'JoyTag 推理',
+      status: DiagnosticItemStatus.unhealthy,
+      hint: joyTagHints['unhealthy']!,
+      elapsedMs: elapsed,
+      // 后端带了失败原因，直接透出去比"模型未就绪"有用。
+      summary: _shortenError(status.joyTag.error ?? '模型未就绪'),
+    );
   }
 
   // --------- 内部辅助 ---------
@@ -603,7 +620,6 @@ class SystemDiagnosticsController extends ChangeNotifier {
       summary: summary,
       cause: hint.cause,
       fixHint: hint.fixHint,
-      impact: hint.impact,
       fixTarget: hint.fixTarget,
     );
   }
@@ -752,5 +768,66 @@ class SystemDiagnosticsController extends ChangeNotifier {
     final trimmed = message.trim();
     if (trimmed.length <= 40) return trimmed;
     return '${trimmed.substring(0, 40)}…';
+  }
+
+  /// 状态短句优先用后端 message，退回 type，再退回 [fallback]。
+  ///
+  /// type（`qbittorrent_request_error` 之类）是内部标识，对用户几乎没信息量，
+  /// 只在没有 message 时才拿它顶着。
+  String _errorSummary(
+    String? message,
+    String? type, {
+    required String fallback,
+  }) {
+    if (message != null && message.trim().isNotEmpty) {
+      return _shortenError(message);
+    }
+    if (type != null && type.trim().isNotEmpty) return type.trim();
+    return fallback;
+  }
+
+  String _storageSummary(
+    DownloadClientStorageTestResultDto result, {
+    required DiagnosticItemStatus status,
+  }) {
+    // mapping 失败时用它自己的 error message；hardlink 不支持时 warnings 里那句最贴切。
+    final mappingError = result.directoryMapping.error;
+    if (status == DiagnosticItemStatus.unhealthy && mappingError != null) {
+      return _errorSummary(
+        mappingError.message,
+        mappingError.type,
+        fallback: '存储映射不通',
+      );
+    }
+    if (result.warnings.isNotEmpty) {
+      return _shortenError(result.warnings.first);
+    }
+    final hardlinkError = result.hardlink.error;
+    if (hardlinkError != null) {
+      return _errorSummary(
+        hardlinkError.message,
+        hardlinkError.type,
+        fallback: '硬链接不可用',
+      );
+    }
+    return status == DiagnosticItemStatus.unhealthy ? '存储映射不通' : '存在告警';
+  }
+
+  /// healthy 时把后端返回的实证数据摆出来，让"绿"是可验证的而不是一句"连通正常"。
+  String _metadataProviderHealthySummary(StatusMetadataProviderTestDto result) {
+    final number = result.movieNumber;
+    return number.isEmpty ? '连通正常' : '$number 抓取成功';
+  }
+
+  String _metadataProviderErrorSummary(StatusMetadataProviderTestDto result) {
+    final error = result.error;
+    if (error == null) return '接口返回不健康';
+    // not_found 的 message 里已经含番号，直接用；其余带上探测番号做定位。
+    return _errorSummary(
+      error.message,
+      error.type,
+      fallback:
+          result.movieNumber.isEmpty ? '探测失败' : '${result.movieNumber} 探测失败',
+    );
   }
 }

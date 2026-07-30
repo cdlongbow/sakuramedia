@@ -280,7 +280,8 @@ class _DesktopAdvancedSettingsSectionState
           children: [
             const _CardTip(
               icon: Icons.travel_explore_outlined,
-              message: '大多数元数据抓取场景只需要配置代理；JavDB 账号和密码两项都填才启用 TOP250 榜单抓取。',
+              message:
+                  '大多数元数据抓取场景只需要配置代理用于抓取DMM；填写JavDB 账号和密码会启用 Javdb TOP250 榜单抓取。⚠️ Javdb不会走代理。',
             ),
             SizedBox(height: spacing.lg),
             _buildFieldGrid(
@@ -370,8 +371,7 @@ class _DesktopAdvancedSettingsSectionState
           children: [
             const _CardTip(
               icon: Icons.schedule_outlined,
-              message:
-                  'Cron 语法：分 时 日 月 周（*/N 每隔 N，逗号列表，连字符区间）。修改后需要重启容器才生效。',
+              message: 'Cron 语法：分 时 日 月 周（*/N 每隔 N，逗号列表，连字符区间）。修改后需要重启容器才生效。',
             ),
             SizedBox(height: spacing.lg),
             for (final group in _cronGroups) ...[
@@ -461,17 +461,18 @@ class _DesktopAdvancedSettingsSectionState
                         child: Text(level),
                       ),
                   ],
-                  onChanged: _savingCards.contains(_AdvancedCardKind.other)
-                      ? null
-                      : (value) {
-                          if (value == null || value == _loggingLevel) {
-                            return;
-                          }
-                          setState(() {
-                            _loggingLevel = value;
-                          });
-                          _markDirty(_AdvancedCardKind.other);
-                        },
+                  onChanged:
+                      _savingCards.contains(_AdvancedCardKind.other)
+                          ? null
+                          : (value) {
+                            if (value == null || value == _loggingLevel) {
+                              return;
+                            }
+                            setState(() {
+                              _loggingLevel = value;
+                            });
+                            _markDirty(_AdvancedCardKind.other);
+                          },
                 ),
               ],
             ),
@@ -517,9 +518,10 @@ class _DesktopAdvancedSettingsSectionState
         final layout = context.appLayoutTokens;
         final minTwoColumnWidth = layout.filterFieldWidthXl * 2 + spacing.md;
         final useTwoColumns = constraints.maxWidth >= minTwoColumnWidth;
-        final fieldWidth = useTwoColumns
-            ? (constraints.maxWidth - spacing.md) / 2
-            : constraints.maxWidth;
+        final fieldWidth =
+            useTwoColumns
+                ? (constraints.maxWidth - spacing.md) / 2
+                : constraints.maxWidth;
         return Wrap(
           spacing: spacing.md,
           runSpacing: spacing.md,
@@ -591,36 +593,27 @@ class _DesktopAdvancedSettingsSectionState
     if (!(_mediaFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(
-        _AdvancedCardKind.media,
-        <String, dynamic>{
-          'media': _buildMediaPayload(),
-        },
-        (values) => _applyMedia(values.media));
+    await _savePartial(_AdvancedCardKind.media, <String, dynamic>{
+      'media': _buildMediaPayload(),
+    }, (values) => _applyMedia(values.media));
   }
 
   Future<void> _handleSaveMetadata() async {
     if (!(_metadataFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(
-        _AdvancedCardKind.metadata,
-        <String, dynamic>{
-          'metadata': _buildMetadataPayload(),
-        },
-        (values) => _applyMetadata(values.metadata));
+    await _savePartial(_AdvancedCardKind.metadata, <String, dynamic>{
+      'metadata': _buildMetadataPayload(),
+    }, (values) => _applyMetadata(values.metadata));
   }
 
   Future<void> _handleSaveScheduler() async {
     if (!(_schedulerFormKey.currentState?.validate() ?? false)) {
       return;
     }
-    await _savePartial(
-        _AdvancedCardKind.scheduler,
-        <String, dynamic>{
-          'scheduler': _buildSchedulerPayload(),
-        },
-        (values) => _applyScheduler(values.scheduler));
+    await _savePartial(_AdvancedCardKind.scheduler, <String, dynamic>{
+      'scheduler': _buildSchedulerPayload(),
+    }, (values) => _applyScheduler(values.scheduler));
   }
 
   Future<void> _handleSaveOther() async {
@@ -702,7 +695,7 @@ class _DesktopAdvancedSettingsSectionState
       ),
       'allowed_min_video_file_size':
           _parseInt(_allowedMinVideoFileSizeController.text) *
-              _bytesPerMegabyte,
+          _bytesPerMegabyte,
     };
   }
 
@@ -778,9 +771,10 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   void _applyLogging(AdvancedLoggingConfigDto logging) {
-    _loggingLevel = _loggingLevels.contains(logging.level)
-        ? logging.level
-        : _defaultLoggingLevel;
+    _loggingLevel =
+        _loggingLevels.contains(logging.level)
+            ? logging.level
+            : _defaultLoggingLevel;
     _savedLoggingLevel = _loggingLevel;
   }
 
@@ -824,10 +818,11 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   String? _cronError(String? value) {
-    final parts = (value?.trim() ?? '')
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
+    final parts =
+        (value?.trim() ?? '')
+            .split(RegExp(r'\s+'))
+            .where((part) => part.isNotEmpty)
+            .toList();
     if (parts.length != _cronPartCount) {
       return '请输入 5 位标准 cron';
     }
@@ -855,9 +850,10 @@ class _DesktopAdvancedSettingsSectionState
     if (values.isEmpty) {
       return includeOthersRule ? '尚未识别条目；规则：下划线转横线、大写、去 PPV- 前缀。' : '尚未识别条目';
     }
-    final previewValues = normalizeOthersNumber
-        ? values.map(_normalizeOthersNumberFeature).toList()
-        : values;
+    final previewValues =
+        normalizeOthersNumber
+            ? values.map(_normalizeOthersNumberFeature).toList()
+            : values;
     final visibleValues = previewValues.take(_previewItemCount).join(', ');
     final suffix = previewValues.length > _previewItemCount ? ', ...' : '';
     final summary = '已识别 ${previewValues.length} 条：$visibleValues$suffix';

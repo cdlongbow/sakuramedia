@@ -38,7 +38,6 @@ DiagnosticItemState _item(DiagnosticItemStatus status, {String key = 'k'}) {
         displayName: key,
         cause: 'c',
         fixHint: 'f',
-        impact: 'i',
       );
     case DiagnosticItemStatus.blocked:
       return DiagnosticItemState.blocked(
@@ -55,8 +54,7 @@ DiagnosticCategoryState _cat(List<DiagnosticItemStatus> statuses) {
     label: 'test',
     icon: Icons.circle,
     items: <DiagnosticItemState>[
-      for (int i = 0; i < statuses.length; i++)
-        _item(statuses[i], key: 'k$i'),
+      for (int i = 0; i < statuses.length; i++) _item(statuses[i], key: 'k$i'),
     ],
   );
 }
@@ -64,8 +62,10 @@ DiagnosticCategoryState _cat(List<DiagnosticItemStatus> statuses) {
 void main() {
   group('DiagnosticCategoryState.aggregate', () {
     test('空列表 → notTested', () {
-      expect(_cat(<DiagnosticItemStatus>[]).aggregate,
-          DiagnosticItemStatus.notTested);
+      expect(
+        _cat(<DiagnosticItemStatus>[]).aggregate,
+        DiagnosticItemStatus.notTested,
+      );
     });
 
     test('任一 unhealthy → unhealthy', () {

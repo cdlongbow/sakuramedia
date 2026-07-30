@@ -39,7 +39,6 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
     final item = widget.item;
     if (item.cause != null && item.cause!.isNotEmpty) return true;
     if (item.fixHint != null && item.fixHint!.isNotEmpty) return true;
-    if (item.impact != null && item.impact!.isNotEmpty) return true;
     if (item.fixTarget != null) return true;
     if (widget.onOpenDetail != null) return true;
     return false;
@@ -128,7 +127,10 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
-            child: _expanded && _canExpand ? _buildDetail(context) : const SizedBox.shrink(),
+            child:
+                _expanded && _canExpand
+                    ? _buildDetail(context)
+                    : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -173,10 +175,8 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
 
     addBlock('可能原因', item.cause);
     addBlock('怎么改', item.fixHint);
-    addBlock('不可用会影响', item.impact);
 
-    final hasAction =
-        item.fixTarget != null || widget.onOpenDetail != null;
+    final hasAction = item.fixTarget != null || widget.onOpenDetail != null;
     if (hasAction) {
       blocks.add(
         Padding(

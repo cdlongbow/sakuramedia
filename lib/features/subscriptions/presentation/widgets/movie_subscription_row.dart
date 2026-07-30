@@ -237,7 +237,7 @@ String _resetDisabledReason(MovieSubscriptionStatus status) {
   return switch (status) {
     // 这一档的补救出口是右侧的导入操作按钮（重试失败文件 / 整作业重跑，按后端
     // available_actions 显示），重置查询只会白打一轮索引器。
-    MovieSubscriptionStatus.importFailed => '文件已经下好了，但没能入库——用右侧导入操作补救，重新找种子没用',
+    MovieSubscriptionStatus.importFailed => '文件已经下好了，但没能入库——用导入操作补救。',
     MovieSubscriptionStatus.imported => '已入库的影片无需重新查询资源',
     MovieSubscriptionStatus.downloading => '已经找到种子了，等它下完',
     _ => '该状态无需重新查询资源',
@@ -457,30 +457,37 @@ class _RowActions extends StatelessWidget {
             key: Key('movie-subscription-row-retry-import-${item.movieNumber}'),
             icon: const Icon(Icons.build_circle_outlined),
             size: AppIconButtonSize.regular,
-            tooltip: '重导 ${importOperation.retryableFileCount} 个失败文件（作业 #${importOperation.importJobId}）',
+            tooltip:
+                '重导 ${importOperation.retryableFileCount} 个失败文件（作业 #${importOperation.importJobId}）',
             semanticLabel: '重导失败文件',
-            onPressed: () => _runImportAction(
-              context,
-              request: (api) => api.retryFailedFiles(importOperation.importJobId),
-              successMessage: '重导任务已提交，可在导入中心跟进',
-              failureMessage: '提交重导失败',
-            ),
+            onPressed:
+                () => _runImportAction(
+                  context,
+                  request:
+                      (api) =>
+                          api.retryFailedFiles(importOperation.importJobId),
+                  successMessage: '重导任务已提交，可在导入中心跟进',
+                  failureMessage: '提交重导失败',
+                ),
           ),
         if (importOperation != null && importOperation.canRerun)
           AppIconButton(
             key: Key('movie-subscription-row-rerun-import-${item.movieNumber}'),
             icon: const Icon(Icons.replay_circle_filled_outlined),
             size: AppIconButtonSize.regular,
-            tooltip: importOperation.retryableFileCount > 0
-                ? '整作业重跑（作业 #${importOperation.importJobId}）'
-                : '上次导入零产出（跳过 ${importOperation.skippedCount} 个文件），整作业重跑一次',
+            tooltip:
+                importOperation.retryableFileCount > 0
+                    ? '整作业重跑（作业 #${importOperation.importJobId}）'
+                    : '上次导入零产出（跳过 ${importOperation.skippedCount} 个文件），整作业重跑一次',
             semanticLabel: '整作业重跑',
-            onPressed: () => _runImportAction(
-              context,
-              request: (api) => api.rerunImportJob(importOperation.importJobId),
-              successMessage: '重跑任务已提交，可在导入中心跟进',
-              failureMessage: '提交重跑失败',
-            ),
+            onPressed:
+                () => _runImportAction(
+                  context,
+                  request:
+                      (api) => api.rerunImportJob(importOperation.importJobId),
+                  successMessage: '重跑任务已提交，可在导入中心跟进',
+                  failureMessage: '提交重跑失败',
+                ),
           ),
         // regular = iconSizeMd + md*2 = 44，达到 iOS HIG 最小点按尺寸。行内操作
         // 双端同一份，移动端用 compact 会挤成 26 见方、点不准。

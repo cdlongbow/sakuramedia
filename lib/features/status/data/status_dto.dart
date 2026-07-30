@@ -1,5 +1,5 @@
 import 'package:sakuramedia/core/json/json_parse.dart'
-    show asDateTime, asInt, asMap;
+    show asDateTime, asInt, asMap, asMapOrNull;
 
 class ActorStatsDto {
   const ActorStatsDto({
@@ -107,20 +107,38 @@ class ThumbnailStatsDto {
 }
 
 class ImageSearchJoyTagStatsDto {
-  const ImageSearchJoyTagStatsDto({required this.healthy, this.usedDevice});
+  const ImageSearchJoyTagStatsDto({
+    required this.healthy,
+    this.usedDevice,
+    this.endpoint,
+    this.error,
+  });
 
   final bool healthy;
   final String? usedDevice;
+
+  /// 推理服务地址（后端 `settings.image_search.inference_base_url`）。
+  final String? endpoint;
+
+  /// 探测失败原因；healthy 为 true 时后端不返回。诊断页要用它给出可定位的文案。
+  final String? error;
 
   factory ImageSearchJoyTagStatsDto.fromJson(Map<String, dynamic> json) {
     return ImageSearchJoyTagStatsDto(
       healthy: _asBool(json['healthy']),
       usedDevice: json['used_device'] as String?,
+      endpoint: json['endpoint'] as String?,
+      error: json['error'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'healthy': healthy, 'used_device': usedDevice};
+    return <String, dynamic>{
+      'healthy': healthy,
+      'used_device': usedDevice,
+      'endpoint': endpoint,
+      'error': error,
+    };
   }
 }
 
@@ -155,6 +173,8 @@ class StatusImageSearchDto {
     required this.indexing,
   });
 
+  /// 后端口径是 joytag 与向量库（Qdrant）的 AND。向量库不单独做诊断项，
+  /// 所以这里只透出聚合值，不解析 `image_search_vector_store` 节。
   final bool healthy;
   final ImageSearchJoyTagStatsDto joyTag;
   final ImageSearchIndexingStatsDto indexing;
@@ -163,9 +183,7 @@ class StatusImageSearchDto {
     return StatusImageSearchDto(
       healthy: _asBool(json['healthy']),
       joyTag: ImageSearchJoyTagStatsDto.fromJson(asMap(json['joytag'])),
-      indexing: ImageSearchIndexingStatsDto.fromJson(
-        asMap(json['indexing']),
-      ),
+      indexing: ImageSearchIndexingStatsDto.fromJson(asMap(json['indexing'])),
     );
   }
 
@@ -178,45 +196,103 @@ class StatusImageSearchDto {
   }
 }
 
+/// 元数据源探测失败详情。
+///
+/// [type] 是后端 `StatusService.test_metadata_provider` 定义的**封闭枚举**，
+/// 只有三种取值（见 [MetadataProviderErrorType]）；诊断文案必须按它分派，
+/// 不要去猜 [message] 里的关键字——JavDB 的 message 是英文异常串、DMM 的是中文，
+/// 关键字匹配两边都不可靠。
 class StatusMetadataProviderTestErrorDto {
-  const StatusMetadataProviderTestErrorDto({required this.message});
+  const StatusMetadataProviderTestErrorDto({
+    required this.type,
+    required this.message,
+    this.method,
+    this.url,
+    this.resource,
+    this.lookupValue,
+  });
 
+  final String type;
   final String message;
+
+  /// 仅 `metadata_request_error` 带：失败请求的方法与 URL。
+  final String? method;
+  final String? url;
+
+  /// 仅 `metadata_not_found` 带：找不到的资源类型（javdb=`movie`、dmm=`movie_desc`）
+  /// 与查询值（探测番号）。
+  final String? resource;
+  final String? lookupValue;
 
   factory StatusMetadataProviderTestErrorDto.fromJson(
     Map<String, dynamic> json,
   ) {
     return StatusMetadataProviderTestErrorDto(
+      type: json['type'] as String? ?? '',
       message: json['message'] as String? ?? '',
+      method: json['method'] as String?,
+      url: json['url'] as String?,
+      resource: json['resource'] as String?,
+      lookupValue: json['lookup_value'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{'message': message};
+    return <String, dynamic>{
+      'type': type,
+      'message': message,
+      'method': method,
+      'url': url,
+      'resource': resource,
+      'lookup_value': lookupValue,
+    };
   }
+}
+
+/// 后端 `StatusMetadataProviderTestError.type` 的全部取值。
+abstract final class MetadataProviderErrorType {
+  /// 站点可访问，但按探测番号搜不到 / 解析不出目标内容。
+  static const String notFound = 'metadata_not_found';
+
+  /// HTTP 层失败（重试耗尽）：不可达、超时、非 2xx。
+  static const String requestError = 'metadata_request_error';
+
+  /// 其它未归类异常，含 JavDB 账号登录失败（后端未单独 catch `JavdbAuthError`）。
+  static const String unexpected = 'unexpected_error';
 }
 
 class StatusMetadataProviderTestDto {
   const StatusMetadataProviderTestDto({
     required this.healthy,
     required this.provider,
+    required this.movieNumber,
+    required this.elapsedMs,
+    this.checkedAt,
     this.error,
   });
 
   final bool healthy;
   final String provider;
+
+  /// 后端写死的探测番号（`StatusService.METADATA_PROVIDER_TEST_MOVIE_NUMBER`），
+  /// 失败文案里要带上它，用户才知道"搜不到"说的是哪个番号。
+  final String movieNumber;
+  final int elapsedMs;
+  final DateTime? checkedAt;
   final StatusMetadataProviderTestErrorDto? error;
 
   factory StatusMetadataProviderTestDto.fromJson(Map<String, dynamic> json) {
-    final errorJson = json['error'];
+    final errorJson = asMapOrNull(json['error']);
     return StatusMetadataProviderTestDto(
       healthy: _asBool(json['healthy']),
       provider: json['provider'] as String? ?? '',
-      error: errorJson == null
-          ? null
-          : StatusMetadataProviderTestErrorDto.fromJson(
-              asMap(errorJson),
-            ),
+      movieNumber: json['movie_number'] as String? ?? '',
+      elapsedMs: asInt(json['elapsed_ms']),
+      checkedAt: asDateTime(json['checked_at']),
+      error:
+          errorJson == null
+              ? null
+              : StatusMetadataProviderTestErrorDto.fromJson(errorJson),
     );
   }
 
@@ -224,6 +300,9 @@ class StatusMetadataProviderTestDto {
     return <String, dynamic>{
       'healthy': healthy,
       'provider': provider,
+      'movie_number': movieNumber,
+      'elapsed_ms': elapsedMs,
+      'checked_at': checkedAt?.toIso8601String(),
       'error': error?.toJson(),
     };
   }
@@ -233,16 +312,16 @@ enum Cloud115CookieStatus { alive, expired, unavailable }
 
 extension Cloud115CookieStatusX on Cloud115CookieStatus {
   static Cloud115CookieStatus fromWire(dynamic value) => switch (value) {
-        'alive' => Cloud115CookieStatus.alive,
-        'expired' => Cloud115CookieStatus.expired,
-        _ => Cloud115CookieStatus.unavailable,
-      };
+    'alive' => Cloud115CookieStatus.alive,
+    'expired' => Cloud115CookieStatus.expired,
+    _ => Cloud115CookieStatus.unavailable,
+  };
 
   String get wireValue => switch (this) {
-        Cloud115CookieStatus.alive => 'alive',
-        Cloud115CookieStatus.expired => 'expired',
-        Cloud115CookieStatus.unavailable => 'unavailable',
-      };
+    Cloud115CookieStatus.alive => 'alive',
+    Cloud115CookieStatus.expired => 'expired',
+    Cloud115CookieStatus.unavailable => 'unavailable',
+  };
 }
 
 class StatusCloud115LibraryCookieDto {
@@ -265,10 +344,10 @@ class StatusCloud115LibraryCookieDto {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'library_id': libraryId,
-        'name': name,
-        'cookie_status': cookieStatus.wireValue,
-      };
+    'library_id': libraryId,
+    'name': name,
+    'cookie_status': cookieStatus.wireValue,
+  };
 }
 
 class StatusCloud115CookieSummaryDto {
@@ -294,11 +373,11 @@ class StatusCloud115CookieSummaryDto {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'total': total,
-        'alive': alive,
-        'expired': expired,
-        'unavailable': unavailable,
-      };
+    'total': total,
+    'alive': alive,
+    'expired': expired,
+    'unavailable': unavailable,
+  };
 }
 
 class StatusCloud115CookiesDto {
@@ -317,22 +396,23 @@ class StatusCloud115CookiesDto {
     return StatusCloud115CookiesDto(
       checkedAt: asDateTime(json['checked_at']),
       summary: StatusCloud115CookieSummaryDto.fromJson(asMap(json['summary'])),
-      libraries: librariesJson is List
-          ? librariesJson
-              .map(asMap)
-              .map(StatusCloud115LibraryCookieDto.fromJson)
-              .toList(growable: false)
-          : const <StatusCloud115LibraryCookieDto>[],
+      libraries:
+          librariesJson is List
+              ? librariesJson
+                  .map(asMap)
+                  .map(StatusCloud115LibraryCookieDto.fromJson)
+                  .toList(growable: false)
+              : const <StatusCloud115LibraryCookieDto>[],
     );
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'checked_at': checkedAt?.toIso8601String(),
-        'summary': summary.toJson(),
-        'libraries': libraries
-            .map((StatusCloud115LibraryCookieDto item) => item.toJson())
-            .toList(growable: false),
-      };
+    'checked_at': checkedAt?.toIso8601String(),
+    'summary': summary.toJson(),
+    'libraries': libraries
+        .map((StatusCloud115LibraryCookieDto item) => item.toJson())
+        .toList(growable: false),
+  };
 }
 
 class StatusDto {

@@ -17,7 +17,6 @@ class DiagnosticItemState {
     this.summary,
     this.cause,
     this.fixHint,
-    this.impact,
     this.fixTarget,
     this.blockedByLabel,
   });
@@ -42,14 +41,11 @@ class DiagnosticItemState {
   /// - blocked: 例如「等待媒体库配置就绪」
   final String? summary;
 
-  /// 三段展开：可能原因。
+  /// 两段展开：哪坏了。
   final String? cause;
 
-  /// 三段展开：怎么修。
+  /// 两段展开：怎么改。
   final String? fixHint;
-
-  /// 三段展开：不修的影响。
-  final String? impact;
 
   final DiagnosticFixTarget? fixTarget;
 
@@ -107,7 +103,6 @@ class DiagnosticItemState {
     String? summary,
     String? cause,
     String? fixHint,
-    String? impact,
     DiagnosticFixTarget? fixTarget,
   }) {
     return DiagnosticItemState(
@@ -119,7 +114,6 @@ class DiagnosticItemState {
       summary: summary,
       cause: cause,
       fixHint: fixHint,
-      impact: impact,
       fixTarget: fixTarget,
     );
   }
@@ -132,7 +126,6 @@ class DiagnosticItemState {
     String? summary,
     required String cause,
     required String fixHint,
-    required String impact,
     DiagnosticFixTarget? fixTarget,
   }) {
     return DiagnosticItemState(
@@ -144,7 +137,6 @@ class DiagnosticItemState {
       summary: summary,
       cause: cause,
       fixHint: fixHint,
-      impact: impact,
       fixTarget: fixTarget,
     );
   }
@@ -171,7 +163,10 @@ class DiagnosticItemState {
     );
   }
 
-  DiagnosticItemState copyWith({DiagnosticItemStatus? status, String? summary}) {
+  DiagnosticItemState copyWith({
+    DiagnosticItemStatus? status,
+    String? summary,
+  }) {
     return DiagnosticItemState(
       kind: kind,
       itemKey: itemKey,
@@ -181,7 +176,6 @@ class DiagnosticItemState {
       summary: summary ?? this.summary,
       cause: cause,
       fixHint: fixHint,
-      impact: impact,
       fixTarget: fixTarget,
       blockedByLabel: blockedByLabel,
     );

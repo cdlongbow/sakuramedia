@@ -115,7 +115,7 @@ class DesktopMediaManagementPage extends HookConsumerWidget {
             tabs: const [
               Tab(key: Key('media-management-tab-list'), text: '媒体列表'),
               Tab(key: Key('media-management-tab-maintenance'), text: '失效巡检'),
-              Tab(key: Key('media-management-tab-batches'), text: '秒传批次'),
+              Tab(key: Key('media-management-tab-batches'), text: '115秒传记录'),
             ],
           ),
           SizedBox(height: spacing.lg),

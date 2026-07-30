@@ -13,12 +13,17 @@ class DiagnosticFixButton extends StatelessWidget {
 
   final DiagnosticFixTarget target;
 
+  /// 必须与 `desktop_configuration_page.dart` 的 `_categories` 顺序逐项对齐——
+  /// 那份列表的下标就是 IndexedStack 索引，改动顺序时这里要同步，否则按钮会指错 tab 名。
   static const Map<int, String> _tabLabels = <int, String>{
+    0: '账号安全',
     1: '媒体库',
     2: '下载器',
     3: '索引器',
-    4: 'LLM',
-    6: '高级设置',
+    4: '下载偏好',
+    5: 'LLM 配置',
+    6: '播放列表',
+    7: '高级设置',
   };
 
   @override

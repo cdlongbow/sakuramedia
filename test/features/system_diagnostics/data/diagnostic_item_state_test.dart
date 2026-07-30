@@ -41,19 +41,17 @@ void main() {
       expect(state.summary, '连通正常');
     });
 
-    test('unhealthy factory 强制要求 cause/fixHint/impact 三段', () {
+    test('unhealthy factory 强制要求 cause/fixHint 两段', () {
       final state = DiagnosticItemState.unhealthy(
         kind: DiagnosticItemKind.downloaderConnectivity,
         itemKey: 'downloader-connectivity-1',
         displayName: 'qB',
         cause: 'auth 失败',
         fixHint: '重填密码',
-        impact: '下载无法投递',
         fixTarget: const DiagnosticFixTarget.configurationTab(2),
       );
       expect(state.cause, isNotNull);
       expect(state.fixHint, isNotNull);
-      expect(state.impact, isNotNull);
       expect(state.fixTarget?.configurationTabIndex, 2);
     });
 

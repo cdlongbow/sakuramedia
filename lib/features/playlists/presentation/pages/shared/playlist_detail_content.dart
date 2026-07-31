@@ -267,7 +267,7 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
   /// 的重试按钮也能正确刷新数据。
   Widget _buildListHeader(BuildContext context) {
     final isMobile =
-        Provider.of<AppPlatform?>(context, listen: false) ==
+        AppPlatformScope.maybeOf(context) ==
         AppPlatform.mobile;
     return AppListHeader(
       filterButtonKey: const Key('playlist-detail-filter-trigger'),

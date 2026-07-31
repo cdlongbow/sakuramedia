@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -51,7 +50,7 @@ class AppTabBar extends StatelessWidget implements PreferredSizeWidget {
     if (variant != AppTabBarVariant.auto) {
       return variant;
     }
-    final platform = Provider.of<AppPlatform?>(context, listen: false);
+    final platform = AppPlatformScope.maybeOf(context);
     return switch (platform) {
       AppPlatform.mobile => AppTabBarVariant.mobileTop,
       AppPlatform.desktop ||

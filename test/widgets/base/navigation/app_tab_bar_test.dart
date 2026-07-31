@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
@@ -107,8 +106,8 @@ void main() {
     'auto app tab bar uses mobile style when mobile platform is provided',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        Provider<AppPlatform>.value(
-          value: AppPlatform.mobile,
+        AppPlatformScope(
+          platform: AppPlatform.mobile,
           child: MaterialApp(
             theme: sakuraThemeData,
             home: DefaultTabController(

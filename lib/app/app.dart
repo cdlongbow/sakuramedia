@@ -7,34 +7,49 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_page_state_cache.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_state.dart';
+import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/app/web_platform_notice.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/account/data/account_api.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
 import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_api_provider.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
@@ -43,18 +58,24 @@ import 'package:sakuramedia/features/movies/presentation/providers/mutation_even
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
 import 'package:sakuramedia/features/tags/data/tags_api.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
+import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
+import 'package:sakuramedia/features/rankings/presentation/providers/rankings_api_provider.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
@@ -134,7 +155,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<AppPlatform>.value(value: _platform),
+        // AppPlatform 已改走 AppPlatformScope InheritedWidget（本 build 下方），
+        // 不再经 provider 注入。
         ChangeNotifierProvider(create: (_) => AppShellController()),
         ChangeNotifierProvider<SessionStore>.value(value: _activeSessionStore),
         ChangeNotifierProxyProvider<SessionStore, AppPageStateCache>(
@@ -344,31 +366,87 @@ class _MyAppState extends State<MyApp> {
               movieSubscriptionBroadcasterProvider.overrideWithValue(
                 context.read<MovieSubscriptionChangeNotifier>(),
               ),
+              // —— 迁移批次 1 起补齐的横切桥（真源仍在上方 MultiProvider，
+              // 组合根反转时统一清偿）——
+              apiClientProvider.overrideWithValue(context.read<ApiClient>()),
+              sessionStoreProvider.overrideWithValue(
+                context.read<SessionStore>(),
+              ),
+              credentialStoreProvider.overrideWithValue(
+                context.read<CredentialStore>(),
+              ),
+              appPageStateCacheProvider.overrideWithValue(
+                context.read<AppPageStateCache>(),
+              ),
+              statusApiProvider.overrideWithValue(context.read<StatusApi>()),
+              configApiProvider.overrideWithValue(context.read<ConfigApi>()),
+              indexerSettingsApiProvider.overrideWithValue(
+                context.read<IndexerSettingsApi>(),
+              ),
+              tagsApiProvider.overrideWithValue(context.read<TagsApi>()),
+              rankingsApiProvider.overrideWithValue(
+                context.read<RankingsApi>(),
+              ),
+              hotReviewsApiProvider.overrideWithValue(
+                context.read<HotReviewsApi>(),
+              ),
+              discoveryApiProvider.overrideWithValue(
+                context.read<DiscoveryApi>(),
+              ),
+              actorsApiProvider.overrideWithValue(context.read<ActorsApi>()),
+              accountApiProvider.overrideWithValue(context.read<AccountApi>()),
+              authApiProvider.overrideWithValue(context.read<AuthApi>()),
+              mediaImportApiProvider.overrideWithValue(
+                context.read<MediaImportApi>(),
+              ),
+              videosApiProvider.overrideWithValue(context.read<VideosApi>()),
+              videoCollectionsApiProvider.overrideWithValue(
+                context.read<VideoCollectionsApi>(),
+              ),
+              videoImportsApiProvider.overrideWithValue(
+                context.read<VideoImportsApi>(),
+              ),
+              clipsApiProvider.overrideWithValue(context.read<ClipsApi>()),
+              clipCollectionsApiProvider.overrideWithValue(
+                context.read<ClipCollectionsApi>(),
+              ),
+              playlistsApiProvider.overrideWithValue(
+                context.read<PlaylistsApi>(),
+              ),
+              imageSearchApiProvider.overrideWithValue(
+                context.read<ImageSearchApi>(),
+              ),
+              imageSearchDraftStoreProvider.overrideWithValue(
+                context.read<ImageSearchDraftStore>(),
+              ),
             ],
-            child: OKToast(
-              textStyle: kAppToastTextStyle,
-              child: MaterialApp.router(
-                title: 'SakuraMedia',
-                debugShowCheckedModeBanner: false,
-                theme:
-                    _platform == AppPlatform.mobile
-                        ? sakuraMobileThemeData
-                        : sakuraDesktopThemeData,
-                routerConfig: _router,
-                builder: (context, child) {
-                  return WebPlatformNoticeHost(
-                    enabled: _platform == AppPlatform.web,
-                    navigatorKey: _router.routerDelegate.navigatorKey,
-                    child: AppImageFullscreenHost(
-                      child: ScrollConfiguration(
-                        behavior: const MaterialScrollBehavior().copyWith(
-                          dragDevices: kAppScrollDragDevices,
+            child: AppPlatformScope(
+              platform: _platform,
+              child: OKToast(
+                textStyle: kAppToastTextStyle,
+                child: MaterialApp.router(
+                  title: 'SakuraMedia',
+                  debugShowCheckedModeBanner: false,
+                  theme:
+                      _platform == AppPlatform.mobile
+                          ? sakuraMobileThemeData
+                          : sakuraDesktopThemeData,
+                  routerConfig: _router,
+                  builder: (context, child) {
+                    return WebPlatformNoticeHost(
+                      enabled: _platform == AppPlatform.web,
+                      navigatorKey: _router.routerDelegate.navigatorKey,
+                      child: AppImageFullscreenHost(
+                        child: ScrollConfiguration(
+                          behavior: const MaterialScrollBehavior().copyWith(
+                            dragDevices: kAppScrollDragDevices,
+                          ),
+                          child: child ?? const SizedBox.shrink(),
                         ),
-                        child: child ?? const SizedBox.shrink(),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           );

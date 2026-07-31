@@ -29,7 +29,6 @@ import 'package:sakuramedia/features/configuration/data/api/download_clients_api
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
 import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
@@ -3771,11 +3770,10 @@ Future<void> _pumpRouterApp(
   ImageSearchDraftStore? imageSearchDraftStore,
 }) {
   final draftStore = imageSearchDraftStore ?? ImageSearchDraftStore();
+  final pageStateCache = AppPageStateCache()..bindSessionStore(sessionStore);
   final providers = [
     ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-    ChangeNotifierProvider<AppPageStateCache>(
-      create: (_) => AppPageStateCache()..bindSessionStore(sessionStore),
-    ),
+    ChangeNotifierProvider<AppPageStateCache>.value(value: pageStateCache),
     if (includeShellController)
       ChangeNotifierProvider(create: (_) => AppShellController()),
     // 路由现在只传 draftId，测试环境也要注入临时草稿仓库。
@@ -3821,11 +3819,10 @@ Future<void> _pumpRouterApp(
     MultiProvider(
       providers: providers,
       child: ProviderScope(
-        overrides: [
-          llmSettingsApiProvider.overrideWithValue(
-            bundle.movieDescTranslationSettingsApi,
-          ),
-        ],
+        overrides: bundle.riverpodOverrides(
+          pageStateCache: pageStateCache,
+          imageSearchDraftStore: draftStore,
+        ),
         child: OKToast(
           child: MaterialApp.router(
             theme: sakuraThemeData,

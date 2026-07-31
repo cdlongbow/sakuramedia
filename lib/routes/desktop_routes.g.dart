@@ -648,10 +648,20 @@ mixin $DesktopHotReviewsRouteData on GoRouteData {
 
 mixin $DesktopActivityRouteData on GoRouteData {
   static DesktopActivityRouteData _fromState(GoRouterState state) =>
-      const DesktopActivityRouteData();
+      DesktopActivityRouteData(
+        downloadMovieNumber: state.uri.queryParameters['download-movie-number'],
+      );
+
+  DesktopActivityRouteData get _self => this as DesktopActivityRouteData;
 
   @override
-  String get location => GoRouteData.$location('/desktop/system/activity');
+  String get location => GoRouteData.$location(
+    '/desktop/system/activity',
+    queryParams: {
+      if (_self.downloadMovieNumber != null)
+        'download-movie-number': _self.downloadMovieNumber,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -1,7 +1,8 @@
 import 'dart:collection';
 
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 
 abstract interface class AppPageStateEntry {
@@ -95,10 +96,19 @@ class AppPageStateCache extends ChangeNotifier {
   }
 }
 
+/// 软查找全局页面状态缓存。
+///
+/// 经 Riverpod 容器读 [appPageStateCacheProvider]；以下两种情况返回 null，
+/// 页面降级为 owned state（与旧 `ProviderNotFoundException` 降级语义一致）：
+/// - 树上没有 `ProviderScope`（多数 widget 测试）；
+/// - 有 scope 但组合根没 override 该桥（body 抛 [UnimplementedError]）。
 AppPageStateCache? maybeReadAppPageStateCache(BuildContext context) {
   try {
-    return context.read<AppPageStateCache>();
-  } on ProviderNotFoundException {
+    return ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(appPageStateCacheProvider);
+  } on Object {
     return null;
   }
 }

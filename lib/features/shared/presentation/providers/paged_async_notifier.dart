@@ -62,13 +62,15 @@ class PagedListState<T> {
       currentPage: currentPage ?? this.currentPage,
       total: total ?? this.total,
       hasMore: hasMore ?? this.hasMore,
-      syncedAt: identical(syncedAt, _kSentinel)
-          ? this.syncedAt
-          : syncedAt as DateTime?,
+      syncedAt:
+          identical(syncedAt, _kSentinel)
+              ? this.syncedAt
+              : syncedAt as DateTime?,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-      loadMoreErrorMessage: identical(loadMoreErrorMessage, _kSentinel)
-          ? this.loadMoreErrorMessage
-          : loadMoreErrorMessage as String?,
+      loadMoreErrorMessage:
+          identical(loadMoreErrorMessage, _kSentinel)
+              ? this.loadMoreErrorMessage
+              : loadMoreErrorMessage as String?,
     );
   }
 
@@ -210,7 +212,8 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
       }
       return;
     }
-    final baseState = updateBaseState != null ? updateBaseState(current) : current;
+    final baseState =
+        updateBaseState != null ? updateBaseState(current) : current;
     state = AsyncLoading<S>();
     final next = await AsyncValue.guard<S>(() async {
       final firstPage = await loadInitialPage();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/theme.dart';
@@ -97,7 +96,7 @@ AppConfirmVariant _resolveVariant(
   if (variant != AppConfirmVariant.auto) {
     return variant;
   }
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
+  final platform = AppPlatformScope.maybeOf(context);
   return platform == AppPlatform.mobile
       ? AppConfirmVariant.drawer
       : AppConfirmVariant.dialog;

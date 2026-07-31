@@ -53,9 +53,10 @@ class DownloadTaskRowState {
   }) {
     return DownloadTaskRowState(
       task: task ?? this.task,
-      live: identical(live, _sentinel)
-          ? this.live
-          : live as DownloadTaskProgressDto?,
+      live:
+          identical(live, _sentinel)
+              ? this.live
+              : live as DownloadTaskProgressDto?,
     );
   }
 
@@ -91,9 +92,10 @@ class DownloadClientTransferState {
       downloadSpeedBytes: downloadSpeedBytes ?? this.downloadSpeedBytes,
       uploadSpeedBytes: uploadSpeedBytes ?? this.uploadSpeedBytes,
       isAvailable: isAvailable ?? this.isAvailable,
-      unavailableMessage: identical(unavailableMessage, _sentinel)
-          ? this.unavailableMessage
-          : unavailableMessage as String?,
+      unavailableMessage:
+          identical(unavailableMessage, _sentinel)
+              ? this.unavailableMessage
+              : unavailableMessage as String?,
     );
   }
 }

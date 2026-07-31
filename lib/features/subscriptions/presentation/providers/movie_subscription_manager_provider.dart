@@ -132,7 +132,9 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
 
   @override
   Future<String?> refresh() async {
-    unawaited(ref.read(movieSubscriptionStatusCountsProvider.notifier).refresh());
+    unawaited(
+      ref.read(movieSubscriptionStatusCountsProvider.notifier).refresh(),
+    );
     return super.refresh();
   }
 
@@ -169,10 +171,11 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   void toggleSelectAllLoaded() {
     final current = state.value;
     if (current == null) return;
-    final loaded = current.paged.items
-        .map((item) => item.movieNumber)
-        .where((number) => number.isNotEmpty)
-        .toSet();
+    final loaded =
+        current.paged.items
+            .map((item) => item.movieNumber)
+            .where((number) => number.isNotEmpty)
+            .toSet();
     final alreadyAll =
         loaded.isNotEmpty &&
         loaded.every(current.selectedMovieNumbers.contains);
@@ -265,9 +268,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
       );
       return MovieSubscriptionActionResult.success(response.acceptedCount);
     } catch (error) {
-      return MovieSubscriptionActionResult.failure(
-        _resetErrorMessage(error),
-      );
+      return MovieSubscriptionActionResult.failure(_resetErrorMessage(error));
     } finally {
       _setBatchAction(null);
     }
@@ -440,7 +441,9 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   /// 取消订阅 → 该行从本页消失（本页只列订阅中的影片）。新增订阅无法就地插入
   /// （拿不到它的资源查询状态，硬造一行会显示错误进度），只刷新计数让角标先对上，
   /// 行本身等下次 reload 自然出现。
-  void _applyExternalSubscriptionChanges(List<MovieSubscriptionChange> changes) {
+  void _applyExternalSubscriptionChanges(
+    List<MovieSubscriptionChange> changes,
+  ) {
     final removed = <String>{
       for (final change in changes)
         if (!change.isSubscribed) change.movieNumber,

@@ -28,7 +28,8 @@ Duration? noDownloadTaskCenterRetry(int retryCount, Object error) => null;
 ///   有 [_minMergeInterval] 限流兜底。
 @Riverpod(keepAlive: true, retry: noDownloadTaskCenterRetry)
 class DownloadTaskCenter extends _$DownloadTaskCenter
-    with PagedAsyncNotifierMixin<DownloadTaskCenterState, DownloadTaskRowState> {
+    with
+        PagedAsyncNotifierMixin<DownloadTaskCenterState, DownloadTaskRowState> {
   static const int _pageSize = 20;
   static const Duration _mergeDebounce = Duration(milliseconds: 800);
   static const Duration _longDisconnectThreshold = Duration(minutes: 2);
@@ -143,9 +144,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
 
     final wasStreamOn =
         state.value?.streamState == DownloadTaskStreamState.live ||
-            state.value?.streamState == DownloadTaskStreamState.connecting ||
-            state.value?.streamState == DownloadTaskStreamState.reconnecting ||
-            state.value?.streamState == DownloadTaskStreamState.polling;
+        state.value?.streamState == DownloadTaskStreamState.connecting ||
+        state.value?.streamState == DownloadTaskStreamState.reconnecting ||
+        state.value?.streamState == DownloadTaskStreamState.polling;
     if (wasStreamOn) {
       _cancelStream();
       _cancelReconnectTimer();
@@ -179,9 +180,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       final firstPage = await loadInitialPage();
       if (isDisposed) return;
       final now = state.value ?? current;
-      state = AsyncData(
-        now.copyWith(paged: firstPage, isReloading: false),
-      );
+      state = AsyncData(now.copyWith(paged: firstPage, isReloading: false));
     } catch (_) {
       if (isDisposed) return;
       // 切换失败保留旧 items（filter 已变——用户可再选触发重试）。
@@ -218,9 +217,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     _resetPendingStreamEvents();
     _disconnectStartedAt = null;
     _reconnectAttempt = 0;
-    state = AsyncData(
-      now.copyWith(streamState: DownloadTaskStreamState.idle),
-    );
+    state = AsyncData(now.copyWith(streamState: DownloadTaskStreamState.idle));
   }
 
   Future<void> pauseTask(int taskId) async {
@@ -278,9 +275,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
 
   Future<void> _loadClientOptionsInBackground() async {
     try {
-      final clients = await ref
-          .read(downloadClientsApiProvider)
-          .getClients();
+      final clients = await ref.read(downloadClientsApiProvider).getClients();
       if (isDisposed) return;
       final options = clients
           .map(
@@ -334,9 +329,10 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
           .read(downloadsApiProvider)
           .streamDownloadTasks(
             clientId: _activeFilter.clientId,
-            movieNumber: _activeFilter.normalizedSearch.isEmpty
-                ? null
-                : _activeFilter.normalizedSearch,
+            movieNumber:
+                _activeFilter.normalizedSearch.isEmpty
+                    ? null
+                    : _activeFilter.normalizedSearch,
           );
       _streamSubscription = stream.listen(
         _handleStreamEvent,
@@ -371,8 +367,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     final initial = state.value;
     if (initial == null) return;
 
-    final firstPageComplete =
-        initial.paged.items.length >= initial.paged.total;
+    final firstPageComplete = initial.paged.items.length >= initial.paged.total;
 
     var current = initial;
     var scheduleFirstPageMerge = false;
@@ -427,7 +422,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         case DownloadTaskStreamEventKind.clientTransfer:
           final transfer = event.clientTransfer;
           if (transfer == null) break;
-          final existing = current.clientTransfers[transfer.clientId] ??
+          final existing =
+              current.clientTransfers[transfer.clientId] ??
               DownloadClientTransferState(clientId: transfer.clientId);
           final nextMap = Map<int, DownloadClientTransferState>.of(
             current.clientTransfers,
@@ -441,7 +437,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         case DownloadTaskStreamEventKind.clientHealth:
           final health = event.clientHealth;
           if (health == null) break;
-          final existing = current.clientTransfers[health.clientId] ??
+          final existing =
+              current.clientTransfers[health.clientId] ??
               DownloadClientTransferState(clientId: health.clientId);
           final nextMap = Map<int, DownloadClientTransferState>.of(
             current.clientTransfers,
@@ -672,10 +669,11 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     _disconnectStartedAt ??= DateTime.now();
     _updateStreamState(DownloadTaskStreamState.reconnecting);
 
-    final delay = _reconnectDelays[_reconnectAttempt.clamp(
-      0,
-      _reconnectDelays.length - 1,
-    )];
+    final delay =
+        _reconnectDelays[_reconnectAttempt.clamp(
+          0,
+          _reconnectDelays.length - 1,
+        )];
     _reconnectAttempt += 1;
     _cancelReconnectTimer();
     _reconnectTimer = Timer(delay, () async {

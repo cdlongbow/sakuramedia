@@ -233,13 +233,13 @@ Future<void> _pumpHarness(
   await tester.pumpWidget(
     MultiProvider(
       providers: [
-        Provider<AppPlatform>.value(value: platform),
         Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
       ],
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: Scaffold(
-          body: _FlowHarness(reauthLibrary: reauthLibrary),
+      child: AppPlatformScope(
+        platform: platform,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(body: _FlowHarness(reauthLibrary: reauthLibrary)),
         ),
       ),
     ),

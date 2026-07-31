@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme/app_layout_tokens.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -73,7 +72,7 @@ AppAdaptiveModalVariant _resolveVariant(
   if (variant != AppAdaptiveModalVariant.auto) {
     return variant;
   }
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
+  final platform = AppPlatformScope.maybeOf(context);
   return platform == AppPlatform.mobile
       ? AppAdaptiveModalVariant.drawer
       : AppAdaptiveModalVariant.dialog;

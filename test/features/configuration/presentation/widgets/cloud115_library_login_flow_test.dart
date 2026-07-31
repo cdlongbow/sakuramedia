@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
@@ -209,15 +210,18 @@ Future<void> _pumpHarness(
   MediaLibraryDto? reauthLibrary,
 }) async {
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-      ],
-      child: AppPlatformScope(
-        platform: platform,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(body: _FlowHarness(reauthLibrary: reauthLibrary)),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        ],
+        child: AppPlatformScope(
+          platform: platform,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(body: _FlowHarness(reauthLibrary: reauthLibrary)),
+          ),
         ),
       ),
     ),

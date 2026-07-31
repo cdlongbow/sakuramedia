@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -473,16 +474,19 @@ void main() {
 
 Future<void> _pumpPage(WidgetTester tester, {MediaLibrariesApi? api}) async {
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        Provider<MediaLibrariesApi>.value(
-          value: api ?? _bundle.mediaLibrariesApi,
-        ),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: MobileMediaLibrariesPage()),
+    ProviderScope(
+      overrides: _bundle.riverpodOverrides(mediaLibrariesApi: api),
+      child: MultiProvider(
+        providers: [
+          Provider<MediaLibrariesApi>.value(
+            value: api ?? _bundle.mediaLibrariesApi,
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: MobileMediaLibrariesPage()),
+          ),
         ),
       ),
     ),

@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/indexer_connection_test_controller.dart';
@@ -30,14 +30,14 @@ import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart'
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_form_sheet.dart';
 
-class MobileIndexersPage extends StatefulWidget {
+class MobileIndexersPage extends ConsumerStatefulWidget {
   const MobileIndexersPage({super.key});
 
   @override
-  State<MobileIndexersPage> createState() => _MobileIndexersPageState();
+  ConsumerState<MobileIndexersPage> createState() => _MobileIndexersPageState();
 }
 
-class _MobileIndexersPageState extends State<MobileIndexersPage> {
+class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   late final TextEditingController _apiKeyController;
   bool _isLoading = true;
   bool _isSavingApiKey = false;
@@ -63,7 +63,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     _apiKeyController = TextEditingController();
     _apiKeyController.addListener(_handleApiKeyChanged);
     _connectionTestController = IndexerConnectionTestController(
-      runTest: () => context.read<IndexerSettingsApi>().testConnection(),
+      runTest: () => ref.read(indexerSettingsApiProvider).testConnection(),
     )..addListener(_handleConnectionTestChanged);
     unawaited(_loadData());
   }
@@ -378,8 +378,8 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
 
     try {
       final results = await Future.wait<Object>([
-        context.read<IndexerSettingsApi>().getSettings(),
-        context.read<DownloadClientsApi>().getClients(),
+        ref.read(indexerSettingsApiProvider).getSettings(),
+        ref.read(downloadClientsApiProvider).getClients(),
       ]);
       if (!mounted) {
         return;
@@ -403,8 +403,8 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
   Future<void> _refreshData() async {
     try {
       final results = await Future.wait<Object>([
-        context.read<IndexerSettingsApi>().getSettings(),
-        context.read<DownloadClientsApi>().getClients(),
+        ref.read(indexerSettingsApiProvider).getSettings(),
+        ref.read(downloadClientsApiProvider).getClients(),
       ]);
       if (!mounted) {
         return;
@@ -437,13 +437,15 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     });
 
     try {
-      final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: _resolvedSettingsType,
-          apiKey: apiKey,
-          indexers: _indexers,
-        ),
-      );
+      final saved = await ref
+          .read(indexerSettingsApiProvider)
+          .updateSettings(
+            UpdateIndexerSettingsPayload(
+              type: _resolvedSettingsType,
+              apiKey: apiKey,
+              indexers: _indexers,
+            ),
+          );
       if (!mounted) {
         return;
       }
@@ -527,7 +529,7 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
   }
 
   Future<void> _handleDeleteIndexer(IndexerEntryDto entry) async {
-    final api = context.read<IndexerSettingsApi>();
+    final api = ref.read(indexerSettingsApiProvider);
     final settingsType = _resolvedSettingsType;
     final apiKey = _apiKeyController.text.trim();
     final nextEntries = _indexers
@@ -694,7 +696,7 @@ class _MobileIndexersLoadingSection extends StatelessWidget {
   }
 }
 
-class _MobileIndexerEditorDrawer extends StatefulWidget {
+class _MobileIndexerEditorDrawer extends ConsumerStatefulWidget {
   const _MobileIndexerEditorDrawer({
     required this.settingsType,
     required this.apiKey,
@@ -710,12 +712,12 @@ class _MobileIndexerEditorDrawer extends StatefulWidget {
   final IndexerEntryDto? initialEntry;
 
   @override
-  State<_MobileIndexerEditorDrawer> createState() =>
+  ConsumerState<_MobileIndexerEditorDrawer> createState() =>
       _MobileIndexerEditorDrawerState();
 }
 
 class _MobileIndexerEditorDrawerState
-    extends State<_MobileIndexerEditorDrawer> {
+    extends ConsumerState<_MobileIndexerEditorDrawer> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -846,13 +848,15 @@ class _MobileIndexerEditorDrawerState
     });
 
     try {
-      final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: widget.settingsType,
-          apiKey: widget.apiKey,
-          indexers: nextEntries,
-        ),
-      );
+      final saved = await ref
+          .read(indexerSettingsApiProvider)
+          .updateSettings(
+            UpdateIndexerSettingsPayload(
+              type: widget.settingsType,
+              apiKey: widget.apiKey,
+              indexers: nextEntries,
+            ),
+          );
       if (!mounted) {
         return;
       }

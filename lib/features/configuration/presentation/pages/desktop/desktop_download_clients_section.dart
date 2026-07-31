@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/download_client_diagnostics_dialog.dart';
@@ -21,7 +21,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/base/forms/app_info_pill.dart';
 
-class DownloadClientsSection extends StatefulWidget {
+class DownloadClientsSection extends ConsumerStatefulWidget {
   const DownloadClientsSection({
     super.key,
     required this.active,
@@ -32,10 +32,12 @@ class DownloadClientsSection extends StatefulWidget {
   final int librariesRevision;
 
   @override
-  State<DownloadClientsSection> createState() => _DownloadClientsSectionState();
+  ConsumerState<DownloadClientsSection> createState() =>
+      _DownloadClientsSectionState();
 }
 
-class _DownloadClientsSectionState extends State<DownloadClientsSection> {
+class _DownloadClientsSectionState
+    extends ConsumerState<DownloadClientsSection> {
   bool _initialized = false;
   bool _isLoading = false;
   bool _needsReload = false;
@@ -70,8 +72,8 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
 
     try {
       final results = await Future.wait<Object>([
-        context.read<DownloadClientsApi>().getClients(),
-        context.read<MediaLibrariesApi>().getLibraries(),
+        ref.read(downloadClientsApiProvider).getClients(),
+        ref.read(mediaLibrariesApiProvider).getLibraries(),
       ]);
       if (!mounted) {
         return;
@@ -97,7 +99,7 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
   }
 
   Future<void> _createClient() async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     final payload = await showDialog<CreateDownloadClientPayload>(
       context: context,
       builder:
@@ -118,7 +120,7 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
   }
 
   Future<void> _editClient(DownloadClientDto client) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     final payload = await showDialog<UpdateDownloadClientPayload>(
       context: context,
       builder:
@@ -142,7 +144,7 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
   }
 
   Future<void> _deleteClient(DownloadClientDto client) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除下载器',
@@ -207,13 +209,13 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
                   onEdit: () => _editClient(client),
                   onDelete: () => _deleteClient(client),
                   runTest:
-                      () => context.read<DownloadClientsApi>().testClient(
-                        client.id,
-                      ),
+                      () => ref
+                          .read(downloadClientsApiProvider)
+                          .testClient(client.id),
                   runStorageTest:
                       client.isQbittorrent
-                          ? () => context
-                              .read<DownloadClientsApi>()
+                          ? () => ref
+                              .read(downloadClientsApiProvider)
                               .storageTestClient(client.id)
                           : null,
                 ),
@@ -239,7 +241,7 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
   }
 }
 
-class DownloadClientCard extends StatefulWidget {
+class DownloadClientCard extends ConsumerStatefulWidget {
   const DownloadClientCard({
     super.key,
     required this.client,
@@ -258,10 +260,10 @@ class DownloadClientCard extends StatefulWidget {
   final Future<DownloadClientStorageTestResultDto> Function()? runStorageTest;
 
   @override
-  State<DownloadClientCard> createState() => _DownloadClientCardState();
+  ConsumerState<DownloadClientCard> createState() => _DownloadClientCardState();
 }
 
-class _DownloadClientCardState extends State<DownloadClientCard> {
+class _DownloadClientCardState extends ConsumerState<DownloadClientCard> {
   late final DownloadClientProbeController _probe;
 
   @override
@@ -470,7 +472,7 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
   }
 }
 
-class DownloadClientDialog extends StatefulWidget {
+class DownloadClientDialog extends ConsumerStatefulWidget {
   const DownloadClientDialog({
     super.key,
     required this.libraries,
@@ -483,10 +485,11 @@ class DownloadClientDialog extends StatefulWidget {
   final DownloadClientDto? initialClient;
 
   @override
-  State<DownloadClientDialog> createState() => _DownloadClientDialogState();
+  ConsumerState<DownloadClientDialog> createState() =>
+      _DownloadClientDialogState();
 }
 
-class _DownloadClientDialogState extends State<DownloadClientDialog> {
+class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -578,7 +581,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     final payload = value.toProbeTestPayload(
       clientId: widget.initialClient?.id,
     );
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await handleProbeConnectivityTap(
       context: context,
       probe: _probe,
@@ -593,7 +596,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     final payload = value.toProbeStorageTestPayload(
       clientId: widget.initialClient?.id,
     );
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await handleProbeStorageTap(
       context: context,
       probe: _probe,
@@ -607,7 +610,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     DownloadClientTestResultDto result,
     DownloadClientProbeTestPayload payload,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:
@@ -624,7 +627,7 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     DownloadClientProbeStorageTestPayload payload,
     String baseUrl,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:

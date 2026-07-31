@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
@@ -16,7 +16,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
-class MediaLibrariesSection extends StatefulWidget {
+class MediaLibrariesSection extends ConsumerStatefulWidget {
   const MediaLibrariesSection({
     super.key,
     required this.active,
@@ -27,10 +27,11 @@ class MediaLibrariesSection extends StatefulWidget {
   final VoidCallback onLibrariesChanged;
 
   @override
-  State<MediaLibrariesSection> createState() => _MediaLibrariesSectionState();
+  ConsumerState<MediaLibrariesSection> createState() =>
+      _MediaLibrariesSectionState();
 }
 
-class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
+class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
     with SectionLoaderMixin<List<MediaLibraryDto>, MediaLibrariesSection> {
   List<MediaLibraryDto> _libraries = const <MediaLibraryDto>[];
 
@@ -39,7 +40,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 
   @override
   Future<List<MediaLibraryDto>> fetchSectionData() =>
-      context.read<MediaLibrariesApi>().getLibraries();
+      ref.read(mediaLibrariesApiProvider).getLibraries();
 
   @override
   void applySectionData(List<MediaLibraryDto> data) {
@@ -88,7 +89,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
     }
 
     try {
-      await context.read<MediaLibrariesApi>().createLibrary(payload);
+      await ref.read(mediaLibrariesApiProvider).createLibrary(payload);
       showToast('媒体库已创建');
       widget.onLibrariesChanged();
       await _loadLibraries();
@@ -122,10 +123,9 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
     }
 
     try {
-      await context.read<MediaLibrariesApi>().updateLibrary(
-        libraryId: library.id,
-        payload: payload,
-      );
+      await ref
+          .read(mediaLibrariesApiProvider)
+          .updateLibrary(libraryId: library.id, payload: payload);
       showToast('媒体库已更新');
       widget.onLibrariesChanged();
       await _loadLibraries();
@@ -135,7 +135,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
   }
 
   Future<void> _deleteLibrary(MediaLibraryDto library) async {
-    final api = context.read<MediaLibrariesApi>();
+    final api = ref.read(mediaLibrariesApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除媒体库',
@@ -246,7 +246,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
   }
 }
 
-class MediaLibraryDialog extends StatefulWidget {
+class MediaLibraryDialog extends ConsumerStatefulWidget {
   const MediaLibraryDialog({
     super.key,
     required this.title,
@@ -257,10 +257,10 @@ class MediaLibraryDialog extends StatefulWidget {
   final MediaLibraryDto? initialLibrary;
 
   @override
-  State<MediaLibraryDialog> createState() => _MediaLibraryDialogState();
+  ConsumerState<MediaLibraryDialog> createState() => _MediaLibraryDialogState();
 }
 
-class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
+class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;

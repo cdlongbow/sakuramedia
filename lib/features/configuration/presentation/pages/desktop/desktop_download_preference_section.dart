@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
@@ -12,18 +12,18 @@ import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
-class DesktopDownloadPreferenceSection extends StatefulWidget {
+class DesktopDownloadPreferenceSection extends ConsumerStatefulWidget {
   const DesktopDownloadPreferenceSection({super.key, required this.active});
 
   final bool active;
 
   @override
-  State<DesktopDownloadPreferenceSection> createState() =>
+  ConsumerState<DesktopDownloadPreferenceSection> createState() =>
       _DesktopDownloadPreferenceSectionState();
 }
 
 class _DesktopDownloadPreferenceSectionState
-    extends State<DesktopDownloadPreferenceSection>
+    extends ConsumerState<DesktopDownloadPreferenceSection>
     with
         SectionLoaderMixin<
           ConfigResourceDto,
@@ -40,7 +40,7 @@ class _DesktopDownloadPreferenceSectionState
 
   @override
   Future<ConfigResourceDto> fetchSectionData() =>
-      context.read<ConfigApi>().get();
+      ref.read(configApiProvider).get();
 
   @override
   void applySectionData(ConfigResourceDto data) {
@@ -70,7 +70,7 @@ class _DesktopDownloadPreferenceSectionState
       _isSaving = true;
     });
     try {
-      final result = await context.read<ConfigApi>().patch(<String, dynamic>{
+      final result = await ref.read(configApiProvider).patch(<String, dynamic>{
         'downloads': <String, dynamic>{
           'preferred_client_kinds': _preferredClientKinds
               .map((kind) => kind.wireValue)

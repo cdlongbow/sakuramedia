@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
@@ -17,23 +17,23 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_management_card.dart';
 
-class PlaylistsSection extends StatefulWidget {
+class PlaylistsSection extends ConsumerStatefulWidget {
   const PlaylistsSection({super.key, required this.active});
 
   final bool active;
 
   @override
-  State<PlaylistsSection> createState() => _PlaylistsSectionState();
+  ConsumerState<PlaylistsSection> createState() => _PlaylistsSectionState();
 }
 
-class _PlaylistsSectionState extends State<PlaylistsSection> {
+class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
   late final PlaylistsOverviewController _controller;
   bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    final api = context.read<PlaylistsApi>();
+    final api = ref.read(playlistsApiProvider);
     _controller = PlaylistsOverviewController(
       fetchPlaylists:
           ({bool includeSystem = true}) =>
@@ -100,7 +100,7 @@ class _PlaylistsSectionState extends State<PlaylistsSection> {
     if (!playlist.isDeletable) {
       return;
     }
-    final api = context.read<PlaylistsApi>();
+    final api = ref.read(playlistsApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除播放列表',

@@ -165,6 +165,10 @@ class TestApiBundle {
     MovieSubscriptionChangeNotifier? movieSubscriptionBroadcaster,
     MovieCollectionTypeChangeNotifier? collectionTypeBroadcaster,
     ClipMutationChangeNotifier? clipMutationBroadcaster,
+    // 允许单测换成 fake 子类（如刷新必败的 API），默认用 bundle 实例。
+    MediaLibrariesApi? mediaLibrariesApi,
+    DownloadClientsApi? downloadClientsApi,
+    IndexerSettingsApi? indexerSettingsApi,
   }) {
     final subscriptionBroadcaster =
         movieSubscriptionBroadcaster ?? this.movieSubscriptionBroadcaster;
@@ -185,14 +189,20 @@ class TestApiBundle {
       configApiProvider.overrideWithValue(configApi),
       discoveryApiProvider.overrideWithValue(discoveryApi),
       downloadsApiProvider.overrideWithValue(downloadsApi),
-      downloadClientsApiProvider.overrideWithValue(downloadClientsApi),
+      downloadClientsApiProvider.overrideWithValue(
+        downloadClientsApi ?? this.downloadClientsApi,
+      ),
       hotReviewsApiProvider.overrideWithValue(hotReviewsApi),
       imageSearchApiProvider.overrideWithValue(imageSearchApi),
-      indexerSettingsApiProvider.overrideWithValue(indexerSettingsApi),
+      indexerSettingsApiProvider.overrideWithValue(
+        indexerSettingsApi ?? this.indexerSettingsApi,
+      ),
       llmSettingsApiProvider.overrideWithValue(movieDescTranslationSettingsApi),
       mediaApiProvider.overrideWithValue(mediaApi),
       mediaImportApiProvider.overrideWithValue(mediaImportApi),
-      mediaLibrariesApiProvider.overrideWithValue(mediaLibrariesApi),
+      mediaLibrariesApiProvider.overrideWithValue(
+        mediaLibrariesApi ?? this.mediaLibrariesApi,
+      ),
       moviesApiProvider.overrideWithValue(moviesApi),
       movieSubscriptionsApiProvider.overrideWithValue(movieSubscriptionsApi),
       playlistsApiProvider.overrideWithValue(playlistsApi),

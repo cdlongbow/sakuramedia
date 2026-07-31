@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
 import 'package:sakuramedia/features/configuration/presentation/controllers/indexer_connection_test_controller.dart';
@@ -20,16 +20,17 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-class IndexerSettingsSection extends StatefulWidget {
+class IndexerSettingsSection extends ConsumerStatefulWidget {
   const IndexerSettingsSection({super.key, required this.active});
 
   final bool active;
 
   @override
-  State<IndexerSettingsSection> createState() => _IndexerSettingsSectionState();
+  ConsumerState<IndexerSettingsSection> createState() =>
+      _IndexerSettingsSectionState();
 }
 
-class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
+class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     with
         SectionLoaderMixin<
           (IndexerSettingsDto, List<DownloadClientDto>),
@@ -54,8 +55,8 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
   Future<(IndexerSettingsDto, List<DownloadClientDto>)>
   fetchSectionData() async {
     final futures = await Future.wait<Object>([
-      context.read<IndexerSettingsApi>().getSettings(),
-      context.read<DownloadClientsApi>().getClients(),
+      ref.read(indexerSettingsApiProvider).getSettings(),
+      ref.read(downloadClientsApiProvider).getClients(),
     ]);
     return (
       futures[0] as IndexerSettingsDto,
@@ -78,7 +79,7 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
     _searchController.addListener(_handleSearchChanged);
     _apiKeyController.addListener(_handleApiKeyChanged);
     _connectionTestController = IndexerConnectionTestController(
-      runTest: () => context.read<IndexerSettingsApi>().testConnection(),
+      runTest: () => ref.read(indexerSettingsApiProvider).testConnection(),
     )..addListener(_handleConnectionTestChanged);
     tryLoadIfActive();
   }
@@ -202,13 +203,15 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
       _isSaving = true;
     });
     try {
-      final saved = await context.read<IndexerSettingsApi>().updateSettings(
-        UpdateIndexerSettingsPayload(
-          type: type,
-          apiKey: apiKey,
-          indexers: _indexers,
-        ),
-      );
+      final saved = await ref
+          .read(indexerSettingsApiProvider)
+          .updateSettings(
+            UpdateIndexerSettingsPayload(
+              type: type,
+              apiKey: apiKey,
+              indexers: _indexers,
+            ),
+          );
       if (!mounted) {
         return;
       }
@@ -526,7 +529,7 @@ class IndexerEntryCard extends StatelessWidget {
   }
 }
 
-class IndexerEntryDialog extends StatefulWidget {
+class IndexerEntryDialog extends ConsumerStatefulWidget {
   const IndexerEntryDialog({
     super.key,
     required this.title,
@@ -539,10 +542,10 @@ class IndexerEntryDialog extends StatefulWidget {
   final IndexerEntryDto? initialEntry;
 
   @override
-  State<IndexerEntryDialog> createState() => _IndexerEntryDialogState();
+  ConsumerState<IndexerEntryDialog> createState() => _IndexerEntryDialogState();
 }
 
-class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
+class _IndexerEntryDialogState extends ConsumerState<IndexerEntryDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;

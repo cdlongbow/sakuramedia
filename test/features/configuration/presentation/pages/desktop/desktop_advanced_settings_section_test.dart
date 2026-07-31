@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -293,14 +294,17 @@ Future<void> _pumpSection(
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [Provider<ConfigApi>.value(value: bundle.configApi)],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: DesktopAdvancedSettingsSection(active: active),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [Provider<ConfigApi>.value(value: bundle.configApi)],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DesktopAdvancedSettingsSection(active: active),
+              ),
             ),
           ),
         ),

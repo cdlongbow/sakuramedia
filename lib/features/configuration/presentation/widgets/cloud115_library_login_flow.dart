@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/cloud115_qr_login_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
@@ -49,17 +49,18 @@ enum _Cloud115QrPhase {
   submitError,
 }
 
-class _Cloud115LibraryLoginBody extends StatefulWidget {
+class _Cloud115LibraryLoginBody extends ConsumerStatefulWidget {
   const _Cloud115LibraryLoginBody({this.reauthLibrary});
 
   final MediaLibraryDto? reauthLibrary;
 
   @override
-  State<_Cloud115LibraryLoginBody> createState() =>
+  ConsumerState<_Cloud115LibraryLoginBody> createState() =>
       _Cloud115LibraryLoginBodyState();
 }
 
-class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
+class _Cloud115LibraryLoginBodyState
+    extends ConsumerState<_Cloud115LibraryLoginBody> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
 
@@ -128,7 +129,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
     });
     try {
       final token =
-          await context.read<MediaLibrariesApi>().getCloud115QrToken();
+          await ref.read(mediaLibrariesApiProvider).getCloud115QrToken();
       final bytes = base64Decode(token.qrcodePngBase64);
       if (!_isCurrent(generation)) {
         return;
@@ -151,7 +152,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
   }
 
   Future<void> _pollStatus(int generation, Cloud115QrTokenDto token) async {
-    final api = context.read<MediaLibrariesApi>();
+    final api = ref.read(mediaLibrariesApiProvider);
     while (_isCurrent(generation)) {
       Cloud115QrStatusDto result;
       try {
@@ -211,7 +212,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
       _errorMessage = null;
     });
     try {
-      final api = context.read<MediaLibrariesApi>();
+      final api = ref.read(mediaLibrariesApiProvider);
       final MediaLibraryDto library;
       if (_isReauth) {
         library = await api.reauthCloud115Library(

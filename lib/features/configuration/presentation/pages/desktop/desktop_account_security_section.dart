@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
 import 'package:sakuramedia/features/account/presentation/account_profile_controller.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -16,14 +16,16 @@ import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-class AccountSecuritySection extends StatefulWidget {
+class AccountSecuritySection extends ConsumerStatefulWidget {
   const AccountSecuritySection({super.key});
 
   @override
-  State<AccountSecuritySection> createState() => _AccountSecuritySectionState();
+  ConsumerState<AccountSecuritySection> createState() =>
+      _AccountSecuritySectionState();
 }
 
-class _AccountSecuritySectionState extends State<AccountSecuritySection> {
+class _AccountSecuritySectionState
+    extends ConsumerState<AccountSecuritySection> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _profileFormKey = GlobalKey<FormState>();
   late final AccountProfileController _profileController;
@@ -44,7 +46,7 @@ class _AccountSecuritySectionState extends State<AccountSecuritySection> {
   void initState() {
     super.initState();
     _profileController = AccountProfileController(
-      accountApi: context.read<AccountApi>(),
+      accountApi: ref.read(accountApiProvider),
     );
     _usernameController =
         TextEditingController()..addListener(_handleUsernameChanged);
@@ -124,8 +126,8 @@ class _AccountSecuritySectionState extends State<AccountSecuritySection> {
     });
 
     try {
-      final accountApi = context.read<AccountApi>();
-      final authApi = context.read<AuthApi>();
+      final accountApi = ref.read(accountApiProvider);
+      final authApi = ref.read(authApiProvider);
       final username =
           (_profileController.account?.username.trim().isNotEmpty ?? false)
               ? _profileController.account!.username.trim()

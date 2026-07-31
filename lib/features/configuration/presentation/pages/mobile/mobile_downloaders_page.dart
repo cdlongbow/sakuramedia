@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_onboarding_card.dart';
@@ -51,14 +51,15 @@ class _MobileDownloaderProbeSnapshot {
   final DownloadClientStorageTestResultDto? storageResult;
 }
 
-class MobileDownloadersPage extends StatefulWidget {
+class MobileDownloadersPage extends ConsumerStatefulWidget {
   const MobileDownloadersPage({super.key});
 
   @override
-  State<MobileDownloadersPage> createState() => _MobileDownloadersPageState();
+  ConsumerState<MobileDownloadersPage> createState() =>
+      _MobileDownloadersPageState();
 }
 
-class _MobileDownloadersPageState extends State<MobileDownloadersPage>
+class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -511,9 +512,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
 
     try {
       final results = await Future.wait<Object>([
-        context.read<DownloadClientsApi>().getClients(),
-        context.read<MediaLibrariesApi>().getLibraries(),
-        context.read<IndexerSettingsApi>().getSettings(),
+        ref.read(downloadClientsApiProvider).getClients(),
+        ref.read(mediaLibrariesApiProvider).getLibraries(),
+        ref.read(indexerSettingsApiProvider).getSettings(),
       ]);
       if (!mounted) {
         return;
@@ -539,9 +540,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
   Future<void> _refreshData() async {
     try {
       final results = await Future.wait<Object>([
-        context.read<DownloadClientsApi>().getClients(),
-        context.read<MediaLibrariesApi>().getLibraries(),
-        context.read<IndexerSettingsApi>().getSettings(),
+        ref.read(downloadClientsApiProvider).getClients(),
+        ref.read(mediaLibrariesApiProvider).getLibraries(),
+        ref.read(indexerSettingsApiProvider).getSettings(),
       ]);
       if (!mounted) {
         return;
@@ -586,7 +587,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
   }
 
   Future<void> _handleDeleteClient(DownloadClientDto client) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除下载器',
@@ -635,9 +636,9 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
   Future<void> _syncDataInBackground() async {
     try {
       final results = await Future.wait<Object>([
-        context.read<DownloadClientsApi>().getClients(),
-        context.read<MediaLibrariesApi>().getLibraries(),
-        context.read<IndexerSettingsApi>().getSettings(),
+        ref.read(downloadClientsApiProvider).getClients(),
+        ref.read(mediaLibrariesApiProvider).getLibraries(),
+        ref.read(indexerSettingsApiProvider).getSettings(),
       ]);
       if (!mounted) {
         return;
@@ -812,7 +813,7 @@ class _MobileDownloaderSkeletonCard extends StatelessWidget {
   }
 }
 
-class _MobileDownloaderEditorDrawer extends StatefulWidget {
+class _MobileDownloaderEditorDrawer extends ConsumerStatefulWidget {
   const _MobileDownloaderEditorDrawer({
     required this.libraries,
     this.initialClient,
@@ -822,12 +823,12 @@ class _MobileDownloaderEditorDrawer extends StatefulWidget {
   final DownloadClientDto? initialClient;
 
   @override
-  State<_MobileDownloaderEditorDrawer> createState() =>
+  ConsumerState<_MobileDownloaderEditorDrawer> createState() =>
       _MobileDownloaderEditorDrawerState();
 }
 
 class _MobileDownloaderEditorDrawerState
-    extends State<_MobileDownloaderEditorDrawer> {
+    extends ConsumerState<_MobileDownloaderEditorDrawer> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _baseUrlController;
@@ -1006,7 +1007,7 @@ class _MobileDownloaderEditorDrawerState
     );
 
     try {
-      final api = context.read<DownloadClientsApi>();
+      final api = ref.read(downloadClientsApiProvider);
       final client =
           _isEditing
               ? await api.updateClient(
@@ -1058,7 +1059,7 @@ class _MobileDownloaderEditorDrawerState
     final payload = value.toProbeTestPayload(
       clientId: widget.initialClient?.id,
     );
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await handleProbeConnectivityTap(
       context: context,
       probe: _probe,
@@ -1073,7 +1074,7 @@ class _MobileDownloaderEditorDrawerState
     final payload = value.toProbeStorageTestPayload(
       clientId: widget.initialClient?.id,
     );
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await handleProbeStorageTap(
       context: context,
       probe: _probe,
@@ -1087,7 +1088,7 @@ class _MobileDownloaderEditorDrawerState
     DownloadClientTestResultDto result,
     DownloadClientProbeTestPayload payload,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:
@@ -1104,7 +1105,7 @@ class _MobileDownloaderEditorDrawerState
     DownloadClientProbeStorageTestPayload payload,
     String baseUrl,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:
@@ -1118,7 +1119,7 @@ class _MobileDownloaderEditorDrawerState
   }
 }
 
-class _MobileDownloaderDetailDrawer extends StatefulWidget {
+class _MobileDownloaderDetailDrawer extends ConsumerStatefulWidget {
   const _MobileDownloaderDetailDrawer({
     required this.client,
     required this.mediaLibrary,
@@ -1134,12 +1135,12 @@ class _MobileDownloaderDetailDrawer extends StatefulWidget {
   final ValueChanged<DownloadClientStorageTestResultDto>? onStorageResult;
 
   @override
-  State<_MobileDownloaderDetailDrawer> createState() =>
+  ConsumerState<_MobileDownloaderDetailDrawer> createState() =>
       _MobileDownloaderDetailDrawerState();
 }
 
 class _MobileDownloaderDetailDrawerState
-    extends State<_MobileDownloaderDetailDrawer> {
+    extends ConsumerState<_MobileDownloaderDetailDrawer> {
   late final DownloadClientProbeController _probe;
 
   @override
@@ -1167,7 +1168,7 @@ class _MobileDownloaderDetailDrawerState
   }
 
   Future<void> _handleConnectivityAction() {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     return handleProbeConnectivityTap(
       context: context,
       probe: _probe,
@@ -1177,7 +1178,7 @@ class _MobileDownloaderDetailDrawerState
   }
 
   Future<void> _handleStorageAction() {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     return handleProbeStorageTap(
       context: context,
       probe: _probe,
@@ -1189,7 +1190,7 @@ class _MobileDownloaderDetailDrawerState
   Future<void> _openConnectivityDialog(
     DownloadClientTestResultDto result,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:
@@ -1204,7 +1205,7 @@ class _MobileDownloaderDetailDrawerState
   Future<void> _openStorageDialog(
     DownloadClientStorageTestResultDto result,
   ) async {
-    final api = context.read<DownloadClientsApi>();
+    final api = ref.read(downloadClientsApiProvider);
     await showDialog<void>(
       context: context,
       builder:

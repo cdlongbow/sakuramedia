@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/validation/url_validators.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
@@ -18,7 +19,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-class DesktopAdvancedSettingsSection extends StatefulWidget {
+class DesktopAdvancedSettingsSection extends ConsumerStatefulWidget {
   const DesktopAdvancedSettingsSection({
     super.key,
     required this.active,
@@ -29,12 +30,12 @@ class DesktopAdvancedSettingsSection extends StatefulWidget {
   final ValueChanged<bool>? onDirtyChanged;
 
   @override
-  State<DesktopAdvancedSettingsSection> createState() =>
+  ConsumerState<DesktopAdvancedSettingsSection> createState() =>
       _DesktopAdvancedSettingsSectionState();
 }
 
 class _DesktopAdvancedSettingsSectionState
-    extends State<DesktopAdvancedSettingsSection> {
+    extends ConsumerState<DesktopAdvancedSettingsSection> {
   final GlobalKey<FormState> _mediaFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _metadataFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _schedulerFormKey = GlobalKey<FormState>();
@@ -62,7 +63,7 @@ class _DesktopAdvancedSettingsSectionState
   String _loggingLevel = _defaultLoggingLevel;
   String _savedLoggingLevel = _defaultLoggingLevel;
 
-  ConfigApi get _api => context.read<ConfigApi>();
+  ConfigApi get _api => ref.read(configApiProvider);
 
   @override
   void initState() {

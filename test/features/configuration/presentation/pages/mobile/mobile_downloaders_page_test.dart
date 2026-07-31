@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -515,22 +516,29 @@ Future<void> _pumpPage(
   IndexerSettingsApi? indexerSettingsApi,
 }) async {
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        Provider<DownloadClientsApi>.value(
-          value: downloadClientsApi ?? _bundle.downloadClientsApi,
-        ),
-        Provider<MediaLibrariesApi>.value(
-          value: mediaLibrariesApi ?? _bundle.mediaLibrariesApi,
-        ),
-        Provider<IndexerSettingsApi>.value(
-          value: indexerSettingsApi ?? _bundle.indexerSettingsApi,
-        ),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: MobileDownloadersPage()),
+    ProviderScope(
+      overrides: _bundle.riverpodOverrides(
+        downloadClientsApi: downloadClientsApi,
+        mediaLibrariesApi: mediaLibrariesApi,
+        indexerSettingsApi: indexerSettingsApi,
+      ),
+      child: MultiProvider(
+        providers: [
+          Provider<DownloadClientsApi>.value(
+            value: downloadClientsApi ?? _bundle.downloadClientsApi,
+          ),
+          Provider<MediaLibrariesApi>.value(
+            value: mediaLibrariesApi ?? _bundle.mediaLibrariesApi,
+          ),
+          Provider<IndexerSettingsApi>.value(
+            value: indexerSettingsApi ?? _bundle.indexerSettingsApi,
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: MobileDownloadersPage()),
+          ),
         ),
       ),
     ),

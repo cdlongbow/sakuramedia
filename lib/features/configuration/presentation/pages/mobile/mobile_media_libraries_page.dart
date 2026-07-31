@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_backend_picker.dart';
@@ -23,15 +23,16 @@ import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart'
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_form_sheet.dart';
 
-class MobileMediaLibrariesPage extends StatefulWidget {
+class MobileMediaLibrariesPage extends ConsumerStatefulWidget {
   const MobileMediaLibrariesPage({super.key});
 
   @override
-  State<MobileMediaLibrariesPage> createState() =>
+  ConsumerState<MobileMediaLibrariesPage> createState() =>
       _MobileMediaLibrariesPageState();
 }
 
-class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
+class _MobileMediaLibrariesPageState
+    extends ConsumerState<MobileMediaLibrariesPage> {
   List<MediaLibraryDto> _libraries = const <MediaLibraryDto>[];
   bool _isLoading = true;
   String? _errorMessage;
@@ -49,7 +50,8 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
     });
 
     try {
-      final libraries = await context.read<MediaLibrariesApi>().getLibraries();
+      final libraries =
+          await ref.read(mediaLibrariesApiProvider).getLibraries();
       if (!mounted) {
         return;
       }
@@ -70,7 +72,8 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
 
   Future<void> _refreshLibraries() async {
     try {
-      final libraries = await context.read<MediaLibrariesApi>().getLibraries();
+      final libraries =
+          await ref.read(mediaLibrariesApiProvider).getLibraries();
       if (!mounted) {
         return;
       }
@@ -151,7 +154,7 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
   }
 
   Future<void> _handleDeleteLibrary(MediaLibraryDto library) async {
-    final api = context.read<MediaLibrariesApi>();
+    final api = ref.read(mediaLibrariesApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除媒体库',
@@ -176,7 +179,8 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
 
   Future<void> _syncLibrariesInBackground() async {
     try {
-      final libraries = await context.read<MediaLibrariesApi>().getLibraries();
+      final libraries =
+          await ref.read(mediaLibrariesApiProvider).getLibraries();
       if (!mounted) {
         return;
       }
@@ -484,18 +488,18 @@ class _MobileMediaLibrarySkeletonCard extends StatelessWidget {
   }
 }
 
-class _MobileMediaLibraryEditorDrawer extends StatefulWidget {
+class _MobileMediaLibraryEditorDrawer extends ConsumerStatefulWidget {
   const _MobileMediaLibraryEditorDrawer({this.initialLibrary});
 
   final MediaLibraryDto? initialLibrary;
 
   @override
-  State<_MobileMediaLibraryEditorDrawer> createState() =>
+  ConsumerState<_MobileMediaLibraryEditorDrawer> createState() =>
       _MobileMediaLibraryEditorDrawerState();
 }
 
 class _MobileMediaLibraryEditorDrawerState
-    extends State<_MobileMediaLibraryEditorDrawer> {
+    extends ConsumerState<_MobileMediaLibraryEditorDrawer> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _rootPathController;
@@ -585,7 +589,7 @@ class _MobileMediaLibraryEditorDrawerState
     );
 
     try {
-      final api = context.read<MediaLibrariesApi>();
+      final api = ref.read(mediaLibrariesApiProvider);
       final library =
           _isEditing
               ? await api.updateLibrary(

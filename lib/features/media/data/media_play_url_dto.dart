@@ -81,11 +81,10 @@ class MoviePlayUrlDto {
       playUrl: asStringOrNull(json['play_url'], trim: true),
       kind: MoviePlayUrlKind.fromApi(asStringOrNull(json['kind'])),
       segmentCount: asInt(json['segment_count']),
-      segments:
-          (json['segments'] as List<dynamic>? ?? const <dynamic>[])
-              .whereType<Map<String, dynamic>>()
-              .map(MoviePlayUrlSegmentDto.fromJson)
-              .toList(growable: false),
+      segments: (json['segments'] as List<dynamic>? ?? const <dynamic>[])
+          .whereType<Map<String, dynamic>>()
+          .map(MoviePlayUrlSegmentDto.fromJson)
+          .toList(growable: false),
     );
   }
 }

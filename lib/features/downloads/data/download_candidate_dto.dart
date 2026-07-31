@@ -50,12 +50,12 @@ class DownloadCandidateDto {
       downloadClients.isNotEmpty
           ? downloadClients
           : <DownloadCandidateClientDto>[
-              DownloadCandidateClientDto(
-                id: resolvedClientId,
-                name: resolvedClientName,
-                kind: resolvedClientKind,
-              ),
-            ];
+            DownloadCandidateClientDto(
+              id: resolvedClientId,
+              name: resolvedClientName,
+              kind: resolvedClientKind,
+            ),
+          ];
   final String movieNumber;
   final String title;
   final int sizeBytes;
@@ -84,15 +84,16 @@ class DownloadCandidateDto {
       resolvedClientId: resolvedClientId,
       resolvedClientName: resolvedClientName,
       resolvedClientKind: resolvedClientKind,
-      downloadClients: parsedClients.isNotEmpty
-          ? parsedClients
-          : <DownloadCandidateClientDto>[
-              DownloadCandidateClientDto(
-                id: resolvedClientId,
-                name: resolvedClientName,
-                kind: resolvedClientKind,
-              ),
-            ],
+      downloadClients:
+          parsedClients.isNotEmpty
+              ? parsedClients
+              : <DownloadCandidateClientDto>[
+                DownloadCandidateClientDto(
+                  id: resolvedClientId,
+                  name: resolvedClientName,
+                  kind: resolvedClientKind,
+                ),
+              ],
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',
       sizeBytes: json['size_bytes'] as int? ?? 0,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 
 part 'mutation_events_provider.g.dart';
@@ -40,6 +41,39 @@ Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) {
   // AsyncValue 而非 stream 本身。
   final controller = StreamController<List<MovieSubscriptionChange>>();
   void onChanged() => notifier.consumePendingChanges(controller.add);
+  notifier.addListener(onChanged);
+  ref.onDispose(() {
+    notifier.removeListener(onChanged);
+    unawaited(controller.close());
+  });
+  return controller.stream;
+}
+
+/// 跨页合集类型（单体/合集）变更广播源的桥——与
+/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
+/// 保持「单一广播源」。实例由组合根 override 注入。
+@Riverpod(keepAlive: true)
+MovieCollectionTypeChangeNotifier collectionTypeBroadcaster(Ref ref) {
+  throw UnimplementedError(
+    'Override collectionTypeBroadcasterProvider at the app root',
+  );
+}
+
+/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
+///
+/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
+/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
+@Riverpod(keepAlive: true)
+Stream<MovieCollectionTypeChange> movieCollectionTypeEvents(Ref ref) {
+  final notifier = ref.watch(collectionTypeBroadcasterProvider);
+  final controller = StreamController<MovieCollectionTypeChange>();
+  void onChanged() {
+    final change = notifier.lastChange;
+    if (change != null) {
+      controller.add(change);
+    }
+  }
+
   notifier.addListener(onChanged);
   ref.onDispose(() {
     notifier.removeListener(onChanged);

@@ -98,8 +98,9 @@ class ClipCollectionDetailController extends ChangeNotifier {
       return null;
     }
     final previous = _clips;
-    _clips =
-        _clips.where((clip) => clip.clipId != clipId).toList(growable: false);
+    _clips = _clips
+        .where((clip) => clip.clipId != clipId)
+        .toList(growable: false);
     _isMutating = true;
     notifyListeners();
     try {
@@ -125,8 +126,9 @@ class ClipCollectionDetailController extends ChangeNotifier {
       return null;
     }
     final previous = _clips;
-    _clips =
-        _clips.where((clip) => clip.clipId != clipId).toList(growable: false);
+    _clips = _clips
+        .where((clip) => clip.clipId != clipId)
+        .toList(growable: false);
     _isMutating = true;
     notifyListeners();
     try {

@@ -167,3 +167,120 @@ final class MovieSubscriptionEventsProvider
 
 String _$movieSubscriptionEventsHash() =>
     r'c19cdac0e0993056126ec9f8c49fd55bff54df25';
+
+/// 跨页合集类型（单体/合集）变更广播源的桥——与
+/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
+/// 保持「单一广播源」。实例由组合根 override 注入。
+
+@ProviderFor(collectionTypeBroadcaster)
+final collectionTypeBroadcasterProvider = CollectionTypeBroadcasterProvider._();
+
+/// 跨页合集类型（单体/合集）变更广播源的桥——与
+/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
+/// 保持「单一广播源」。实例由组合根 override 注入。
+
+final class CollectionTypeBroadcasterProvider
+    extends
+        $FunctionalProvider<
+          MovieCollectionTypeChangeNotifier,
+          MovieCollectionTypeChangeNotifier,
+          MovieCollectionTypeChangeNotifier
+        >
+    with $Provider<MovieCollectionTypeChangeNotifier> {
+  /// 跨页合集类型（单体/合集）变更广播源的桥——与
+  /// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
+  /// 保持「单一广播源」。实例由组合根 override 注入。
+  CollectionTypeBroadcasterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'collectionTypeBroadcasterProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$collectionTypeBroadcasterHash();
+
+  @$internal
+  @override
+  $ProviderElement<MovieCollectionTypeChangeNotifier> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  MovieCollectionTypeChangeNotifier create(Ref ref) {
+    return collectionTypeBroadcaster(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(MovieCollectionTypeChangeNotifier value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MovieCollectionTypeChangeNotifier>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$collectionTypeBroadcasterHash() =>
+    r'9208f0dff0403c3c315e64d2f6f1a667642d8c93';
+
+/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
+///
+/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
+/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
+
+@ProviderFor(movieCollectionTypeEvents)
+final movieCollectionTypeEventsProvider = MovieCollectionTypeEventsProvider._();
+
+/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
+///
+/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
+/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
+
+final class MovieCollectionTypeEventsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<MovieCollectionTypeChange>,
+          MovieCollectionTypeChange,
+          Stream<MovieCollectionTypeChange>
+        >
+    with
+        $FutureModifier<MovieCollectionTypeChange>,
+        $StreamProvider<MovieCollectionTypeChange> {
+  /// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
+  ///
+  /// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
+  /// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
+  MovieCollectionTypeEventsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'movieCollectionTypeEventsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$movieCollectionTypeEventsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<MovieCollectionTypeChange> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<MovieCollectionTypeChange> create(Ref ref) {
+    return movieCollectionTypeEvents(ref);
+  }
+}
+
+String _$movieCollectionTypeEventsHash() =>
+    r'41e5c72305ea8e4dedc9e19edb5e0171f1e2c326';

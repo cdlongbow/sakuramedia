@@ -257,8 +257,7 @@ class _WebSseEventStreamClient implements SseEventStreamClient {
     if (error case web.DOMException(name: 'AbortError')) {
       return ApiException(message: 'Event stream aborted', statusCode: null);
     }
-    if (error is ApiException ||
-        error is SseEventStreamUnsupportedException) {
+    if (error is ApiException || error is SseEventStreamUnsupportedException) {
       return error;
     }
     return ApiException(message: error.toString());

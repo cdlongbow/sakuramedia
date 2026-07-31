@@ -72,8 +72,8 @@ Future<void> _pumpDesktopApp(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
         ChangeNotifierProvider(create: (_) => AppShellController()),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
+        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+          value: bundle.movieSubscriptionBroadcaster,
         ),
         Provider<StatusApi>.value(value: bundle.statusApi),
         Provider<MoviesApi>.value(value: bundle.moviesApi),

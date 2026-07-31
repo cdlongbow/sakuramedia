@@ -340,8 +340,7 @@ class MovieDetailPageContent extends StatelessWidget {
                   MoviePlaybackOptionsBar(
                     sourceOptions: sourceOptions!,
                     selectedSource: selectedPlaySource,
-                    onSourceChanged:
-                        onPlaySourceChanged ?? (_) {},
+                    onSourceChanged: onPlaySourceChanged ?? (_) {},
                     mergedAvailable: mergedPlaybackAvailable,
                     selectedMode: selectedPlayMode,
                     onModeChanged: onPlayModeChanged ?? (_) {},

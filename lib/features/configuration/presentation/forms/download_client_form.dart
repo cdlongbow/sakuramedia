@@ -236,9 +236,10 @@ class DownloadClientFormFields extends StatelessWidget {
     final credentialsFields = _buildCredentialsFields(context);
     final eligibleLibraries = libraries
         .where(
-          (library) => kind == DownloadClientKind.cloud115
-              ? library.isCloud115
-              : library.isLocal,
+          (library) =>
+              kind == DownloadClientKind.cloud115
+                  ? library.isCloud115
+                  : library.isLocal,
         )
         .toList(growable: false);
 
@@ -257,11 +258,12 @@ class DownloadClientFormFields extends StatelessWidget {
               )
               .toList(growable: false),
           label: '下载方式',
-          onChanged: enabled && !isEditing
-              ? (value) {
-                  if (value != null) onKindChanged(value);
-                }
-              : null,
+          onChanged:
+              enabled && !isEditing
+                  ? (value) {
+                    if (value != null) onKindChanged(value);
+                  }
+                  : null,
         ),
         SizedBox(height: resolvedFieldSpacing),
         AppTextField(
@@ -274,9 +276,11 @@ class DownloadClientFormFields extends StatelessWidget {
           validator: validateDownloadClientName,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) => kind == DownloadClientKind.qbittorrent
-              ? baseUrlFocusNode?.requestFocus()
-              : onSubmitted?.call(),
+          onFieldSubmitted:
+              (_) =>
+                  kind == DownloadClientKind.qbittorrent
+                      ? baseUrlFocusNode?.requestFocus()
+                      : onSubmitted?.call(),
         ),
         if (kind == DownloadClientKind.qbittorrent) ...[
           SizedBox(height: resolvedFieldSpacing),
@@ -336,14 +340,16 @@ class DownloadClientFormFields extends StatelessWidget {
               )
               .toList(growable: false),
           label: '目标媒体库',
-          placeholder: eligibleLibraries.isEmpty
-              ? '请先准备${kind == DownloadClientKind.cloud115 ? ' 115' : '本地'}媒体库'
-              : '请选择目标媒体库',
-          onChanged: enabled &&
-                  (!isEditing || kind == DownloadClientKind.qbittorrent) &&
-                  eligibleLibraries.isNotEmpty
-              ? onLibraryChanged
-              : null,
+          placeholder:
+              eligibleLibraries.isEmpty
+                  ? '请先准备${kind == DownloadClientKind.cloud115 ? ' 115' : '本地'}媒体库'
+                  : '请选择目标媒体库',
+          onChanged:
+              enabled &&
+                      (!isEditing || kind == DownloadClientKind.qbittorrent) &&
+                      eligibleLibraries.isNotEmpty
+                  ? onLibraryChanged
+                  : null,
           validator: (value) => value == null ? '请选择目标媒体库' : null,
         ),
         if (kind == DownloadClientKind.qbittorrent) ...[
@@ -393,8 +399,9 @@ class DownloadClientFormFields extends StatelessWidget {
       hintText: '输入用于登录下载器的密码',
       helperText: isEditing ? '留空则保持原密码不变' : null,
       obscureText: true,
-      validator: (value) =>
-          validateDownloadClientPassword(value, isEditing: isEditing),
+      validator:
+          (value) =>
+              validateDownloadClientPassword(value, isEditing: isEditing),
       autovalidateMode: autovalidateMode,
       textInputAction: TextInputAction.next,
       onFieldSubmitted: (_) => clientSavePathFocusNode?.requestFocus(),

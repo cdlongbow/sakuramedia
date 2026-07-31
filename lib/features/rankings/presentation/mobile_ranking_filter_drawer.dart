@@ -33,7 +33,7 @@ class RankingFilterDrawerArgs {
   final RankingSortField? selectedSortField;
   final SortDirection selectedSortDirection;
   final void Function(RankingSortField? field, SortDirection direction)
-      onSortChanged;
+  onSortChanged;
 }
 
 /// 弹出移动端榜单筛选底部抽屉。
@@ -54,11 +54,12 @@ Future<void> showMobileRankingFilterDrawer(
     context: context,
     drawerKey: const Key('mobile-rankings-filter-drawer'),
     maxHeightFactor: 0.6,
-    builder: (sheetContext) => _MobileRankingFilterDrawerContent(
-      listenable: listenable,
-      argsBuilder: argsBuilder,
-      initialAnchor: initialAnchor,
-    ),
+    builder:
+        (sheetContext) => _MobileRankingFilterDrawerContent(
+          listenable: listenable,
+          argsBuilder: argsBuilder,
+          initialAnchor: initialAnchor,
+        ),
   );
 }
 

@@ -74,7 +74,9 @@ class AppTextScale extends ThemeExtension<AppTextScale> {
         // 仅 Web 内嵌的可变字体需要:把字重喂给 wght 轴(默认停在 Thin 100)。
         // 其他平台用系统字体,靠 fontWeight 即可。
         fontVariations:
-            kIsWeb ? [FontVariation('wght', fontWeight.value.toDouble())] : null,
+            kIsWeb
+                ? [FontVariation('wght', fontWeight.value.toDouble())]
+                : null,
       );
     }
 

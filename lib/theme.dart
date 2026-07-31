@@ -116,9 +116,12 @@ ThemeData _buildSakuraThemeData({
       onInverseSurface: Color(0xFFF8EEEA),
       inversePrimary: Color(0xFFFFB4A9),
     ),
-    textTheme: kIsWeb
-        ? textScale.toTextTheme(textWeights).apply(fontFamily: kAppFontFamily)
-        : textScale.toTextTheme(textWeights),
+    textTheme:
+        kIsWeb
+            ? textScale
+                .toTextTheme(textWeights)
+                .apply(fontFamily: kAppFontFamily)
+            : textScale.toTextTheme(textWeights),
     extensions: <ThemeExtension<dynamic>>[
       const AppColors.defaults(),
       componentTokens,

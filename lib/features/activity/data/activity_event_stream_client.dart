@@ -4,8 +4,8 @@ import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 
 /// 兼容别名：活动流的 Unsupported 异常上提到 core 后，保留别名让现有 catch 逻辑不改。
-typedef ActivityEventStreamUnsupportedException
-    = SseEventStreamUnsupportedException;
+typedef ActivityEventStreamUnsupportedException =
+    SseEventStreamUnsupportedException;
 
 /// 活动流客户端：把 core 的通用 SSE 客户端包装成固定连 `/system/events/stream`
 /// 的 `connect({afterEventId})` API，避免调用方感知路径与查询参数。

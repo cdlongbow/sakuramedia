@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
@@ -14,7 +12,10 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
-class DesktopPlaylistsPage extends StatefulWidget {
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+
+class DesktopPlaylistsPage extends ConsumerStatefulWidget {
   const DesktopPlaylistsPage({
     super.key,
     this.playlistOrderStore = const SharedPreferencesPlaylistOrderStore(),
@@ -23,17 +24,18 @@ class DesktopPlaylistsPage extends StatefulWidget {
   final PlaylistOrderStore playlistOrderStore;
 
   @override
-  State<DesktopPlaylistsPage> createState() => _DesktopPlaylistsPageState();
+  ConsumerState<DesktopPlaylistsPage> createState() =>
+      _DesktopPlaylistsPageState();
 }
 
-class _DesktopPlaylistsPageState extends State<DesktopPlaylistsPage> {
+class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
   late final PlaylistsOverviewController _controller;
   int? _hoveredPlaylistId;
 
   @override
   void initState() {
     super.initState();
-    final api = context.read<PlaylistsApi>();
+    final api = ref.read(playlistsApiProvider);
     _controller = PlaylistsOverviewController(
       fetchPlaylists: api.getPlaylists,
       fetchPlaylistCoverUrl: (playlistId) async {
@@ -45,7 +47,7 @@ class _DesktopPlaylistsPageState extends State<DesktopPlaylistsPage> {
       },
       createPlaylist: api.createPlaylist,
       playlistOrderStore: widget.playlistOrderStore,
-      orderScopeKey: context.read<SessionStore>().baseUrl,
+      orderScopeKey: ref.read(sessionStoreProvider).baseUrl,
     )..load();
   }
 
@@ -70,54 +72,54 @@ class _DesktopPlaylistsPageState extends State<DesktopPlaylistsPage> {
         animation: _controller,
         builder: (context, _) {
           if (_controller.isLoading) {
-          return const SizedBox.expand(
-            child: Center(
-              child: SizedBox(
-                key: Key('playlists-page-loading'),
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(),
+            return const SizedBox.expand(
+              child: Center(
+                child: SizedBox(
+                  key: Key('playlists-page-loading'),
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(),
+                ),
               ),
+            );
+          }
+
+          if (_controller.errorMessage != null) {
+            return AppEmptyState(message: _controller.errorMessage!);
+          }
+
+          return ColoredBox(
+            color: context.appColors.surfaceElevated,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '播放列表',
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s18,
+                        weight: AppTextWeight.semibold,
+                        tone: AppTextTone.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    AppButton(
+                      key: const Key('playlists-create-button'),
+                      label: '新建播放列表',
+                      variant: AppButtonVariant.primary,
+                      onPressed: _openCreateDialog,
+                      size: AppButtonSize.small,
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.appSpacing.lg),
+                Expanded(child: _buildPlaylistsList(context)),
+              ],
             ),
           );
-        }
-
-        if (_controller.errorMessage != null) {
-          return AppEmptyState(message: _controller.errorMessage!);
-        }
-
-        return ColoredBox(
-          color: context.appColors.surfaceElevated,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '播放列表',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s18,
-                      weight: AppTextWeight.semibold,
-                      tone: AppTextTone.primary,
-                    ),
-                  ),
-                  const Spacer(),
-                  AppButton(
-                    key: const Key('playlists-create-button'),
-                    label: '新建播放列表',
-                    variant: AppButtonVariant.primary,
-                    onPressed: _openCreateDialog,
-                    size: AppButtonSize.small,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.appSpacing.lg),
-              Expanded(child: _buildPlaylistsList(context)),
-            ],
-          ),
-        );
-      },
+        },
       ),
     );
   }

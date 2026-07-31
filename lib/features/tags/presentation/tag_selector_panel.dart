@@ -112,19 +112,20 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
               size: context.appComponentTokens.iconSizeSm,
               color: context.appTextPalette.secondary,
             ),
-            suffix: _searchController.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      size: context.appComponentTokens.iconSizeSm,
+            suffix:
+                _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        size: context.appComponentTokens.iconSizeSm,
+                      ),
+                      splashRadius: 16,
+                      onPressed: () {
+                        _searchController.clear();
+                        widget.onQueryChanged('');
+                      },
                     ),
-                    splashRadius: 16,
-                    onPressed: () {
-                      _searchController.clear();
-                      widget.onQueryChanged('');
-                    },
-                  ),
             onChanged: widget.onQueryChanged,
           ),
           SizedBox(height: spacing.md),
@@ -328,9 +329,10 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
     // 收起态（非搜索）仅展示前 _collapsedCloudLimit 个，约三行；
     // 展开或搜索时完整展示。按数量裁剪，确保「展开全部」只在确有隐藏项时出现。
     final showAll = selection.isSearching || selection.expanded;
-    final visibleTags = showAll || tags.length <= _collapsedCloudLimit
-        ? tags
-        : tags.sublist(0, _collapsedCloudLimit);
+    final visibleTags =
+        showAll || tags.length <= _collapsedCloudLimit
+            ? tags
+            : tags.sublist(0, _collapsedCloudLimit);
     return _buildCloudWrap(context, visibleTags);
   }
 

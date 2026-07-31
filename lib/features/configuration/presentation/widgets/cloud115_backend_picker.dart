@@ -46,8 +46,9 @@ Future<MediaLibraryBackend?> showMediaLibraryBackendPicker(
               title: '本地存储',
               subtitle: '使用后端服务器可访问的本地目录',
               trailing: const AppSettingCellChevron(),
-              onTap: () =>
-                  Navigator.of(modalContext).pop(MediaLibraryBackend.local),
+              onTap:
+                  () =>
+                      Navigator.of(modalContext).pop(MediaLibraryBackend.local),
             ),
             AppSettingCell(
               key: const Key('media-library-backend-cloud115'),
@@ -55,8 +56,10 @@ Future<MediaLibraryBackend?> showMediaLibraryBackendPicker(
               title: '115 网盘',
               subtitle: '扫码登录并使用 115 网盘存储媒体',
               trailing: const AppSettingCellChevron(),
-              onTap: () =>
-                  Navigator.of(modalContext).pop(MediaLibraryBackend.cloud115),
+              onTap:
+                  () => Navigator.of(
+                    modalContext,
+                  ).pop(MediaLibraryBackend.cloud115),
             ),
           ],
         ),

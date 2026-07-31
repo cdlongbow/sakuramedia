@@ -219,7 +219,8 @@ class _LoginPageState extends State<LoginPage> {
               final shortViewport = constraints.maxHeight < 400;
               final topPadding = shortViewport ? spacing.lg : spacing.xxl;
               final bottomPadding =
-                  (shortViewport ? spacing.lg : spacing.xxl) + viewInsets.bottom;
+                  (shortViewport ? spacing.lg : spacing.xxl) +
+                  viewInsets.bottom;
               final availableHeight =
                   constraints.maxHeight - topPadding - bottomPadding;
               // 矮屏下同步收紧:块级间距(副标题后/按钮前)、输入框间距、卡片内边距。
@@ -684,16 +685,15 @@ class _ProtocolMenu extends StatelessWidget {
         borderRadius: context.appRadius.smBorder,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children:
-              protocols
-                  .map(
-                    (protocol) => _ProtocolMenuItem(
-                      protocol: protocol,
-                      selected: protocol == selected,
-                      onTap: () => onSelected(protocol),
-                    ),
-                  )
-                  .toList(growable: false),
+          children: protocols
+              .map(
+                (protocol) => _ProtocolMenuItem(
+                  protocol: protocol,
+                  selected: protocol == selected,
+                  onTap: () => onSelected(protocol),
+                ),
+              )
+              .toList(growable: false),
         ),
       ),
     );

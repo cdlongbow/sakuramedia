@@ -349,7 +349,8 @@ class ApiClient {
                   if (!controller.isClosed) controller.close();
                   return;
                 }
-                if (!controller.isClosed) controller.addError(error, stackTrace);
+                if (!controller.isClosed)
+                  controller.addError(error, stackTrace);
               },
               onDone: () {
                 if (!controller.isClosed) controller.close();

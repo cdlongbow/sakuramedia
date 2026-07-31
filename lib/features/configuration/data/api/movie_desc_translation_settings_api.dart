@@ -48,9 +48,7 @@ class MovieDescTranslationSettingsApi {
   ) {
     final values = response['values'];
     if (values is! Map) {
-      throw const FormatException(
-        '/config response missing "values" object',
-      );
+      throw const FormatException('/config response missing "values" object');
     }
     final section = values[_configSection];
     if (section is! Map) {

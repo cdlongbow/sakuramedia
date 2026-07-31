@@ -46,6 +46,7 @@ import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
@@ -363,6 +364,12 @@ class _MyAppState extends State<MyApp> {
               // ChangeNotifier 实例，两侧 report 的变更彼此都能收到。
               movieSubscriptionBroadcasterProvider.overrideWithValue(
                 context.read<MovieSubscriptionChangeNotifier>(),
+              ),
+              collectionTypeBroadcasterProvider.overrideWithValue(
+                context.read<MovieCollectionTypeChangeNotifier>(),
+              ),
+              clipMutationBroadcasterProvider.overrideWithValue(
+                context.read<ClipMutationChangeNotifier>(),
               ),
               // —— 迁移批次 1 起补齐的横切桥（真源仍在上方 MultiProvider，
               // 组合根反转时统一清偿）——

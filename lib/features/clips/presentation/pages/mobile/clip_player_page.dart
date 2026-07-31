@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
@@ -14,11 +13,13 @@ import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overl
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+
 /// 移动端单切片全屏横屏播放页：进入锁定横屏沉浸式、退出恢复原方向。
 ///
 /// 切片很短，无需缩略图 / 进度上报 / 字幕，用 media_kit 直接播放签名 `streamUrl`，
 /// 播放控件与合集连播页保持一致（去掉上一首 / 下一首）。
-class MobileClipPlayerPage extends StatefulWidget {
+class MobileClipPlayerPage extends ConsumerStatefulWidget {
   const MobileClipPlayerPage({
     super.key,
     required this.streamUrl,
@@ -29,10 +30,11 @@ class MobileClipPlayerPage extends StatefulWidget {
   final String title;
 
   @override
-  State<MobileClipPlayerPage> createState() => _MobileClipPlayerPageState();
+  ConsumerState<MobileClipPlayerPage> createState() =>
+      _MobileClipPlayerPageState();
 }
 
-class _MobileClipPlayerPageState extends State<MobileClipPlayerPage> {
+class _MobileClipPlayerPageState extends ConsumerState<MobileClipPlayerPage> {
   Player? _player;
   VideoController? _controller;
   bool _hasResolvedUrl = true;
@@ -55,7 +57,7 @@ class _MobileClipPlayerPageState extends State<MobileClipPlayerPage> {
     if (!mounted) {
       return;
     }
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(
       rawUrl: widget.streamUrl,
       baseUrl: baseUrl,

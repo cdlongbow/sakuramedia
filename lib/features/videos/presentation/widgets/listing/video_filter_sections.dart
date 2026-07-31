@@ -29,9 +29,11 @@ class VideoFilterSectionGroup extends StatelessWidget {
           title: '排序字段',
           options: VideoSortField.values,
           selectedValue: filterState.sortField,
-          optionKeyBuilder: (field) => Key('videos-filter-sort-${field.apiValue}'),
+          optionKeyBuilder:
+              (field) => Key('videos-filter-sort-${field.apiValue}'),
           labelBuilder: (field) => field.label,
-          onSelected: (field) => onChanged(filterState.copyWith(sortField: field)),
+          onSelected:
+              (field) => onChanged(filterState.copyWith(sortField: field)),
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<SortDirection>(
@@ -44,7 +46,8 @@ class VideoFilterSectionGroup extends StatelessWidget {
                 '${dir == SortDirection.desc ? 'desc' : 'asc'}',
               ),
           labelBuilder: (dir) => dir == SortDirection.desc ? '降序' : '升序',
-          onSelected: (dir) => onChanged(filterState.copyWith(sortDirection: dir)),
+          onSelected:
+              (dir) => onChanged(filterState.copyWith(sortDirection: dir)),
         ),
       ],
     );

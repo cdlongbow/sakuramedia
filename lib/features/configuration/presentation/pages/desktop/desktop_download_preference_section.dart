@@ -25,8 +25,10 @@ class DesktopDownloadPreferenceSection extends StatefulWidget {
 class _DesktopDownloadPreferenceSectionState
     extends State<DesktopDownloadPreferenceSection>
     with
-        SectionLoaderMixin<ConfigResourceDto,
-            DesktopDownloadPreferenceSection> {
+        SectionLoaderMixin<
+          ConfigResourceDto,
+          DesktopDownloadPreferenceSection
+        > {
   List<DownloadClientKind> _preferredClientKinds = const <DownloadClientKind>[
     DownloadClientKind.qbittorrent,
     DownloadClientKind.cloud115,
@@ -144,9 +146,7 @@ class _DesktopDownloadPreferenceSectionState
           ),
           SizedBox(height: spacing.lg),
           AppSelectField<DownloadClientKind>(
-            key: const Key(
-              'configuration-download-preference-client-field',
-            ),
+            key: const Key('configuration-download-preference-client-field'),
             label: '首选下载器',
             value: selectedKind,
             items: [
@@ -156,21 +156,22 @@ class _DesktopDownloadPreferenceSectionState
                   child: Text(kind.label),
                 ),
             ],
-            onChanged: _isSaving
-                ? null
-                : (value) {
-                    if (value == null || value == selectedKind) {
-                      return;
-                    }
-                    setState(() {
-                      _preferredClientKinds = <DownloadClientKind>[
-                        value,
-                        ...DownloadClientKind.values.where(
-                          (kind) => kind != value,
-                        ),
-                      ];
-                    });
-                  },
+            onChanged:
+                _isSaving
+                    ? null
+                    : (value) {
+                      if (value == null || value == selectedKind) {
+                        return;
+                      }
+                      setState(() {
+                        _preferredClientKinds = <DownloadClientKind>[
+                          value,
+                          ...DownloadClientKind.values.where(
+                            (kind) => kind != value,
+                          ),
+                        ];
+                      });
+                    },
           ),
           SizedBox(height: spacing.sm),
           Text(

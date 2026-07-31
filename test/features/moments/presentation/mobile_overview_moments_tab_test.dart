@@ -251,7 +251,7 @@ Future<void> _pumpMomentsRouterApp(
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: bundle.riverpodOverrides(),
+      overrides: bundle.riverpodOverrides(imageSearchDraftStore: draftStore),
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider<SessionStore>.value(value: sessionStore),

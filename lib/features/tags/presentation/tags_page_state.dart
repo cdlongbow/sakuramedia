@@ -29,16 +29,17 @@ class TagsPageStateEntry
          popularLimit: popularLimit,
        ) {
     controller = PagedMovieSummaryController(
-      fetchPage: (page, pageSize) => _moviesApi.getMovies(
-        page: page,
-        pageSize: pageSize,
-        tagIds: selection.selectedTagIds,
-        tagMatch: selection.matchMode,
-        status: filterState.status,
-        collectionType: filterState.collectionType,
-        numberSource: filterState.numberSource,
-        sort: filterState.sortExpression,
-      ),
+      fetchPage:
+          (page, pageSize) => _moviesApi.getMovies(
+            page: page,
+            pageSize: pageSize,
+            tagIds: selection.selectedTagIds,
+            tagMatch: selection.matchMode,
+            status: filterState.status,
+            collectionType: filterState.collectionType,
+            numberSource: filterState.numberSource,
+            sort: filterState.sortExpression,
+          ),
       subscribeMovie: _moviesApi.subscribeMovie,
       unsubscribeMovie: _moviesApi.unsubscribeMovie,
       batchSubscribeMovies: _moviesApi.batchSubscribeMovies,
@@ -57,8 +58,10 @@ class TagsPageStateEntry
     // 带初始预选标签（从详情页跳入）时，种子选择发生在 listener 之前，
     // 需在此手动触发首拉影片。
     if (selection.hasSelection) {
-      _lastFetchedSignature =
-          _signatureFor(selection.selectedTagIds, selection.matchMode);
+      _lastFetchedSignature = _signatureFor(
+        selection.selectedTagIds,
+        selection.matchMode,
+      );
       unawaited(controller.initialize());
     }
   }

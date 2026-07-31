@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_list_page_state.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
@@ -19,14 +18,16 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
-class DesktopActorsPage extends StatefulWidget {
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+
+class DesktopActorsPage extends ConsumerStatefulWidget {
   const DesktopActorsPage({super.key});
 
   @override
-  State<DesktopActorsPage> createState() => _DesktopActorsPageState();
+  ConsumerState<DesktopActorsPage> createState() => _DesktopActorsPageState();
 }
 
-class _DesktopActorsPageState extends State<DesktopActorsPage> {
+class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
   late final CachedPageStateHandle<ActorListPageStateEntry> _pageStateHandle;
 
   ActorListPageStateEntry get _pageState => _pageStateHandle.value;
@@ -41,7 +42,7 @@ class _DesktopActorsPageState extends State<DesktopActorsPage> {
       context,
       key: desktopActorsPageStateKey(),
       create:
-          () => ActorListPageStateEntry(actorsApi: context.read<ActorsApi>()),
+          () => ActorListPageStateEntry(actorsApi: ref.read(actorsApiProvider)),
     );
   }
 
@@ -153,7 +154,6 @@ class _DesktopActorsPageState extends State<DesktopActorsPage> {
       ),
     );
   }
-
 }
 
 class _ActorsHeader extends StatelessWidget {

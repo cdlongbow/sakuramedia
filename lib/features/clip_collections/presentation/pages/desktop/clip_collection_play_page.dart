@@ -119,13 +119,15 @@ class _DesktopClipCollectionPlayPageState
         configuration: const VideoControllerConfiguration(hwdec: 'auto'),
       );
       // 「整部合集」关键帧面板：按可播切片顺序逐集拉关键帧（切片自身时间轴 offset）。
-      final clipIds =
-          playableClips.map((clip) => clip.clipId).toList(growable: false);
+      final clipIds = playableClips
+          .map((clip) => clip.clipId)
+          .toList(growable: false);
       final filmstrip = CollectionFilmstripController(
         episodeCount: clipIds.length,
         frameLoader: (episodeIndex) async {
-          final thumbnails =
-              await clipsApi.getClipThumbnails(clipId: clipIds[episodeIndex]);
+          final thumbnails = await clipsApi.getClipThumbnails(
+            clipId: clipIds[episodeIndex],
+          );
           return thumbnails
               .map(
                 (thumbnail) => (
@@ -288,5 +290,4 @@ class _DesktopClipCollectionPlayPageState
       ),
     );
   }
-
 }

@@ -62,9 +62,7 @@ Map<String, dynamic>? asMapOrNull(dynamic value) {
     return value;
   }
   if (value is Map) {
-    return value.map(
-      (dynamic key, dynamic v) => MapEntry(key.toString(), v),
-    );
+    return value.map((dynamic key, dynamic v) => MapEntry(key.toString(), v));
   }
   return null;
 }

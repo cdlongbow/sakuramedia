@@ -50,9 +50,10 @@ class PlaylistFilterState {
       sortDirection == SortDirection.desc &&
       resolution == null;
 
-  String? get sortExpression => sortField == null
-      ? null
-      : '${sortField!.apiValue}:${sortDirection.apiValue}';
+  String? get sortExpression =>
+      sortField == null
+          ? null
+          : '${sortField!.apiValue}:${sortDirection.apiValue}';
 
   /// 筛选入口上显示的当前筛选摘要。
   /// - 两维度都非默认 → `4K · 码率`（分辨率在前，排序在后，用 `·` 分隔）；
@@ -83,13 +84,15 @@ class PlaylistFilterState {
     Object? resolution = _playlistFilterUnset,
   }) {
     return PlaylistFilterState(
-      sortField: identical(sortField, _playlistFilterUnset)
-          ? this.sortField
-          : sortField as PlaylistSortField?,
+      sortField:
+          identical(sortField, _playlistFilterUnset)
+              ? this.sortField
+              : sortField as PlaylistSortField?,
       sortDirection: sortDirection ?? this.sortDirection,
-      resolution: identical(resolution, _playlistFilterUnset)
-          ? this.resolution
-          : resolution as PlaylistResolutionFilter?,
+      resolution:
+          identical(resolution, _playlistFilterUnset)
+              ? this.resolution
+              : resolution as PlaylistResolutionFilter?,
     );
   }
 }

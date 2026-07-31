@@ -34,21 +34,20 @@ class PlaylistFilterSectionGroup extends StatelessWidget {
       children: [
         ListenableBuilder(
           listenable: resolutionOptions,
-          builder: (context, _) => _PlaylistResolutionSection(
-            options: resolutionOptions.options,
-            selectedResolution: filterState.resolution,
-            isLoading: resolutionOptions.isLoading,
-            errorMessage: resolutionOptions.errorMessage,
-            onRetry: () => resolutionOptions.retry(),
-            onSelected: (value) =>
-                onChanged(filterState.copyWith(resolution: value)),
-          ),
+          builder:
+              (context, _) => _PlaylistResolutionSection(
+                options: resolutionOptions.options,
+                selectedResolution: filterState.resolution,
+                isLoading: resolutionOptions.isLoading,
+                errorMessage: resolutionOptions.errorMessage,
+                onRetry: () => resolutionOptions.retry(),
+                onSelected:
+                    (value) =>
+                        onChanged(filterState.copyWith(resolution: value)),
+              ),
         ),
         SizedBox(height: context.appSpacing.lg),
-        _PlaylistSortSection(
-          filterState: filterState,
-          onChanged: onChanged,
-        ),
+        _PlaylistSortSection(filterState: filterState, onChanged: onChanged),
       ],
     );
   }
@@ -97,10 +96,7 @@ class _PlaylistResolutionSection extends StatelessWidget {
             onSelected: onSelected,
           )
         else if (isLoading)
-          _ResolutionInlineStatus(
-            text: '分辨率加载中',
-            showSpinner: true,
-          )
+          _ResolutionInlineStatus(text: '分辨率加载中', showSpinner: true)
         else if (errorMessage != null)
           _ResolutionInlineStatus(
             text: errorMessage!,
@@ -125,10 +121,7 @@ class _PlaylistResolutionSection extends StatelessWidget {
         // 有数据 + 后台刷新 → 底下追一个 spinner，chips 不动。
         if (hasOptions && isLoading && errorMessage == null) ...[
           SizedBox(height: context.appSpacing.xs),
-          _ResolutionInlineStatus(
-            text: '分辨率刷新中',
-            showSpinner: true,
-          ),
+          _ResolutionInlineStatus(text: '分辨率刷新中', showSpinner: true),
         ],
       ],
     );
@@ -164,11 +157,11 @@ class _ResolutionChips extends StatelessWidget {
             key: Key('playlist-filter-resolution-${option.resolution}'),
             label: '${option.resolution}(${option.count})',
             size: AppTextButtonSize.xSmall,
-            isSelected:
-                option.resolution == selectedResolution?.apiValue,
-            onPressed: () => onSelected(
-              PlaylistResolutionFilterX.fromApiValue(option.resolution),
-            ),
+            isSelected: option.resolution == selectedResolution?.apiValue,
+            onPressed:
+                () => onSelected(
+                  PlaylistResolutionFilterX.fromApiValue(option.resolution),
+                ),
           ),
       ],
     );
@@ -221,7 +214,10 @@ class _ResolutionInlineStatus extends StatelessWidget {
 }
 
 class _PlaylistSortSection extends StatelessWidget {
-  const _PlaylistSortSection({required this.filterState, required this.onChanged});
+  const _PlaylistSortSection({
+    required this.filterState,
+    required this.onChanged,
+  });
 
   final PlaylistFilterState filterState;
   final ValueChanged<PlaylistFilterState> onChanged;
@@ -260,9 +256,8 @@ class _PlaylistSortSection extends StatelessWidget {
                 label: field.label,
                 size: AppTextButtonSize.xSmall,
                 isSelected: field == sortField,
-                onPressed: () => onChanged(
-                  filterState.copyWith(sortField: field),
-                ),
+                onPressed:
+                    () => onChanged(filterState.copyWith(sortField: field)),
               ),
           ],
         ),
@@ -290,9 +285,10 @@ class _PlaylistSortSection extends StatelessWidget {
                     label: direction == SortDirection.desc ? '降序' : '升序',
                     size: AppTextButtonSize.xSmall,
                     isSelected: direction == filterState.sortDirection,
-                    onPressed: () => onChanged(
-                      filterState.copyWith(sortDirection: direction),
-                    ),
+                    onPressed:
+                        () => onChanged(
+                          filterState.copyWith(sortDirection: direction),
+                        ),
                   ),
                 )
                 .toList(growable: false),

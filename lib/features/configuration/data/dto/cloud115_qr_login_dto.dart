@@ -23,22 +23,22 @@ class Cloud115QrTokenDto {
   }
 
   Map<String, dynamic> toStatusRequestJson() => <String, dynamic>{
-        'uid': uid,
-        'time': time,
-        'sign': sign,
-      };
+    'uid': uid,
+    'time': time,
+    'sign': sign,
+  };
 }
 
 enum Cloud115QrStatus { waiting, scanned, confirmed, expired, canceled }
 
 extension Cloud115QrStatusX on Cloud115QrStatus {
   static Cloud115QrStatus fromWire(dynamic value) => switch (value) {
-        'scanned' => Cloud115QrStatus.scanned,
-        'confirmed' => Cloud115QrStatus.confirmed,
-        'expired' => Cloud115QrStatus.expired,
-        'canceled' => Cloud115QrStatus.canceled,
-        _ => Cloud115QrStatus.waiting,
-      };
+    'scanned' => Cloud115QrStatus.scanned,
+    'confirmed' => Cloud115QrStatus.confirmed,
+    'expired' => Cloud115QrStatus.expired,
+    'canceled' => Cloud115QrStatus.canceled,
+    _ => Cloud115QrStatus.waiting,
+  };
 }
 
 class Cloud115QrStatusDto {
@@ -65,10 +65,10 @@ class Cloud115LibraryCreatePayload {
   final Cloud115LoginApp app;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'name': name,
-        'uid': uid,
-        'app': app.wireValue,
-      };
+    'name': name,
+    'uid': uid,
+    'app': app.wireValue,
+  };
 }
 
 class Cloud115LibraryReauthPayload {
@@ -78,7 +78,7 @@ class Cloud115LibraryReauthPayload {
   final Cloud115LoginApp app;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'uid': uid,
-        'app': app.wireValue,
-      };
+    'uid': uid,
+    'app': app.wireValue,
+  };
 }

@@ -376,7 +376,9 @@ class _AddClipsToCollectionDialogState
           _memberIds.remove(clip.clipId);
         }
       });
-      showToast(apiErrorMessage(error, fallback: isMember ? '移出合集失败' : '加入合集失败'));
+      showToast(
+        apiErrorMessage(error, fallback: isMember ? '移出合集失败' : '加入合集失败'),
+      );
     } finally {
       if (mounted) {
         setState(() => _updatingIds.remove(clip.clipId));

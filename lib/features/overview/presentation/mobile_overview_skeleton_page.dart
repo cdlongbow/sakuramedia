@@ -54,7 +54,9 @@ class MobileOverviewSkeletonPage extends StatelessWidget {
                 child: TabBarView(
                   key: const Key('mobile-overview-tab-view'),
                   children: [
-                    _MobileOverviewMyTab(playlistOrderStore: playlistOrderStore),
+                    _MobileOverviewMyTab(
+                      playlistOrderStore: playlistOrderStore,
+                    ),
                     const MobileOverviewClipsTab(),
                     const MobileOverviewFollowTab(),
                     const MobileOverviewDiscoverTab(),

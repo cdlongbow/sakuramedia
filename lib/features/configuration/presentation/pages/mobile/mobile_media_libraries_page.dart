@@ -398,8 +398,9 @@ Future<MediaLibraryDto?> showMobileMediaLibraryEditorDrawer(
     context: context,
     drawerKey: const Key('mobile-media-library-editor-drawer'),
     heightFactor: 0.68,
-    builder: (drawerContext) =>
-        _MobileMediaLibraryEditorDrawer(initialLibrary: initialLibrary),
+    builder:
+        (drawerContext) =>
+            _MobileMediaLibraryEditorDrawer(initialLibrary: initialLibrary),
   );
 }
 
@@ -411,8 +412,8 @@ Future<MobileMediaLibraryAction?> showMobileMediaLibraryActionsDrawer(
     context: context,
     drawerKey: const Key('mobile-media-library-actions-drawer'),
     maxHeightFactor: library.isCloud115 ? 0.48 : 0.34,
-    builder: (drawerContext) =>
-        _MobileMediaLibraryActionsDrawer(library: library),
+    builder:
+        (drawerContext) => _MobileMediaLibraryActionsDrawer(library: library),
   );
 }
 
@@ -506,9 +507,10 @@ class _MobileMediaLibraryEditorDrawerState
 
   bool get _isEditing => widget.initialLibrary != null;
 
-  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
-      ? AutovalidateMode.onUserInteraction
-      : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode =>
+      _hasAttemptedSubmit
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -537,9 +539,10 @@ class _MobileMediaLibraryEditorDrawerState
     return AppBottomFormSheet(
       formKey: _formKey,
       title: _isEditing ? '编辑媒体库' : '新增媒体库',
-      subtitle: widget.initialLibrary?.isCloud115 == true
-          ? '媒体库名称可修改，115 登录平台请通过重新认证更新。'
-          : '维护可供下载器等模块使用的本地媒体根路径。',
+      subtitle:
+          widget.initialLibrary?.isCloud115 == true
+              ? '媒体库名称可修改，115 登录平台请通过重新认证更新。'
+              : '维护可供下载器等模块使用的本地媒体根路径。',
       submitKey: const Key('mobile-media-library-submit-button'),
       isSubmitting: _isSubmitting,
       onSubmit: _submit,
@@ -583,12 +586,13 @@ class _MobileMediaLibraryEditorDrawerState
 
     try {
       final api = context.read<MediaLibrariesApi>();
-      final library = _isEditing
-          ? await api.updateLibrary(
-              libraryId: widget.initialLibrary!.id,
-              payload: value.toUpdatePayload(),
-            )
-          : await api.createLibrary(value.toCreatePayload());
+      final library =
+          _isEditing
+              ? await api.updateLibrary(
+                libraryId: widget.initialLibrary!.id,
+                payload: value.toUpdatePayload(),
+              )
+              : await api.createLibrary(value.toCreatePayload());
       if (!mounted) {
         return;
       }
@@ -655,8 +659,9 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
             key: const Key('mobile-media-library-action-reauth'),
             icon: Icons.refresh_rounded,
             label: '重新认证',
-            onTap: () =>
-                Navigator.of(context).pop(MobileMediaLibraryAction.reauth),
+            onTap:
+                () =>
+                    Navigator.of(context).pop(MobileMediaLibraryAction.reauth),
           ),
         ],
         SizedBox(height: spacing.sm),
@@ -665,8 +670,8 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
           icon: Icons.delete_outline_rounded,
           label: '删除媒体库',
           tone: AppTextTone.error,
-          onTap: () =>
-              Navigator.of(context).pop(MobileMediaLibraryAction.delete),
+          onTap:
+              () => Navigator.of(context).pop(MobileMediaLibraryAction.delete),
         ),
       ],
     );

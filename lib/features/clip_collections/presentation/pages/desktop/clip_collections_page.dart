@@ -76,34 +76,34 @@ class _DesktopClipCollectionsPageState
           animation: _controller,
           builder: (context, _) {
             return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '切片合集',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s18,
-                      weight: AppTextWeight.semibold,
-                      tone: AppTextTone.primary,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '切片合集',
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s18,
+                        weight: AppTextWeight.semibold,
+                        tone: AppTextTone.primary,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  AppTextButton(
-                    key: const Key('clip-collections-create-button'),
-                    label: '新建合集',
-                    size: AppTextButtonSize.small,
-                    onPressed: _createCollection,
-                  ),
-                ],
-              ),
-              SizedBox(height: context.appSpacing.lg),
-              Expanded(child: _buildBody(context)),
-            ],
-          );
-        },
-      ),
+                    const Spacer(),
+                    AppTextButton(
+                      key: const Key('clip-collections-create-button'),
+                      label: '新建合集',
+                      size: AppTextButtonSize.small,
+                      onPressed: _createCollection,
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.appSpacing.lg),
+                Expanded(child: _buildBody(context)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

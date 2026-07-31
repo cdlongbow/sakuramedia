@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -169,19 +170,22 @@ Future<void> _pumpRankingsPage(
   required TestApiBundle bundle,
 }) {
   return tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<RankingsApi>.value(value: bundle.rankingsApi),
-        Provider<MoviesApi>.value(value: bundle.moviesApi),
-        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>(
-          create: (_) => MovieSubscriptionChangeNotifier(),
-        ),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: DesktopRankingsPage()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<RankingsApi>.value(value: bundle.rankingsApi),
+          Provider<MoviesApi>.value(value: bundle.moviesApi),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopRankingsPage()),
+          ),
         ),
       ),
     ),

@@ -15,30 +15,30 @@ enum DownloadTaskStateFilter {
 
 extension DownloadTaskStateFilterValue on DownloadTaskStateFilter {
   String get label => switch (this) {
-        DownloadTaskStateFilter.all => '全部',
-        DownloadTaskStateFilter.downloading => '下载中',
-        DownloadTaskStateFilter.seeding => '做种中',
-        DownloadTaskStateFilter.completed => '已完成',
-        DownloadTaskStateFilter.paused => '已暂停',
-        DownloadTaskStateFilter.failed => '失败',
-        DownloadTaskStateFilter.queued => '排队中',
-        DownloadTaskStateFilter.checking => '校验中',
-        DownloadTaskStateFilter.stalled => '停滞',
-        DownloadTaskStateFilter.abandoned => '已放弃跟踪',
-      };
+    DownloadTaskStateFilter.all => '全部',
+    DownloadTaskStateFilter.downloading => '下载中',
+    DownloadTaskStateFilter.seeding => '做种中',
+    DownloadTaskStateFilter.completed => '已完成',
+    DownloadTaskStateFilter.paused => '已暂停',
+    DownloadTaskStateFilter.failed => '失败',
+    DownloadTaskStateFilter.queued => '排队中',
+    DownloadTaskStateFilter.checking => '校验中',
+    DownloadTaskStateFilter.stalled => '停滞',
+    DownloadTaskStateFilter.abandoned => '已放弃跟踪',
+  };
 
   String? get apiValue => switch (this) {
-        DownloadTaskStateFilter.all => null,
-        DownloadTaskStateFilter.downloading => 'downloading',
-        DownloadTaskStateFilter.seeding => 'seeding',
-        DownloadTaskStateFilter.completed => 'completed',
-        DownloadTaskStateFilter.paused => 'paused',
-        DownloadTaskStateFilter.failed => 'failed',
-        DownloadTaskStateFilter.queued => 'queued',
-        DownloadTaskStateFilter.checking => 'checking',
-        DownloadTaskStateFilter.stalled => 'stalled',
-        DownloadTaskStateFilter.abandoned => 'abandoned',
-      };
+    DownloadTaskStateFilter.all => null,
+    DownloadTaskStateFilter.downloading => 'downloading',
+    DownloadTaskStateFilter.seeding => 'seeding',
+    DownloadTaskStateFilter.completed => 'completed',
+    DownloadTaskStateFilter.paused => 'paused',
+    DownloadTaskStateFilter.failed => 'failed',
+    DownloadTaskStateFilter.queued => 'queued',
+    DownloadTaskStateFilter.checking => 'checking',
+    DownloadTaskStateFilter.stalled => 'stalled',
+    DownloadTaskStateFilter.abandoned => 'abandoned',
+  };
 }
 
 /// 下载任务列表的筛选值对象，遵循「筛选状态驱动」范式。

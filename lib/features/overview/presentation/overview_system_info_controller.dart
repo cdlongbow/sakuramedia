@@ -3,9 +3,8 @@ import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 
 class OverviewSystemInfoController extends ChangeNotifier {
-  OverviewSystemInfoController({
-    required StatusApi statusApi,
-  }) : _statusApi = statusApi;
+  OverviewSystemInfoController({required StatusApi statusApi})
+    : _statusApi = statusApi;
 
   final StatusApi _statusApi;
 
@@ -24,10 +23,7 @@ class OverviewSystemInfoController extends ChangeNotifier {
   String? statusError;
 
   Future<void> load() async {
-    await Future.wait<void>([
-      loadStatus(),
-      loadImageSearchStatus(),
-    ]);
+    await Future.wait<void>([loadStatus(), loadImageSearchStatus()]);
   }
 
   Future<void> refresh() async {

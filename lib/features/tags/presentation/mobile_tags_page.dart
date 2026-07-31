@@ -2,14 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 // 标签页展示的就是影片列表，筛选抽屉与移动影片页共用同一个（与已复用的
 // MovieListContent 同源）。
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_list_content.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/tags/data/tags_api.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_selection_controller.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_selector_panel.dart';
 import 'package:sakuramedia/features/tags/presentation/tags_page_state.dart';
@@ -19,22 +16,28 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
+import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
+
 /// 移动端标签页：标签多选区 + 所选标签下的影片列表。
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+
 ///
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+
 /// 与桌面端 `DesktopTagsPage` 共用状态层（[TagsPageStateEntry]）与选择面板
 /// （[TagSelectorPanel]）。无论一级抽屉入口还是详情页预选跳入，移动端都以
 /// push 的子页面形式呈现，状态随页面自建自销，不接入缓存。
-class MobileTagsPage extends StatefulWidget {
+class MobileTagsPage extends ConsumerStatefulWidget {
   const MobileTagsPage({super.key, this.initialTagId});
 
   /// 从影片详情页跳入时携带的预选标签；为空表示抽屉一级入口。
   final int? initialTagId;
 
   @override
-  State<MobileTagsPage> createState() => _MobileTagsPageState();
+  ConsumerState<MobileTagsPage> createState() => _MobileTagsPageState();
 }
 
-class _MobileTagsPageState extends State<MobileTagsPage> {
+class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
   late final TagsPageStateEntry _pageState;
 
   TagSelectionController get _selection => _pageState.selection;
@@ -43,10 +46,11 @@ class _MobileTagsPageState extends State<MobileTagsPage> {
   void initState() {
     super.initState();
     _pageState = TagsPageStateEntry(
-      tagsApi: context.read<TagsApi>(),
-      moviesApi: context.read<MoviesApi>(),
-      subscriptionChangeNotifier:
-          context.read<MovieSubscriptionChangeNotifier>(),
+      tagsApi: ref.read(tagsApiProvider),
+      moviesApi: ref.read(moviesApiProvider),
+      subscriptionChangeNotifier: ref.read(
+        movieSubscriptionBroadcasterProvider,
+      ),
       initialSelectedTagIds:
           widget.initialTagId == null
               ? const <int>[]

@@ -79,7 +79,9 @@ class MovieSubscriptionStatusTabs extends HookConsumerWidget {
       onTap: (index) {
         final status = kMovieSubscriptionStatusTabs[index];
         unawaited(
-          ref.read(movieSubscriptionManagerProvider.notifier).applyStatus(status),
+          ref
+              .read(movieSubscriptionManagerProvider.notifier)
+              .applyStatus(status),
         );
       },
       tabs: <Widget>[

@@ -69,9 +69,7 @@ class ActivityApi {
   }
 
   /// 批量已读：把 [ids] 对应的通知置已读，返回最新 `unread_count` 供刷新角标。
-  Future<NotificationReadResultDto> markNotificationsRead(
-    List<int> ids,
-  ) async {
+  Future<NotificationReadResultDto> markNotificationsRead(List<int> ids) async {
     final response = await _apiClient.post(
       '/system/notifications/read',
       data: <String, dynamic>{'ids': ids},

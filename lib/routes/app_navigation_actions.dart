@@ -2,10 +2,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/desktop_image_search_route_state.dart';
@@ -153,7 +154,9 @@ extension AppNavigationActions on BuildContext {
 
   void pushDesktopVideoCollectionDetail({required int collectionId}) {
     GoRouter.optionURLReflectsImperativeAPIs = true;
-    DesktopVideoCollectionDetailRouteData(collectionId: collectionId).push(this);
+    DesktopVideoCollectionDetailRouteData(
+      collectionId: collectionId,
+    ).push(this);
   }
 
   void pushDesktopVideoCollectionPlay({
@@ -308,10 +311,8 @@ extension AppNavigationActions on BuildContext {
         fileBytes.isEmpty) {
       return null;
     }
-    return read<ImageSearchDraftStore>().save(
-      fileName: fileName,
-      bytes: fileBytes,
-      mimeType: mimeType,
-    );
+    return ProviderScope.containerOf(this, listen: false)
+        .read(imageSearchDraftStoreProvider)
+        .save(fileName: fileName, bytes: fileBytes, mimeType: mimeType);
   }
 }

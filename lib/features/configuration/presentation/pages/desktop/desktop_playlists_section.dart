@@ -35,8 +35,9 @@ class _PlaylistsSectionState extends State<PlaylistsSection> {
     super.initState();
     final api = context.read<PlaylistsApi>();
     _controller = PlaylistsOverviewController(
-      fetchPlaylists: ({bool includeSystem = true}) =>
-          api.getPlaylists(includeSystem: false),
+      fetchPlaylists:
+          ({bool includeSystem = true}) =>
+              api.getPlaylists(includeSystem: false),
       fetchPlaylistCoverUrl: (playlistId) async {
         final page = await api.getPlaylistMovies(
           playlistId: playlistId,
@@ -218,14 +219,16 @@ class _PlaylistsSectionState extends State<PlaylistsSection> {
         final spacing = context.appSpacing;
         const targetWidth = 420.0;
         final available = constraints.maxWidth;
-        final columns = available < targetWidth * 1.6
-            ? 1
-            : ((available + spacing.md) / (targetWidth + spacing.md))
-                .floor()
-                .clamp(1, 3);
-        final cardWidth = columns == 1
-            ? available
-            : (available - spacing.md * (columns - 1)) / columns;
+        final columns =
+            available < targetWidth * 1.6
+                ? 1
+                : ((available + spacing.md) / (targetWidth + spacing.md))
+                    .floor()
+                    .clamp(1, 3);
+        final cardWidth =
+            columns == 1
+                ? available
+                : (available - spacing.md * (columns - 1)) / columns;
         return Wrap(
           spacing: spacing.md,
           runSpacing: spacing.md,
@@ -239,12 +242,12 @@ class _PlaylistsSectionState extends State<PlaylistsSection> {
                   layout: PlaylistCardLayout.dense,
                   keyPrefix: 'desktop-playlist',
                   onViewTap: () => _viewPlaylist(playlist),
-                  onEditTap: playlist.isMutable
-                      ? () => _editPlaylist(playlist)
-                      : null,
-                  onDeleteTap: playlist.isDeletable
-                      ? () => _deletePlaylist(playlist)
-                      : null,
+                  onEditTap:
+                      playlist.isMutable ? () => _editPlaylist(playlist) : null,
+                  onDeleteTap:
+                      playlist.isDeletable
+                          ? () => _deletePlaylist(playlist)
+                          : null,
                 ),
               ),
           ],

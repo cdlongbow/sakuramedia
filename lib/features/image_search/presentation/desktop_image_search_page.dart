@@ -4,21 +4,17 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
-import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_controller.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_page_state.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -35,9 +31,14 @@ import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_api_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+
 enum ImageSearchResultPreviewPresentation { dialog, bottomDrawer }
 
-class DesktopImageSearchPage extends StatefulWidget {
+class DesktopImageSearchPage extends ConsumerStatefulWidget {
   const DesktopImageSearchPage({
     super.key,
     this.fallbackPath,
@@ -73,10 +74,12 @@ class DesktopImageSearchPage extends StatefulWidget {
   final ImageSearchResultPreviewPresentation resultPreviewPresentation;
 
   @override
-  State<DesktopImageSearchPage> createState() => _DesktopImageSearchPageState();
+  ConsumerState<DesktopImageSearchPage> createState() =>
+      _DesktopImageSearchPageState();
 }
 
-class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
+class _DesktopImageSearchPageState
+    extends ConsumerState<DesktopImageSearchPage> {
   static const int _maxAutoLoadAttempts = 5;
   static const int _maxAutoLoadNoGrowthStreak = 2;
 
@@ -98,8 +101,8 @@ class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
       key: _resolveStateKey(),
       create:
           () => ImageSearchPageStateEntry(
-            imageSearchApi: context.read<ImageSearchApi>(),
-            actorsApi: context.read<ActorsApi>(),
+            imageSearchApi: ref.read(imageSearchApiProvider),
+            actorsApi: ref.read(actorsApiProvider),
             initialCurrentMovieScope: widget.initialCurrentMovieScope,
           ),
     );
@@ -195,18 +198,23 @@ class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
                       filterState: _filterState,
                       summaryText: _filterSummaryText,
                       currentMovieNumber: widget.currentMovieNumber,
-                      onCurrentMovieScopeChanged: (scope) => setState(
-                        () => _pageState.filterState = _filterState.copyWith(
-                          currentMovieScope: scope,
-                        ),
-                      ),
-                      isSearching: _controller.isSearching ||
+                      onCurrentMovieScopeChanged:
+                          (scope) => setState(
+                            () =>
+                                _pageState.filterState = _filterState.copyWith(
+                                  currentMovieScope: scope,
+                                ),
+                          ),
+                      isSearching:
+                          _controller.isSearching ||
                           _controller.isResolvingActorMovieIds,
-                      onModeChanged: (mode) => setState(
-                        () => _pageState.filterState = _filterState.copyWith(
-                          actorFilterMode: mode,
-                        ),
-                      ),
+                      onModeChanged:
+                          (mode) => setState(
+                            () =>
+                                _pageState.filterState = _filterState.copyWith(
+                                  actorFilterMode: mode,
+                                ),
+                          ),
                       onSelectActors: _openActorSelectorDialog,
                       onSearch: _runSearch,
                     ),
@@ -812,9 +820,9 @@ class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
     if (item.mediaId <= 0 || item.thumbnailId <= 0) {
       return null;
     }
-    final points = await context.read<MediaApi>().getMediaPoints(
-      mediaId: item.mediaId,
-    );
+    final points = await ref
+        .read(mediaApiProvider)
+        .getMediaPoints(mediaId: item.mediaId);
     for (final point in points) {
       if (point.thumbnailId == item.thumbnailId) {
         return point;
@@ -825,7 +833,7 @@ class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
 
   Future<void> _saveResultImageToLocal(ImageSearchResultItemDto item) async {
     final result = await ImageSaveService(
-      fetchBytes: context.read<ApiClient>().getBytes,
+      fetchBytes: ref.read(apiClientProvider).getBytes,
     ).saveImageFromUrl(
       imageUrl: _resultImageUrl(item),
       fileName: _resultImageFileName(item),
@@ -851,19 +859,20 @@ class _DesktopImageSearchPageState extends State<DesktopImageSearchPage> {
     }
     try {
       if (point == null) {
-        await context.read<MediaApi>().createMediaPoint(
-          mediaId: item.mediaId,
-          thumbnailId: item.thumbnailId,
-        );
+        await ref
+            .read(mediaApiProvider)
+            .createMediaPoint(
+              mediaId: item.mediaId,
+              thumbnailId: item.thumbnailId,
+            );
         if (mounted) {
           showToast('已添加标记');
         }
         return;
       }
-      await context.read<MediaApi>().deleteMediaPoint(
-        mediaId: item.mediaId,
-        pointId: point.pointId,
-      );
+      await ref
+          .read(mediaApiProvider)
+          .deleteMediaPoint(mediaId: item.mediaId, pointId: point.pointId);
       if (mounted) {
         showToast('已删除标记');
       }

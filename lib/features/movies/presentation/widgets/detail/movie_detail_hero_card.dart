@@ -156,19 +156,20 @@ class MovieDetailHeroCard extends StatelessWidget {
                           ),
                           shape: BoxShape.circle,
                         ),
-                        child: isPlayLoading
-                            ? const Padding(
-                              padding: EdgeInsets.all(22),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                color: Colors.white,
-                              ),
-                            )
-                            : Icon(
-                              Icons.play_arrow_rounded,
-                              color: context.appTextPalette.onMedia,
-                              size: tokens.iconSize4xl,
-                            ),
+                        child:
+                            isPlayLoading
+                                ? const Padding(
+                                  padding: EdgeInsets.all(22),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : Icon(
+                                  Icons.play_arrow_rounded,
+                                  color: context.appTextPalette.onMedia,
+                                  size: tokens.iconSize4xl,
+                                ),
                       ),
                     ),
                   ),

@@ -74,11 +74,11 @@ void main() {
         providers: [
           ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
           ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
+          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+            value: bundle.collectionTypeBroadcaster,
           ),
         ],
         child: OKToast(

@@ -148,8 +148,7 @@ class _MobileVideoCollectionDetailPageState
   /// 成员列表顶栏：与桌面合集详情共用同一条 `AppListHeader`，差别只在筛选面板的
   /// 容器——桌面就地浮层，移动底部抽屉。
   Widget _buildListHeader(BuildContext context) {
-    final count =
-        _controller.collection?.itemCount ?? _controller.items.length;
+    final count = _controller.collection?.itemCount ?? _controller.items.length;
     return AppListHeader(
       filterButtonKey: const Key('mobile-video-collection-sort-trigger'),
       filterIcon: Icons.swap_vert_rounded,
@@ -613,9 +612,7 @@ class _MobileVideoCollectionDetailPageState
       key: const Key('mobile-video-collection-batch-bottom-bar'),
       actions: [
         AppButton(
-          key: const Key(
-            'mobile-video-collection-batch-add-collection-button',
-          ),
+          key: const Key('mobile-video-collection-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           onPressed: hasSelection ? _batchAddToOtherCollection : null,

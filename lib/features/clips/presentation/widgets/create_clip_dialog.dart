@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 
 /// 弹出切片标题输入对话框并执行同步切片创建。
 ///
@@ -38,7 +39,7 @@ Future<MediaClipDto?> showCreateClipDialog(
   );
 }
 
-class CreateClipDialog extends StatefulWidget {
+class CreateClipDialog extends ConsumerStatefulWidget {
   const CreateClipDialog({
     super.key,
     required this.mediaId,
@@ -57,10 +58,10 @@ class CreateClipDialog extends StatefulWidget {
   final int endSeconds;
 
   @override
-  State<CreateClipDialog> createState() => _CreateClipDialogState();
+  ConsumerState<CreateClipDialog> createState() => _CreateClipDialogState();
 }
 
-class _CreateClipDialogState extends State<CreateClipDialog> {
+class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
   late final TextEditingController _titleController;
   bool _isSubmitting = false;
 
@@ -173,12 +174,14 @@ class _CreateClipDialogState extends State<CreateClipDialog> {
       _isSubmitting = true;
     });
     try {
-      final clip = await context.read<ClipsApi>().createClip(
-        mediaId: widget.mediaId,
-        startThumbnailId: widget.startThumbnailId,
-        endThumbnailId: widget.endThumbnailId,
-        title: _titleController.text,
-      );
+      final clip = await ref
+          .read(clipsApiProvider)
+          .createClip(
+            mediaId: widget.mediaId,
+            startThumbnailId: widget.startThumbnailId,
+            endThumbnailId: widget.endThumbnailId,
+            title: _titleController.text,
+          );
       if (!mounted) {
         return;
       }

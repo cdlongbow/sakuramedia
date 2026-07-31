@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 
 /// 「编辑播放列表」弹窗形态；与 [showCreatePlaylistDialog] 对齐。
 enum EditPlaylistDialogPresentation { dialog, bottomDrawer }
@@ -26,25 +27,27 @@ Future<PlaylistDto?> showEditPlaylistDialog(
     case EditPlaylistDialogPresentation.dialog:
       return showDialog<PlaylistDto>(
         context: context,
-        builder: (dialogContext) => EditPlaylistDialog(
-          playlist: playlist,
-          presentation: EditPlaylistDialogPresentation.dialog,
-        ),
+        builder:
+            (dialogContext) => EditPlaylistDialog(
+              playlist: playlist,
+              presentation: EditPlaylistDialogPresentation.dialog,
+            ),
       );
     case EditPlaylistDialogPresentation.bottomDrawer:
       return showAppBottomDrawer<PlaylistDto>(
         context: context,
         drawerKey: const Key('mobile-playlist-edit-drawer'),
         heightFactor: 0.62,
-        builder: (sheetContext) => EditPlaylistDialog(
-          playlist: playlist,
-          presentation: EditPlaylistDialogPresentation.bottomDrawer,
-        ),
+        builder:
+            (sheetContext) => EditPlaylistDialog(
+              playlist: playlist,
+              presentation: EditPlaylistDialogPresentation.bottomDrawer,
+            ),
       );
   }
 }
 
-class EditPlaylistDialog extends StatefulWidget {
+class EditPlaylistDialog extends ConsumerStatefulWidget {
   const EditPlaylistDialog({
     super.key,
     required this.playlist,
@@ -55,10 +58,10 @@ class EditPlaylistDialog extends StatefulWidget {
   final EditPlaylistDialogPresentation presentation;
 
   @override
-  State<EditPlaylistDialog> createState() => _EditPlaylistDialogState();
+  ConsumerState<EditPlaylistDialog> createState() => _EditPlaylistDialogState();
 }
 
-class _EditPlaylistDialogState extends State<EditPlaylistDialog> {
+class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -68,20 +71,23 @@ class _EditPlaylistDialogState extends State<EditPlaylistDialog> {
   bool get _isDialog =>
       widget.presentation == EditPlaylistDialogPresentation.dialog;
 
-  Key get _nameFieldKey => _isDialog
-      ? const Key('configuration-playlist-name-field')
-      : const Key('mobile-playlist-name-field');
+  Key get _nameFieldKey =>
+      _isDialog
+          ? const Key('configuration-playlist-name-field')
+          : const Key('mobile-playlist-name-field');
 
-  Key get _descriptionFieldKey => _isDialog
-      ? const Key('configuration-playlist-description-field')
-      : const Key('mobile-playlist-description-field');
+  Key get _descriptionFieldKey =>
+      _isDialog
+          ? const Key('configuration-playlist-description-field')
+          : const Key('mobile-playlist-description-field');
 
   Key? get _submitKey =>
       _isDialog ? null : const Key('mobile-playlist-submit-button');
 
-  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
-      ? AutovalidateMode.onUserInteraction
-      : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode =>
+      _hasAttemptedSubmit
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -146,9 +152,9 @@ class _EditPlaylistDialogState extends State<EditPlaylistDialog> {
             hintText: '例如：稍后再看',
             enabled: !_isSubmitting,
             autovalidateMode: _autovalidateMode,
-            validator: (value) => value == null || value.trim().isEmpty
-                ? '请输入播放列表名称'
-                : null,
+            validator:
+                (value) =>
+                    value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
@@ -202,13 +208,15 @@ class _EditPlaylistDialogState extends State<EditPlaylistDialog> {
     setState(() => _isSubmitting = true);
 
     try {
-      final playlist = await context.read<PlaylistsApi>().updatePlaylist(
-        playlistId: widget.playlist.id,
-        payload: UpdatePlaylistPayload(
-          name: _nameController.text.trim(),
-          description: _descriptionController.text.trim(),
-        ),
-      );
+      final playlist = await ref
+          .read(playlistsApiProvider)
+          .updatePlaylist(
+            playlistId: widget.playlist.id,
+            payload: UpdatePlaylistPayload(
+              name: _nameController.text.trim(),
+              description: _descriptionController.text.trim(),
+            ),
+          );
       if (!mounted) {
         return;
       }

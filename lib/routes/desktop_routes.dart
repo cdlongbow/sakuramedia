@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/series_movies_page.dart';
@@ -124,7 +124,8 @@ class DesktopClipCollectionPlayRouteData extends _DesktopNoTransitionRouteData
   Widget buildContent(BuildContext context, GoRouterState state) {
     return DesktopClipCollectionPlayPage(
       collectionId: collectionId,
-      startIndex: resolveIntQueryParameter(
+      startIndex:
+          resolveIntQueryParameter(
             state,
             names: const <String>['startIndex', 'start-index'],
             fallback: startIndex,
@@ -167,7 +168,8 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
   Widget buildContent(BuildContext context, GoRouterState state) {
     return DesktopVideoCollectionPlayPage(
       collectionId: collectionId,
-      startIndex: resolveIntQueryParameter(
+      startIndex:
+          resolveIntQueryParameter(
             state,
             names: const <String>['startIndex', 'start-index'],
             fallback: startIndex,
@@ -207,9 +209,7 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
     TypedGoRoute<DesktopHotReviewsRouteData>(path: desktopHotReviewsPath),
     TypedGoRoute<DesktopActivityRouteData>(path: desktopActivityPath),
     TypedGoRoute<DesktopMediaRouteData>(path: desktopMediaPath),
-    TypedGoRoute<DesktopNotificationsRouteData>(
-      path: desktopNotificationsPath,
-    ),
+    TypedGoRoute<DesktopNotificationsRouteData>(path: desktopNotificationsPath),
     TypedGoRoute<DesktopConfigurationRouteData>(path: desktopConfigurationPath),
     TypedGoRoute<DesktopMediaImportRouteData>(path: desktopMediaImportPath),
     TypedGoRoute<DesktopMovieSubscriptionsRouteData>(
@@ -242,9 +242,7 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
     TypedGoRoute<DesktopActorDetailRouteData>(
       path: '/desktop/library/actors/:actorId',
     ),
-    TypedGoRoute<DesktopTagMoviesRouteData>(
-      path: '$desktopTagsPath/:tagId',
-    ),
+    TypedGoRoute<DesktopTagMoviesRouteData>(path: '$desktopTagsPath/:tagId'),
     TypedGoRoute<DesktopVideoCollectionDetailRouteData>(
       path: '$desktopVideoCollectionsPath/:collectionId',
     ),
@@ -373,7 +371,7 @@ class DesktopConfigurationRouteData extends _DesktopShellSpecRouteData
 class DesktopActivityRouteData extends _DesktopShellSpecRouteData
     with $DesktopActivityRouteData {
   const DesktopActivityRouteData({this.downloadMovieNumber})
-      : super(desktopActivityPath);
+    : super(desktopActivityPath);
 
   /// 打开任务中心后直接定位到「下载任务」tab 并按番号过滤的意图。
   /// 走 query 参数而非 path：侧边栏等普通入口不携带，行为与原来一致。
@@ -531,7 +529,10 @@ class DesktopImageSearchRouteData extends _DesktopShellPageRouteData
       names: const <String>['draftId', 'draft-id'],
       fallback: draftId,
     );
-    final draft = context.read<ImageSearchDraftStore>().get(resolvedDraftId);
+    final draft = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(imageSearchDraftStoreProvider).get(resolvedDraftId);
     return DesktopImageSearchPage(
       fallbackPath: routeState.fallbackPath,
       initialFileName: draft?.fileName,

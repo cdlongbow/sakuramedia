@@ -83,9 +83,10 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _selectedApp = _isReauth
-        ? widget.reauthLibrary!.cloud115App
-        : Cloud115LoginApp.alipaymini;
+    _selectedApp =
+        _isReauth
+            ? widget.reauthLibrary!.cloud115App
+            : Cloud115LoginApp.alipaymini;
     _lockedApp = _selectedApp;
   }
 
@@ -149,10 +150,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
     }
   }
 
-  Future<void> _pollStatus(
-    int generation,
-    Cloud115QrTokenDto token,
-  ) async {
+  Future<void> _pollStatus(int generation, Cloud115QrTokenDto token) async {
     final api = context.read<MediaLibrariesApi>();
     while (_isCurrent(generation)) {
       Cloud115QrStatusDto result;
@@ -286,9 +284,10 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
     return PopScope<void>(
       canPop: !_isSubmitting,
       child: SingleChildScrollView(
-        child: _step == _Cloud115FlowStep.configuration
-            ? _buildConfiguration(context)
-            : _buildQr(context),
+        child:
+            _step == _Cloud115FlowStep.configuration
+                ? _buildConfiguration(context)
+                : _buildQr(context),
       ),
     );
   }
@@ -418,10 +417,7 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader(
-          context,
-          title: _isReauth ? '扫码重新认证' : '扫码登录 115',
-        ),
+        _buildHeader(context, title: _isReauth ? '扫码重新认证' : '扫码登录 115'),
         SizedBox(height: spacing.xs),
         Text(
           '正在登录到：${_lockedApp.label}',
@@ -520,68 +516,69 @@ class _Cloud115LibraryLoginBodyState extends State<_Cloud115LibraryLoginBody> {
         borderRadius: context.appRadius.mdBorder,
         border: Border.all(color: colors.borderSubtle),
       ),
-      child: image == null
-          ? const CircularProgressIndicator()
-          : Image.memory(
-              image,
-              key: const Key('cloud115-login-qr-image'),
-              fit: BoxFit.contain,
-              gaplessPlayback: true,
-            ),
+      child:
+          image == null
+              ? const CircularProgressIndicator()
+              : Image.memory(
+                image,
+                key: const Key('cloud115-login-qr-image'),
+                fit: BoxFit.contain,
+                gaplessPlayback: true,
+              ),
     );
   }
 
   Widget _buildQrActionButton() {
     return switch (_phase) {
       _Cloud115QrPhase.loading => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: '加载二维码',
-          isLoading: true,
-          onPressed: null,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: '加载二维码',
+        isLoading: true,
+        onPressed: null,
+      ),
       _Cloud115QrPhase.waiting || _Cloud115QrPhase.scanned => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: '等待确认',
-          variant: AppButtonVariant.primary,
-          onPressed: null,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: '等待确认',
+        variant: AppButtonVariant.primary,
+        onPressed: null,
+      ),
       _Cloud115QrPhase.expired || _Cloud115QrPhase.canceled => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: '刷新二维码',
-          variant: AppButtonVariant.primary,
-          onPressed: _loadQrToken,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: '刷新二维码',
+        variant: AppButtonVariant.primary,
+        onPressed: _loadQrToken,
+      ),
       _Cloud115QrPhase.pollError => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: _token == null ? '重新加载二维码' : '重试检测',
-          variant: AppButtonVariant.primary,
-          onPressed: _token == null ? _loadQrToken : _retryPoll,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: _token == null ? '重新加载二维码' : '重试检测',
+        variant: AppButtonVariant.primary,
+        onPressed: _token == null ? _loadQrToken : _retryPoll,
+      ),
       _Cloud115QrPhase.submitting => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: _isReauth ? '正在更新认证' : '正在创建媒体库',
-          variant: AppButtonVariant.primary,
-          isLoading: true,
-          onPressed: null,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: _isReauth ? '正在更新认证' : '正在创建媒体库',
+        variant: AppButtonVariant.primary,
+        isLoading: true,
+        onPressed: null,
+      ),
       _Cloud115QrPhase.submitError => AppButton(
-          key: const Key('cloud115-login-primary-button'),
-          label: _isReauth ? '重试认证' : '重试创建',
-          variant: AppButtonVariant.primary,
-          onPressed: _retrySubmit,
-        ),
+        key: const Key('cloud115-login-primary-button'),
+        label: _isReauth ? '重试认证' : '重试创建',
+        variant: AppButtonVariant.primary,
+        onPressed: _retrySubmit,
+      ),
     };
   }
 
   String get _statusMessage => switch (_phase) {
-        _Cloud115QrPhase.loading => '正在加载二维码…',
-        _Cloud115QrPhase.waiting => '请使用 115 App 扫码',
-        _Cloud115QrPhase.scanned => '已扫码，请在手机上确认',
-        _Cloud115QrPhase.expired => '二维码已过期',
-        _Cloud115QrPhase.canceled => '本次扫码已取消',
-        _Cloud115QrPhase.pollError => _token == null ? '二维码加载失败' : '扫码状态检测失败',
-        _Cloud115QrPhase.submitting =>
-          _isReauth ? '扫码已确认，正在更新认证…' : '扫码已确认，正在创建媒体库…',
-        _Cloud115QrPhase.submitError => _isReauth ? '重新认证失败' : '媒体库创建失败',
-      };
+    _Cloud115QrPhase.loading => '正在加载二维码…',
+    _Cloud115QrPhase.waiting => '请使用 115 App 扫码',
+    _Cloud115QrPhase.scanned => '已扫码，请在手机上确认',
+    _Cloud115QrPhase.expired => '二维码已过期',
+    _Cloud115QrPhase.canceled => '本次扫码已取消',
+    _Cloud115QrPhase.pollError => _token == null ? '二维码加载失败' : '扫码状态检测失败',
+    _Cloud115QrPhase.submitting =>
+      _isReauth ? '扫码已确认，正在更新认证…' : '扫码已确认，正在创建媒体库…',
+    _Cloud115QrPhase.submitError => _isReauth ? '重新认证失败' : '媒体库创建失败',
+  };
 }

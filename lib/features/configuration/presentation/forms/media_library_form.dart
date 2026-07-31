@@ -3,8 +3,8 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-typedef MediaLibraryFieldLabelBuilder = Widget Function(
-    BuildContext context, String label);
+typedef MediaLibraryFieldLabelBuilder =
+    Widget Function(BuildContext context, String label);
 
 class MediaLibraryFormValue {
   const MediaLibraryFormValue({required this.name, required this.rootPath});

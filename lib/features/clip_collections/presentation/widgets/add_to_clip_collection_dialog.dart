@@ -178,7 +178,10 @@ class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
       );
     }
     if (_errorMessage != null) {
-      return SizedBox(height: 160, child: AppEmptyState(message: _errorMessage!));
+      return SizedBox(
+        height: 160,
+        child: AppEmptyState(message: _errorMessage!),
+      );
     }
     if (_collections.isEmpty) {
       return const SizedBox(
@@ -220,7 +223,9 @@ class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
                   Transform.scale(
                     scale: _checkboxScale,
                     child: Checkbox(
-                      key: Key('add-to-clip-collection-checkbox-${collection.id}'),
+                      key: Key(
+                        'add-to-clip-collection-checkbox-${collection.id}',
+                      ),
                       value: selected,
                       onChanged:
                           isAnyUpdating ? null : (_) => _toggle(collection),
@@ -289,7 +294,9 @@ class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
           _selectedIds.remove(collection.id);
         }
       });
-      showToast(apiErrorMessage(error, fallback: isSelected ? '移出合集失败' : '加入合集失败'));
+      showToast(
+        apiErrorMessage(error, fallback: isSelected ? '移出合集失败' : '加入合集失败'),
+      );
     } finally {
       if (mounted) {
         setState(() => _updatingIds.remove(collection.id));

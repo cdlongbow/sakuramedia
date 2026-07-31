@@ -228,11 +228,11 @@ Future<void> _pumpDiscoveryWidget(
             create: (_) => MediaApi(apiClient: bundle.apiClient),
           ),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
+          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+            value: bundle.collectionTypeBroadcaster,
           ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
           ),
           Provider<ImageSearchApi>(
             create: (_) => ImageSearchApi(apiClient: bundle.apiClient),

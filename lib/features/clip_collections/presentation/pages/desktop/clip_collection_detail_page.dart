@@ -94,35 +94,35 @@ class _DesktopClipCollectionDetailPageState
           animation: _controller,
           builder: (context, _) {
             if (_controller.isLoading && _controller.collection == null) {
-            return const Center(
-              child: SizedBox(
-                key: Key('clip-collection-detail-loading'),
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(),
-              ),
+              return const Center(
+                child: SizedBox(
+                  key: Key('clip-collection-detail-loading'),
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (_controller.errorMessage != null &&
+                _controller.collection == null) {
+              return AppEmptyState(message: _controller.errorMessage!);
+            }
+            return Column(
+              key: const Key('clip-collection-detail-page-body'),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTitleBlock(context),
+                SizedBox(height: context.appSpacing.md),
+                if (selectionMode)
+                  _buildSelectionHeader(context)
+                else
+                  _buildListHeader(context),
+                SizedBox(height: context.appSpacing.md),
+                Expanded(child: _buildClips(context)),
+              ],
             );
-          }
-          if (_controller.errorMessage != null &&
-              _controller.collection == null) {
-            return AppEmptyState(message: _controller.errorMessage!);
-          }
-          return Column(
-            key: const Key('clip-collection-detail-page-body'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTitleBlock(context),
-              SizedBox(height: context.appSpacing.md),
-              if (selectionMode)
-                _buildSelectionHeader(context)
-              else
-                _buildListHeader(context),
-              SizedBox(height: context.appSpacing.md),
-              Expanded(child: _buildClips(context)),
-            ],
-          );
-        },
-      ),
+          },
+        ),
       ),
     );
   }
@@ -286,9 +286,10 @@ class _DesktopClipCollectionDetailPageState
         title: clip.displayTitle,
         subtitle: clip.metaLine,
         isHovered: _hoveredClipId == clip.clipId,
-        onTap: selectionMode
-            ? () => toggleSelect(clip.clipId)
-            : () => _playClipSingle(clip),
+        onTap:
+            selectionMode
+                ? () => toggleSelect(clip.clipId)
+                : () => _playClipSingle(clip),
         menuKey: Key('clip-collection-menu-${clip.clipId}'),
         dragHandleKey: Key('clip-reorder-handle-${clip.clipId}'),
         onOpenSource: _openMovieCallback(clip),
@@ -307,8 +308,8 @@ class _DesktopClipCollectionDetailPageState
       return ListView.separated(
         key: const Key('clip-collection-detail-list'),
         itemCount: clips.length,
-        separatorBuilder: (context, _) =>
-            SizedBox(height: context.appSpacing.sm),
+        separatorBuilder:
+            (context, _) => SizedBox(height: context.appSpacing.sm),
         itemBuilder: (context, index) => buildRow(index),
       );
     }
@@ -372,9 +373,10 @@ class _DesktopClipCollectionDetailPageState
               title: number,
               subtitle: duration,
               clipOverlay: true,
-              onTap: selectionMode
-                  ? () => toggleSelect(clip.clipId)
-                  : () => _playClipSingle(clip),
+              onTap:
+                  selectionMode
+                      ? () => toggleSelect(clip.clipId)
+                      : () => _playClipSingle(clip),
               menuKey: Key('clip-collection-grid-menu-${clip.clipId}'),
               onOpenSource: _openMovieCallback(clip),
               openSourceLabel: '影片',
@@ -417,11 +419,7 @@ class _DesktopClipCollectionDetailPageState
   /// 点单条卡片：只播这一个切片（对齐桌面切片主页 `_playClip`），不进合集连播。
   /// 头部「播放」按钮仍走 [_playFrom] 走整张合集连播。
   void _playClipSingle(MediaClipDto clip) {
-    showClipPlayerDialog(
-      context,
-      streamUrl: clip.streamUrl,
-      title: clip.title,
-    );
+    showClipPlayerDialog(context, streamUrl: clip.streamUrl, title: clip.title);
   }
 
   /// 切片有番号时返回跳转来源影片详情的回调，否则为 `null`（菜单项隐藏）。

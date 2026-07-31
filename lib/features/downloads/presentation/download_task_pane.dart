@@ -91,13 +91,14 @@ List<Widget> buildDownloadTaskSlivers({
         child: AppEmptyState(
           message: hasFilter ? '没有符合筛选条件的下载任务' : '暂无下载任务',
           icon: hasFilter ? Icons.search_off_rounded : Icons.download_outlined,
-          onRetry: hasFilter
-              ? () => unawaited(
+          onRetry:
+              hasFilter
+                  ? () => unawaited(
                     ref
                         .read(downloadTaskCenterProvider.notifier)
                         .applyFilter(DownloadTaskFilterState.initial),
                   )
-              : null,
+                  : null,
           retryLabel: '清除筛选',
           retryKey: const Key('download-empty-clear-filter'),
         ),
@@ -113,9 +114,7 @@ List<Widget> buildDownloadTaskSlivers({
         final isLast = index == items.length - 1;
         return Padding(
           padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.md),
-          child: RepaintBoundary(
-            child: _DownloadTaskCard(row: row),
-          ),
+          child: RepaintBoundary(child: _DownloadTaskCard(row: row)),
         );
       }, childCount: items.length),
     ),
@@ -130,9 +129,10 @@ List<Widget> buildDownloadTaskSlivers({
             AppPagedLoadMoreFooter(
               isLoading: state.paged.isLoadingMore,
               errorMessage: state.paged.loadMoreErrorMessage,
-              onRetry: () => unawaited(
-                ref.read(downloadTaskCenterProvider.notifier).loadMore(),
-              ),
+              onRetry:
+                  () => unawaited(
+                    ref.read(downloadTaskCenterProvider.notifier).loadMore(),
+                  ),
             ),
             SizedBox(height: context.appSpacing.xl),
           ],
@@ -171,8 +171,9 @@ class _DownloadClientSpeedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final transfers = state.clientTransfers.values.toList()
-      ..sort((a, b) => a.clientId.compareTo(b.clientId));
+    final transfers =
+        state.clientTransfers.values.toList()
+          ..sort((a, b) => a.clientId.compareTo(b.clientId));
     final hasAnyLiveData = transfers.isNotEmpty;
     final totalDown = state.totalDownloadSpeedBytes;
     final totalUp = state.totalUploadSpeedBytes;
@@ -338,12 +339,13 @@ class _DownloadTaskCard extends ConsumerWidget {
       cover: _DownloadTaskCover(
         coverUrl: coverUrl,
         movieNumber: hasMovieNumber ? movieNumber : null,
-        onTap: hasMovieNumber
-            ? () => context.pushDesktopMovieDetail(
+        onTap:
+            hasMovieNumber
+                ? () => context.pushDesktopMovieDetail(
                   movieNumber: movieNumber!,
                   fallbackPath: desktopActivityPath,
                 )
-            : null,
+                : null,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,18 +469,16 @@ class _DownloadTaskCard extends ConsumerWidget {
                   key: Key('download-task-resume-${task.id}'),
                   icon: const Icon(Icons.play_arrow_rounded),
                   tooltip: '恢复',
-                  onPressed: isPending
-                      ? null
-                      : () => _resume(context, ref, task.id),
+                  onPressed:
+                      isPending ? null : () => _resume(context, ref, task.id),
                 )
               else if (!isCloud115 && downloadState != 'completed')
                 AppIconButton(
                   key: Key('download-task-pause-${task.id}'),
                   icon: const Icon(Icons.pause_rounded),
                   tooltip: '暂停',
-                  onPressed: isPending
-                      ? null
-                      : () => _pause(context, ref, task.id),
+                  onPressed:
+                      isPending ? null : () => _pause(context, ref, task.id),
                 ),
               if (!isCloud115 && downloadState != 'completed')
                 SizedBox(width: context.appSpacing.xs),
@@ -486,9 +486,10 @@ class _DownloadTaskCard extends ConsumerWidget {
                 key: Key('download-task-delete-${task.id}'),
                 icon: const Icon(Icons.delete_outline_rounded),
                 tooltip: isImportRunning ? '任务正在导入，无法删除' : '删除',
-                onPressed: (isPending || isImportRunning)
-                    ? null
-                    : () => _confirmDelete(
+                onPressed:
+                    (isPending || isImportRunning)
+                        ? null
+                        : () => _confirmDelete(
                           context,
                           ref,
                           task,
@@ -512,18 +513,18 @@ class _DownloadTaskCard extends ConsumerWidget {
 }
 
 TextStyle _statTextStyle(BuildContext context) => resolveAppTextStyle(
-      context,
-      size: AppTextSize.s12,
-      weight: AppTextWeight.regular,
-      tone: AppTextTone.muted,
-    );
+  context,
+  size: AppTextSize.s12,
+  weight: AppTextWeight.regular,
+  tone: AppTextTone.muted,
+);
 
 TextStyle _footnoteTextStyle(BuildContext context) => resolveAppTextStyle(
-      context,
-      size: AppTextSize.s10,
-      weight: AppTextWeight.regular,
-      tone: AppTextTone.tertiary,
-    );
+  context,
+  size: AppTextSize.s10,
+  weight: AppTextWeight.regular,
+  tone: AppTextTone.tertiary,
+);
 
 /// 进度条颜色：下载中用品牌强调色（用户主动关注）；做种/已完成/暂停用中性灰
 /// 避免"血条"式视觉抢眼；失败态用主题 error；其余中性。
@@ -784,7 +785,9 @@ class _DownloadFilterBar extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final searchController = useTextEditingController(text: state.filter.search);
+    final searchController = useTextEditingController(
+      text: state.filter.search,
+    );
     // 若外部通过其它入口（如「清除筛选」）改了 filter.search，同步进输入框；
     // 用户正在输入时（controller.text 与最近同步值不一致）避免打断。
     final attachedSearch = useRef<String>(state.filter.search);
@@ -846,16 +849,17 @@ class _DownloadFilterBar extends HookConsumerWidget {
                   ),
                 )
                 .toList(growable: false),
-            onChanged: isBusy
-                ? null
-                : (value) => ref
-                    .read(downloadTaskCenterProvider.notifier)
-                    .applyFilter(
-                      state.filter.copyWith(
-                        stateFilter:
-                            value ?? DownloadTaskStateFilter.downloading,
-                      ),
-                    ),
+            onChanged:
+                isBusy
+                    ? null
+                    : (value) => ref
+                        .read(downloadTaskCenterProvider.notifier)
+                        .applyFilter(
+                          state.filter.copyWith(
+                            stateFilter:
+                                value ?? DownloadTaskStateFilter.downloading,
+                          ),
+                        ),
           ),
         ),
         if (clientOptions.length >= 2)
@@ -867,10 +871,7 @@ class _DownloadFilterBar extends HookConsumerWidget {
               size: AppSelectFieldSize.compact,
               textStyle: filterTextStyle,
               items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text('全部客户端'),
-                ),
+                const DropdownMenuItem<int?>(value: null, child: Text('全部客户端')),
                 for (final option in clientOptions)
                   DropdownMenuItem<int?>(
                     value: option.id,
@@ -880,11 +881,12 @@ class _DownloadFilterBar extends HookConsumerWidget {
                     ),
                   ),
               ],
-              onChanged: isBusy
-                  ? null
-                  : (value) => ref
-                      .read(downloadTaskCenterProvider.notifier)
-                      .applyFilter(state.filter.copyWith(clientId: value)),
+              onChanged:
+                  isBusy
+                      ? null
+                      : (value) => ref
+                          .read(downloadTaskCenterProvider.notifier)
+                          .applyFilter(state.filter.copyWith(clientId: value)),
             ),
           ),
       ],

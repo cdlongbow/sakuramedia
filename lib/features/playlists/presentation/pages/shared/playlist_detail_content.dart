@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
@@ -30,7 +29,11 @@ import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
-class PlaylistDetailContent extends StatefulWidget {
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+
+class PlaylistDetailContent extends ConsumerStatefulWidget {
   const PlaylistDetailContent({
     super.key,
     required this.playlistId,
@@ -43,10 +46,11 @@ class PlaylistDetailContent extends StatefulWidget {
   final bool enablePullToRefresh;
 
   @override
-  State<PlaylistDetailContent> createState() => _PlaylistDetailContentState();
+  ConsumerState<PlaylistDetailContent> createState() =>
+      _PlaylistDetailContentState();
 }
 
-class _PlaylistDetailContentState extends State<PlaylistDetailContent>
+class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     with
         MultiSelectStateMixin<PlaylistDetailContent, String>,
         MovieBatchSelectionMixin<PlaylistDetailContent> {
@@ -75,10 +79,11 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
   @override
   void initState() {
     super.initState();
-    _playlistsApi = context.read<PlaylistsApi>();
-    final moviesApi = context.read<MoviesApi>();
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _playlistsApi = ref.read(playlistsApiProvider);
+    final moviesApi = ref.read(moviesApiProvider);
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
     _detailController = PlaylistDetailController(
       playlistId: widget.playlistId,
@@ -201,9 +206,7 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
                   (movie) => _moviesController.isSubscriptionUpdating(
                     movie.movieNumber,
                   ),
-              emptyMessage: _filterState.isDefault
-                  ? '暂无影片数据'
-                  : '当前筛选条件下暂无匹配影片',
+              emptyMessage: _filterState.isDefault ? '暂无影片数据' : '当前筛选条件下暂无匹配影片',
               selectionMode: selectionMode,
               isMovieSelected: (movie) => isSelected(movie.movieNumber),
               onMovieSelectedChanged:
@@ -266,9 +269,7 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
   /// 面板，桌面/移动都实时跟随后端返回：抽屉不再是打开那一刻的快照，抽屉里
   /// 的重试按钮也能正确刷新数据。
   Widget _buildListHeader(BuildContext context) {
-    final isMobile =
-        AppPlatformScope.maybeOf(context) ==
-        AppPlatform.mobile;
+    final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     return AppListHeader(
       filterButtonKey: const Key('playlist-detail-filter-trigger'),
       filterLabel: _filterState.triggerLabel,
@@ -283,7 +284,9 @@ class _PlaylistDetailContentState extends State<PlaylistDetailContent>
                 resolutionOptions: _resolutionOptionsController,
               ),
       onFilterPanelOpened:
-          isMobile ? null : () => unawaited(_resolutionOptionsController.ensureLoaded()),
+          isMobile
+              ? null
+              : () => unawaited(_resolutionOptionsController.ensureLoaded()),
       filterPanelFooter: AppFilterPanelFooter(
         isDefault: _filterState.isDefault,
         onReset: _resetFilters,

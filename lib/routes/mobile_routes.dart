@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_password_page.dart';
@@ -14,11 +15,11 @@ import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_deta
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart';
@@ -160,7 +161,10 @@ class MobileImageSearchRouteData extends _MobileSubpageRouteData
       names: const <String>['draftId', 'draft-id'],
       fallback: draftId,
     );
-    final draft = context.read<ImageSearchDraftStore>().get(resolvedDraftId);
+    final draft = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(imageSearchDraftStoreProvider).get(resolvedDraftId);
     return DesktopImageSearchPage(
       initialFileName: draft?.fileName,
       initialFileBytes: draft?.bytes,
@@ -184,15 +188,20 @@ class MobileImageSearchRouteData extends _MobileSubpageRouteData
         final fileName =
             'image_search_${item.movieNumber}_${item.thumbnailId}.${guessImageFileExtension(imageUrl)}';
         try {
-          final imageBytes = await context.read<ApiClient>().getBytes(imageUrl);
+          final imageBytes = await ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(apiClientProvider).getBytes(imageUrl);
           if (!context.mounted) {
             return false;
           }
-          final nextDraftId = context.read<ImageSearchDraftStore>().save(
-            fileName: fileName,
-            bytes: imageBytes,
-            mimeType: guessImageMimeType(fileName),
-          );
+          final nextDraftId = ProviderScope.containerOf(context, listen: false)
+              .read(imageSearchDraftStoreProvider)
+              .save(
+                fileName: fileName,
+                bytes: imageBytes,
+                mimeType: guessImageMimeType(fileName),
+              );
           await MobileImageSearchRouteData(
             draftId: nextDraftId,
             currentMovieNumber: item.movieNumber,
@@ -283,7 +292,6 @@ class MobileSettingsMediaLibrariesRouteData extends _MobileSubpageRouteData
     return const MobileMediaLibrariesPage();
   }
 }
-
 
 @TypedGoRoute<MobileSystemOverviewRouteData>(path: mobileSystemOverviewPath)
 class MobileSystemOverviewRouteData extends _MobileSubpageRouteData
@@ -1021,18 +1029,20 @@ class _MobileOverviewDrawer extends StatelessWidget {
                             ),
                             icon: Icons.notifications_none_rounded,
                             label: '消息',
-                            trailing: unreadCount > 0
-                                ? AppBadge(
-                                    key: const Key(
-                                      'mobile-overview-drawer-notifications-badge',
-                                    ),
-                                    label: unreadCount > 99
-                                        ? '99+'
-                                        : '$unreadCount',
-                                    tone: AppBadgeTone.error,
-                                    size: AppBadgeSize.compact,
-                                  )
-                                : null,
+                            trailing:
+                                unreadCount > 0
+                                    ? AppBadge(
+                                      key: const Key(
+                                        'mobile-overview-drawer-notifications-badge',
+                                      ),
+                                      label:
+                                          unreadCount > 99
+                                              ? '99+'
+                                              : '$unreadCount',
+                                      tone: AppBadgeTone.error,
+                                      size: AppBadgeSize.compact,
+                                    )
+                                    : null,
                             onTap: () {
                               Navigator.of(context).pop();
                               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1094,10 +1104,18 @@ class _MobileOverviewDrawer extends StatelessWidget {
                       ),
                       SizedBox(height: spacing.md),
                       _MobileOverviewDrawerSection(
-                        key: const Key('mobile-overview-drawer-account-section'),
+                        key: const Key(
+                          'mobile-overview-drawer-account-section',
+                        ),
                         items: <Widget>[
-                          _buildMenuEntry(context: context, item: _usernameItem),
-                          _buildMenuEntry(context: context, item: _passwordItem),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _usernameItem,
+                          ),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _passwordItem,
+                          ),
                         ],
                       ),
                       SizedBox(height: spacing.md),
@@ -1442,10 +1460,7 @@ class _MobileOverviewDrawerItem extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) ...[
-                SizedBox(width: spacing.sm),
-                trailing!,
-              ],
+              if (trailing != null) ...[SizedBox(width: spacing.sm), trailing!],
             ],
           ),
         ),

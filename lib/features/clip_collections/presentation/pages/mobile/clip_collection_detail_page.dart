@@ -237,12 +237,13 @@ class _MobileClipCollectionDetailPageState
       itemBuilder: (context, index) {
         final clip = clips[index];
         return GestureDetector(
-          onLongPress: selectionMode
-              ? null
-              : () {
-                  enterSelection();
-                  toggleSelect(clip.clipId);
-                },
+          onLongPress:
+              selectionMode
+                  ? null
+                  : () {
+                    enterSelection();
+                    toggleSelect(clip.clipId);
+                  },
           child: CollectionMemberRow(
             key: ValueKey<int>(clip.clipId),
             index: index,
@@ -256,9 +257,10 @@ class _MobileClipCollectionDetailPageState
             reorderable: false,
             selectionMode: selectionMode,
             isSelected: isSelected(clip.clipId),
-            onTap: selectionMode
-                ? () => toggleSelect(clip.clipId)
-                : () => _openClipSheet(index, clip),
+            onTap:
+                selectionMode
+                    ? () => toggleSelect(clip.clipId)
+                    : () => _openClipSheet(index, clip),
             menuKey: Key('mobile-clip-collection-menu-${clip.clipId}'),
             dragHandleKey: Key('mobile-clip-reorder-handle-${clip.clipId}'),
           ),
@@ -287,12 +289,13 @@ class _MobileClipCollectionDetailPageState
           itemBuilder: (context, index) {
             final clip = clips[index];
             return GestureDetector(
-              onLongPress: selectionMode
-                  ? null
-                  : () {
-                      enterSelection();
-                      toggleSelect(clip.clipId);
-                    },
+              onLongPress:
+                  selectionMode
+                      ? null
+                      : () {
+                        enterSelection();
+                        toggleSelect(clip.clipId);
+                      },
               child: ClipCoverCard(
                 key: ValueKey<int>(clip.clipId),
                 clip: clip,
@@ -353,10 +356,11 @@ class _MobileClipCollectionDetailPageState
     // 用根 Navigator 推全屏页，覆盖底部导航；切片自带 streamUrl 直接传入。
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
-        builder: (_) => MobileClipPlayerPage(
-          streamUrl: clip.streamUrl,
-          title: clip.title,
-        ),
+        builder:
+            (_) => MobileClipPlayerPage(
+              streamUrl: clip.streamUrl,
+              title: clip.title,
+            ),
       ),
     );
   }
@@ -487,10 +491,11 @@ class _MobileClipCollectionDetailPageState
       context,
       title: '正在加入「${target.name}」',
       items: selected,
-      action: (clip) => api.addClipToCollection(
-        collectionId: target.id,
-        clipId: clip.clipId,
-      ),
+      action:
+          (clip) => api.addClipToCollection(
+            collectionId: target.id,
+            clipId: clip.clipId,
+          ),
     );
     if (!mounted) {
       return;

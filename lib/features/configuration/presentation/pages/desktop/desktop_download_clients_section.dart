@@ -100,8 +100,9 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
     final api = context.read<DownloadClientsApi>();
     final payload = await showDialog<CreateDownloadClientPayload>(
       context: context,
-      builder: (dialogContext) =>
-          DownloadClientDialog(libraries: _libraries, title: '添加下载器'),
+      builder:
+          (dialogContext) =>
+              DownloadClientDialog(libraries: _libraries, title: '添加下载器'),
     );
     if (!mounted || payload == null) {
       return;
@@ -120,11 +121,12 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
     final api = context.read<DownloadClientsApi>();
     final payload = await showDialog<UpdateDownloadClientPayload>(
       context: context,
-      builder: (dialogContext) => DownloadClientDialog(
-        libraries: _libraries,
-        title: '编辑下载器',
-        initialClient: client,
-      ),
+      builder:
+          (dialogContext) => DownloadClientDialog(
+            libraries: _libraries,
+            title: '编辑下载器',
+            initialClient: client,
+          ),
     );
     if (!mounted || payload == null) {
       return;
@@ -204,13 +206,16 @@ class _DownloadClientsSectionState extends State<DownloadClientsSection> {
                   mediaLibrary: librariesById[client.mediaLibraryId],
                   onEdit: () => _editClient(client),
                   onDelete: () => _deleteClient(client),
-                  runTest: () =>
-                      context.read<DownloadClientsApi>().testClient(client.id),
-                  runStorageTest: client.isQbittorrent
-                      ? () => context
-                          .read<DownloadClientsApi>()
-                          .storageTestClient(client.id)
-                      : null,
+                  runTest:
+                      () => context.read<DownloadClientsApi>().testClient(
+                        client.id,
+                      ),
+                  runStorageTest:
+                      client.isQbittorrent
+                          ? () => context
+                              .read<DownloadClientsApi>()
+                              .storageTestClient(client.id)
+                          : null,
                 ),
             ],
           ),
@@ -313,11 +318,12 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
   ) async {
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientTestResultDialog(
-        initialResult: result,
-        onRerun: widget.runTest,
-        onResultChanged: _probe.applyConnectivityResult,
-      ),
+      builder:
+          (_) => DownloadClientTestResultDialog(
+            initialResult: result,
+            onRerun: widget.runTest,
+            onResultChanged: _probe.applyConnectivityResult,
+          ),
     );
   }
 
@@ -328,12 +334,13 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
     if (runStorageTest == null) return;
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientStorageTestResultDialog(
-        initialResult: result,
-        clientBaseUrl: widget.client.baseUrl,
-        onRerun: runStorageTest,
-        onResultChanged: _probe.applyStorageResult,
-      ),
+      builder:
+          (_) => DownloadClientStorageTestResultDialog(
+            initialResult: result,
+            clientBaseUrl: widget.client.baseUrl,
+            onRerun: runStorageTest,
+            onResultChanged: _probe.applyStorageResult,
+          ),
     );
   }
 
@@ -346,17 +353,20 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
 
     return Padding(
       key: Key('download-client-card-${client.id}'),
-      padding:
-          EdgeInsets.symmetric(horizontal: spacing.lg, vertical: spacing.md),
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.lg,
+        vertical: spacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               AppSettingIconBox(
-                icon: client.isCloud115
-                    ? Icons.cloud_outlined
-                    : Icons.cloud_download_outlined,
+                icon:
+                    client.isCloud115
+                        ? Icons.cloud_outlined
+                        : Icons.cloud_download_outlined,
               ),
               SizedBox(width: spacing.md),
               Expanded(
@@ -434,9 +444,10 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
                 AppInfoPill(label: '类型', value: client.kind.label),
                 AppInfoPill(
                   label: '媒体库',
-                  value: mediaLibrary == null
-                      ? '未匹配 (${client.mediaLibraryId})'
-                      : mediaLibrary.name,
+                  value:
+                      mediaLibrary == null
+                          ? '未匹配 (${client.mediaLibraryId})'
+                          : mediaLibrary.name,
                 ),
                 if (client.isQbittorrent) ...[
                   AppInfoPill(label: '用户名', value: client.username),
@@ -444,10 +455,7 @@ class _DownloadClientCardState extends State<DownloadClientCard> {
                     label: 'qBittorrent保存路径',
                     value: client.clientSavePath,
                   ),
-                  AppInfoPill(
-                    label: '本地访问路径',
-                    value: client.localRootPath,
-                  ),
+                  AppInfoPill(label: '本地访问路径', value: client.localRootPath),
                   AppInfoPill(
                     label: '密码',
                     value: client.hasPassword ? '已设置' : '未设置',
@@ -590,8 +598,8 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
       context: context,
       probe: _probe,
       runTest: () => api.probeStorageTestClient(payload),
-      openDialog: (result) =>
-          _openStorageDialog(result, payload, value.baseUrl),
+      openDialog:
+          (result) => _openStorageDialog(result, payload, value.baseUrl),
     );
   }
 
@@ -602,11 +610,12 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientTestResultDialog(
-        initialResult: result,
-        onRerun: () => api.probeTestClient(payload),
-        onResultChanged: _probe.applyConnectivityResult,
-      ),
+      builder:
+          (_) => DownloadClientTestResultDialog(
+            initialResult: result,
+            onRerun: () => api.probeTestClient(payload),
+            onResultChanged: _probe.applyConnectivityResult,
+          ),
     );
   }
 
@@ -618,12 +627,13 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientStorageTestResultDialog(
-        initialResult: result,
-        clientBaseUrl: baseUrl,
-        onRerun: () => api.probeStorageTestClient(payload),
-        onResultChanged: _probe.applyStorageResult,
-      ),
+      builder:
+          (_) => DownloadClientStorageTestResultDialog(
+            initialResult: result,
+            clientBaseUrl: baseUrl,
+            onRerun: () => api.probeStorageTestClient(payload),
+            onResultChanged: _probe.applyStorageResult,
+          ),
     );
   }
 
@@ -665,14 +675,16 @@ class _DownloadClientDialogState extends State<DownloadClientDialog> {
                 localRootPathController: _localRootPathController,
                 libraries: widget.libraries,
                 kind: _kind,
-                onKindChanged: (value) => setState(() {
-                  _kind = value;
-                  _selectedLibraryId = null;
-                }),
+                onKindChanged:
+                    (value) => setState(() {
+                      _kind = value;
+                      _selectedLibraryId = null;
+                    }),
                 selectedLibraryId: _selectedLibraryId,
-                onLibraryChanged: (value) => setState(() {
-                  _selectedLibraryId = value;
-                }),
+                onLibraryChanged:
+                    (value) => setState(() {
+                      _selectedLibraryId = value;
+                    }),
                 isEditing: _isEditing,
                 enabled: !busy,
                 credentialsLayout: DownloadClientCredentialsLayout.horizontal,

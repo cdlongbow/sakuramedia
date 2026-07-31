@@ -1,13 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_list_content.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/tags/data/tags_api.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_selection_controller.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_selector_panel.dart';
 import 'package:sakuramedia/features/tags/presentation/tags_page_state.dart';
@@ -17,17 +14,21 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
-class DesktopTagsPage extends StatefulWidget {
+import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+
+class DesktopTagsPage extends ConsumerStatefulWidget {
   const DesktopTagsPage({super.key, this.initialTagId});
 
   /// 从影片详情页跳入时携带的预选标签；为空表示一级导航入口。
   final int? initialTagId;
 
   @override
-  State<DesktopTagsPage> createState() => _DesktopTagsPageState();
+  ConsumerState<DesktopTagsPage> createState() => _DesktopTagsPageState();
 }
 
-class _DesktopTagsPageState extends State<DesktopTagsPage> {
+class _DesktopTagsPageState extends ConsumerState<DesktopTagsPage> {
   // 一级导航入口走缓存；带预选标签的子路由入口走独立非缓存状态，
   // 避免与缓存实例共用 scrollController 冲突。
   CachedPageStateHandle<TagsPageStateEntry>? _pageStateHandle;
@@ -59,10 +60,11 @@ class _DesktopTagsPageState extends State<DesktopTagsPage> {
     List<int> initialSelectedTagIds = const <int>[],
   }) {
     return TagsPageStateEntry(
-      tagsApi: context.read<TagsApi>(),
-      moviesApi: context.read<MoviesApi>(),
-      subscriptionChangeNotifier:
-          context.read<MovieSubscriptionChangeNotifier>(),
+      tagsApi: ref.read(tagsApiProvider),
+      moviesApi: ref.read(moviesApiProvider),
+      subscriptionChangeNotifier: ref.read(
+        movieSubscriptionBroadcasterProvider,
+      ),
       initialSelectedTagIds: initialSelectedTagIds,
       popularLimit: 15,
     );
@@ -114,29 +116,29 @@ class _DesktopTagsPageState extends State<DesktopTagsPage> {
     return AppPageRefreshScope(
       onRefresh: _pageState.controller.refresh,
       child: MovieListContent(
-      key: const Key('tags-page'),
-      pageState: _pageState,
-      surfaceColor: context.appColors.surfaceElevated,
-      contentKey: const Key('tags-page-movies'),
-      totalKey: const Key('tags-page-total'),
-      sectionSpacing: context.appSpacing.lg,
-      emptyMessage: '该标签下暂无影片',
-      onMovieTap:
-          (context, movieNumber) => context.pushDesktopMovieDetail(
-            movieNumber: movieNumber,
-            fallbackPath: desktopTagsPath,
-          ),
-      bodyBuilder:
-          (context, scrollController, sliver, onRefresh) => CustomScrollView(
-            controller: scrollController,
-            slivers: [
-              SliverToBoxAdapter(child: _buildSelectorPanel()),
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.appSpacing.lg),
-              ),
-              sliver,
-            ],
-          ),
+        key: const Key('tags-page'),
+        pageState: _pageState,
+        surfaceColor: context.appColors.surfaceElevated,
+        contentKey: const Key('tags-page-movies'),
+        totalKey: const Key('tags-page-total'),
+        sectionSpacing: context.appSpacing.lg,
+        emptyMessage: '该标签下暂无影片',
+        onMovieTap:
+            (context, movieNumber) => context.pushDesktopMovieDetail(
+              movieNumber: movieNumber,
+              fallbackPath: desktopTagsPath,
+            ),
+        bodyBuilder:
+            (context, scrollController, sliver, onRefresh) => CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                SliverToBoxAdapter(child: _buildSelectorPanel()),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.appSpacing.lg),
+                ),
+                sliver,
+              ],
+            ),
       ),
     );
   }

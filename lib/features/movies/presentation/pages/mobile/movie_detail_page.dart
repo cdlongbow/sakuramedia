@@ -216,8 +216,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
                         ),
                 onPlayTap:
                     selectedMedia != null && selectedMedia.hasPlayableUrl
-                        ? () =>
-                            _openMoviePlayer(mediaId: selectedMedia.mediaId)
+                        ? () => _openMoviePlayer(mediaId: selectedMedia.mediaId)
                         : null,
                 sourceOptions: sourceOptions,
                 selectedPlaySource: effectivePlaySource,

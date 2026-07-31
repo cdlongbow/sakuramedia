@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
@@ -19,14 +18,17 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-class DesktopFollowPage extends StatefulWidget {
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+
+class DesktopFollowPage extends ConsumerStatefulWidget {
   const DesktopFollowPage({super.key});
 
   @override
-  State<DesktopFollowPage> createState() => _DesktopFollowPageState();
+  ConsumerState<DesktopFollowPage> createState() => _DesktopFollowPageState();
 }
 
-class _DesktopFollowPageState extends State<DesktopFollowPage>
+class _DesktopFollowPageState extends ConsumerState<DesktopFollowPage>
     with
         MultiSelectStateMixin<DesktopFollowPage, String>,
         MovieBatchSelectionMixin<DesktopFollowPage> {
@@ -49,22 +51,23 @@ class _DesktopFollowPageState extends State<DesktopFollowPage>
   @override
   void initState() {
     super.initState();
-    _collectionChangeNotifier =
-        context.read<MovieCollectionTypeChangeNotifier>();
+    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
 
     _moviesController = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context
-              .read<MoviesApi>()
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
               .getSubscribedActorsLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 24,

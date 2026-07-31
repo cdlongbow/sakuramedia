@@ -31,8 +31,10 @@ class IndexerSettingsSection extends StatefulWidget {
 
 class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
     with
-        SectionLoaderMixin<(IndexerSettingsDto, List<DownloadClientDto>),
-            IndexerSettingsSection> {
+        SectionLoaderMixin<
+          (IndexerSettingsDto, List<DownloadClientDto>),
+          IndexerSettingsSection
+        > {
   static const List<String> _supportedTypes = <String>['jackett'];
 
   final TextEditingController _apiKeyController = TextEditingController();
@@ -50,7 +52,7 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
 
   @override
   Future<(IndexerSettingsDto, List<DownloadClientDto>)>
-      fetchSectionData() async {
+  fetchSectionData() async {
     final futures = await Future.wait<Object>([
       context.read<IndexerSettingsApi>().getSettings(),
       context.read<DownloadClientsApi>().getClients(),
@@ -147,10 +149,7 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
           current.name != previous.name ||
           current.url != previous.url ||
           current.kind != previous.kind ||
-          !listEquals(
-            current.downloadClientIds,
-            previous.downloadClientIds,
-          )) {
+          !listEquals(current.downloadClientIds, previous.downloadClientIds)) {
         return true;
       }
     }
@@ -204,12 +203,12 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
     });
     try {
       final saved = await context.read<IndexerSettingsApi>().updateSettings(
-            UpdateIndexerSettingsPayload(
-              type: type,
-              apiKey: apiKey,
-              indexers: _indexers,
-            ),
-          );
+        UpdateIndexerSettingsPayload(
+          type: type,
+          apiKey: apiKey,
+          indexers: _indexers,
+        ),
+      );
       if (!mounted) {
         return;
       }
@@ -243,10 +242,11 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
   Future<void> _createIndexer() async {
     final result = await showDialog<IndexerEntryDto>(
       context: context,
-      builder: (dialogContext) => IndexerEntryDialog(
-        title: '新增索引器',
-        downloadClients: _downloadClients,
-      ),
+      builder:
+          (dialogContext) => IndexerEntryDialog(
+            title: '新增索引器',
+            downloadClients: _downloadClients,
+          ),
     );
     if (result == null) {
       return;
@@ -260,11 +260,12 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
   Future<void> _editIndexer(int index) async {
     final result = await showDialog<IndexerEntryDto>(
       context: context,
-      builder: (dialogContext) => IndexerEntryDialog(
-        title: '编辑索引器',
-        downloadClients: _downloadClients,
-        initialEntry: _indexers[index],
-      ),
+      builder:
+          (dialogContext) => IndexerEntryDialog(
+            title: '编辑索引器',
+            downloadClients: _downloadClients,
+            initialEntry: _indexers[index],
+          ),
     );
     if (result == null) {
       return;
@@ -293,14 +294,17 @@ class _IndexerSettingsSectionState extends State<IndexerSettingsSection>
 
   Widget _buildLoaded(BuildContext context) {
     final query = _searchController.text.trim().toLowerCase();
-    final filteredIndexers = query.isEmpty
-        ? _indexers
-        : _indexers.where((item) {
-            final source =
-                '${item.name} ${item.url} ${item.kind} ${item.downloadClientNames}'
-                    .toLowerCase();
-            return source.contains(query);
-          }).toList(growable: false);
+    final filteredIndexers =
+        query.isEmpty
+            ? _indexers
+            : _indexers
+                .where((item) {
+                  final source =
+                      '${item.name} ${item.url} ${item.kind} ${item.downloadClientNames}'
+                          .toLowerCase();
+                  return source.contains(query);
+                })
+                .toList(growable: false);
 
     final spacing = context.appSpacing;
     return Column(
@@ -634,21 +638,24 @@ class _IndexerEntryDialogState extends State<IndexerEntryDialog> {
               kind: _kind,
               downloadClients: widget.downloadClients,
               selectedDownloadClientIds: _selectedDownloadClientIds,
-              onKindChanged: (value) => setState(() {
-                _kind = value;
-                if (value == 'pt') {
-                  final qbIds = widget.downloadClients
-                      .where((client) => client.isQbittorrent)
-                      .map((client) => client.id)
-                      .toSet();
-                  _selectedDownloadClientIds = _selectedDownloadClientIds
-                      .where(qbIds.contains)
-                      .toList(growable: false);
-                }
-              }),
-              onDownloadClientsChanged: (value) => setState(() {
-                _selectedDownloadClientIds = value;
-              }),
+              onKindChanged:
+                  (value) => setState(() {
+                    _kind = value;
+                    if (value == 'pt') {
+                      final qbIds =
+                          widget.downloadClients
+                              .where((client) => client.isQbittorrent)
+                              .map((client) => client.id)
+                              .toSet();
+                      _selectedDownloadClientIds = _selectedDownloadClientIds
+                          .where(qbIds.contains)
+                          .toList(growable: false);
+                    }
+                  }),
+              onDownloadClientsChanged:
+                  (value) => setState(() {
+                    _selectedDownloadClientIds = value;
+                  }),
               onSubmitted: _submit,
             ),
             SizedBox(height: spacing.xl),

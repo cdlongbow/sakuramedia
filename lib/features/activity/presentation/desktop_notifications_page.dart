@@ -82,30 +82,31 @@ class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _maybeAutoLoadMore();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _maybeAutoLoadMore();
+            }
+          });
+
+          if (_controller.isInitialLoading &&
+              _controller.notifications.isEmpty) {
+            return const _NotificationsLoadingState();
           }
-        });
+          if (_controller.initialErrorMessage != null &&
+              _controller.notifications.isEmpty) {
+            return _NotificationsErrorState(
+              message: _controller.initialErrorMessage!,
+              onRetry: _controller.reloadAll,
+            );
+          }
 
-        if (_controller.isInitialLoading && _controller.notifications.isEmpty) {
-          return const _NotificationsLoadingState();
-        }
-        if (_controller.initialErrorMessage != null &&
-            _controller.notifications.isEmpty) {
-          return _NotificationsErrorState(
-            message: _controller.initialErrorMessage!,
-            onRetry: _controller.reloadAll,
+          return CustomScrollView(
+            controller: _scrollController,
+            // 收敛视口外预构建，避免卡片「提前已读」。
+            cacheExtent: 0,
+            slivers: _buildSlivers(context),
           );
-        }
-
-        return CustomScrollView(
-          controller: _scrollController,
-          // 收敛视口外预构建，避免卡片「提前已读」。
-          cacheExtent: 0,
-          slivers: _buildSlivers(context),
-        );
-      },
+        },
       ),
     );
   }
@@ -176,9 +177,7 @@ class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
             padding: EdgeInsets.only(
               bottom: isLast ? 0 : context.appSpacing.md,
             ),
-            child: RepaintBoundary(
-              child: NotificationCard(notification: item),
-            ),
+            child: RepaintBoundary(child: NotificationCard(notification: item)),
           );
         }, childCount: _controller.notifications.length),
       ),
@@ -223,7 +222,10 @@ class _NotificationsLoadingState extends StatelessWidget {
 }
 
 class _NotificationsErrorState extends StatelessWidget {
-  const _NotificationsErrorState({required this.message, required this.onRetry});
+  const _NotificationsErrorState({
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final Future<void> Function() onRetry;

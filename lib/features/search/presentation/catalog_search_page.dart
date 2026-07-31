@@ -2,13 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_page_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -16,7 +13,11 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_content.dart';
 
-class CatalogSearchPage extends StatefulWidget {
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+
+class CatalogSearchPage extends ConsumerStatefulWidget {
   const CatalogSearchPage({
     super.key,
     required this.initialQuery,
@@ -29,10 +30,10 @@ class CatalogSearchPage extends StatefulWidget {
   final bool initialUseOnlineSearch;
 
   @override
-  State<CatalogSearchPage> createState() => _CatalogSearchPageState();
+  ConsumerState<CatalogSearchPage> createState() => _CatalogSearchPageState();
 }
 
-class _CatalogSearchPageState extends State<CatalogSearchPage>
+class _CatalogSearchPageState extends ConsumerState<CatalogSearchPage>
     with SingleTickerProviderStateMixin {
   late final CachedPageStateHandle<CatalogSearchPageStateEntry>
   _pageStateHandle;
@@ -50,10 +51,11 @@ class _CatalogSearchPageState extends State<CatalogSearchPage>
       key: desktopSearchPageStateKey(_resolveCachePath()),
       create:
           () => CatalogSearchPageStateEntry(
-            moviesApi: context.read<MoviesApi>(),
-            actorsApi: context.read<ActorsApi>(),
-            subscriptionChangeNotifier:
-                context.read<MovieSubscriptionChangeNotifier>(),
+            moviesApi: ref.read(moviesApiProvider),
+            actorsApi: ref.read(actorsApiProvider),
+            subscriptionChangeNotifier: ref.read(
+              movieSubscriptionBroadcasterProvider,
+            ),
           ),
     );
 
@@ -124,8 +126,8 @@ class _CatalogSearchPageState extends State<CatalogSearchPage>
               (movie) => context.pushDesktopMovieDetail(
                 movieNumber: movie.movieNumber,
               ),
-          onMovieMenuRequest: (movie, globalPosition) =>
-              requestMovieCollectionMenu(
+          onMovieMenuRequest:
+              (movie, globalPosition) => requestMovieCollectionMenu(
                 context,
                 movie.movieNumber,
                 globalPosition,

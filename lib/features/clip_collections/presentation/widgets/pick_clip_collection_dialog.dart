@@ -27,19 +27,21 @@ Future<ClipCollectionDto?> showPickClipCollectionDialog(
     case PickClipCollectionPresentation.dialog:
       return showDialog<ClipCollectionDto>(
         context: context,
-        builder: (dialogContext) => _PickClipCollectionDialog(
-          excludedCollectionId: excludedCollectionId,
-        ),
+        builder:
+            (dialogContext) => _PickClipCollectionDialog(
+              excludedCollectionId: excludedCollectionId,
+            ),
       );
     case PickClipCollectionPresentation.bottomDrawer:
       return showAppBottomDrawer<ClipCollectionDto>(
         context: context,
         drawerKey: const Key('pick-clip-collection-bottom-sheet'),
         maxHeightFactor: 0.7,
-        builder: (sheetContext) => _PickClipCollectionDialog(
-          presentation: PickClipCollectionPresentation.bottomDrawer,
-          excludedCollectionId: excludedCollectionId,
-        ),
+        builder:
+            (sheetContext) => _PickClipCollectionDialog(
+              presentation: PickClipCollectionPresentation.bottomDrawer,
+              excludedCollectionId: excludedCollectionId,
+            ),
       );
   }
 }
@@ -88,11 +90,12 @@ class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
       }
       final excluded = widget.excludedCollectionId;
       setState(() {
-        _collections = excluded == null
-            ? collections
-            : collections
-                .where((c) => c.id != excluded)
-                .toList(growable: false);
+        _collections =
+            excluded == null
+                ? collections
+                : collections
+                    .where((c) => c.id != excluded)
+                    .toList(growable: false);
         _isLoading = false;
       });
     } catch (error) {
@@ -109,9 +112,10 @@ class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
   Future<void> _createAndPick() async {
     final created = await showCreateClipCollectionDialog(
       context,
-      presentation: _isBottomDrawer
-          ? ClipCollectionEditPresentation.bottomDrawer
-          : ClipCollectionEditPresentation.dialog,
+      presentation:
+          _isBottomDrawer
+              ? ClipCollectionEditPresentation.bottomDrawer
+              : ClipCollectionEditPresentation.dialog,
     );
     if (created != null && mounted) {
       Navigator.of(context).pop(created);
@@ -131,12 +135,13 @@ class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
     final spacing = context.appSpacing;
     // 抽屉形态：列表占据抽屉剩余空间并内部滚动，表头/按钮常驻，整体由抽屉 maxHeightFactor
     // 约束，避免矮屏上「表头 + 固定高列表 + 按钮」超过抽屉封顶导致溢出。桌面弹窗仍用固定上限。
-    final listSection = _isBottomDrawer
-        ? Flexible(child: _buildBody(context))
-        : ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 320),
-            child: _buildBody(context),
-          );
+    final listSection =
+        _isBottomDrawer
+            ? Flexible(child: _buildBody(context))
+            : ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 320),
+              child: _buildBody(context),
+            );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,10 +161,7 @@ class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
         Row(
           children: [
             Expanded(
-              child: AppButton(
-                label: '新建合集并加入',
-                onPressed: _createAndPick,
-              ),
+              child: AppButton(label: '新建合集并加入', onPressed: _createAndPick),
             ),
             SizedBox(width: spacing.md),
             AppButton(

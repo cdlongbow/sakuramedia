@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -114,15 +115,18 @@ Future<void> _pumpActorsPage(
   required TestApiBundle bundle,
 }) {
   return tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<ActorsApi>.value(value: bundle.actorsApi),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: DesktopActorsPage()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<ActorsApi>.value(value: bundle.actorsApi),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopActorsPage()),
+          ),
         ),
       ),
     ),

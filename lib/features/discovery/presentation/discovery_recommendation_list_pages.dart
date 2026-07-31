@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
-import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -67,16 +67,17 @@ class MobileDiscoverMomentsPage extends StatelessWidget {
 
 enum _DiscoveryListPlatform { desktop, mobile }
 
-class _DiscoveryMoviesPage extends StatefulWidget {
+class _DiscoveryMoviesPage extends ConsumerStatefulWidget {
   const _DiscoveryMoviesPage({required this.platform});
 
   final _DiscoveryListPlatform platform;
 
   @override
-  State<_DiscoveryMoviesPage> createState() => _DiscoveryMoviesPageState();
+  ConsumerState<_DiscoveryMoviesPage> createState() =>
+      _DiscoveryMoviesPageState();
 }
 
-class _DiscoveryMoviesPageState extends State<_DiscoveryMoviesPage> {
+class _DiscoveryMoviesPageState extends ConsumerState<_DiscoveryMoviesPage> {
   late final PagedLoadController<DailyRecommendationMovieDto> _controller;
 
   bool get _isMobile => widget.platform == _DiscoveryListPlatform.mobile;
@@ -86,8 +87,8 @@ class _DiscoveryMoviesPageState extends State<_DiscoveryMoviesPage> {
     super.initState();
     _controller = PagedLoadController<DailyRecommendationMovieDto>(
       fetchPage:
-          (page, pageSize) => context
-              .read<DiscoveryApi>()
+          (page, pageSize) => ref
+              .read(discoveryApiProvider)
               .getDailyRecommendations(page: page, pageSize: pageSize),
       pageSize: _isMobile ? 18 : 24,
       loadMoreTriggerOffset: 300,
@@ -161,23 +162,24 @@ class _DiscoveryMoviesPageState extends State<_DiscoveryMoviesPage> {
 
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
-      child: _isMobile
-          ? ColoredBox(
-              color: context.appColors.surfaceCard,
-              child: AppAdaptiveRefreshScrollView(
-                controller: _controller.scrollController,
-                onRefresh: _handleRefresh,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
+      child:
+          _isMobile
+              ? ColoredBox(
+                color: context.appColors.surfaceCard,
+                child: AppAdaptiveRefreshScrollView(
+                  controller: _controller.scrollController,
+                  onRefresh: _handleRefresh,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: <Widget>[sliver],
+                ),
+              )
+              : ColoredBox(
+                color: context.appColors.surfaceElevated,
+                child: CustomScrollView(
+                  controller: _controller.scrollController,
+                  slivers: [sliver],
+                ),
               ),
-            )
-          : ColoredBox(
-              color: context.appColors.surfaceElevated,
-              child: CustomScrollView(
-                controller: _controller.scrollController,
-                slivers: [sliver],
-              ),
-            ),
     );
   }
 
@@ -223,16 +225,17 @@ class _DiscoveryMoviesPageState extends State<_DiscoveryMoviesPage> {
   }
 }
 
-class _DiscoveryMomentsPage extends StatefulWidget {
+class _DiscoveryMomentsPage extends ConsumerStatefulWidget {
   const _DiscoveryMomentsPage({required this.platform});
 
   final _DiscoveryListPlatform platform;
 
   @override
-  State<_DiscoveryMomentsPage> createState() => _DiscoveryMomentsPageState();
+  ConsumerState<_DiscoveryMomentsPage> createState() =>
+      _DiscoveryMomentsPageState();
 }
 
-class _DiscoveryMomentsPageState extends State<_DiscoveryMomentsPage> {
+class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
   late final PagedLoadController<MomentRecommendationDto> _controller;
 
   bool get _isMobile => widget.platform == _DiscoveryListPlatform.mobile;
@@ -261,8 +264,8 @@ class _DiscoveryMomentsPageState extends State<_DiscoveryMomentsPage> {
     int page,
     int pageSize,
   ) async {
-    final response = await context
-        .read<DiscoveryApi>()
+    final response = await ref
+        .read(discoveryApiProvider)
         .getMomentRecommendations(page: page, pageSize: pageSize);
     return PaginatedResponseDto<MomentRecommendationDto>(
       items: response.items,
@@ -329,23 +332,24 @@ class _DiscoveryMomentsPageState extends State<_DiscoveryMomentsPage> {
 
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
-      child: _isMobile
-          ? ColoredBox(
-              color: context.appColors.surfaceCard,
-              child: AppAdaptiveRefreshScrollView(
-                controller: _controller.scrollController,
-                onRefresh: _handleRefresh,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
+      child:
+          _isMobile
+              ? ColoredBox(
+                color: context.appColors.surfaceCard,
+                child: AppAdaptiveRefreshScrollView(
+                  controller: _controller.scrollController,
+                  onRefresh: _handleRefresh,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: <Widget>[sliver],
+                ),
+              )
+              : ColoredBox(
+                color: context.appColors.surfaceElevated,
+                child: CustomScrollView(
+                  controller: _controller.scrollController,
+                  slivers: [sliver],
+                ),
               ),
-            )
-          : ColoredBox(
-              color: context.appColors.surfaceElevated,
-              child: CustomScrollView(
-                controller: _controller.scrollController,
-                slivers: [sliver],
-              ),
-            ),
     );
   }
 

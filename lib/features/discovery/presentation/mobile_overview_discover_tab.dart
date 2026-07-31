@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
@@ -23,15 +22,18 @@ import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart'
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-class MobileOverviewDiscoverTab extends StatefulWidget {
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
+
+class MobileOverviewDiscoverTab extends ConsumerStatefulWidget {
   const MobileOverviewDiscoverTab({super.key});
 
   @override
-  State<MobileOverviewDiscoverTab> createState() =>
+  ConsumerState<MobileOverviewDiscoverTab> createState() =>
       _MobileOverviewDiscoverTabState();
 }
 
-class _MobileOverviewDiscoverTabState extends State<MobileOverviewDiscoverTab> {
+class _MobileOverviewDiscoverTabState
+    extends ConsumerState<MobileOverviewDiscoverTab> {
   static const int _dailyPreviewCount = 6;
   static const int _momentPreviewCount = 4;
 
@@ -41,7 +43,7 @@ class _MobileOverviewDiscoverTabState extends State<MobileOverviewDiscoverTab> {
   void initState() {
     super.initState();
     _controller = DiscoveryController(
-      discoveryApi: context.read<DiscoveryApi>(),
+      discoveryApi: ref.read(discoveryApiProvider),
       dailyPageSize: 10,
       momentPageSize: 10,
     )..load();
@@ -155,9 +157,7 @@ class _MobileOverviewDiscoverTabState extends State<MobileOverviewDiscoverTab> {
       );
     }
     if (_controller.momentItems.isEmpty) {
-      return const AppEmptyState(
-        message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示',
-      );
+      return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
     }
     return MomentGrid(
       items: _controller.momentItems

@@ -47,9 +47,8 @@ class VideoCollectionFilterSectionGroup extends StatelessWidget {
           options: <VideoSortField?>[null, ...VideoSortField.values],
           selectedValue: sortField,
           optionKeyBuilder:
-              (value) => Key(
-                'video-collection-sort-${value?.apiValue ?? 'manual'}',
-              ),
+              (value) =>
+                  Key('video-collection-sort-${value?.apiValue ?? 'manual'}'),
           labelBuilder: videoCollectionSortLabel,
           onSelected: (value) => onChanged(field: value),
         ),

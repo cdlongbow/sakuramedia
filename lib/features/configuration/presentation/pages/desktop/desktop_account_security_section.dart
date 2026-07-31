@@ -503,4 +503,3 @@ class _AccountProfilePill extends StatelessWidget {
     );
   }
 }
-

@@ -17,7 +17,8 @@ class ClipCollectionsOverviewController extends ChangeNotifier {
   List<ClipCollectionDto> get collections => _collections;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isEmpty => !_isLoading && _errorMessage == null && _collections.isEmpty;
+  bool get isEmpty =>
+      !_isLoading && _errorMessage == null && _collections.isEmpty;
 
   Future<void> load() async {
     _isLoading = true;
@@ -56,10 +57,9 @@ class ClipCollectionsOverviewController extends ChangeNotifier {
 
   void removeCollection(int collectionId) {
     final before = _collections.length;
-    _collections =
-        _collections
-            .where((item) => item.id != collectionId)
-            .toList(growable: false);
+    _collections = _collections
+        .where((item) => item.id != collectionId)
+        .toList(growable: false);
     if (_collections.length != before) {
       notifyListeners();
     }

@@ -5,7 +5,7 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 
 class MediaLibrariesApi {
   const MediaLibrariesApi({required ApiClient apiClient})
-      : _apiClient = apiClient;
+    : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 

@@ -9,10 +9,7 @@ enum DownloadClientProbeKind { connectivity, storage }
 /// 警告显示「有警告」,其它态返回 null(chip 只显示 label)。
 ///
 /// 顶级函数以便无 controller 的展示组件(如移动端只读卡片胶囊)也能复用。
-String? probeChipDetail(
-  DownloadClientProbeChipState state, {
-  int? elapsedMs,
-}) {
+String? probeChipDetail(DownloadClientProbeChipState state, {int? elapsedMs}) {
   switch (state) {
     case DownloadClientProbeChipState.healthy:
       return (elapsedMs != null && elapsedMs > 0) ? '${elapsedMs}ms' : null;
@@ -48,10 +45,10 @@ class DownloadClientProbeController extends ChangeNotifier {
     DownloadClientStorageTestResultDto? storageResult,
     this.onConnectivityChanged,
     this.onStorageChanged,
-  })  : _connectivityChipState = connectivityChipState,
-        _storageChipState = storageChipState,
-        _lastConnectivity = connectivityResult,
-        _lastStorage = storageResult;
+  }) : _connectivityChipState = connectivityChipState,
+       _storageChipState = storageChipState,
+       _lastConnectivity = connectivityResult,
+       _lastStorage = storageResult;
 
   /// 每次结果落定(初次跑完 / dialog 重跑回写)时触发,便于父层把结果同步给
   /// 兄弟组件(如移动端详情抽屉 → 卡片 snapshot)。
@@ -84,9 +81,9 @@ class DownloadClientProbeController extends ChangeNotifier {
           _storageChipState == DownloadClientProbeChipState.warning);
 
   String? connectivityChipDetail() => probeChipDetail(
-        _connectivityChipState,
-        elapsedMs: _lastConnectivity?.elapsedMs,
-      );
+    _connectivityChipState,
+    elapsedMs: _lastConnectivity?.elapsedMs,
+  );
   String? storageChipDetail() =>
       probeChipDetail(_storageChipState, elapsedMs: _lastStorage?.elapsedMs);
 
@@ -112,9 +109,7 @@ class DownloadClientProbeController extends ChangeNotifier {
     final parts = <String>[];
     if (result.warnings.isNotEmpty) parts.addAll(result.warnings);
     if (result.hardlink.status.isNotEmpty) {
-      parts.add(
-        result.hardlink.supported ? '硬链接可用' : '硬链接不可用(将回退复制)',
-      );
+      parts.add(result.hardlink.supported ? '硬链接可用' : '硬链接不可用(将回退复制)');
     }
     if (result.elapsedMs > 0) parts.add('${result.elapsedMs}ms');
     if (result.directoryMapping.error != null &&
@@ -169,9 +164,10 @@ class DownloadClientProbeController extends ChangeNotifier {
     } catch (_) {
       if (_isDisposed) rethrow;
       _probing = null;
-      _connectivityChipState = _lastConnectivity == null
-          ? DownloadClientProbeChipState.notTested
-          : probeChipStateFromConnectivity(_lastConnectivity!);
+      _connectivityChipState =
+          _lastConnectivity == null
+              ? DownloadClientProbeChipState.notTested
+              : probeChipStateFromConnectivity(_lastConnectivity!);
       _safeNotify();
       rethrow;
     }
@@ -193,9 +189,10 @@ class DownloadClientProbeController extends ChangeNotifier {
     } catch (_) {
       if (_isDisposed) rethrow;
       _probing = null;
-      _storageChipState = _lastStorage == null
-          ? DownloadClientProbeChipState.notTested
-          : probeChipStateFromStorage(_lastStorage!);
+      _storageChipState =
+          _lastStorage == null
+              ? DownloadClientProbeChipState.notTested
+              : probeChipStateFromStorage(_lastStorage!);
       _safeNotify();
       rethrow;
     }

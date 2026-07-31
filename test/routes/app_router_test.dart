@@ -2250,14 +2250,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -2306,14 +2306,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -2360,14 +2360,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -2416,14 +2416,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
             Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
           ],
@@ -2743,14 +2743,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -2813,14 +2813,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -2906,14 +2906,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -3079,14 +3079,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -3145,14 +3145,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -3253,14 +3253,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -3848,14 +3848,14 @@ void main() {
               value: bundle.movieDescTranslationSettingsApi,
             ),
             Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>(
-              create: (_) => ClipMutationChangeNotifier(),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+              value: bundle.clipMutationBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
             ),
-            ChangeNotifierProvider(
-              create: (_) => MovieSubscriptionChangeNotifier(),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
             ),
           ],
           child: MaterialApp.router(
@@ -3903,15 +3903,19 @@ Future<void> _pumpRouterApp(
     ),
     Provider<StatusApi>.value(value: bundle.statusApi),
     Provider<MoviesApi>.value(value: bundle.moviesApi),
-    ChangeNotifierProvider(create: (_) => MovieCollectionTypeChangeNotifier()),
-    ChangeNotifierProvider(create: (_) => MovieSubscriptionChangeNotifier()),
+    ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+      value: bundle.collectionTypeBroadcaster,
+    ),
+    ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+      value: bundle.movieSubscriptionBroadcaster,
+    ),
     Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
     Provider<ClipsApi>(create: (_) => ClipsApi(apiClient: bundle.apiClient)),
     Provider<ClipCollectionsApi>(
       create: (_) => ClipCollectionsApi(apiClient: bundle.apiClient),
     ),
-    ChangeNotifierProvider<ClipMutationChangeNotifier>(
-      create: (_) => ClipMutationChangeNotifier(),
+    ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
+      value: bundle.clipMutationBroadcaster,
     ),
     Provider<RankingsApi>.value(value: bundle.rankingsApi),
     Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),

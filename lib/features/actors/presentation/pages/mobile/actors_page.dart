@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_list_page_state.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
@@ -18,14 +17,16 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
-class MobileActorsPage extends StatefulWidget {
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+
+class MobileActorsPage extends ConsumerStatefulWidget {
   const MobileActorsPage({super.key});
 
   @override
-  State<MobileActorsPage> createState() => _MobileActorsPageState();
+  ConsumerState<MobileActorsPage> createState() => _MobileActorsPageState();
 }
 
-class _MobileActorsPageState extends State<MobileActorsPage> {
+class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
   late final CachedPageStateHandle<ActorListPageStateEntry> _pageStateHandle;
 
   ActorListPageStateEntry get _pageState => _pageStateHandle.value;
@@ -40,7 +41,7 @@ class _MobileActorsPageState extends State<MobileActorsPage> {
       context,
       key: mobileActorsPageStateKey(),
       create:
-          () => ActorListPageStateEntry(actorsApi: context.read<ActorsApi>()),
+          () => ActorListPageStateEntry(actorsApi: ref.read(actorsApiProvider)),
     );
   }
 

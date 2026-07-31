@@ -3,16 +3,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clips_overview_controller.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
@@ -30,18 +28,24 @@ import 'package:sakuramedia/widgets/domain/clips/clip_player_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+
 /// 切片首页：上方「我的合集」横滑区 + 下方「全部切片」网格（悬停预览、加入合集）。
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+
 ///
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+
 /// 「全部切片」表头右侧的「选择」入口进入多选模式后，网格切换为多选交互；选择栏支持
 /// 「加入合集 / 删除」两个批量动作，逻辑对齐 PornBox 桌面页。
-class DesktopClipsPage extends StatefulWidget {
+class DesktopClipsPage extends ConsumerStatefulWidget {
   const DesktopClipsPage({super.key});
 
   @override
-  State<DesktopClipsPage> createState() => _DesktopClipsPageState();
+  ConsumerState<DesktopClipsPage> createState() => _DesktopClipsPageState();
 }
 
-class _DesktopClipsPageState extends State<DesktopClipsPage>
+class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     with MultiSelectStateMixin<DesktopClipsPage, int> {
   late final ClipsOverviewController _clipsController;
   late final ClipCollectionsOverviewController _collectionsController;
@@ -55,17 +59,16 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
   @override
   void initState() {
     super.initState();
-    final clipsApi = context.read<ClipsApi>();
-    final collectionsApi = context.read<ClipCollectionsApi>();
-    _mutationNotifier = context.read<ClipMutationChangeNotifier>();
+    final clipsApi = ref.read(clipsApiProvider);
+    final collectionsApi = ref.read(clipCollectionsApiProvider);
+    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
     _clipsController = ClipsOverviewController(
       fetchClips:
           ({
             int page = 1,
             int pageSize = 24,
             String sort = 'created_at:desc',
-          }) =>
-              clipsApi.getMyClips(page: page, pageSize: pageSize, sort: sort),
+          }) => clipsApi.getMyClips(page: page, pageSize: pageSize, sort: sort),
     )..load();
     _collectionsController = ClipCollectionsOverviewController(
       fetchCollections: collectionsApi.getCollections,
@@ -135,32 +138,32 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
         child: AnimatedBuilder(
           animation: _pageListenable,
           builder: (context, _) {
-          // 仅首屏（尚无任何切片）才整页 spinner；切换排序等重载时保留页面骨架，
-          // 让合集区与标题栏不被销毁重建，旧列表沿用到新数据返回。
-          if (_clipsController.isLoading && _clipsController.clips.isEmpty) {
-            return const Center(
-              child: SizedBox(
-                key: Key('clips-page-loading'),
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(),
-              ),
+            // 仅首屏（尚无任何切片）才整页 spinner；切换排序等重载时保留页面骨架，
+            // 让合集区与标题栏不被销毁重建，旧列表沿用到新数据返回。
+            if (_clipsController.isLoading && _clipsController.clips.isEmpty) {
+              return const Center(
+                child: SizedBox(
+                  key: Key('clips-page-loading'),
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+            if (_clipsController.errorMessage != null) {
+              return AppEmptyState(message: _clipsController.errorMessage!);
+            }
+            return CustomScrollView(
+              controller: _scrollController,
+              slivers: <Widget>[
+                SliverToBoxAdapter(child: _buildCollectionsSection(context)),
+                SliverToBoxAdapter(child: _buildClipsHeader(context)),
+                _buildClipsSliver(context),
+                SliverToBoxAdapter(child: _buildFooter(context)),
+              ],
             );
-          }
-          if (_clipsController.errorMessage != null) {
-            return AppEmptyState(message: _clipsController.errorMessage!);
-          }
-          return CustomScrollView(
-            controller: _scrollController,
-            slivers: <Widget>[
-              SliverToBoxAdapter(child: _buildCollectionsSection(context)),
-              SliverToBoxAdapter(child: _buildClipsHeader(context)),
-              _buildClipsSliver(context),
-              SliverToBoxAdapter(child: _buildFooter(context)),
-            ],
-          );
-        },
-      ),
+          },
+        ),
       ),
     );
   }
@@ -481,10 +484,9 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
       return;
     }
     try {
-      final updated = await context.read<ClipsApi>().updateClipTitle(
-        clipId: clip.clipId,
-        title: newTitle,
-      );
+      final updated = await ref
+          .read(clipsApiProvider)
+          .updateClipTitle(clipId: clip.clipId, title: newTitle);
       _clipsController.replaceClip(updated);
       if (mounted) {
         showToast('已重命名');
@@ -508,7 +510,7 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
       return;
     }
     try {
-      await context.read<ClipsApi>().deleteClip(clipId: clip.clipId);
+      await ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId);
       // 广播删除信号：本页监听后从网格精准移除，并刷新合集横滑区（封面 / 计数可能变化）。
       _mutationNotifier.reportDeleted(clip.clipId);
       if (mounted) {
@@ -571,15 +573,16 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在加入「${target.name}」',
       items: selected,
-      action: (clip) => api.addClipToCollection(
-        collectionId: target.id,
-        clipId: clip.clipId,
-      ),
+      action:
+          (clip) => api.addClipToCollection(
+            collectionId: target.id,
+            clipId: clip.clipId,
+          ),
     );
     if (!mounted) {
       return;
@@ -611,7 +614,7 @@ class _DesktopClipsPageState extends State<DesktopClipsPage>
     if (!mounted || !confirmed) {
       return;
     }
-    final api = context.read<ClipsApi>();
+    final api = ref.read(clipsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在删除切片',

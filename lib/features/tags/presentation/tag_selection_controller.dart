@@ -86,10 +86,7 @@ class TagSelectionController extends ChangeNotifier {
       _hasLoadedOnce = true;
       _errorMessage = null;
     } catch (error) {
-      _errorMessage = apiErrorMessage(
-        error,
-        fallback: '标签加载失败，请稍后重试',
-      );
+      _errorMessage = apiErrorMessage(error, fallback: '标签加载失败，请稍后重试');
     } finally {
       _isLoading = false;
       notifyListeners();

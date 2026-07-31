@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
@@ -17,6 +17,8 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 
 typedef MovieListBodyBuilder =
     Widget Function(
@@ -41,7 +43,7 @@ class MovieListHeaderArgs {
   final int total;
 }
 
-class MovieListContent extends StatefulWidget {
+class MovieListContent extends ConsumerStatefulWidget {
   const MovieListContent({
     super.key,
     required this.pageState,
@@ -82,10 +84,10 @@ class MovieListContent extends StatefulWidget {
   final bool useMobileSelectionLayout;
 
   @override
-  State<MovieListContent> createState() => _MovieListContentState();
+  ConsumerState<MovieListContent> createState() => _MovieListContentState();
 }
 
-class _MovieListContentState extends State<MovieListContent>
+class _MovieListContentState extends ConsumerState<MovieListContent>
     with
         MultiSelectStateMixin<MovieListContent, String>,
         MovieBatchSelectionMixin<MovieListContent> {
@@ -106,8 +108,7 @@ class _MovieListContentState extends State<MovieListContent>
   @override
   void initState() {
     super.initState();
-    _collectionChangeNotifier =
-        context.read<MovieCollectionTypeChangeNotifier>();
+    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
   }
 

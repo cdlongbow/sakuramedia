@@ -149,13 +149,13 @@ List<Widget> buildResourceTaskSlivers({
                   if (!isBatchSelectable) {
                     final unavailable = record.mediaUnavailableLabel;
                     showToast(
-                      unavailable != null
-                          ? '$unavailable，无法重置'
-                          : '仅可重置失败的任务',
+                      unavailable != null ? '$unavailable，无法重置' : '仅可重置失败的任务',
                     );
                     return;
                   }
-                  final ok = controller.toggleRecordSelection(record.resourceId);
+                  final ok = controller.toggleRecordSelection(
+                    record.resourceId,
+                  );
                   if (!ok) {
                     showToast(
                       '最多可选 ${ResourceTaskCenterController.maxBatchResetCount} 项',
@@ -662,9 +662,10 @@ class _ResourceTaskRecordTile extends StatelessWidget {
         lastAttemptedLabel != null ? '最近尝试 $lastAttemptedLabel' : '尚未执行';
     final showAsBatchSelected = inSelectionMode && isBatchSelected;
     final dimmed = inSelectionMode && !isBatchSelectable;
-    final borderColor = (showAsBatchSelected || isSelected)
-        ? colors.selectionBorder
-        : colors.borderSubtle;
+    final borderColor =
+        (showAsBatchSelected || isSelected)
+            ? colors.selectionBorder
+            : colors.borderSubtle;
 
     return Material(
       color: Colors.transparent,
@@ -712,119 +713,119 @@ class _ResourceTaskRecordTile extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        if (subtitleText != null) ...[
-                          SizedBox(height: context.appSpacing.xs),
-                          Text(
-                            subtitleText,
-                            style: resolveAppTextStyle(
-                              context,
-                              size: AppTextSize.s14,
-                              weight: AppTextWeight.regular,
-                              tone: AppTextTone.secondary,
+                          if (subtitleText != null) ...[
+                            SizedBox(height: context.appSpacing.xs),
+                            Text(
+                              subtitleText,
+                              style: resolveAppTextStyle(
+                                context,
+                                size: AppTextSize.s14,
+                                weight: AppTextWeight.regular,
+                                tone: AppTextTone.secondary,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: context.appSpacing.md),
-                  // 「媒体已失效/已删除」这两条是"重试也救不回来"的客观事实，
-                  // 常驻在状态徽标左侧，跟中文语序顺(定语在前)。
-                  // tone 用 neutral 灰底，是"客观告知"不是"警告"——
-                  // 别抢右侧任务状态徽标的视觉重心。
-                  if (record.mediaUnavailableLabel != null) ...[
-                    AppBadge(
-                      key: Key(
-                        'resource-task-media-unavailable-${record.recordKey}',
                       ),
-                      label: record.mediaUnavailableLabel!,
-                      tone: AppBadgeTone.neutral,
-                      size: AppBadgeSize.compact,
                     ),
-                    SizedBox(width: context.appSpacing.sm),
-                  ],
-                  AppBadge(
-                    label: _labelForResourceTaskState(record.state),
-                    tone: _toneForResourceTaskState(record.state),
-                  ),
-                ],
-              ),
-              SizedBox(height: context.appSpacing.md),
-              Wrap(
-                spacing: context.appSpacing.sm,
-                runSpacing: context.appSpacing.sm,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  if (!inSelectionMode && onAction != null)
-                    for (final action in record.availableActions)
-                      AppTextButton(
+                    SizedBox(width: context.appSpacing.md),
+                    // 「媒体已失效/已删除」这两条是"重试也救不回来"的客观事实，
+                    // 常驻在状态徽标左侧，跟中文语序顺(定语在前)。
+                    // tone 用 neutral 灰底，是"客观告知"不是"警告"——
+                    // 别抢右侧任务状态徽标的视觉重心。
+                    if (record.mediaUnavailableLabel != null) ...[
+                      AppBadge(
                         key: Key(
-                          'resource-task-action-$action-${record.recordKey}',
+                          'resource-task-media-unavailable-${record.recordKey}',
                         ),
-                        label: _labelForResourceTaskAction(action),
-                        size: AppTextButtonSize.small,
-                        backgroundStyle: AppTextButtonBackgroundStyle.muted,
-                        onPressed: () => onAction!(action),
+                        label: record.mediaUnavailableLabel!,
+                        tone: AppBadgeTone.neutral,
+                        size: AppBadgeSize.compact,
                       ),
-                  AppBadge(
-                    label: '尝试 ${record.attemptCount} 次',
-                    tone: AppBadgeTone.neutral,
-                    size: AppBadgeSize.compact,
-                  ),
-                  if ((record.lastTriggerType ?? '').trim().isNotEmpty)
+                      SizedBox(width: context.appSpacing.sm),
+                    ],
                     AppBadge(
-                      label: _labelForResourceTaskTrigger(
-                        record.lastTriggerType!,
-                      ),
+                      label: _labelForResourceTaskState(record.state),
+                      tone: _toneForResourceTaskState(record.state),
+                    ),
+                  ],
+                ),
+                SizedBox(height: context.appSpacing.md),
+                Wrap(
+                  spacing: context.appSpacing.sm,
+                  runSpacing: context.appSpacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (!inSelectionMode && onAction != null)
+                      for (final action in record.availableActions)
+                        AppTextButton(
+                          key: Key(
+                            'resource-task-action-$action-${record.recordKey}',
+                          ),
+                          label: _labelForResourceTaskAction(action),
+                          size: AppTextButtonSize.small,
+                          backgroundStyle: AppTextButtonBackgroundStyle.muted,
+                          onPressed: () => onAction!(action),
+                        ),
+                    AppBadge(
+                      label: '尝试 ${record.attemptCount} 次',
                       tone: AppBadgeTone.neutral,
                       size: AppBadgeSize.compact,
                     ),
-                  if (resource?.path != null) ...[
-                    SizedBox(
-                      width: 260,
-                      child: Text(
-                        resource!.path!,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.muted,
+                    if ((record.lastTriggerType ?? '').trim().isNotEmpty)
+                      AppBadge(
+                        label: _labelForResourceTaskTrigger(
+                          record.lastTriggerType!,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        tone: AppBadgeTone.neutral,
+                        size: AppBadgeSize.compact,
+                      ),
+                    if (resource?.path != null) ...[
+                      SizedBox(
+                        width: 260,
+                        child: Text(
+                          resource!.path!,
+                          style: resolveAppTextStyle(
+                            context,
+                            size: AppTextSize.s12,
+                            weight: AppTextWeight.regular,
+                            tone: AppTextTone.muted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                    Text(
+                      timeLabel,
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s12,
+                        weight: AppTextWeight.regular,
+                        tone: AppTextTone.muted,
                       ),
                     ),
                   ],
+                ),
+                if (record.isFailed &&
+                    (record.lastError ?? '').trim().isNotEmpty) ...[
+                  SizedBox(height: context.appSpacing.md),
                   Text(
-                    timeLabel,
+                    record.lastError!,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
                       weight: AppTextWeight.regular,
-                      tone: AppTextTone.muted,
+                      tone: AppTextTone.error,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ),
-              if (record.isFailed &&
-                  (record.lastError ?? '').trim().isNotEmpty) ...[
-                SizedBox(height: context.appSpacing.md),
-                Text(
-                  record.lastError!,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.error,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
-            ],
-          ),
+            ),
           ),
         ),
       ),
@@ -981,13 +982,11 @@ class _ResourceTaskDetailDrawer extends StatelessWidget {
                                   ),
                                 _DetailRow(
                                   '创建时间',
-                                  formatUpdatedAtLabel(record.createdAt) ??
-                                      '—',
+                                  formatUpdatedAtLabel(record.createdAt) ?? '—',
                                 ),
                                 _DetailRow(
                                   '更新时间',
-                                  formatUpdatedAtLabel(record.updatedAt) ??
-                                      '—',
+                                  formatUpdatedAtLabel(record.updatedAt) ?? '—',
                                 ),
                               ],
                             ),

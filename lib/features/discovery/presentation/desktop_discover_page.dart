@@ -2,13 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
@@ -28,14 +26,19 @@ import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-class DesktopDiscoverPage extends StatefulWidget {
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+
+class DesktopDiscoverPage extends ConsumerStatefulWidget {
   const DesktopDiscoverPage({super.key});
 
   @override
-  State<DesktopDiscoverPage> createState() => _DesktopDiscoverPageState();
+  ConsumerState<DesktopDiscoverPage> createState() =>
+      _DesktopDiscoverPageState();
 }
 
-class _DesktopDiscoverPageState extends State<DesktopDiscoverPage> {
+class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   late final DiscoveryController _controller;
   late final PagedMovieSummaryController _followController;
   late final MovieCollectionTypeChangeNotifier _collectionChangeNotifier;
@@ -45,27 +48,28 @@ class _DesktopDiscoverPageState extends State<DesktopDiscoverPage> {
   void initState() {
     super.initState();
     _controller = DiscoveryController(
-      discoveryApi: context.read<DiscoveryApi>(),
+      discoveryApi: ref.read(discoveryApiProvider),
       dailyPageSize: 6,
       momentPageSize: 8,
     )..load();
 
-    _collectionChangeNotifier =
-        context.read<MovieCollectionTypeChangeNotifier>();
+    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
 
     _followController = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context
-              .read<MoviesApi>()
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
               .getSubscribedActorsLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 6,

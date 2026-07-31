@@ -18,7 +18,8 @@ import 'package:sakuramedia/widgets/domain/collections/playback/collection_playb
 class CollectionPlaybackHandoff {
   _VideoHandoff? _video;
   _ClipHandoff? _clip;
-  final Map<String, CollectionPlaybackMode> _modes = <String, CollectionPlaybackMode>{};
+  final Map<String, CollectionPlaybackMode> _modes =
+      <String, CollectionPlaybackMode>{};
 
   /// 暂存视频合集成员。成员须带 `playUrl`（详情页以 `includePlayUrl` 加载），否则
   /// 连播页拿到也无法直接组装播放列表。[sort] 须与连播页将收到的排序一致，作匹配键。
@@ -27,7 +28,11 @@ class CollectionPlaybackHandoff {
     required String? sort,
     required List<VideoCollectionItemDto> items,
   }) {
-    _video = _VideoHandoff(collectionId: collectionId, sort: sort, items: items);
+    _video = _VideoHandoff(
+      collectionId: collectionId,
+      sort: sort,
+      items: items,
+    );
   }
 
   /// 取走匹配 [collectionId] 且排序一致的成员；一次性（取后清空），不匹配返回 `null`。

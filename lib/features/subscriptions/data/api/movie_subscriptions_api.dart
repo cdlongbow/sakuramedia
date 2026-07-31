@@ -59,5 +59,4 @@ class MovieSubscriptionsApi {
     final response = await _apiClient.get('/movie-subscriptions/status-counts');
     return MovieSubscriptionStatusCountsDto.fromJson(response);
   }
-
 }

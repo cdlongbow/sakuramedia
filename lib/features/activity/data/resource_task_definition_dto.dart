@@ -32,7 +32,13 @@ class ResourceTaskStateCountsDto {
   int get failedTotal => failed + failedRetryable + failedTerminal + exhausted;
 
   int get total =>
-      pending + running + succeeded + failed + failedRetryable + failedTerminal + exhausted;
+      pending +
+      running +
+      succeeded +
+      failed +
+      failedRetryable +
+      failedTerminal +
+      exhausted;
 
   factory ResourceTaskStateCountsDto.fromJson(Map<String, dynamic> json) {
     return ResourceTaskStateCountsDto(
@@ -98,7 +104,9 @@ class ResourceTaskDefinitionDto {
     );
   }
 
-  ResourceTaskDefinitionDto copyWith({ResourceTaskStateCountsDto? stateCounts}) {
+  ResourceTaskDefinitionDto copyWith({
+    ResourceTaskStateCountsDto? stateCounts,
+  }) {
     return ResourceTaskDefinitionDto(
       taskKey: taskKey,
       resourceType: resourceType,

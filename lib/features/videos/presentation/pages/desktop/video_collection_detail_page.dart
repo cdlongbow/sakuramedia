@@ -449,8 +449,7 @@ class _DesktopVideoCollectionDetailPageState
   /// 筛选入口收排序（含「手动顺序」），信息槽放成员数，右侧操作槽放
   /// 「选择 / 视图切换」。
   Widget _buildListHeader(BuildContext context) {
-    final count =
-        _controller.collection?.itemCount ?? _controller.items.length;
+    final count = _controller.collection?.itemCount ?? _controller.items.length;
     return AppListHeader(
       filterButtonKey: const Key('video-collection-sort-trigger'),
       filterIcon: Icons.swap_vert_rounded,

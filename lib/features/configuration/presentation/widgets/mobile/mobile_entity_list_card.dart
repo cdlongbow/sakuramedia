@@ -87,21 +87,22 @@ class MobileEntityListCard extends StatelessWidget {
         border: Border.all(color: colors.borderSubtle),
         boxShadow: context.appShadows.card,
       ),
-      child: trailingAction == null
-          ? tapArea
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: tapArea),
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: spacing.sm,
-                    right: spacing.sm,
+      child:
+          trailingAction == null
+              ? tapArea
+              : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: tapArea),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: spacing.sm,
+                      right: spacing.sm,
+                    ),
+                    child: trailingAction,
                   ),
-                  child: trailingAction,
-                ),
-              ],
-            ),
+                ],
+              ),
     );
   }
 }

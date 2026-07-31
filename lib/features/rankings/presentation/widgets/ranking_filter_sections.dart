@@ -14,10 +14,10 @@ class RankingFilterSectionKeys {
     GlobalKey? board,
     GlobalKey? period,
     GlobalKey? sort,
-  })  : source = source ?? GlobalKey(),
-        board = board ?? GlobalKey(),
-        period = period ?? GlobalKey(),
-        sort = sort ?? GlobalKey();
+  }) : source = source ?? GlobalKey(),
+       board = board ?? GlobalKey(),
+       period = period ?? GlobalKey(),
+       sort = sort ?? GlobalKey();
 
   final GlobalKey source;
   final GlobalKey board;
@@ -64,7 +64,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
   final RankingSortField? selectedSortField;
   final SortDirection selectedSortDirection;
   final void Function(RankingSortField? field, SortDirection direction)
-      onSortChanged;
+  onSortChanged;
   final RankingFilterSectionKeys? sectionKeys;
 
   @override
@@ -160,18 +160,17 @@ class RankingFilterChoiceSection<T> extends StatelessWidget {
         Wrap(
           spacing: context.appSpacing.sm,
           runSpacing: context.appSpacing.sm,
-          children:
-              options
-                  .map(
-                    (value) => AppTextButton(
-                      key: optionKeyBuilder(value),
-                      label: labelBuilder(value),
-                      size: AppTextButtonSize.xSmall,
-                      isSelected: value == selectedValue,
-                      onPressed: () => onSelected(value),
-                    ),
-                  )
-                  .toList(growable: false),
+          children: options
+              .map(
+                (value) => AppTextButton(
+                  key: optionKeyBuilder(value),
+                  label: labelBuilder(value),
+                  size: AppTextButtonSize.xSmall,
+                  isSelected: value == selectedValue,
+                  onPressed: () => onSelected(value),
+                ),
+              )
+              .toList(growable: false),
         ),
       ],
     );
@@ -189,7 +188,7 @@ class RankingSortSection extends StatelessWidget {
   final RankingSortField? selectedSortField;
   final SortDirection selectedSortDirection;
   final void Function(RankingSortField? field, SortDirection direction)
-      onSortChanged;
+  onSortChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -223,8 +222,11 @@ class RankingSortSection extends StatelessWidget {
               label: RankingSortField.heat.label,
               size: AppTextButtonSize.xSmall,
               isSelected: selectedSortField == RankingSortField.heat,
-              onPressed: () =>
-                  onSortChanged(RankingSortField.heat, selectedSortDirection),
+              onPressed:
+                  () => onSortChanged(
+                    RankingSortField.heat,
+                    selectedSortDirection,
+                  ),
             ),
             if (selectedSortField != null)
               AppTextButton(
@@ -236,12 +238,13 @@ class RankingSortSection extends StatelessWidget {
                       : Icons.north_rounded,
                 ),
                 size: AppTextButtonSize.xSmall,
-                onPressed: () => onSortChanged(
-                  selectedSortField,
-                  selectedSortDirection == SortDirection.desc
-                      ? SortDirection.asc
-                      : SortDirection.desc,
-                ),
+                onPressed:
+                    () => onSortChanged(
+                      selectedSortField,
+                      selectedSortDirection == SortDirection.desc
+                          ? SortDirection.asc
+                          : SortDirection.desc,
+                    ),
               ),
           ],
         ),

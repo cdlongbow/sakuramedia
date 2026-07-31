@@ -51,8 +51,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
 
   /// 订阅下载中心 provider，其状态变化触发 viewport 自动加载检查（等效原
   /// `_downloadTaskController.addListener(_handleControllerChanged)`）。
-  ProviderSubscription<AsyncValue<DownloadTaskCenterState>>?
-      _downloadCenterSub;
+  ProviderSubscription<AsyncValue<DownloadTaskCenterState>>? _downloadCenterSub;
 
   @override
   void initState() {
@@ -97,14 +96,16 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     if (movieNumber == null || movieNumber.isEmpty) {
       return;
     }
-    await ref.read(downloadTaskCenterProvider.notifier).applyFilter(
-      DownloadTaskFilterState(
-        // 用 all 而不是默认 downloading：订阅的 import_failed 档任务往往已下载完成
-        // （download_state=completed/seeding），按 downloading 过滤会把它们滤掉。
-        stateFilter: DownloadTaskStateFilter.all,
-        search: movieNumber,
-      ),
-    );
+    await ref
+        .read(downloadTaskCenterProvider.notifier)
+        .applyFilter(
+          DownloadTaskFilterState(
+            // 用 all 而不是默认 downloading：订阅的 import_failed 档任务往往已下载完成
+            // （download_state=completed/seeding），按 downloading 过滤会把它们滤掉。
+            stateFilter: DownloadTaskStateFilter.all,
+            search: movieNumber,
+          ),
+        );
     if (!mounted) {
       return;
     }
@@ -162,9 +163,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     if (nextTab == ActivityTab.downloadTasks) {
       // AsyncNotifier 的 build() 在首次 watch 时自动跑（`ref.read(...notifier)`
       // 也会触发 build）；这里只需要打开 SSE。
-      unawaited(
-        ref.read(downloadTaskCenterProvider.notifier).connectStream(),
-      );
+      unawaited(ref.read(downloadTaskCenterProvider.notifier).connectStream());
     } else if (previousTab == ActivityTab.downloadTasks) {
       ref.read(downloadTaskCenterProvider.notifier).disconnectStream();
     }
@@ -218,16 +217,12 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         }
         break;
       case ActivityTab.downloadTasks:
-        final downloadState = ref
-            .read(downloadTaskCenterProvider)
-            .value;
+        final downloadState = ref.read(downloadTaskCenterProvider).value;
         if (downloadState != null &&
             downloadState.paged.hasMore &&
             !downloadState.paged.isLoadingMore &&
             downloadState.paged.loadMoreErrorMessage == null) {
-          unawaited(
-            ref.read(downloadTaskCenterProvider.notifier).loadMore(),
-          );
+          unawaited(ref.read(downloadTaskCenterProvider.notifier).loadMore());
         }
         break;
     }
@@ -423,60 +418,60 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         ]),
         builder: (context, _) {
           return Stack(
-          children: [
-            CustomScrollView(
-              controller: _pageScrollController,
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    key: const Key('desktop-activity-page'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AppTabBar(
-                        controller: _tabController,
-                        tabs: const [
-                          Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
-                          Tab(
-                            key: Key('activity-tab-resource-tasks'),
-                            text: '元数据任务',
-                          ),
-                          Tab(
-                            key: Key('activity-tab-download-tasks'),
-                            text: '下载任务',
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: context.appSpacing.lg),
-                      _ConnectionBanner(
-                        state: _controller.connectionState,
-                        message: _controller.connectionMessage,
-                      ),
-                      SizedBox(height: context.appSpacing.xl),
-                    ],
+            children: [
+              CustomScrollView(
+                controller: _pageScrollController,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      key: const Key('desktop-activity-page'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppTabBar(
+                          controller: _tabController,
+                          tabs: const [
+                            Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
+                            Tab(
+                              key: Key('activity-tab-resource-tasks'),
+                              text: '元数据任务',
+                            ),
+                            Tab(
+                              key: Key('activity-tab-download-tasks'),
+                              text: '下载任务',
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: context.appSpacing.lg),
+                        _ConnectionBanner(
+                          state: _controller.connectionState,
+                          message: _controller.connectionMessage,
+                        ),
+                        SizedBox(height: context.appSpacing.xl),
+                      ],
+                    ),
                   ),
-                ),
-                ..._buildTabSlivers(context),
-              ],
-            ),
-            if (_controller.activeTab == ActivityTab.resourceTasks)
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: !_resourceTaskController.isDetailOpen,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child:
-                        _resourceTaskController.isDetailOpen
-                            ? buildResourceTaskDetailOverlay(
-                              context: context,
-                              controller: _resourceTaskController,
-                            )
-                            : const SizedBox.shrink(),
-                  ),
-                ),
+                  ..._buildTabSlivers(context),
+                ],
               ),
-          ],
-        );
-      },
+              if (_controller.activeTab == ActivityTab.resourceTasks)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    ignoring: !_resourceTaskController.isDetailOpen,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      child:
+                          _resourceTaskController.isDetailOpen
+                              ? buildResourceTaskDetailOverlay(
+                                context: context,
+                                controller: _resourceTaskController,
+                              )
+                              : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1072,10 +1067,7 @@ class _FilterRefreshIndicator extends StatelessWidget {
 }
 
 class _TaskRunCard extends StatelessWidget {
-  const _TaskRunCard({
-    required this.taskRun,
-    required this.highlighted,
-  });
+  const _TaskRunCard({required this.taskRun, required this.highlighted});
 
   final TaskRunDto taskRun;
   final bool highlighted;
@@ -1157,10 +1149,7 @@ class _TaskRunCard extends StatelessWidget {
             else
               ClipRRect(
                 borderRadius: context.appRadius.pillBorder,
-                child: Container(
-                  height: 6,
-                  color: colors.surfaceMuted,
-                ),
+                child: Container(height: 6, color: colors.surfaceMuted),
               ),
           ],
           SizedBox(height: context.appSpacing.md),

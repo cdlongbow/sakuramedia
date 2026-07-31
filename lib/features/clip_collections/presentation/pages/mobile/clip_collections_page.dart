@@ -141,15 +141,12 @@ class _MobileClipCollectionsPageState extends State<MobileClipCollectionsPage> {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final collection = collections[index];
                     return CollectionCard.clip(
-                      key: Key(
-                        'mobile-clip-collection-card-${collection.id}',
-                      ),
+                      key: Key('mobile-clip-collection-card-${collection.id}'),
                       collection: collection,
                       onTap:
-                          () =>
-                              MobileClipCollectionDetailRouteData(
-                                collectionId: collection.id,
-                              ).push(context),
+                          () => MobileClipCollectionDetailRouteData(
+                            collectionId: collection.id,
+                          ).push(context),
                       onEdit: () => _editCollection(collection),
                       onDelete: () => _deleteCollection(collection),
                     );
@@ -196,7 +193,9 @@ class _MobileClipCollectionsPageState extends State<MobileClipCollectionsPage> {
       message: '确认删除$name？合集内的切片不会被删除。',
       confirmLabel: '删除',
       drawerKey: const Key('mobile-clip-collection-delete-drawer'),
-      confirmButtonKey: const Key('mobile-clip-collection-delete-confirm-button'),
+      confirmButtonKey: const Key(
+        'mobile-clip-collection-delete-confirm-button',
+      ),
     );
     if (!mounted || confirmed != true) {
       return;

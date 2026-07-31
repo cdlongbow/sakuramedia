@@ -88,19 +88,20 @@ class IndexerSettingsDto {
 
   factory IndexerSettingsDto.fromJson(Map<String, dynamic> json) {
     final rawIndexers = json['indexers'];
-    final indexers = rawIndexers is List
-        ? rawIndexers
-            .whereType<Map>()
-            .map(
-              (entry) => IndexerEntryDto.fromJson(
-                entry.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value),
-                ),
-              ),
-            )
-            .toList(growable: false)
-        : const <IndexerEntryDto>[];
+    final indexers =
+        rawIndexers is List
+            ? rawIndexers
+                .whereType<Map>()
+                .map(
+                  (entry) => IndexerEntryDto.fromJson(
+                    entry.map(
+                      (dynamic key, dynamic value) =>
+                          MapEntry(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList(growable: false)
+            : const <IndexerEntryDto>[];
     return IndexerSettingsDto(
       type: json['type'] as String? ?? '',
       apiKey: json['api_key'] as String? ?? '',
@@ -183,13 +184,15 @@ class IndexerConnectionTestResultDto {
       indexersChecked: json['indexers_checked'] as int? ?? 0,
       resultCount: json['result_count'] as int? ?? 0,
       elapsedMs: json['elapsed_ms'] as int? ?? 0,
-      error: rawError is Map
-          ? IndexerConnectionTestErrorDto.fromJson(
-              rawError.map(
-                (dynamic key, dynamic value) => MapEntry(key.toString(), value),
-              ),
-            )
-          : null,
+      error:
+          rawError is Map
+              ? IndexerConnectionTestErrorDto.fromJson(
+                rawError.map(
+                  (dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value),
+                ),
+              )
+              : null,
     );
   }
 }

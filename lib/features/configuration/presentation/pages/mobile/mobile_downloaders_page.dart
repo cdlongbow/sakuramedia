@@ -79,11 +79,12 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
 
   bool get _hasLibraries => _libraries.isNotEmpty;
 
-  int get _linkedLibraryCount => _clients
-      .map((item) => item.mediaLibraryId)
-      .where((item) => item > 0)
-      .toSet()
-      .length;
+  int get _linkedLibraryCount =>
+      _clients
+          .map((item) => item.mediaLibraryId)
+          .where((item) => item > 0)
+          .toSet()
+          .length;
 
   int get _savedPasswordCount =>
       _clients.where((item) => item.hasPassword).length;
@@ -245,14 +246,16 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                   description: 'qBittorrent 入口绑定本地媒体库；115 离线入口绑定已登录的 115 媒体库。',
                   tip: '先确认媒体库类型与目标下载方式一致。',
                   badgeLabel: _hasLibraries ? '已配置' : '待配置',
-                  badgeTone: _hasLibraries
-                      ? AppBadgeTone.success
-                      : AppBadgeTone.warning,
+                  badgeTone:
+                      _hasLibraries
+                          ? AppBadgeTone.success
+                          : AppBadgeTone.warning,
                   showShadow: true,
                   actionLabel: '前往媒体库',
-                  onActionTap: () => GoRouter.of(
-                    context,
-                  ).push(mobileSettingsMediaLibrariesPath),
+                  onActionTap:
+                      () => GoRouter.of(
+                        context,
+                      ).push(mobileSettingsMediaLibrariesPath),
                 ),
                 SizedBox(height: spacing.md),
                 MobileConfigOnboardingCard(
@@ -261,9 +264,10 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                   description: '下载入口负责接收索引器推送的资源请求，并选择实际执行下载的服务。',
                   tip: 'qBittorrent 需填写连接与路径；115 离线只需选择对应云媒体库。',
                   badgeLabel: _clients.isNotEmpty ? '已配置' : '待配置',
-                  badgeTone: _clients.isNotEmpty
-                      ? AppBadgeTone.success
-                      : AppBadgeTone.warning,
+                  badgeTone:
+                      _clients.isNotEmpty
+                          ? AppBadgeTone.success
+                          : AppBadgeTone.warning,
                   showShadow: true,
                   actionLabel: '切换到下载器',
                   onActionTap: () => _tabController.animateTo(0),
@@ -275,13 +279,15 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                   description: '只有索引器绑定到下载器，影片详情里的资源搜索结果才能投递到对应客户端。',
                   tip: '常见问题：未绑定下载器时，搜索结果会提示先创建下载器。',
                   badgeLabel: _hasLinkedIndexer ? '已配置' : '待配置',
-                  badgeTone: _hasLinkedIndexer
-                      ? AppBadgeTone.success
-                      : AppBadgeTone.warning,
+                  badgeTone:
+                      _hasLinkedIndexer
+                          ? AppBadgeTone.success
+                          : AppBadgeTone.warning,
                   showShadow: true,
                   actionLabel: '查看索引器',
-                  onActionTap: () =>
-                      GoRouter.of(context).push(mobileSettingsIndexersPath),
+                  onActionTap:
+                      () =>
+                          GoRouter.of(context).push(mobileSettingsIndexersPath),
                 ),
               ],
             ),
@@ -324,7 +330,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
                 context,
                 client: client,
                 mediaLibrary: librariesById[client.mediaLibraryId],
-                probeSnapshot: _probeSnapshots[client.id] ??
+                probeSnapshot:
+                    _probeSnapshots[client.id] ??
                     const _MobileDownloaderProbeSnapshot(),
               ),
               if (client != _clients.last)
@@ -345,14 +352,16 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
     final avatarSide = componentTokens.iconSizeXl + spacing.md;
-    final passwordTone = client.isCloud115
-        ? AppBadgeTone.info
-        : client.hasPassword
+    final passwordTone =
+        client.isCloud115
+            ? AppBadgeTone.info
+            : client.hasPassword
             ? AppBadgeTone.success
             : AppBadgeTone.warning;
-    final passwordLabel = client.isCloud115
-        ? client.kind.label
-        : client.hasPassword
+    final passwordLabel =
+        client.isCloud115
+            ? client.kind.label
+            : client.hasPassword
             ? '已保存密码'
             : '待补密码';
 
@@ -415,10 +424,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
             value: client.clientSavePath,
           ),
           SizedBox(height: spacing.xs),
-          _DownloaderMetaLine(
-            label: '本地访问路径',
-            value: client.localRootPath,
-          ),
+          _DownloaderMetaLine(label: '本地访问路径', value: client.localRootPath),
         ],
         SizedBox(height: spacing.sm),
         Wrap(
@@ -611,8 +617,8 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
       mediaLibrary: _libraryById(client.mediaLibraryId),
       initialSnapshot:
           _probeSnapshots[client.id] ?? const _MobileDownloaderProbeSnapshot(),
-      onConnectivityResult: (result) =>
-          _mergeConnectivityResult(client.id, result),
+      onConnectivityResult:
+          (result) => _mergeConnectivityResult(client.id, result),
       onStorageResult: (result) => _mergeStorageResult(client.id, result),
     );
     if (!mounted || detailAction == null) {
@@ -845,9 +851,10 @@ class _MobileDownloaderEditorDrawerState
 
   bool get _busy => _isSubmitting || _probe.busy;
 
-  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
-      ? AutovalidateMode.onUserInteraction
-      : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode =>
+      _hasAttemptedSubmit
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -907,9 +914,10 @@ class _MobileDownloaderEditorDrawerState
     return AppBottomFormSheet(
       formKey: _formKey,
       title: _isEditing ? '编辑下载器' : '新增下载器',
-      subtitle: _kind == DownloadClientKind.cloud115
-          ? '选择 115 媒体库即可启用离线下载。'
-          : '维护下载器服务地址、路径映射和媒体库绑定关系。',
+      subtitle:
+          _kind == DownloadClientKind.cloud115
+              ? '选择 115 媒体库即可启用离线下载。'
+              : '维护下载器服务地址、路径映射和媒体库绑定关系。',
       submitKey: const Key('mobile-downloader-submit-button'),
       isSubmitting: _isSubmitting,
       submitDisabled: _probe.busy,
@@ -999,12 +1007,13 @@ class _MobileDownloaderEditorDrawerState
 
     try {
       final api = context.read<DownloadClientsApi>();
-      final client = _isEditing
-          ? await api.updateClient(
-              clientId: widget.initialClient!.id,
-              payload: value.toUpdatePayload(),
-            )
-          : await api.createClient(value.toCreatePayload());
+      final client =
+          _isEditing
+              ? await api.updateClient(
+                clientId: widget.initialClient!.id,
+                payload: value.toUpdatePayload(),
+              )
+              : await api.createClient(value.toCreatePayload());
       if (!mounted) {
         return;
       }
@@ -1069,8 +1078,8 @@ class _MobileDownloaderEditorDrawerState
       context: context,
       probe: _probe,
       runTest: () => api.probeStorageTestClient(payload),
-      openDialog: (result) =>
-          _openStorageDialog(result, payload, value.baseUrl),
+      openDialog:
+          (result) => _openStorageDialog(result, payload, value.baseUrl),
     );
   }
 
@@ -1081,11 +1090,12 @@ class _MobileDownloaderEditorDrawerState
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientTestResultDialog(
-        initialResult: result,
-        onRerun: () => api.probeTestClient(payload),
-        onResultChanged: _probe.applyConnectivityResult,
-      ),
+      builder:
+          (_) => DownloadClientTestResultDialog(
+            initialResult: result,
+            onRerun: () => api.probeTestClient(payload),
+            onResultChanged: _probe.applyConnectivityResult,
+          ),
     );
   }
 
@@ -1097,12 +1107,13 @@ class _MobileDownloaderEditorDrawerState
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientStorageTestResultDialog(
-        initialResult: result,
-        clientBaseUrl: baseUrl,
-        onRerun: () => api.probeStorageTestClient(payload),
-        onResultChanged: _probe.applyStorageResult,
-      ),
+      builder:
+          (_) => DownloadClientStorageTestResultDialog(
+            initialResult: result,
+            clientBaseUrl: baseUrl,
+            onRerun: () => api.probeStorageTestClient(payload),
+            onResultChanged: _probe.applyStorageResult,
+          ),
     );
   }
 }
@@ -1181,11 +1192,12 @@ class _MobileDownloaderDetailDrawerState
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientTestResultDialog(
-        initialResult: result,
-        onRerun: () => api.testClient(widget.client.id),
-        onResultChanged: _probe.applyConnectivityResult,
-      ),
+      builder:
+          (_) => DownloadClientTestResultDialog(
+            initialResult: result,
+            onRerun: () => api.testClient(widget.client.id),
+            onResultChanged: _probe.applyConnectivityResult,
+          ),
     );
   }
 
@@ -1195,12 +1207,13 @@ class _MobileDownloaderDetailDrawerState
     final api = context.read<DownloadClientsApi>();
     await showDialog<void>(
       context: context,
-      builder: (_) => DownloadClientStorageTestResultDialog(
-        initialResult: result,
-        clientBaseUrl: widget.client.baseUrl,
-        onRerun: () => api.storageTestClient(widget.client.id),
-        onResultChanged: _probe.applyStorageResult,
-      ),
+      builder:
+          (_) => DownloadClientStorageTestResultDialog(
+            initialResult: result,
+            clientBaseUrl: widget.client.baseUrl,
+            onRerun: () => api.storageTestClient(widget.client.id),
+            onResultChanged: _probe.applyStorageResult,
+          ),
     );
   }
 
@@ -1209,9 +1222,10 @@ class _MobileDownloaderDetailDrawerState
     final spacing = context.appSpacing;
     final client = widget.client;
     final mediaLibrary = widget.mediaLibrary;
-    final passwordLabel = client.isCloud115
-        ? client.kind.label
-        : client.hasPassword
+    final passwordLabel =
+        client.isCloud115
+            ? client.kind.label
+            : client.hasPassword
             ? '已保存密码'
             : '待补密码';
     final busy = _probe.busy;
@@ -1251,9 +1265,10 @@ class _MobileDownloaderDetailDrawerState
               ),
               AppBadge(
                 label: passwordLabel,
-                tone: client.isCloud115
-                    ? AppBadgeTone.info
-                    : client.hasPassword
+                tone:
+                    client.isCloud115
+                        ? AppBadgeTone.info
+                        : client.hasPassword
                         ? AppBadgeTone.success
                         : AppBadgeTone.warning,
                 size: AppBadgeSize.compact,
@@ -1266,10 +1281,7 @@ class _MobileDownloaderDetailDrawerState
             SizedBox(height: spacing.sm),
             AppInfoBlock(label: '用户名', value: client.username),
           ],
-          AppInfoBlock(
-            label: '目标媒体库',
-            value: mediaLibrary?.name ?? '未关联媒体库',
-          ),
+          AppInfoBlock(label: '目标媒体库', value: mediaLibrary?.name ?? '未关联媒体库'),
           if (client.isQbittorrent) ...[
             SizedBox(height: spacing.sm),
             AppInfoBlock(
@@ -1277,10 +1289,7 @@ class _MobileDownloaderDetailDrawerState
               value: client.clientSavePath,
             ),
             SizedBox(height: spacing.sm),
-            AppInfoBlock(
-              label: '本地访问路径',
-              value: client.localRootPath,
-            ),
+            AppInfoBlock(label: '本地访问路径', value: client.localRootPath),
           ],
           SizedBox(height: spacing.sm),
           AppInfoBlock(
@@ -1329,9 +1338,10 @@ class _MobileDownloaderDetailDrawerState
                   key: const Key('mobile-downloader-detail-edit-button'),
                   label: '编辑',
                   variant: AppButtonVariant.primary,
-                  onPressed: busy
-                      ? null
-                      : () => Navigator.of(
+                  onPressed:
+                      busy
+                          ? null
+                          : () => Navigator.of(
                             context,
                           ).pop(MobileDownloaderDetailAction.edit),
                 ),
@@ -1342,9 +1352,10 @@ class _MobileDownloaderDetailDrawerState
                   key: const Key('mobile-downloader-detail-delete-button'),
                   label: '删除',
                   variant: AppButtonVariant.danger,
-                  onPressed: busy
-                      ? null
-                      : () => Navigator.of(
+                  onPressed:
+                      busy
+                          ? null
+                          : () => Navigator.of(
                             context,
                           ).pop(MobileDownloaderDetailAction.delete),
                 ),

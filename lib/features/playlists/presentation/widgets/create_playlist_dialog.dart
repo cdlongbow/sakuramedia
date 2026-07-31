@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 
 enum CreatePlaylistDialogPresentation { dialog, bottomDrawer }
 
@@ -39,7 +40,7 @@ Future<PlaylistDto?> showCreatePlaylistDialog(
   }
 }
 
-class CreatePlaylistDialog extends StatefulWidget {
+class CreatePlaylistDialog extends ConsumerStatefulWidget {
   const CreatePlaylistDialog({
     super.key,
     this.presentation = CreatePlaylistDialogPresentation.dialog,
@@ -48,10 +49,11 @@ class CreatePlaylistDialog extends StatefulWidget {
   final CreatePlaylistDialogPresentation presentation;
 
   @override
-  State<CreatePlaylistDialog> createState() => _CreatePlaylistDialogState();
+  ConsumerState<CreatePlaylistDialog> createState() =>
+      _CreatePlaylistDialogState();
 }
 
-class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
+class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -143,10 +145,12 @@ class _CreatePlaylistDialogState extends State<CreatePlaylistDialog> {
       _isSubmitting = true;
     });
     try {
-      final playlist = await context.read<PlaylistsApi>().createPlaylist(
-        name: _nameController.text,
-        description: _descriptionController.text,
-      );
+      final playlist = await ref
+          .read(playlistsApiProvider)
+          .createPlaylist(
+            name: _nameController.text,
+            description: _descriptionController.text,
+          );
       if (!mounted) {
         return;
       }

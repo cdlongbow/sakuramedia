@@ -73,10 +73,10 @@ class ClipsApi {
         'limit': limit,
       },
     );
-    final items = (response['items'] as List<dynamic>?)
+    final items =
+        (response['items'] as List<dynamic>?)
             ?.map(
-              (dynamic e) =>
-                  MediaClipDto.fromJson(e as Map<String, dynamic>),
+              (dynamic e) => MediaClipDto.fromJson(e as Map<String, dynamic>),
             )
             .toList(growable: false) ??
         <MediaClipDto>[];
@@ -110,9 +110,9 @@ class ClipsApi {
   Future<List<MediaClipThumbnailDto>> getClipThumbnails({
     required int clipId,
   }) async {
-    final response = await _apiClient.getList('/media-clips/$clipId/thumbnails');
-    return response
-        .map(MediaClipThumbnailDto.fromJson)
-        .toList(growable: false);
+    final response = await _apiClient.getList(
+      '/media-clips/$clipId/thumbnails',
+    );
+    return response.map(MediaClipThumbnailDto.fromJson).toList(growable: false);
   }
 }

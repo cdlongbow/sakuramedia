@@ -623,8 +623,8 @@ Future<void> _pumpDesktopApp(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
         ChangeNotifierProvider(create: (_) => AppShellController()),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
+        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+          value: bundle.movieSubscriptionBroadcaster,
         ),
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
         Provider<AuthApi>.value(value: bundle.authApi),
@@ -671,8 +671,8 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
         ChangeNotifierProvider(create: (_) => AppShellController()),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
+        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+          value: bundle.movieSubscriptionBroadcaster,
         ),
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
         Provider<AuthApi>.value(value: bundle.authApi),

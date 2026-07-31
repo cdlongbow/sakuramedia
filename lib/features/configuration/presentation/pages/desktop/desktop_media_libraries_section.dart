@@ -113,8 +113,9 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
   Future<void> _editLibrary(MediaLibraryDto library) async {
     final payload = await showDialog<UpdateMediaLibraryPayload>(
       context: context,
-      builder: (dialogContext) =>
-          MediaLibraryDialog(title: '编辑媒体库', initialLibrary: library),
+      builder:
+          (dialogContext) =>
+              MediaLibraryDialog(title: '编辑媒体库', initialLibrary: library),
     );
     if (!mounted || payload == null) {
       return;
@@ -122,9 +123,9 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 
     try {
       await context.read<MediaLibrariesApi>().updateLibrary(
-            libraryId: library.id,
-            payload: payload,
-          );
+        libraryId: library.id,
+        payload: payload,
+      );
       showToast('媒体库已更新');
       widget.onLibrariesChanged();
       await _loadLibraries();
@@ -151,10 +152,7 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 
   @override
   Widget build(BuildContext context) {
-    return buildSectionStates(
-      errorTitle: '媒体库加载失败',
-      buildLoaded: _buildLoaded,
-    );
+    return buildSectionStates(errorTitle: '媒体库加载失败', buildLoaded: _buildLoaded);
   }
 
   Widget _buildLoaded(BuildContext context) {
@@ -182,13 +180,15 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
               for (final library in _libraries)
                 AppSettingCell(
                   key: Key('media-library-card-${library.id}'),
-                  icon: library.isCloud115
-                      ? Icons.cloud_outlined
-                      : Icons.folder_open_outlined,
+                  icon:
+                      library.isCloud115
+                          ? Icons.cloud_outlined
+                          : Icons.folder_open_outlined,
                   title: library.name,
-                  subtitle: library.isCloud115
-                      ? '115 网盘 · ${library.cloud115App.label}'
-                      : library.rootPath,
+                  subtitle:
+                      library.isCloud115
+                          ? '115 网盘 · ${library.cloud115App.label}'
+                          : library.rootPath,
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -247,8 +247,11 @@ class _MediaLibrariesSectionState extends State<MediaLibrariesSection>
 }
 
 class MediaLibraryDialog extends StatefulWidget {
-  const MediaLibraryDialog(
-      {super.key, required this.title, this.initialLibrary});
+  const MediaLibraryDialog({
+    super.key,
+    required this.title,
+    this.initialLibrary,
+  });
 
   final String title;
   final MediaLibraryDto? initialLibrary;
@@ -332,15 +335,16 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
               rootPathController: _rootPathController,
               rootPathEnabled: !_isEditing,
               showRootPath: widget.initialLibrary?.isCloud115 != true,
-              labelBuilder: (context, label) => Text(
-                label,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
+              labelBuilder:
+                  (context, label) => Text(
+                    label,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.secondary,
+                    ),
+                  ),
             ),
             SizedBox(height: spacing.xl),
             Row(

@@ -1974,8 +1974,8 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => AppShellController()),
           ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
           ),
           Provider<AccountApi>.value(value: bundle.accountApi),
           Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
@@ -2052,8 +2052,8 @@ Future<void> _pumpPage(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
+        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+          value: bundle.movieSubscriptionBroadcaster,
         ),
         Provider<AccountApi>.value(value: bundle.accountApi),
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),

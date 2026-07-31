@@ -56,19 +56,20 @@ class Cloud115DirectoryPageDto {
       offset: asInt(json['offset']),
       limit: asInt(json['limit']),
       rootCid: json['root_cid'] as String? ?? '',
-      entries: rawEntries is List
-          ? rawEntries
-              .whereType<Map>()
-              .map(
-                (item) => Cloud115DirectoryEntryDto.fromJson(
-                  item.map(
-                    (dynamic key, dynamic value) =>
-                        MapEntry(key.toString(), value),
-                  ),
-                ),
-              )
-              .toList(growable: false)
-          : const <Cloud115DirectoryEntryDto>[],
+      entries:
+          rawEntries is List
+              ? rawEntries
+                  .whereType<Map>()
+                  .map(
+                    (item) => Cloud115DirectoryEntryDto.fromJson(
+                      item.map(
+                        (dynamic key, dynamic value) =>
+                            MapEntry(key.toString(), value),
+                      ),
+                    ),
+                  )
+                  .toList(growable: false)
+              : const <Cloud115DirectoryEntryDto>[],
     );
   }
 }

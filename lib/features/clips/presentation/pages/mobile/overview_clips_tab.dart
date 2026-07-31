@@ -3,15 +3,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clips_overview_controller.dart';
@@ -30,19 +28,26 @@ import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+
 /// 概览页「切片」tab：上方「我的合集」横滑区 + 下方「全部切片」网格。
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+
 ///
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+
 /// 数据层与桌面 `DesktopClipsPage` 完全一致（复用同一组 controller 与 mutation
 /// 广播），仅在布局上改为移动端竖屏网格 + 底部抽屉形态的编辑交互；长按切片卡进入
 /// 多选模式，支持批量加入合集 / 删除（与移动 PornBox 对齐）。
-class MobileOverviewClipsTab extends StatefulWidget {
+class MobileOverviewClipsTab extends ConsumerStatefulWidget {
   const MobileOverviewClipsTab({super.key});
 
   @override
-  State<MobileOverviewClipsTab> createState() => _MobileOverviewClipsTabState();
+  ConsumerState<MobileOverviewClipsTab> createState() =>
+      _MobileOverviewClipsTabState();
 }
 
-class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
+class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     with MultiSelectStateMixin<MobileOverviewClipsTab, int> {
   late final ClipsOverviewController _clipsController;
   late final ClipCollectionsOverviewController _collectionsController;
@@ -56,17 +61,16 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
   @override
   void initState() {
     super.initState();
-    final clipsApi = context.read<ClipsApi>();
-    final collectionsApi = context.read<ClipCollectionsApi>();
-    _mutationNotifier = context.read<ClipMutationChangeNotifier>();
+    final clipsApi = ref.read(clipsApiProvider);
+    final collectionsApi = ref.read(clipCollectionsApiProvider);
+    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
     _clipsController = ClipsOverviewController(
       fetchClips:
           ({
             int page = 1,
             int pageSize = 24,
             String sort = 'created_at:desc',
-          }) =>
-              clipsApi.getMyClips(page: page, pageSize: pageSize, sort: sort),
+          }) => clipsApi.getMyClips(page: page, pageSize: pageSize, sort: sort),
     )..load();
     _collectionsController = ClipCollectionsOverviewController(
       fetchCollections: collectionsApi.getCollections,
@@ -146,7 +150,9 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
                 slivers: <Widget>[
                   // 选择模式下隐藏合集横滑区，只剩切片网格，与移动 PornBox 一致。
                   if (!selectionMode)
-                    SliverToBoxAdapter(child: _buildCollectionsSection(context)),
+                    SliverToBoxAdapter(
+                      child: _buildCollectionsSection(context),
+                    ),
                   SliverToBoxAdapter(child: _buildClipsHeader(context)),
                   _buildClipsSliver(context),
                   SliverToBoxAdapter(child: _buildFooter(context)),
@@ -237,10 +243,9 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
               key: Key('mobile-clip-collection-card-${collection.id}'),
               collection: collection,
               onTap:
-                  () =>
-                      MobileClipCollectionDetailRouteData(
-                        collectionId: collection.id,
-                      ).push(context),
+                  () => MobileClipCollectionDetailRouteData(
+                    collectionId: collection.id,
+                  ).push(context),
             ),
           );
         },
@@ -326,7 +331,8 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
         ),
       );
     }
-    if (_clipsController.errorMessage != null && _clipsController.clips.isEmpty) {
+    if (_clipsController.errorMessage != null &&
+        _clipsController.clips.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -360,12 +366,13 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
           delegate: SliverChildBuilderDelegate((context, index) {
             final clip = clips[index];
             return GestureDetector(
-              onLongPress: selectionMode
-                  ? null
-                  : () {
-                      enterSelection();
-                      toggleSelect(clip.clipId);
-                    },
+              onLongPress:
+                  selectionMode
+                      ? null
+                      : () {
+                        enterSelection();
+                        toggleSelect(clip.clipId);
+                      },
               child: ClipCoverCard(
                 key: Key('mobile-clip-grid-card-${clip.clipId}'),
                 clip: clip,
@@ -424,7 +431,10 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
     final clipIds = _clipsController.clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: spacing.md, vertical: spacing.sm),
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.md,
+        vertical: spacing.sm,
+      ),
       decoration: BoxDecoration(
         color: colors.surfaceCard,
         border: Border(bottom: BorderSide(color: colors.divider)),
@@ -542,10 +552,9 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
       return;
     }
     try {
-      final updated = await context.read<ClipsApi>().updateClipTitle(
-        clipId: clip.clipId,
-        title: newTitle,
-      );
+      final updated = await ref
+          .read(clipsApiProvider)
+          .updateClipTitle(clipId: clip.clipId, title: newTitle);
       _clipsController.replaceClip(updated);
       if (mounted) {
         showToast('已重命名');
@@ -569,7 +578,7 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
       return;
     }
     try {
-      await context.read<ClipsApi>().deleteClip(clipId: clip.clipId);
+      await ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId);
       _mutationNotifier.reportDeleted(clip.clipId);
       if (mounted) {
         showToast('已删除切片');
@@ -631,15 +640,16 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在加入「${target.name}」',
       items: selected,
-      action: (clip) => api.addClipToCollection(
-        collectionId: target.id,
-        clipId: clip.clipId,
-      ),
+      action:
+          (clip) => api.addClipToCollection(
+            collectionId: target.id,
+            clipId: clip.clipId,
+          ),
     );
     if (!mounted) {
       return;
@@ -670,7 +680,7 @@ class _MobileOverviewClipsTabState extends State<MobileOverviewClipsTab>
     if (!mounted || confirmed != true) {
       return;
     }
-    final api = context.read<ClipsApi>();
+    final api = ref.read(clipsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在删除切片',

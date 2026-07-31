@@ -332,9 +332,8 @@ class ResourceTaskCenterController extends ChangeNotifier {
       _applySuccessfulReset(resetIds, result.acceptedCount);
       _isResetting = false;
       // 被跳过的仍留在列表里,保持选中让用户能定位;其余从选中集合里剔除。
-      final keepSelected = _selectedResourceIds
-          .where((id) => !resetIds.contains(id))
-          .toSet();
+      final keepSelected =
+          _selectedResourceIds.where((id) => !resetIds.contains(id)).toSet();
       _selectedResourceIds
         ..clear()
         ..addAll(keepSelected);

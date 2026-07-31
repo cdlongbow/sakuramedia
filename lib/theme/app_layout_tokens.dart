@@ -49,6 +49,7 @@ class AppLayoutTokens extends ThemeExtension<AppLayoutTokens> {
   final double dialogInsetPadding;
   final double emptySectionVerticalPadding;
   final double inlineIconPadding;
+
   /// 媒体导入弹窗内目录浏览器的固定视窗高度（本地/115 通用），保证在最小分辨率下也
   /// 能显示 ≥5 行条目而不至于挤压 transferMode 与警告条。
   final double directoryBrowserHeight;

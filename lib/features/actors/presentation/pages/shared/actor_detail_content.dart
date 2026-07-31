@@ -2,14 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/detail/actor_detail_controller.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
@@ -26,6 +24,10 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 
 typedef ActorDetailBodyBuilder =
     Widget Function(
@@ -54,7 +56,7 @@ typedef ActorDetailFooterBuilder =
       PagedMovieSummaryController moviesController,
     );
 
-class ActorDetailContent extends StatefulWidget {
+class ActorDetailContent extends ConsumerStatefulWidget {
   const ActorDetailContent({
     super.key,
     required this.actorId,
@@ -96,10 +98,10 @@ class ActorDetailContent extends StatefulWidget {
   final bool useMobileSelectionLayout;
 
   @override
-  State<ActorDetailContent> createState() => _ActorDetailContentState();
+  ConsumerState<ActorDetailContent> createState() => _ActorDetailContentState();
 }
 
-class _ActorDetailContentState extends State<ActorDetailContent>
+class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     with
         MultiSelectStateMixin<ActorDetailContent, String>,
         MovieBatchSelectionMixin<ActorDetailContent> {
@@ -132,33 +134,36 @@ class _ActorDetailContentState extends State<ActorDetailContent>
   @override
   void initState() {
     super.initState();
-    _collectionChangeNotifier =
-        context.read<MovieCollectionTypeChangeNotifier>();
+    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
 
     _actorController = ActorDetailController(
       actorId: widget.actorId,
-      fetchActorDetail: context.read<ActorsApi>().getActorDetail,
+      fetchActorDetail: ref.read(actorsApiProvider).getActorDetail,
     )..load();
     _moviesController = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context.read<MoviesApi>().getMovies(
-            actorId: widget.actorId,
-            page: page,
-            pageSize: pageSize,
-            status: _filterState.status,
-            collectionType: _filterState.collectionType,
-            numberSource: _filterState.numberSource,
-            sort: _filterState.sortExpression,
-            year: _filterState.year,
-          ),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
+              .getMovies(
+                actorId: widget.actorId,
+                page: page,
+                pageSize: pageSize,
+                status: _filterState.status,
+                collectionType: _filterState.collectionType,
+                numberSource: _filterState.numberSource,
+                sort: _filterState.sortExpression,
+                year: _filterState.year,
+              ),
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 24,
@@ -247,9 +252,9 @@ class _ActorDetailContentState extends State<ActorDetailContent>
     });
 
     try {
-      final years = await context.read<ActorsApi>().getActorMovieYears(
-        actorId: widget.actorId,
-      );
+      final years = await ref
+          .read(actorsApiProvider)
+          .getActorMovieYears(actorId: widget.actorId);
       if (!mounted) {
         return;
       }
@@ -298,13 +303,15 @@ class _ActorDetailContentState extends State<ActorDetailContent>
 
     try {
       if (isSubscribed) {
-        await context.read<ActorsApi>().unsubscribeActor(
-          actorId: widget.actorId,
-        );
+        await ref
+            .read(actorsApiProvider)
+            .unsubscribeActor(actorId: widget.actorId);
         result = const ActorSubscriptionToggleResult.unsubscribed();
         _isActorSubscribedOverride = false;
       } else {
-        await context.read<ActorsApi>().subscribeActor(actorId: widget.actorId);
+        await ref
+            .read(actorsApiProvider)
+            .subscribeActor(actorId: widget.actorId);
         result = const ActorSubscriptionToggleResult.subscribed();
         _isActorSubscribedOverride = true;
       }

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 
 enum MoviePlaylistPickerPresentation { dialog, bottomDrawer }
 
@@ -47,7 +48,7 @@ Future<void> showMoviePlaylistPickerDialog(
   }
 }
 
-class MoviePlaylistPickerDialog extends StatefulWidget {
+class MoviePlaylistPickerDialog extends ConsumerStatefulWidget {
   const MoviePlaylistPickerDialog({
     super.key,
     required this.movieNumber,
@@ -60,11 +61,12 @@ class MoviePlaylistPickerDialog extends StatefulWidget {
   final MoviePlaylistPickerPresentation presentation;
 
   @override
-  State<MoviePlaylistPickerDialog> createState() =>
+  ConsumerState<MoviePlaylistPickerDialog> createState() =>
       _MoviePlaylistPickerDialogState();
 }
 
-class _MoviePlaylistPickerDialogState extends State<MoviePlaylistPickerDialog> {
+class _MoviePlaylistPickerDialogState
+    extends ConsumerState<MoviePlaylistPickerDialog> {
   static const double _playlistCheckboxScale = 0.85;
 
   List<PlaylistDto> _playlists = const <PlaylistDto>[];
@@ -83,7 +85,7 @@ class _MoviePlaylistPickerDialogState extends State<MoviePlaylistPickerDialog> {
 
   Future<void> _load() async {
     try {
-      final playlists = await context.read<PlaylistsApi>().getPlaylists();
+      final playlists = await ref.read(playlistsApiProvider).getPlaylists();
       if (!mounted) {
         return;
       }
@@ -280,15 +282,19 @@ class _MoviePlaylistPickerDialogState extends State<MoviePlaylistPickerDialog> {
 
     try {
       if (isSelected) {
-        await context.read<PlaylistsApi>().removeMovieFromPlaylist(
-          playlistId: playlist.id,
-          movieNumber: widget.movieNumber,
-        );
+        await ref
+            .read(playlistsApiProvider)
+            .removeMovieFromPlaylist(
+              playlistId: playlist.id,
+              movieNumber: widget.movieNumber,
+            );
       } else {
-        await context.read<PlaylistsApi>().addMovieToPlaylist(
-          playlistId: playlist.id,
-          movieNumber: widget.movieNumber,
-        );
+        await ref
+            .read(playlistsApiProvider)
+            .addMovieToPlaylist(
+              playlistId: playlist.id,
+              movieNumber: widget.movieNumber,
+            );
       }
     } catch (error) {
       setState(() {

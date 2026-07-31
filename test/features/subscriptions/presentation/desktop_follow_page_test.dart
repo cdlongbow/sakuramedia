@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -344,20 +345,23 @@ Future<void> _pumpFollowPage(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   return tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<MoviesApi>.value(value: bundle.moviesApi),
-        ChangeNotifierProvider(
-          create: (_) => MovieCollectionTypeChangeNotifier(),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<MoviesApi>.value(value: bundle.moviesApi),
+          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+            value: bundle.collectionTypeBroadcaster,
+          ),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
+          ),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const OKToast(child: Scaffold(body: DesktopFollowPage())),
         ),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
-        ),
-      ],
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: const OKToast(child: Scaffold(body: DesktopFollowPage())),
       ),
     ),
   );
@@ -375,19 +379,25 @@ Future<void> _pumpFollowRouter(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   return tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<MoviesApi>.value(value: bundle.moviesApi),
-        ChangeNotifierProvider(
-          create: (_) => MovieCollectionTypeChangeNotifier(),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<MoviesApi>.value(value: bundle.moviesApi),
+          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+            value: bundle.collectionTypeBroadcaster,
+          ),
+          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+            value: bundle.movieSubscriptionBroadcaster,
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+          ),
         ),
-        ChangeNotifierProvider(
-          create: (_) => MovieSubscriptionChangeNotifier(),
-        ),
-      ],
-      child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

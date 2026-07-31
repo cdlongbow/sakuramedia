@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -47,7 +47,10 @@ Future<void> launchImageSearchFromUrl(
   bool replaceCurrent = false,
   bool replaceRouteStack = false,
 }) async {
-  final apiClient = context.read<ApiClient>();
+  final apiClient = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(apiClientProvider);
   final bytes = await apiClient.getBytes(imageUrl);
   if (!context.mounted) {
     return;
@@ -122,11 +125,9 @@ DesktopImageSearchRouteData _buildDesktopRoute({
   required String? currentMovieNumber,
   required ImageSearchCurrentMovieScope initialCurrentMovieScope,
 }) {
-  final draftId = context.read<ImageSearchDraftStore>().save(
-    fileName: fileName,
-    bytes: bytes,
-    mimeType: mimeType,
-  );
+  final draftId = ProviderScope.containerOf(context, listen: false)
+      .read(imageSearchDraftStoreProvider)
+      .save(fileName: fileName, bytes: bytes, mimeType: mimeType);
   return DesktopImageSearchRouteData(
     draftId: draftId,
     currentMovieNumber: currentMovieNumber,
@@ -142,11 +143,9 @@ MobileImageSearchRouteData _buildMobileRoute({
   required String? currentMovieNumber,
   required ImageSearchCurrentMovieScope initialCurrentMovieScope,
 }) {
-  final draftId = context.read<ImageSearchDraftStore>().save(
-    fileName: fileName,
-    bytes: bytes,
-    mimeType: mimeType,
-  );
+  final draftId = ProviderScope.containerOf(context, listen: false)
+      .read(imageSearchDraftStoreProvider)
+      .save(fileName: fileName, bytes: bytes, mimeType: mimeType);
   return MobileImageSearchRouteData(
     draftId: draftId,
     currentMovieNumber: currentMovieNumber,

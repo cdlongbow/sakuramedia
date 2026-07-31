@@ -4,19 +4,19 @@ enum DownloadClientKind { qbittorrent, cloud115 }
 
 extension DownloadClientKindX on DownloadClientKind {
   String get wireValue => switch (this) {
-        DownloadClientKind.qbittorrent => 'qbittorrent',
-        DownloadClientKind.cloud115 => 'cloud115',
-      };
+    DownloadClientKind.qbittorrent => 'qbittorrent',
+    DownloadClientKind.cloud115 => 'cloud115',
+  };
 
   String get label => switch (this) {
-        DownloadClientKind.qbittorrent => 'qBittorrent',
-        DownloadClientKind.cloud115 => '115 离线',
-      };
+    DownloadClientKind.qbittorrent => 'qBittorrent',
+    DownloadClientKind.cloud115 => '115 离线',
+  };
 
   static DownloadClientKind fromWire(dynamic value) => switch (value) {
-        'cloud115' => DownloadClientKind.cloud115,
-        _ => DownloadClientKind.qbittorrent,
-      };
+    'cloud115' => DownloadClientKind.cloud115,
+    _ => DownloadClientKind.qbittorrent,
+  };
 }
 
 class DownloadClientDto {
@@ -241,9 +241,10 @@ class DownloadClientTestResultDto {
       elapsedMs: asInt(json['elapsed_ms']),
       version: asStringOrNull(json['version'], trim: true),
       webApiVersion: asStringOrNull(json['web_api_version'], trim: true),
-      error: errorMap == null
-          ? null
-          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error:
+          errorMap == null
+              ? null
+              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -278,9 +279,10 @@ class DownloadClientStorageDirectoryMappingResultDto {
       probeRemoteDir: json['probe_remote_dir'] as String? ?? '',
       probeLocalDir: json['probe_local_dir'] as String? ?? '',
       sentinelVisibleToQb: json['sentinel_visible_to_qb'] as bool? ?? false,
-      error: errorMap == null
-          ? null
-          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error:
+          errorMap == null
+              ? null
+              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -309,9 +311,10 @@ class DownloadClientStorageHardlinkResultDto {
       supported: json['supported'] as bool? ?? false,
       sourcePath: json['source_path'] as String? ?? '',
       targetPath: json['target_path'] as String? ?? '',
-      error: errorMap == null
-          ? null
-          : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
+      error:
+          errorMap == null
+              ? null
+              : DownloadClientDiagnosticErrorDto.fromJson(errorMap),
     );
   }
 }
@@ -341,9 +344,10 @@ class DownloadClientStorageTestResultDto {
     Map<String, dynamic> json,
   ) {
     final rawWarnings = json['warnings'];
-    final warnings = rawWarnings is List
-        ? rawWarnings.whereType<String>().toList(growable: false)
-        : const <String>[];
+    final warnings =
+        rawWarnings is List
+            ? rawWarnings.whereType<String>().toList(growable: false)
+            : const <String>[];
     return DownloadClientStorageTestResultDto(
       healthy: json['healthy'] as bool? ?? false,
       checkedAt: asDateTime(json['checked_at']),

@@ -82,7 +82,9 @@ class _ListHeader extends ConsumerWidget {
 
     void applyFilter(MovieSubscriptionFilterState next) {
       unawaited(
-        ref.read(movieSubscriptionManagerProvider.notifier).applyFilterState(next),
+        ref
+            .read(movieSubscriptionManagerProvider.notifier)
+            .applyFilterState(next),
       );
     }
 
@@ -206,12 +208,11 @@ Future<void> _confirmResetAllExhausted(
   );
   if (!confirmed) return;
 
-  final result = await ref
-      .read(movieSubscriptionManagerProvider.notifier)
-      .resetAllExhausted();
-  showToast(
-    result.errorMessage ?? '已重置 ${result.affectedCount} 部影片的查询状态',
-  );
+  final result =
+      await ref
+          .read(movieSubscriptionManagerProvider.notifier)
+          .resetAllExhausted();
+  showToast(result.errorMessage ?? '已重置 ${result.affectedCount} 部影片的查询状态');
 }
 
 // --- 多选态顶栏 --------------------------------------------------------------
@@ -226,8 +227,7 @@ class _SelectionHeader extends ConsumerWidget {
     final notifier = ref.read(movieSubscriptionManagerProvider.notifier);
     final busy = state.isBatchRunning;
     final loadedCount = state.paged.items.length;
-    final allSelected =
-        loadedCount > 0 && state.selectionCount >= loadedCount;
+    final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
     final selectAllLabel = allSelected ? '取消全选' : '全选（$loadedCount）';
 
     return AppSelectionHeaderToolbar(
@@ -291,7 +291,9 @@ List<Widget> _buildBatchActions(
 /// 批量重置不弹确认：它是可逆的加法（把影片放回队列），最坏结果只是多打一轮索引器。
 Future<void> _runBatchReset(WidgetRef ref) async {
   final result =
-      await ref.read(movieSubscriptionManagerProvider.notifier).batchResetSearch();
+      await ref
+          .read(movieSubscriptionManagerProvider.notifier)
+          .batchResetSearch();
   final message = result.errorMessage;
   if (message != null) {
     showToast(message);
@@ -318,7 +320,9 @@ Future<void> _confirmBatchUnsubscribe(
   if (!confirmed) return;
 
   final result =
-      await ref.read(movieSubscriptionManagerProvider.notifier).batchUnsubscribe();
+      await ref
+          .read(movieSubscriptionManagerProvider.notifier)
+          .batchUnsubscribe();
   if (!context.mounted) return;
   await showMovieSubscriptionBatchFeedback(context, result, subscribe: false);
 }
@@ -327,7 +331,8 @@ Future<void> _confirmBatchUnsubscribe(
 
 const _queryExplanationTip = AppNoticeCard(
   leadingIcon: Icons.info_outline_rounded,
-  description: '订阅影片后，系统通过定时任务在索引器中搜索可下载资源，找到后自动提交下载。'
+  description:
+      '订阅影片后，系统通过定时任务在索引器中搜索可下载资源，找到后自动提交下载。'
       '新片（发行 90 天内）每轮查询、不限次数；'
       '老片默认至多查 3 次，用尽则标记「已放弃」，需手动重置后重新排队。'
       '查询出错不消耗次数，下一轮自动重试。'
@@ -384,12 +389,11 @@ class _EmptyState extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter =
-        ref
-            .watch(
-              movieSubscriptionManagerProvider.select(
-                (asyncState) => asyncState.value?.filter,
-              ),
-            ) ??
+        ref.watch(
+          movieSubscriptionManagerProvider.select(
+            (asyncState) => asyncState.value?.filter,
+          ),
+        ) ??
         MovieSubscriptionFilterState.initial;
 
     if (filter.hasSearch) {
@@ -507,8 +511,8 @@ class _RowConsumer extends ConsumerWidget {
           selectionMode
               ? () => notifier.toggleSelection(item.movieNumber)
               : () => onOpenMovie(context, item.movieNumber),
-      onOpenDownloads: () =>
-          context.goDesktopDownloadTasks(movieNumber: item.movieNumber),
+      onOpenDownloads:
+          () => context.goDesktopDownloadTasks(movieNumber: item.movieNumber),
       onResetSearch: () => unawaited(_resetRow(ref, item.movieNumber)),
       onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
     );

@@ -18,7 +18,7 @@ enum DownloadClientProbeChipState {
   probing,
   healthy,
   warning,
-  unhealthy
+  unhealthy,
 }
 
 DownloadClientProbeChipState probeChipStateFromConnectivity(
@@ -73,16 +73,17 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
     final tap = disabled ? null : onTap;
     // onTap 为 null(只读态)时用 IgnorePointer,让上层 InkWell/GestureDetector
     // 接管点击 —— 移动卡片场景下整卡都可点开详情抽屉。
-    final Widget interactive = tap == null
-        ? IgnorePointer(child: content)
-        : MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: tap,
-              child: content,
-            ),
-          );
+    final Widget interactive =
+        tap == null
+            ? IgnorePointer(child: content)
+            : MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: tap,
+                child: content,
+              ),
+            );
 
     if (tooltip == null || tooltip!.isEmpty) return interactive;
     return Tooltip(message: tooltip!, child: interactive);
@@ -96,10 +97,7 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
       case DownloadClientProbeChipState.notTested:
         return AppStatusChipPalette.neutral(context);
       case DownloadClientProbeChipState.probing:
-        return AppStatusChipPalette.neutral(
-          context,
-          icon: Icons.hourglass_top,
-        );
+        return AppStatusChipPalette.neutral(context, icon: Icons.hourglass_top);
       case DownloadClientProbeChipState.healthy:
         return AppStatusChipPalette.success(context);
       case DownloadClientProbeChipState.warning:
@@ -158,7 +156,8 @@ class _DownloadClientTestResultDialogState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final isCloud115 = _result.baseUrl.trim().isEmpty &&
+    final isCloud115 =
+        _result.baseUrl.trim().isEmpty &&
         _result.version == null &&
         _result.webApiVersion == null;
     return AppDesktopDialog(
@@ -170,9 +169,10 @@ class _DownloadClientTestResultDialogState
         children: [
           _DiagnosticsHeader(
             title: '连通性检测',
-            subtitle: isCloud115
-                ? '${_result.clientName} · 115 登录状态'
-                : '${_result.clientName} · ${_result.baseUrl}',
+            subtitle:
+                isCloud115
+                    ? '${_result.clientName} · 115 登录状态'
+                    : '${_result.clientName} · ${_result.baseUrl}',
             healthy: _result.healthy,
             elapsedMs: _result.elapsedMs,
           ),
@@ -192,10 +192,7 @@ class _DownloadClientTestResultDialogState
                     runSpacing: spacing.sm,
                     children: [
                       if (isCloud115)
-                        const AppInfoPill(
-                          label: '检测项',
-                          value: '115 登录状态正常',
-                        )
+                        const AppInfoPill(label: '检测项', value: '115 登录状态正常')
                       else ...[
                         AppInfoPill(
                           label: 'qBittorrent 版本',
@@ -359,18 +356,9 @@ class _DownloadClientStorageTestResultDialogState
                         status: hardlink.status,
                         goodValues: const <String>{'ok'},
                       ),
-                      _BooleanPill(
-                        label: '支持硬链接',
-                        value: hardlink.supported,
-                      ),
-                      AppInfoPill(
-                        label: '源文件',
-                        value: hardlink.sourcePath,
-                      ),
-                      AppInfoPill(
-                        label: '目标文件',
-                        value: hardlink.targetPath,
-                      ),
+                      _BooleanPill(label: '支持硬链接', value: hardlink.supported),
+                      AppInfoPill(label: '源文件', value: hardlink.sourcePath),
+                      AppInfoPill(label: '目标文件', value: hardlink.targetPath),
                     ],
                   ),
                 ),
@@ -457,9 +445,10 @@ class _HealthyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final background = healthy
-        ? context.appColors.successSurface
-        : context.appColors.errorSurface;
+    final background =
+        healthy
+            ? context.appColors.successSurface
+            : context.appColors.errorSurface;
     final tone = healthy ? AppTextTone.success : AppTextTone.error;
     final label = healthy ? '正常' : '异常';
     return Container(

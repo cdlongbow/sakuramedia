@@ -56,9 +56,10 @@ class DownloadTaskDto {
       createdAt: asDateTime(json['created_at']),
       updatedAt: asDateTime(json['updated_at']),
       movieTitle: json['movie_title'] as String?,
-      movieCover: coverRaw is Map<String, dynamic>
-          ? MovieImageDto.fromJson(coverRaw)
-          : null,
+      movieCover:
+          coverRaw is Map<String, dynamic>
+              ? MovieImageDto.fromJson(coverRaw)
+              : null,
     );
   }
 
@@ -81,9 +82,10 @@ class DownloadTaskDto {
     return DownloadTaskDto(
       id: id ?? this.id,
       clientId: clientId ?? this.clientId,
-      movieNumber: identical(movieNumber, _sentinel)
-          ? this.movieNumber
-          : movieNumber as String?,
+      movieNumber:
+          identical(movieNumber, _sentinel)
+              ? this.movieNumber
+              : movieNumber as String?,
       name: name ?? this.name,
       infoHash: infoHash ?? this.infoHash,
       savePath: savePath ?? this.savePath,
@@ -91,18 +93,22 @@ class DownloadTaskDto {
       downloadState: downloadState ?? this.downloadState,
       importStatus: importStatus ?? this.importStatus,
       importStatusLabel: importStatusLabel ?? this.importStatusLabel,
-      createdAt: identical(createdAt, _sentinel)
-          ? this.createdAt
-          : createdAt as DateTime?,
-      updatedAt: identical(updatedAt, _sentinel)
-          ? this.updatedAt
-          : updatedAt as DateTime?,
-      movieTitle: identical(movieTitle, _sentinel)
-          ? this.movieTitle
-          : movieTitle as String?,
-      movieCover: identical(movieCover, _sentinel)
-          ? this.movieCover
-          : movieCover as MovieImageDto?,
+      createdAt:
+          identical(createdAt, _sentinel)
+              ? this.createdAt
+              : createdAt as DateTime?,
+      updatedAt:
+          identical(updatedAt, _sentinel)
+              ? this.updatedAt
+              : updatedAt as DateTime?,
+      movieTitle:
+          identical(movieTitle, _sentinel)
+              ? this.movieTitle
+              : movieTitle as String?,
+      movieCover:
+          identical(movieCover, _sentinel)
+              ? this.movieCover
+              : movieCover as MovieImageDto?,
     );
   }
 }

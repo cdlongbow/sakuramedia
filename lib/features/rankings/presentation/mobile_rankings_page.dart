@@ -1,14 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/core/format/synced_at_label.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
 import 'package:sakuramedia/features/rankings/presentation/mobile_ranking_filter_drawer.dart';
 import 'package:sakuramedia/features/rankings/presentation/rankings_list_page_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -25,14 +22,18 @@ import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranked_movie_summary_grid.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filter_sections.dart';
 
-class MobileRankingsPage extends StatefulWidget {
+import 'package:sakuramedia/features/rankings/presentation/providers/rankings_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+
+class MobileRankingsPage extends ConsumerStatefulWidget {
   const MobileRankingsPage({super.key});
 
   @override
-  State<MobileRankingsPage> createState() => _MobileRankingsPageState();
+  ConsumerState<MobileRankingsPage> createState() => _MobileRankingsPageState();
 }
 
-class _MobileRankingsPageState extends State<MobileRankingsPage>
+class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
     with
         MultiSelectStateMixin<MobileRankingsPage, String>,
         MovieBatchSelectionMixin<MobileRankingsPage> {
@@ -60,10 +61,11 @@ class _MobileRankingsPageState extends State<MobileRankingsPage>
       key: mobileRankingsPageStateKey(),
       create:
           () => RankingsListPageStateEntry(
-            rankingsApi: context.read<RankingsApi>(),
-            moviesApi: context.read<MoviesApi>(),
-            subscriptionChangeNotifier:
-                context.read<MovieSubscriptionChangeNotifier>(),
+            rankingsApi: ref.read(rankingsApiProvider),
+            moviesApi: ref.read(moviesApiProvider),
+            subscriptionChangeNotifier: ref.read(
+              movieSubscriptionBroadcasterProvider,
+            ),
           ),
     );
     unawaited(_pageState.initialize());

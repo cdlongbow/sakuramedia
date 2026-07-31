@@ -4,14 +4,14 @@ enum MediaLibraryBackend { local, cloud115 }
 
 extension MediaLibraryBackendX on MediaLibraryBackend {
   String get wireValue => switch (this) {
-        MediaLibraryBackend.local => 'local',
-        MediaLibraryBackend.cloud115 => 'cloud115',
-      };
+    MediaLibraryBackend.local => 'local',
+    MediaLibraryBackend.cloud115 => 'cloud115',
+  };
 
   static MediaLibraryBackend fromWire(dynamic value) => switch (value) {
-        'cloud115' => MediaLibraryBackend.cloud115,
-        _ => MediaLibraryBackend.local,
-      };
+    'cloud115' => MediaLibraryBackend.cloud115,
+    _ => MediaLibraryBackend.local,
+  };
 }
 
 enum Cloud115LoginApp {
@@ -31,17 +31,17 @@ extension Cloud115LoginAppX on Cloud115LoginApp {
   String get wireValue => name;
 
   String get label => switch (this) {
-        Cloud115LoginApp.web => '网页版',
-        Cloud115LoginApp.android => 'Android',
-        Cloud115LoginApp.ios => 'iOS',
-        Cloud115LoginApp.linux => 'Linux',
-        Cloud115LoginApp.mac => 'macOS',
-        Cloud115LoginApp.windows => 'Windows',
-        Cloud115LoginApp.tv => 'TV',
-        Cloud115LoginApp.alipaymini => '支付宝小程序',
-        Cloud115LoginApp.wechatmini => '微信小程序',
-        Cloud115LoginApp.qandroid => 'Android（qandroid 登录槽）',
-      };
+    Cloud115LoginApp.web => '网页版',
+    Cloud115LoginApp.android => 'Android',
+    Cloud115LoginApp.ios => 'iOS',
+    Cloud115LoginApp.linux => 'Linux',
+    Cloud115LoginApp.mac => 'macOS',
+    Cloud115LoginApp.windows => 'Windows',
+    Cloud115LoginApp.tv => 'TV',
+    Cloud115LoginApp.alipaymini => '支付宝小程序',
+    Cloud115LoginApp.wechatmini => '微信小程序',
+    Cloud115LoginApp.qandroid => 'Android（qandroid 登录槽）',
+  };
 
   bool get isRecommended => this == Cloud115LoginApp.alipaymini;
 
@@ -88,13 +88,14 @@ class MediaLibraryDto {
 
   factory MediaLibraryDto.fromJson(Map<String, dynamic> json) {
     final rawConfig = json['backend_config'];
-    final config = rawConfig is Map
-        ? rawConfig.map(
-            (dynamic key, dynamic value) => MapEntry(key.toString(), value),
-          )
-        : <String, dynamic>{
-            if (json['root_path'] is String) 'root_path': json['root_path'],
-          };
+    final config =
+        rawConfig is Map
+            ? rawConfig.map(
+              (dynamic key, dynamic value) => MapEntry(key.toString(), value),
+            )
+            : <String, dynamic>{
+              if (json['root_path'] is String) 'root_path': json['root_path'],
+            };
     return MediaLibraryDto(
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',

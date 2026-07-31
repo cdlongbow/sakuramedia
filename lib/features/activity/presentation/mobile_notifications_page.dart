@@ -110,10 +110,11 @@ class _MobileNotificationsPageState extends State<MobileNotificationsPage>
     if (!_snapshotDirty || _controller.isInitialLoading) {
       return;
     }
-    _unreadSnapshotIds = _controller.notifications
-        .where((item) => !item.isRead)
-        .map((item) => item.id)
-        .toSet();
+    _unreadSnapshotIds =
+        _controller.notifications
+            .where((item) => !item.isRead)
+            .map((item) => item.id)
+            .toSet();
     _snapshotDirty = false;
   }
 
@@ -249,7 +250,9 @@ class _MobileNotificationsPageState extends State<MobileNotificationsPage>
             });
           }
           return Padding(
-            padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.sm),
+            padding: EdgeInsets.only(
+              bottom: isLast ? 0 : context.appSpacing.sm,
+            ),
             child: RepaintBoundary(
               child: MobileNotificationCard(
                 notification: item,
@@ -332,22 +335,23 @@ class MobileNotificationCard extends StatelessWidget {
         children: [
           SizedBox(
             width: spacing.sm,
-            child: isUnread
-                ? Padding(
-                    padding: EdgeInsets.only(top: spacing.xs),
-                    child: Container(
-                      key: Key(
-                        'mobile-activity-notification-${notification.id}-dot',
+            child:
+                isUnread
+                    ? Padding(
+                      padding: EdgeInsets.only(top: spacing.xs),
+                      child: Container(
+                        key: Key(
+                          'mobile-activity-notification-${notification.id}-dot',
+                        ),
+                        width: spacing.sm,
+                        height: spacing.sm,
+                        decoration: BoxDecoration(
+                          color: context.appTextPalette.error,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                      width: spacing.sm,
-                      height: spacing.sm,
-                      decoration: BoxDecoration(
-                        color: context.appTextPalette.error,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  )
-                : null,
+                    )
+                    : null,
           ),
           SizedBox(width: spacing.sm),
           Expanded(
@@ -358,7 +362,9 @@ class MobileNotificationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     AppBadge(
-                      label: labelForNotificationCategory(notification.category),
+                      label: labelForNotificationCategory(
+                        notification.category,
+                      ),
                       tone: notificationCategoryTone(notification.category),
                       size: AppBadgeSize.compact,
                     ),
@@ -381,7 +387,9 @@ class MobileNotificationCard extends StatelessWidget {
                     context,
                     size: AppTextSize.s14,
                     weight:
-                        isUnread ? AppTextWeight.semibold : AppTextWeight.medium,
+                        isUnread
+                            ? AppTextWeight.semibold
+                            : AppTextWeight.medium,
                     tone: AppTextTone.primary,
                   ),
                 ),
@@ -443,4 +451,3 @@ class _MobileNotificationSkeleton extends StatelessWidget {
     );
   }
 }
-

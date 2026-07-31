@@ -43,7 +43,10 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
@@ -134,6 +137,22 @@ class TestApiBundle {
   final ImageSearchApi imageSearchApi;
   final FakeHttpClientAdapter adapter;
 
+  /// 三个跨页 mutation 广播源的「单一实例」——与组合根一致:测试里 legacy
+  /// Provider 侧与 Riverpod 侧都必须用同一个实例(Provider 树挂
+  /// `.value(bundle.movieSubscriptionBroadcaster)`,Riverpod 侧由
+  /// [riverpodOverrides] 自动注入),否则跨页广播静默丢事件。
+  final MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster =
+      MovieSubscriptionChangeNotifier();
+
+  /// 图搜草稿仓默认实例——图搜启动器经 Riverpod 容器写入草稿，测试树里必须有
+  /// override 才能落笔。需要自持实例（预置草稿）的测试仍可传参覆盖。
+  final ImageSearchDraftStore defaultImageSearchDraftStore =
+      ImageSearchDraftStore();
+  final MovieCollectionTypeChangeNotifier collectionTypeBroadcaster =
+      MovieCollectionTypeChangeNotifier();
+  final ClipMutationChangeNotifier clipMutationBroadcaster =
+      ClipMutationChangeNotifier();
+
   /// 一次性产出全部 Riverpod 桥 provider 的 overrides——widget 测试给
   /// `ProviderScope(overrides: bundle.riverpodOverrides(...))` 用，
   /// 与 `lib/app/app.dart` 组合根的 override 清单同构。
@@ -144,7 +163,15 @@ class TestApiBundle {
     AppPageStateCache? pageStateCache,
     ImageSearchDraftStore? imageSearchDraftStore,
     MovieSubscriptionChangeNotifier? movieSubscriptionBroadcaster,
+    MovieCollectionTypeChangeNotifier? collectionTypeBroadcaster,
+    ClipMutationChangeNotifier? clipMutationBroadcaster,
   }) {
+    final subscriptionBroadcaster =
+        movieSubscriptionBroadcaster ?? this.movieSubscriptionBroadcaster;
+    final typeBroadcaster =
+        collectionTypeBroadcaster ?? this.collectionTypeBroadcaster;
+    final clipBroadcaster =
+        clipMutationBroadcaster ?? this.clipMutationBroadcaster;
     return <Override>[
       apiClientProvider.overrideWithValue(apiClient),
       sessionStoreProvider.overrideWithValue(sessionStore),
@@ -177,12 +204,14 @@ class TestApiBundle {
       videoImportsApiProvider.overrideWithValue(videoImportsApi),
       if (pageStateCache != null)
         appPageStateCacheProvider.overrideWithValue(pageStateCache),
-      if (imageSearchDraftStore != null)
-        imageSearchDraftStoreProvider.overrideWithValue(imageSearchDraftStore),
-      if (movieSubscriptionBroadcaster != null)
-        movieSubscriptionBroadcasterProvider.overrideWithValue(
-          movieSubscriptionBroadcaster,
-        ),
+      imageSearchDraftStoreProvider.overrideWithValue(
+        imageSearchDraftStore ?? defaultImageSearchDraftStore,
+      ),
+      movieSubscriptionBroadcasterProvider.overrideWithValue(
+        subscriptionBroadcaster,
+      ),
+      collectionTypeBroadcasterProvider.overrideWithValue(typeBroadcaster),
+      clipMutationBroadcasterProvider.overrideWithValue(clipBroadcaster),
     ];
   }
 

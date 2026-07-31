@@ -7,7 +7,8 @@ Future<bool?> showClipCollectionDeleteDialog(
   BuildContext context, {
   required ClipCollectionDto collection,
 }) {
-  final name = collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+  final name =
+      collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
   return showAppConfirmDialog(
     context,
     title: '删除合集',

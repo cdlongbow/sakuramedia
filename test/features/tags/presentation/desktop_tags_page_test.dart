@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -60,22 +61,25 @@ void main() {
 
   Future<void> pumpTagsPage(WidgetTester tester) async {
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<TagsApi>.value(value: tagsApi),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: DesktopTagsPage()),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<TagsApi>.value(value: tagsApi),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
+            ),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
+            ),
+          ],
+          child: OKToast(
+            child: MaterialApp(
+              theme: sakuraThemeData,
+              home: const Scaffold(body: DesktopTagsPage()),
+            ),
           ),
         ),
       ),
@@ -145,22 +149,25 @@ void main() {
       ..enqueueJson(method: 'GET', path: '/movies', body: moviesPage());
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<TagsApi>.value(value: tagsApi),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: DesktopTagsPage(initialTagId: 1)),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<TagsApi>.value(value: tagsApi),
+            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
+              value: bundle.movieSubscriptionBroadcaster,
+            ),
+            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
+              value: bundle.collectionTypeBroadcaster,
+            ),
+          ],
+          child: OKToast(
+            child: MaterialApp(
+              theme: sakuraThemeData,
+              home: const Scaffold(body: DesktopTagsPage(initialTagId: 1)),
+            ),
           ),
         ),
       ),

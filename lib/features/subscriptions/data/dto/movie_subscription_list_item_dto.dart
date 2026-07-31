@@ -138,7 +138,6 @@ class MovieSubscriptionListItemDto {
   }
 }
 
-
 /// `import_failed` 档的最新导入作业上下文；`availableActions` 由后端计算，
 /// 前端只按枚举渲染（open_import_job / retry_failed_files / rerun_import）。
 class MovieSubscriptionImportOperationDto {
@@ -162,7 +161,8 @@ class MovieSubscriptionImportOperationDto {
   final int retryableFileCount;
   final List<String> availableActions;
 
-  bool get canRetryFailedFiles => availableActions.contains('retry_failed_files');
+  bool get canRetryFailedFiles =>
+      availableActions.contains('retry_failed_files');
   bool get canRerun => availableActions.contains('rerun_import');
 
   static MovieSubscriptionImportOperationDto? fromJsonOrNull(

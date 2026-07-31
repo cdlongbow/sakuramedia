@@ -2,10 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
@@ -18,20 +17,23 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_management_card.dart';
 
-class MobilePlaylistsPage extends StatefulWidget {
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+
+class MobilePlaylistsPage extends ConsumerStatefulWidget {
   const MobilePlaylistsPage({super.key});
 
   @override
-  State<MobilePlaylistsPage> createState() => _MobilePlaylistsPageState();
+  ConsumerState<MobilePlaylistsPage> createState() =>
+      _MobilePlaylistsPageState();
 }
 
-class _MobilePlaylistsPageState extends State<MobilePlaylistsPage> {
+class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
   late final PlaylistsOverviewController _controller;
 
   @override
   void initState() {
     super.initState();
-    final api = context.read<PlaylistsApi>();
+    final api = ref.read(playlistsApiProvider);
     _controller = PlaylistsOverviewController(
       fetchPlaylists:
           ({bool includeSystem = true}) =>
@@ -182,12 +184,14 @@ class _MobilePlaylistsPageState extends State<MobilePlaylistsPage> {
                         playlistId: playlist.id,
                       ).push(context);
                     },
-                    onEditTap: playlist.isMutable
-                        ? () => _handleEditPlaylist(playlist)
-                        : null,
-                    onDeleteTap: playlist.isDeletable
-                        ? () => _handleDeletePlaylist(playlist)
-                        : null,
+                    onEditTap:
+                        playlist.isMutable
+                            ? () => _handleEditPlaylist(playlist)
+                            : null,
+                    onDeleteTap:
+                        playlist.isDeletable
+                            ? () => _handleDeletePlaylist(playlist)
+                            : null,
                   ),
                   if (playlist != playlists.last)
                     SizedBox(height: context.appSpacing.sm),
@@ -237,7 +241,7 @@ class _MobilePlaylistsPageState extends State<MobilePlaylistsPage> {
   }
 
   Future<void> _handleDeletePlaylist(PlaylistDto playlist) async {
-    final api = context.read<PlaylistsApi>();
+    final api = ref.read(playlistsApiProvider);
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除播放列表',

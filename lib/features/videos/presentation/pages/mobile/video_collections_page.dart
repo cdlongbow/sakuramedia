@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
@@ -19,16 +20,16 @@ import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
 /// 移动端视频合集列表页：全部合集网格 + 新建 / 编辑 / 删除（编辑与确认走底部抽屉）。
-class MobileVideoCollectionsPage extends StatefulWidget {
+class MobileVideoCollectionsPage extends ConsumerStatefulWidget {
   const MobileVideoCollectionsPage({super.key});
 
   @override
-  State<MobileVideoCollectionsPage> createState() =>
+  ConsumerState<MobileVideoCollectionsPage> createState() =>
       _MobileVideoCollectionsPageState();
 }
 
 class _MobileVideoCollectionsPageState
-    extends State<MobileVideoCollectionsPage> {
+    extends ConsumerState<MobileVideoCollectionsPage> {
   late final VideoCollectionsOverviewController _controller;
   late final VideoMutationChangeNotifier _mutationNotifier;
   bool _refreshScheduled = false;
@@ -36,9 +37,9 @@ class _MobileVideoCollectionsPageState
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<VideoMutationChangeNotifier>();
+    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
     _controller = VideoCollectionsOverviewController(
-      collectionsApi: context.read<VideoCollectionsApi>(),
+      collectionsApi: ref.read(videoCollectionsApiProvider),
     )..load();
     _mutationNotifier.addListener(_onMutation);
   }
@@ -208,7 +209,9 @@ class _MobileVideoCollectionsPageState
       return;
     }
     try {
-      await context.read<VideoCollectionsApi>().deleteCollection(collection.id);
+      await ref
+          .read(videoCollectionsApiProvider)
+          .deleteCollection(collection.id);
       await _controller.refresh();
       if (mounted) {
         showToast('已删除合集');

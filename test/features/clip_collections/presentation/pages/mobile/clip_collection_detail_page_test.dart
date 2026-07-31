@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -94,15 +97,16 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<ClipCollectionsApi>.value(
-            value: ClipCollectionsApi(apiClient: apiClient),
+      ProviderScope(
+        overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
+          clipCollectionsApiProvider.overrideWithValue(
+            ClipCollectionsApi(apiClient: apiClient),
           ),
-          Provider<ClipsApi>.value(value: ClipsApi(apiClient: apiClient)),
-          ChangeNotifierProvider(create: (_) => ClipMutationChangeNotifier()),
-          Provider(create: (_) => CollectionPlaybackHandoff()),
+          clipsApiProvider.overrideWithValue(ClipsApi(apiClient: apiClient)),
+          clipMutationBroadcasterProvider.overrideWithValue(
+            ClipMutationChangeNotifier(),
+          ),
         ],
         child: OKToast(
           child: MaterialApp(

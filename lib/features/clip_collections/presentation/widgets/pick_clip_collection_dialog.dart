@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
@@ -46,7 +47,7 @@ Future<ClipCollectionDto?> showPickClipCollectionDialog(
   }
 }
 
-class _PickClipCollectionDialog extends StatefulWidget {
+class _PickClipCollectionDialog extends ConsumerStatefulWidget {
   const _PickClipCollectionDialog({
     this.presentation = PickClipCollectionPresentation.dialog,
     this.excludedCollectionId,
@@ -58,11 +59,12 @@ class _PickClipCollectionDialog extends StatefulWidget {
   final int? excludedCollectionId;
 
   @override
-  State<_PickClipCollectionDialog> createState() =>
+  ConsumerState<_PickClipCollectionDialog> createState() =>
       _PickClipCollectionDialogState();
 }
 
-class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
+class _PickClipCollectionDialogState
+    extends ConsumerState<_PickClipCollectionDialog> {
   late final ClipCollectionsApi _api;
   List<ClipCollectionDto> _collections = const <ClipCollectionDto>[];
   bool _isLoading = true;
@@ -74,7 +76,7 @@ class _PickClipCollectionDialogState extends State<_PickClipCollectionDialog> {
   @override
   void initState() {
     super.initState();
-    _api = context.read<ClipCollectionsApi>();
+    _api = ref.read(clipCollectionsApiProvider);
     _load();
   }
 

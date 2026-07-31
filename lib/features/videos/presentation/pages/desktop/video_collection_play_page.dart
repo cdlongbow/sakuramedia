@@ -5,17 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
@@ -40,7 +41,7 @@ import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 /// 分栏壳与右侧关键帧面板）。区别在于视频成员不自带播放地址，靠后端 `include_play_url`
 /// 内联「首个媒体」的签名 url 组装 [Playlist]（切片则自带 streamUrl）；右侧「整部合集」
 /// 关键帧面板按成员的 `firstMediaId` 逐集拉缩略图。
-class DesktopVideoCollectionPlayPage extends StatefulWidget {
+class DesktopVideoCollectionPlayPage extends ConsumerStatefulWidget {
   const DesktopVideoCollectionPlayPage({
     super.key,
     required this.collectionId,
@@ -59,12 +60,12 @@ class DesktopVideoCollectionPlayPage extends StatefulWidget {
   final bool useTouchOptimizedControls;
 
   @override
-  State<DesktopVideoCollectionPlayPage> createState() =>
+  ConsumerState<DesktopVideoCollectionPlayPage> createState() =>
       _DesktopVideoCollectionPlayPageState();
 }
 
 class _DesktopVideoCollectionPlayPageState
-    extends State<DesktopVideoCollectionPlayPage>
+    extends ConsumerState<DesktopVideoCollectionPlayPage>
     with CollectionPlaybackPageMixin<DesktopVideoCollectionPlayPage> {
   List<VideoItemListItemDto> _videos = const <VideoItemListItemDto>[];
   bool _isLoading = true;
@@ -84,10 +85,10 @@ class _DesktopVideoCollectionPlayPageState
   }
 
   Future<void> _load() async {
-    final handoff = context.read<CollectionPlaybackHandoff>();
-    final collectionsApi = context.read<VideoCollectionsApi>();
-    final moviesApi = context.read<MoviesApi>();
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
+    final collectionsApi = ref.read(videoCollectionsApiProvider);
+    final moviesApi = ref.read(moviesApiProvider);
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     try {
       // 优先用详情页「交接」来的成员（已带播放地址）：常规的「详情页点某集进连播」
       // 路径下零额外请求、秒开。取不到（深链/刷新）才自行并发分页拉全——后端已内联
@@ -241,7 +242,7 @@ class _DesktopVideoCollectionPlayPageState
     if (thumbnail.mediaId <= 0 || thumbnail.thumbnailId <= 0) {
       return;
     }
-    final mediaApi = context.read<MediaApi>();
+    final mediaApi = ref.read(mediaApiProvider);
     // 先查该帧是否已是时刻，决定菜单展示「添加」还是「删除」。
     final existingPoint = await _findMatchingPoint(mediaApi, thumbnail);
     if (!mounted) {

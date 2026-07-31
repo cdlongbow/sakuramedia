@@ -63,10 +63,8 @@ import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
@@ -298,13 +296,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (_) => MovieSubscriptionChangeNotifier(),
         ),
-        ChangeNotifierProvider(create: (_) => VideoMutationChangeNotifier()),
+        // VideoMutationChangeNotifier 与 CollectionPlaybackHandoff 已原生迁移
+        // 到 Riverpod（videos / shared 的 presentation/providers/）。
         ChangeNotifierProvider(create: (_) => ClipMutationChangeNotifier()),
-        // 合集详情页 → 连播页 的一次性成员交接信箱（详情 offer、连播 take），
-        // 免去连播页重复全量拉取。无依赖，纯被动存取。
-        Provider<CollectionPlaybackHandoff>(
-          create: (_) => CollectionPlaybackHandoff(),
-        ),
         Provider<PlaylistsApi>(
           create:
               (context) => PlaylistsApi(apiClient: context.read<ApiClient>()),

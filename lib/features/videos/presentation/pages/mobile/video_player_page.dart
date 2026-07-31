@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/media/playback_resume_policy.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -23,7 +24,7 @@ import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 /// 与切片不同，视频列表项不含播放地址，需先 `GET /videos/{id}` 解析首个可播 media
 /// （与桌面 `video_quick_play_dialog` 一致）；本页放弃缩略图，但保留完整媒体的续播提示
 /// 与进度上报。播放控件去掉上一首 / 下一首，对齐切片全屏播放页。
-class MobileVideoPlayerPage extends StatefulWidget {
+class MobileVideoPlayerPage extends ConsumerStatefulWidget {
   const MobileVideoPlayerPage({
     super.key,
     required this.videoId,
@@ -34,10 +35,11 @@ class MobileVideoPlayerPage extends StatefulWidget {
   final String title;
 
   @override
-  State<MobileVideoPlayerPage> createState() => _MobileVideoPlayerPageState();
+  ConsumerState<MobileVideoPlayerPage> createState() =>
+      _MobileVideoPlayerPageState();
 }
 
-class _MobileVideoPlayerPageState extends State<MobileVideoPlayerPage> {
+class _MobileVideoPlayerPageState extends ConsumerState<MobileVideoPlayerPage> {
   Player? _player;
   VideoController? _controller;
   bool _isLoading = true;
@@ -74,8 +76,8 @@ class _MobileVideoPlayerPageState extends State<MobileVideoPlayerPage> {
     if (!mounted) {
       return;
     }
-    final videosApi = context.read<VideosApi>();
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final videosApi = ref.read(videosApiProvider);
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     try {
       final detail = await videosApi.getVideoDetail(videoId: widget.videoId);
       if (!mounted) {

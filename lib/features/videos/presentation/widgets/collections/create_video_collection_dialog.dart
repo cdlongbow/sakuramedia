@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -42,7 +42,7 @@ Future<VideoCollectionDto?> showVideoCollectionDialog(
   }
 }
 
-class CreateVideoCollectionDialog extends StatefulWidget {
+class CreateVideoCollectionDialog extends ConsumerStatefulWidget {
   const CreateVideoCollectionDialog({
     super.key,
     this.existing,
@@ -53,12 +53,12 @@ class CreateVideoCollectionDialog extends StatefulWidget {
   final VideoCollectionEditPresentation presentation;
 
   @override
-  State<CreateVideoCollectionDialog> createState() =>
+  ConsumerState<CreateVideoCollectionDialog> createState() =>
       _CreateVideoCollectionDialogState();
 }
 
 class _CreateVideoCollectionDialogState
-    extends State<CreateVideoCollectionDialog> {
+    extends ConsumerState<CreateVideoCollectionDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -175,7 +175,7 @@ class _CreateVideoCollectionDialogState
       return;
     }
     setState(() => _isSubmitting = true);
-    final api = context.read<VideoCollectionsApi>();
+    final api = ref.read(videoCollectionsApiProvider);
     try {
       final VideoCollectionDto result;
       if (_isEditing) {

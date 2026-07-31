@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
@@ -42,14 +42,14 @@ import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_s
 /// 网格。数据层与桌面 `DesktopVideoListPage` 完全一致（复用缓存页状态 + 合集控制器 +
 /// mutation 广播），仅布局改为移动端竖屏网格 + 底部抽屉形态的编辑交互；长按视频卡进入
 /// 多选模式，支持批量加入合集 / 删除。
-class MobilePornboxPage extends StatefulWidget {
+class MobilePornboxPage extends ConsumerStatefulWidget {
   const MobilePornboxPage({super.key});
 
   @override
-  State<MobilePornboxPage> createState() => _MobilePornboxPageState();
+  ConsumerState<MobilePornboxPage> createState() => _MobilePornboxPageState();
 }
 
-class _MobilePornboxPageState extends State<MobilePornboxPage>
+class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     with MultiSelectStateMixin<MobilePornboxPage, int> {
   late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
   late final VideoCollectionsOverviewController _collectionsController;
@@ -66,18 +66,18 @@ class _MobilePornboxPageState extends State<MobilePornboxPage>
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<VideoMutationChangeNotifier>();
+    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
     _pageStateHandle = obtainCachedPageState<VideoListPageStateEntry>(
       context,
       key: mobilePornboxPageStateKey(),
       create:
           () => VideoListPageStateEntry(
-            videosApi: context.read<VideosApi>(),
+            videosApi: ref.read(videosApiProvider),
             mutationNotifier: _mutationNotifier,
           ),
     );
     _collectionsController = VideoCollectionsOverviewController(
-      collectionsApi: context.read<VideoCollectionsApi>(),
+      collectionsApi: ref.read(videoCollectionsApiProvider),
     )..load();
     _mutationNotifier.addListener(_onMutation);
   }
@@ -187,7 +187,7 @@ class _MobilePornboxPageState extends State<MobilePornboxPage>
       return;
     }
     try {
-      await context.read<VideosApi>().deleteVideo(video.id);
+      await ref.read(videosApiProvider).deleteVideo(video.id);
       _mutationNotifier.reportDeleted(video.id);
       if (mounted) {
         showToast('已删除视频');
@@ -221,7 +221,7 @@ class _MobilePornboxPageState extends State<MobilePornboxPage>
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<VideoCollectionsApi>();
+    final api = ref.read(videoCollectionsApiProvider);
     final result = await runBatchOperation<VideoItemListItemDto>(
       context,
       title: '正在加入「${target.name}」',
@@ -261,7 +261,7 @@ class _MobilePornboxPageState extends State<MobilePornboxPage>
     if (!mounted || confirmed != true) {
       return;
     }
-    final api = context.read<VideosApi>();
+    final api = ref.read(videosApiProvider);
     final result = await runBatchOperation<VideoItemListItemDto>(
       context,
       title: '正在删除视频',

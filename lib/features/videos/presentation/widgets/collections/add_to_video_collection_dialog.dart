@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
@@ -43,7 +44,7 @@ Future<bool?> showAddToVideoCollectionDialog(
   }
 }
 
-class AddToVideoCollectionDialog extends StatefulWidget {
+class AddToVideoCollectionDialog extends ConsumerStatefulWidget {
   const AddToVideoCollectionDialog({
     super.key,
     required this.videoItemId,
@@ -54,12 +55,12 @@ class AddToVideoCollectionDialog extends StatefulWidget {
   final AddToVideoCollectionPresentation presentation;
 
   @override
-  State<AddToVideoCollectionDialog> createState() =>
+  ConsumerState<AddToVideoCollectionDialog> createState() =>
       _AddToVideoCollectionDialogState();
 }
 
 class _AddToVideoCollectionDialogState
-    extends State<AddToVideoCollectionDialog> {
+    extends ConsumerState<AddToVideoCollectionDialog> {
   late final VideoCollectionsApi _api;
   List<VideoCollectionDto> _collections = const <VideoCollectionDto>[];
   bool _isLoading = true;
@@ -72,7 +73,7 @@ class _AddToVideoCollectionDialogState
   @override
   void initState() {
     super.initState();
-    _api = context.read<VideoCollectionsApi>();
+    _api = ref.read(videoCollectionsApiProvider);
     _load();
   }
 

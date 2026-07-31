@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_collection_detail_page.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
@@ -94,15 +94,13 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<VideosApi>.value(value: VideosApi(apiClient: apiClient)),
-          Provider<VideoCollectionsApi>.value(
-            value: VideoCollectionsApi(apiClient: apiClient),
+      ProviderScope(
+        overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
+          videosApiProvider.overrideWithValue(VideosApi(apiClient: apiClient)),
+          videoCollectionsApiProvider.overrideWithValue(
+            VideoCollectionsApi(apiClient: apiClient),
           ),
-          ChangeNotifierProvider(create: (_) => VideoMutationChangeNotifier()),
-          Provider(create: (_) => CollectionPlaybackHandoff()),
         ],
         child: OKToast(
           child: MaterialApp(

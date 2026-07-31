@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -44,7 +44,7 @@ Future<void> showAddToClipCollectionDialog(
   }
 }
 
-class AddToClipCollectionDialog extends StatefulWidget {
+class AddToClipCollectionDialog extends ConsumerStatefulWidget {
   const AddToClipCollectionDialog({
     super.key,
     required this.clipId,
@@ -55,11 +55,12 @@ class AddToClipCollectionDialog extends StatefulWidget {
   final AddToClipCollectionPresentation presentation;
 
   @override
-  State<AddToClipCollectionDialog> createState() =>
+  ConsumerState<AddToClipCollectionDialog> createState() =>
       _AddToClipCollectionDialogState();
 }
 
-class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
+class _AddToClipCollectionDialogState
+    extends ConsumerState<AddToClipCollectionDialog> {
   static const double _checkboxScale = 0.85;
 
   List<ClipCollectionDto> _collections = const <ClipCollectionDto>[];
@@ -78,8 +79,8 @@ class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
   }
 
   Future<void> _load() async {
-    final collectionsApi = context.read<ClipCollectionsApi>();
-    final clipsApi = context.read<ClipsApi>();
+    final collectionsApi = ref.read(clipCollectionsApiProvider);
+    final clipsApi = ref.read(clipsApiProvider);
     try {
       final collections = await collectionsApi.getCollections();
       // 切片详情携带 collections（后端对称影片 playlists），用于回显已加入项。
@@ -263,7 +264,7 @@ class _AddToClipCollectionDialogState extends State<AddToClipCollectionDialog> {
   }
 
   Future<void> _toggle(ClipCollectionDto collection) async {
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     final isSelected = _selectedIds.contains(collection.id);
     setState(() {
       _updatingIds.add(collection.id);

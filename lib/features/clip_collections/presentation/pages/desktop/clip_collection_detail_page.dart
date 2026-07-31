@@ -2,16 +2,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collection_detail_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -32,7 +33,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 enum _ClipLayout { list, grid }
 
 /// 切片合集详情页：有序切片列表，支持拖序、移除、添加切片、改名与播放。
-class DesktopClipCollectionDetailPage extends StatefulWidget {
+class DesktopClipCollectionDetailPage extends ConsumerStatefulWidget {
   const DesktopClipCollectionDetailPage({
     super.key,
     required this.collectionId,
@@ -41,12 +42,12 @@ class DesktopClipCollectionDetailPage extends StatefulWidget {
   final int collectionId;
 
   @override
-  State<DesktopClipCollectionDetailPage> createState() =>
+  ConsumerState<DesktopClipCollectionDetailPage> createState() =>
       _DesktopClipCollectionDetailPageState();
 }
 
 class _DesktopClipCollectionDetailPageState
-    extends State<DesktopClipCollectionDetailPage>
+    extends ConsumerState<DesktopClipCollectionDetailPage>
     with MultiSelectStateMixin<DesktopClipCollectionDetailPage, int> {
   late final ClipCollectionDetailController _controller;
   late final ClipMutationChangeNotifier _mutationNotifier;
@@ -56,11 +57,11 @@ class _DesktopClipCollectionDetailPageState
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<ClipMutationChangeNotifier>();
+    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
     _controller = ClipCollectionDetailController(
       collectionId: widget.collectionId,
-      api: context.read<ClipCollectionsApi>(),
-      clipsApi: context.read<ClipsApi>(),
+      api: ref.read(clipCollectionsApiProvider),
+      clipsApi: ref.read(clipsApiProvider),
     )..load();
   }
 
@@ -403,7 +404,7 @@ class _DesktopClipCollectionDetailPageState
     if (mode == null || !mounted) {
       return;
     }
-    final handoff = context.read<CollectionPlaybackHandoff>();
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
     // 切片自带 streamUrl，把当前列表交给连播页直接用，免其二次全量拉取。
     handoff.offerClips(
       collectionId: widget.collectionId,
@@ -566,7 +567,7 @@ class _DesktopClipCollectionDetailPageState
     if (!mounted || !ok) {
       return;
     }
-    final clipsApi = context.read<ClipsApi>();
+    final clipsApi = ref.read(clipsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在删除切片',

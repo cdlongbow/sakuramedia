@@ -2,20 +2,21 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collection_detail_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -43,18 +44,18 @@ enum _ClipLayout { list, grid }
 ///
 /// 长按切片进入多选模式：上方「选择栏」（取消 / 已选 N 个 / 全选），下方「批量栏」
 /// （加入合集 / 移除 / 删除），与移动 PornBox / 视频合集详情页对齐。
-class MobileClipCollectionDetailPage extends StatefulWidget {
+class MobileClipCollectionDetailPage extends ConsumerStatefulWidget {
   const MobileClipCollectionDetailPage({super.key, required this.collectionId});
 
   final int collectionId;
 
   @override
-  State<MobileClipCollectionDetailPage> createState() =>
+  ConsumerState<MobileClipCollectionDetailPage> createState() =>
       _MobileClipCollectionDetailPageState();
 }
 
 class _MobileClipCollectionDetailPageState
-    extends State<MobileClipCollectionDetailPage>
+    extends ConsumerState<MobileClipCollectionDetailPage>
     with MultiSelectStateMixin<MobileClipCollectionDetailPage, int> {
   late final ClipCollectionDetailController _controller;
   late final ClipMutationChangeNotifier _mutationNotifier;
@@ -70,11 +71,11 @@ class _MobileClipCollectionDetailPageState
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<ClipMutationChangeNotifier>();
+    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
     _controller = ClipCollectionDetailController(
       collectionId: widget.collectionId,
-      api: context.read<ClipCollectionsApi>(),
-      clipsApi: context.read<ClipsApi>(),
+      api: ref.read(clipCollectionsApiProvider),
+      clipsApi: ref.read(clipsApiProvider),
     )..load();
   }
 
@@ -337,7 +338,7 @@ class _MobileClipCollectionDetailPageState
     if (mode == null || !mounted) {
       return;
     }
-    final handoff = context.read<CollectionPlaybackHandoff>();
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
     // 切片自带 streamUrl，把当前列表交给连播页直接用，免其二次全量拉取。
     handoff.offerClips(
       collectionId: widget.collectionId,
@@ -486,7 +487,7 @@ class _MobileClipCollectionDetailPageState
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在加入「${target.name}」',
@@ -574,7 +575,7 @@ class _MobileClipCollectionDetailPageState
     if (!mounted || confirmed != true) {
       return;
     }
-    final api = context.read<ClipsApi>();
+    final api = ref.read(clipsApiProvider);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在删除切片',

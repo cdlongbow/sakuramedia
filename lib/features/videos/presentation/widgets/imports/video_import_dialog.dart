@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -38,14 +38,14 @@ Future<VideoImportRequest?> showVideoImportDialog(BuildContext context) {
   );
 }
 
-class VideoImportDialog extends StatefulWidget {
+class VideoImportDialog extends ConsumerStatefulWidget {
   const VideoImportDialog({super.key});
 
   @override
-  State<VideoImportDialog> createState() => _VideoImportDialogState();
+  ConsumerState<VideoImportDialog> createState() => _VideoImportDialogState();
 }
 
-class _VideoImportDialogState extends State<VideoImportDialog> {
+class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
   MediaLibraryDto? _selectedLibrary;
   MediaImportSource? _source;
   TransferMode _transferMode = TransferMode.auto;
@@ -62,7 +62,7 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
   Future<void> _loadCollections() async {
     try {
       final collections =
-          await context.read<VideoCollectionsApi>().getCollections();
+          await ref.read(videoCollectionsApiProvider).getCollections();
       if (mounted) {
         setState(() => _collections = collections);
       }

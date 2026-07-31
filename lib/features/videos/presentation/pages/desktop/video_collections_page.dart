@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
@@ -16,23 +17,23 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 
-class DesktopVideoCollectionsPage extends StatefulWidget {
+class DesktopVideoCollectionsPage extends ConsumerStatefulWidget {
   const DesktopVideoCollectionsPage({super.key});
 
   @override
-  State<DesktopVideoCollectionsPage> createState() =>
+  ConsumerState<DesktopVideoCollectionsPage> createState() =>
       _DesktopVideoCollectionsPageState();
 }
 
 class _DesktopVideoCollectionsPageState
-    extends State<DesktopVideoCollectionsPage> {
+    extends ConsumerState<DesktopVideoCollectionsPage> {
   late final VideoCollectionsOverviewController _controller;
   late final VideoCollectionsApi _api;
 
   @override
   void initState() {
     super.initState();
-    _api = context.read<VideoCollectionsApi>();
+    _api = ref.read(videoCollectionsApiProvider);
     _controller = VideoCollectionsOverviewController(collectionsApi: _api)
       ..load();
   }

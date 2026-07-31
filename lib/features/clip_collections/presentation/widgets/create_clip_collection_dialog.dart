@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -63,7 +63,7 @@ Future<ClipCollectionDto?> _showClipCollectionEditDialog(
 }
 
 /// 合集新建/编辑共用对话框：`collection` 为空表示新建。
-class ClipCollectionEditDialog extends StatefulWidget {
+class ClipCollectionEditDialog extends ConsumerStatefulWidget {
   const ClipCollectionEditDialog({
     super.key,
     this.collection,
@@ -76,11 +76,12 @@ class ClipCollectionEditDialog extends StatefulWidget {
   bool get isEditing => collection != null;
 
   @override
-  State<ClipCollectionEditDialog> createState() =>
+  ConsumerState<ClipCollectionEditDialog> createState() =>
       _ClipCollectionEditDialogState();
 }
 
-class _ClipCollectionEditDialogState extends State<ClipCollectionEditDialog> {
+class _ClipCollectionEditDialogState
+    extends ConsumerState<ClipCollectionEditDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -181,7 +182,7 @@ class _ClipCollectionEditDialogState extends State<ClipCollectionEditDialog> {
       return;
     }
     setState(() => _isSubmitting = true);
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     try {
       final ClipCollectionDto result;
       if (widget.isEditing) {

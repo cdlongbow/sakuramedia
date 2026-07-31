@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
@@ -34,14 +34,15 @@ import 'package:sakuramedia/widgets/domain/media/quick_play_dialog.dart';
 /// PornBox 主页：顶部「新建合集」，中部「视频合集」横滑区（参照切片页），
 /// 下方「全部视频」网格。导入入口统一收口到「媒体导入」页。
 /// 合集详情/连播作为子路由从本页跳转，不再独占侧栏菜单项。
-class DesktopVideoListPage extends StatefulWidget {
+class DesktopVideoListPage extends ConsumerStatefulWidget {
   const DesktopVideoListPage({super.key});
 
   @override
-  State<DesktopVideoListPage> createState() => _DesktopVideoListPageState();
+  ConsumerState<DesktopVideoListPage> createState() =>
+      _DesktopVideoListPageState();
 }
 
-class _DesktopVideoListPageState extends State<DesktopVideoListPage>
+class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     with MultiSelectStateMixin<DesktopVideoListPage, int> {
   late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
   late final VideoCollectionsOverviewController _collectionsController;
@@ -53,18 +54,18 @@ class _DesktopVideoListPageState extends State<DesktopVideoListPage>
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<VideoMutationChangeNotifier>();
+    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
     _pageStateHandle = obtainCachedPageState<VideoListPageStateEntry>(
       context,
       key: desktopVideosPageStateKey(),
       create:
           () => VideoListPageStateEntry(
-            videosApi: context.read<VideosApi>(),
+            videosApi: ref.read(videosApiProvider),
             mutationNotifier: _mutationNotifier,
           ),
     );
     _collectionsController = VideoCollectionsOverviewController(
-      collectionsApi: context.read<VideoCollectionsApi>(),
+      collectionsApi: ref.read(videoCollectionsApiProvider),
     )..load();
     _mutationNotifier.addListener(_onMutation);
   }
@@ -170,7 +171,7 @@ class _DesktopVideoListPageState extends State<DesktopVideoListPage>
       return;
     }
     try {
-      await context.read<VideosApi>().deleteVideo(video.id);
+      await ref.read(videosApiProvider).deleteVideo(video.id);
       // 广播删除信号：缓存 entry 监听后从网格精准移除，页面监听后刷新合集横滑区。
       _mutationNotifier.reportDeleted(video.id);
       if (mounted) {
@@ -212,7 +213,7 @@ class _DesktopVideoListPageState extends State<DesktopVideoListPage>
     if (!mounted || !confirmed) {
       return;
     }
-    final api = context.read<VideosApi>();
+    final api = ref.read(videosApiProvider);
     final result = await runBatchOperation<VideoItemListItemDto>(
       context,
       title: '正在删除视频',
@@ -240,7 +241,7 @@ class _DesktopVideoListPageState extends State<DesktopVideoListPage>
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<VideoCollectionsApi>();
+    final api = ref.read(videoCollectionsApiProvider);
     final result = await runBatchOperation<VideoItemListItemDto>(
       context,
       title: '正在加入「${target.name}」',

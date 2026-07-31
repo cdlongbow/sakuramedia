@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
@@ -18,16 +19,16 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/clip_
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 /// 切片合集列表页：全部合集网格 + 新建 / 编辑 / 删除。
-class DesktopClipCollectionsPage extends StatefulWidget {
+class DesktopClipCollectionsPage extends ConsumerStatefulWidget {
   const DesktopClipCollectionsPage({super.key});
 
   @override
-  State<DesktopClipCollectionsPage> createState() =>
+  ConsumerState<DesktopClipCollectionsPage> createState() =>
       _DesktopClipCollectionsPageState();
 }
 
 class _DesktopClipCollectionsPageState
-    extends State<DesktopClipCollectionsPage> {
+    extends ConsumerState<DesktopClipCollectionsPage> {
   late final ClipCollectionsOverviewController _controller;
   late final ClipMutationChangeNotifier _mutationNotifier;
   bool _refreshScheduled = false;
@@ -35,8 +36,8 @@ class _DesktopClipCollectionsPageState
   @override
   void initState() {
     super.initState();
-    final api = context.read<ClipCollectionsApi>();
-    _mutationNotifier = context.read<ClipMutationChangeNotifier>();
+    final api = ref.read(clipCollectionsApiProvider);
+    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
     _controller = ClipCollectionsOverviewController(
       fetchCollections: api.getCollections,
     )..load();
@@ -184,9 +185,9 @@ class _DesktopClipCollectionsPageState
       return;
     }
     try {
-      await context.read<ClipCollectionsApi>().deleteCollection(
-        collectionId: collection.id,
-      );
+      await ref
+          .read(clipCollectionsApiProvider)
+          .deleteCollection(collectionId: collection.id);
       _controller.removeCollection(collection.id);
       if (mounted) {
         showToast('已删除合集');

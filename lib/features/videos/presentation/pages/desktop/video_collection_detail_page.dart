@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
-import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collection_detail_controller.dart';
@@ -35,7 +35,7 @@ enum _VideoLayout { list, grid }
 ///
 /// 排布与切片合集详情页共用 [CollectionMemberRow] / [CollectionMemberCard]，
 /// 封面沿用 PornBox 视频卡的竖版海报比例。
-class DesktopVideoCollectionDetailPage extends StatefulWidget {
+class DesktopVideoCollectionDetailPage extends ConsumerStatefulWidget {
   const DesktopVideoCollectionDetailPage({
     super.key,
     required this.collectionId,
@@ -44,12 +44,12 @@ class DesktopVideoCollectionDetailPage extends StatefulWidget {
   final int collectionId;
 
   @override
-  State<DesktopVideoCollectionDetailPage> createState() =>
+  ConsumerState<DesktopVideoCollectionDetailPage> createState() =>
       _DesktopVideoCollectionDetailPageState();
 }
 
 class _DesktopVideoCollectionDetailPageState
-    extends State<DesktopVideoCollectionDetailPage>
+    extends ConsumerState<DesktopVideoCollectionDetailPage>
     with MultiSelectStateMixin<DesktopVideoCollectionDetailPage, int> {
   late final VideoCollectionDetailController _controller;
   late final VideoMutationChangeNotifier _mutationNotifier;
@@ -59,11 +59,11 @@ class _DesktopVideoCollectionDetailPageState
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<VideoMutationChangeNotifier>();
+    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
     _controller = VideoCollectionDetailController(
       collectionId: widget.collectionId,
-      collectionsApi: context.read<VideoCollectionsApi>(),
-      videosApi: context.read<VideosApi>(),
+      collectionsApi: ref.read(videoCollectionsApiProvider),
+      videosApi: ref.read(videosApiProvider),
     )..load();
   }
 
@@ -94,7 +94,7 @@ class _DesktopVideoCollectionDetailPageState
     if (mode == null || !mounted) {
       return;
     }
-    final handoff = context.read<CollectionPlaybackHandoff>();
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
     final sort = _controller.sortExpression;
     // 把当前已排序、带播放地址的成员交给连播页直接用，免其二次全量拉取。
     handoff.offerVideoItems(
@@ -237,7 +237,7 @@ class _DesktopVideoCollectionDetailPageState
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<VideoCollectionsApi>();
+    final api = ref.read(videoCollectionsApiProvider);
     final result = await runBatchOperation<VideoCollectionItemDto>(
       context,
       title: '正在加入「${target.name}」',
@@ -316,7 +316,7 @@ class _DesktopVideoCollectionDetailPageState
     if (!mounted || !ok) {
       return;
     }
-    final videosApi = context.read<VideosApi>();
+    final videosApi = ref.read(videosApiProvider);
     final result = await runBatchOperation<VideoCollectionItemDto>(
       context,
       title: '正在删除视频',

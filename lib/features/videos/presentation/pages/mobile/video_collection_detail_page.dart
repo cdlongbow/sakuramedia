@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
@@ -43,7 +43,7 @@ enum _VideoLayout { list, grid }
 ///
 /// 长按成员进入多选模式：上方「选择栏」（取消 / 已选 N 个 / 全选），下方「批量栏」
 /// （加入合集 / 移除 / 删除），与移动 PornBox 主页对齐。
-class MobileVideoCollectionDetailPage extends StatefulWidget {
+class MobileVideoCollectionDetailPage extends ConsumerStatefulWidget {
   const MobileVideoCollectionDetailPage({
     super.key,
     required this.collectionId,
@@ -52,12 +52,12 @@ class MobileVideoCollectionDetailPage extends StatefulWidget {
   final int collectionId;
 
   @override
-  State<MobileVideoCollectionDetailPage> createState() =>
+  ConsumerState<MobileVideoCollectionDetailPage> createState() =>
       _MobileVideoCollectionDetailPageState();
 }
 
 class _MobileVideoCollectionDetailPageState
-    extends State<MobileVideoCollectionDetailPage>
+    extends ConsumerState<MobileVideoCollectionDetailPage>
     with MultiSelectStateMixin<MobileVideoCollectionDetailPage, int> {
   late final VideoCollectionDetailController _controller;
   late final VideoMutationChangeNotifier _mutationNotifier;
@@ -73,11 +73,11 @@ class _MobileVideoCollectionDetailPageState
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = context.read<VideoMutationChangeNotifier>();
+    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
     _controller = VideoCollectionDetailController(
       collectionId: widget.collectionId,
-      collectionsApi: context.read<VideoCollectionsApi>(),
-      videosApi: context.read<VideosApi>(),
+      collectionsApi: ref.read(videoCollectionsApiProvider),
+      videosApi: ref.read(videosApiProvider),
     )..load();
   }
 
@@ -390,7 +390,7 @@ class _MobileVideoCollectionDetailPageState
     if (mode == null || !mounted) {
       return;
     }
-    final handoff = context.read<CollectionPlaybackHandoff>();
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
     final sort = _controller.sortExpression;
     // 把当前已排序、带播放地址的成员交给连播页直接用，免其二次全量拉取。
     handoff.offerVideoItems(
@@ -497,7 +497,7 @@ class _MobileVideoCollectionDetailPageState
     if (!mounted || target == null) {
       return;
     }
-    final api = context.read<VideoCollectionsApi>();
+    final api = ref.read(videoCollectionsApiProvider);
     final result = await runBatchOperation<VideoCollectionItemDto>(
       context,
       title: '正在加入「${target.name}」',
@@ -585,7 +585,7 @@ class _MobileVideoCollectionDetailPageState
     if (!mounted || confirmed != true) {
       return;
     }
-    final api = context.read<VideosApi>();
+    final api = ref.read(videosApiProvider);
     final result = await runBatchOperation<VideoCollectionItemDto>(
       context,
       title: '正在删除视频',

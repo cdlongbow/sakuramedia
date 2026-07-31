@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -49,7 +49,7 @@ Future<void> showAddClipsToCollectionDialog(
   }
 }
 
-class AddClipsToCollectionDialog extends StatefulWidget {
+class AddClipsToCollectionDialog extends ConsumerStatefulWidget {
   const AddClipsToCollectionDialog({
     super.key,
     required this.collectionId,
@@ -62,12 +62,12 @@ class AddClipsToCollectionDialog extends StatefulWidget {
   final ClipCollectionEditPresentation presentation;
 
   @override
-  State<AddClipsToCollectionDialog> createState() =>
+  ConsumerState<AddClipsToCollectionDialog> createState() =>
       _AddClipsToCollectionDialogState();
 }
 
 class _AddClipsToCollectionDialogState
-    extends State<AddClipsToCollectionDialog> {
+    extends ConsumerState<AddClipsToCollectionDialog> {
   static const double _checkboxScale = 0.85;
   static const int _pageSize = 24;
 
@@ -111,10 +111,9 @@ class _AddClipsToCollectionDialogState
 
   Future<void> _loadInitial() async {
     try {
-      final result = await context.read<ClipsApi>().getMyClips(
-        page: 1,
-        pageSize: _pageSize,
-      );
+      final result = await ref
+          .read(clipsApiProvider)
+          .getMyClips(page: 1, pageSize: _pageSize);
       if (!mounted) {
         return;
       }
@@ -143,10 +142,9 @@ class _AddClipsToCollectionDialogState
     }
     setState(() => _isLoadingMore = true);
     try {
-      final result = await context.read<ClipsApi>().getMyClips(
-        page: _page + 1,
-        pageSize: _pageSize,
-      );
+      final result = await ref
+          .read(clipsApiProvider)
+          .getMyClips(page: _page + 1, pageSize: _pageSize);
       if (!mounted) {
         return;
       }
@@ -346,7 +344,7 @@ class _AddClipsToCollectionDialogState
   }
 
   Future<void> _toggle(MediaClipDto clip) async {
-    final api = context.read<ClipCollectionsApi>();
+    final api = ref.read(clipCollectionsApiProvider);
     final isMember = _memberIds.contains(clip.clipId);
     setState(() {
       _updatingIds.add(clip.clipId);

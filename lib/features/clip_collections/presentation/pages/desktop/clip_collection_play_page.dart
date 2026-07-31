@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_episode_queue_item.dart';
@@ -29,7 +29,7 @@ import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 
 /// 切片合集连播独立页面：media_kit 播放器（原生 Playlist 自动连播）占满画面，
 /// 底部控制条「选集」按钮唤出右侧滑出的剧集面板（当前高亮 / 点击跳转）。
-class DesktopClipCollectionPlayPage extends StatefulWidget {
+class DesktopClipCollectionPlayPage extends ConsumerStatefulWidget {
   const DesktopClipCollectionPlayPage({
     super.key,
     required this.collectionId,
@@ -44,12 +44,12 @@ class DesktopClipCollectionPlayPage extends StatefulWidget {
   final bool useTouchOptimizedControls;
 
   @override
-  State<DesktopClipCollectionPlayPage> createState() =>
+  ConsumerState<DesktopClipCollectionPlayPage> createState() =>
       _DesktopClipCollectionPlayPageState();
 }
 
 class _DesktopClipCollectionPlayPageState
-    extends State<DesktopClipCollectionPlayPage>
+    extends ConsumerState<DesktopClipCollectionPlayPage>
     with CollectionPlaybackPageMixin<DesktopClipCollectionPlayPage> {
   List<MediaClipDto> _clips = const <MediaClipDto>[];
   bool _isLoading = true;
@@ -69,10 +69,10 @@ class _DesktopClipCollectionPlayPageState
   }
 
   Future<void> _load() async {
-    final handoff = context.read<CollectionPlaybackHandoff>();
-    final api = context.read<ClipCollectionsApi>();
-    final clipsApi = context.read<ClipsApi>();
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final handoff = ref.read(collectionPlaybackHandoffProvider);
+    final api = ref.read(clipCollectionsApiProvider);
+    final clipsApi = ref.read(clipsApiProvider);
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     try {
       // 优先用详情页「交接」来的切片（自带 streamUrl）：详情→连播零额外请求、秒开；
       // 取不到（深链/刷新）才自行并发分页拉全。

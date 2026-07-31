@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
 import 'package:sakuramedia/features/account/presentation/account_profile_controller.dart';
 import 'package:sakuramedia/theme.dart';
@@ -11,15 +11,16 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-class MobileChangeUsernamePage extends StatefulWidget {
+class MobileChangeUsernamePage extends ConsumerStatefulWidget {
   const MobileChangeUsernamePage({super.key});
 
   @override
-  State<MobileChangeUsernamePage> createState() =>
+  ConsumerState<MobileChangeUsernamePage> createState() =>
       _MobileChangeUsernamePageState();
 }
 
-class _MobileChangeUsernamePageState extends State<MobileChangeUsernamePage> {
+class _MobileChangeUsernamePageState
+    extends ConsumerState<MobileChangeUsernamePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final AccountProfileController _controller;
   late final TextEditingController _usernameController;
@@ -40,7 +41,7 @@ class _MobileChangeUsernamePageState extends State<MobileChangeUsernamePage> {
   void initState() {
     super.initState();
     _controller = AccountProfileController(
-      accountApi: context.read<AccountApi>(),
+      accountApi: ref.read(accountApiProvider),
     );
     _usernameController =
         TextEditingController()..addListener(_handleInputChanged);
@@ -391,4 +392,3 @@ class _SkeletonBlock extends StatelessWidget {
     );
   }
 }
-

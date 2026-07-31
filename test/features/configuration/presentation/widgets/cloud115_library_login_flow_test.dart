@@ -17,21 +17,18 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('cloud115 login apps expose the complete backend whitelist', () {
-    expect(
-      Cloud115LoginApp.values.map((item) => item.wireValue),
-      <String>[
-        'web',
-        'android',
-        'ios',
-        'linux',
-        'mac',
-        'windows',
-        'tv',
-        'alipaymini',
-        'wechatmini',
-        'qandroid',
-      ],
-    );
+    expect(Cloud115LoginApp.values.map((item) => item.wireValue), <String>[
+      'web',
+      'android',
+      'ios',
+      'linux',
+      'mac',
+      'windows',
+      'tv',
+      'alipaymini',
+      'wechatmini',
+      'qandroid',
+    ]);
     expect(Cloud115LoginApp.alipaymini.isRecommended, isTrue);
     expect(Cloud115LoginAppX.fromWire('unknown'), Cloud115LoginApp.alipaymini);
   });
@@ -55,14 +52,9 @@ void main() {
       '115 主账号',
     );
 
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-continue-button')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-continue-button')));
     await tester.pump();
-    expect(
-      find.byKey(const Key('cloud115-login-risk-error')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('cloud115-login-risk-error')), findsOneWidget);
     expect(
       bundle.adapter.hitCount(
         'POST',
@@ -71,13 +63,9 @@ void main() {
       0,
     );
 
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-risk-checkbox')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-risk-checkbox')));
     await tester.pump();
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-continue-button')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-continue-button')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
@@ -113,12 +101,8 @@ void main() {
       find.byKey(const Key('cloud115-library-name-field')),
       '115 归档库',
     );
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-risk-checkbox')),
-    );
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-continue-button')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-risk-checkbox')));
+    await tester.tap(find.byKey(const Key('cloud115-login-continue-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -160,12 +144,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('持续占用“网页版”登录槽'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-risk-checkbox')),
-    );
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-continue-button')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-risk-checkbox')));
+    await tester.tap(find.byKey(const Key('cloud115-login-continue-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pumpAndSettle();
@@ -184,9 +164,7 @@ void main() {
     await tester.tap(find.byKey(const Key('launch-cloud115-flow')));
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(const Key('cloud115-login-risk-checkbox')),
-    );
+    await tester.tap(find.byKey(const Key('cloud115-login-risk-checkbox')));
     await tester.pump();
     expect(
       tester
@@ -277,9 +255,7 @@ class _FlowHarnessState extends State<_FlowHarness> {
           child: const Text('launch'),
         ),
         if (_result != null)
-          Text(
-            'result:${_result!.name}:${_result!.cloud115App.wireValue}',
-          ),
+          Text('result:${_result!.name}:${_result!.cloud115App.wireValue}'),
       ],
     );
   }
@@ -314,9 +290,10 @@ void _enqueueCloudLibrary(
 }) {
   bundle.adapter.enqueueJson(
     method: 'POST',
-    path: reauth
-        ? '/media-libraries/cloud115/8/reauth'
-        : '/media-libraries/cloud115',
+    path:
+        reauth
+            ? '/media-libraries/cloud115/8/reauth'
+            : '/media-libraries/cloud115',
     statusCode: reauth ? 200 : 201,
     body: {
       'id': 8,

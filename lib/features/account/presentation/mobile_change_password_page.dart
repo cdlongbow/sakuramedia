@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 
-class MobileChangePasswordPage extends StatefulWidget {
+class MobileChangePasswordPage extends ConsumerStatefulWidget {
   const MobileChangePasswordPage({super.key});
 
   @override
-  State<MobileChangePasswordPage> createState() =>
+  ConsumerState<MobileChangePasswordPage> createState() =>
       _MobileChangePasswordPageState();
 }
 
-class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
+class _MobileChangePasswordPageState
+    extends ConsumerState<MobileChangePasswordPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _currentPasswordController;
   late final TextEditingController _newPasswordController;
@@ -78,8 +79,8 @@ class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
     });
 
     try {
-      final accountApi = context.read<AccountApi>();
-      final authApi = context.read<AuthApi>();
+      final accountApi = ref.read(accountApiProvider);
+      final authApi = ref.read(authApiProvider);
       final username = (await accountApi.getAccount()).username.trim();
 
       await accountApi.changePassword(
@@ -261,7 +262,6 @@ class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
   }
 }
 
-
 class _FormCard extends StatelessWidget {
   const _FormCard({required this.children});
 
@@ -285,4 +285,3 @@ class _FormCard extends StatelessWidget {
     );
   }
 }
-

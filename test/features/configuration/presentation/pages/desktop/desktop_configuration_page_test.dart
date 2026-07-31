@@ -18,10 +18,8 @@ import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_configuration_page.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/llm_settings_copy.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
@@ -1995,15 +1993,7 @@ void main() {
           Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
         ],
         child: ProviderScope(
-          overrides: [
-            llmSettingsApiProvider.overrideWithValue(
-              bundle.movieDescTranslationSettingsApi,
-            ),
-            mediaApiProvider.overrideWithValue(bundle.mediaApi),
-            mediaLibrariesApiProvider.overrideWithValue(
-              bundle.mediaLibrariesApi,
-            ),
-          ],
+          overrides: bundle.riverpodOverrides(),
           child: OKToast(
             child: MaterialApp.router(
               theme: sakuraThemeData,
@@ -2079,15 +2069,7 @@ Future<void> _pumpPage(
         Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
       ],
       child: ProviderScope(
-        overrides: [
-          llmSettingsApiProvider.overrideWithValue(
-            bundle.movieDescTranslationSettingsApi,
-          ),
-          mediaApiProvider.overrideWithValue(bundle.mediaApi),
-          mediaLibrariesApiProvider.overrideWithValue(
-            bundle.mediaLibrariesApi,
-          ),
-        ],
+        overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
             theme: sakuraThemeData,

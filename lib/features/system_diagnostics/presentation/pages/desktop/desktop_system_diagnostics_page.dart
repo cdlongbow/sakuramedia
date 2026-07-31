@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/download_client_diagnostics_dialog.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_kind.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
@@ -16,27 +16,27 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
 
-class DesktopSystemDiagnosticsPage extends StatefulWidget {
+class DesktopSystemDiagnosticsPage extends ConsumerStatefulWidget {
   const DesktopSystemDiagnosticsPage({super.key});
 
   @override
-  State<DesktopSystemDiagnosticsPage> createState() =>
+  ConsumerState<DesktopSystemDiagnosticsPage> createState() =>
       _DesktopSystemDiagnosticsPageState();
 }
 
 class _DesktopSystemDiagnosticsPageState
-    extends State<DesktopSystemDiagnosticsPage> {
+    extends ConsumerState<DesktopSystemDiagnosticsPage> {
   late final SystemDiagnosticsController _controller;
 
   @override
   void initState() {
     super.initState();
     _controller = SystemDiagnosticsController(
-      mediaLibrariesApi: context.read<MediaLibrariesApi>(),
-      downloadClientsApi: context.read<DownloadClientsApi>(),
-      indexerSettingsApi: context.read<IndexerSettingsApi>(),
-      statusApi: context.read<StatusApi>(),
-      llmApi: context.read<MovieDescTranslationSettingsApi>(),
+      mediaLibrariesApi: ref.read(mediaLibrariesApiProvider),
+      downloadClientsApi: ref.read(downloadClientsApiProvider),
+      indexerSettingsApi: ref.read(indexerSettingsApiProvider),
+      statusApi: ref.read(statusApiProvider),
+      llmApi: ref.read(llmSettingsApiProvider),
     )..addListener(_onChanged);
     // 进入页面直接跑一次 —— 页面本身是低频访问入口，不需要用户再点一次按钮才能看到结果。
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -169,13 +169,14 @@ class _DesktopSystemDiagnosticsPageState
       onOpen: () {
         showDialog<void>(
           context: context,
-          builder: (_) => DownloadClientTestResultDialog(
-            initialResult: result,
-            onRerun: () async {
-              final api = context.read<DownloadClientsApi>();
-              return api.testClient(clientId);
-            },
-          ),
+          builder:
+              (_) => DownloadClientTestResultDialog(
+                initialResult: result,
+                onRerun: () async {
+                  final api = ref.read(downloadClientsApiProvider);
+                  return api.testClient(clientId);
+                },
+              ),
         );
       },
     );
@@ -192,14 +193,15 @@ class _DesktopSystemDiagnosticsPageState
       onOpen: () {
         showDialog<void>(
           context: context,
-          builder: (_) => DownloadClientStorageTestResultDialog(
-            initialResult: result,
-            clientBaseUrl: client.baseUrl,
-            onRerun: () async {
-              final api = context.read<DownloadClientsApi>();
-              return api.storageTestClient(clientId);
-            },
-          ),
+          builder:
+              (_) => DownloadClientStorageTestResultDialog(
+                initialResult: result,
+                clientBaseUrl: client.baseUrl,
+                onRerun: () async {
+                  final api = ref.read(downloadClientsApiProvider);
+                  return api.storageTestClient(clientId);
+                },
+              ),
         );
       },
     );

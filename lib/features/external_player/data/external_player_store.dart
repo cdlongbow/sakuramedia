@@ -29,7 +29,8 @@ class ExternalPlayerStore extends ChangeNotifier {
 
   Future<void> load() async {
     try {
-      final preferences = _preferences ??= await SharedPreferences.getInstance();
+      final preferences =
+          _preferences ??= await SharedPreferences.getInstance();
       final storedPackage = preferences.getString(_packageKey);
       _packageName =
           storedPackage != null && storedPackage.isNotEmpty
@@ -56,7 +57,8 @@ class ExternalPlayerStore extends ChangeNotifier {
     _label = label;
     notifyListeners();
     try {
-      final preferences = _preferences ??= await SharedPreferences.getInstance();
+      final preferences =
+          _preferences ??= await SharedPreferences.getInstance();
       await preferences.setString(_packageKey, packageName);
       await preferences.setString(_labelKey, label);
     } catch (_) {
@@ -72,7 +74,8 @@ class ExternalPlayerStore extends ChangeNotifier {
     _label = null;
     notifyListeners();
     try {
-      final preferences = _preferences ??= await SharedPreferences.getInstance();
+      final preferences =
+          _preferences ??= await SharedPreferences.getInstance();
       await preferences.remove(_packageKey);
       await preferences.remove(_labelKey);
     } catch (_) {

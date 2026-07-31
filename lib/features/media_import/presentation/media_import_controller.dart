@@ -22,8 +22,8 @@ class MediaImportController extends ChangeNotifier
     required MediaImportApi mediaImportApi,
     required ActivityApi activityApi,
     this.pageSize = 20,
-  })  : _mediaImportApi = mediaImportApi,
-        _activityApi = activityApi;
+  }) : _mediaImportApi = mediaImportApi,
+       _activityApi = activityApi;
 
   final MediaImportApi _mediaImportApi;
   final ActivityApi _activityApi;
@@ -448,10 +448,11 @@ class MediaImportController extends ChangeNotifier
     if (_disposed || _reconnectTimer != null) {
       return;
     }
-    final delay = _reconnectDelays[_reconnectAttempt.clamp(
-      0,
-      _reconnectDelays.length - 1,
-    )];
+    final delay =
+        _reconnectDelays[_reconnectAttempt.clamp(
+          0,
+          _reconnectDelays.length - 1,
+        )];
     _reconnectAttempt += 1;
     _reconnectTimer = Timer(delay, () {
       _reconnectTimer = null;

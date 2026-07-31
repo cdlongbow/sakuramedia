@@ -6,10 +6,7 @@ void main() {
 
   test('一分钟以内归「刚刚」', () {
     expect(
-      formatRelativeTimeLabel(
-        DateTime.parse('2026-07-28T11:59:30'),
-        now: now,
-      ),
+      formatRelativeTimeLabel(DateTime.parse('2026-07-28T11:59:30'), now: now),
       '刚刚',
     );
     expect(formatRelativeTimeLabel(now, now: now), '刚刚');

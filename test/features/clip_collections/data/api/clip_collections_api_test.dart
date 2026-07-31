@@ -80,7 +80,10 @@ void main() {
     expect(collections.first.id, 7);
     expect(collections.first.name, '精选合集');
     expect(collections.first.clipCount, 3);
-    expect(collections.first.coverImage?.bestAvailableUrl, '/clips/cover-large.webp');
+    expect(
+      collections.first.coverImage?.bestAvailableUrl,
+      '/clips/cover-large.webp',
+    );
   });
 
   test('createCollection posts trimmed name and description', () async {
@@ -91,7 +94,10 @@ void main() {
       body: _collectionJson(),
     );
 
-    final created = await api.createCollection(name: ' 精选合集 ', description: ' 我的精选 ');
+    final created = await api.createCollection(
+      name: ' 精选合集 ',
+      description: ' 我的精选 ',
+    );
 
     expect(created.id, 7);
     expect(adapter.requests.single.body, <String, dynamic>{
@@ -191,29 +197,35 @@ void main() {
     expect(adapter.hitCount('GET', '/clip-collections/7/clips'), 3);
   });
 
-  test('addClipToCollection maps PUT /clip-collections/{id}/clips/{clipId}', () async {
-    adapter.enqueueJson(
-      method: 'PUT',
-      path: '/clip-collections/7/clips/12',
-      statusCode: 204,
-    );
+  test(
+    'addClipToCollection maps PUT /clip-collections/{id}/clips/{clipId}',
+    () async {
+      adapter.enqueueJson(
+        method: 'PUT',
+        path: '/clip-collections/7/clips/12',
+        statusCode: 204,
+      );
 
-    await api.addClipToCollection(collectionId: 7, clipId: 12);
+      await api.addClipToCollection(collectionId: 7, clipId: 12);
 
-    expect(adapter.hitCount('PUT', '/clip-collections/7/clips/12'), 1);
-  });
+      expect(adapter.hitCount('PUT', '/clip-collections/7/clips/12'), 1);
+    },
+  );
 
-  test('removeClipFromCollection maps DELETE /clip-collections/{id}/clips/{clipId}', () async {
-    adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/clip-collections/7/clips/12',
-      statusCode: 204,
-    );
+  test(
+    'removeClipFromCollection maps DELETE /clip-collections/{id}/clips/{clipId}',
+    () async {
+      adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/clip-collections/7/clips/12',
+        statusCode: 204,
+      );
 
-    await api.removeClipFromCollection(collectionId: 7, clipId: 12);
+      await api.removeClipFromCollection(collectionId: 7, clipId: 12);
 
-    expect(adapter.hitCount('DELETE', '/clip-collections/7/clips/12'), 1);
-  });
+      expect(adapter.hitCount('DELETE', '/clip-collections/7/clips/12'), 1);
+    },
+  );
 
   test('setCollectionClips puts ordered clip_ids', () async {
     adapter.enqueueJson(

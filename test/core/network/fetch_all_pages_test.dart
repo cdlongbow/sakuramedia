@@ -3,12 +3,7 @@ import 'package:sakuramedia/core/network/fetch_all_pages.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 
 PaginatedResponseDto<int> page(int p, List<int> items, int total) =>
-    PaginatedResponseDto<int>(
-      items: items,
-      page: p,
-      pageSize: 2,
-      total: total,
-    );
+    PaginatedResponseDto<int>(items: items, page: p, pageSize: 2, total: total);
 
 void main() {
   test('并发翻页拉全部并按页序拼接', () async {

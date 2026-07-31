@@ -486,4 +486,3 @@ Map<String, dynamic> _jobJson({
     'last_task_run': lastTaskRun,
   };
 }
-

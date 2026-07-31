@@ -27,22 +27,25 @@ void main() {
     expect(controller.errorMessage, isNull);
   });
 
-  test('search surfaces a friendly message and empties items on failure', () async {
-    final controller = MovieDetailMagnetController(
-      movieNumber: 'ABC-001',
-      searchCandidates: ({required movieNumber, indexerKind}) async {
-        throw Exception('boom');
-      },
-      createDownloadRequest: _unusedCreateDownloadRequest,
-    );
-    addTearDown(controller.dispose);
+  test(
+    'search surfaces a friendly message and empties items on failure',
+    () async {
+      final controller = MovieDetailMagnetController(
+        movieNumber: 'ABC-001',
+        searchCandidates: ({required movieNumber, indexerKind}) async {
+          throw Exception('boom');
+        },
+        createDownloadRequest: _unusedCreateDownloadRequest,
+      );
+      addTearDown(controller.dispose);
 
-    await controller.search();
+      await controller.search();
 
-    expect(controller.items, isEmpty);
-    expect(controller.isLoading, isFalse);
-    expect(controller.errorMessage, '搜索资源失败，请稍后重试。');
-  });
+      expect(controller.items, isEmpty);
+      expect(controller.isLoading, isFalse);
+      expect(controller.errorMessage, '搜索资源失败，请稍后重试。');
+    },
+  );
 
   // 回归：检查器面板在请求飞行途中被关闭（宿主 dispose 控制器），响应回来后
   // finally 里的 notify 不能再抛 "used after being disposed"。

@@ -86,10 +86,7 @@ void main() {
   group('PlaylistResolutionFilter', () {
     test('fromApiValue round-trips known labels and rejects unknown', () {
       for (final filter in PlaylistResolutionFilter.values) {
-        expect(
-          PlaylistResolutionFilterX.fromApiValue(filter.apiValue),
-          filter,
-        );
+        expect(PlaylistResolutionFilterX.fromApiValue(filter.apiValue), filter);
       }
       expect(PlaylistResolutionFilterX.fromApiValue('5K'), isNull);
     });

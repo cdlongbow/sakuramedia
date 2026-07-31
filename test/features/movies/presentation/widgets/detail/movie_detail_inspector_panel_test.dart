@@ -359,18 +359,16 @@ void main() {
     await _pumpInspectorPanel(
       tester,
       panelHeight: 520,
-      fetchMovieReviews: ({
-        required String movieNumber,
-        required int page,
-        required int pageSize,
-        required MovieReviewSort sort,
-      }) async =>
-          const <MovieReviewDto>[],
-      searchCandidates: ({
-        required String movieNumber,
-        String? indexerKind,
-      }) async =>
-          const <DownloadCandidateDto>[candidate],
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => const <MovieReviewDto>[],
+      searchCandidates:
+          ({required String movieNumber, String? indexerKind}) async =>
+              const <DownloadCandidateDto>[candidate],
       createDownloadRequest: ({
         required String movieNumber,
         required int clientId,
@@ -386,8 +384,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('磁力搜索'));
     await tester.pumpAndSettle();
-    await tester
-        .tap(find.byKey(const Key('movie-detail-magnet-search-button')));
+    await tester.tap(
+      find.byKey(const Key('movie-detail-magnet-search-button')),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(
@@ -427,39 +426,38 @@ void main() {
     await _pumpInspectorPanel(
       tester,
       panelHeight: 640,
-      fetchMovieReviews: ({
-        required String movieNumber,
-        required int page,
-        required int pageSize,
-        required MovieReviewSort sort,
-      }) async =>
-          const <MovieReviewDto>[],
-      searchCandidates: ({
-        required String movieNumber,
-        String? indexerKind,
-      }) async =>
-          const <DownloadCandidateDto>[
-        DownloadCandidateDto(
-          source: 'jackett',
-          indexerName: 'dmhy',
-          indexerKind: 'bt',
-          resolvedClientId: 2,
-          resolvedClientName: 'qb-main',
-          movieNumber: 'ABC-001',
-          title: 'ABC-001 中文字幕',
-          sizeBytes: 1024,
-          seeders: 8,
-          magnetUrl: magnetUrl,
-          torrentUrl: '',
-          tags: <String>[],
-        ),
-      ],
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => const <MovieReviewDto>[],
+      searchCandidates:
+          ({required String movieNumber, String? indexerKind}) async =>
+              const <DownloadCandidateDto>[
+                DownloadCandidateDto(
+                  source: 'jackett',
+                  indexerName: 'dmhy',
+                  indexerKind: 'bt',
+                  resolvedClientId: 2,
+                  resolvedClientName: 'qb-main',
+                  movieNumber: 'ABC-001',
+                  title: 'ABC-001 中文字幕',
+                  sizeBytes: 1024,
+                  seeders: 8,
+                  magnetUrl: magnetUrl,
+                  torrentUrl: '',
+                  tags: <String>[],
+                ),
+              ],
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('磁力搜索'));
     await tester.pumpAndSettle();
-    await tester
-        .tap(find.byKey(const Key('movie-detail-magnet-search-button')));
+    await tester.tap(
+      find.byKey(const Key('movie-detail-magnet-search-button')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('磁力链接'), findsOneWidget);
@@ -538,16 +536,19 @@ Future<void> _pumpInspectorPanel(
     required int page,
     required int pageSize,
     required MovieReviewSort sort,
-  }) fetchMovieReviews,
+  })
+  fetchMovieReviews,
   Future<List<DownloadCandidateDto>> Function({
     required String movieNumber,
     String? indexerKind,
-  })? searchCandidates,
+  })?
+  searchCandidates,
   Future<DownloadRequestResponseDto> Function({
     required String movieNumber,
     required int clientId,
     required DownloadCandidateDto candidate,
-  })? createDownloadRequest,
+  })?
+  createDownloadRequest,
 }) async {
   final sessionStore = SessionStore.inMemory();
   await tester.pumpWidget(
@@ -555,9 +556,10 @@ Future<void> _pumpInspectorPanel(
       value: sessionStore,
       child: OKToast(
         child: MaterialApp(
-          theme: platform == null
-              ? sakuraThemeData
-              : sakuraThemeData.copyWith(platform: platform),
+          theme:
+              platform == null
+                  ? sakuraThemeData
+                  : sakuraThemeData.copyWith(platform: platform),
           home: Scaffold(
             body: Center(
               child: SizedBox(
@@ -570,22 +572,24 @@ Future<void> _pumpInspectorPanel(
                   fetchMediaThumbnails: ({required int mediaId}) async {
                     return const <MovieMediaThumbnailDto>[];
                   },
-                  searchCandidates: searchCandidates ??
-                      (
-                          {required String movieNumber,
-                          String? indexerKind}) async {
+                  searchCandidates:
+                      searchCandidates ??
+                      ({
+                        required String movieNumber,
+                        String? indexerKind,
+                      }) async {
                         return const <DownloadCandidateDto>[];
                       },
-                  createDownloadRequest: createDownloadRequest ??
+                  createDownloadRequest:
+                      createDownloadRequest ??
                       ({
                         required String movieNumber,
                         required int clientId,
                         required DownloadCandidateDto candidate,
-                      }) async =>
-                          DownloadRequestResponseDto(
-                            task: _emptyDownloadTask(clientId: clientId),
-                            created: false,
-                          ),
+                      }) async => DownloadRequestResponseDto(
+                        task: _emptyDownloadTask(clientId: clientId),
+                        created: false,
+                      ),
                   onClose: () {},
                   showCloseButton: false,
                 ),
@@ -622,7 +626,8 @@ int _expectedSkeletonCount(double availableHeight) {
   const skeletonLineHeight = 12.0;
   const skeletonLineCount = 3;
   const internalGapCount = 2;
-  final itemHeight = (spacingMd * 2) +
+  final itemHeight =
+      (spacingMd * 2) +
       (skeletonLineHeight * skeletonLineCount) +
       (spacingXs * internalGapCount);
   final estimatedCount =

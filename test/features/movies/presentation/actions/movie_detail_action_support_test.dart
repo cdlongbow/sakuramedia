@@ -40,16 +40,18 @@ void main() {
     },
   );
 
-  test('movieDetailRemoteActionSpecFor has no remote spec for openInspector',
-      () {
-    expect(
-      movieDetailRemoteActionSpecFor(
-        action: MovieDetailActionType.openInspector,
-        movieNumber: 'ABC-001',
-      ),
-      isNull,
-    );
-  });
+  test(
+    'movieDetailRemoteActionSpecFor has no remote spec for openInspector',
+    () {
+      expect(
+        movieDetailRemoteActionSpecFor(
+          action: MovieDetailActionType.openInspector,
+          movieNumber: 'ABC-001',
+        ),
+        isNull,
+      );
+    },
+  );
 
   test('movieDetailRemoteActionSpecFor maps refresh metadata action', () async {
     final spec = await _runRemoteActionSpec(
@@ -114,10 +116,11 @@ void main() {
     // 老后端详情响应不带 id 时（movieId 缺省 0），不能拿 0 去打统一 action
     // 端点——request 直接抛错，由 executeMovieDetailRemoteAction 的 catch
     // 转 failureMessage toast。
-    final spec = movieDetailRemoteActionSpecFor(
-      action: MovieDetailActionType.translateDescription,
-      movieNumber: 'ABC-001',
-    )!;
+    final spec =
+        movieDetailRemoteActionSpecFor(
+          action: MovieDetailActionType.translateDescription,
+          movieNumber: 'ABC-001',
+        )!;
 
     expect(
       () => spec.request(
@@ -314,10 +317,10 @@ MovieDetailController _buildController() {
   return MovieDetailController(
     movieNumber: 'ABC-001',
     fetchMovieDetail: ({required movieNumber}) async => _movieDetail(),
-    fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
-        <MovieListItemDto>[
-      _similarMovie(),
-    ],
+    fetchSimilarMovies:
+        ({required movieNumber, int limit = 15}) async => <MovieListItemDto>[
+          _similarMovie(),
+        ],
   );
 }
 

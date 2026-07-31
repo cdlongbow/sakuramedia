@@ -65,10 +65,7 @@ void main() {
     );
 
     expect(find.text('4K 2.0 GB'), findsOneWidget);
-    expect(
-      find.text('115 网盘 · 云盘库 · 3840x2160 · 01:01:01'),
-      findsOneWidget,
-    );
+    expect(find.text('115 网盘 · 云盘库 · 3840x2160 · 01:01:01'), findsOneWidget);
   });
 
   testWidgets(
@@ -212,15 +209,18 @@ void main() {
 
       final pillWrapBottom =
           tester.getBottomLeft(find.byType(MovieDetailPillWrap)).dy;
-      final techSummaryTop = tester
-          .getTopLeft(find.byKey(const Key('movie-media-tech-summary')))
-          .dy;
-      final techSummaryBottom = tester
-          .getBottomLeft(find.byKey(const Key('movie-media-tech-summary')))
-          .dy;
-      final pointsTitleTop = tester
-          .getTopLeft(find.byKey(const Key('movie-media-points-title')))
-          .dy;
+      final techSummaryTop =
+          tester
+              .getTopLeft(find.byKey(const Key('movie-media-tech-summary')))
+              .dy;
+      final techSummaryBottom =
+          tester
+              .getBottomLeft(find.byKey(const Key('movie-media-tech-summary')))
+              .dy;
+      final pointsTitleTop =
+          tester
+              .getTopLeft(find.byKey(const Key('movie-media-points-title')))
+              .dy;
 
       expect(
         techSummaryTop - pillWrapBottom,
@@ -433,12 +433,14 @@ void main() {
         ),
       );
 
-      final summaryRight = tester
-          .getTopRight(find.byKey(const Key('movie-media-tech-summary')))
-          .dx;
-      final deleteLeft = tester
-          .getTopLeft(find.byKey(const Key('movie-media-delete-button')))
-          .dx;
+      final summaryRight =
+          tester
+              .getTopRight(find.byKey(const Key('movie-media-tech-summary')))
+              .dx;
+      final deleteLeft =
+          tester
+              .getTopLeft(find.byKey(const Key('movie-media-delete-button')))
+              .dx;
 
       expect(deleteLeft - summaryRight, const AppSpacing.defaults().md);
     },

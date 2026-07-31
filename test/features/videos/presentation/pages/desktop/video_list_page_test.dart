@@ -59,7 +59,11 @@ void main() {
   ) async {
     enqueueInitialLoad();
 
-    await _pumpVideoListPage(tester, sessionStore: sessionStore, apiClient: apiClient);
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
     await tester.pumpAndSettle();
 
     // 顶栏收敛到 AppListHeader，旧的 AppFilterTotalHeader 不再出现。
@@ -87,7 +91,11 @@ void main() {
   testWidgets('进入多选原地改写整条顶栏，不另起一行且高度不变', (WidgetTester tester) async {
     enqueueInitialLoad();
 
-    await _pumpVideoListPage(tester, sessionStore: sessionStore, apiClient: apiClient);
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
     await tester.pumpAndSettle();
 
     final headerHeight =
@@ -122,7 +130,11 @@ void main() {
   testWidgets('桌面筛选浮层与移动抽屉同构，点选排序即时生效', (WidgetTester tester) async {
     enqueueInitialLoad();
 
-    await _pumpVideoListPage(tester, sessionStore: sessionStore, apiClient: apiClient);
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('videos-filter-trigger')));

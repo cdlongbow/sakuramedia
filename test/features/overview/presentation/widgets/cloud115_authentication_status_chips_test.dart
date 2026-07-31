@@ -72,10 +72,11 @@ void main() {
       summary: _summary(alive: 1, expired: 1, unavailable: 1),
     );
 
-    final text = tester
-        .widgetList<Text>(find.byType(Text))
-        .map((Text widget) => widget.data ?? '')
-        .join();
+    final text =
+        tester
+            .widgetList<Text>(find.byType(Text))
+            .map((Text widget) => widget.data ?? '')
+            .join();
     final emoji = RegExp(
       r'[\u{2600}-\u{27BF}\u{1F000}-\u{1FAFF}]',
       unicode: true,

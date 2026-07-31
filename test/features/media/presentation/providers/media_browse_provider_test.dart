@@ -60,119 +60,137 @@ void main() {
     );
   });
 
-  test('applyFilterState triggers reload with new query and clears selection',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(items: [_javItemJson(id: 1)], total: 1, page: 1),
-    );
-    await container.read(mediaBrowseProvider.future);
-    container.read(mediaBrowseProvider.notifier).toggleSelection(1);
-    expect(container.read(mediaBrowseProvider).requireValue.selectionCount, 1);
+  test(
+    'applyFilterState triggers reload with new query and clears selection',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: [_javItemJson(id: 1)], total: 1, page: 1),
+      );
+      await container.read(mediaBrowseProvider.future);
+      container.read(mediaBrowseProvider.notifier).toggleSelection(1);
+      expect(
+        container.read(mediaBrowseProvider).requireValue.selectionCount,
+        1,
+      );
 
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(items: const [], total: 0, page: 1),
-    );
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: const [], total: 0, page: 1),
+      );
 
-    await container.read(mediaBrowseProvider.notifier).applyFilterState(
-          const MediaBrowseFilterState().copyWith(
-            kind: MediaListItemKind.jav,
-            libraryId: 8,
-            sortField: MediaBrowseSortField.heat,
-            sortDirection: MediaBrowseSortDirection.desc,
-          ),
-        );
+      await container
+          .read(mediaBrowseProvider.notifier)
+          .applyFilterState(
+            const MediaBrowseFilterState().copyWith(
+              kind: MediaListItemKind.jav,
+              libraryId: 8,
+              sortField: MediaBrowseSortField.heat,
+              sortDirection: MediaBrowseSortDirection.desc,
+            ),
+          );
 
-    final state = container.read(mediaBrowseProvider).requireValue;
-    expect(state.selectionCount, 0);
-    expect(state.filter.kind, MediaListItemKind.jav);
-    expect(
-      adapter.requests.last.uri.queryParameters,
-      containsPair('kind', 'jav'),
-    );
-    expect(
-      adapter.requests.last.uri.queryParameters,
-      containsPair('library_id', '8'),
-    );
-    expect(
-      adapter.requests.last.uri.queryParameters,
-      containsPair('sort', 'heat:desc'),
-    );
-  });
+      final state = container.read(mediaBrowseProvider).requireValue;
+      expect(state.selectionCount, 0);
+      expect(state.filter.kind, MediaListItemKind.jav);
+      expect(
+        adapter.requests.last.uri.queryParameters,
+        containsPair('kind', 'jav'),
+      );
+      expect(
+        adapter.requests.last.uri.queryParameters,
+        containsPair('library_id', '8'),
+      );
+      expect(
+        adapter.requests.last.uri.queryParameters,
+        containsPair('sort', 'heat:desc'),
+      );
+    },
+  );
 
-  test('applyFilterState down-passes rapidUploadStatus to /media query',
-      () async {
-    // 首屏空载后，切筛选到 in_progress，应触发第 2 次请求，且带上
-    // rapid_upload_status=in_progress；none 值域走同一路径，只是 wire 值不同。
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(items: const [], total: 0, page: 1),
-    );
-    await container.read(mediaBrowseProvider.future);
+  test(
+    'applyFilterState down-passes rapidUploadStatus to /media query',
+    () async {
+      // 首屏空载后，切筛选到 in_progress，应触发第 2 次请求，且带上
+      // rapid_upload_status=in_progress；none 值域走同一路径，只是 wire 值不同。
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: const [], total: 0, page: 1),
+      );
+      await container.read(mediaBrowseProvider.future);
 
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(items: const [], total: 0, page: 1),
-    );
-    await container.read(mediaBrowseProvider.notifier).applyFilterState(
-          const MediaBrowseFilterState().copyWith(
-            rapidUploadStatus: MediaBrowseRapidUploadFilter.inProgress,
-          ),
-        );
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: const [], total: 0, page: 1),
+      );
+      await container
+          .read(mediaBrowseProvider.notifier)
+          .applyFilterState(
+            const MediaBrowseFilterState().copyWith(
+              rapidUploadStatus: MediaBrowseRapidUploadFilter.inProgress,
+            ),
+          );
 
-    expect(
-      adapter.requests.last.uri.queryParameters,
-      containsPair('rapid_upload_status', 'in_progress'),
-    );
-    final state = container.read(mediaBrowseProvider).requireValue;
-    expect(
-      state.filter.rapidUploadStatus,
-      MediaBrowseRapidUploadFilter.inProgress,
-    );
-  });
+      expect(
+        adapter.requests.last.uri.queryParameters,
+        containsPair('rapid_upload_status', 'in_progress'),
+      );
+      final state = container.read(mediaBrowseProvider).requireValue;
+      expect(
+        state.filter.rapidUploadStatus,
+        MediaBrowseRapidUploadFilter.inProgress,
+      );
+    },
+  );
 
-  test('applyFilterState short-circuits when equal filters are supplied',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(items: const [], total: 0, page: 1),
-    );
-    await container.read(mediaBrowseProvider.future);
+  test(
+    'applyFilterState short-circuits when equal filters are supplied',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: const [], total: 0, page: 1),
+      );
+      await container.read(mediaBrowseProvider.future);
 
-    await container
-        .read(mediaBrowseProvider.notifier)
-        .applyFilterState(const MediaBrowseFilterState().copyWith());
+      await container
+          .read(mediaBrowseProvider.notifier)
+          .applyFilterState(const MediaBrowseFilterState().copyWith());
 
-    expect(adapter.hitCount('GET', '/media'), 1);
-  });
+      expect(adapter.hitCount('GET', '/media'), 1);
+    },
+  );
 
-  test('removeItemsByIds prunes list, adjusts total, clears selection',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _mediaPage(
-        items: [_javItemJson(id: 1), _javItemJson(id: 2)],
-        total: 5,
-        page: 1,
-      ),
-    );
-    await container.read(mediaBrowseProvider.future);
-    container.read(mediaBrowseProvider.notifier).toggleSelection(1);
+  test(
+    'removeItemsByIds prunes list, adjusts total, clears selection',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(
+          items: [_javItemJson(id: 1), _javItemJson(id: 2)],
+          total: 5,
+          page: 1,
+        ),
+      );
+      await container.read(mediaBrowseProvider.future);
+      container.read(mediaBrowseProvider.notifier).toggleSelection(1);
 
-    container.read(mediaBrowseProvider.notifier).removeItemsByIds(const [1, 2]);
+      container.read(mediaBrowseProvider.notifier).removeItemsByIds(const [
+        1,
+        2,
+      ]);
 
-    final state = container.read(mediaBrowseProvider).requireValue;
-    expect(state.paged.items, isEmpty);
-    expect(state.paged.total, 3);
-    expect(state.selectionCount, 0);
-  });
+      final state = container.read(mediaBrowseProvider).requireValue;
+      expect(state.paged.items, isEmpty);
+      expect(state.paged.total, 3);
+      expect(state.selectionCount, 0);
+    },
+  );
 
   test('selectAllLoaded / setSelected / clearSelection', () async {
     adapter.enqueueJson(
@@ -189,8 +207,10 @@ void main() {
     final notifier = container.read(mediaBrowseProvider.notifier);
     notifier.selectAllLoaded();
     expect(container.read(mediaBrowseProvider).requireValue.selectionCount, 2);
-    expect(container.read(mediaBrowseProvider).requireValue.isSelected(10),
-        isTrue);
+    expect(
+      container.read(mediaBrowseProvider).requireValue.isSelected(10),
+      isTrue,
+    );
 
     notifier.setSelected(10, false);
     expect(container.read(mediaBrowseProvider).requireValue.selectionCount, 1);
@@ -199,8 +219,7 @@ void main() {
     expect(container.read(mediaBrowseProvider).requireValue.selectionCount, 0);
   });
 
-  test(
-      'selectAllLoaded whitelists safe rapid upload statuses '
+  test('selectAllLoaded whitelists safe rapid upload statuses '
       '(skips in_progress and unknown)', () async {
     // 白名单：null/notHit/failed/cleanupFailed 可批量选，in_progress 因后端
     // active_media_id 唯一约束必拒，未识别字符串（映射为 unknown）保守也拒——

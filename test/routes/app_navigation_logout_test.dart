@@ -21,10 +21,7 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     final credentialStore = InMemoryCredentialStore();
-    await credentialStore.saveCredentials(
-      username: 'account',
-      password: 'pwd',
-    );
+    await credentialStore.saveCredentials(username: 'account', password: 'pwd');
 
     expect(sessionStore.hasSession, isTrue);
 
@@ -36,14 +33,15 @@ void main() {
         ],
         child: MaterialApp(
           home: Builder(
-            builder: (context) => Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () => context.logOut(),
-                  child: const Text('logout'),
+            builder:
+                (context) => Scaffold(
+                  body: Center(
+                    child: ElevatedButton(
+                      onPressed: () => context.logOut(),
+                      child: const Text('logout'),
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ),
         ),
       ),

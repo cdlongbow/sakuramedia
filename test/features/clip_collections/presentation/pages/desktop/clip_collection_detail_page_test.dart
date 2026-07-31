@@ -116,9 +116,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('「播放全部」是 primary 按钮且贴右，与视频合集详情一致', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('「播放全部」是 primary 按钮且贴右，与视频合集详情一致', (WidgetTester tester) async {
     enqueueInitialLoad();
     await pumpPage(tester);
 
@@ -146,9 +144,7 @@ void main() {
     expect(play.onPressed, isNull);
   });
 
-  testWidgets('顶栏是 AppListHeader，无筛选维度所以不渲染筛选入口', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('顶栏是 AppListHeader，无筛选维度所以不渲染筛选入口', (WidgetTester tester) async {
     enqueueInitialLoad();
     await pumpPage(tester);
 

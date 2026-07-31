@@ -37,10 +37,7 @@ void main() {
         'updated_count': 1,
         'skipped_count': 2,
         'skipped': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'movie_number': 'ABP-124',
-            'reason': 'has_media',
-          },
+          <String, dynamic>{'movie_number': 'ABP-124', 'reason': 'has_media'},
           <String, dynamic>{
             'movie_number': 'NOT-EXIST-999',
             'reason': 'movie_not_found',
@@ -64,37 +61,44 @@ void main() {
       );
     });
 
-    test('unknown skip reason preserves raw string and falls back to unknown',
-        () {
-      final result = MovieSubscriptionBatchResultDto.fromJson(<String, dynamic>{
-        'requested_count': 1,
-        'updated_count': 0,
-        'skipped_count': 1,
-        'skipped': <Map<String, dynamic>>[
+    test(
+      'unknown skip reason preserves raw string and falls back to unknown',
+      () {
+        final result = MovieSubscriptionBatchResultDto.fromJson(
           <String, dynamic>{
-            'movie_number': 'ABC-001',
-            'reason': 'brand_new_reason',
+            'requested_count': 1,
+            'updated_count': 0,
+            'skipped_count': 1,
+            'skipped': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'movie_number': 'ABC-001',
+                'reason': 'brand_new_reason',
+              },
+            ],
           },
-        ],
-      });
+        );
 
-      expect(
-        result.skipped.single.reason,
-        MovieSubscriptionSkipReason.unknown,
-      );
-      expect(result.skipped.single.rawReason, 'brand_new_reason');
-    });
+        expect(
+          result.skipped.single.reason,
+          MovieSubscriptionSkipReason.unknown,
+        );
+        expect(result.skipped.single.rawReason, 'brand_new_reason');
+      },
+    );
 
-    test('missing counts / skipped list falls back to zeros and empty list',
-        () {
-      final result =
-          MovieSubscriptionBatchResultDto.fromJson(<String, dynamic>{});
+    test(
+      'missing counts / skipped list falls back to zeros and empty list',
+      () {
+        final result = MovieSubscriptionBatchResultDto.fromJson(
+          <String, dynamic>{},
+        );
 
-      expect(result.requestedCount, 0);
-      expect(result.updatedCount, 0);
-      expect(result.skippedCount, 0);
-      expect(result.skipped, isEmpty);
-    });
+        expect(result.requestedCount, 0);
+        expect(result.updatedCount, 0);
+        expect(result.skippedCount, 0);
+        expect(result.skipped, isEmpty);
+      },
+    );
 
     test('non-list skipped field is treated as empty', () {
       final result = MovieSubscriptionBatchResultDto.fromJson(<String, dynamic>{
@@ -107,24 +111,28 @@ void main() {
       expect(result.skipped, isEmpty);
     });
 
-    test('non-map skip entries are dropped, movie_number defaults to empty',
-        () {
-      final result = MovieSubscriptionBatchResultDto.fromJson(<String, dynamic>{
-        'requested_count': 2,
-        'updated_count': 0,
-        'skipped_count': 2,
-        'skipped': <dynamic>[
-          'not-a-map',
-          <String, dynamic>{'reason': 'has_media'},
-        ],
-      });
+    test(
+      'non-map skip entries are dropped, movie_number defaults to empty',
+      () {
+        final result = MovieSubscriptionBatchResultDto.fromJson(
+          <String, dynamic>{
+            'requested_count': 2,
+            'updated_count': 0,
+            'skipped_count': 2,
+            'skipped': <dynamic>[
+              'not-a-map',
+              <String, dynamic>{'reason': 'has_media'},
+            ],
+          },
+        );
 
-      expect(result.skipped, hasLength(1));
-      expect(result.skipped.single.movieNumber, '');
-      expect(
-        result.skipped.single.reason,
-        MovieSubscriptionSkipReason.hasMedia,
-      );
-    });
+        expect(result.skipped, hasLength(1));
+        expect(result.skipped.single.movieNumber, '');
+        expect(
+          result.skipped.single.reason,
+          MovieSubscriptionSkipReason.hasMedia,
+        );
+      },
+    );
   });
 }

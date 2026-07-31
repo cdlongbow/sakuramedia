@@ -62,7 +62,9 @@ void main() {
     await _openPicker(tester);
 
     expect(
-        find.byKey(const Key('media-import-cloud-root-hint')), findsOneWidget);
+      find.byKey(const Key('media-import-cloud-root-hint')),
+      findsOneWidget,
+    );
     expect(find.text('复制并保留源文件'), findsOneWidget);
     expect(find.text('媒体库管理目录，不可选择'), findsOneWidget);
     expect(
@@ -79,10 +81,7 @@ void main() {
     );
     await tester.pump();
     expect(
-      bundle.adapter.hitCount(
-        'GET',
-        '/media-libraries/cloud115/2/entries',
-      ),
+      bundle.adapter.hitCount('GET', '/media-libraries/cloud115/2/entries'),
       1,
     );
 
@@ -110,8 +109,9 @@ void main() {
     expect(find.text('result:cloud115:cid-source:copy'), findsOneWidget);
   });
 
-  testWidgets('cloud115 supports pagination and cleanup warning',
-      (tester) async {
+  testWidgets('cloud115 supports pagination and cleanup warning', (
+    tester,
+  ) async {
     final bundle = await _buildBundle();
     addTearDown(bundle.dispose);
     _enqueueLibraries(bundle, <Map<String, dynamic>>[_cloudLibrary()]);
@@ -180,10 +180,7 @@ void main() {
     await _pumpHarness(tester, bundle);
     await _openPicker(tester);
 
-    expect(
-      find.text('115 登录已失效，请前往“系统设置 → 媒体库”重新认证后重试。'),
-      findsOneWidget,
-    );
+    expect(find.text('115 登录已失效，请前往“系统设置 → 媒体库”重新认证后重试。'), findsOneWidget);
   });
 
   testWidgets('switching library ignores an in-flight old browse response', (
@@ -191,10 +188,10 @@ void main() {
   ) async {
     final bundle = await _buildBundle();
     addTearDown(bundle.dispose);
-    _enqueueLibraries(
-      bundle,
-      <Map<String, dynamic>>[_localLibrary(), _cloudLibrary()],
-    );
+    _enqueueLibraries(bundle, <Map<String, dynamic>>[
+      _localLibrary(),
+      _cloudLibrary(),
+    ]);
     final delayedLocal = Completer<ResponseBody>();
     bundle.adapter.enqueueResponder(
       method: 'GET',
@@ -255,10 +252,7 @@ Future<TestApiBundle> _buildBundle() async {
   return createTestApiBundle(sessionStore);
 }
 
-Future<void> _pumpHarness(
-  WidgetTester tester,
-  TestApiBundle bundle,
-) async {
+Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) async {
   tester.view.physicalSize = const Size(1440, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -335,40 +329,39 @@ void _enqueueCloudDirectory(
 }
 
 Map<String, dynamic> _localLibrary() => <String, dynamic>{
-      'id': 1,
-      'name': '本地库',
-      'backend': 'local',
-      'backend_config': <String, dynamic>{'root_path': '/media'},
-      'created_at': '2026-07-14T09:00:00Z',
-      'updated_at': '2026-07-14T09:00:00Z',
-    };
+  'id': 1,
+  'name': '本地库',
+  'backend': 'local',
+  'backend_config': <String, dynamic>{'root_path': '/media'},
+  'created_at': '2026-07-14T09:00:00Z',
+  'updated_at': '2026-07-14T09:00:00Z',
+};
 
 Map<String, dynamic> _cloudLibrary() => <String, dynamic>{
-      'id': 2,
-      'name': '115 库',
-      'backend': 'cloud115',
-      'backend_config': <String, dynamic>{
-        'root_cid': 'cid-root',
-        'app': 'alipaymini',
-      },
-      'created_at': '2026-07-14T09:00:00Z',
-      'updated_at': '2026-07-14T09:00:00Z',
-    };
+  'id': 2,
+  'name': '115 库',
+  'backend': 'cloud115',
+  'backend_config': <String, dynamic>{
+    'root_cid': 'cid-root',
+    'app': 'alipaymini',
+  },
+  'created_at': '2026-07-14T09:00:00Z',
+  'updated_at': '2026-07-14T09:00:00Z',
+};
 
 Map<String, dynamic> _cloudEntry({
   required String id,
   required String name,
   bool isDirectory = false,
   int size = 0,
-}) =>
-    <String, dynamic>{
-      'entry_id': id,
-      'name': name,
-      'is_dir': isDirectory,
-      'size': size,
-      'is_video': !isDirectory,
-      'mtime': 1700000000,
-    };
+}) => <String, dynamic>{
+  'entry_id': id,
+  'name': name,
+  'is_dir': isDirectory,
+  'size': size,
+  'is_video': !isDirectory,
+  'mtime': 1700000000,
+};
 
 class _PickerHarness extends StatefulWidget {
   const _PickerHarness();

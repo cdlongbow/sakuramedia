@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/theme.dart';
@@ -424,7 +425,7 @@ class _FooterLine extends StatelessWidget {
   }
 }
 
-class _RowActions extends StatelessWidget {
+class _RowActions extends ConsumerWidget {
   const _RowActions({
     required this.item,
     required this.onOpenDownloads,
@@ -438,13 +439,13 @@ class _RowActions extends StatelessWidget {
   final VoidCallback onUnsubscribe;
 
   Future<void> _runImportAction(
-    BuildContext context, {
+    WidgetRef ref, {
     required Future<void> Function(MediaImportApi api) request,
     required String successMessage,
     required String failureMessage,
   }) async {
     try {
-      await request(context.read<MediaImportApi>());
+      await request(ref.read(mediaImportApiProvider));
       showToast(successMessage);
     } catch (error) {
       showToast(apiErrorMessage(error, fallback: failureMessage));
@@ -452,7 +453,7 @@ class _RowActions extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final canReset = item.canResetSearch;
     final importOperation =
         item.status == MovieSubscriptionStatus.importFailed
@@ -482,7 +483,7 @@ class _RowActions extends StatelessWidget {
             semanticLabel: '重导失败文件',
             onPressed:
                 () => _runImportAction(
-                  context,
+                  ref,
                   request:
                       (api) =>
                           api.retryFailedFiles(importOperation.importJobId),
@@ -502,7 +503,7 @@ class _RowActions extends StatelessWidget {
             semanticLabel: '整作业重跑',
             onPressed:
                 () => _runImportAction(
-                  context,
+                  ref,
                   request:
                       (api) => api.rerunImportJob(importOperation.importJobId),
                   successMessage: '重跑任务已提交，可在导入中心跟进',

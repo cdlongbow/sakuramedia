@@ -630,10 +630,7 @@ void main() {
       expect(controller.selectionMode, isFalse);
       expect(controller.selectedCount, 0);
       expect(controller.isResetting, isFalse);
-      expect(
-        controller.activeRecords.map((r) => r.resourceId),
-        <int>[703],
-      );
+      expect(controller.activeRecords.map((r) => r.resourceId), <int>[703]);
       final mediaDef = controller.definitions.firstWhere(
         (d) => d.taskKey == 'media_thumbnail_generation',
       );
@@ -688,10 +685,10 @@ void main() {
       expect(result?.skippedCount, 2);
       expect(controller.isResetting, isFalse);
       // 只有 901 真正被重置 → 只有它从列表里移除。
-      expect(
-        controller.activeRecords.map((r) => r.resourceId),
-        <int>[902, 903],
-      );
+      expect(controller.activeRecords.map((r) => r.resourceId), <int>[
+        902,
+        903,
+      ]);
       // 跳过项保持选中，方便用户定位。
       expect(controller.selectionMode, isTrue);
       expect(controller.selectedCount, 2);
@@ -737,10 +734,10 @@ void main() {
 
       expect(result?.acceptedCount, 0);
       // 一条都没重置 → 列表原封不动（旧实现会在这里把两条全抹掉）。
-      expect(
-        controller.activeRecords.map((r) => r.resourceId),
-        <int>[951, 952],
-      );
+      expect(controller.activeRecords.map((r) => r.resourceId), <int>[
+        951,
+        952,
+      ]);
       expect(controller.selectionMode, isTrue);
       expect(controller.selectedCount, 2);
       final mediaDef = controller.definitions.firstWhere(

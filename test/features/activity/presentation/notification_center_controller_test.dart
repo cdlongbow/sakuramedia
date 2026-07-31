@@ -26,77 +26,83 @@ void main() {
     sessionStore.dispose();
   });
 
-  test('initialize loads notifications and connects stream from latest_event_id', () async {
-    _enqueueBootstrap(
-      bundle,
-      latestEventId: 120,
-      notifications: <Map<String, dynamic>>[_notificationJson(id: 101)],
-      unreadCount: 3,
-    );
-    _enqueueStream(bundle);
+  test(
+    'initialize loads notifications and connects stream from latest_event_id',
+    () async {
+      _enqueueBootstrap(
+        bundle,
+        latestEventId: 120,
+        notifications: <Map<String, dynamic>>[_notificationJson(id: 101)],
+        unreadCount: 3,
+      );
+      _enqueueStream(bundle);
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
-    addTearDown(controller.dispose);
+      final controller = NotificationCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
 
-    await controller.initialize();
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+      await controller.initialize();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
 
-    expect(controller.notifications.single.id, 101);
-    expect(controller.unreadCount, 3);
-    expect(controller.connectionState, NotificationConnectionState.live);
-    expect(
-      bundle.adapter.requests
-          .where((request) => request.path == '/system/events/stream')
-          .single
-          .uri
-          .queryParameters['after_event_id'],
-      '120',
-    );
-  });
-
-  test('onNotificationDisplayed debounces and batch-marks displayed ids read', () async {
-    _enqueueBootstrap(
-      bundle,
-      notifications: <Map<String, dynamic>>[
-        _notificationJson(id: 101),
-        _notificationJson(id: 102),
-      ],
-      unreadCount: 2,
-    );
-    _enqueueStream(bundle);
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read',
-      body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
-    );
-
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
-    addTearDown(controller.dispose);
-
-    await controller.initialize();
-    controller.onNotificationDisplayed(101);
-    controller.onNotificationDisplayed(102);
-    // 去抖窗口内重复触发不应产生第二次请求。
-    controller.onNotificationDisplayed(101);
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
-    final body =
+      expect(controller.notifications.single.id, 101);
+      expect(controller.unreadCount, 3);
+      expect(controller.connectionState, NotificationConnectionState.live);
+      expect(
         bundle.adapter.requests
-            .firstWhere(
-              (request) => request.path == '/system/notifications/read',
-            )
-            .body;
-    expect(body, <String, dynamic>{
-      'ids': <int>[101, 102],
-    });
-    expect(controller.notifications.every((item) => item.isRead), isTrue);
-    expect(controller.unreadCount, 0);
-  });
+            .where((request) => request.path == '/system/events/stream')
+            .single
+            .uri
+            .queryParameters['after_event_id'],
+        '120',
+      );
+    },
+  );
+
+  test(
+    'onNotificationDisplayed debounces and batch-marks displayed ids read',
+    () async {
+      _enqueueBootstrap(
+        bundle,
+        notifications: <Map<String, dynamic>>[
+          _notificationJson(id: 101),
+          _notificationJson(id: 102),
+        ],
+        unreadCount: 2,
+      );
+      _enqueueStream(bundle);
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/notifications/read',
+        body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
+      );
+
+      final controller = NotificationCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.initialize();
+      controller.onNotificationDisplayed(101);
+      controller.onNotificationDisplayed(102);
+      // 去抖窗口内重复触发不应产生第二次请求。
+      controller.onNotificationDisplayed(101);
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
+      final body =
+          bundle.adapter.requests
+              .firstWhere(
+                (request) => request.path == '/system/notifications/read',
+              )
+              .body;
+      expect(body, <String, dynamic>{
+        'ids': <int>[101, 102],
+      });
+      expect(controller.notifications.every((item) => item.isRead), isTrue);
+      expect(controller.unreadCount, 0);
+    },
+  );
 
   test('onNotificationDisplayed ignores already-read notifications', () async {
     _enqueueBootstrap(
@@ -120,37 +126,40 @@ void main() {
     expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 0);
   });
 
-  test('markAllRead posts read-all, marks all read and zeroes the badge', () async {
-    _enqueueBootstrap(
-      bundle,
-      notifications: <Map<String, dynamic>>[
-        _notificationJson(id: 101),
-        _notificationJson(id: 102),
-      ],
-      unreadCount: 2,
-    );
-    _enqueueStream(bundle);
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read-all',
-      body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
-    );
+  test(
+    'markAllRead posts read-all, marks all read and zeroes the badge',
+    () async {
+      _enqueueBootstrap(
+        bundle,
+        notifications: <Map<String, dynamic>>[
+          _notificationJson(id: 101),
+          _notificationJson(id: 102),
+        ],
+        unreadCount: 2,
+      );
+      _enqueueStream(bundle);
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/notifications/read-all',
+        body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
+      );
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
-    addTearDown(controller.dispose);
+      final controller = NotificationCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
 
-    await controller.initialize();
-    await controller.markAllRead();
+      await controller.initialize();
+      await controller.markAllRead();
 
-    expect(
-      bundle.adapter.hitCount('POST', '/system/notifications/read-all'),
-      1,
-    );
-    expect(controller.notifications.every((item) => item.isRead), isTrue);
-    expect(controller.unreadCount, 0);
-  });
+      expect(
+        bundle.adapter.hitCount('POST', '/system/notifications/read-all'),
+        1,
+      );
+      expect(controller.notifications.every((item) => item.isRead), isTrue);
+      expect(controller.unreadCount, 0);
+    },
+  );
 
   test('failed batch read rolls notifications back to unread', () async {
     _enqueueBootstrap(
@@ -181,76 +190,82 @@ void main() {
     expect(controller.notifications.single.isRead, isFalse);
   });
 
-  test('SSE notifications_read marks ids read and refreshes unread count', () async {
-    _enqueueBootstrap(
-      bundle,
-      notifications: <Map<String, dynamic>>[
-        _notificationJson(id: 101),
-        _notificationJson(id: 102),
-      ],
-      unreadCount: 2,
-    );
-    bundle.adapter.enqueueSse(
-      method: 'GET',
-      path: '/system/events/stream',
-      chunks: const <String>[
-        'id: 121\n'
-            'event: notifications_read\n'
-            'data: {"ids":[101],"unread_count":1}\n\n',
-      ],
-      keepOpen: true,
-    );
+  test(
+    'SSE notifications_read marks ids read and refreshes unread count',
+    () async {
+      _enqueueBootstrap(
+        bundle,
+        notifications: <Map<String, dynamic>>[
+          _notificationJson(id: 101),
+          _notificationJson(id: 102),
+        ],
+        unreadCount: 2,
+      );
+      bundle.adapter.enqueueSse(
+        method: 'GET',
+        path: '/system/events/stream',
+        chunks: const <String>[
+          'id: 121\n'
+              'event: notifications_read\n'
+              'data: {"ids":[101],"unread_count":1}\n\n',
+        ],
+        keepOpen: true,
+      );
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
-    addTearDown(controller.dispose);
+      final controller = NotificationCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
 
-    await controller.initialize();
-    await Future<void>.delayed(const Duration(milliseconds: 30));
+      await controller.initialize();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
 
-    expect(
-      controller.notifications.firstWhere((item) => item.id == 101).isRead,
-      isTrue,
-    );
-    expect(
-      controller.notifications.firstWhere((item) => item.id == 102).isRead,
-      isFalse,
-    );
-    expect(controller.unreadCount, 1);
-  });
+      expect(
+        controller.notifications.firstWhere((item) => item.id == 101).isRead,
+        isTrue,
+      );
+      expect(
+        controller.notifications.firstWhere((item) => item.id == 102).isRead,
+        isFalse,
+      );
+      expect(controller.unreadCount, 1);
+    },
+  );
 
-  test('SSE notifications_read_all marks all read and zeroes the badge', () async {
-    _enqueueBootstrap(
-      bundle,
-      notifications: <Map<String, dynamic>>[
-        _notificationJson(id: 101),
-        _notificationJson(id: 102),
-      ],
-      unreadCount: 2,
-    );
-    bundle.adapter.enqueueSse(
-      method: 'GET',
-      path: '/system/events/stream',
-      chunks: const <String>[
-        'id: 121\n'
-            'event: notifications_read_all\n'
-            'data: {"unread_count":0}\n\n',
-      ],
-      keepOpen: true,
-    );
+  test(
+    'SSE notifications_read_all marks all read and zeroes the badge',
+    () async {
+      _enqueueBootstrap(
+        bundle,
+        notifications: <Map<String, dynamic>>[
+          _notificationJson(id: 101),
+          _notificationJson(id: 102),
+        ],
+        unreadCount: 2,
+      );
+      bundle.adapter.enqueueSse(
+        method: 'GET',
+        path: '/system/events/stream',
+        chunks: const <String>[
+          'id: 121\n'
+              'event: notifications_read_all\n'
+              'data: {"unread_count":0}\n\n',
+        ],
+        keepOpen: true,
+      );
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
-    addTearDown(controller.dispose);
+      final controller = NotificationCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
 
-    await controller.initialize();
-    await Future<void>.delayed(const Duration(milliseconds: 30));
+      await controller.initialize();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
 
-    expect(controller.notifications.every((item) => item.isRead), isTrue);
-    expect(controller.unreadCount, 0);
-  });
+      expect(controller.notifications.every((item) => item.isRead), isTrue);
+      expect(controller.unreadCount, 0);
+    },
+  );
 }
 
 void _enqueueStream(TestApiBundle bundle) {

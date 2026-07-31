@@ -60,7 +60,10 @@ void main() {
     );
 
     expect(find.byKey(const Key('topbar-refresh-button')), findsNothing);
-    expect(find.byKey(const Key('topbar-refresh-button-loading')), findsNothing);
+    expect(
+      find.byKey(const Key('topbar-refresh-button-loading')),
+      findsNothing,
+    );
   });
 
   testWidgets('app top bar shows refresh button when onRefresh is provided', (

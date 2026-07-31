@@ -2229,32 +2229,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2275,32 +2285,42 @@ void main() {
     final router = buildDesktopRouter(sessionStore: sessionStore);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2319,32 +2339,42 @@ void main() {
     final router = buildDesktopRouter(sessionStore: sessionStore);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2366,32 +2396,42 @@ void main() {
     final router = buildMobileRouter(sessionStore: sessionStore);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+            Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-          Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2682,32 +2722,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2742,32 +2792,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2825,32 +2885,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2988,32 +3058,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3044,32 +3124,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3142,32 +3232,42 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<ActorsApi>.value(value: bundle.actorsApi),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3728,31 +3828,41 @@ void main() {
     final router = buildDesktopRouter(sessionStore: sessionStore);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          Provider<CredentialStore>(create: (_) => CredentialStore()),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            ChangeNotifierProvider(create: (_) => AppShellController()),
+            Provider<CredentialStore>(create: (_) => CredentialStore()),
+            Provider<StatusApi>.value(value: bundle.statusApi),
+            Provider<MoviesApi>.value(value: bundle.moviesApi),
+            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+            Provider<DownloadClientsApi>.value(
+              value: bundle.downloadClientsApi,
+            ),
+            Provider<IndexerSettingsApi>.value(
+              value: bundle.indexerSettingsApi,
+            ),
+            Provider<MovieDescTranslationSettingsApi>.value(
+              value: bundle.movieDescTranslationSettingsApi,
+            ),
+            Provider<ClipsApi>.value(value: bundle.clipsApi),
+            ChangeNotifierProvider<ClipMutationChangeNotifier>(
+              create: (_) => ClipMutationChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieCollectionTypeChangeNotifier(),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => MovieSubscriptionChangeNotifier(),
+            ),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
-          Provider<ClipsApi>.value(value: bundle.clipsApi),
-          ChangeNotifierProvider<ClipMutationChangeNotifier>(
-            create: (_) => ClipMutationChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieCollectionTypeChangeNotifier(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => MovieSubscriptionChangeNotifier(),
-          ),
-        ],
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        ),
       ),
     );
     await tester.pumpAndSettle();

@@ -68,7 +68,9 @@ void main() {
     );
 
     expect(
-      find.byKey(const Key('mobile-system-overview-external-data-source-javdb')),
+      find.byKey(
+        const Key('mobile-system-overview-external-data-source-javdb'),
+      ),
       findsOneWidget,
     );
     expect(

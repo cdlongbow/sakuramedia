@@ -39,7 +39,6 @@ import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
-import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_api_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
@@ -333,9 +332,8 @@ class _MyAppState extends State<MyApp> {
               (context) => ImageSearchApi(apiClient: context.read<ApiClient>()),
         ),
         Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
-        ChangeNotifierProvider<ExternalPlayerStore>(
-          create: (_) => ExternalPlayerStore()..load(),
-        ),
+        // ExternalPlayerStore 已原生迁移到 Riverpod
+        // （features/external_player/presentation/providers/），不再经 provider 注入。
       ],
       child: Builder(
         builder: (context) {

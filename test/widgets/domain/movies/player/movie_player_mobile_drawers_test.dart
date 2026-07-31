@@ -173,22 +173,23 @@ void main() {
                 width: 240,
                 height: 420,
                 child: Builder(
-                  builder: (context) => Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      const ColoredBox(color: Colors.black),
-                      buildMoviePlayerMobileDrawerOverlay(
-                        context: context,
-                        activeDrawer: MoviePlayerMobileDrawerType.speed,
-                        subtitleState: MoviePlayerSubtitleState.empty,
-                        currentRate: 1.0,
-                        isApplyingSubtitleListenable: applyingNotifier,
-                        onDismiss: () {},
-                        onRateSelected: (_) async {},
-                        onSubtitleSelected: (_) async {},
+                  builder:
+                      (context) => Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          const ColoredBox(color: Colors.black),
+                          buildMoviePlayerMobileDrawerOverlay(
+                            context: context,
+                            activeDrawer: MoviePlayerMobileDrawerType.speed,
+                            subtitleState: MoviePlayerSubtitleState.empty,
+                            currentRate: 1.0,
+                            isApplyingSubtitleListenable: applyingNotifier,
+                            onDismiss: () {},
+                            onRateSelected: (_) async {},
+                            onSubtitleSelected: (_) async {},
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -316,29 +317,30 @@ class _MoviePlayerMobileDrawerHarnessState
   MoviePlayerMobileDrawerType? _activeDrawer;
   int? _selectedSubtitleId;
   final ValueNotifier<MoviePlayerMobileSpeedDisplayState>
-      _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
+  _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
     const MoviePlayerMobileSpeedDisplayState(
       rate: 1.0,
       hasExplicitSelection: false,
     ),
   );
-  final ValueNotifier<bool> _isApplyingSubtitleNotifier =
-      ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isApplyingSubtitleNotifier = ValueNotifier<bool>(
+    false,
+  );
 
   final MoviePlayerSubtitleState _subtitleState =
       const MoviePlayerSubtitleState(
-    options: <MoviePlayerSubtitleOption>[
-      MoviePlayerSubtitleOption(
-        subtitleId: 501,
-        label: 'ABC-001.zh.srt',
-        resolvedUrl: 'https://example.com/subtitles/501.srt',
-      ),
-    ],
-    selectedSubtitleId: null,
-    isLoading: false,
-    fetchStatus: 'succeeded',
-    errorMessage: null,
-  );
+        options: <MoviePlayerSubtitleOption>[
+          MoviePlayerSubtitleOption(
+            subtitleId: 501,
+            label: 'ABC-001.zh.srt',
+            resolvedUrl: 'https://example.com/subtitles/501.srt',
+          ),
+        ],
+        selectedSubtitleId: null,
+        isLoading: false,
+        fetchStatus: 'succeeded',
+        errorMessage: null,
+      );
 
   @override
   void dispose() {
@@ -375,8 +377,8 @@ class _MoviePlayerMobileDrawerHarnessState
                   setState(() {
                     _activeDrawer = null;
                   });
-                  _speedDisplayNotifier.value =
-                      MoviePlayerMobileSpeedDisplayState(
+                  _speedDisplayNotifier
+                      .value = MoviePlayerMobileSpeedDisplayState(
                     rate: rate,
                     hasExplicitSelection: true,
                   );
@@ -399,18 +401,22 @@ class _MoviePlayerMobileDrawerHarnessState
                       children: buildMoviePlayerMobileDrawerToggleButtons(
                         activeDrawer: _activeDrawer,
                         speedDisplayListenable: _speedDisplayNotifier,
-                        onSpeedButtonPressed: () => setState(() {
-                          _activeDrawer =
-                              _activeDrawer == MoviePlayerMobileDrawerType.speed
-                                  ? null
-                                  : MoviePlayerMobileDrawerType.speed;
-                        }),
-                        onSubtitleButtonPressed: () => setState(() {
-                          _activeDrawer = _activeDrawer ==
-                                  MoviePlayerMobileDrawerType.subtitle
-                              ? null
-                              : MoviePlayerMobileDrawerType.subtitle;
-                        }),
+                        onSpeedButtonPressed:
+                            () => setState(() {
+                              _activeDrawer =
+                                  _activeDrawer ==
+                                          MoviePlayerMobileDrawerType.speed
+                                      ? null
+                                      : MoviePlayerMobileDrawerType.speed;
+                            }),
+                        onSubtitleButtonPressed:
+                            () => setState(() {
+                              _activeDrawer =
+                                  _activeDrawer ==
+                                          MoviePlayerMobileDrawerType.subtitle
+                                      ? null
+                                      : MoviePlayerMobileDrawerType.subtitle;
+                            }),
                       ),
                     ),
                   ),
@@ -439,32 +445,33 @@ class _MoviePlayerInfoDrawerHarnessState
   int? _selectedSubtitleId;
   final ValueNotifier<MoviePlayerPlaybackInfoSnapshot> _infoNotifier =
       ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
-    MoviePlayerPlaybackInfoSnapshot.empty,
-  );
+        MoviePlayerPlaybackInfoSnapshot.empty,
+      );
   final ValueNotifier<MoviePlayerMobileSpeedDisplayState>
-      _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
+  _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
     const MoviePlayerMobileSpeedDisplayState(
       rate: 1.0,
       hasExplicitSelection: false,
     ),
   );
-  final ValueNotifier<bool> _isApplyingSubtitleNotifier =
-      ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isApplyingSubtitleNotifier = ValueNotifier<bool>(
+    false,
+  );
 
   final MoviePlayerSubtitleState _subtitleState =
       const MoviePlayerSubtitleState(
-    options: <MoviePlayerSubtitleOption>[
-      MoviePlayerSubtitleOption(
-        subtitleId: 501,
-        label: 'ABC-001.zh.srt',
-        resolvedUrl: 'https://example.com/subtitles/501.srt',
-      ),
-    ],
-    selectedSubtitleId: null,
-    isLoading: false,
-    fetchStatus: 'succeeded',
-    errorMessage: null,
-  );
+        options: <MoviePlayerSubtitleOption>[
+          MoviePlayerSubtitleOption(
+            subtitleId: 501,
+            label: 'ABC-001.zh.srt',
+            resolvedUrl: 'https://example.com/subtitles/501.srt',
+          ),
+        ],
+        selectedSubtitleId: null,
+        isLoading: false,
+        fetchStatus: 'succeeded',
+        errorMessage: null,
+      );
 
   @override
   void dispose() {
@@ -519,8 +526,8 @@ class _MoviePlayerInfoDrawerHarnessState
                 onDismiss: () => setState(() => _activeDrawer = null),
                 onRateSelected: (rate) async {
                   setState(() => _activeDrawer = null);
-                  _speedDisplayNotifier.value =
-                      MoviePlayerMobileSpeedDisplayState(
+                  _speedDisplayNotifier
+                      .value = MoviePlayerMobileSpeedDisplayState(
                     rate: rate,
                     hasExplicitSelection: true,
                   );
@@ -555,12 +562,14 @@ class _MoviePlayerInfoDrawerHarnessState
                       children: buildMoviePlayerMobileDrawerToggleButtons(
                         activeDrawer: _activeDrawer,
                         speedDisplayListenable: _speedDisplayNotifier,
-                        onSpeedButtonPressed: () => _toggleMobileDrawer(
-                          MoviePlayerMobileDrawerType.speed,
-                        ),
-                        onSubtitleButtonPressed: () => _toggleMobileDrawer(
-                          MoviePlayerMobileDrawerType.subtitle,
-                        ),
+                        onSpeedButtonPressed:
+                            () => _toggleMobileDrawer(
+                              MoviePlayerMobileDrawerType.speed,
+                            ),
+                        onSubtitleButtonPressed:
+                            () => _toggleMobileDrawer(
+                              MoviePlayerMobileDrawerType.subtitle,
+                            ),
                       ),
                     ),
                   ),

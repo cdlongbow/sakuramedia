@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -31,26 +26,12 @@ Widget _wrap(Widget child) {
   final router = GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => Scaffold(body: child),
-      ),
+      GoRoute(path: '/', builder: (context, state) => Scaffold(body: child)),
     ],
   );
-  return MultiProvider(
-    providers: [
-      Provider<MediaLibrariesApi>.value(value: _bundle.mediaLibrariesApi),
-      Provider<DownloadClientsApi>.value(value: _bundle.downloadClientsApi),
-      Provider<IndexerSettingsApi>.value(value: _bundle.indexerSettingsApi),
-      Provider<StatusApi>.value(value: _bundle.statusApi),
-      Provider<MovieDescTranslationSettingsApi>.value(
-        value: _bundle.movieDescTranslationSettingsApi,
-      ),
-    ],
-    child: MaterialApp.router(
-      routerConfig: router,
-      theme: sakuraThemeData,
-    ),
+  return ProviderScope(
+    overrides: _bundle.riverpodOverrides(),
+    child: MaterialApp.router(routerConfig: router, theme: sakuraThemeData),
   );
 }
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_category_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/controllers/system_diagnostics_controller.dart';
@@ -25,25 +25,27 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 /// 里 new + dispose 释放）；不进 app.dart 全局 provider。诊断页会另建一份自己的
 /// controller，两份状态互不共享——用户视角常见的操作路径是"strip 上看一眼→进
 /// 诊断页点重新检测"，两份状态各自独立没问题。
-class SystemDiagnosticsStrip extends StatefulWidget {
+class SystemDiagnosticsStrip extends ConsumerStatefulWidget {
   const SystemDiagnosticsStrip({super.key});
 
   @override
-  State<SystemDiagnosticsStrip> createState() => _SystemDiagnosticsStripState();
+  ConsumerState<SystemDiagnosticsStrip> createState() =>
+      _SystemDiagnosticsStripState();
 }
 
-class _SystemDiagnosticsStripState extends State<SystemDiagnosticsStrip> {
+class _SystemDiagnosticsStripState
+    extends ConsumerState<SystemDiagnosticsStrip> {
   late final SystemDiagnosticsController _controller;
 
   @override
   void initState() {
     super.initState();
     _controller = SystemDiagnosticsController(
-      mediaLibrariesApi: context.read<MediaLibrariesApi>(),
-      downloadClientsApi: context.read<DownloadClientsApi>(),
-      indexerSettingsApi: context.read<IndexerSettingsApi>(),
-      statusApi: context.read<StatusApi>(),
-      llmApi: context.read<MovieDescTranslationSettingsApi>(),
+      mediaLibrariesApi: ref.read(mediaLibrariesApiProvider),
+      downloadClientsApi: ref.read(downloadClientsApiProvider),
+      indexerSettingsApi: ref.read(indexerSettingsApiProvider),
+      statusApi: ref.read(statusApiProvider),
+      llmApi: ref.read(llmSettingsApiProvider),
     )..addListener(_onChanged);
   }
 
@@ -193,9 +195,10 @@ class _SystemDiagnosticsStripState extends State<SystemDiagnosticsStrip> {
                   context,
                   size: AppTextSize.s12,
                   weight: AppTextWeight.regular,
-                  tone: c.unhealthyCount > 0
-                      ? AppTextTone.error
-                      : AppTextTone.muted,
+                  tone:
+                      c.unhealthyCount > 0
+                          ? AppTextTone.error
+                          : AppTextTone.muted,
                 ),
               ),
             ),
@@ -206,9 +209,10 @@ class _SystemDiagnosticsStripState extends State<SystemDiagnosticsStrip> {
   }
 
   String? _detailForCategory(DiagnosticCategoryState cat) {
-    final unhealthy = cat.items
-        .where((i) => i.status == DiagnosticItemStatus.unhealthy)
-        .length;
+    final unhealthy =
+        cat.items
+            .where((i) => i.status == DiagnosticItemStatus.unhealthy)
+            .length;
     if (unhealthy > 0) return '$unhealthy';
     return null;
   }

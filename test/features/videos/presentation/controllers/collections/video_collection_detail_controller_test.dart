@@ -107,18 +107,12 @@ void main() {
       videosApi: videosApi,
     );
     await controller.load();
-    expect(
-      controller.items.map((item) => item.video.id).toList(),
-      <int>[1, 2],
-    );
+    expect(controller.items.map((item) => item.video.id).toList(), <int>[1, 2]);
 
     // 把第二个成员拖到最前。
     await controller.reorder(1, 0);
 
-    expect(
-      controller.items.map((item) => item.video.id).toList(),
-      <int>[2, 1],
-    );
+    expect(controller.items.map((item) => item.video.id).toList(), <int>[2, 1]);
     final reorderRequest = adapter.requests.last;
     expect(reorderRequest.path, '/video-collections/3/items/reorder');
     final body = reorderRequest.body as Map<String, dynamic>;
@@ -149,10 +143,7 @@ void main() {
     await controller.reorder(1, 0);
 
     // 失败回滚到提交前顺序 [1, 2]，不再触发重载。
-    expect(
-      controller.items.map((item) => item.video.id).toList(),
-      <int>[1, 2],
-    );
+    expect(controller.items.map((item) => item.video.id).toList(), <int>[1, 2]);
     expect(controller.isMutating, isFalse);
 
     controller.dispose();
@@ -177,10 +168,7 @@ void main() {
     final error = await controller.removeItem(100);
 
     expect(error, isNull);
-    expect(
-      controller.items.map((item) => item.itemId).toList(),
-      <int>[101],
-    );
+    expect(controller.items.map((item) => item.itemId).toList(), <int>[101]);
     expect(controller.isMutating, isFalse);
 
     controller.dispose();
@@ -208,10 +196,10 @@ void main() {
 
     expect(error, isNotNull);
     // 失败回滚，成员仍在。
-    expect(
-      controller.items.map((item) => item.itemId).toList(),
-      <int>[100, 101],
-    );
+    expect(controller.items.map((item) => item.itemId).toList(), <int>[
+      100,
+      101,
+    ]);
     expect(controller.isMutating, isFalse);
 
     controller.dispose();
@@ -237,10 +225,7 @@ void main() {
     final error = await controller.deleteVideo(100, 1);
 
     expect(error, isNull);
-    expect(
-      controller.items.map((item) => item.itemId).toList(),
-      <int>[101],
-    );
+    expect(controller.items.map((item) => item.itemId).toList(), <int>[101]);
     expect(adapter.requests.last.path, '/videos/1');
     expect(controller.isMutating, isFalse);
 
@@ -269,10 +254,10 @@ void main() {
 
     expect(error, isNotNull);
     // 失败回滚，成员仍在。
-    expect(
-      controller.items.map((item) => item.itemId).toList(),
-      <int>[100, 101],
-    );
+    expect(controller.items.map((item) => item.itemId).toList(), <int>[
+      100,
+      101,
+    ]);
     expect(controller.isMutating, isFalse);
 
     controller.dispose();
@@ -326,10 +311,7 @@ void main() {
     expect(controller.sortDirection, SortDirection.desc);
     // 「播放全部」透传给连播页的排序表达式，与拉取成员时使用的一致。
     expect(controller.sortExpression, 'duration:desc');
-    expect(
-      adapter.requests.last.uri.queryParameters['sort'],
-      'duration:desc',
-    );
+    expect(adapter.requests.last.uri.queryParameters['sort'], 'duration:desc');
 
     controller.dispose();
   });

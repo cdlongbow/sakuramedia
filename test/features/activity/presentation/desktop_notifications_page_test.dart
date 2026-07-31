@@ -34,7 +34,10 @@ void main() {
     await _pumpNotificationsPage(tester, bundle: bundle);
 
     expect(find.byKey(const Key('desktop-notifications-page')), findsOneWidget);
-    expect(find.byKey(const Key('notification-category-filter')), findsOneWidget);
+    expect(
+      find.byKey(const Key('notification-category-filter')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('activity-notification-101')), findsOneWidget);
     expect(find.text('提醒通知'), findsOneWidget);
     // 分类筛选默认「全部」。
@@ -92,10 +95,11 @@ void main() {
       expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
       final body =
           bundle.adapter.requests
-              .firstWhere(
-                (request) => request.path == '/system/notifications/read',
-              )
-              .body as Map<String, dynamic>;
+                  .firstWhere(
+                    (request) => request.path == '/system/notifications/read',
+                  )
+                  .body
+              as Map<String, dynamic>;
       expect((body['ids'] as List<dynamic>).contains(101), isTrue);
       expect((body['ids'] as List<dynamic>).contains(102), isTrue);
 

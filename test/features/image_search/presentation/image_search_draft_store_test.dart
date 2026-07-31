@@ -45,7 +45,10 @@ void main() {
 
       for (var i = 0; i < 500; i++) {
         ids.add(
-          store.save(fileName: 'f$i.jpg', bytes: Uint8List.fromList([i & 0xff])),
+          store.save(
+            fileName: 'f$i.jpg',
+            bytes: Uint8List.fromList([i & 0xff]),
+          ),
         );
       }
 

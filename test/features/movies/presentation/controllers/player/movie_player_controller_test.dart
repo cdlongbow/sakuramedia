@@ -41,7 +41,8 @@ void main() {
       actors: const <MovieActorDto>[],
       tags: const <MovieTagDto>[],
       playlists: const <MoviePlaylistSummaryDto>[],
-      mediaItems: mediaItems ??
+      mediaItems:
+          mediaItems ??
           <MovieMediaItemDto>[
             MovieMediaItemDto(
               mediaId: 100,
@@ -110,23 +111,22 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMediaLibraries: () async => const <MediaLibraryDto>[
-        MediaLibraryDto(
-          id: 1,
-          name: '115 主库',
-          backend: MediaLibraryBackend.cloud115,
-          createdAt: null,
-          updatedAt: null,
-        ),
-      ],
-      updateMediaProgress: ({
-        required mediaId,
-        required positionSeconds,
-      }) async =>
-          MovieMediaProgressDto(
-        lastPositionSeconds: positionSeconds,
-        lastWatchedAt: null,
-      ),
+      fetchMediaLibraries:
+          () async => const <MediaLibraryDto>[
+            MediaLibraryDto(
+              id: 1,
+              name: '115 主库',
+              backend: MediaLibraryBackend.cloud115,
+              createdAt: null,
+              updatedAt: null,
+            ),
+          ],
+      updateMediaProgress:
+          ({required mediaId, required positionSeconds}) async =>
+              MovieMediaProgressDto(
+                lastPositionSeconds: positionSeconds,
+                lastWatchedAt: null,
+              ),
     );
     addTearDown(controller.dispose);
 
@@ -145,11 +145,13 @@ void main() {
       movieNumber: 'ABC-001',
       fetchStatus: fetchStatus,
       lastAttemptedAt: DateTime.parse('2026-04-10T09:00:00'),
-      lastSucceededAt: fetchStatus == 'succeeded'
-          ? DateTime.parse('2026-04-10T09:01:00')
-          : null,
+      lastSucceededAt:
+          fetchStatus == 'succeeded'
+              ? DateTime.parse('2026-04-10T09:01:00')
+              : null,
       lastError: lastError,
-      items: items ??
+      items:
+          items ??
           const <MovieSubtitleItemDto>[
             MovieSubtitleItemDto(
               subtitleId: 501,
@@ -175,8 +177,8 @@ void main() {
         thumbnailRequests.add(mediaId);
         return buildThumbnails();
       },
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -212,39 +214,40 @@ void main() {
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         initialMediaId: 999,
-        fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(
-          mediaItems: <MovieMediaItemDto>[
-            MovieMediaItemDto(
-              mediaId: 90,
-              libraryId: 1,
-              playUrl: '',
-              storageMode: 'hardlink',
-              resolution: '1920x1080',
-              fileSizeBytes: 100,
-              durationSeconds: 7200,
-              specialTags: '',
-              valid: true,
-              progress: null,
-              points: const <MovieMediaPointDto>[],
+        fetchMovieDetail:
+            ({required movieNumber}) async => buildMovieDetail(
+              mediaItems: <MovieMediaItemDto>[
+                MovieMediaItemDto(
+                  mediaId: 90,
+                  libraryId: 1,
+                  playUrl: '',
+                  storageMode: 'hardlink',
+                  resolution: '1920x1080',
+                  fileSizeBytes: 100,
+                  durationSeconds: 7200,
+                  specialTags: '',
+                  valid: true,
+                  progress: null,
+                  points: const <MovieMediaPointDto>[],
+                ),
+                MovieMediaItemDto(
+                  mediaId: 100,
+                  libraryId: 1,
+                  playUrl: '/files/media/movies/ABC-001/video.mp4',
+                  storageMode: 'hardlink',
+                  resolution: '1920x1080',
+                  fileSizeBytes: 100,
+                  durationSeconds: 7200,
+                  specialTags: '',
+                  valid: true,
+                  progress: null,
+                  points: const <MovieMediaPointDto>[],
+                ),
+              ],
             ),
-            MovieMediaItemDto(
-              mediaId: 100,
-              libraryId: 1,
-              playUrl: '/files/media/movies/ABC-001/video.mp4',
-              storageMode: 'hardlink',
-              resolution: '1920x1080',
-              fileSizeBytes: 100,
-              durationSeconds: 7200,
-              specialTags: '',
-              valid: true,
-              progress: null,
-              points: const <MovieMediaPointDto>[],
-            ),
-          ],
-        ),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -271,8 +274,8 @@ void main() {
       fetchMediaThumbnails: ({required mediaId}) async {
         throw Exception('boom');
       },
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -303,8 +306,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -368,8 +371,8 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -402,8 +405,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -437,8 +440,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -473,8 +476,8 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -503,8 +506,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -539,8 +542,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -573,8 +576,8 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -609,8 +612,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -641,16 +644,14 @@ void main() {
       initialPositionSeconds: 90,
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
-      updateMediaProgress: ({
-        required mediaId,
-        required positionSeconds,
-      }) async =>
-          MovieMediaProgressDto(
-        lastPositionSeconds: positionSeconds,
-        lastWatchedAt: null,
-      ),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
+      updateMediaProgress:
+          ({required mediaId, required positionSeconds}) async =>
+              MovieMediaProgressDto(
+                lastPositionSeconds: positionSeconds,
+                lastWatchedAt: null,
+              ),
     );
     addTearDown(controller.dispose);
 
@@ -669,8 +670,8 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
         updateMediaProgress: ({
           required mediaId,
           required positionSeconds,
@@ -708,8 +709,8 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -744,8 +745,8 @@ void main() {
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
       fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-      fetchMovieSubtitles: ({required movieNumber}) async =>
-          buildSubtitleList(),
+      fetchMovieSubtitles:
+          ({required movieNumber}) async => buildSubtitleList(),
       updateMediaProgress: ({
         required mediaId,
         required positionSeconds,
@@ -783,37 +784,37 @@ void main() {
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
         fetchMediaThumbnails: ({required mediaId}) async => buildThumbnails(),
-        fetchMovieSubtitles: ({required movieNumber}) async =>
-            buildSubtitleList(),
-        updateMediaProgress: ({
-          required mediaId,
-          required positionSeconds,
-        }) async =>
-            MovieMediaProgressDto(
-          lastPositionSeconds: positionSeconds,
-          lastWatchedAt: null,
-        ),
+        fetchMovieSubtitles:
+            ({required movieNumber}) async => buildSubtitleList(),
+        updateMediaProgress:
+            ({required mediaId, required positionSeconds}) async =>
+                MovieMediaProgressDto(
+                  lastPositionSeconds: positionSeconds,
+                  lastWatchedAt: null,
+                ),
       );
       addTearDown(controller.dispose);
       await controller.load();
       return controller;
     }
 
-    test('toggling enters mode, releases scroll lock, clears on exit',
-        () async {
-      final controller = await buildLoadedController();
-      expect(controller.clipSelectionMode, isFalse);
+    test(
+      'toggling enters mode, releases scroll lock, clears on exit',
+      () async {
+        final controller = await buildLoadedController();
+        expect(controller.clipSelectionMode, isFalse);
 
-      controller.toggleClipSelectionMode();
-      expect(controller.clipSelectionMode, isTrue);
-      expect(controller.isThumbnailScrollLocked, isFalse);
+        controller.toggleClipSelectionMode();
+        expect(controller.clipSelectionMode, isTrue);
+        expect(controller.isThumbnailScrollLocked, isFalse);
 
-      controller.handleClipSelectionTap(0);
-      controller.toggleClipSelectionMode();
-      expect(controller.clipSelectionMode, isFalse);
-      expect(controller.clipStartIndex, isNull);
-      expect(controller.clipEndIndex, isNull);
-    });
+        controller.handleClipSelectionTap(0);
+        controller.toggleClipSelectionMode();
+        expect(controller.clipSelectionMode, isFalse);
+        expect(controller.clipStartIndex, isNull);
+        expect(controller.clipEndIndex, isNull);
+      },
+    );
 
     test('first/second/third tap cycle start and end points', () async {
       final controller = await buildLoadedController();
@@ -839,17 +840,19 @@ void main() {
       expect(controller.canCreateClip, isFalse);
     });
 
-    test('tapping the same thumbnail twice does not complete a range',
-        () async {
-      final controller = await buildLoadedController();
-      controller.toggleClipSelectionMode();
+    test(
+      'tapping the same thumbnail twice does not complete a range',
+      () async {
+        final controller = await buildLoadedController();
+        controller.toggleClipSelectionMode();
 
-      controller.handleClipSelectionTap(1);
-      controller.handleClipSelectionTap(1);
-      expect(controller.clipStartIndex, 1);
-      expect(controller.clipEndIndex, isNull);
-      expect(controller.canCreateClip, isFalse);
-    });
+        controller.handleClipSelectionTap(1);
+        controller.handleClipSelectionTap(1);
+        expect(controller.clipStartIndex, 1);
+        expect(controller.clipEndIndex, isNull);
+        expect(controller.canCreateClip, isFalse);
+      },
+    );
 
     test('clearClipSelection resets both endpoints', () async {
       final controller = await buildLoadedController();

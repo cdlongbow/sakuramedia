@@ -110,19 +110,22 @@ void main() {
       coord.dispose();
     });
 
-    test('resetMobileDisplayForNewMedia: mobile display 复位到新初始速率, 清 hasExplicit', () async {
-      final coord = build(initialRate: 1.0);
-      // 只有移动端路径会同步更新 mobile display 的 hasExplicit
-      // (桌面 select 不触摸 mobile display, 保留历史解耦)
-      await coord.selectFromMobile(1.5);
-      expect(coord.mobileSpeedDisplay.value.hasExplicitSelection, isTrue);
+    test(
+      'resetMobileDisplayForNewMedia: mobile display 复位到新初始速率, 清 hasExplicit',
+      () async {
+        final coord = build(initialRate: 1.0);
+        // 只有移动端路径会同步更新 mobile display 的 hasExplicit
+        // (桌面 select 不触摸 mobile display, 保留历史解耦)
+        await coord.selectFromMobile(1.5);
+        expect(coord.mobileSpeedDisplay.value.hasExplicitSelection, isTrue);
 
-      coord.resetMobileDisplayForNewMedia(1.0);
-      expect(coord.mobileSpeedDisplay.value.rate, 1.0);
-      expect(coord.mobileSpeedDisplay.value.hasExplicitSelection, isFalse);
-      // 权威 currentRate/hasExplicit 不受 resetMobileDisplayForNewMedia 影响
-      // (换片后 player.stream.rate 会自然喂新值)
-      coord.dispose();
-    });
+        coord.resetMobileDisplayForNewMedia(1.0);
+        expect(coord.mobileSpeedDisplay.value.rate, 1.0);
+        expect(coord.mobileSpeedDisplay.value.hasExplicitSelection, isFalse);
+        // 权威 currentRate/hasExplicit 不受 resetMobileDisplayForNewMedia 影响
+        // (换片后 player.stream.rate 会自然喂新值)
+        coord.dispose();
+      },
+    );
   });
 }

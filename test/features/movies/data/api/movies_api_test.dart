@@ -184,26 +184,28 @@ void main() {
     expect(page.items.single.seriesName, 'S1 NO.1 STYLE');
   });
 
-  test('getMovies sends actor_id and year when actor year filters provided',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies',
-      statusCode: 200,
-      body: <String, dynamic>{
-        'items': const <Map<String, dynamic>>[],
-        'page': 1,
-        'page_size': 24,
-        'total': 0,
-      },
-    );
+  test(
+    'getMovies sends actor_id and year when actor year filters provided',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        statusCode: 200,
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 24,
+          'total': 0,
+        },
+      );
 
-    await moviesApi.getMovies(actorId: 7, year: 2026, page: 1, pageSize: 24);
+      await moviesApi.getMovies(actorId: 7, year: 2026, page: 1, pageSize: 24);
 
-    final request = adapter.requests.single;
-    expect(request.uri.queryParameters['actor_id'], '7');
-    expect(request.uri.queryParameters['year'], '2026');
-  });
+      final request = adapter.requests.single;
+      expect(request.uri.queryParameters['actor_id'], '7');
+      expect(request.uri.queryParameters['year'], '2026');
+    },
+  );
 
   test('getMovies joins tagIds into comma-separated tag_ids', () async {
     adapter.enqueueJson(
@@ -258,36 +260,39 @@ void main() {
 
     expect(
       adapter.requests.every(
-          (request) => !request.uri.queryParameters.containsKey('tag_ids')),
+        (request) => !request.uri.queryParameters.containsKey('tag_ids'),
+      ),
       isTrue,
     );
   });
 
-  test('getMovies sends tag_match when tagIds and tagMatch are provided',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies',
-      statusCode: 200,
-      body: <String, dynamic>{
-        'items': const <Map<String, dynamic>>[],
-        'page': 1,
-        'page_size': 24,
-        'total': 0,
-      },
-    );
+  test(
+    'getMovies sends tag_match when tagIds and tagMatch are provided',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        statusCode: 200,
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 24,
+          'total': 0,
+        },
+      );
 
-    await moviesApi.getMovies(
-      tagIds: const <int>[1, 2],
-      tagMatch: TagMatchMode.and,
-      page: 1,
-      pageSize: 24,
-    );
+      await moviesApi.getMovies(
+        tagIds: const <int>[1, 2],
+        tagMatch: TagMatchMode.and,
+        page: 1,
+        pageSize: 24,
+      );
 
-    final request = adapter.requests.single;
-    expect(request.uri.queryParameters['tag_ids'], '1,2');
-    expect(request.uri.queryParameters['tag_match'], 'and');
-  });
+      final request = adapter.requests.single;
+      expect(request.uri.queryParameters['tag_ids'], '1,2');
+      expect(request.uri.queryParameters['tag_match'], 'and');
+    },
+  );
 
   test('getMovies omits tag_match when tagIds is empty', () async {
     adapter.enqueueJson(
@@ -603,9 +608,10 @@ void main() {
       ],
     );
 
-    final updates = await moviesApi
-        .searchOnlineMoviesStream(movieNumber: 'ABP-123')
-        .toList();
+    final updates =
+        await moviesApi
+            .searchOnlineMoviesStream(movieNumber: 'ABP-123')
+            .toList();
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
@@ -630,9 +636,10 @@ void main() {
         ],
       );
 
-      final updates = await moviesApi
-          .searchOnlineMoviesStream(movieNumber: 'ABP-404')
-          .toList();
+      final updates =
+          await moviesApi
+              .searchOnlineMoviesStream(movieNumber: 'ABP-404')
+              .toList();
 
       expect(updates.last.success, isFalse);
       expect(updates.last.reason, 'movie_not_found');
@@ -652,9 +659,10 @@ void main() {
       ],
     );
 
-    final updates = await moviesApi
-        .searchOnlineMoviesStream(movieNumber: 'ABP-123')
-        .toList();
+    final updates =
+        await moviesApi
+            .searchOnlineMoviesStream(movieNumber: 'ABP-123')
+            .toList();
 
     expect(updates.single.results.single.movieNumber, 'ABP-123');
   });
@@ -1849,54 +1857,48 @@ void main() {
     );
   });
 
-  test(
-    'batchUnsubscribeMovies posts to unsubscriptions endpoint and parses '
-    'has_media skip reason',
-    () async {
-      adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/unsubscriptions',
-        statusCode: 200,
-        body: <String, dynamic>{
-          'requested_count': 3,
-          'updated_count': 1,
-          'skipped_count': 2,
-          'skipped': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'movie_number': 'ABP-124',
-              'reason': 'has_media',
-            },
-            <String, dynamic>{
-              'movie_number': 'NOT-EXIST-999',
-              'reason': 'movie_not_found',
-            },
-          ],
-        },
-      );
+  test('batchUnsubscribeMovies posts to unsubscriptions endpoint and parses '
+      'has_media skip reason', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/movies/unsubscriptions',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'requested_count': 3,
+        'updated_count': 1,
+        'skipped_count': 2,
+        'skipped': <Map<String, dynamic>>[
+          <String, dynamic>{'movie_number': 'ABP-124', 'reason': 'has_media'},
+          <String, dynamic>{
+            'movie_number': 'NOT-EXIST-999',
+            'reason': 'movie_not_found',
+          },
+        ],
+      },
+    );
 
-      final result = await moviesApi.batchUnsubscribeMovies(
-        movieNumbers: const <String>['ABC-001', 'ABP-124', 'NOT-EXIST-999'],
-      );
+    final result = await moviesApi.batchUnsubscribeMovies(
+      movieNumbers: const <String>['ABC-001', 'ABP-124', 'NOT-EXIST-999'],
+    );
 
-      final request = adapter.requests.single;
-      expect(request.method, 'POST');
-      expect(request.path, '/movies/unsubscriptions');
-      expect(request.body, <String, dynamic>{
-        'movie_numbers': <String>['ABC-001', 'ABP-124', 'NOT-EXIST-999'],
-      });
-      expect(result.updatedCount, 1);
-      expect(
-        result.movieNumbersSkippedBecause(MovieSubscriptionSkipReason.hasMedia),
-        <String>['ABP-124'],
-      );
-      expect(
-        result.movieNumbersSkippedBecause(
-          MovieSubscriptionSkipReason.movieNotFound,
-        ),
-        <String>['NOT-EXIST-999'],
-      );
-    },
-  );
+    final request = adapter.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '/movies/unsubscriptions');
+    expect(request.body, <String, dynamic>{
+      'movie_numbers': <String>['ABC-001', 'ABP-124', 'NOT-EXIST-999'],
+    });
+    expect(result.updatedCount, 1);
+    expect(
+      result.movieNumbersSkippedBecause(MovieSubscriptionSkipReason.hasMedia),
+      <String>['ABP-124'],
+    );
+    expect(
+      result.movieNumbersSkippedBecause(
+        MovieSubscriptionSkipReason.movieNotFound,
+      ),
+      <String>['NOT-EXIST-999'],
+    );
+  });
 
   test('unsubscribeMovie preserves backend ApiException payload', () async {
     adapter.enqueueJson(

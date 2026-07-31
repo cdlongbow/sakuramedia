@@ -65,9 +65,10 @@ void main() {
       ),
     );
 
-    final containers = tester
-        .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
-        .toList();
+    final containers =
+        tester
+            .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
+            .toList();
     final mutedDecoration = containers.first.decoration! as BoxDecoration;
     final selectedDecoration = containers.last.decoration! as BoxDecoration;
 
@@ -103,9 +104,10 @@ void main() {
       ),
     );
 
-    final containers = tester
-        .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
-        .toList();
+    final containers =
+        tester
+            .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
+            .toList();
     final labels = tester.widgetList<Text>(find.byType(Text)).toList();
 
     expect(

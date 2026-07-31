@@ -231,9 +231,7 @@ void main() {
   group('buildAdvancedConfigSaveSuccessMessage', () {
     test('returns default message when pending_restart is empty', () {
       expect(
-        buildAdvancedConfigSaveSuccessMessage(
-          const <PendingRestartFieldDto>[],
-        ),
+        buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[]),
         '已保存',
       );
     });
@@ -248,39 +246,42 @@ void main() {
     });
 
     test(
-        'reports container restart when only scheduler-scope fields pending',
-        () {
-      expect(
-        buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[
-          PendingRestartFieldDto(
-            field: 'scheduler.movie_heat_cron',
-            restart: 'scheduler',
-          ),
-          PendingRestartFieldDto(
-            field: 'scheduler.ranking_sync_cron',
-            restart: 'scheduler',
-          ),
-        ]),
-        '已保存，需重启容器才生效',
-      );
-    });
+      'reports container restart when only scheduler-scope fields pending',
+      () {
+        expect(
+          buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[
+            PendingRestartFieldDto(
+              field: 'scheduler.movie_heat_cron',
+              restart: 'scheduler',
+            ),
+            PendingRestartFieldDto(
+              field: 'scheduler.ranking_sync_cron',
+              restart: 'scheduler',
+            ),
+          ]),
+          '已保存，需重启容器才生效',
+        );
+      },
+    );
 
-    test('collapses both restart kinds into a single container-restart notice',
-        () {
-      // 对用户而言 api / scheduler 都是同一个容器，同一次「其他」卡改动里出现
-      // logging(api) + downloads(scheduler) 两种 restart 时不需要区分，只提示
-      // 一次「重启容器」即可。
-      expect(
-        buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[
-          PendingRestartFieldDto(field: 'logging.level', restart: 'api'),
-          PendingRestartFieldDto(
-            field: 'downloads.small_file_cleanup_threshold_mb',
-            restart: 'scheduler',
-          ),
-        ]),
-        '已保存，需重启容器才生效',
-      );
-    });
+    test(
+      'collapses both restart kinds into a single container-restart notice',
+      () {
+        // 对用户而言 api / scheduler 都是同一个容器，同一次「其他」卡改动里出现
+        // logging(api) + downloads(scheduler) 两种 restart 时不需要区分，只提示
+        // 一次「重启容器」即可。
+        expect(
+          buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[
+            PendingRestartFieldDto(field: 'logging.level', restart: 'api'),
+            PendingRestartFieldDto(
+              field: 'downloads.small_file_cleanup_threshold_mb',
+              restart: 'scheduler',
+            ),
+          ]),
+          '已保存，需重启容器才生效',
+        );
+      },
+    );
   });
 }
 

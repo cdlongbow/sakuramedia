@@ -76,8 +76,7 @@ void main() {
     expect(recorded.uri.queryParameters.containsKey('person_id'), isFalse);
   });
 
-  test('getVideoDetail 复用 MovieMediaItemDto 解析 media_items（含进度与时刻）',
-      () async {
+  test('getVideoDetail 复用 MovieMediaItemDto 解析 media_items（含进度与时刻）', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/videos/7',

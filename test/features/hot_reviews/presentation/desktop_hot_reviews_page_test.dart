@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -159,15 +160,18 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const OKToast(
-            child: Scaffold(body: MobileOverviewHotReviewsTab()),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+          ],
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const OKToast(
+              child: Scaffold(body: MobileOverviewHotReviewsTab()),
+            ),
           ),
         ),
       ),
@@ -193,15 +197,18 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData.copyWith(platform: TargetPlatform.iOS),
-          home: const OKToast(
-            child: Scaffold(body: MobileOverviewHotReviewsTab()),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+          ],
+          child: MaterialApp(
+            theme: sakuraThemeData.copyWith(platform: TargetPlatform.iOS),
+            home: const OKToast(
+              child: Scaffold(body: MobileOverviewHotReviewsTab()),
+            ),
           ),
         ),
       ),
@@ -227,15 +234,18 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-          ],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const OKToast(
-              child: Scaffold(body: MobileOverviewHotReviewsTab()),
+        ProviderScope(
+          overrides: bundle.riverpodOverrides(),
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+              Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+            ],
+            child: MaterialApp(
+              theme: sakuraThemeData,
+              home: const OKToast(
+                child: Scaffold(body: MobileOverviewHotReviewsTab()),
+              ),
             ),
           ),
         ),
@@ -246,9 +256,9 @@ void main() {
       final triggerFinder = find.byKey(const Key('hot-reviews-filter-trigger'));
       expect(triggerFinder, findsOneWidget);
       expect(
-        tester.widget<AppFilterEntryButton>(
-          find.byType(AppFilterEntryButton),
-        ).label,
+        tester
+            .widget<AppFilterEntryButton>(find.byType(AppFilterEntryButton))
+            .label,
         '本周',
       );
 
@@ -289,15 +299,18 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const OKToast(
-            child: Scaffold(body: MobileOverviewHotReviewsTab()),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+            Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+          ],
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const OKToast(
+              child: Scaffold(body: MobileOverviewHotReviewsTab()),
+            ),
           ),
         ),
       ),
@@ -513,15 +526,18 @@ void main() {
       addTearDown(router.dispose);
 
       await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-          ],
-          child: OKToast(
-            child: MaterialApp.router(
-              theme: sakuraThemeData,
-              routerConfig: router,
+        ProviderScope(
+          overrides: bundle.riverpodOverrides(),
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+              Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+            ],
+            child: OKToast(
+              child: MaterialApp.router(
+                theme: sakuraThemeData,
+                routerConfig: router,
+              ),
             ),
           ),
         ),
@@ -625,15 +641,18 @@ Future<void> _pumpHotReviewsPage(
   required TestApiBundle bundle,
 }) {
   return tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: DesktopHotReviewsPage()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopHotReviewsPage()),
+          ),
         ),
       ),
     ),

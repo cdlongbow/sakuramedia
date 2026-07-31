@@ -161,9 +161,11 @@ void main() {
       body: <String, dynamic>{'updated_count': 3, 'unread_count': 5},
     );
 
-    final result = await bundle.activityApi.markNotificationsRead(
-      <int>[1, 2, 3],
-    );
+    final result = await bundle.activityApi.markNotificationsRead(<int>[
+      1,
+      2,
+      3,
+    ]);
 
     expect(result.updatedCount, 3);
     expect(result.unreadCount, 5);
@@ -288,48 +290,45 @@ void main() {
     expect(bundle.adapter.hitCount('POST', '/system/jobs/ranking_sync/run'), 1);
   });
 
-  test(
-    'applyResourceTaskAction posts resource ids and maps result',
-    () async {
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/system/resource-task-actions',
-        body: <String, dynamic>{
-          'task_key': 'media_thumbnail_generation',
-          'action': 'reset_retry_budget',
-          'task_run_id': null,
-          'accepted_resource_ids': <int>[101, 202],
-          'skipped': <Map<String, dynamic>>[
-            <String, dynamic>{'resource_id': 303, 'reason': 'media_invalid'},
-          ],
-        },
-      );
-
-      final result = await bundle.activityApi.applyResourceTaskAction(
-        taskKey: 'media_thumbnail_generation',
-        action: 'reset_retry_budget',
-        resourceIds: <int>[101, 202, 303],
-      );
-
-      expect(result.taskKey, 'media_thumbnail_generation');
-      expect(result.action, 'reset_retry_budget');
-      expect(result.taskRunId, isNull);
-      expect(result.acceptedResourceIds, <int>[101, 202]);
-      expect(result.acceptedCount, 2);
-      expect(result.skippedCount, 1);
-      expect(result.skipped.single.resourceId, 303);
-      expect(result.skipped.single.reasonLabel, '媒体已失效');
-
-      final request = bundle.adapter.requests.single;
-      expect(request.method.toUpperCase(), 'POST');
-      expect(request.path, '/system/resource-task-actions');
-      expect(request.body, <String, dynamic>{
+  test('applyResourceTaskAction posts resource ids and maps result', () async {
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/system/resource-task-actions',
+      body: <String, dynamic>{
         'task_key': 'media_thumbnail_generation',
         'action': 'reset_retry_budget',
-        'resource_ids': <int>[101, 202, 303],
-      });
-    },
-  );
+        'task_run_id': null,
+        'accepted_resource_ids': <int>[101, 202],
+        'skipped': <Map<String, dynamic>>[
+          <String, dynamic>{'resource_id': 303, 'reason': 'media_invalid'},
+        ],
+      },
+    );
+
+    final result = await bundle.activityApi.applyResourceTaskAction(
+      taskKey: 'media_thumbnail_generation',
+      action: 'reset_retry_budget',
+      resourceIds: <int>[101, 202, 303],
+    );
+
+    expect(result.taskKey, 'media_thumbnail_generation');
+    expect(result.action, 'reset_retry_budget');
+    expect(result.taskRunId, isNull);
+    expect(result.acceptedResourceIds, <int>[101, 202]);
+    expect(result.acceptedCount, 2);
+    expect(result.skippedCount, 1);
+    expect(result.skipped.single.resourceId, 303);
+    expect(result.skipped.single.reasonLabel, '媒体已失效');
+
+    final request = bundle.adapter.requests.single;
+    expect(request.method.toUpperCase(), 'POST');
+    expect(request.path, '/system/resource-task-actions');
+    expect(request.body, <String, dynamic>{
+      'task_key': 'media_thumbnail_generation',
+      'action': 'reset_retry_budget',
+      'resource_ids': <int>[101, 202, 303],
+    });
+  });
 
   test(
     'applyResourceTaskAction omits resource ids and scopes by state',

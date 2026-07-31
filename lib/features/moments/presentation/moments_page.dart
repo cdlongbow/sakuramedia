@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_filter_sections.dart';
 import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -27,16 +27,16 @@ import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart'
 
 enum MomentsPagePlatform { desktop, mobile }
 
-class MomentsPage extends StatefulWidget {
+class MomentsPage extends ConsumerStatefulWidget {
   const MomentsPage({super.key, required this.platform});
 
   final MomentsPagePlatform platform;
 
   @override
-  State<MomentsPage> createState() => _MomentsPageState();
+  ConsumerState<MomentsPage> createState() => _MomentsPageState();
 }
 
-class _MomentsPageState extends State<MomentsPage> {
+class _MomentsPageState extends ConsumerState<MomentsPage> {
   late final PagedMomentController _controller;
 
   bool get _isMobile => widget.platform == MomentsPagePlatform.mobile;
@@ -48,8 +48,9 @@ class _MomentsPageState extends State<MomentsPage> {
     super.initState();
     _controller = PagedMomentController(
       fetchPage:
-          (page, pageSize, sort, kind) =>
-              context.read<MediaApi>().getGlobalMediaPoints(
+          (page, pageSize, sort, kind) => ref
+              .read(mediaApiProvider)
+              .getGlobalMediaPoints(
                 page: page,
                 pageSize: pageSize,
                 sort: sort,
@@ -78,9 +79,7 @@ class _MomentsPageState extends State<MomentsPage> {
             (_controller.isLoadingMore ||
                 _controller.loadMoreErrorMessage != null);
         return SliverMainAxisGroup(
-          key: Key(
-            _isMobile ? 'mobile-overview-moments-tab' : 'moments-page',
-          ),
+          key: Key(_isMobile ? 'mobile-overview-moments-tab' : 'moments-page'),
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -113,17 +112,18 @@ class _MomentsPageState extends State<MomentsPage> {
       onRefresh: _handleRefresh,
       child: ColoredBox(
         color: context.appColors.surfaceCard,
-        child: _isMobile
-            ? AppAdaptiveRefreshScrollView(
-                onRefresh: _handleRefresh,
-                controller: _controller.scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
-              )
-            : CustomScrollView(
-                controller: _controller.scrollController,
-                slivers: <Widget>[sliver],
-              ),
+        child:
+            _isMobile
+                ? AppAdaptiveRefreshScrollView(
+                  onRefresh: _handleRefresh,
+                  controller: _controller.scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: <Widget>[sliver],
+                )
+                : CustomScrollView(
+                  controller: _controller.scrollController,
+                  slivers: <Widget>[sliver],
+                ),
       ),
     );
   }

@@ -109,10 +109,7 @@ void main() {
           )
           .first,
     );
-    expect(
-      (container.decoration! as BoxDecoration).color,
-      colors.surfaceMuted,
-    );
+    expect((container.decoration! as BoxDecoration).color, colors.surfaceMuted);
   });
 
   testWidgets('筛选入口带摘要时显示摘要与下拉箭头', (tester) async {

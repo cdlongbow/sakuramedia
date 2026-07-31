@@ -1,24 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_app.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
-import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
-class MobileExternalPlayerSettingsPage extends StatefulWidget {
+class MobileExternalPlayerSettingsPage extends ConsumerStatefulWidget {
   const MobileExternalPlayerSettingsPage({super.key});
 
   @override
-  State<MobileExternalPlayerSettingsPage> createState() =>
+  ConsumerState<MobileExternalPlayerSettingsPage> createState() =>
       _MobileExternalPlayerSettingsPageState();
 }
 
 class _MobileExternalPlayerSettingsPageState
-    extends State<MobileExternalPlayerSettingsPage> {
+    extends ConsumerState<MobileExternalPlayerSettingsPage> {
   List<ExternalPlayerApp> _players = const <ExternalPlayerApp>[];
   bool _isLoading = true;
 
@@ -33,7 +33,7 @@ class _MobileExternalPlayerSettingsPageState
       _isLoading = true;
     });
     const channel = ExternalPlayerChannel();
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     final players = await channel.listPlayers(
       sampleUrl: baseUrl.isNotEmpty ? baseUrl : null,
     );
@@ -47,20 +47,22 @@ class _MobileExternalPlayerSettingsPageState
   }
 
   Future<void> _selectInApp() async {
-    await context.read<ExternalPlayerStore>().useInAppPlayer();
+    await ref.read(externalPlayerStoreProvider).useInAppPlayer();
   }
 
   Future<void> _selectPlayer(ExternalPlayerApp player) async {
-    await context.read<ExternalPlayerStore>().selectExternalPlayer(
-      packageName: player.packageName,
-      label: player.label,
-    );
+    await ref
+        .read(externalPlayerStoreProvider)
+        .selectExternalPlayer(
+          packageName: player.packageName,
+          label: player.label,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final store = context.watch<ExternalPlayerStore>();
+    final store = ref.watch(externalPlayerStoreProvider);
     final selectedPackage = store.packageName;
 
     final cells = <Widget>[
@@ -69,8 +71,7 @@ class _MobileExternalPlayerSettingsPageState
         icon: Icons.phonelink_ring_outlined,
         title: '应用内播放器',
         subtitle: '使用樱视内置播放器',
-        trailing:
-            selectedPackage == null ? const _SelectionCheckMark() : null,
+        trailing: selectedPackage == null ? const _SelectionCheckMark() : null,
         onTap: () => unawaited(_selectInApp()),
       ),
       for (final player in _players)
@@ -78,9 +79,10 @@ class _MobileExternalPlayerSettingsPageState
           key: Key('mobile-external-player-${player.packageName}'),
           icon: Icons.ondemand_video_outlined,
           title: player.label,
-          trailing: selectedPackage == player.packageName
-              ? const _SelectionCheckMark()
-              : null,
+          trailing:
+              selectedPackage == player.packageName
+                  ? const _SelectionCheckMark()
+                  : null,
           onTap: () => unawaited(_selectPlayer(player)),
         ),
       if (_isLoading)

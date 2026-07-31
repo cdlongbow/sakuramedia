@@ -25,7 +25,7 @@ class DiagnosticCategoryCard extends StatelessWidget {
   /// `DownloadClientTestResultDialog` / `DownloadClientStorageTestResultDialog`。
   /// 其它 kind 返回 null 即可。
   final DiagnosticItemDetailAction? Function(DiagnosticItemState item)?
-      itemDetailBuilder;
+  itemDetailBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +80,10 @@ class DiagnosticCategoryCard extends StatelessWidget {
       case DiagnosticItemStatus.warning:
         return '存在告警';
       case DiagnosticItemStatus.unhealthy:
-        final count = category.items
-            .where((i) => i.status == DiagnosticItemStatus.unhealthy)
-            .length;
+        final count =
+            category.items
+                .where((i) => i.status == DiagnosticItemStatus.unhealthy)
+                .length;
         return '$count 项异常';
       case DiagnosticItemStatus.probing:
         return '检测中';

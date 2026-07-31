@@ -83,43 +83,44 @@ void main() {
         .refreshBatch(42);
 
     expect(detail.id, 42);
-    final state =
-        container.read(mediaRapidUploadHistoryProvider).requireValue;
+    final state = container.read(mediaRapidUploadHistoryProvider).requireValue;
     expect(state.items.first.id, 42);
     expect(state.items, hasLength(2));
     expect(state.total, 2);
   });
 
-  test('refreshBatch upserts existing batch by id without changing total',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media/rapid-uploads',
-      body: <String, dynamic>{
-        'items': [_batchJson(id: 1, state: 'running', total: 3, ok: 0)],
-        'page': 1,
-        'page_size': 20,
-        'total': 1,
-      },
-    );
-    await container.read(mediaRapidUploadHistoryProvider.future);
+  test(
+    'refreshBatch upserts existing batch by id without changing total',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media/rapid-uploads',
+        body: <String, dynamic>{
+          'items': [_batchJson(id: 1, state: 'running', total: 3, ok: 0)],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      );
+      await container.read(mediaRapidUploadHistoryProvider.future);
 
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media/rapid-uploads/1',
-      body: _batchWithItemsJson(id: 1, state: 'completed', total: 3, ok: 3),
-    );
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media/rapid-uploads/1',
+        body: _batchWithItemsJson(id: 1, state: 'completed', total: 3, ok: 3),
+      );
 
-    await container
-        .read(mediaRapidUploadHistoryProvider.notifier)
-        .refreshBatch(1);
+      await container
+          .read(mediaRapidUploadHistoryProvider.notifier)
+          .refreshBatch(1);
 
-    final state =
-        container.read(mediaRapidUploadHistoryProvider).requireValue;
-    expect(state.items, hasLength(1));
-    expect(state.items.single.state, MediaRapidUploadBatchState.completed);
-    expect(state.total, 1);
-  });
+      final state =
+          container.read(mediaRapidUploadHistoryProvider).requireValue;
+      expect(state.items, hasLength(1));
+      expect(state.items.single.state, MediaRapidUploadBatchState.completed);
+      expect(state.total, 1);
+    },
+  );
 }
 
 Map<String, dynamic> _batchJson({

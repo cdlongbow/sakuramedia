@@ -79,9 +79,7 @@ void main() {
 
     test('defaults to cloud115 when no local media', () {
       final options = resolveMoviePlaybackSourceOptions(
-        mediaItems: <MovieMediaItemDto>[
-          media(mediaId: 3, libraryId: 2),
-        ],
+        mediaItems: <MovieMediaItemDto>[media(mediaId: 3, libraryId: 2)],
         storageDescriptors: storageDescriptors,
       );
 
@@ -129,9 +127,7 @@ void main() {
     test('returns null when source has no media', () {
       expect(
         resolveFirstPlayableMediaId(
-          mediaItems: <MovieMediaItemDto>[
-            media(mediaId: 1, libraryId: 1),
-          ],
+          mediaItems: <MovieMediaItemDto>[media(mediaId: 1, libraryId: 1)],
           storageDescriptors: storageDescriptors,
           source: MoviePlayUrlSource.cloud115,
         ),
@@ -161,11 +157,11 @@ void main() {
       );
 
       expect(find.byKey(const Key('movie-playback-options-bar')), findsNothing);
-      expect(find.byKey(const Key('movie-playback-source-local')), findsNothing);
       expect(
-        find.byKey(const Key('movie-playback-mode-merged')),
+        find.byKey(const Key('movie-playback-source-local')),
         findsNothing,
       );
+      expect(find.byKey(const Key('movie-playback-mode-merged')), findsNothing);
     });
 
     testWidgets('shows source pills when both sources present', (

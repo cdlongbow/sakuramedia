@@ -69,8 +69,10 @@ void main() {
     final state = container.read(invalidMediaProvider).requireValue;
     // Provider 用它自己的 pageSize（20）拼参数，但 fake 只关心命中；后端返回 total=2
     // → 加载后 items 累加 2 条。
-    expect(state.paged.items.map((item) => item.movieNumber),
-        ['ABC-001', 'ABC-002']);
+    expect(state.paged.items.map((item) => item.movieNumber), [
+      'ABC-001',
+      'ABC-002',
+    ]);
     expect(state.paged.total, 2);
     expect(state.paged.hasMore, isFalse);
   });
@@ -182,38 +184,40 @@ void main() {
     expect(adapter.hitCount('DELETE', '/media/1'), 0);
   });
 
-  test('deleteInvalidMedia removes checked invalid item after API succeeds',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media/invalid',
-      body: _invalidMediaPage(
-        total: 1,
-        items: [_invalidMediaJson(id: 1, movieNumber: 'ABC-001')],
-      ),
-    );
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/media/1/validity-check',
-      body: _validityResultJson(id: 1, revived: false, validAfter: false),
-    );
-    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+  test(
+    'deleteInvalidMedia removes checked invalid item after API succeeds',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media/invalid',
+        body: _invalidMediaPage(
+          total: 1,
+          items: [_invalidMediaJson(id: 1, movieNumber: 'ABC-001')],
+        ),
+      );
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/media/1/validity-check',
+        body: _validityResultJson(id: 1, revived: false, validAfter: false),
+      );
+      adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
 
-    await container.read(invalidMediaProvider.future);
-    await container
-        .read(invalidMediaProvider.notifier)
-        .checkValidity(mediaId: 1);
-    await container
-        .read(invalidMediaProvider.notifier)
-        .deleteInvalidMedia(mediaId: 1);
+      await container.read(invalidMediaProvider.future);
+      await container
+          .read(invalidMediaProvider.notifier)
+          .checkValidity(mediaId: 1);
+      await container
+          .read(invalidMediaProvider.notifier)
+          .deleteInvalidMedia(mediaId: 1);
 
-    final state = container.read(invalidMediaProvider).requireValue;
-    expect(state.paged.items, isEmpty);
-    expect(state.paged.total, 0);
-    expect(state.deletingMediaId, isNull);
-    expect(state.canDeleteMedia(1), isFalse);
-    expect(adapter.hitCount('DELETE', '/media/1'), 1);
-  });
+      final state = container.read(invalidMediaProvider).requireValue;
+      expect(state.paged.items, isEmpty);
+      expect(state.paged.total, 0);
+      expect(state.deletingMediaId, isNull);
+      expect(state.canDeleteMedia(1), isFalse);
+      expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    },
+  );
 }
 
 Map<String, dynamic> _invalidMediaPage({

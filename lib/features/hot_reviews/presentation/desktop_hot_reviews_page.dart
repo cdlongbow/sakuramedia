@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/synced_at_label.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_review_list_item_dto.dart';
-import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
+import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/hot_review_filter_sections.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/paged_hot_review_controller.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -25,7 +25,7 @@ typedef HotReviewMovieOpenHandler =
     void Function(BuildContext context, HotReviewListItemDto item);
 const double _hotReviewCardHeight = 150;
 
-class DesktopHotReviewsPage extends StatefulWidget {
+class DesktopHotReviewsPage extends ConsumerStatefulWidget {
   const DesktopHotReviewsPage({
     super.key,
     this.onOpenMovieDetail,
@@ -51,10 +51,11 @@ class DesktopHotReviewsPage extends StatefulWidget {
   final bool useMobileFilterDrawer;
 
   @override
-  State<DesktopHotReviewsPage> createState() => _DesktopHotReviewsPageState();
+  ConsumerState<DesktopHotReviewsPage> createState() =>
+      _DesktopHotReviewsPageState();
 }
 
-class _DesktopHotReviewsPageState extends State<DesktopHotReviewsPage> {
+class _DesktopHotReviewsPageState extends ConsumerState<DesktopHotReviewsPage> {
   late final PagedHotReviewController _controller;
 
   @override
@@ -62,8 +63,8 @@ class _DesktopHotReviewsPageState extends State<DesktopHotReviewsPage> {
     super.initState();
     _controller = PagedHotReviewController(
       fetchPage:
-          (page, pageSize, period) => context
-              .read<HotReviewsApi>()
+          (page, pageSize, period) => ref
+              .read(hotReviewsApiProvider)
               .getHotReviews(period: period, page: page, pageSize: pageSize),
       pageSize: 20,
       loadMoreTriggerOffset: 300,
@@ -298,7 +299,6 @@ class _HotReviewSliver extends StatelessWidget {
     );
   }
 }
-
 
 class _HotReviewCard extends StatelessWidget {
   const _HotReviewCard({required this.item, this.onTap});

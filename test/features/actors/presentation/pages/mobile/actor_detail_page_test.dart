@@ -96,9 +96,7 @@ void main() {
     expect(find.text('2024(2)'), findsOneWidget);
   });
 
-  testWidgets('多选走移动布局：顶栏只留计数/全选，批量动作在底部条且不溢出', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('多选走移动布局：顶栏只留计数/全选，批量动作在底部条且不溢出', (WidgetTester tester) async {
     // 移动壳 body 左右各留 AppPageInsets.compact(8)，390 屏的可用宽是 374。
     // 桌面式一行 toolbar 在这个宽度下会 RenderFlex 溢出，故必须走移动布局。
     tester.view.devicePixelRatio = 1;
@@ -119,9 +117,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.longPress(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-    );
+    await tester.longPress(find.byKey(const Key('movie-summary-card-ABC-001')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('选择'));
     await tester.pumpAndSettle();

@@ -32,7 +32,10 @@ void main() {
     expect(find.text('已选 2 部'), findsOneWidget);
     // 批量动作已下沉到底部条，顶栏不得再出现。
     expect(find.byKey(const Key('test-batch-subscribe-button')), findsNothing);
-    expect(find.byKey(const Key('test-batch-unsubscribe-button')), findsNothing);
+    expect(
+      find.byKey(const Key('test-batch-unsubscribe-button')),
+      findsNothing,
+    );
   });
 
   testWidgets('移动多选底部条区分订阅与取消订阅的视觉层级', (tester) async {

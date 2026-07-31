@@ -93,14 +93,16 @@ void main() {
       episodeCount: 4,
       frameLoader: (episodeIndex) async {
         loadOrder.add(episodeIndex);
-        return <({
-          int offsetSeconds,
-          MovieImageDto image,
-          int mediaId,
-          int thumbnailId,
-          int? width,
-          int? height,
-        })>[
+        return <
+          ({
+            int offsetSeconds,
+            MovieImageDto image,
+            int mediaId,
+            int thumbnailId,
+            int? width,
+            int? height,
+          })
+        >[
           (
             offsetSeconds: 0,
             image: _img(episodeIndex),

@@ -27,10 +27,7 @@ void main() {
       MaterialApp(
         theme: sakuraThemeData,
         home: const Scaffold(
-          body: AppEmptyState(
-            message: '加载失败',
-            icon: Icons.error_outline,
-          ),
+          body: AppEmptyState(message: '加载失败', icon: Icons.error_outline),
         ),
       ),
     );
@@ -72,10 +69,7 @@ void main() {
       MaterialApp(
         theme: sakuraThemeData,
         home: const Scaffold(
-          body: AppEmptyState(
-            title: '缩略图加载失败',
-            message: '网络异常,请重试',
-          ),
+          body: AppEmptyState(title: '缩略图加载失败', message: '网络异常,请重试'),
         ),
       ),
     );

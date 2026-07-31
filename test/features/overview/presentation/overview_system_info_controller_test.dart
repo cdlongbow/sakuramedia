@@ -40,21 +40,20 @@ void main() {
     apiClient.dispose();
   });
 
-  test('initial load and refresh do not probe cloud115 authentication',
-      () async {
-    _enqueueOverviewStatus(adapter);
-    _enqueueOverviewStatus(adapter);
+  test(
+    'initial load and refresh do not probe cloud115 authentication',
+    () async {
+      _enqueueOverviewStatus(adapter);
+      _enqueueOverviewStatus(adapter);
 
-    await controller.load();
-    await controller.refresh();
+      await controller.load();
+      await controller.refresh();
 
-    expect(
-      adapter.hitCount('GET', '/status/media-libraries/cloud115'),
-      0,
-    );
-    expect(controller.cloud115CookiesStatus, isNull);
-    expect(controller.cloud115AuthenticationRequestFailed, isFalse);
-  });
+      expect(adapter.hitCount('GET', '/status/media-libraries/cloud115'), 0);
+      expect(controller.cloud115CookiesStatus, isNull);
+      expect(controller.cloud115AuthenticationRequestFailed, isFalse);
+    },
+  );
 
   test('manual cloud115 authentication probe stores summary', () async {
     adapter.enqueueJson(
@@ -72,56 +71,57 @@ void main() {
     expect(controller.cloud115CookiesStatus?.summary.unavailable, 1);
   });
 
-  test('manual cloud115 authentication probe exposes request failure',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/status/media-libraries/cloud115',
-      statusCode: 500,
-      body: <String, dynamic>{
-        'error': <String, dynamic>{
-          'code': 'server_error',
-          'message': 'server error',
+  test(
+    'manual cloud115 authentication probe exposes request failure',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/status/media-libraries/cloud115',
+        statusCode: 500,
+        body: <String, dynamic>{
+          'error': <String, dynamic>{
+            'code': 'server_error',
+            'message': 'server error',
+          },
         },
-      },
-    );
+      );
 
-    await controller.testCloud115Authentication();
+      await controller.testCloud115Authentication();
 
-    expect(controller.isTestingCloud115Authentication, isFalse);
-    expect(controller.cloud115AuthenticationRequestFailed, isTrue);
-    expect(controller.cloud115CookiesStatus, isNull);
-  });
+      expect(controller.isTestingCloud115Authentication, isFalse);
+      expect(controller.cloud115AuthenticationRequestFailed, isTrue);
+      expect(controller.cloud115CookiesStatus, isNull);
+    },
+  );
 
-  test('duplicate cloud115 probe is ignored while request is running',
-      () async {
-    final release = Completer<void>();
-    adapter.enqueueResponder(
-      method: 'GET',
-      path: '/status/media-libraries/cloud115',
-      responder: (RequestOptions _, dynamic __) async {
-        await release.future;
-        return _jsonResponse(_cloud115StatusJson(alive: 1));
-      },
-    );
+  test(
+    'duplicate cloud115 probe is ignored while request is running',
+    () async {
+      final release = Completer<void>();
+      adapter.enqueueResponder(
+        method: 'GET',
+        path: '/status/media-libraries/cloud115',
+        responder: (RequestOptions _, dynamic __) async {
+          await release.future;
+          return _jsonResponse(_cloud115StatusJson(alive: 1));
+        },
+      );
 
-    final firstProbe = controller.testCloud115Authentication();
-    await _waitForRequest(
-      adapter,
-      method: 'GET',
-      path: '/status/media-libraries/cloud115',
-    );
-    await controller.testCloud115Authentication();
+      final firstProbe = controller.testCloud115Authentication();
+      await _waitForRequest(
+        adapter,
+        method: 'GET',
+        path: '/status/media-libraries/cloud115',
+      );
+      await controller.testCloud115Authentication();
 
-    expect(controller.isTestingCloud115Authentication, isTrue);
-    expect(
-      adapter.hitCount('GET', '/status/media-libraries/cloud115'),
-      1,
-    );
+      expect(controller.isTestingCloud115Authentication, isTrue);
+      expect(adapter.hitCount('GET', '/status/media-libraries/cloud115'), 1);
 
-    release.complete();
-    await firstProbe;
-  });
+      release.complete();
+      await firstProbe;
+    },
+  );
 
   test('cloud115 and metadata provider probes run independently', () async {
     final releaseCloud115 = Completer<void>();

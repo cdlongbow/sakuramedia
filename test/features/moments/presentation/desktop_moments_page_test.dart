@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -168,17 +169,23 @@ Future<void> _pumpMomentsApp(
   );
 
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<ApiClient>.value(value: bundle.apiClient),
-        Provider<MoviesApi>.value(value: bundle.moviesApi),
-        Provider<MediaApi>(
-          create: (_) => MediaApi(apiClient: bundle.apiClient),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          Provider<ApiClient>.value(value: bundle.apiClient),
+          Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaApi>(
+            create: (_) => MediaApi(apiClient: bundle.apiClient),
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+          ),
         ),
-      ],
-      child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

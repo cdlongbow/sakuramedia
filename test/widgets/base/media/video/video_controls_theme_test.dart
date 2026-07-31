@@ -40,19 +40,21 @@ void main() {
       expect(themeData.seekOnDoubleTap, isTrue);
     });
 
-    test('mobile controls theme keeps progress visible while seek is disabled',
-        () {
-      final themeData = buildMoviePlayerMobileControlsThemeData(
-        theme: ThemeData.light(),
-        topControls: const <Widget>[],
-        bottomControls: const <Widget>[],
-        seekEnabled: false,
-      );
+    test(
+      'mobile controls theme keeps progress visible while seek is disabled',
+      () {
+        final themeData = buildMoviePlayerMobileControlsThemeData(
+          theme: ThemeData.light(),
+          topControls: const <Widget>[],
+          bottomControls: const <Widget>[],
+          seekEnabled: false,
+        );
 
-      expect(themeData.displaySeekBar, isTrue);
-      expect(themeData.seekGesture, isFalse);
-      expect(themeData.seekOnDoubleTap, isFalse);
-    });
+        expect(themeData.displaySeekBar, isTrue);
+        expect(themeData.seekGesture, isFalse);
+        expect(themeData.seekOnDoubleTap, isFalse);
+      },
+    );
 
     test('desktop controls theme keeps the built-in progress bar visible', () {
       final themeData = buildMoviePlayerDesktopControlsThemeData(
@@ -71,20 +73,21 @@ void main() {
         MaterialApp(
           theme: sakuraThemeData,
           home: Builder(
-            builder: (context) => Column(
-              children: [
-                buildMoviePlayerMobileControlsThemeData(
-                  theme: Theme.of(context),
-                  topControls: const <Widget>[],
-                  bottomControls: const <Widget>[],
-                ).bufferingIndicatorBuilder!(context),
-                buildMoviePlayerDesktopControlsThemeData(
-                  theme: Theme.of(context),
-                  topControls: const <Widget>[],
-                  bottomControls: const <Widget>[],
-                ).bufferingIndicatorBuilder!(context),
-              ],
-            ),
+            builder:
+                (context) => Column(
+                  children: [
+                    buildMoviePlayerMobileControlsThemeData(
+                      theme: Theme.of(context),
+                      topControls: const <Widget>[],
+                      bottomControls: const <Widget>[],
+                    ).bufferingIndicatorBuilder!(context),
+                    buildMoviePlayerDesktopControlsThemeData(
+                      theme: Theme.of(context),
+                      topControls: const <Widget>[],
+                      bottomControls: const <Widget>[],
+                    ).bufferingIndicatorBuilder!(context),
+                  ],
+                ),
           ),
         ),
       );

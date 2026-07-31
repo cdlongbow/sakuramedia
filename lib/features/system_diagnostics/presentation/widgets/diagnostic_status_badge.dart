@@ -42,10 +42,7 @@ class DiagnosticStatusBadge extends StatelessWidget {
       case DiagnosticItemStatus.notTested:
         return AppStatusChipPalette.neutral(context);
       case DiagnosticItemStatus.probing:
-        return AppStatusChipPalette.neutral(
-          context,
-          icon: Icons.hourglass_top,
-        );
+        return AppStatusChipPalette.neutral(context, icon: Icons.hourglass_top);
       case DiagnosticItemStatus.healthy:
         return AppStatusChipPalette.success(context);
       case DiagnosticItemStatus.warning:

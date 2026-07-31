@@ -81,8 +81,10 @@ class _CompositeNotifier extends AsyncNotifier<_CompositeState>
   PagedListState<int> pagedOf(_CompositeState state) => state.paged;
 
   @override
-  _CompositeState applyPaged(_CompositeState state, PagedListState<int> paged) =>
-      state.copyWith(paged: paged);
+  _CompositeState applyPaged(
+    _CompositeState state,
+    PagedListState<int> paged,
+  ) => state.copyWith(paged: paged);
 
   @override
   Future<PaginatedResponseDto<int>> fetchPage(int page, int pageSize) =>
@@ -110,9 +112,8 @@ final _compositeProvider =
       retry: (_, __) => null,
     );
 
-ProviderContainer _makeContainer(_Fetcher fetcher) => ProviderContainer(
-  overrides: [_fetcherProvider.overrideWithValue(fetcher)],
-);
+ProviderContainer _makeContainer(_Fetcher fetcher) =>
+    ProviderContainer(overrides: [_fetcherProvider.overrideWithValue(fetcher)]);
 
 PaginatedResponseDto<int> _page({
   required int page,
@@ -164,11 +165,11 @@ void main() {
         loadMoreErrorMessage: 'e',
       );
       expect(s.copyWith().loadMoreErrorMessage, 'e');
-      expect(s.copyWith(loadMoreErrorMessage: null).loadMoreErrorMessage, isNull);
       expect(
-        s.copyWith(loadMoreErrorMessage: 'x').loadMoreErrorMessage,
-        'x',
+        s.copyWith(loadMoreErrorMessage: null).loadMoreErrorMessage,
+        isNull,
       );
+      expect(s.copyWith(loadMoreErrorMessage: 'x').loadMoreErrorMessage, 'x');
     });
 
     test('equality compares items element-wise', () {
@@ -252,22 +253,25 @@ void main() {
       expect(call, 1);
     });
 
-    test('loadMore failure preserves items + sets loadMoreErrorMessage', () async {
-      final container = _makeContainer((page, size) async {
-        if (page == 1) return _page(page: 1, items: [1, 2, 3], total: 6);
-        throw StateError('boom');
-      });
-      addTearDown(container.dispose);
+    test(
+      'loadMore failure preserves items + sets loadMoreErrorMessage',
+      () async {
+        final container = _makeContainer((page, size) async {
+          if (page == 1) return _page(page: 1, items: [1, 2, 3], total: 6);
+          throw StateError('boom');
+        });
+        addTearDown(container.dispose);
 
-      await container.read(_plainProvider.future);
-      await container.read(_plainProvider.notifier).loadMore();
+        await container.read(_plainProvider.future);
+        await container.read(_plainProvider.notifier).loadMore();
 
-      final s = container.read(_plainProvider).requireValue;
-      expect(s.items, [1, 2, 3]);
-      expect(s.loadMoreErrorMessage, 'load-more-err');
-      expect(s.isLoadingMore, isFalse);
-      expect(s.hasMore, isTrue); // items < total
-    });
+        final s = container.read(_plainProvider).requireValue;
+        expect(s.items, [1, 2, 3]);
+        expect(s.loadMoreErrorMessage, 'load-more-err');
+        expect(s.isLoadingMore, isFalse);
+        expect(s.hasMore, isTrue); // items < total
+      },
+    );
 
     test('reload clears items and reloads page 1', () async {
       var version = 0;
@@ -308,85 +312,87 @@ void main() {
       expect(call, 2);
     });
 
-    test('refresh returns null on success and swaps items atomically', () async {
-      var version = 0;
-      final container = _makeContainer((page, size) async {
-        version += 1;
-        return _page(page: 1, items: [version], total: 1);
-      });
-      addTearDown(container.dispose);
-
-      await container.read(_plainProvider.future);
-      final message = await container.read(_plainProvider.notifier).refresh();
-
-      expect(message, isNull);
-      final s = container.read(_plainProvider).requireValue;
-      expect(s.items, [2]);
-    });
-
-    test('refresh returns fallback message on failure and keeps items', () async {
-      final container = _makeContainer((page, size) async {
-        if (page == 1 && !_refreshFailed) {
-          return _page(page: 1, items: [1, 2], total: 2);
-        }
-        throw StateError('boom');
-      });
-      addTearDown(container.dispose);
-
-      await container.read(_plainProvider.future);
-      _refreshFailed = true;
-      final message = await container.read(_plainProvider.notifier).refresh();
-      _refreshFailed = false;
-
-      expect(message, 'initial-err');
-      final s = container.read(_plainProvider).requireValue;
-      expect(s.items, [1, 2]);
-    });
-
     test(
-      'reload during in-flight loadMore discards stale response '
-      '(no items overwrite)',
+      'refresh returns null on success and swaps items atomically',
       () async {
-        // 场景：loadMore 的 page 2 请求还没回来时 reload 触发，
-        // reload 用一份「全新的第一页」覆盖 State；loadMore 的旧响应
-        // 回来后应该识别到「代次已变」直接丢弃，不把旧 items 拼上去。
-        final page2Completer = Completer<PaginatedResponseDto<int>>();
-        var page1Calls = 0;
+        var version = 0;
         final container = _makeContainer((page, size) async {
-          if (page == 1) {
-            page1Calls += 1;
-            if (page1Calls == 1) {
-              return _page(page: 1, items: [1, 2, 3], total: 6);
-            }
-            return _page(page: 1, items: [100, 200, 300], total: 3);
-          }
-          if (page == 2) return page2Completer.future;
-          throw StateError('unexpected page $page');
+          version += 1;
+          return _page(page: 1, items: [version], total: 1);
         });
         addTearDown(container.dispose);
 
         await container.read(_plainProvider.future);
+        final message = await container.read(_plainProvider.notifier).refresh();
 
-        final loadMoreFuture =
-            container.read(_plainProvider.notifier).loadMore();
-        // reload 期间 loadMore 尚未回；reload 用新首页覆盖状态。
-        await container.read(_plainProvider.notifier).reload();
-
-        final reloaded = container.read(_plainProvider).requireValue;
-        expect(reloaded.items, [100, 200, 300]);
-        expect(reloaded.hasMore, isFalse);
-
-        // 触发 loadMore 的旧响应回来——它应当被丢弃。
-        page2Completer.complete(_page(page: 2, items: [4, 5, 6], total: 6));
-        await loadMoreFuture;
-
-        final finalState = container.read(_plainProvider).requireValue;
-        expect(finalState.items, [100, 200, 300]);
-        expect(finalState.currentPage, 1);
-        expect(finalState.total, 3);
-        expect(finalState.isLoadingMore, isFalse);
+        expect(message, isNull);
+        final s = container.read(_plainProvider).requireValue;
+        expect(s.items, [2]);
       },
     );
+
+    test(
+      'refresh returns fallback message on failure and keeps items',
+      () async {
+        final container = _makeContainer((page, size) async {
+          if (page == 1 && !_refreshFailed) {
+            return _page(page: 1, items: [1, 2], total: 2);
+          }
+          throw StateError('boom');
+        });
+        addTearDown(container.dispose);
+
+        await container.read(_plainProvider.future);
+        _refreshFailed = true;
+        final message = await container.read(_plainProvider.notifier).refresh();
+        _refreshFailed = false;
+
+        expect(message, 'initial-err');
+        final s = container.read(_plainProvider).requireValue;
+        expect(s.items, [1, 2]);
+      },
+    );
+
+    test('reload during in-flight loadMore discards stale response '
+        '(no items overwrite)', () async {
+      // 场景：loadMore 的 page 2 请求还没回来时 reload 触发，
+      // reload 用一份「全新的第一页」覆盖 State；loadMore 的旧响应
+      // 回来后应该识别到「代次已变」直接丢弃，不把旧 items 拼上去。
+      final page2Completer = Completer<PaginatedResponseDto<int>>();
+      var page1Calls = 0;
+      final container = _makeContainer((page, size) async {
+        if (page == 1) {
+          page1Calls += 1;
+          if (page1Calls == 1) {
+            return _page(page: 1, items: [1, 2, 3], total: 6);
+          }
+          return _page(page: 1, items: [100, 200, 300], total: 3);
+        }
+        if (page == 2) return page2Completer.future;
+        throw StateError('unexpected page $page');
+      });
+      addTearDown(container.dispose);
+
+      await container.read(_plainProvider.future);
+
+      final loadMoreFuture = container.read(_plainProvider.notifier).loadMore();
+      // reload 期间 loadMore 尚未回；reload 用新首页覆盖状态。
+      await container.read(_plainProvider.notifier).reload();
+
+      final reloaded = container.read(_plainProvider).requireValue;
+      expect(reloaded.items, [100, 200, 300]);
+      expect(reloaded.hasMore, isFalse);
+
+      // 触发 loadMore 的旧响应回来——它应当被丢弃。
+      page2Completer.complete(_page(page: 2, items: [4, 5, 6], total: 6));
+      await loadMoreFuture;
+
+      final finalState = container.read(_plainProvider).requireValue;
+      expect(finalState.items, [100, 200, 300]);
+      expect(finalState.currentPage, 1);
+      expect(finalState.total, 3);
+      expect(finalState.isLoadingMore, isFalse);
+    });
 
     test('dispose during in-flight loadMore does not throw', () async {
       final completer = Completer<PaginatedResponseDto<int>>();
@@ -432,9 +438,9 @@ void main() {
       container.read(_compositeProvider.notifier).toggleSelection(99);
       expect(container.read(_compositeProvider).requireValue.selected, {99});
 
-      await container.read(_compositeProvider.notifier).reload(
-        updateBaseState: (s) => s.copyWith(selected: const <int>{}),
-      );
+      await container
+          .read(_compositeProvider.notifier)
+          .reload(updateBaseState: (s) => s.copyWith(selected: const <int>{}));
 
       final s = container.read(_compositeProvider).requireValue;
       expect(s.selected, isEmpty);

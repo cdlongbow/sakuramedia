@@ -110,50 +110,51 @@ void main() {
       expect(bundle.adapter.requests[2].body.containsKey('password'), isFalse);
     });
 
-    test('cloud115 download client only sends name, kind and media library',
-        () async {
-      final sessionStore = await _buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
+    test(
+      'cloud115 download client only sends name, kind and media library',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
 
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/download-clients',
-        statusCode: 201,
-        body: <String, dynamic>{
-          'id': 8,
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/download-clients',
+          statusCode: 201,
+          body: <String, dynamic>{
+            'id': 8,
+            'name': '115 主账号',
+            'kind': 'cloud115',
+            'base_url': null,
+            'username': null,
+            'client_save_path': null,
+            'local_root_path': null,
+            'media_library_id': 12,
+            'has_password': false,
+            'created_at': '2026-07-15T08:00:00Z',
+            'updated_at': '2026-07-15T08:00:00Z',
+          },
+        );
+
+        final created = await bundle.downloadClientsApi.createClient(
+          const CreateDownloadClientPayload(
+            name: '115 主账号',
+            kind: DownloadClientKind.cloud115,
+            mediaLibraryId: 12,
+          ),
+        );
+
+        expect(created.kind, DownloadClientKind.cloud115);
+        expect(created.baseUrl, isEmpty);
+        expect(bundle.adapter.requests.single.body, <String, dynamic>{
           'name': '115 主账号',
           'kind': 'cloud115',
-          'base_url': null,
-          'username': null,
-          'client_save_path': null,
-          'local_root_path': null,
           'media_library_id': 12,
-          'has_password': false,
-          'created_at': '2026-07-15T08:00:00Z',
-          'updated_at': '2026-07-15T08:00:00Z',
-        },
-      );
+        });
+      },
+    );
 
-      final created = await bundle.downloadClientsApi.createClient(
-        const CreateDownloadClientPayload(
-          name: '115 主账号',
-          kind: DownloadClientKind.cloud115,
-          mediaLibraryId: 12,
-        ),
-      );
-
-      expect(created.kind, DownloadClientKind.cloud115);
-      expect(created.baseUrl, isEmpty);
-      expect(bundle.adapter.requests.single.body, <String, dynamic>{
-        'name': '115 主账号',
-        'kind': 'cloud115',
-        'media_library_id': 12,
-      });
-    });
-
-    test('download clients diagnostic apis map endpoints and results',
-        () async {
+    test('download clients diagnostic apis map endpoints and results', () async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
@@ -533,95 +534,99 @@ void main() {
       expect(bundle.adapter.requests[1].body['backend_config'], {
         'root_path': '/media/library/archive',
       });
-      expect(
-        bundle.adapter.requests[2].body,
-        <String, dynamic>{'name': 'Archive Library Updated'},
-      );
+      expect(bundle.adapter.requests[2].body, <String, dynamic>{
+        'name': 'Archive Library Updated',
+      });
       expect(bundle.adapter.hitCount('DELETE', '/media-libraries/2'), 1);
     });
 
-    test('cloud115 qr login api maps token, status, create and reauth',
-        () async {
-      final sessionStore = await _buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
+    test(
+      'cloud115 qr login api maps token, status, create and reauth',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
 
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/media-libraries/cloud115/qrlogin/token',
-        body: {
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries/cloud115/qrlogin/token',
+          body: {
+            'uid': 'uid-1',
+            'time': 1700000000,
+            'sign': 'sign-1',
+            'qrcode_png_base64': 'UE5H',
+          },
+        );
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries/cloud115/qrlogin/status',
+          body: {'status': 'scanned'},
+        );
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries/cloud115',
+          statusCode: 201,
+          body: {
+            'id': 8,
+            'name': '115 主账号',
+            'backend': 'cloud115',
+            'backend_config': {'root_cid': 'cid-root', 'app': 'wechatmini'},
+            'created_at': '2026-07-14T09:30:00Z',
+            'updated_at': '2026-07-14T09:30:00Z',
+          },
+        );
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries/cloud115/8/reauth',
+          body: {
+            'id': 8,
+            'name': '115 主账号',
+            'backend': 'cloud115',
+            'backend_config': {'root_cid': 'cid-root', 'app': 'web'},
+            'created_at': '2026-07-14T09:30:00Z',
+            'updated_at': '2026-07-14T10:00:00Z',
+          },
+        );
+
+        final token = await bundle.mediaLibrariesApi.getCloud115QrToken();
+        final status = await bundle.mediaLibrariesApi.pollCloud115QrStatus(
+          token,
+        );
+        final created = await bundle.mediaLibrariesApi.createCloud115Library(
+          const Cloud115LibraryCreatePayload(
+            name: '115 主账号',
+            uid: 'uid-1',
+            app: Cloud115LoginApp.wechatmini,
+          ),
+        );
+        final reauthed = await bundle.mediaLibrariesApi.reauthCloud115Library(
+          libraryId: 8,
+          payload: const Cloud115LibraryReauthPayload(
+            uid: 'uid-2',
+            app: Cloud115LoginApp.web,
+          ),
+        );
+
+        expect(status.status, Cloud115QrStatus.scanned);
+        expect(created.isCloud115, isTrue);
+        expect(created.cloud115App, Cloud115LoginApp.wechatmini);
+        expect(reauthed.cloud115App, Cloud115LoginApp.web);
+        expect(
+          bundle.adapter.requests[1].receiveTimeout,
+          const Duration(seconds: 45),
+        );
+        expect(bundle.adapter.requests[2].body, {
+          'name': '115 主账号',
           'uid': 'uid-1',
-          'time': 1700000000,
-          'sign': 'sign-1',
-          'qrcode_png_base64': 'UE5H',
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/media-libraries/cloud115/qrlogin/status',
-        body: {'status': 'scanned'},
-      );
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/media-libraries/cloud115',
-        statusCode: 201,
-        body: {
-          'id': 8,
-          'name': '115 主账号',
-          'backend': 'cloud115',
-          'backend_config': {'root_cid': 'cid-root', 'app': 'wechatmini'},
-          'created_at': '2026-07-14T09:30:00Z',
-          'updated_at': '2026-07-14T09:30:00Z',
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/media-libraries/cloud115/8/reauth',
-        body: {
-          'id': 8,
-          'name': '115 主账号',
-          'backend': 'cloud115',
-          'backend_config': {'root_cid': 'cid-root', 'app': 'web'},
-          'created_at': '2026-07-14T09:30:00Z',
-          'updated_at': '2026-07-14T10:00:00Z',
-        },
-      );
-
-      final token = await bundle.mediaLibrariesApi.getCloud115QrToken();
-      final status = await bundle.mediaLibrariesApi.pollCloud115QrStatus(token);
-      final created = await bundle.mediaLibrariesApi.createCloud115Library(
-        const Cloud115LibraryCreatePayload(
-          name: '115 主账号',
-          uid: 'uid-1',
-          app: Cloud115LoginApp.wechatmini,
-        ),
-      );
-      final reauthed = await bundle.mediaLibrariesApi.reauthCloud115Library(
-        libraryId: 8,
-        payload: const Cloud115LibraryReauthPayload(
-          uid: 'uid-2',
-          app: Cloud115LoginApp.web,
-        ),
-      );
-
-      expect(status.status, Cloud115QrStatus.scanned);
-      expect(created.isCloud115, isTrue);
-      expect(created.cloud115App, Cloud115LoginApp.wechatmini);
-      expect(reauthed.cloud115App, Cloud115LoginApp.web);
-      expect(bundle.adapter.requests[1].receiveTimeout,
-          const Duration(seconds: 45));
-      expect(bundle.adapter.requests[2].body, {
-        'name': '115 主账号',
-        'uid': 'uid-1',
-        'app': 'wechatmini',
-      });
-      expect(bundle.adapter.requests[2].receiveTimeout,
-          const Duration(seconds: 60));
-      expect(bundle.adapter.requests[3].body, {
-        'uid': 'uid-2',
-        'app': 'web',
-      });
-    });
+          'app': 'wechatmini',
+        });
+        expect(
+          bundle.adapter.requests[2].receiveTimeout,
+          const Duration(seconds: 60),
+        );
+        expect(bundle.adapter.requests[3].body, {'uid': 'uid-2', 'app': 'web'});
+      },
+    );
 
     test('cloud115 directory api maps pagination and entries', () async {
       final sessionStore = await _buildLoggedInSessionStore();
@@ -903,17 +908,17 @@ void main() {
 
         final settings =
             await bundle.movieDescTranslationSettingsApi.getSettings();
-        final updated =
-            await bundle.movieDescTranslationSettingsApi.updateSettings(
-          const UpdateMovieDescTranslationSettingsPayload(
-            enabled: true,
-            baseUrl: 'http://127.0.0.1:8000',
-            apiKey: '',
-            model: 'gpt-4o-mini',
-            timeoutSeconds: 180,
-            connectTimeoutSeconds: 9,
-          ),
-        );
+        final updated = await bundle.movieDescTranslationSettingsApi
+            .updateSettings(
+              const UpdateMovieDescTranslationSettingsPayload(
+                enabled: true,
+                baseUrl: 'http://127.0.0.1:8000',
+                apiKey: '',
+                model: 'gpt-4o-mini',
+                timeoutSeconds: 180,
+                connectTimeoutSeconds: 9,
+              ),
+            );
         final ok = await bundle.movieDescTranslationSettingsApi.testSettings(
           const TestMovieDescTranslationSettingsPayload(
             enabled: true,

@@ -25,20 +25,23 @@ MovieMediaItemDto _media({
 
 void main() {
   group('resolveExternalPlayerSingleUrl', () {
-    test('cloud115 media switches /stream to /stream.m3u8 keeping signature', () {
-      final media = _media(
-        mediaId: 5453,
-        libraryBackend: 'cloud115',
-        playUrl:
-            '/media/5453/stream?expires=1785628800&signature=145bddc07079',
-      );
+    test(
+      'cloud115 media switches /stream to /stream.m3u8 keeping signature',
+      () {
+        final media = _media(
+          mediaId: 5453,
+          libraryBackend: 'cloud115',
+          playUrl:
+              '/media/5453/stream?expires=1785628800&signature=145bddc07079',
+        );
 
-      expect(media.isCloud115, isTrue);
-      expect(
-        resolveExternalPlayerSingleUrl(media),
-        '/media/5453/stream.m3u8?expires=1785628800&signature=145bddc07079',
-      );
-    });
+        expect(media.isCloud115, isTrue);
+        expect(
+          resolveExternalPlayerSingleUrl(media),
+          '/media/5453/stream.m3u8?expires=1785628800&signature=145bddc07079',
+        );
+      },
+    );
 
     test('local media keeps the /stream byte stream url', () {
       final media = _media(
@@ -108,9 +111,7 @@ void main() {
     );
 
     test('replaces points and keeps other fields', () {
-      final updated = media.copyWith(
-        points: const <MovieMediaPointDto>[],
-      );
+      final updated = media.copyWith(points: const <MovieMediaPointDto>[]);
 
       expect(updated.points, isEmpty);
       expect(updated.mediaId, media.mediaId);

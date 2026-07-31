@@ -330,11 +330,13 @@ void main() {
       final gesture = await tester.startGesture(
         tester.getCenter(find.byKey(const Key('movie-media-thumbnail-grid'))),
       );
-      for (var step = 0;
-          step < 30 &&
-              unseenImage.evaluate().isEmpty &&
-              (unseenTile.evaluate().isNotEmpty || step < 14);
-          step++) {
+      for (
+        var step = 0;
+        step < 30 &&
+            unseenImage.evaluate().isEmpty &&
+            (unseenTile.evaluate().isNotEmpty || step < 14);
+        step++
+      ) {
         await gesture.moveBy(const Offset(0, -160));
         await tester.pump();
       }
@@ -723,73 +725,15 @@ void main() {
     });
   });
 
-  testWidgets('staggered layout: 渲染 CustomScrollView + SliverMasonryGrid，按 dims 切 tile 高度', (
-    WidgetTester tester,
-  ) async {
-    await _pumpGrid(
-      tester,
-      layout: ThumbnailGridLayout.staggered,
-      columns: 2,
-      thumbnails: <MovieMediaThumbnailDto>[
-        // 横版
-        MovieMediaThumbnailDto(
-          thumbnailId: 1,
-          mediaId: 100,
-          offsetSeconds: 10,
-          image: const MovieImageDto(
-            id: 1,
-            origin: 'a.webp',
-            small: 'a.webp',
-            medium: 'a.webp',
-            large: 'a.webp',
-          ),
-          width: 1920,
-          height: 1080,
-        ),
-        // 竖版（同列宽下 tile 高度应明显大于横版）
-        MovieMediaThumbnailDto(
-          thumbnailId: 2,
-          mediaId: 200,
-          offsetSeconds: 20,
-          image: const MovieImageDto(
-            id: 2,
-            origin: 'b.webp',
-            small: 'b.webp',
-            medium: 'b.webp',
-            large: 'b.webp',
-          ),
-          width: 1080,
-          height: 1920,
-        ),
-      ],
-    );
-
-    // staggered 分支用 CustomScrollView，uniform 分支用 GridView。
-    expect(
-      find.byKey(const Key('movie-media-thumbnail-grid')),
-      findsOneWidget,
-    );
-    expect(find.byType(CustomScrollView), findsOneWidget);
-    expect(find.byType(GridView), findsNothing);
-
-    // 两个 AspectRatio 分别对应横/竖 → 高度差异应大约 16/9 vs 9/16。
-    final aspectRatios =
-        tester
-            .widgetList<AspectRatio>(find.byType(AspectRatio))
-            .map((w) => w.aspectRatio)
-            .toList();
-    expect(aspectRatios, contains(closeTo(16 / 9, 0.0001)));
-    expect(aspectRatios, contains(closeTo(1080 / 1920, 0.0001)));
-  });
-
   testWidgets(
-    'staggered layout: width/height 缺失 tile 回退 16:9 占位',
+    'staggered layout: 渲染 CustomScrollView + SliverMasonryGrid，按 dims 切 tile 高度',
     (WidgetTester tester) async {
       await _pumpGrid(
         tester,
         layout: ThumbnailGridLayout.staggered,
-        columns: 1,
+        columns: 2,
         thumbnails: <MovieMediaThumbnailDto>[
+          // 横版
           MovieMediaThumbnailDto(
             thumbnailId: 1,
             mediaId: 100,
@@ -801,18 +745,76 @@ void main() {
               medium: 'a.webp',
               large: 'a.webp',
             ),
+            width: 1920,
+            height: 1080,
+          ),
+          // 竖版（同列宽下 tile 高度应明显大于横版）
+          MovieMediaThumbnailDto(
+            thumbnailId: 2,
+            mediaId: 200,
+            offsetSeconds: 20,
+            image: const MovieImageDto(
+              id: 2,
+              origin: 'b.webp',
+              small: 'b.webp',
+              medium: 'b.webp',
+              large: 'b.webp',
+            ),
+            width: 1080,
+            height: 1920,
           ),
         ],
       );
 
+      // staggered 分支用 CustomScrollView，uniform 分支用 GridView。
+      expect(
+        find.byKey(const Key('movie-media-thumbnail-grid')),
+        findsOneWidget,
+      );
+      expect(find.byType(CustomScrollView), findsOneWidget);
+      expect(find.byType(GridView), findsNothing);
+
+      // 两个 AspectRatio 分别对应横/竖 → 高度差异应大约 16/9 vs 9/16。
       final aspectRatios =
           tester
               .widgetList<AspectRatio>(find.byType(AspectRatio))
               .map((w) => w.aspectRatio)
               .toList();
       expect(aspectRatios, contains(closeTo(16 / 9, 0.0001)));
+      expect(aspectRatios, contains(closeTo(1080 / 1920, 0.0001)));
     },
   );
+
+  testWidgets('staggered layout: width/height 缺失 tile 回退 16:9 占位', (
+    WidgetTester tester,
+  ) async {
+    await _pumpGrid(
+      tester,
+      layout: ThumbnailGridLayout.staggered,
+      columns: 1,
+      thumbnails: <MovieMediaThumbnailDto>[
+        MovieMediaThumbnailDto(
+          thumbnailId: 1,
+          mediaId: 100,
+          offsetSeconds: 10,
+          image: const MovieImageDto(
+            id: 1,
+            origin: 'a.webp',
+            small: 'a.webp',
+            medium: 'a.webp',
+            large: 'a.webp',
+          ),
+        ),
+      ],
+    );
+
+    final aspectRatios =
+        tester
+            .widgetList<AspectRatio>(find.byType(AspectRatio))
+            .map((w) => w.aspectRatio)
+            .toList();
+    expect(aspectRatios, contains(closeTo(16 / 9, 0.0001)));
+  });
 }
 
 Future<void> _pumpGrid(

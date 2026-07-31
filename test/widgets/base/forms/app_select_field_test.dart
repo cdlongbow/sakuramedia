@@ -390,14 +390,8 @@ void main() {
               child: AppSelectField<String?>(
                 value: null,
                 items: const [
-                  DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('全部状态'),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: 'failed',
-                    child: Text('失败'),
-                  ),
+                  DropdownMenuItem<String?>(value: null, child: Text('全部状态')),
+                  DropdownMenuItem<String?>(value: 'failed', child: Text('失败')),
                 ],
                 onChanged: (_) {},
               ),
@@ -407,14 +401,8 @@ void main() {
               child: AppSelectField<String?>(
                 value: null,
                 items: const [
-                  DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('全部任务类型'),
-                  ),
-                  DropdownMenuItem<String?>(
-                    value: 'sync',
-                    child: Text('同步任务'),
-                  ),
+                  DropdownMenuItem<String?>(value: null, child: Text('全部任务类型')),
+                  DropdownMenuItem<String?>(value: 'sync', child: Text('同步任务')),
                 ],
                 onChanged: (_) {},
               ),
@@ -424,10 +412,7 @@ void main() {
               child: AppSelectField<String?>(
                 value: null,
                 items: const [
-                  DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('全部触发来源'),
-                  ),
+                  DropdownMenuItem<String?>(value: null, child: Text('全部触发来源')),
                   DropdownMenuItem<String?>(
                     value: 'manual',
                     child: Text('手动触发'),

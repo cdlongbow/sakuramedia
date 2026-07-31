@@ -101,22 +101,23 @@ void main() {
         'page': page,
         'page_size': 2,
         'total': total,
-        'items': ids
-            .map(
-              (id) => <String, dynamic>{
-                'item_id': id + 100,
-                'position': id,
-                'video': <String, dynamic>{
-                  'id': id,
-                  'title': '片$id',
-                  'media_count': 1,
-                  'can_play': true,
-                  'created_at': '2026-01-02T03:04:05',
-                  'updated_at': '2026-01-02T03:04:05',
-                },
-              },
-            )
-            .toList(),
+        'items':
+            ids
+                .map(
+                  (id) => <String, dynamic>{
+                    'item_id': id + 100,
+                    'position': id,
+                    'video': <String, dynamic>{
+                      'id': id,
+                      'title': '片$id',
+                      'media_count': 1,
+                      'can_play': true,
+                      'created_at': '2026-01-02T03:04:05',
+                      'updated_at': '2026-01-02T03:04:05',
+                    },
+                  },
+                )
+                .toList(),
       };
     }
 

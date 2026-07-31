@@ -18,10 +18,10 @@ void main() {
       });
 
   MediaClipDto clip(int id) => MediaClipDto.fromJson(<String, dynamic>{
-        'clip_id': id,
-        'stream_url': '/media-clips/$id/stream',
-        'title': 'C$id',
-      });
+    'clip_id': id,
+    'stream_url': '/media-clips/$id/stream',
+    'title': 'C$id',
+  });
 
   group('视频成员交接', () {
     test('take 返回 offer 的成员，且一次性（取后清空）', () {
@@ -39,7 +39,10 @@ void main() {
       final items = <VideoCollectionItemDto>[videoItem(1)];
       handoff.offerVideoItems(collectionId: 7, sort: 'title:asc', items: items);
 
-      expect(handoff.takeVideoItems(collectionId: 8, sort: 'title:asc'), isNull);
+      expect(
+        handoff.takeVideoItems(collectionId: 8, sort: 'title:asc'),
+        isNull,
+      );
       expect(handoff.takeVideoItems(collectionId: 7, sort: null), isNull);
       // 不匹配不消费，正确键仍可取到。
       expect(

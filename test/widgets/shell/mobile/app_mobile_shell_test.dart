@@ -163,9 +163,7 @@ void main() {
       MaterialApp(
         theme: sakuraThemeData,
         home: const MediaQuery(
-          data: MediaQueryData(
-            systemGestureInsets: EdgeInsets.only(left: 32),
-          ),
+          data: MediaQueryData(systemGestureInsets: EdgeInsets.only(left: 32)),
           child: AppMobileShell(
             currentPath: '/mobile/overview',
             navGroups: navGroups,
@@ -188,9 +186,7 @@ void main() {
       MaterialApp(
         theme: sakuraThemeData,
         home: const MediaQuery(
-          data: MediaQueryData(
-            systemGestureInsets: EdgeInsets.only(left: 32),
-          ),
+          data: MediaQueryData(systemGestureInsets: EdgeInsets.only(left: 32)),
           child: AppMobileShell(
             currentPath: '/mobile/overview',
             navGroups: navGroups,

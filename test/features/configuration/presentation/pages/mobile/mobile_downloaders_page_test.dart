@@ -572,18 +572,19 @@ void _enqueueDownloadersData(
                 },
               ])
           .map((entry) {
-        if (entry.containsKey('download_clients')) return entry;
-        return <String, dynamic>{
-          ...entry,
-          'download_clients': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'id': entry['download_client_id'],
-              'name': entry['download_client_name'],
-              'kind': 'qbittorrent',
-            },
-          ],
-        };
-      }).toList(growable: false),
+            if (entry.containsKey('download_clients')) return entry;
+            return <String, dynamic>{
+              ...entry,
+              'download_clients': <Map<String, dynamic>>[
+                <String, dynamic>{
+                  'id': entry['download_client_id'],
+                  'name': entry['download_client_name'],
+                  'kind': 'qbittorrent',
+                },
+              ],
+            };
+          })
+          .toList(growable: false),
     },
   );
 }
@@ -628,10 +629,7 @@ const List<Map<String, dynamic>> _cloudLibraries = <Map<String, dynamic>>[
     'id': 8,
     'name': '115 云盘',
     'backend': 'cloud115',
-    'backend_config': <String, dynamic>{
-      'root_cid': '100',
-      'app': 'alipaymini',
-    },
+    'backend_config': <String, dynamic>{'root_cid': '100', 'app': 'alipaymini'},
     'created_at': '2026-07-15T08:00:00Z',
     'updated_at': '2026-07-15T08:00:00Z',
   },

@@ -411,215 +411,205 @@ void main() {
       controller.dispose();
     });
 
-    test(
-      'batchToggleSubscription subscribes matched items, broadcasts once, '
-      'and reports full-success result',
-      () async {
-        final broadcasts = <List<MovieSubscriptionChange>>[];
-        var notifyCount = 0;
-        final controller = PagedMovieSummaryController(
-          subscribeMovie: ({required movieNumber}) async {},
-          unsubscribeMovie:
-              ({required movieNumber, deleteMedia = false}) async {},
-          batchSubscribeMovies: ({required movieNumbers}) async {
-            expect(movieNumbers, <String>['ABC-001', 'ABC-002']);
-            return const MovieSubscriptionBatchResultDto(
-              requestedCount: 2,
-              updatedCount: 2,
-              skippedCount: 0,
-              skipped: <MovieSubscriptionSkippedItemDto>[],
-            );
-          },
-          batchUnsubscribeMovies: ({required movieNumbers}) async {
-            fail('unsubscribe should not be called');
-          },
-          onSubscriptionsBatchChanged: broadcasts.add,
-          fetchPage: (_, __) async => PaginatedResponseDto<MovieListItemDto>(
-            items: <MovieListItemDto>[
-              _movie(1, isSubscribed: false),
-              _movie(2, isSubscribed: false),
-            ],
-            page: 1,
-            pageSize: 24,
-            total: 2,
-          ),
-        );
+    test('batchToggleSubscription subscribes matched items, broadcasts once, '
+        'and reports full-success result', () async {
+      final broadcasts = <List<MovieSubscriptionChange>>[];
+      var notifyCount = 0;
+      final controller = PagedMovieSummaryController(
+        subscribeMovie: ({required movieNumber}) async {},
+        unsubscribeMovie:
+            ({required movieNumber, deleteMedia = false}) async {},
+        batchSubscribeMovies: ({required movieNumbers}) async {
+          expect(movieNumbers, <String>['ABC-001', 'ABC-002']);
+          return const MovieSubscriptionBatchResultDto(
+            requestedCount: 2,
+            updatedCount: 2,
+            skippedCount: 0,
+            skipped: <MovieSubscriptionSkippedItemDto>[],
+          );
+        },
+        batchUnsubscribeMovies: ({required movieNumbers}) async {
+          fail('unsubscribe should not be called');
+        },
+        onSubscriptionsBatchChanged: broadcasts.add,
+        fetchPage:
+            (_, __) async => PaginatedResponseDto<MovieListItemDto>(
+              items: <MovieListItemDto>[
+                _movie(1, isSubscribed: false),
+                _movie(2, isSubscribed: false),
+              ],
+              page: 1,
+              pageSize: 24,
+              total: 2,
+            ),
+      );
 
-        await controller.initialize();
-        controller.addListener(() => notifyCount += 1);
+      await controller.initialize();
+      controller.addListener(() => notifyCount += 1);
 
-        final result = await controller.batchToggleSubscription(
-          movieNumbers: const <String>['ABC-001', 'ABC-002'],
-          subscribe: true,
-        );
+      final result = await controller.batchToggleSubscription(
+        movieNumbers: const <String>['ABC-001', 'ABC-002'],
+        subscribe: true,
+      );
 
-        expect(result.updatedCount, 2);
-        expect(result.skippedCount, 0);
-        expect(result.hasError, isFalse);
-        expect(
-          controller.items.map((movie) => movie.isSubscribed),
-          <bool>[true, true],
-        );
-        expect(broadcasts, hasLength(1));
-        expect(
-          broadcasts.single.map((change) => change.movieNumber),
-          <String>['ABC-001', 'ABC-002'],
-        );
-        // 只有乐观更新触发的那一次通知；请求成功且无 skip 时不再额外 notify。
-        expect(notifyCount, 1);
+      expect(result.updatedCount, 2);
+      expect(result.skippedCount, 0);
+      expect(result.hasError, isFalse);
+      expect(controller.items.map((movie) => movie.isSubscribed), <bool>[
+        true,
+        true,
+      ]);
+      expect(broadcasts, hasLength(1));
+      expect(broadcasts.single.map((change) => change.movieNumber), <String>[
+        'ABC-001',
+        'ABC-002',
+      ]);
+      // 只有乐观更新触发的那一次通知；请求成功且无 skip 时不再额外 notify。
+      expect(notifyCount, 1);
 
-        controller.dispose();
-      },
-    );
+      controller.dispose();
+    });
 
-    test(
-      'batchToggleSubscription rolls back skipped items to their original '
-      'state and broadcasts only the accepted ones',
-      () async {
-        final broadcasts = <List<MovieSubscriptionChange>>[];
-        final controller = PagedMovieSummaryController(
-          subscribeMovie: ({required movieNumber}) async {},
-          unsubscribeMovie:
-              ({required movieNumber, deleteMedia = false}) async {},
-          batchUnsubscribeMovies: ({required movieNumbers}) async =>
-              const MovieSubscriptionBatchResultDto(
-                requestedCount: 3,
-                updatedCount: 1,
-                skippedCount: 2,
-                skipped: <MovieSubscriptionSkippedItemDto>[
-                  MovieSubscriptionSkippedItemDto(
-                    movieNumber: 'ABC-002',
-                    reason: MovieSubscriptionSkipReason.hasMedia,
-                    rawReason: 'has_media',
-                  ),
-                  MovieSubscriptionSkippedItemDto(
-                    movieNumber: 'ABC-003',
-                    reason: MovieSubscriptionSkipReason.movieNotFound,
-                    rawReason: 'movie_not_found',
-                  ),
-                ],
-              ),
-          onSubscriptionsBatchChanged: broadcasts.add,
-          fetchPage: (_, __) async => PaginatedResponseDto<MovieListItemDto>(
-            items: <MovieListItemDto>[
-              _movie(1, isSubscribed: true),
-              _movie(2, isSubscribed: true),
-            ],
-            page: 1,
-            pageSize: 24,
-            total: 2,
-          ),
-        );
+    test('batchToggleSubscription rolls back skipped items to their original '
+        'state and broadcasts only the accepted ones', () async {
+      final broadcasts = <List<MovieSubscriptionChange>>[];
+      final controller = PagedMovieSummaryController(
+        subscribeMovie: ({required movieNumber}) async {},
+        unsubscribeMovie:
+            ({required movieNumber, deleteMedia = false}) async {},
+        batchUnsubscribeMovies:
+            ({required movieNumbers}) async =>
+                const MovieSubscriptionBatchResultDto(
+                  requestedCount: 3,
+                  updatedCount: 1,
+                  skippedCount: 2,
+                  skipped: <MovieSubscriptionSkippedItemDto>[
+                    MovieSubscriptionSkippedItemDto(
+                      movieNumber: 'ABC-002',
+                      reason: MovieSubscriptionSkipReason.hasMedia,
+                      rawReason: 'has_media',
+                    ),
+                    MovieSubscriptionSkippedItemDto(
+                      movieNumber: 'ABC-003',
+                      reason: MovieSubscriptionSkipReason.movieNotFound,
+                      rawReason: 'movie_not_found',
+                    ),
+                  ],
+                ),
+        onSubscriptionsBatchChanged: broadcasts.add,
+        fetchPage:
+            (_, __) async => PaginatedResponseDto<MovieListItemDto>(
+              items: <MovieListItemDto>[
+                _movie(1, isSubscribed: true),
+                _movie(2, isSubscribed: true),
+              ],
+              page: 1,
+              pageSize: 24,
+              total: 2,
+            ),
+      );
 
-        await controller.initialize();
+      await controller.initialize();
 
-        final result = await controller.batchToggleSubscription(
-          movieNumbers: const <String>['ABC-001', 'ABC-002', 'ABC-003'],
-          subscribe: false,
-        );
+      final result = await controller.batchToggleSubscription(
+        movieNumbers: const <String>['ABC-001', 'ABC-002', 'ABC-003'],
+        subscribe: false,
+      );
 
-        expect(result.updatedCount, 1);
-        expect(result.skippedHasMediaNumbers, <String>['ABC-002']);
-        expect(result.skippedMovieNotFoundNumbers, <String>['ABC-003']);
-        // 被 has_media 跳过的 ABC-002 应回滚到 isSubscribed:true。
-        expect(controller.items[0].isSubscribed, isFalse);
-        expect(controller.items[1].isSubscribed, isTrue);
-        // 广播只包含真正被后端接受的项。
-        expect(broadcasts, hasLength(1));
-        expect(
-          broadcasts.single.map((c) => c.movieNumber),
-          <String>['ABC-001'],
-        );
-        expect(broadcasts.single.single.isSubscribed, isFalse);
+      expect(result.updatedCount, 1);
+      expect(result.skippedHasMediaNumbers, <String>['ABC-002']);
+      expect(result.skippedMovieNotFoundNumbers, <String>['ABC-003']);
+      // 被 has_media 跳过的 ABC-002 应回滚到 isSubscribed:true。
+      expect(controller.items[0].isSubscribed, isFalse);
+      expect(controller.items[1].isSubscribed, isTrue);
+      // 广播只包含真正被后端接受的项。
+      expect(broadcasts, hasLength(1));
+      expect(broadcasts.single.map((c) => c.movieNumber), <String>['ABC-001']);
+      expect(broadcasts.single.single.isSubscribed, isFalse);
 
-        controller.dispose();
-      },
-    );
+      controller.dispose();
+    });
 
-    test(
-      'batchToggleSubscription rolls all optimistic changes back and '
-      'returns error message when the request itself fails',
-      () async {
-        final broadcasts = <List<MovieSubscriptionChange>>[];
-        final controller = PagedMovieSummaryController(
-          subscribeMovie: ({required movieNumber}) async {},
-          unsubscribeMovie:
-              ({required movieNumber, deleteMedia = false}) async {},
-          batchSubscribeMovies: ({required movieNumbers}) async {
-            throw Exception('network boom');
-          },
-          onSubscriptionsBatchChanged: broadcasts.add,
-          fetchPage: (_, __) async => PaginatedResponseDto<MovieListItemDto>(
-            items: <MovieListItemDto>[
-              _movie(1, isSubscribed: false),
-              _movie(2, isSubscribed: false),
-            ],
-            page: 1,
-            pageSize: 24,
-            total: 2,
-          ),
-        );
+    test('batchToggleSubscription rolls all optimistic changes back and '
+        'returns error message when the request itself fails', () async {
+      final broadcasts = <List<MovieSubscriptionChange>>[];
+      final controller = PagedMovieSummaryController(
+        subscribeMovie: ({required movieNumber}) async {},
+        unsubscribeMovie:
+            ({required movieNumber, deleteMedia = false}) async {},
+        batchSubscribeMovies: ({required movieNumbers}) async {
+          throw Exception('network boom');
+        },
+        onSubscriptionsBatchChanged: broadcasts.add,
+        fetchPage:
+            (_, __) async => PaginatedResponseDto<MovieListItemDto>(
+              items: <MovieListItemDto>[
+                _movie(1, isSubscribed: false),
+                _movie(2, isSubscribed: false),
+              ],
+              page: 1,
+              pageSize: 24,
+              total: 2,
+            ),
+      );
 
-        await controller.initialize();
+      await controller.initialize();
 
-        final result = await controller.batchToggleSubscription(
-          movieNumbers: const <String>['ABC-001', 'ABC-002'],
-          subscribe: true,
-        );
+      final result = await controller.batchToggleSubscription(
+        movieNumbers: const <String>['ABC-001', 'ABC-002'],
+        subscribe: true,
+      );
 
-        expect(result.hasError, isTrue);
-        expect(result.errorMessage, isNotNull);
-        expect(result.updatedCount, 0);
-        expect(
-          controller.items.map((movie) => movie.isSubscribed),
-          <bool>[false, false],
-        );
-        expect(broadcasts, isEmpty);
+      expect(result.hasError, isTrue);
+      expect(result.errorMessage, isNotNull);
+      expect(result.updatedCount, 0);
+      expect(controller.items.map((movie) => movie.isSubscribed), <bool>[
+        false,
+        false,
+      ]);
+      expect(broadcasts, isEmpty);
 
-        controller.dispose();
-      },
-    );
+      controller.dispose();
+    });
 
-    test(
-      'batchToggleSubscription skips duplicate numbers and short-circuits '
-      'without hitting the network when nothing is left',
-      () async {
-        var called = false;
-        final controller = PagedMovieSummaryController(
-          subscribeMovie: ({required movieNumber}) async {},
-          unsubscribeMovie:
-              ({required movieNumber, deleteMedia = false}) async {},
-          batchSubscribeMovies: ({required movieNumbers}) async {
-            called = true;
-            return const MovieSubscriptionBatchResultDto(
-              requestedCount: 0,
-              updatedCount: 0,
-              skippedCount: 0,
-              skipped: <MovieSubscriptionSkippedItemDto>[],
-            );
-          },
-          fetchPage: (_, __) async => PaginatedResponseDto<MovieListItemDto>(
-            items: const <MovieListItemDto>[],
-            page: 1,
-            pageSize: 24,
-            total: 0,
-          ),
-        );
+    test('batchToggleSubscription skips duplicate numbers and short-circuits '
+        'without hitting the network when nothing is left', () async {
+      var called = false;
+      final controller = PagedMovieSummaryController(
+        subscribeMovie: ({required movieNumber}) async {},
+        unsubscribeMovie:
+            ({required movieNumber, deleteMedia = false}) async {},
+        batchSubscribeMovies: ({required movieNumbers}) async {
+          called = true;
+          return const MovieSubscriptionBatchResultDto(
+            requestedCount: 0,
+            updatedCount: 0,
+            skippedCount: 0,
+            skipped: <MovieSubscriptionSkippedItemDto>[],
+          );
+        },
+        fetchPage:
+            (_, __) async => PaginatedResponseDto<MovieListItemDto>(
+              items: const <MovieListItemDto>[],
+              page: 1,
+              pageSize: 24,
+              total: 0,
+            ),
+      );
 
-        await controller.initialize();
+      await controller.initialize();
 
-        final result = await controller.batchToggleSubscription(
-          movieNumbers: const <String>['', ''],
-          subscribe: true,
-        );
+      final result = await controller.batchToggleSubscription(
+        movieNumbers: const <String>['', ''],
+        subscribe: true,
+      );
 
-        expect(called, isFalse);
-        expect(result.requestedCount, 0);
-        expect(result.updatedCount, 0);
+      expect(called, isFalse);
+      expect(result.requestedCount, 0);
+      expect(result.updatedCount, 0);
 
-        controller.dispose();
-      },
-    );
+      controller.dispose();
+    });
 
     test(
       'batchToggleSubscription does not broadcast items that were already in '
@@ -640,15 +630,16 @@ void main() {
             );
           },
           onSubscriptionsBatchChanged: broadcasts.add,
-          fetchPage: (_, __) async => PaginatedResponseDto<MovieListItemDto>(
-            items: <MovieListItemDto>[
-              _movie(1, isSubscribed: true), // 已订阅，等价空操作
-              _movie(2, isSubscribed: false),
-            ],
-            page: 1,
-            pageSize: 24,
-            total: 2,
-          ),
+          fetchPage:
+              (_, __) async => PaginatedResponseDto<MovieListItemDto>(
+                items: <MovieListItemDto>[
+                  _movie(1, isSubscribed: true), // 已订阅，等价空操作
+                  _movie(2, isSubscribed: false),
+                ],
+                page: 1,
+                pageSize: 24,
+                total: 2,
+              ),
         );
 
         await controller.initialize();
@@ -659,10 +650,9 @@ void main() {
         );
 
         expect(broadcasts, hasLength(1));
-        expect(
-          broadcasts.single.map((c) => c.movieNumber),
-          <String>['ABC-002'],
-        );
+        expect(broadcasts.single.map((c) => c.movieNumber), <String>[
+          'ABC-002',
+        ]);
 
         controller.dispose();
       },

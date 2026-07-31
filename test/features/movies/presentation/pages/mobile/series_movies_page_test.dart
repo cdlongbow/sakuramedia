@@ -126,9 +126,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.longPress(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-    );
+    await tester.longPress(find.byKey(const Key('movie-summary-card-ABC-001')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('选择'));
     await tester.pumpAndSettle();

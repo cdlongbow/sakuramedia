@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_state.dart';
@@ -29,16 +30,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       _enqueueOverviewResponses(bundle);
 
-      await _pumpDesktopApp(
-        tester,
-        sessionStore: sessionStore,
-        statusApi: bundle.statusApi,
-        moviesApi: bundle.moviesApi,
-        mediaLibrariesApi: bundle.mediaLibrariesApi,
-        downloadClientsApi: bundle.downloadClientsApi,
-        indexerSettingsApi: bundle.indexerSettingsApi,
-        movieDescTranslationSettingsApi: bundle.movieDescTranslationSettingsApi,
-      );
+      await _pumpDesktopApp(tester, sessionStore: sessionStore, bundle: bundle);
       await tester.pumpAndSettle();
 
       expect(find.text('SakuraMedia'), findsNothing);
@@ -72,12 +64,7 @@ Future<SessionStore> _buildLoggedInSessionStore() async {
 Future<void> _pumpDesktopApp(
   WidgetTester tester, {
   required SessionStore sessionStore,
-  required StatusApi statusApi,
-  required MoviesApi moviesApi,
-  required MediaLibrariesApi mediaLibrariesApi,
-  required DownloadClientsApi downloadClientsApi,
-  required IndexerSettingsApi indexerSettingsApi,
-  required MovieDescTranslationSettingsApi movieDescTranslationSettingsApi,
+  required TestApiBundle bundle,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
   await tester.pumpWidget(
@@ -88,16 +75,19 @@ Future<void> _pumpDesktopApp(
         ChangeNotifierProvider(
           create: (_) => MovieSubscriptionChangeNotifier(),
         ),
-        Provider<StatusApi>.value(value: statusApi),
-        Provider<MoviesApi>.value(value: moviesApi),
-        Provider<MediaLibrariesApi>.value(value: mediaLibrariesApi),
-        Provider<DownloadClientsApi>.value(value: downloadClientsApi),
-        Provider<IndexerSettingsApi>.value(value: indexerSettingsApi),
+        Provider<StatusApi>.value(value: bundle.statusApi),
+        Provider<MoviesApi>.value(value: bundle.moviesApi),
+        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
         Provider<MovieDescTranslationSettingsApi>.value(
-          value: movieDescTranslationSettingsApi,
+          value: bundle.movieDescTranslationSettingsApi,
         ),
       ],
-      child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      child: ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      ),
     ),
   );
 }

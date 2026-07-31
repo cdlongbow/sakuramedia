@@ -6,7 +6,14 @@
 /// - [warning]: 业务上通过但带告警（例如硬链接不支持、索引器未在线校验）。
 /// - [unhealthy]: 检测失败或抛异常。
 /// - [blocked]: 前置依赖没通过（例如媒体库空 → 下载器无法测），不跑请求直接标灰。
-enum DiagnosticItemStatus { notTested, probing, healthy, warning, unhealthy, blocked }
+enum DiagnosticItemStatus {
+  notTested,
+  probing,
+  healthy,
+  warning,
+  unhealthy,
+  blocked,
+}
 
 /// 一组状态的汇总规则，[DiagnosticCategoryState.aggregate] 和
 /// [SystemDiagnosticsController.overallStatus] 共用同一份优先级：

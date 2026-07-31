@@ -48,9 +48,10 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
     setState(() {
       _selectedLibrary = library;
       _source = null;
-      _transferMode = library == null
-          ? TransferMode.auto
-          : MediaImportSourcePicker.defaultTransferModeFor(library);
+      _transferMode =
+          library == null
+              ? TransferMode.auto
+              : MediaImportSourcePicker.defaultTransferModeFor(library);
     });
   }
 

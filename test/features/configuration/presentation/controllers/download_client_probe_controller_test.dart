@@ -22,12 +22,13 @@ DownloadClientTestResultDto _connectivity({
     elapsedMs: elapsedMs,
     version: version,
     webApiVersion: webApi,
-    error: errorType == null
-        ? null
-        : DownloadClientDiagnosticErrorDto(
-            type: errorType,
-            message: errorMessage ?? '',
-          ),
+    error:
+        errorType == null
+            ? null
+            : DownloadClientDiagnosticErrorDto(
+              type: errorType,
+              message: errorMessage ?? '',
+            ),
   );
 }
 
@@ -52,12 +53,13 @@ DownloadClientStorageTestResultDto _storage({
       probeRemoteDir: '/downloads/.probe',
       probeLocalDir: '/mnt/downloads/.probe',
       sentinelVisibleToQb: true,
-      error: mappingErrorMessage == null
-          ? null
-          : DownloadClientDiagnosticErrorDto(
-              type: 'mapping_error',
-              message: mappingErrorMessage,
-            ),
+      error:
+          mappingErrorMessage == null
+              ? null
+              : DownloadClientDiagnosticErrorDto(
+                type: 'mapping_error',
+                message: mappingErrorMessage,
+              ),
     ),
     hardlink: DownloadClientStorageHardlinkResultDto(
       status: hardlinkStatus,
@@ -191,9 +193,7 @@ void main() {
       await controller.runConnectivity(
         () async => _connectivity(healthy: false),
       );
-      await controller.runStorage(
-        () async => _storage(healthy: false),
-      );
+      await controller.runStorage(() async => _storage(healthy: false));
 
       expect(controller.canReplayConnectivityDialog, isTrue);
       expect(controller.canReplayStorageDialog, isTrue);
@@ -204,7 +204,10 @@ void main() {
         controller.connectivityChipState,
         DownloadClientProbeChipState.notTested,
       );
-      expect(controller.storageChipState, DownloadClientProbeChipState.notTested);
+      expect(
+        controller.storageChipState,
+        DownloadClientProbeChipState.notTested,
+      );
       expect(controller.lastConnectivityResult, isNull);
       expect(controller.lastStorageResult, isNull);
     });
@@ -252,22 +255,10 @@ void main() {
         probeChipDetail(DownloadClientProbeChipState.healthy, elapsedMs: 15),
         '15ms',
       );
-      expect(
-        probeChipDetail(DownloadClientProbeChipState.notTested),
-        isNull,
-      );
-      expect(
-        probeChipDetail(DownloadClientProbeChipState.probing),
-        isNull,
-      );
-      expect(
-        probeChipDetail(DownloadClientProbeChipState.warning),
-        '有警告',
-      );
-      expect(
-        probeChipDetail(DownloadClientProbeChipState.unhealthy),
-        '异常',
-      );
+      expect(probeChipDetail(DownloadClientProbeChipState.notTested), isNull);
+      expect(probeChipDetail(DownloadClientProbeChipState.probing), isNull);
+      expect(probeChipDetail(DownloadClientProbeChipState.warning), '有警告');
+      expect(probeChipDetail(DownloadClientProbeChipState.unhealthy), '异常');
     });
   });
 }

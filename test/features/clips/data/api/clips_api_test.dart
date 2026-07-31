@@ -94,7 +94,10 @@ void main() {
 
     expect(page.items, hasLength(1));
     expect(page.items.single.clipId, 12);
-    expect(page.items.single.coverImage?.bestAvailableUrl, '/clips/12-large.webp');
+    expect(
+      page.items.single.coverImage?.bestAvailableUrl,
+      '/clips/12-large.webp',
+    );
     expect(page.total, 1);
     expect(adapter.requests.single.uri.queryParameters, <String, String>{
       'page': '1',
@@ -117,44 +120,47 @@ void main() {
     expect(clips.last.clipId, 13);
   });
 
-  test('getClipDetail maps GET /media-clips/{clip_id} with detail fields', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media-clips/12',
-      body: <String, dynamic>{
-        ..._clipJson(),
-        'preview_frames': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'id': 2,
-            'origin': '/clips/12-f0.webp',
-            'small': '/clips/12-f0-s.webp',
-            'medium': '/clips/12-f0-m.webp',
-            'large': '/clips/12-f0-l.webp',
-          },
-          <String, dynamic>{
-            'id': 3,
-            'origin': '/clips/12-f1.webp',
-            'small': '/clips/12-f1-s.webp',
-            'medium': '/clips/12-f1-m.webp',
-            'large': '/clips/12-f1-l.webp',
-          },
-        ],
-        'collections': <Map<String, dynamic>>[
-          <String, dynamic>{'id': 7, 'name': '精选合集'},
-        ],
-      },
-    );
+  test(
+    'getClipDetail maps GET /media-clips/{clip_id} with detail fields',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-clips/12',
+        body: <String, dynamic>{
+          ..._clipJson(),
+          'preview_frames': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 2,
+              'origin': '/clips/12-f0.webp',
+              'small': '/clips/12-f0-s.webp',
+              'medium': '/clips/12-f0-m.webp',
+              'large': '/clips/12-f0-l.webp',
+            },
+            <String, dynamic>{
+              'id': 3,
+              'origin': '/clips/12-f1.webp',
+              'small': '/clips/12-f1-s.webp',
+              'medium': '/clips/12-f1-m.webp',
+              'large': '/clips/12-f1-l.webp',
+            },
+          ],
+          'collections': <Map<String, dynamic>>[
+            <String, dynamic>{'id': 7, 'name': '精选合集'},
+          ],
+        },
+      );
 
-    final clip = await clipsApi.getClipDetail(clipId: 12);
+      final clip = await clipsApi.getClipDetail(clipId: 12);
 
-    expect(clip.clipId, 12);
-    expect(clip.previewFrames, hasLength(2));
-    expect(clip.previewFrames.first.bestAvailableUrl, '/clips/12-f0-l.webp');
-    expect(clip.collections, hasLength(1));
-    expect(clip.collections.single.id, 7);
-    expect(clip.collections.single.name, '精选合集');
-    expect(adapter.hitCount('GET', '/media-clips/12'), 1);
-  });
+      expect(clip.clipId, 12);
+      expect(clip.previewFrames, hasLength(2));
+      expect(clip.previewFrames.first.bestAvailableUrl, '/clips/12-f0-l.webp');
+      expect(clip.collections, hasLength(1));
+      expect(clip.collections.single.id, 7);
+      expect(clip.collections.single.name, '精选合集');
+      expect(adapter.hitCount('GET', '/media-clips/12'), 1);
+    },
+  );
 
   test('updateClipTitle maps PATCH /media-clips/{clip_id}', () async {
     adapter.enqueueJson(
@@ -181,45 +187,48 @@ void main() {
     expect(adapter.hitCount('DELETE', '/media-clips/12'), 1);
   });
 
-  test('getClipThumbnails maps GET /media-clips/{clip_id}/thumbnails', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media-clips/12/thumbnails',
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'clip_id': 12,
-          'thumbnail_id': 201,
-          'offset_seconds': 0,
-          'image': <String, dynamic>{
-            'id': 2,
-            'origin': '/clips/12-f0.webp',
-            'small': '/clips/12-f0-s.webp',
-            'medium': '/clips/12-f0-m.webp',
-            'large': '/clips/12-f0-l.webp',
+  test(
+    'getClipThumbnails maps GET /media-clips/{clip_id}/thumbnails',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-clips/12/thumbnails',
+        body: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'clip_id': 12,
+            'thumbnail_id': 201,
+            'offset_seconds': 0,
+            'image': <String, dynamic>{
+              'id': 2,
+              'origin': '/clips/12-f0.webp',
+              'small': '/clips/12-f0-s.webp',
+              'medium': '/clips/12-f0-m.webp',
+              'large': '/clips/12-f0-l.webp',
+            },
           },
-        },
-        <String, dynamic>{
-          'clip_id': 12,
-          'thumbnail_id': 202,
-          'offset_seconds': 10,
-          'image': <String, dynamic>{
-            'id': 3,
-            'origin': '/clips/12-f1.webp',
-            'small': '/clips/12-f1-s.webp',
-            'medium': '/clips/12-f1-m.webp',
-            'large': '/clips/12-f1-l.webp',
+          <String, dynamic>{
+            'clip_id': 12,
+            'thumbnail_id': 202,
+            'offset_seconds': 10,
+            'image': <String, dynamic>{
+              'id': 3,
+              'origin': '/clips/12-f1.webp',
+              'small': '/clips/12-f1-s.webp',
+              'medium': '/clips/12-f1-m.webp',
+              'large': '/clips/12-f1-l.webp',
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
 
-    final thumbnails = await clipsApi.getClipThumbnails(clipId: 12);
+      final thumbnails = await clipsApi.getClipThumbnails(clipId: 12);
 
-    expect(thumbnails, hasLength(2));
-    expect(thumbnails.first.thumbnailId, 201);
-    expect(thumbnails.first.offsetSeconds, 0);
-    expect(thumbnails.last.offsetSeconds, 10);
-    expect(thumbnails.last.image.bestAvailableUrl, '/clips/12-f1-l.webp');
-    expect(adapter.hitCount('GET', '/media-clips/12/thumbnails'), 1);
-  });
+      expect(thumbnails, hasLength(2));
+      expect(thumbnails.first.thumbnailId, 201);
+      expect(thumbnails.first.offsetSeconds, 0);
+      expect(thumbnails.last.offsetSeconds, 10);
+      expect(thumbnails.last.image.bestAvailableUrl, '/clips/12-f1-l.webp');
+      expect(adapter.hitCount('GET', '/media-clips/12/thumbnails'), 1);
+    },
+  );
 }

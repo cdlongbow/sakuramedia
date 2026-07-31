@@ -324,10 +324,12 @@ void main() {
 
     final options = await playlistsApi.getPlaylistResolutions(playlistId: 8);
 
-    expect(
-      options.map((o) => o.resolution).toList(),
-      <String>['8K', '4K', '1080P', '9K'],
-    );
+    expect(options.map((o) => o.resolution).toList(), <String>[
+      '8K',
+      '4K',
+      '1080P',
+      '9K',
+    ]);
   });
 
   test('addMovieToPlaylist sends put request', () async {

@@ -34,8 +34,11 @@ void main() {
     final controller = ClipsOverviewController(
       pageSize: 2,
       fetchClips:
-          ({int page = 1, int pageSize = 2, String sort = 'created_at:desc'}) async =>
-              _page([_clip(1), _clip(2)], page: 1, total: 3),
+          ({
+            int page = 1,
+            int pageSize = 2,
+            String sort = 'created_at:desc',
+          }) async => _page([_clip(1), _clip(2)], page: 1, total: 3),
     );
     addTearDown(controller.dispose);
 
@@ -50,7 +53,11 @@ void main() {
   test('loadMore appends next page and clears hasMore at the end', () async {
     final controller = ClipsOverviewController(
       pageSize: 2,
-      fetchClips: ({int page = 1, int pageSize = 2, String sort = 'created_at:desc'}) async {
+      fetchClips: ({
+        int page = 1,
+        int pageSize = 2,
+        String sort = 'created_at:desc',
+      }) async {
         if (page == 1) {
           return _page([_clip(1), _clip(2)], page: 1, total: 3);
         }
@@ -70,7 +77,11 @@ void main() {
     var calls = 0;
     final controller = ClipsOverviewController(
       pageSize: 2,
-      fetchClips: ({int page = 1, int pageSize = 2, String sort = 'created_at:desc'}) async {
+      fetchClips: ({
+        int page = 1,
+        int pageSize = 2,
+        String sort = 'created_at:desc',
+      }) async {
         calls++;
         if (calls == 1) {
           return _page([_clip(1), _clip(2)], page: 1, total: 5);
@@ -91,8 +102,11 @@ void main() {
     final controller = ClipsOverviewController(
       pageSize: 2,
       fetchClips:
-          ({int page = 1, int pageSize = 2, String sort = 'created_at:desc'}) async =>
-              _page([_clip(1), _clip(2)], page: 1, total: 2),
+          ({
+            int page = 1,
+            int pageSize = 2,
+            String sort = 'created_at:desc',
+          }) async => _page([_clip(1), _clip(2)], page: 1, total: 2),
     );
     addTearDown(controller.dispose);
 
@@ -107,7 +121,11 @@ void main() {
     final controller = ClipsOverviewController(
       pageSize: 2,
       fetchClips:
-          ({int page = 1, int pageSize = 2, String sort = 'created_at:desc'}) async =>
+          ({
+            int page = 1,
+            int pageSize = 2,
+            String sort = 'created_at:desc',
+          }) async =>
               _page([_clip(1, title: 'old'), _clip(2)], page: 1, total: 2),
     );
     addTearDown(controller.dispose);

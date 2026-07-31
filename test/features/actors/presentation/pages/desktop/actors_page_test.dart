@@ -95,7 +95,10 @@ void main() {
     // 即时生效：不需要「确定」，选中当场触发带新参数的重新拉取。
     final lastRequest = bundle.adapter.requests.last;
     expect(lastRequest.path, '/actors');
-    expect(lastRequest.uri.queryParameters['subscription_status'], 'unsubscribed');
+    expect(
+      lastRequest.uri.queryParameters['subscription_status'],
+      'unsubscribed',
+    );
     expect(find.text('1 位'), findsOneWidget);
 
     final entry = tester.widget<AppFilterEntryButton>(

@@ -34,7 +34,9 @@ class ExternalPlayerChannel {
       final players = <ExternalPlayerApp>[];
       for (final item in raw) {
         if (item is Map) {
-          final player = ExternalPlayerApp.fromMap(item.cast<Object?, Object?>());
+          final player = ExternalPlayerApp.fromMap(
+            item.cast<Object?, Object?>(),
+          );
           if (player != null) {
             players.add(player);
           }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -643,8 +644,14 @@ Future<void> _pumpDesktopApp(
         ),
         Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
       ],
-      child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      child: ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+          ),
+        ),
       ),
     ),
   );
@@ -686,8 +693,14 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
         ),
         Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
       ],
-      child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      child: ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+          ),
+        ),
       ),
     ),
   );

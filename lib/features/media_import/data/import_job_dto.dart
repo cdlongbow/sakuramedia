@@ -7,22 +7,22 @@ enum TransferMode { auto, cleanupSource, copy }
 extension TransferModeX on TransferMode {
   /// 后端序列化值。
   String get wireValue => switch (this) {
-        TransferMode.auto => 'auto',
-        TransferMode.cleanupSource => 'cleanup-source',
-        TransferMode.copy => 'copy',
-      };
+    TransferMode.auto => 'auto',
+    TransferMode.cleanupSource => 'cleanup-source',
+    TransferMode.copy => 'copy',
+  };
 
   String get label => switch (this) {
-        TransferMode.auto => '硬链接优先（保留源文件）',
-        TransferMode.cleanupSource => '复制后删除源文件',
-        TransferMode.copy => '复制并保留源文件',
-      };
+    TransferMode.auto => '硬链接优先（保留源文件）',
+    TransferMode.cleanupSource => '复制后删除源文件',
+    TransferMode.copy => '复制并保留源文件',
+  };
 
   static TransferMode fromWire(dynamic value) => switch (value) {
-        'cleanup-source' => TransferMode.cleanupSource,
-        'copy' => TransferMode.copy,
-        _ => TransferMode.auto,
-      };
+    'cleanup-source' => TransferMode.cleanupSource,
+    'copy' => TransferMode.copy,
+    _ => TransferMode.auto,
+  };
 }
 
 /// 失败文件条目分类，决定其是否可被删除/重命名/重导。
@@ -234,19 +234,20 @@ class ImportJobDto extends ImportJobListItemDto
   factory ImportJobDto.fromJson(Map<String, dynamic> json) {
     final base = ImportJobListItemDto.fromJson(json);
     final rawFiles = json['failed_files'];
-    final failedFiles = rawFiles is List
-        ? rawFiles
-            .whereType<Map>()
-            .map(
-              (item) => FailedFileDto.fromJson(
-                item.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value),
-                ),
-              ),
-            )
-            .toList(growable: false)
-        : const <FailedFileDto>[];
+    final failedFiles =
+        rawFiles is List
+            ? rawFiles
+                .whereType<Map>()
+                .map(
+                  (item) => FailedFileDto.fromJson(
+                    item.map(
+                      (dynamic key, dynamic value) =>
+                          MapEntry(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList(growable: false)
+            : const <FailedFileDto>[];
 
     return ImportJobDto(
       id: base.id,

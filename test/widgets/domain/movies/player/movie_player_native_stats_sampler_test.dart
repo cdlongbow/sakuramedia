@@ -70,10 +70,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 20));
     await sampler.refreshNative();
 
-    expect(
-      sampler.snapshot.value.playbackSourceDownloadRateLabel,
-      isNotNull,
-    );
+    expect(sampler.snapshot.value.playbackSourceDownloadRateLabel, isNotNull);
     sampler.dispose();
   });
 
@@ -107,10 +104,7 @@ void main() {
       mediaOrigin: MoviePlayerPlaybackMediaOrigin.local,
       originalUrl: 'http://192.168.1.10:8000/library/2.mp4',
     );
-    expect(
-      sampler.snapshot.value.playbackSourceHostLabel,
-      '192.168.1.10:8000',
-    );
+    expect(sampler.snapshot.value.playbackSourceHostLabel, '192.168.1.10:8000');
     sampler.dispose();
   });
 

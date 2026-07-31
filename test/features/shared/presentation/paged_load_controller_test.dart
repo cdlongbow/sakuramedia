@@ -72,8 +72,7 @@ void main() {
             page: 1,
             pageSize: 24,
             total: 1,
-            syncedAt:
-                call == 1 ? DateTime.parse('2026-05-08T09:00:00') : null,
+            syncedAt: call == 1 ? DateTime.parse('2026-05-08T09:00:00') : null,
           );
         },
         initialLoadErrorText: 'initial failed',

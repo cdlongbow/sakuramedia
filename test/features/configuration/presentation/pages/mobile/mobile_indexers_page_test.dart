@@ -399,10 +399,7 @@ void main() {
   ) async {
     _enqueueIndexersData(
       _bundle,
-      clients: <Map<String, dynamic>>[
-        ..._defaultClients,
-        _cloudDownloadClient,
-      ],
+      clients: <Map<String, dynamic>>[..._defaultClients, _cloudDownloadClient],
       apiKey: 'secret-key',
       indexers: const <Map<String, dynamic>>[],
     );
@@ -423,11 +420,7 @@ void main() {
                 'name': 'client-a',
                 'kind': 'qbittorrent',
               },
-              <String, dynamic>{
-                'id': 8,
-                'name': '115 主账号',
-                'kind': 'cloud115',
-              },
+              <String, dynamic>{'id': 8, 'name': '115 主账号', 'kind': 'cloud115'},
             ],
           },
         ],
@@ -445,10 +438,7 @@ void main() {
       find.byKey(const Key('indexer-entry-url-field')),
       'https://dmhy.example/api',
     );
-    expect(
-      find.byKey(const Key('indexer-download-client-8')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('indexer-download-client-8')), findsNothing);
     await tester.tap(find.text('BT (公网)').last);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('indexer-download-client-1')));
@@ -469,10 +459,10 @@ void main() {
       (request) =>
           request.method == 'PATCH' && request.path == '/indexer-settings',
     );
-    expect(
-      patchRequest.body['indexers'][0]['download_client_ids'],
-      <int>[1, 8],
-    );
+    expect(patchRequest.body['indexers'][0]['download_client_ids'], <int>[
+      1,
+      8,
+    ]);
     expect(find.textContaining('client-a、115 主账号'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
@@ -739,18 +729,19 @@ Map<String, dynamic> _buildSettingsJson({
               },
             ])
         .map((entry) {
-      if (entry.containsKey('download_clients')) return entry;
-      return <String, dynamic>{
-        ...entry,
-        'download_clients': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'id': entry['download_client_id'],
-            'name': entry['download_client_name'],
-            'kind': 'qbittorrent',
-          },
-        ],
-      };
-    }).toList(growable: false),
+          if (entry.containsKey('download_clients')) return entry;
+          return <String, dynamic>{
+            ...entry,
+            'download_clients': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'id': entry['download_client_id'],
+                'name': entry['download_client_name'],
+                'kind': 'qbittorrent',
+              },
+            ],
+          };
+        })
+        .toList(growable: false),
   };
 }
 

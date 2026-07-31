@@ -149,21 +149,23 @@ void main() {
     controller.dispose();
   });
 
-  test('leaves the list untouched for collection membership broadcast',
-      () async {
-    final controller = build(
-      fetchClips:
-          ({required String movieNumber, int limit = 30}) async =>
-              <MediaClipDto>[_clip(1)],
-    );
-    await controller.load();
+  test(
+    'leaves the list untouched for collection membership broadcast',
+    () async {
+      final controller = build(
+        fetchClips:
+            ({required String movieNumber, int limit = 30}) async =>
+                <MediaClipDto>[_clip(1)],
+      );
+      await controller.load();
 
-    mutationNotifier.reportCollectionMembershipChanged(clipId: 1);
+      mutationNotifier.reportCollectionMembershipChanged(clipId: 1);
 
-    expect(controller.clips.map((clip) => clip.clipId), <int>[1]);
+      expect(controller.clips.map((clip) => clip.clipId), <int>[1]);
 
-    controller.dispose();
-  });
+      controller.dispose();
+    },
+  );
 
   test('stops listening to broadcasts after dispose', () async {
     final controller = build(

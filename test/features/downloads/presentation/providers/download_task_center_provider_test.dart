@@ -85,7 +85,8 @@ void main() {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/download-clients',
-      body: clients ??
+      body:
+          clients ??
           <Map<String, dynamic>>[
             {
               'id': 2,
@@ -112,8 +113,9 @@ void main() {
     expect(state.paged.items.first.task.id, 1);
     expect(state.filter, DownloadTaskFilterState.initial);
     expect(state.isReloading, isFalse);
-    final taskRequest = bundle.adapter.requests
-        .firstWhere((r) => r.uri.path.endsWith('/download-tasks'));
+    final taskRequest = bundle.adapter.requests.firstWhere(
+      (r) => r.uri.path.endsWith('/download-tasks'),
+    );
     expect(
       taskRequest.uri.queryParameters,
       containsPair('download_state', 'downloading'),
@@ -152,9 +154,8 @@ void main() {
           );
 
       // 切换过程中：filter 已更新，isReloading = true，旧 items 仍在。
-      final duringSwitch = container
-          .read(downloadTaskCenterProvider)
-          .requireValue;
+      final duringSwitch =
+          container.read(downloadTaskCenterProvider).requireValue;
       expect(duringSwitch.isReloading, isTrue);
       expect(duringSwitch.filter.stateFilter, DownloadTaskStateFilter.paused);
       expect(duringSwitch.paged.items.first.task.id, 1);

@@ -78,9 +78,8 @@ void main() {
         ],
       );
 
-      final events = await streamClient
-          .connect('/download-tasks/stream')
-          .toList();
+      final events =
+          await streamClient.connect('/download-tasks/stream').toList();
 
       expect(events, hasLength(2));
       expect(events[0].id, isNull);

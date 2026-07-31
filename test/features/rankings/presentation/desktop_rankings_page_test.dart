@@ -83,7 +83,10 @@ void main() {
     expect(entry.icon, Icons.leaderboard_outlined);
 
     // 总数与抓取时间是两个独立的只读信息胶囊，不再拼成一段文本。
-    expect(find.byKey(const Key('desktop-rankings-page-total')), findsOneWidget);
+    expect(
+      find.byKey(const Key('desktop-rankings-page-total')),
+      findsOneWidget,
+    );
     expect(find.text('2 部'), findsOneWidget);
     expect(find.byKey(const Key('desktop-rankings-synced-at')), findsOneWidget);
     expect(find.text('05/08 09:00'), findsOneWidget);

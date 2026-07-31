@@ -19,7 +19,10 @@ void main() {
     );
 
     final container = tester.widget<Container>(find.byType(Container).first);
-    expect(container.constraints?.maxWidth ?? 0, anyOf(equals(120), lessThan(1)));
+    expect(
+      container.constraints?.maxWidth ?? 0,
+      anyOf(equals(120), lessThan(1)),
+    );
     expect(find.byType(AppSkeletonBlock), findsOneWidget);
   });
 
@@ -54,8 +57,7 @@ void main() {
         AppMobileSkeletonList(
           itemCount: 2,
           itemBuilder:
-              (_, index) =>
-                  SizedBox(key: Key('custom-$index'), height: 40),
+              (_, index) => SizedBox(key: Key('custom-$index'), height: 40),
         ),
       ),
     );

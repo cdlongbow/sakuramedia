@@ -36,22 +36,22 @@ void main() {
   });
 
   Map<String, dynamic> moviesPage() => <String, dynamic>{
-        'items': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'javdb_id': 'MovieA1',
-            'movie_number': 'ABC-001',
-            'title': 'Movie 1',
-            'cover_image': null,
-            'release_date': '2024-01-02',
-            'duration_minutes': 120,
-            'is_subscribed': false,
-            'can_play': true,
-          },
-        ],
-        'page': 1,
-        'page_size': 24,
-        'total': 1,
-      };
+    'items': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'javdb_id': 'MovieA1',
+        'movie_number': 'ABC-001',
+        'title': 'Movie 1',
+        'cover_image': null,
+        'release_date': '2024-01-02',
+        'duration_minutes': 120,
+        'is_subscribed': false,
+        'can_play': true,
+      },
+    ],
+    'page': 1,
+    'page_size': 24,
+    'total': 1,
+  };
 
   List<String?> movieTagMatches() => bundle.adapter.requests
       .where((request) => request.uri.path == '/movies')
@@ -72,63 +72,58 @@ void main() {
         ),
       ],
       child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(body: child),
-        ),
+        child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
       ),
     );
   }
 
-  testWidgets(
-    'caps popular tags to popularLimit and hides 展开全部',
-    (WidgetTester tester) async {
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/tags',
-        body: <Map<String, dynamic>>[
-          for (var i = 0; i < 30; i++)
-            <String, dynamic>{
-              'tag_id': i,
-              'name': 'tag$i',
-              'movie_count': 100 - i,
-            },
-        ],
-      );
+  testWidgets('caps popular tags to popularLimit and hides 展开全部', (
+    WidgetTester tester,
+  ) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        for (var i = 0; i < 30; i++)
+          <String, dynamic>{
+            'tag_id': i,
+            'name': 'tag$i',
+            'movie_count': 100 - i,
+          },
+      ],
+    );
 
-      await tester.pumpWidget(wrap(const MobileTagsPage()));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(const MobileTagsPage()));
+    await tester.pumpAndSettle();
 
-      // popularLimit=5：移动端仅展示前 5 个热门标签，更多标签靠搜索，不出现「展开全部」。
-      expect(find.byKey(const Key('tags-option-4')), findsOneWidget);
-      expect(find.byKey(const Key('tags-option-5')), findsNothing);
-      expect(find.text('展开全部'), findsNothing);
-    },
-  );
+    // popularLimit=5：移动端仅展示前 5 个热门标签，更多标签靠搜索，不出现「展开全部」。
+    expect(find.byKey(const Key('tags-option-4')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-5')), findsNothing);
+    expect(find.text('展开全部'), findsNothing);
+  });
 
-  testWidgets(
-    'shows all popular tags when fewer than popularLimit',
-    (WidgetTester tester) async {
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/tags',
-        body: <Map<String, dynamic>>[
-          for (var i = 0; i < 3; i++)
-            <String, dynamic>{
-              'tag_id': i,
-              'name': 'tag$i',
-              'movie_count': 100 - i,
-            },
-        ],
-      );
+  testWidgets('shows all popular tags when fewer than popularLimit', (
+    WidgetTester tester,
+  ) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        for (var i = 0; i < 3; i++)
+          <String, dynamic>{
+            'tag_id': i,
+            'name': 'tag$i',
+            'movie_count': 100 - i,
+          },
+      ],
+    );
 
-      await tester.pumpWidget(wrap(const MobileTagsPage()));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(const MobileTagsPage()));
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('tags-option-2')), findsOneWidget);
-      expect(find.text('展开全部'), findsNothing);
-    },
-  );
+    expect(find.byKey(const Key('tags-option-2')), findsOneWidget);
+    expect(find.text('展开全部'), findsNothing);
+  });
 
   testWidgets(
     'preselected tag fetches movies with tag_match=or then and on toggle',
@@ -183,9 +178,7 @@ void main() {
     expect(find.byKey(const Key('movies-filter-panel')), findsNothing);
   });
 
-  testWidgets('多选走移动布局：顶栏只留计数/全选，批量动作在底部条且不溢出', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('多选走移动布局：顶栏只留计数/全选，批量动作在底部条且不溢出', (WidgetTester tester) async {
     // 移动壳 body 左右各留 AppPageInsets.compact(8)，390 屏的可用宽是 374。
     // 桌面式一行 toolbar 在这个宽度下会 RenderFlex 溢出，故必须走移动布局。
     tester.view.devicePixelRatio = 1;
@@ -214,9 +207,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.longPress(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-    );
+    await tester.longPress(find.byKey(const Key('movie-summary-card-ABC-001')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('选择'));
     await tester.pumpAndSettle();

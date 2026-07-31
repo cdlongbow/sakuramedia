@@ -11,10 +11,12 @@ void main() {
     test('media library lookup failure does not block movie detail', () async {
       final controller = MovieDetailController(
         movieNumber: 'ABC-001',
-        fetchMovieDetail: ({required movieNumber}) async =>
-            _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
-        fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
-            const <MovieListItemDto>[],
+        fetchMovieDetail:
+            ({required movieNumber}) async =>
+                _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
+        fetchSimilarMovies:
+            ({required movieNumber, int limit = 15}) async =>
+                const <MovieListItemDto>[],
         fetchMediaLibraries: () async => throw Exception('libraries failed'),
       );
 
@@ -28,19 +30,22 @@ void main() {
     test('loads media library storage descriptors with detail', () async {
       final controller = MovieDetailController(
         movieNumber: 'ABC-001',
-        fetchMovieDetail: ({required movieNumber}) async =>
-            _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
-        fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
-            const <MovieListItemDto>[],
-        fetchMediaLibraries: () async => const <MediaLibraryDto>[
-          MediaLibraryDto(
-            id: 9,
-            name: '115 主库',
-            backend: MediaLibraryBackend.cloud115,
-            createdAt: null,
-            updatedAt: null,
-          ),
-        ],
+        fetchMovieDetail:
+            ({required movieNumber}) async =>
+                _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
+        fetchSimilarMovies:
+            ({required movieNumber, int limit = 15}) async =>
+                const <MovieListItemDto>[],
+        fetchMediaLibraries:
+            () async => const <MediaLibraryDto>[
+              MediaLibraryDto(
+                id: 9,
+                name: '115 主库',
+                backend: MediaLibraryBackend.cloud115,
+                createdAt: null,
+                updatedAt: null,
+              ),
+            ],
       );
 
       await controller.load();
@@ -285,15 +290,16 @@ MovieDetailDto _movieDetail({
     summary: '',
     descZh: '',
     desc: '',
-    thinCoverImage: thinCoverOrigin == null
-        ? null
-        : MovieImageDto(
-            id: 2,
-            origin: thinCoverOrigin,
-            small: '',
-            medium: '',
-            large: '',
-          ),
+    thinCoverImage:
+        thinCoverOrigin == null
+            ? null
+            : MovieImageDto(
+              id: 2,
+              origin: thinCoverOrigin,
+              small: '',
+              medium: '',
+              large: '',
+            ),
     plotImages: const <MovieImageDto>[],
     actors: const <MovieActorDto>[],
     tags: const <MovieTagDto>[],

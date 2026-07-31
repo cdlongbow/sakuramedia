@@ -39,10 +39,11 @@ void main() {
     );
 
     final wrap = tester.widget<Wrap>(find.byType(Wrap));
-    final verticalGaps = tester
-        .widgetList<SizedBox>(find.byType(SizedBox))
-        .map((box) => box.height)
-        .toList();
+    final verticalGaps =
+        tester
+            .widgetList<SizedBox>(find.byType(SizedBox))
+            .map((box) => box.height)
+            .toList();
 
     expect(wrap.spacing, sakuraThemeData.appSpacing.sm);
     expect(wrap.runSpacing, sakuraThemeData.appSpacing.sm);

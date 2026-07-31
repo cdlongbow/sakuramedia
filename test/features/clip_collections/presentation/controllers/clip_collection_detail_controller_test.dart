@@ -91,10 +91,11 @@ void main() {
     await controller.load();
 
     expect(controller.collection?.name, '精选合集');
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[10, 11, 12],
-    );
+    expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[
+      10,
+      11,
+      12,
+    ]);
   });
 
   test('reorder moves item and PUTs full ordered ids', () async {
@@ -117,10 +118,11 @@ void main() {
     final error = await controller.reorder(0, 2);
 
     expect(error, isNull);
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[11, 10, 12],
-    );
+    expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[
+      11,
+      10,
+      12,
+    ]);
     expect(adapter.requests.last.body, <String, dynamic>{
       'clip_ids': <int>[11, 10, 12],
     });
@@ -148,10 +150,11 @@ void main() {
     final error = await controller.reorder(0, 2);
 
     expect(error, isNotNull);
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[10, 11, 12],
-    );
+    expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[
+      10,
+      11,
+      12,
+    ]);
   });
 
   test('removeClip optimistically drops then confirms', () async {
@@ -173,39 +176,38 @@ void main() {
     final error = await controller.removeClip(11);
 
     expect(error, isNull);
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[10, 12],
-    );
+    expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[10, 12]);
     expect(controller.collection?.clipCount, 2);
   });
 
-  test('deleteClip optimistically drops then confirms via media-clips DELETE',
-      () async {
-    enqueueLoad();
-    final controller = ClipCollectionDetailController(
-      collectionId: 7,
-      api: api,
-      clipsApi: clipsApi,
-    );
-    addTearDown(controller.dispose);
-    await controller.load();
+  test(
+    'deleteClip optimistically drops then confirms via media-clips DELETE',
+    () async {
+      enqueueLoad();
+      final controller = ClipCollectionDetailController(
+        collectionId: 7,
+        api: api,
+        clipsApi: clipsApi,
+      );
+      addTearDown(controller.dispose);
+      await controller.load();
 
-    adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/media-clips/11',
-      statusCode: 204,
-    );
+      adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/media-clips/11',
+        statusCode: 204,
+      );
 
-    final error = await controller.deleteClip(11);
+      final error = await controller.deleteClip(11);
 
-    expect(error, isNull);
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[10, 12],
-    );
-    expect(controller.collection?.clipCount, 2);
-  });
+      expect(error, isNull);
+      expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[
+        10,
+        12,
+      ]);
+      expect(controller.collection?.clipCount, 2);
+    },
+  );
 
   test('deleteClip rolls back on failure', () async {
     enqueueLoad();
@@ -229,9 +231,10 @@ void main() {
     final error = await controller.deleteClip(11);
 
     expect(error, isNotNull);
-    expect(
-      controller.clips.map((clip) => clip.clipId).toList(),
-      <int>[10, 11, 12],
-    );
+    expect(controller.clips.map((clip) => clip.clipId).toList(), <int>[
+      10,
+      11,
+      12,
+    ]);
   });
 }

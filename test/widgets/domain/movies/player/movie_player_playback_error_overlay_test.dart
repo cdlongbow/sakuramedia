@@ -20,9 +20,7 @@ void main() {
 
       expect(find.text('播放失败'), findsOneWidget);
       expect(
-        find.text(
-          '暂时无法播放此 115 网盘媒体。请检查网络或媒体库认证状态；如需重新认证，请前往「系统设置 → 媒体库」。',
-        ),
+        find.text('暂时无法播放此 115 网盘媒体。请检查网络或媒体库认证状态；如需重新认证，请前往「系统设置 → 媒体库」。'),
         findsOneWidget,
       );
       expect(find.textContaining('重试'), findsNothing);

@@ -166,8 +166,7 @@ void main() {
     expect(find.text('分辨率刷新中'), findsOneWidget);
   });
 
-  testWidgets('渲染全部排序字段 chip 且 sortField 为 null 时隐藏方向分节',
-      (tester) async {
+  testWidgets('渲染全部排序字段 chip 且 sortField 为 null 时隐藏方向分节', (tester) async {
     final controller = seededController();
     addTearDown(controller.dispose);
     await pumpSections(
@@ -227,10 +226,7 @@ void main() {
     await tester.tap(find.byKey(const Key('playlist-filter-sort-heat')));
     await tester.tap(find.byKey(const Key('playlist-filter-sort-recent')));
 
-    expect(
-      sortFields,
-      <PlaylistSortField?>[PlaylistSortField.heat, null],
-    );
+    expect(sortFields, <PlaylistSortField?>[PlaylistSortField.heat, null]);
   });
 
   testWidgets('点击方向 chip 回传对应升降序', (tester) async {
@@ -269,16 +265,11 @@ void main() {
     );
 
     await tester.tap(find.byKey(const Key('playlist-filter-resolution-4K')));
-    await tester.tap(
-      find.byKey(const Key('playlist-filter-resolution-all')),
-    );
+    await tester.tap(find.byKey(const Key('playlist-filter-resolution-all')));
 
-    expect(
-      resolutions,
-      <PlaylistResolutionFilter?>[
-        PlaylistResolutionFilter.k4k,
-        null,
-      ],
-    );
+    expect(resolutions, <PlaylistResolutionFilter?>[
+      PlaylistResolutionFilter.k4k,
+      null,
+    ]);
   });
 }

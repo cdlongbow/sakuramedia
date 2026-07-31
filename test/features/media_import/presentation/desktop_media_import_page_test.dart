@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -535,19 +536,22 @@ Future<void> _pumpPage(
   required TestApiBundle bundle,
 }) async {
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        Provider<ActivityEventStreamClient>.value(
-          value: bundle.activityEventStreamClient,
-        ),
-        Provider<ActivityApi>.value(value: bundle.activityApi),
-        Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
-        Provider<VideoImportsApi>.value(value: bundle.videoImportsApi),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: DesktopMediaImportPage()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          Provider<ActivityEventStreamClient>.value(
+            value: bundle.activityEventStreamClient,
+          ),
+          Provider<ActivityApi>.value(value: bundle.activityApi),
+          Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
+          Provider<VideoImportsApi>.value(value: bundle.videoImportsApi),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopMediaImportPage()),
+          ),
         ),
       ),
     ),

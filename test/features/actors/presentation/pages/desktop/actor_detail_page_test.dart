@@ -54,9 +54,7 @@ void main() {
     );
   }
 
-  testWidgets('桌面女优详情影片区顶栏与移动端同构：筛选入口 + 选择入口', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('桌面女优详情影片区顶栏与移动端同构：筛选入口 + 选择入口', (WidgetTester tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1280, 1600);
     addTearDown(() {

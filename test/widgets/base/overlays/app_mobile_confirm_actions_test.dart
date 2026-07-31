@@ -8,7 +8,9 @@ void main() {
   Widget wrap(Widget child) {
     return MaterialApp(
       theme: sakuraThemeData,
-      home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+      home: Scaffold(
+        body: Padding(padding: const EdgeInsets.all(16), child: child),
+      ),
     );
   }
 
@@ -66,11 +68,15 @@ void main() {
       ),
     );
 
-    final confirmButton = tester.widget<AppButton>(find.byKey(const Key('confirm')));
+    final confirmButton = tester.widget<AppButton>(
+      find.byKey(const Key('confirm')),
+    );
     expect(confirmButton.variant, AppButtonVariant.danger);
   });
 
-  testWidgets('isLoading disables cancel and shows spinner on confirm', (tester) async {
+  testWidgets('isLoading disables cancel and shows spinner on confirm', (
+    tester,
+  ) async {
     var cancels = 0;
     await tester.pumpWidget(
       wrap(
@@ -84,10 +90,14 @@ void main() {
       ),
     );
 
-    final cancelButton = tester.widget<AppButton>(find.byKey(const Key('cancel')));
+    final cancelButton = tester.widget<AppButton>(
+      find.byKey(const Key('cancel')),
+    );
     expect(cancelButton.onPressed, isNull);
 
-    final confirmButton = tester.widget<AppButton>(find.byKey(const Key('confirm')));
+    final confirmButton = tester.widget<AppButton>(
+      find.byKey(const Key('confirm')),
+    );
     expect(confirmButton.isLoading, isTrue);
 
     await tester.tap(find.byKey(const Key('cancel')));

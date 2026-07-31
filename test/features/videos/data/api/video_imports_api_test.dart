@@ -35,64 +35,69 @@ void main() {
     sessionStore.dispose();
   });
 
-  test('createVideoImport sends library, transfer_mode and collection', () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/video-imports',
-      statusCode: 202,
-      body: <String, dynamic>{
-        'video_import_job_id': 7,
-        'task_run_id': 42,
-        'status': 'accepted',
-      },
-    );
+  test(
+    'createVideoImport sends library, transfer_mode and collection',
+    () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/video-imports',
+        statusCode: 202,
+        body: <String, dynamic>{
+          'video_import_job_id': 7,
+          'task_run_id': 42,
+          'status': 'accepted',
+        },
+      );
 
-    final response = await api.createVideoImport(
-      libraryId: 1,
-      source: const MediaImportSource.local('/mnt/incoming/videos'),
-      transferMode: TransferMode.cleanupSource,
-      collectionId: 9,
-    );
+      final response = await api.createVideoImport(
+        libraryId: 1,
+        source: const MediaImportSource.local('/mnt/incoming/videos'),
+        transferMode: TransferMode.cleanupSource,
+        collectionId: 9,
+      );
 
-    expect(response.videoImportJobId, 7);
-    expect(response.taskRunId, 42);
-    expect(response.status, 'accepted');
+      expect(response.videoImportJobId, 7);
+      expect(response.taskRunId, 42);
+      expect(response.status, 'accepted');
 
-    final body = adapter.requests.single.body as Map;
-    expect(body['library_id'], 1);
-    expect(body['source_path'], '/mnt/incoming/videos');
-    expect(body.containsKey('source_cid'), isFalse);
-    expect(body['transfer_mode'], 'cleanup-source');
-    expect(body['collection_id'], 9);
-  });
+      final body = adapter.requests.single.body as Map;
+      expect(body['library_id'], 1);
+      expect(body['source_path'], '/mnt/incoming/videos');
+      expect(body.containsKey('source_cid'), isFalse);
+      expect(body['transfer_mode'], 'cleanup-source');
+      expect(body['collection_id'], 9);
+    },
+  );
 
-  test('createVideoImport with cloud115 source sends source_cid + copy mode',
-      () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/video-imports',
-      statusCode: 202,
-      body: <String, dynamic>{
-        'video_import_job_id': 8,
-        'task_run_id': 43,
-        'status': 'accepted',
-      },
-    );
+  test(
+    'createVideoImport with cloud115 source sends source_cid + copy mode',
+    () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/video-imports',
+        statusCode: 202,
+        body: <String, dynamic>{
+          'video_import_job_id': 8,
+          'task_run_id': 43,
+          'status': 'accepted',
+        },
+      );
 
-    await api.createVideoImport(
-      libraryId: 2,
-      source: const MediaImportSource.cloud115('cid-source'),
-      transferMode: TransferMode.copy,
-      collectionId: 9,
-    );
+      await api.createVideoImport(
+        libraryId: 2,
+        source: const MediaImportSource.cloud115('cid-source'),
+        transferMode: TransferMode.copy,
+        collectionId: 9,
+      );
 
-    final body = adapter.requests.single.body as Map;
-    expect(body['library_id'], 2);
-    expect(body['source_cid'], 'cid-source');
-    expect(body.containsKey('source_path'), isFalse);
-    expect(body['transfer_mode'], 'copy');
-    expect(body['collection_id'], 9);
-  });
+      final body = adapter.requests.single.body as Map;
+      expect(body['library_id'], 2);
+      expect(body['source_cid'], 'cid-source');
+      expect(body.containsKey('source_path'), isFalse);
+      expect(body['transfer_mode'], 'copy');
+      expect(body['collection_id'], 9);
+    },
+  );
 
   test('createVideoImport omits collection_id when null', () async {
     adapter.enqueueJson(
@@ -282,7 +287,6 @@ void main() {
     final body = adapter.requests.single.body as Map;
     expect(body.containsKey('files'), isFalse);
   });
-
 }
 
 Map<String, dynamic> _jobDetailBody() {

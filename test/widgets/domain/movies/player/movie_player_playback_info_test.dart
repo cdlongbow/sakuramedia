@@ -196,28 +196,22 @@ void main() {
         fileFormat: 'matroska,webm',
       );
 
-      expect(
-        snapshot.playbackSourceKindLabel,
-        '本地文件 · demuxer=matroska,webm',
-      );
+      expect(snapshot.playbackSourceKindLabel, '本地文件 · demuxer=matroska,webm');
       expect(snapshot.playbackSourceDegradedHint, isNull);
       expect(snapshot.playbackSourceQualityLabel, isNull);
     });
 
-    test(
-      'hides host / path when originalUrl cannot yield them',
-      () {
-        final snapshot = _buildMinimalSnapshot(
-          mediaOrigin: MoviePlayerPlaybackMediaOrigin.unknown,
-          originalUrl: '',
-          fileFormat: null,
-        );
+    test('hides host / path when originalUrl cannot yield them', () {
+      final snapshot = _buildMinimalSnapshot(
+        mediaOrigin: MoviePlayerPlaybackMediaOrigin.unknown,
+        originalUrl: '',
+        fileFormat: null,
+      );
 
-        expect(snapshot.playbackSourceKindLabel, '--');
-        expect(snapshot.playbackSourceHostLabel, isNull);
-        expect(snapshot.playbackSourceRequestPathLabel, isNull);
-      },
-    );
+      expect(snapshot.playbackSourceKindLabel, '--');
+      expect(snapshot.playbackSourceHostLabel, isNull);
+      expect(snapshot.playbackSourceRequestPathLabel, isNull);
+    });
 
     test('keeps port in host when non-standard', () {
       final snapshot = _buildMinimalSnapshot(
@@ -408,10 +402,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(
-        find.text('HLS 不可用，可能因未转码 / 账号非 VIP，已回落到原画直链'),
-        findsOneWidget,
-      );
+      expect(find.text('HLS 不可用，可能因未转码 / 账号非 VIP，已回落到原画直链'), findsOneWidget);
       // 档位行不渲染
       expect(
         find.byKey(
@@ -427,11 +418,11 @@ void main() {
       String? copied;
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-        if (call.method == 'Clipboard.setData') {
-          copied = (call.arguments as Map)['text'] as String?;
-        }
-        return null;
-      });
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String?;
+            }
+            return null;
+          });
       addTearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(SystemChannels.platform, null);
@@ -460,9 +451,7 @@ void main() {
       );
 
       await tester.tap(
-        find.byKey(
-          const Key('movie-player-info-copy-playback-source-host'),
-        ),
+        find.byKey(const Key('movie-player-info-copy-playback-source-host')),
       );
       // toast 会 schedule 一个自动关闭 timer；把它跑完防 "pending timers"。
       await tester.pumpAndSettle(const Duration(seconds: 3));

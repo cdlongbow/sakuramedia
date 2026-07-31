@@ -170,23 +170,22 @@ void main() {
   });
 
   group('MoviePlayerSurfaceSubtitleCoordinator', () {
-    test('applies external subtitle data and returns the selected id',
-        () async {
+    test('applies external subtitle data and returns the selected id', () async {
       final fake = _FakePlaybackFunctions();
       const subtitleText = '1\n00:00:01,000 --> 00:00:02,000\nhello\n';
 
-      final result =
-          await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
-        setSubtitleTrack: fake.setSubtitleTrack,
-        selectedOption: const MoviePlayerSubtitleOption(
-          subtitleId: 501,
-          label: 'ABC-001.zh.srt',
-          resolvedUrl: 'https://example.com/subtitles/501.srt',
-          title: 'ABC-001.zh.srt',
-        ),
-        loadSubtitleText: (_) async => subtitleText,
-        onError: () {},
-      );
+      final result = await const MoviePlayerSurfaceSubtitleCoordinator()
+          .applySelection(
+            setSubtitleTrack: fake.setSubtitleTrack,
+            selectedOption: const MoviePlayerSubtitleOption(
+              subtitleId: 501,
+              label: 'ABC-001.zh.srt',
+              resolvedUrl: 'https://example.com/subtitles/501.srt',
+              title: 'ABC-001.zh.srt',
+            ),
+            loadSubtitleText: (_) async => subtitleText,
+            onError: () {},
+          );
 
       expect(result, 501);
       expect(
@@ -200,13 +199,13 @@ void main() {
     test('disables subtitles when null is selected', () async {
       final fake = _FakePlaybackFunctions();
 
-      final result =
-          await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
-        setSubtitleTrack: fake.setSubtitleTrack,
-        selectedOption: null,
-        loadSubtitleText: (_) async => throw UnimplementedError(),
-        onError: () {},
-      );
+      final result = await const MoviePlayerSurfaceSubtitleCoordinator()
+          .applySelection(
+            setSubtitleTrack: fake.setSubtitleTrack,
+            selectedOption: null,
+            loadSubtitleText: (_) async => throw UnimplementedError(),
+            onError: () {},
+          );
 
       expect(result, isNull);
       expect(fake.operations, <String>[
@@ -217,22 +216,21 @@ void main() {
     test(
       'falls back to no subtitle and emits error when subtitle load fails',
       () async {
-        final fake = _FakePlaybackFunctions()
-          ..failNextSubtitleSelection = true;
+        final fake = _FakePlaybackFunctions()..failNextSubtitleSelection = true;
         var didError = false;
 
-        final result =
-            await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
-          setSubtitleTrack: fake.setSubtitleTrack,
-          selectedOption: const MoviePlayerSubtitleOption(
-            subtitleId: 501,
-            label: 'ABC-001.zh.srt',
-            resolvedUrl: 'https://example.com/subtitles/501.srt',
-          ),
-          loadSubtitleText: (_) async =>
-              '1\n00:00:01,000 --> 00:00:02,000\nhello\n',
-          onError: () => didError = true,
-        );
+        final result = await const MoviePlayerSurfaceSubtitleCoordinator()
+            .applySelection(
+              setSubtitleTrack: fake.setSubtitleTrack,
+              selectedOption: const MoviePlayerSubtitleOption(
+                subtitleId: 501,
+                label: 'ABC-001.zh.srt',
+                resolvedUrl: 'https://example.com/subtitles/501.srt',
+              ),
+              loadSubtitleText:
+                  (_) async => '1\n00:00:01,000 --> 00:00:02,000\nhello\n',
+              onError: () => didError = true,
+            );
 
         expect(result, isNull);
         expect(didError, isTrue);
@@ -249,17 +247,17 @@ void main() {
         final fake = _FakePlaybackFunctions();
         var didError = false;
 
-        final result =
-            await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
-          setSubtitleTrack: fake.setSubtitleTrack,
-          selectedOption: const MoviePlayerSubtitleOption(
-            subtitleId: 501,
-            label: 'ABC-001.zh.srt',
-            resolvedUrl: 'https://example.com/subtitles/501.srt',
-          ),
-          loadSubtitleText: (_) async => throw const FormatException('bad'),
-          onError: () => didError = true,
-        );
+        final result = await const MoviePlayerSurfaceSubtitleCoordinator()
+            .applySelection(
+              setSubtitleTrack: fake.setSubtitleTrack,
+              selectedOption: const MoviePlayerSubtitleOption(
+                subtitleId: 501,
+                label: 'ABC-001.zh.srt',
+                resolvedUrl: 'https://example.com/subtitles/501.srt',
+              ),
+              loadSubtitleText: (_) async => throw const FormatException('bad'),
+              onError: () => didError = true,
+            );
 
         expect(result, isNull);
         expect(didError, isTrue);

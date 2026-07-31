@@ -140,7 +140,9 @@ void main() {
       find.byKey(const Key('mobile-notifications-mark-all-read')),
       findsOneWidget,
     );
-    await tester.tap(find.byKey(const Key('mobile-notifications-mark-all-read')));
+    await tester.tap(
+      find.byKey(const Key('mobile-notifications-mark-all-read')),
+    );
     await tester.pumpAndSettle();
 
     expect(

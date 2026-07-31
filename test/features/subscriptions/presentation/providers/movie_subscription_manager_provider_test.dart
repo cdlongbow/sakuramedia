@@ -100,10 +100,7 @@ void main() {
 
     final state = container.read(movieSubscriptionManagerProvider).requireValue;
     expect(state.filter.status, MovieSubscriptionStatus.missing);
-    expect(
-      adapter.requests.first.uri.queryParameters['status'],
-      'missing',
-    );
+    expect(adapter.requests.first.uri.queryParameters['status'], 'missing');
   });
 
   test('applyStatus 切签重新拉取并退出多选', () async {
@@ -116,7 +113,9 @@ void main() {
       method: 'GET',
       path: '/movie-subscriptions',
       body: _page(
-        items: <Map<String, dynamic>>[_item(number: 'B-1', status: 'exhausted')],
+        items: <Map<String, dynamic>>[
+          _item(number: 'B-1', status: 'exhausted'),
+        ],
         total: 1,
       ),
     );
@@ -127,10 +126,7 @@ void main() {
     expect(state.paged.items.single.movieNumber, 'B-1');
     expect(state.selectionMode, isFalse);
     expect(state.selectedMovieNumbers, isEmpty);
-    expect(
-      adapter.requests.last.uri.queryParameters['status'],
-      'exhausted',
-    );
+    expect(adapter.requests.last.uri.queryParameters['status'], 'exhausted');
   });
 
   test('面板重置只清排序与搜索，保留当前分段签', () async {
@@ -204,10 +200,10 @@ void main() {
 
     expect(result.hasError, isFalse);
     final state = container.read(movieSubscriptionManagerProvider).requireValue;
-    expect(
-      state.paged.items.map((item) => item.movieNumber),
-      <String>['A-2', 'A-3'],
-    );
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'A-2',
+      'A-3',
+    ]);
     expect(state.paged.total, 2);
     expect(state.isPending('A-1'), isFalse);
   });
@@ -338,10 +334,10 @@ void main() {
 
     expect(result.status, MovieSubscriptionToggleStatus.unsubscribed);
     final state = container.read(movieSubscriptionManagerProvider).requireValue;
-    expect(
-      state.paged.items.map((item) => item.movieNumber),
-      <String>['A-2', 'A-3'],
-    );
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'A-2',
+      'A-3',
+    ]);
     expect(state.paged.total, 2);
     expect(changes.single.movieNumber, 'A-1');
     expect(changes.single.isSubscribed, isFalse);
@@ -364,11 +360,7 @@ void main() {
 
     expect(result.status, MovieSubscriptionToggleStatus.blockedByMedia);
     expect(
-      container
-          .read(movieSubscriptionManagerProvider)
-          .requireValue
-          .paged
-          .items,
+      container.read(movieSubscriptionManagerProvider).requireValue.paged.items,
       hasLength(3),
     );
   });
@@ -412,10 +404,10 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
     final state = container.read(movieSubscriptionManagerProvider).requireValue;
-    expect(
-      state.paged.items.map((item) => item.movieNumber),
-      <String>['A-1', 'A-3'],
-    );
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'A-1',
+      'A-3',
+    ]);
     expect(state.paged.total, 2);
   });
 

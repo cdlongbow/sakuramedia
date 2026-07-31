@@ -203,26 +203,26 @@ void main() {
                 (context) => Scaffold(
                   body: TextButton(
                     onPressed: () {
-                    showAppBottomDrawer<void>(
-                      context: context,
-                      drawerKey: const Key(
-                        'app-bottom-drawer-safe-area-ignored',
-                      ),
-                      heightFactor: 0.5,
-                      ignoreTopSafeArea: true,
-                      builder:
-                          (_) => const Align(
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                              key: Key('app-bottom-drawer-safe-area-probe'),
-                              width: 12,
-                              height: 12,
+                      showAppBottomDrawer<void>(
+                        context: context,
+                        drawerKey: const Key(
+                          'app-bottom-drawer-safe-area-ignored',
+                        ),
+                        heightFactor: 0.5,
+                        ignoreTopSafeArea: true,
+                        builder:
+                            (_) => const Align(
+                              alignment: Alignment.topLeft,
+                              child: SizedBox(
+                                key: Key('app-bottom-drawer-safe-area-probe'),
+                                width: 12,
+                                height: 12,
+                              ),
                             ),
-                          ),
-                    );
-                  },
-                  child: const Text('open'),
-                ),
+                      );
+                    },
+                    child: const Text('open'),
+                  ),
                 ),
           ),
         ),

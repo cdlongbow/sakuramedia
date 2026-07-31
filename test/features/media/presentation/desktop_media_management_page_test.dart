@@ -42,11 +42,7 @@ void main() {
     // 页面挂载即建媒体列表 tab（watch mediaBrowseProvider）与秒传轮询监听
     // （ref.listen mediaRapidUploadHistoryProvider），给这两个端点常驻空响应，
     // 让失效巡检用例不必逐个排队。
-    adapter.setFallbackJson(
-      method: 'GET',
-      path: '/media',
-      body: _emptyPage(),
-    );
+    adapter.setFallbackJson(method: 'GET', path: '/media', body: _emptyPage());
     adapter.setFallbackJson(
       method: 'GET',
       path: '/media/rapid-uploads',
@@ -92,9 +88,7 @@ void main() {
     // 失效巡检 tab 未激活前不发请求。
     expect(adapter.hitCount('GET', '/media/invalid'), 0);
 
-    await tester.tap(
-      find.byKey(const Key('media-management-tab-maintenance')),
-    );
+    await tester.tap(find.byKey(const Key('media-management-tab-maintenance')));
     await tester.pumpAndSettle();
 
     expect(adapter.hitCount('GET', '/media/invalid'), 1);
@@ -594,9 +588,7 @@ Future<void> _pumpPage(
   await tester.pumpAndSettle();
 
   if (switchToMaintenanceTab) {
-    await tester.tap(
-      find.byKey(const Key('media-management-tab-maintenance')),
-    );
+    await tester.tap(find.byKey(const Key('media-management-tab-maintenance')));
     await tester.pump();
     await tester.pumpAndSettle();
   }

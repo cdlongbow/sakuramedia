@@ -3,8 +3,10 @@ import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
@@ -91,9 +93,9 @@ Future<void> launchMoviePlayback(
       media == null
           ? null
           : resolveMediaUrl(
-              rawUrl: resolveExternalPlayerSingleUrl(media),
-              baseUrl: baseUrl,
-            );
+            rawUrl: resolveExternalPlayerSingleUrl(media),
+            baseUrl: baseUrl,
+          );
 
   // 拿不到可播放直链时回落到应用内播放页。
   if (detail == null ||
@@ -186,9 +188,10 @@ Future<void> _launchExternalMergedPlayback(
   }
 
   final baseUrl = context.read<SessionStore>().baseUrl;
-  final resolvedUrl = playUrl.hasPlayableUrl
-      ? resolveMediaUrl(rawUrl: playUrl.playUrl, baseUrl: baseUrl)
-      : null;
+  final resolvedUrl =
+      playUrl.hasPlayableUrl
+          ? resolveMediaUrl(rawUrl: playUrl.playUrl, baseUrl: baseUrl)
+          : null;
 
   if (resolvedUrl == null || resolvedUrl.isEmpty) {
     showToast('合并播放暂不可用，已使用应用内播放');
@@ -234,11 +237,15 @@ Future<void> _launchExternalMergedPlayback(
   }
 }
 
-/// 安全读取偏好；在未注入 Provider 的局部上下文中返回 null（降级为应用内播放）。
+/// 安全读取偏好；树上没有 `ProviderScope` 的局部上下文（部分 widget 测试）
+/// 返回 null（降级为应用内播放），与旧 `ProviderNotFoundException` 语义一致。
 ExternalPlayerStore? _readExternalPlayerStore(BuildContext context) {
   try {
-    return context.read<ExternalPlayerStore>();
-  } on ProviderNotFoundException {
+    return ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(externalPlayerStoreProvider);
+  } on Object {
     return null;
   }
 }

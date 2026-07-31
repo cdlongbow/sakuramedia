@@ -94,9 +94,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('顶栏用 AppListHeader，无筛选维度所以不渲染筛选入口', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('顶栏用 AppListHeader，无筛选维度所以不渲染筛选入口', (WidgetTester tester) async {
     enqueueSeriesMovies();
     await pumpPage(tester);
 
@@ -116,9 +114,7 @@ void main() {
     expect(find.text('共 2 部'), findsOneWidget);
   });
 
-  testWidgets('「同步系列影片」与「选择」都在操作槽里，不再另起一行', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('「同步系列影片」与「选择」都在操作槽里，不再另起一行', (WidgetTester tester) async {
     enqueueSeriesMovies();
     await pumpPage(tester);
 
@@ -133,9 +129,7 @@ void main() {
     expect(
       find.descendant(
         of: actionSlots,
-        matching: find.byKey(
-          const Key('series-movies-enter-selection-button'),
-        ),
+        matching: find.byKey(const Key('series-movies-enter-selection-button')),
       ),
       findsOneWidget,
     );

@@ -241,7 +241,10 @@ void main() {
         MaterialApp(
           theme: sakuraThemeData,
           home: const Scaffold(
-            body: MoviePlayerSurfaceFrame(isReady: false, child: Text('player')),
+            body: MoviePlayerSurfaceFrame(
+              isReady: false,
+              child: Text('player'),
+            ),
           ),
         ),
       );

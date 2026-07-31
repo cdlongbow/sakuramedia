@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/activity/data/activity_api.dart';
-import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
+import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/media_import/presentation/directory_picker_dialog.dart';
 import 'package:sakuramedia/features/media_import/presentation/import_job_card.dart';
 import 'package:sakuramedia/features/media_import/presentation/import_jobs_view_controller.dart';
 import 'package:sakuramedia/features/media_import/presentation/media_import_controller.dart';
-import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/imports/video_import_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/imports/video_import_dialog.dart';
 import 'package:sakuramedia/theme.dart';
@@ -22,14 +22,15 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
-class DesktopMediaImportPage extends StatefulWidget {
+class DesktopMediaImportPage extends ConsumerStatefulWidget {
   const DesktopMediaImportPage({super.key});
 
   @override
-  State<DesktopMediaImportPage> createState() => _DesktopMediaImportPageState();
+  ConsumerState<DesktopMediaImportPage> createState() =>
+      _DesktopMediaImportPageState();
 }
 
-class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
+class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     with SingleTickerProviderStateMixin {
   late final MediaImportController _javController;
   late final VideoImportController _pornController;
@@ -48,12 +49,12 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
   void initState() {
     super.initState();
     _javController = MediaImportController(
-      mediaImportApi: context.read<MediaImportApi>(),
-      activityApi: context.read<ActivityApi>(),
+      mediaImportApi: ref.read(mediaImportApiProvider),
+      activityApi: ref.read(activityApiProvider),
     );
     _pornController = VideoImportController(
-      videoImportsApi: context.read<VideoImportsApi>(),
-      activityApi: context.read<ActivityApi>(),
+      videoImportsApi: ref.read(videoImportsApiProvider),
+      activityApi: ref.read(activityApiProvider),
     );
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(_handleTabChanged);
@@ -165,23 +166,24 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
       child: AnimatedBuilder(
         animation: _mergedListenable,
         builder: (context, _) {
-          final tabSlivers = _isPornTab
-              ? _buildTabSlivers(
-                  context,
-                  controller: _pornController,
-                  expanded: _expandedPorn,
-                  description:
-                      '从后端白名单目录中选择 PornBox 视频导入到媒体库，必须归入一个合集。导入在后台运行，可在此查看实时进度与失败文件处理。',
-                  onCreate: () => unawaited(_openPornCreateDialog()),
-                )
-              : _buildTabSlivers(
-                  context,
-                  controller: _javController,
-                  expanded: _expandedJav,
-                  description:
-                      '从后端本地目录或 115 网盘目录中选择 JAV 媒体导入到对应媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
-                  onCreate: () => unawaited(_openJavCreateDialog()),
-                );
+          final tabSlivers =
+              _isPornTab
+                  ? _buildTabSlivers(
+                    context,
+                    controller: _pornController,
+                    expanded: _expandedPorn,
+                    description:
+                        '从后端白名单目录中选择 PornBox 视频导入到媒体库，必须归入一个合集。导入在后台运行，可在此查看实时进度与失败文件处理。',
+                    onCreate: () => unawaited(_openPornCreateDialog()),
+                  )
+                  : _buildTabSlivers(
+                    context,
+                    controller: _javController,
+                    expanded: _expandedJav,
+                    description:
+                        '从后端本地目录或 115 网盘目录中选择 JAV 媒体导入到对应媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
+                    onCreate: () => unawaited(_openJavCreateDialog()),
+                  );
           return CustomScrollView(
             key: const Key('media-import-page'),
             controller: _scrollController,
@@ -198,7 +200,9 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
                   ],
                 ),
               ),
-              SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
+              SliverToBoxAdapter(
+                child: SizedBox(height: context.appSpacing.lg),
+              ),
               ...tabSlivers,
             ],
           );

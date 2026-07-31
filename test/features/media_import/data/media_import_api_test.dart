@@ -96,34 +96,36 @@ void main() {
     );
   });
 
-  test('createImportJob sends transfer_mode wire value and parses response',
-      () async {
-    adapter.enqueueJson(
-      method: 'POST',
-      path: '/import-jobs',
-      statusCode: 202,
-      body: <String, dynamic>{
-        'import_job_id': 7,
-        'task_run_id': 42,
-        'status': 'pending',
-      },
-    );
+  test(
+    'createImportJob sends transfer_mode wire value and parses response',
+    () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/import-jobs',
+        statusCode: 202,
+        body: <String, dynamic>{
+          'import_job_id': 7,
+          'task_run_id': 42,
+          'status': 'pending',
+        },
+      );
 
-    final response = await api.createImportJob(
-      libraryId: 1,
-      source: const MediaImportSource.local('/mnt/incoming/movies'),
-      transferMode: TransferMode.cleanupSource,
-    );
+      final response = await api.createImportJob(
+        libraryId: 1,
+        source: const MediaImportSource.local('/mnt/incoming/movies'),
+        transferMode: TransferMode.cleanupSource,
+      );
 
-    expect(response.importJobId, 7);
-    expect(response.taskRunId, 42);
-    expect(response.status, 'pending');
+      expect(response.importJobId, 7);
+      expect(response.taskRunId, 42);
+      expect(response.status, 'pending');
 
-    final body = adapter.requests.single.body as Map;
-    expect(body['library_id'], 1);
-    expect(body['source_path'], '/mnt/incoming/movies');
-    expect(body['transfer_mode'], 'cleanup-source');
-  });
+      final body = adapter.requests.single.body as Map;
+      expect(body['library_id'], 1);
+      expect(body['source_path'], '/mnt/incoming/movies');
+      expect(body['transfer_mode'], 'cleanup-source');
+    },
+  );
 
   test('createImportJob surfaces 409 conflict as ApiException', () async {
     adapter.enqueueJson(

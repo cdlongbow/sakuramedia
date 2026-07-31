@@ -118,52 +118,55 @@ void main() {
     });
   });
 
-  test('getGlobalMediaPoints passes kind and parses video item moments', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media-points',
-      body: <String, dynamic>{
-        'items': [
-          <String, dynamic>{
-            'point_id': 11,
-            'media_id': 200,
-            'movie_number': null,
-            'video_item_id': 999,
-            'thumbnail_id': 18,
-            'offset_seconds': 360,
-            'image': <String, dynamic>{
-              'id': 9100,
-              'origin': '/points/v18-origin.webp',
-              'small': '/points/v18-small.webp',
-              'medium': '/points/v18-medium.webp',
-              'large': '/points/v18-large.webp',
+  test(
+    'getGlobalMediaPoints passes kind and parses video item moments',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-points',
+        body: <String, dynamic>{
+          'items': [
+            <String, dynamic>{
+              'point_id': 11,
+              'media_id': 200,
+              'movie_number': null,
+              'video_item_id': 999,
+              'thumbnail_id': 18,
+              'offset_seconds': 360,
+              'image': <String, dynamic>{
+                'id': 9100,
+                'origin': '/points/v18-origin.webp',
+                'small': '/points/v18-small.webp',
+                'medium': '/points/v18-medium.webp',
+                'large': '/points/v18-large.webp',
+              },
+              'created_at': '2026-03-12T11:00:00Z',
             },
-            'created_at': '2026-03-12T11:00:00Z',
-          },
-        ],
-        'page': 1,
-        'page_size': 20,
-        'total': 1,
-      },
-    );
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      );
 
-    final page = await mediaApi.getGlobalMediaPoints(
-      page: 1,
-      pageSize: 20,
-      sort: 'created_at:desc',
-      kind: 'video',
-    );
+      final page = await mediaApi.getGlobalMediaPoints(
+        page: 1,
+        pageSize: 20,
+        sort: 'created_at:desc',
+        kind: 'video',
+      );
 
-    expect(page.items.single.movieNumber, isNull);
-    expect(page.items.single.videoItemId, 999);
-    expect(page.items.single.isVideo, isTrue);
-    expect(adapter.requests.single.uri.queryParameters, <String, String>{
-      'page': '1',
-      'page_size': '20',
-      'sort': 'created_at:desc',
-      'kind': 'video',
-    });
-  });
+      expect(page.items.single.movieNumber, isNull);
+      expect(page.items.single.videoItemId, 999);
+      expect(page.items.single.isVideo, isTrue);
+      expect(adapter.requests.single.uri.queryParameters, <String, String>{
+        'page': '1',
+        'page_size': '20',
+        'sort': 'created_at:desc',
+        'kind': 'video',
+      });
+    },
+  );
 
   test('getInvalidMedia maps pagination and movie cover images', () async {
     adapter.enqueueJson(
@@ -345,39 +348,41 @@ void main() {
     },
   );
 
-  test('getMediaList sends kind/library/actor/rapid-upload/sort query params',
-      () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: <String, dynamic>{
-        'items': const <Map<String, dynamic>>[],
-        'page': 1,
-        'page_size': 20,
-        'total': 0,
-      },
-    );
+  test(
+    'getMediaList sends kind/library/actor/rapid-upload/sort query params',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+      );
 
-    await mediaApi.getMediaList(
-      page: 2,
-      pageSize: 30,
-      kind: 'jav',
-      libraryId: 5,
-      actorIds: const <int>[12, 34],
-      rapidUploadStatus: 'in_progress',
-      sort: 'heat:desc',
-    );
+      await mediaApi.getMediaList(
+        page: 2,
+        pageSize: 30,
+        kind: 'jav',
+        libraryId: 5,
+        actorIds: const <int>[12, 34],
+        rapidUploadStatus: 'in_progress',
+        sort: 'heat:desc',
+      );
 
-    expect(adapter.requests.single.uri.queryParameters, <String, String>{
-      'page': '2',
-      'page_size': '30',
-      'kind': 'jav',
-      'library_id': '5',
-      'actor_ids': '12,34',
-      'rapid_upload_status': 'in_progress',
-      'sort': 'heat:desc',
-    });
-  });
+      expect(adapter.requests.single.uri.queryParameters, <String, String>{
+        'page': '2',
+        'page_size': '30',
+        'kind': 'jav',
+        'library_id': '5',
+        'actor_ids': '12,34',
+        'rapid_upload_status': 'in_progress',
+        'sort': 'heat:desc',
+      });
+    },
+  );
 
   test('getMediaList omits optional query params when not provided', () async {
     adapter.enqueueJson(
@@ -659,7 +664,8 @@ void main() {
       method: 'GET',
       path: '/media/play-url',
       body: <String, dynamic>{
-        'play_url': '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig',
+        'play_url':
+            '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig',
         'kind': 'merged_local',
         'segment_count': 2,
         'segments': <Map<String, dynamic>>[
@@ -715,7 +721,8 @@ void main() {
       method: 'GET',
       path: '/media/play-url',
       body: <String, dynamic>{
-        'play_url': '/media/merged-stream.m3u8?media_ids=1,2&expires=123&signature=sig',
+        'play_url':
+            '/media/merged-stream.m3u8?media_ids=1,2&expires=123&signature=sig',
         'kind': 'cloud115_merged',
         'segment_count': 2,
         'segments': <Map<String, dynamic>>[

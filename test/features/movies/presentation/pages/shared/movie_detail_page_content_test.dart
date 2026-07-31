@@ -131,11 +131,12 @@ void main() {
       final makerBottom =
           tester.getBottomLeft(find.text('厂商 · S1 NO.1 STYLE')).dy;
       final directorTop = tester.getTopLeft(find.text('导演 · 紋℃')).dy;
-      final metaGroupBottom = tester
-          .getBottomLeft(
-            find.byKey(const Key('movie-detail-inline-meta-group')),
-          )
-          .dy;
+      final metaGroupBottom =
+          tester
+              .getBottomLeft(
+                find.byKey(const Key('movie-detail-inline-meta-group')),
+              )
+              .dy;
       final tagTop = tester.getTopLeft(find.text('标签')).dy;
       final tagWrapBottom = tester.getBottomLeft(find.byType(MovieTagWrap)).dy;
       final actorTop = tester.getTopLeft(find.text('演员')).dy;

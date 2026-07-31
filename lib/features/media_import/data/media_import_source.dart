@@ -15,8 +15,9 @@ class LocalMediaImportSource extends MediaImportSource {
 
   /// 序列化时兜底剪空白，防止调用方从用户输入直接构造带前后空格/换行的路径。
   @override
-  Map<String, dynamic> toJson() =>
-      <String, dynamic>{'source_path': path.trim()};
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'source_path': path.trim(),
+  };
 
   @override
   bool operator ==(Object other) =>

@@ -710,6 +710,33 @@ void main() {
     expect(playUrl.playUrl, isNull);
   });
 
+  test('getMoviePlayUrl maps cloud115 merged hls proxy url', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/play-url',
+      body: <String, dynamic>{
+        'play_url': '/media/merged-stream.m3u8?media_ids=1,2&expires=123&signature=sig',
+        'kind': 'cloud115_merged',
+        'segment_count': 2,
+        'segments': <Map<String, dynamic>>[
+          <String, dynamic>{'media_id': 1, 'duration_seconds': 100},
+          <String, dynamic>{'media_id': 2, 'duration_seconds': 100},
+        ],
+      },
+    );
+
+    final playUrl = await mediaApi.getMoviePlayUrl(
+      movieNumber: 'ABC-002',
+      source: MoviePlayUrlSource.cloud115,
+      mode: MoviePlayUrlMode.merged,
+    );
+
+    expect(playUrl.kind, MoviePlayUrlKind.cloud115Merged);
+    expect(playUrl.hasPlayableUrl, isTrue);
+    expect(playUrl.playUrl, startsWith('/media/merged-stream.m3u8?'));
+    expect(playUrl.segmentCount, 2);
+  });
+
   test('probeMergedPlayback returns true on 206 with Range header', () async {
     const mergedPath =
         '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig';

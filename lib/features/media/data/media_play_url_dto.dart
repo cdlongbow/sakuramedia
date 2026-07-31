@@ -27,6 +27,7 @@ enum MoviePlayUrlKind {
   mergedLocal,
   singleLocal,
   singleCloud115,
+  cloud115Merged,
   cloud115MergedPending,
   none;
 
@@ -35,6 +36,7 @@ enum MoviePlayUrlKind {
       'merged_local' => MoviePlayUrlKind.mergedLocal,
       'single_local' => MoviePlayUrlKind.singleLocal,
       'single_cloud115' => MoviePlayUrlKind.singleCloud115,
+      'cloud115_merged' => MoviePlayUrlKind.cloud115Merged,
       'cloud115_merged_pending' => MoviePlayUrlKind.cloud115MergedPending,
       _ => MoviePlayUrlKind.none,
     };

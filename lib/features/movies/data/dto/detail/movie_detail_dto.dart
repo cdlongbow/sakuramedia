@@ -212,6 +212,7 @@ class MovieMediaItemDto {
   const MovieMediaItemDto({
     required this.mediaId,
     required this.libraryId,
+    this.libraryBackend,
     required this.playUrl,
     required this.storageMode,
     required this.resolution,
@@ -226,6 +227,10 @@ class MovieMediaItemDto {
 
   final int mediaId;
   final int? libraryId;
+
+  /// 媒体所属库的 backend（`local` / `cloud115`）；孤儿媒体可能为 `null`。
+  final String? libraryBackend;
+
   final String playUrl;
   final String storageMode;
   final String resolution;
@@ -239,10 +244,14 @@ class MovieMediaItemDto {
 
   bool get hasPlayableUrl => playUrl.trim().isNotEmpty;
 
+  /// 是否 115 网盘媒体：外部播放器对 115 源要走后端 HLS 代理（.m3u8）。
+  bool get isCloud115 => libraryBackend == 'cloud115';
+
   factory MovieMediaItemDto.fromJson(Map<String, dynamic> json) {
     return MovieMediaItemDto(
       mediaId: json['media_id'] as int? ?? 0,
       libraryId: json['library_id'] as int?,
+      libraryBackend: json['library_backend'] as String?,
       playUrl: json['play_url'] as String? ?? '',
       storageMode: json['storage_mode'] as String? ?? '',
       resolution: json['resolution'] as String? ?? '',
@@ -258,7 +267,50 @@ class MovieMediaItemDto {
       videoInfo: _videoInfoFromJson(json['video_info']),
     );
   }
+
+  /// 可空字段用 sentinel 区分「不改」与「改为 null」；普通字段 `??`。
+  MovieMediaItemDto copyWith({
+    int? mediaId,
+    Object? libraryId = _sentinel,
+    Object? libraryBackend = _sentinel,
+    String? playUrl,
+    String? storageMode,
+    String? resolution,
+    int? fileSizeBytes,
+    int? durationSeconds,
+    String? specialTags,
+    bool? valid,
+    Object? progress = _sentinel,
+    List<MovieMediaPointDto>? points,
+    Object? videoInfo = _sentinel,
+  }) {
+    return MovieMediaItemDto(
+      mediaId: mediaId ?? this.mediaId,
+      libraryId: identical(libraryId, _sentinel)
+          ? this.libraryId
+          : libraryId as int?,
+      libraryBackend: identical(libraryBackend, _sentinel)
+          ? this.libraryBackend
+          : libraryBackend as String?,
+      playUrl: playUrl ?? this.playUrl,
+      storageMode: storageMode ?? this.storageMode,
+      resolution: resolution ?? this.resolution,
+      fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      specialTags: specialTags ?? this.specialTags,
+      valid: valid ?? this.valid,
+      progress: identical(progress, _sentinel)
+          ? this.progress
+          : progress as MovieMediaProgressDto?,
+      points: points ?? this.points,
+      videoInfo: identical(videoInfo, _sentinel)
+          ? this.videoInfo
+          : videoInfo as MovieMediaVideoInfoDto?,
+    );
+  }
 }
+
+const Object _sentinel = Object();
 
 class MovieMediaVideoInfoDto {
   const MovieMediaVideoInfoDto({

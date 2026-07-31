@@ -659,7 +659,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
           if (pointsOverride == null) {
             return item;
           }
-          return _copyMediaItemWithPoints(item, pointsOverride);
+          return item.copyWith(points: pointsOverride);
         })
         .toList(growable: false);
   }
@@ -689,26 +689,6 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       return label;
     }
     return '媒体源 ${mediaItem.mediaId}';
-  }
-
-  MovieMediaItemDto _copyMediaItemWithPoints(
-    MovieMediaItemDto item,
-    List<MovieMediaPointDto> points,
-  ) {
-    return MovieMediaItemDto(
-      mediaId: item.mediaId,
-      libraryId: item.libraryId,
-      playUrl: item.playUrl,
-      storageMode: item.storageMode,
-      resolution: item.resolution,
-      fileSizeBytes: item.fileSizeBytes,
-      durationSeconds: item.durationSeconds,
-      specialTags: item.specialTags,
-      valid: item.valid,
-      progress: item.progress,
-      points: points,
-      videoInfo: item.videoInfo,
-    );
   }
 
   Future<void> _openMediaPointPreview(
@@ -949,6 +929,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
     return MovieMediaItemDto(
       mediaId: mediaId,
       libraryId: null,
+      libraryBackend: null,
       playUrl: '',
       storageMode: '',
       resolution: '',

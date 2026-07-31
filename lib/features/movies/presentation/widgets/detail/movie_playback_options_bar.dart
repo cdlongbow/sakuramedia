@@ -8,7 +8,7 @@ import 'package:sakuramedia/theme.dart';
 ///
 /// 分情况展示：
 /// - 播放源：仅当本地与 115 两种源都有可播媒体时显示；
-/// - 播放模式：仅当合并播放可用（外部播放器 + 本地多分段）时显示。
+/// - 播放模式：仅当合并播放可用（外部播放器 + 本地/115 多分段）时显示。
 /// 都不满足时整行隐藏，播放行为回落到旧逻辑。
 class MoviePlaybackOptionsBar extends StatelessWidget {
   const MoviePlaybackOptionsBar({

@@ -630,29 +630,9 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
           if (pointsOverride == null) {
             return item;
           }
-          return _copyMediaItemWithPoints(item, pointsOverride);
+          return item.copyWith(points: pointsOverride);
         })
         .toList(growable: false);
-  }
-
-  MovieMediaItemDto _copyMediaItemWithPoints(
-    MovieMediaItemDto item,
-    List<MovieMediaPointDto> points,
-  ) {
-    return MovieMediaItemDto(
-      mediaId: item.mediaId,
-      libraryId: item.libraryId,
-      playUrl: item.playUrl,
-      storageMode: item.storageMode,
-      resolution: item.resolution,
-      fileSizeBytes: item.fileSizeBytes,
-      durationSeconds: item.durationSeconds,
-      specialTags: item.specialTags,
-      valid: item.valid,
-      progress: item.progress,
-      points: points,
-      videoInfo: item.videoInfo,
-    );
   }
 
   Future<void> _openMediaPointPreview(
@@ -898,6 +878,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     return MovieMediaItemDto(
       mediaId: mediaId,
       libraryId: null,
+      libraryBackend: null,
       playUrl: '',
       storageMode: '',
       resolution: '',
@@ -943,21 +924,40 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     return '媒体源 ${mediaItem.mediaId}';
   }
 
-  /// 合并播放对当前选中源是否可用（外部播放器就绪 + 本地多分段）。
+  /// 当前生效播放源：未显式选择时取该影片可播媒体的默认源。
+  ///
+  /// 合并可用性与播放启动都基于它，避免「可用性按默认源、启动却回退本地源」
+  /// 的不一致（纯 115 多分段影片必须拿到 cloud115 源才能解析合并链接）。
+  MoviePlayUrlSource? get _effectivePlaySource {
+    final movie = _controller.movie;
+    if (movie == null) {
+      return _playSource;
+    }
+    final sourceOptions = resolveMoviePlaybackSourceOptions(
+      mediaItems: _resolveMediaItems(movie),
+      storageDescriptors: _controller.storageDescriptors,
+    );
+    return _playSource ?? sourceOptions.defaultSource;
+  }
+
+  /// 合并播放对当前选中源是否可用（外部播放器就绪 + 该源多分段）。
   bool get _isMergedPlaybackAvailable {
     final movie = _controller.movie;
     if (movie == null) {
       return false;
     }
-    final mediaItems = _resolveMediaItems(movie);
     final sourceOptions = resolveMoviePlaybackSourceOptions(
-      mediaItems: mediaItems,
+      mediaItems: _resolveMediaItems(movie),
       storageDescriptors: _controller.storageDescriptors,
     );
-    final effectivePlaySource = _playSource ?? sourceOptions.defaultSource;
-    return isExternalPlayerReady(context) &&
-        effectivePlaySource == MoviePlayUrlSource.local &&
-        sourceOptions.localCount >= 2;
+    if (!isExternalPlayerReady(context)) {
+      return false;
+    }
+    return switch (_effectivePlaySource) {
+      MoviePlayUrlSource.local => sourceOptions.localCount >= 2,
+      MoviePlayUrlSource.cloud115 => sourceOptions.cloud115Count >= 2,
+      null => false,
+    };
   }
 
   /// 当前生效播放模式：未显式选择时，合并播放可用则默认合并，否则单个。
@@ -981,7 +981,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         mediaId: mediaId,
         positionSeconds: positionSeconds,
         movie: _controller.movie,
-        playSource: _playSource ?? MoviePlayUrlSource.local,
+        playSource: _effectivePlaySource ?? MoviePlayUrlSource.local,
         playMode: _effectivePlayMode,
       ).whenComplete(() {
         if (mounted) {
@@ -1015,8 +1015,10 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       );
       final mergedStillAvailable =
           isExternalPlayerReady(context) &&
-          source == MoviePlayUrlSource.local &&
-          newSourceOptions.localCount >= 2;
+          switch (source) {
+            MoviePlayUrlSource.local => newSourceOptions.localCount >= 2,
+            MoviePlayUrlSource.cloud115 => newSourceOptions.cloud115Count >= 2,
+          };
       if (_playMode == MoviePlayUrlMode.merged && !mergedStillAvailable) {
         _playMode = MoviePlayUrlMode.single;
       }

@@ -90,7 +90,10 @@ Future<void> launchMoviePlayback(
   final resolvedUrl =
       media == null
           ? null
-          : resolveMediaUrl(rawUrl: media.playUrl, baseUrl: baseUrl);
+          : resolveMediaUrl(
+              rawUrl: resolveExternalPlayerSingleUrl(media),
+              baseUrl: baseUrl,
+            );
 
   // 拿不到可播放直链时回落到应用内播放页。
   if (detail == null ||
@@ -270,4 +273,18 @@ MovieMediaItemDto? _resolvePlayableMedia(MovieDetailDto? movie, int? mediaId) {
     }
   }
   return null;
+}
+
+/// 外部播放器单播地址：115 媒体换成后端 HLS 代理的 `.m3u8`。
+///
+/// 签名载荷（`media:{id}:{expires}`）与路径后缀无关，把 `/stream` 换成
+/// `/stream.m3u8` 后原签名仍有效；http 部署下 ExoPlayer 系播放器不跟随
+/// http->https 的 302 跳转，且需要 `.m3u8` 后缀才能按 HLS 解析，故 115 源
+/// 必须走代理。本地媒体保持原 `/stream` 字节流。
+@visibleForTesting
+String resolveExternalPlayerSingleUrl(MovieMediaItemDto media) {
+  if (!media.isCloud115) {
+    return media.playUrl;
+  }
+  return media.playUrl.replaceFirst('/stream?', '/stream.m3u8?');
 }

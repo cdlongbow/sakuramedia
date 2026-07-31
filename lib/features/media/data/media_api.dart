@@ -179,7 +179,7 @@ class MediaApi {
   /// `GET /media/play-url`：解析影片播放链接。
   ///
   /// 按播放源（本地/115）与播放模式（单个/合并）返回签名地址；本地多分段返回
-  /// 虚拟合并 URL，115 合并暂为占位（`kind=cloud115MergedPending`）。
+  /// 虚拟合并 URL，115 多分段返回后端 HLS 代理的合播 m3u8 URL（`kind=cloud115Merged`）。
   Future<MoviePlayUrlDto> getMoviePlayUrl({
     required String movieNumber,
     required MoviePlayUrlSource source,

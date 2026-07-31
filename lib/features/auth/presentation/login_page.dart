@@ -215,10 +215,17 @@ class _LoginPageState extends State<LoginPage> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final horizontalPadding = isCompact ? spacing.lg : spacing.xxxl;
-              final topPadding = spacing.xxl;
-              final bottomPadding = spacing.xxl + viewInsets.bottom;
+              // 横屏矮屏(如 VR 2D 面板)纵向空间紧张:收紧留白,尽量让整卡落在一屏内。
+              final shortViewport = constraints.maxHeight < 400;
+              final topPadding = shortViewport ? spacing.lg : spacing.xxl;
+              final bottomPadding =
+                  (shortViewport ? spacing.lg : spacing.xxl) + viewInsets.bottom;
               final availableHeight =
                   constraints.maxHeight - topPadding - bottomPadding;
+              // 矮屏下同步收紧:块级间距(副标题后/按钮前)、输入框间距、卡片内边距。
+              final fieldGap = shortViewport ? spacing.sm : spacing.lg;
+              final sectionGap = shortViewport ? spacing.md : spacing.xl;
+              final cardPadding = shortViewport ? spacing.lg : spacing.xl;
 
               return SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -236,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                       constraints: const BoxConstraints(maxWidth: 460),
                       child: Container(
                         key: const Key('login-main-card'),
-                        padding: EdgeInsets.all(spacing.xl),
+                        padding: EdgeInsets.all(cardPadding),
                         decoration: BoxDecoration(
                           color: colors.surfaceCard.withValues(alpha: 0.94),
                           borderRadius: radius.lgBorder,
@@ -273,16 +280,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               SizedBox(height: spacing.lg),
                               Text(
-                                '登录',
-                                style: resolveAppTextStyle(
-                                  context,
-                                  size: AppTextSize.s14,
-                                  weight: AppTextWeight.regular,
-                                  tone: AppTextTone.secondary,
-                                ),
-                              ),
-                              SizedBox(height: spacing.sm),
-                              Text(
                                 '请输入服务器地址与账号信息',
                                 style: resolveAppTextStyle(
                                   context,
@@ -290,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                                   tone: AppTextTone.secondary,
                                 ),
                               ),
-                              SizedBox(height: spacing.xl),
+                              SizedBox(height: sectionGap),
                               AppTextField(
                                 fieldKey: const Key('login-form-base-url'),
                                 controller: _baseUrlController,
@@ -309,7 +306,7 @@ class _LoginPageState extends State<LoginPage> {
                                   onChanged: _handleProtocolChanged,
                                 ),
                               ),
-                              SizedBox(height: spacing.lg),
+                              SizedBox(height: fieldGap),
                               AppTextField(
                                 fieldKey: const Key('login-form-username'),
                                 controller: _usernameController,
@@ -327,7 +324,7 @@ class _LoginPageState extends State<LoginPage> {
                                   color: context.appTextPalette.muted,
                                 ),
                               ),
-                              SizedBox(height: spacing.lg),
+                              SizedBox(height: fieldGap),
                               AppTextField(
                                 fieldKey: const Key('login-form-password'),
                                 controller: _passwordController,
@@ -396,7 +393,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                               ],
-                              SizedBox(height: spacing.xl),
+                              SizedBox(height: sectionGap),
                               SizedBox(
                                 height: 48,
                                 child: DecoratedBox(

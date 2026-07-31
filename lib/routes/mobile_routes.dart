@@ -1092,20 +1092,20 @@ class _MobileOverviewDrawer extends StatelessWidget {
                           ),
                         ],
                       ),
+                      SizedBox(height: spacing.md),
+                      _MobileOverviewDrawerSection(
+                        key: const Key('mobile-overview-drawer-account-section'),
+                        items: <Widget>[
+                          _buildMenuEntry(context: context, item: _usernameItem),
+                          _buildMenuEntry(context: context, item: _passwordItem),
+                        ],
+                      ),
+                      SizedBox(height: spacing.md),
+                      const _MobileDrawerVersionCard(),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: spacing.md),
-              _MobileOverviewDrawerSection(
-                key: const Key('mobile-overview-drawer-account-section'),
-                items: <Widget>[
-                  _buildMenuEntry(context: context, item: _usernameItem),
-                  _buildMenuEntry(context: context, item: _passwordItem),
-                ],
-              ),
-              SizedBox(height: spacing.md),
-              const _MobileDrawerVersionCard(),
               SizedBox(height: spacing.md),
               _MobileOverviewDrawerSection(
                 key: const Key('mobile-overview-drawer-bottom-actions'),

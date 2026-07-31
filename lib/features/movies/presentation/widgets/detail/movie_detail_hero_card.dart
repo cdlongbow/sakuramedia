@@ -17,6 +17,7 @@ class MovieDetailHeroCard extends StatelessWidget {
     this.onMoreActionsTap,
     this.isSubscriptionUpdating = false,
     this.isMoreActionsUpdating = false,
+    this.isPlayLoading = false,
   });
 
   final double height;
@@ -31,6 +32,9 @@ class MovieDetailHeroCard extends StatelessWidget {
   final Future<void> Function(Offset globalPosition)? onMoreActionsTap;
   final bool isSubscriptionUpdating;
   final bool isMoreActionsUpdating;
+
+  /// 播放动作进行中（如合并播放探测/拉起外部播放器），按钮显示 loading 并禁用。
+  final bool isPlayLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +136,7 @@ class MovieDetailHeroCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onPlayTap != null)
+          if (onPlayTap != null || isPlayLoading)
             Positioned.fill(
               child: Center(
                 child: MouseRegion(
@@ -142,7 +146,7 @@ class MovieDetailHeroCard extends StatelessWidget {
                     child: InkWell(
                       key: const Key('movie-detail-hero-play-button'),
                       customBorder: const CircleBorder(),
-                      onTap: onPlayTap,
+                      onTap: isPlayLoading ? null : onPlayTap,
                       child: Container(
                         width: 72,
                         height: 72,
@@ -152,11 +156,19 @@ class MovieDetailHeroCard extends StatelessWidget {
                           ),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: context.appTextPalette.onMedia,
-                          size: tokens.iconSize4xl,
-                        ),
+                        child: isPlayLoading
+                            ? const Padding(
+                              padding: EdgeInsets.all(22),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Icon(
+                              Icons.play_arrow_rounded,
+                              color: context.appTextPalette.onMedia,
+                              size: tokens.iconSize4xl,
+                            ),
                       ),
                     ),
                   ),

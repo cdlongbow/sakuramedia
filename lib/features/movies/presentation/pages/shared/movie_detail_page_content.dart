@@ -4,11 +4,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options_bar.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -80,6 +83,13 @@ class MovieDetailPageContent extends StatelessWidget {
     this.scrollPhysics,
     this.scrollViewBuilder,
     this.isMoreActionsUpdating = false,
+    this.sourceOptions,
+    this.selectedPlaySource,
+    this.onPlaySourceChanged,
+    this.mergedPlaybackAvailable = false,
+    this.selectedPlayMode = MoviePlayUrlMode.single,
+    this.onPlayModeChanged,
+    this.isPlayLoading = false,
   });
 
   final MovieDetailDto movie;
@@ -139,6 +149,17 @@ class MovieDetailPageContent extends StatelessWidget {
   final MovieDetailBottomInfoBarVariant bottomInfoBarVariant;
   final ScrollPhysics? scrollPhysics;
   final MovieDetailScrollViewBuilder? scrollViewBuilder;
+
+  /// 播放源/播放模式选择配置。`sourceOptions` 为空表示本片无可播媒体（隐藏选择行）。
+  final MoviePlaybackSourceOptions? sourceOptions;
+  final MoviePlayUrlSource? selectedPlaySource;
+  final ValueChanged<MoviePlayUrlSource>? onPlaySourceChanged;
+  final bool mergedPlaybackAvailable;
+  final MoviePlayUrlMode selectedPlayMode;
+  final ValueChanged<MoviePlayUrlMode>? onPlayModeChanged;
+
+  /// 播放动作进行中（合并播放探测/拉起外部播放器），透传给 hero 播放按钮显示 loading。
+  final bool isPlayLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +293,7 @@ class MovieDetailPageContent extends StatelessWidget {
           isSubscriptionUpdating: isSubscriptionUpdating,
           onMoreActionsTap: onMoreActionsTap,
           isMoreActionsUpdating: isMoreActionsUpdating,
+          isPlayLoading: isPlayLoading,
           onPlayTap: onPlayTap,
         ),
         SizedBox(height: context.appSpacing.lg),
@@ -311,15 +333,32 @@ class MovieDetailPageContent extends StatelessWidget {
         if (mediaItems.isNotEmpty)
           MovieDetailSection(
             title: '媒体源',
-            child: MovieMediaItemList(
-              mediaItems: mediaItems,
-              selectedMediaId: selectedMediaId,
-              storageDescriptors: storageDescriptors,
-              onSelect: onMediaSelect,
-              isDeletingSelectedMedia: isDeletingSelectedMedia,
-              onDeleteSelectedMedia: onDeleteSelectedMedia,
-              onOpenPointPreview: onOpenMediaPointPreview,
-              onRequestPointMenu: onRequestMediaPointMenu,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (sourceOptions != null)
+                  MoviePlaybackOptionsBar(
+                    sourceOptions: sourceOptions!,
+                    selectedSource: selectedPlaySource,
+                    onSourceChanged:
+                        onPlaySourceChanged ?? (_) {},
+                    mergedAvailable: mergedPlaybackAvailable,
+                    selectedMode: selectedPlayMode,
+                    onModeChanged: onPlayModeChanged ?? (_) {},
+                  ),
+                if (sourceOptions != null)
+                  SizedBox(height: context.appSpacing.sm),
+                MovieMediaItemList(
+                  mediaItems: mediaItems,
+                  selectedMediaId: selectedMediaId,
+                  storageDescriptors: storageDescriptors,
+                  onSelect: onMediaSelect,
+                  isDeletingSelectedMedia: isDeletingSelectedMedia,
+                  onDeleteSelectedMedia: onDeleteSelectedMedia,
+                  onOpenPointPreview: onOpenMediaPointPreview,
+                  onRequestPointMenu: onRequestMediaPointMenu,
+                ),
+              ],
             ),
           ),
         if (isClipsLoading || clipsErrorMessage != null || clips.isNotEmpty)

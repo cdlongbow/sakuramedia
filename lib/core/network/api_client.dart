@@ -97,12 +97,14 @@ class ApiClient {
   Future<Uint8List> getBytes(
     String pathOrUrl, {
     bool requiresAuth = true,
+    Map<String, dynamic>? headers,
   }) async {
     final response = await _request<List<int>>(
       method: 'GET',
       path: pathOrUrl,
       requiresAuth: requiresAuth,
       responseType: ResponseType.bytes,
+      headers: headers,
     );
     return _asBytes(response.data);
   }

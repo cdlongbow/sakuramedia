@@ -3,11 +3,13 @@ import 'package:sakuramedia/theme.dart';
 
 class MovieDetailPillItem {
   const MovieDetailPillItem({
+    this.key,
     required this.label,
     this.isSelected = false,
     this.onTap,
   });
 
+  final Key? key;
   final String label;
   final bool isSelected;
   final VoidCallback? onTap;
@@ -43,14 +45,14 @@ class MovieDetailPillWrap extends StatelessWidget {
       spacing: tokens.movieDetailPillGap,
       runSpacing: tokens.movieDetailPillGap,
       children: items
-          .map((item) => _MovieDetailPill(item: item))
+          .map((item) => _MovieDetailPill(key: item.key, item: item))
           .toList(growable: false),
     );
   }
 }
 
 class _MovieDetailPill extends StatelessWidget {
-  const _MovieDetailPill({required this.item});
+  const _MovieDetailPill({super.key, required this.item});
 
   final MovieDetailPillItem item;
 

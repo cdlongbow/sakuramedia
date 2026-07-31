@@ -6,8 +6,10 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/features/external_player/data/external_player_availability.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
@@ -26,6 +28,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_deta
 import 'package:sakuramedia/features/movies/presentation/actions/movie_plot_image_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playlist_picker_dialog.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -64,6 +67,10 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
   bool _isCollectionUpdating = false;
   int? _deletingMediaId;
   MovieDetailActionType? _activeMovieAction;
+
+  /// 播放源选择（媒体区设置行）。源为 null 表示自动（首个有可播媒体的源）。
+  /// 桌面无外部播放器，合并模式恒不可用，不持有播放模式状态。
+  MoviePlayUrlSource? _playSource;
 
   bool get _isMovieActionLocked =>
       _isSubscriptionUpdating ||
@@ -139,6 +146,16 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
                   .where((item) => item.mediaId == _selectedMediaId)
                   .firstOrNull ??
               (mediaItems.isNotEmpty ? mediaItems.first : null);
+          final sourceOptions = resolveMoviePlaybackSourceOptions(
+            mediaItems: mediaItems,
+            storageDescriptors: _controller.storageDescriptors,
+          );
+          final effectivePlaySource =
+              _playSource ?? sourceOptions.defaultSource;
+          final mergedPlaybackAvailable =
+              isExternalPlayerReady(context) &&
+              effectivePlaySource == MoviePlayUrlSource.local &&
+              sourceOptions.localCount >= 2;
           return AnimatedBuilder(
             animation: _movieClipsController,
             builder: (context, child) {
@@ -192,6 +209,10 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
                           mediaId: selectedMedia.mediaId,
                         )
                         : null,
+                sourceOptions: sourceOptions,
+                selectedPlaySource: effectivePlaySource,
+                onPlaySourceChanged: _handlePlaySourceChanged,
+                mergedPlaybackAvailable: mergedPlaybackAvailable,
                 onPlaylistTap:
                     () => showMoviePlaylistPickerDialog(
                       context,
@@ -641,6 +662,25 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
           return _copyMediaItemWithPoints(item, pointsOverride);
         })
         .toList(growable: false);
+  }
+
+  /// 切换播放源：选中该源下第一个可播放媒体。桌面无外部播放器，不涉及合并模式。
+  void _handlePlaySourceChanged(MoviePlayUrlSource source) {
+    final movie = _controller.movie;
+    if (movie == null) {
+      return;
+    }
+    setState(() {
+      _playSource = source;
+      final target = resolveFirstPlayableMediaId(
+        mediaItems: _resolveMediaItems(movie),
+        storageDescriptors: _controller.storageDescriptors,
+        source: source,
+      );
+      if (target != null) {
+        _selectedMediaId = target;
+      }
+    });
   }
 
   String _buildMediaDeleteLabel(MovieMediaItemDto mediaItem) {

@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
@@ -651,5 +652,94 @@ void main() {
 
     expect(response.batchId, 43);
     expect(adapter.hitCount('POST', '/media/rapid-uploads/42/retry'), 1);
+  });
+
+  test('getMoviePlayUrl fetches merged local play url', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/play-url',
+      body: <String, dynamic>{
+        'play_url': '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig',
+        'kind': 'merged_local',
+        'segment_count': 2,
+        'segments': <Map<String, dynamic>>[
+          <String, dynamic>{'media_id': 1, 'duration_seconds': 1800},
+          <String, dynamic>{'media_id': 2, 'duration_seconds': 2400},
+        ],
+      },
+    );
+
+    final playUrl = await mediaApi.getMoviePlayUrl(
+      movieNumber: 'ABC-001',
+      source: MoviePlayUrlSource.local,
+      mode: MoviePlayUrlMode.merged,
+    );
+
+    expect(playUrl.kind, MoviePlayUrlKind.mergedLocal);
+    expect(playUrl.hasPlayableUrl, isTrue);
+    expect(playUrl.playUrl, startsWith('/media/merged-stream?media_ids=1,2'));
+    expect(playUrl.segmentCount, 2);
+    expect(playUrl.segments.map((s) => s.mediaId), [1, 2]);
+
+    final request = adapter.requests.single;
+    expect(request.uri.queryParameters['movie_number'], 'ABC-001');
+    expect(request.uri.queryParameters['source'], 'local');
+    expect(request.uri.queryParameters['mode'], 'merged');
+  });
+
+  test('getMoviePlayUrl maps cloud115 merged pending placeholder', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/play-url',
+      body: <String, dynamic>{
+        'play_url': null,
+        'kind': 'cloud115_merged_pending',
+        'segment_count': 2,
+        'segments': <Map<String, dynamic>>[],
+      },
+    );
+
+    final playUrl = await mediaApi.getMoviePlayUrl(
+      movieNumber: 'ABC-002',
+      source: MoviePlayUrlSource.cloud115,
+      mode: MoviePlayUrlMode.merged,
+    );
+
+    expect(playUrl.kind, MoviePlayUrlKind.cloud115MergedPending);
+    expect(playUrl.hasPlayableUrl, isFalse);
+    expect(playUrl.playUrl, isNull);
+  });
+
+  test('probeMergedPlayback returns true on 206 with Range header', () async {
+    const mergedPath =
+        '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig';
+    adapter.enqueueJson(
+      method: 'GET',
+      path: mergedPath,
+      statusCode: 206,
+      body: const <String, dynamic>{},
+    );
+
+    final ok = await mediaApi.probeMergedPlayback(playUrl: mergedPath);
+
+    expect(ok, isTrue);
+    final request = adapter.requests.single;
+    expect(request.headers['Range'], 'bytes=0-0');
+    expect(request.headers.containsKey('Authorization'), isFalse);
+  });
+
+  test('probeMergedPlayback returns false when merge spec mismatch', () async {
+    const mergedPath =
+        '/media/merged-stream?media_ids=1,2&expires=1700000000&signature=sig';
+    adapter.enqueueJson(
+      method: 'GET',
+      path: mergedPath,
+      statusCode: 422,
+      body: const <String, dynamic>{},
+    );
+
+    final ok = await mediaApi.probeMergedPlayback(playUrl: mergedPath);
+
+    expect(ok, isFalse);
   });
 }

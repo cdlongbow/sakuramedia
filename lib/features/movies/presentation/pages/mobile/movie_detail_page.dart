@@ -10,9 +10,11 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/external_player/data/external_player_availability.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
@@ -26,6 +28,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/m
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_plot_image_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
@@ -68,6 +71,16 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
   bool _isCollectionUpdating = false;
   int? _deletingMediaId;
   MovieDetailActionType? _activeMovieAction;
+
+  /// 播放源选择（媒体区设置行）。源为 null 表示自动（首个有可播媒体的源）。
+  MoviePlayUrlSource? _playSource;
+
+  /// 播放模式显式选择；null 表示未选择，由 [_effectivePlayMode] 推导默认值
+  /// （合并播放可用时默认合并，否则单个）。
+  MoviePlayUrlMode? _playMode;
+
+  /// 合并播放探测/拉起外部播放器进行中，播放按钮显示 loading 并禁用。
+  bool _isLaunchingPlayback = false;
 
   bool get _isMovieActionLocked =>
       _isSubscriptionUpdating ||
@@ -144,6 +157,13 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
                   .where((item) => item.mediaId == _selectedMediaId)
                   .firstOrNull ??
               (mediaItems.isNotEmpty ? mediaItems.first : null);
+          final sourceOptions = resolveMoviePlaybackSourceOptions(
+            mediaItems: mediaItems,
+            storageDescriptors: _controller.storageDescriptors,
+          );
+          final effectivePlaySource =
+              _playSource ?? sourceOptions.defaultSource;
+          final mergedPlaybackAvailable = _isMergedPlaybackAvailable;
 
           return AnimatedBuilder(
             animation: _movieClipsController,
@@ -196,8 +216,20 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
                         ),
                 onPlayTap:
                     selectedMedia != null && selectedMedia.hasPlayableUrl
-                        ? () => _openMoviePlayer(mediaId: selectedMedia.mediaId)
+                        ? () =>
+                            _openMoviePlayer(mediaId: selectedMedia.mediaId)
                         : null,
+                sourceOptions: sourceOptions,
+                selectedPlaySource: effectivePlaySource,
+                onPlaySourceChanged: _handlePlaySourceChanged,
+                mergedPlaybackAvailable: mergedPlaybackAvailable,
+                selectedPlayMode: _effectivePlayMode,
+                onPlayModeChanged: (mode) {
+                  setState(() {
+                    _playMode = mode;
+                  });
+                },
+                isPlayLoading: _isLaunchingPlayback,
                 onPlaylistTap:
                     () => showMoviePlaylistPickerDialog(
                       context,
@@ -911,7 +943,37 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     return '媒体源 ${mediaItem.mediaId}';
   }
 
+  /// 合并播放对当前选中源是否可用（外部播放器就绪 + 本地多分段）。
+  bool get _isMergedPlaybackAvailable {
+    final movie = _controller.movie;
+    if (movie == null) {
+      return false;
+    }
+    final mediaItems = _resolveMediaItems(movie);
+    final sourceOptions = resolveMoviePlaybackSourceOptions(
+      mediaItems: mediaItems,
+      storageDescriptors: _controller.storageDescriptors,
+    );
+    final effectivePlaySource = _playSource ?? sourceOptions.defaultSource;
+    return isExternalPlayerReady(context) &&
+        effectivePlaySource == MoviePlayUrlSource.local &&
+        sourceOptions.localCount >= 2;
+  }
+
+  /// 当前生效播放模式：未显式选择时，合并播放可用则默认合并，否则单个。
+  MoviePlayUrlMode get _effectivePlayMode =>
+      _playMode ??
+      (_isMergedPlaybackAvailable
+          ? MoviePlayUrlMode.merged
+          : MoviePlayUrlMode.single);
+
   void _openMoviePlayer({int? mediaId, int? positionSeconds}) {
+    if (_isLaunchingPlayback) {
+      return;
+    }
+    setState(() {
+      _isLaunchingPlayback = true;
+    });
     unawaited(
       launchMoviePlayback(
         context,
@@ -919,8 +981,46 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         mediaId: mediaId,
         positionSeconds: positionSeconds,
         movie: _controller.movie,
-      ),
+        playSource: _playSource ?? MoviePlayUrlSource.local,
+        playMode: _effectivePlayMode,
+      ).whenComplete(() {
+        if (mounted) {
+          setState(() {
+            _isLaunchingPlayback = false;
+          });
+        }
+      }),
     );
+  }
+
+  /// 切换播放源：选中该源下第一个可播放媒体；若合并模式在新源下不可用则回落到单个。
+  void _handlePlaySourceChanged(MoviePlayUrlSource source) {
+    final movie = _controller.movie;
+    if (movie == null) {
+      return;
+    }
+    setState(() {
+      _playSource = source;
+      final target = resolveFirstPlayableMediaId(
+        mediaItems: _resolveMediaItems(movie),
+        storageDescriptors: _controller.storageDescriptors,
+        source: source,
+      );
+      if (target != null) {
+        _selectedMediaId = target;
+      }
+      final newSourceOptions = resolveMoviePlaybackSourceOptions(
+        mediaItems: _resolveMediaItems(movie),
+        storageDescriptors: _controller.storageDescriptors,
+      );
+      final mergedStillAvailable =
+          isExternalPlayerReady(context) &&
+          source == MoviePlayUrlSource.local &&
+          newSourceOptions.localCount >= 2;
+      if (_playMode == MoviePlayUrlMode.merged && !mergedStillAvailable) {
+        _playMode = MoviePlayUrlMode.single;
+      }
+    });
   }
 
   Future<void> _openImageSearchFromUrl({

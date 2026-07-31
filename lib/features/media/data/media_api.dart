@@ -2,6 +2,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
@@ -173,5 +174,43 @@ class MediaApi {
 
   Future<void> deleteMedia({required int mediaId}) {
     return _apiClient.deleteNoContent('/media/$mediaId');
+  }
+
+  /// `GET /media/play-url`：解析影片播放链接。
+  ///
+  /// 按播放源（本地/115）与播放模式（单个/合并）返回签名地址；本地多分段返回
+  /// 虚拟合并 URL，115 合并暂为占位（`kind=cloud115MergedPending`）。
+  Future<MoviePlayUrlDto> getMoviePlayUrl({
+    required String movieNumber,
+    required MoviePlayUrlSource source,
+    required MoviePlayUrlMode mode,
+  }) async {
+    final response = await _apiClient.get(
+      '/media/play-url',
+      queryParameters: <String, dynamic>{
+        'movie_number': movieNumber,
+        'source': source.apiValue,
+        'mode': mode.apiValue,
+      },
+    );
+    return MoviePlayUrlDto.fromJson(response);
+  }
+
+  /// 探测合并播放流是否可播。
+  ///
+  /// 合并的真实规格校验（编码/分辨率/帧率一致）发生在 `/media/merged-stream`
+  /// 端点请求时；发送 `Range: bytes=0-0` 触发后端构建合并布局并校验，2xx 视为
+  /// 可播。后端对 layout 有进程内缓存（TTL 300s），正式播放会复用同一次解析。
+  Future<bool> probeMergedPlayback({required String playUrl}) async {
+    try {
+      await _apiClient.getBytes(
+        playUrl,
+        requiresAuth: false,
+        headers: const <String, dynamic>{'Range': 'bytes=0-0'},
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }

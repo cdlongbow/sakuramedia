@@ -67,7 +67,7 @@ final class LlmSettingsProvider
     : super(
         from: null,
         argument: null,
-        retry: noLlmSettingsRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'llmSettingsProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -82,7 +82,7 @@ final class LlmSettingsProvider
   LlmSettings create() => LlmSettings();
 }
 
-String _$llmSettingsHash() => r'822b29382a020386f9bf007913583d398cedb659';
+String _$llmSettingsHash() => r'92e5a14324ac7f688b32662aa1dd831f7215e608';
 
 abstract class _$LlmSettings extends $AsyncNotifier<LlmSettingsState> {
   FutureOr<LlmSettingsState> build();

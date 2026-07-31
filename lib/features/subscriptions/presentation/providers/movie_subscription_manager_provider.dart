@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
@@ -19,8 +20,6 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
 
 part 'movie_subscription_manager_provider.g.dart';
-
-Duration? noMovieSubscriptionManagerRetry(int retryCount, Object error) => null;
 
 /// 「订阅管理」页的列表控制器。
 ///
@@ -35,7 +34,7 @@ Duration? noMovieSubscriptionManagerRetry(int retryCount, Object error) => null;
 /// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
 /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
 /// 不整页重拉。
-@Riverpod(keepAlive: true, retry: noMovieSubscriptionManagerRetry)
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class MovieSubscriptionManager extends _$MovieSubscriptionManager
     with
         PagedAsyncNotifierMixin<

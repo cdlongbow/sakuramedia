@@ -55,7 +55,7 @@ final class DownloadTaskCenterProvider
     : super(
         from: null,
         argument: null,
-        retry: noDownloadTaskCenterRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'downloadTaskCenterProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -71,7 +71,7 @@ final class DownloadTaskCenterProvider
 }
 
 String _$downloadTaskCenterHash() =>
-    r'ca4e1e0180a5a74f7eb503e37d168cf7f26cba88';
+    r'48240bc57439b1ab282140296de7335eb97f7f4c';
 
 /// 下载任务中心（Riverpod）：分页拉 `/download-tasks` + SSE 实时进度 + 暂停/恢复/删除。
 ///

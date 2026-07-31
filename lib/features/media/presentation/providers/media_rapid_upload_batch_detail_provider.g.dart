@@ -46,7 +46,7 @@ final class MediaRapidUploadBatchDetailProvider
     required MediaRapidUploadBatchDetailFamily super.from,
     required int super.argument,
   }) : super(
-         retry: noMediaRapidUploadBatchDetailRetry,
+         retry: kNoAsyncNotifierRetry,
          name: r'mediaRapidUploadBatchDetailProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -88,7 +88,7 @@ final class MediaRapidUploadBatchDetailProvider
 }
 
 String _$mediaRapidUploadBatchDetailHash() =>
-    r'4a363d8c1b2457bc09fbd869918f01c8b65bdf65';
+    r'bc335b909c6b4864d8037aa65ff5157b09bb9276';
 
 /// 秒传批次详情控制器（Riverpod family）：按 batchId 拉 `GET /media/rapid-uploads/{id}`
 /// 得到含 items 的完整批次；`RapidUploadHistorySection` 展开批次卡时使用。
@@ -101,7 +101,7 @@ final class MediaRapidUploadBatchDetailFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<MediaRapidUploadBatchDto>, int> {
   MediaRapidUploadBatchDetailFamily._()
     : super(
-        retry: noMediaRapidUploadBatchDetailRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'mediaRapidUploadBatchDetailProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

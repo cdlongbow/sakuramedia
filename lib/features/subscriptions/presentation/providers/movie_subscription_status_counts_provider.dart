@@ -1,11 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status_counts_dto.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
 
 part 'movie_subscription_status_counts_provider.g.dart';
-
-Duration? noMovieSubscriptionStatusCountsRetry(int retryCount, Object error) =>
-    null;
 
 /// 状态分段签的角标计数。
 ///
@@ -14,13 +12,12 @@ Duration? noMovieSubscriptionStatusCountsRetry(int retryCount, Object error) =>
 ///
 /// 任何会改变状态归属的动作（重置查询 / 取消订阅）之后由列表 notifier 调
 /// [MovieSubscriptionStatusCounts.refresh] 拉一次，保持角标与列表同步。
-@Riverpod(keepAlive: true, retry: noMovieSubscriptionStatusCountsRetry)
-class MovieSubscriptionStatusCounts extends _$MovieSubscriptionStatusCounts {
-  bool _disposed = false;
-
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+class MovieSubscriptionStatusCounts extends _$MovieSubscriptionStatusCounts
+    with AsyncNotifierDisposeGuardMixin<MovieSubscriptionStatusCountsDto> {
   @override
   Future<MovieSubscriptionStatusCountsDto> build() async {
-    ref.onDispose(() => _disposed = true);
+    attachDisposeGuard();
     return ref.read(movieSubscriptionsApiProvider).getStatusCounts();
   }
 
@@ -32,7 +29,7 @@ class MovieSubscriptionStatusCounts extends _$MovieSubscriptionStatusCounts {
     try {
       final counts =
           await ref.read(movieSubscriptionsApiProvider).getStatusCounts();
-      if (_disposed) return;
+      if (isDisposed) return;
       state = AsyncData(counts);
     } catch (_) {
       // 保留上一份计数：陈旧角标也好过角标突然消失。

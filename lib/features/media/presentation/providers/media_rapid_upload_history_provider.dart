@@ -2,11 +2,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
 part 'media_rapid_upload_history_provider.g.dart';
-
-Duration? noMediaRapidUploadHistoryRetry(int retryCount, Object error) => null;
 
 /// 秒传批次历史控制器（Riverpod）：只读分页 + 单批次覆盖更新。
 ///
@@ -14,7 +13,7 @@ Duration? noMediaRapidUploadHistoryRetry(int retryCount, Object error) => null;
 /// 避免整页 reload；State 就是 [PagedListState]（无附加字段）。
 ///
 /// 迁移前对应：`MediaRapidUploadHistoryController extends PagedLoadController<...>`。
-@Riverpod(keepAlive: true, retry: noMediaRapidUploadHistoryRetry)
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class MediaRapidUploadHistory extends _$MediaRapidUploadHistory
     with
         PagedAsyncNotifierMixin<

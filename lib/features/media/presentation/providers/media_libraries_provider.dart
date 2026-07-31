@@ -4,6 +4,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 
 part 'media_libraries_provider.g.dart';
 
@@ -38,18 +39,15 @@ class MediaLibrariesState {
   bool get isNotEmpty => libraries.isNotEmpty;
 }
 
-Duration? noMediaLibrariesRetry(int retryCount, Object error) => null;
-
 /// 媒体库列表 provider：keepAlive；两页（媒体管理 + 媒体维护）与秒传弹窗共享一份，
 /// 避免每次进 tab 各拉一次。加载失败以 `AsyncError` 呈现，消费方可 fallback
 /// 到 [MediaLibrariesState.empty]（对齐 legacy 行为——库加载失败不阻断主流程）。
-@Riverpod(keepAlive: true, retry: noMediaLibrariesRetry)
-class MediaLibraries extends _$MediaLibraries {
-  bool _disposed = false;
-
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+class MediaLibraries extends _$MediaLibraries
+    with AsyncNotifierDisposeGuardMixin<MediaLibrariesState> {
   @override
   Future<MediaLibrariesState> build() async {
-    ref.onDispose(() => _disposed = true);
+    attachDisposeGuard();
     final libraries = await ref.read(mediaLibrariesApiProvider).getLibraries();
     return MediaLibrariesState(libraries: libraries);
   }
@@ -59,7 +57,7 @@ class MediaLibraries extends _$MediaLibraries {
     try {
       final libraries =
           await ref.read(mediaLibrariesApiProvider).getLibraries();
-      if (_disposed) return null;
+      if (isDisposed) return null;
       state = AsyncData(MediaLibrariesState(libraries: libraries));
       return null;
     } catch (error) {
@@ -75,7 +73,7 @@ class MediaLibraries extends _$MediaLibraries {
           await ref.read(mediaLibrariesApiProvider).getLibraries();
       return MediaLibrariesState(libraries: libraries);
     });
-    if (!_disposed) {
+    if (!isDisposed) {
       state = next;
     }
   }

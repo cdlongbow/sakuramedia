@@ -39,7 +39,7 @@ final class MediaBrowseProvider
     : super(
         from: null,
         argument: null,
-        retry: noMediaBrowseRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'mediaBrowseProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -54,7 +54,7 @@ final class MediaBrowseProvider
   MediaBrowse create() => MediaBrowse();
 }
 
-String _$mediaBrowseHash() => r'bffe61e81319976c8d074cd643f08643f55d9d3b';
+String _$mediaBrowseHash() => r'e444b38aaff40acf79445cfb91257b94967a3e11';
 
 /// 「媒体管理」列表控制器（Riverpod）：分页拉取全局 `/media`，持有筛选与多选。
 ///

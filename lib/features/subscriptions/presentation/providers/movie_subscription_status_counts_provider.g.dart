@@ -44,7 +44,7 @@ final class MovieSubscriptionStatusCountsProvider
     : super(
         from: null,
         argument: null,
-        retry: noMovieSubscriptionStatusCountsRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'movieSubscriptionStatusCountsProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -60,7 +60,7 @@ final class MovieSubscriptionStatusCountsProvider
 }
 
 String _$movieSubscriptionStatusCountsHash() =>
-    r'eec92b3f14c34289d6cf6a217cc2a08508976cb3';
+    r'9db16e4285cd70bbb67ba2c9c90cd0d6aad1c1cd';
 
 /// 状态分段签的角标计数。
 ///

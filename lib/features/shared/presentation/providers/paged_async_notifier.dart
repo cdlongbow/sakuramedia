@@ -107,7 +107,7 @@ const Object _kSentinel = Object();
 /// 使用范式（S 中携带 [PagedListState<T>] 段 + 额外字段，如 filter/selection）：
 ///
 /// ```dart
-/// @Riverpod(keepAlive: true, retry: noXxxRetry)
+/// @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 /// class MediaBrowse extends _$MediaBrowse
 ///     with PagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto> {
 ///   @override int get pageSize => 30;
@@ -138,7 +138,7 @@ const Object _kSentinel = Object();
 /// 生命周期与 `AsyncNotifier` 一致：首次加载态由外层 [AsyncLoading] 表达；成功后
 /// State 内的 [PagedListState.items] 累加；loadMore 失败保留原列表 + 挂 error text；
 /// 关闭 provider 自动重试（`AsyncNotifierProvider` 传 `retry: (_, __) => null`
-/// 或 `@Riverpod(..., retry: noXxxRetry)`）避免失败态里 `build()` 打爆后端。
+/// 或 `@Riverpod(..., retry: kNoAsyncNotifierRetry)`）避免失败态里 `build()` 打爆后端。
 mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
   bool _disposed = false;
 

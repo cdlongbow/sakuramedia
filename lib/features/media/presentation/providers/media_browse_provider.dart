@@ -4,11 +4,10 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
 part 'media_browse_provider.g.dart';
-
-Duration? noMediaBrowseRetry(int retryCount, Object error) => null;
 
 /// 「媒体管理」列表控制器（Riverpod）：分页拉取全局 `/media`，持有筛选与多选。
 ///
@@ -17,7 +16,7 @@ Duration? noMediaBrowseRetry(int retryCount, Object error) => null;
 /// 才 reload。多选独立于 filter，reload 会清空。
 ///
 /// 迁移前对应：`MediaBrowseController extends PagedLoadController<MediaListItemDto>`。
-@Riverpod(keepAlive: true, retry: noMediaBrowseRetry)
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class MediaBrowse extends _$MediaBrowse
     with PagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto> {
   /// fetchPage 读取的筛选源。放在 Notifier 字段而不是 `state.value.filter`，

@@ -40,7 +40,7 @@ final class MediaRapidUploadHistoryProvider
     : super(
         from: null,
         argument: null,
-        retry: noMediaRapidUploadHistoryRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'mediaRapidUploadHistoryProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -56,7 +56,7 @@ final class MediaRapidUploadHistoryProvider
 }
 
 String _$mediaRapidUploadHistoryHash() =>
-    r'374ab03b4bc30101d4d1c8edd665a8df35bccd40';
+    r'9ce0836d60f3d6d3917cecdc33191e2c77deb2bf';
 
 /// 秒传批次历史控制器（Riverpod）：只读分页 + 单批次覆盖更新。
 ///

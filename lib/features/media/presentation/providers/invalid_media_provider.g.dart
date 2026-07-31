@@ -36,7 +36,7 @@ final class InvalidMediaProvider
     : super(
         from: null,
         argument: null,
-        retry: noInvalidMediaRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'invalidMediaProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -51,7 +51,7 @@ final class InvalidMediaProvider
   InvalidMedia create() => InvalidMedia();
 }
 
-String _$invalidMediaHash() => r'3b9790bc7d61b137ee5761f866871f8315adfc1f';
+String _$invalidMediaHash() => r'7d5a1f61ee954c6da4bb32381f113ced7636149c';
 
 /// 「媒体维护」失效媒体列表（Riverpod）。
 ///

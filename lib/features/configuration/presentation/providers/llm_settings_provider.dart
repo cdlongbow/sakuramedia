@@ -4,6 +4,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 
 part 'llm_settings_provider.g.dart';
 
@@ -14,15 +15,12 @@ MovieDescTranslationSettingsApi llmSettingsApi(Ref ref) {
   );
 }
 
-Duration? noLlmSettingsRetry(int retryCount, Object error) => null;
-
-@Riverpod(keepAlive: true, retry: noLlmSettingsRetry)
-class LlmSettings extends _$LlmSettings {
-  bool _disposed = false;
-
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+class LlmSettings extends _$LlmSettings
+    with AsyncNotifierDisposeGuardMixin<LlmSettingsState> {
   @override
   Future<LlmSettingsState> build() async {
-    ref.onDispose(() => _disposed = true);
+    attachDisposeGuard();
     final settings = await ref.read(llmSettingsApiProvider).getSettings();
     return LlmSettingsState.fromDto(settings);
   }
@@ -33,7 +31,7 @@ class LlmSettings extends _$LlmSettings {
       final settings = await ref.read(llmSettingsApiProvider).getSettings();
       return LlmSettingsState.fromDto(settings);
     });
-    if (!_disposed) {
+    if (!isDisposed) {
       state = nextState;
     }
   }
@@ -46,7 +44,7 @@ class LlmSettings extends _$LlmSettings {
     }
     try {
       final settings = await ref.read(llmSettingsApiProvider).getSettings();
-      if (!_disposed) {
+      if (!isDisposed) {
         state = AsyncData(LlmSettingsState.fromDto(settings));
       }
       return null;
@@ -80,7 +78,7 @@ class LlmSettings extends _$LlmSettings {
       final saved = await ref
           .read(llmSettingsApiProvider)
           .updateSettings(_buildUpdatePayload(current.draft));
-      if (_disposed) {
+      if (isDisposed) {
         return null;
       }
       final savedDraft = LlmSettingsDraft.fromDto(saved);
@@ -95,7 +93,7 @@ class LlmSettings extends _$LlmSettings {
       );
       return 'LLM 配置已保存';
     } catch (error) {
-      if (!_disposed) {
+      if (!isDisposed) {
         state = AsyncData(current.copyWith(isSaving: false));
       }
       return apiErrorMessage(error, fallback: '保存 LLM 配置失败');
@@ -117,7 +115,7 @@ class LlmSettings extends _$LlmSettings {
       final ok = await ref
           .read(llmSettingsApiProvider)
           .testSettings(_buildTestPayload(current.draft));
-      if (_disposed) {
+      if (isDisposed) {
         return null;
       }
       state = AsyncData(
@@ -129,7 +127,7 @@ class LlmSettings extends _$LlmSettings {
       );
       return ok ? '测试通过' : '测试失败';
     } catch (error) {
-      if (!_disposed) {
+      if (!isDisposed) {
         state = AsyncData(
           current.copyWith(
             isTesting: false,

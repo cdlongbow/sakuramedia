@@ -8,11 +8,10 @@ import 'package:sakuramedia/features/downloads/data/download_task_stream_event_d
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
 part 'download_task_center_provider.g.dart';
-
-Duration? noDownloadTaskCenterRetry(int retryCount, Object error) => null;
 
 /// 下载任务中心（Riverpod）：分页拉 `/download-tasks` + SSE 实时进度 + 暂停/恢复/删除。
 ///
@@ -26,7 +25,7 @@ Duration? noDownloadTaskCenterRetry(int retryCount, Object error) => null;
 ///   写回。开始前调 [invalidateInFlightLoadMore] 让旧 loadMore 作废。
 /// - SSE 触发的「首页去抖合并」维持原生流程：独立 fetchPage(1) + 手工 upsert，
 ///   有 [_minMergeInterval] 限流兜底。
-@Riverpod(keepAlive: true, retry: noDownloadTaskCenterRetry)
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class DownloadTaskCenter extends _$DownloadTaskCenter
     with
         PagedAsyncNotifierMixin<DownloadTaskCenterState, DownloadTaskRowState> {

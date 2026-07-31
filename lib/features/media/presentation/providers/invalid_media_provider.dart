@@ -4,11 +4,10 @@ import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/data/media_validity_check_result_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_state.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
 part 'invalid_media_provider.g.dart';
-
-Duration? noInvalidMediaRetry(int retryCount, Object error) => null;
 
 /// 「媒体维护」失效媒体列表（Riverpod）。
 ///
@@ -16,7 +15,7 @@ Duration? noInvalidMediaRetry(int retryCount, Object error) => null;
 /// 允许删除。删除 → 移除并扣减 total。单飞守卫：同时只能一项复查/一项删除。
 ///
 /// 迁移前对应：`InvalidMediaController extends PagedLoadController<InvalidMediaDto>`。
-@Riverpod(keepAlive: true, retry: noInvalidMediaRetry)
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class InvalidMedia extends _$InvalidMedia
     with PagedAsyncNotifierMixin<InvalidMediaState, InvalidMediaDto> {
   @override

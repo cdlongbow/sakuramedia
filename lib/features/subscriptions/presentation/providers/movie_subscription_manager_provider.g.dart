@@ -61,7 +61,7 @@ final class MovieSubscriptionManagerProvider
     : super(
         from: null,
         argument: null,
-        retry: noMovieSubscriptionManagerRetry,
+        retry: kNoAsyncNotifierRetry,
         name: r'movieSubscriptionManagerProvider',
         isAutoDispose: false,
         dependencies: null,
@@ -77,7 +77,7 @@ final class MovieSubscriptionManagerProvider
 }
 
 String _$movieSubscriptionManagerHash() =>
-    r'7af2f35ff819460580a4240e10baec07be1c93f4';
+    r'907537bffea21a1be015ab9bd4083398a407da65';
 
 /// 「订阅管理」页的列表控制器。
 ///

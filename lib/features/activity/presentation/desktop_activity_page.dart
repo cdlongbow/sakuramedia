@@ -1108,14 +1108,26 @@ class _TaskRunCard extends StatelessWidget {
           ),
           if (taskRun.isActive) ...[
             SizedBox(height: context.appSpacing.md),
-            ClipRRect(
-              borderRadius: context.appRadius.pillBorder,
-              child: LinearProgressIndicator(
-                minHeight: 6,
-                value: progressValue,
-                backgroundColor: colors.surfaceMuted,
+            // 仅在有确定进度时渲染带动画的进度条；否则用静态灰条占位。
+            // value 为 null 时 LinearProgressIndicator 是无限循环动画，
+            // 会让 GPU 持续光栅化（核显吃满）。
+            if (taskRun.hasDeterminateProgress)
+              ClipRRect(
+                borderRadius: context.appRadius.pillBorder,
+                child: LinearProgressIndicator(
+                  minHeight: 6,
+                  value: progressValue,
+                  backgroundColor: colors.surfaceMuted,
+                ),
+              )
+            else
+              ClipRRect(
+                borderRadius: context.appRadius.pillBorder,
+                child: Container(
+                  height: 6,
+                  color: colors.surfaceMuted,
+                ),
               ),
-            ),
           ],
           SizedBox(height: context.appSpacing.md),
           Wrap(

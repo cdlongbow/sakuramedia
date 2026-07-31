@@ -101,6 +101,12 @@ class PagedListState<T> {
 
 const Object _kSentinel = Object();
 
+/// 筛选切换的视觉策略：
+/// - [spinner]：切 [AsyncLoading]，列表清空显骨架（订阅/媒体管理走这条）；
+/// - [preserveList]：保留旧 items + `isReloading: true`，只显示行内薄进度条
+///   （downloads 走这条）。
+enum FilterReloadStrategy { spinner, preserveList }
+
 /// [PagedListState] 的局部补丁原语：事件/乐观更新后对已加载列表做**就地**
 /// 修正，避免整页 invalidate 重拉。
 ///
@@ -371,6 +377,101 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
           ),
         ),
       );
+    }
+  }
+}
+
+/// 筛选驱动分页 mixin：统一「值对象筛选状态 → reload/preserveList」两套切换语义，
+/// 收敛 4 处业务副本（订阅管理 / 媒体管理 / downloads / resource task center）。
+///
+/// 约定：`F` 是不可变值对象（`==` 即"筛选未变"）；`fetchPage` 从 [activeFilter]
+/// 读参数；UI 改筛选后调 [applyFilterState]。State 里的 filter 字段由
+/// [applyFilterToState] 负责写入（连带清多选等副作用）。
+///
+/// ```dart
+/// @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+/// class MediaBrowse extends _$MediaBrowse
+///     with PagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto>,
+///          FilterablePagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto, MediaBrowseFilterState> {
+///   @override
+///   MediaBrowseFilterState get initialFilter => MediaBrowseFilterState.initial;
+///
+///   @override
+///   MediaBrowseState applyFilterToState(MediaBrowseState s, MediaBrowseFilterState filter) =>
+///       s.copyWith(filter: filter, selectedIds: const <int>{});
+///
+///   @override
+///   Future<MediaBrowseState> build() async {
+///     attachDisposeGuard();
+///     final paged = await loadInitialPage();
+///     return MediaBrowseState(paged: paged, filter: activeFilter);
+///   }
+/// }
+/// ```
+mixin FilterablePagedAsyncNotifierMixin<S, T, F>
+    on PagedAsyncNotifierMixin<S, T> {
+  /// 首次 build 的默认筛选。
+  @protected
+  F get initialFilter;
+
+  late F _activeFilter = initialFilter;
+
+  /// 当前生效的筛选；`fetchPage` 从它读参数拼请求。
+  @protected
+  F get activeFilter => _activeFilter;
+
+  /// 把新筛选值写进 State（连带清多选等副作用）。注意把 filter 字段本身也写入。
+  @protected
+  S applyFilterToState(S state, F filter);
+
+  /// 切换筛选的视觉策略，默认 [FilterReloadStrategy.spinner]。
+  @protected
+  FilterReloadStrategy get filterReloadStrategy =>
+      FilterReloadStrategy.spinner;
+
+  /// [FilterReloadStrategy.preserveList] 策略要求实现：写 `isReloading` 标志
+  /// （`reloading: true` 显示行内薄进度条）。默认返回原状态。
+  @protected
+  S copyWithReloading(S state, bool reloading) => state;
+
+  /// 应用新筛选状态。值对象相等则短路（不发请求）；否则按
+  /// [filterReloadStrategy] 触发 reload / preserveList 重拉第一页。
+  Future<void> applyFilterState(F next) async {
+    if (_activeFilter == next) return;
+    _activeFilter = next;
+
+    switch (filterReloadStrategy) {
+      case FilterReloadStrategy.spinner:
+        await reload(updateBaseState: (s) => applyFilterToState(s, next));
+      case FilterReloadStrategy.preserveList:
+        await _applyPreserveList(next);
+    }
+  }
+
+  /// preserveList：保留旧 items + 顶部薄进度条 → 拉第一页 → 复位。
+  /// 失败：items 保留、`isReloading` 复位（filter 已更新，用户可再触发重试），
+  /// 然后**原样抛出**，由调用方决定是否 toast。
+  Future<void> _applyPreserveList(F next) async {
+    final current = state.value;
+    if (current == null) {
+      // 尚未 build 完成，走 reload 兜底。
+      await reload(updateBaseState: (s) => applyFilterToState(s, next));
+      return;
+    }
+
+    invalidateInFlightLoadMore();
+    state = AsyncData(copyWithReloading(applyFilterToState(current, next), true));
+
+    try {
+      final firstPage = await loadInitialPage();
+      if (isDisposed) return;
+      final now = state.value ?? current;
+      state = AsyncData(copyWithReloading(applyPaged(now, firstPage), false));
+    } catch (error) {
+      if (isDisposed) return;
+      final now = state.value ?? current;
+      state = AsyncData(copyWithReloading(now, false));
+      rethrow;
     }
   }
 }

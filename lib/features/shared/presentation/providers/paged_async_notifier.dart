@@ -101,6 +101,63 @@ class PagedListState<T> {
 
 const Object _kSentinel = Object();
 
+/// [PagedListState] 的局部补丁原语：事件/乐观更新后对已加载列表做**就地**
+/// 修正，避免整页 invalidate 重拉。
+///
+/// 三个操作都保持不可变契约（新列表一律 `List.unmodifiable`）与其余分页字段
+/// 不变（currentPage / syncedAt / isLoadingMore / loadMoreErrorMessage 原样
+/// 透传）；只动 items / total / hasMore 三者中受影响的。
+extension PagedListStatePatch<T> on PagedListState<T> {
+  /// 移除所有匹配项：同步扣减 [PagedListState.total]（下限 0）并重算
+  /// [PagedListState.hasMore]。无匹配时原样返回自身。
+  PagedListState<T> removeWhere(bool Function(T) predicate) {
+    final nextItems = items.where((item) => !predicate(item)).toList();
+    if (nextItems.length == items.length) {
+      return this;
+    }
+    final removed = items.length - nextItems.length;
+    final nextTotal = (total - removed).clamp(0, 1 << 30).toInt();
+    return copyWith(
+      items: List<T>.unmodifiable(nextItems),
+      total: nextTotal,
+      hasMore: nextItems.length < nextTotal,
+    );
+  }
+
+  /// 把**第一个**匹配项替换成 `update(item)` 的结果；不改 [PagedListState.total]
+  /// / [PagedListState.hasMore]（条数未变）。无匹配时原样返回自身。
+  PagedListState<T> patchWhere(
+    bool Function(T) matches,
+    T Function(T) update,
+  ) {
+    final index = items.indexWhere(matches);
+    if (index < 0) {
+      return this;
+    }
+    final nextItems = List<T>.of(items);
+    nextItems[index] = update(items[index]);
+    return copyWith(items: List<T>.unmodifiable(nextItems));
+  }
+
+  /// 前置 upsert：命中则替换第一个匹配项（条数不变，total/hasMore 不动）；
+  /// 未命中则在**列表头部**插入 [item]，`total + 1` 并重算 [PagedListState.hasMore]。
+  PagedListState<T> upsertFront(T item, {required bool Function(T) matches}) {
+    final index = items.indexWhere(matches);
+    if (index >= 0) {
+      final nextItems = List<T>.of(items);
+      nextItems[index] = item;
+      return copyWith(items: List<T>.unmodifiable(nextItems));
+    }
+    final nextItems = List<T>.unmodifiable(<T>[item, ...items]);
+    final nextTotal = total + 1;
+    return copyWith(
+      items: nextItems,
+      total: nextTotal,
+      hasMore: nextItems.length < nextTotal,
+    );
+  }
+}
+
 /// `$AsyncNotifier<S>` 的分页 mixin，把 `PagedLoadController` 的语义
 /// 迁移到 Riverpod 侧。首例见 `features/media/presentation/providers/`。
 ///

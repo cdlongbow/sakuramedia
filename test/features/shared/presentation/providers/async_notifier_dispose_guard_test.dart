@@ -4,6 +4,8 @@ import 'package:sakuramedia/features/shared/presentation/providers/async_notifie
 
 class _GuardNotifier extends AsyncNotifier<String>
     with AsyncNotifierDisposeGuardMixin<String> {
+  bool get disposed => isDisposed;
+
   @override
   Future<String> build() async {
     attachDisposeGuard();
@@ -23,10 +25,10 @@ void main() {
 
     await container.read(_guardProvider.future);
     final notifier = container.read(_guardProvider.notifier);
-    expect(notifier.isDisposed, isFalse);
+    expect(notifier.disposed, isFalse);
 
     container.dispose();
-    expect(notifier.isDisposed, isTrue);
+    expect(notifier.disposed, isTrue);
   });
 
   test('kNoAsyncNotifierRetry 恒为 null（不自动重试）', () {

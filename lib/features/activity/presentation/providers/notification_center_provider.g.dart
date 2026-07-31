@@ -11,9 +11,8 @@ part of 'notification_center_provider.dart';
 /// 常驻通知中心控制器的桥。
 ///
 /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-/// `overrideWithValue(context.read<NotificationCenterController>())` 注入
-/// （构造即 bindSessionStore 的会话生命周期仍由 Provider 侧负责，组合根
-/// 反转时改为原生装配 + ref.onDispose 配对）。
+/// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
+/// `ref.onDispose` 配对销毁，见 app.dart）。
 ///
 /// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
 /// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`
@@ -26,9 +25,8 @@ final notificationCenterControllerProvider =
 /// 常驻通知中心控制器的桥。
 ///
 /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-/// `overrideWithValue(context.read<NotificationCenterController>())` 注入
-/// （构造即 bindSessionStore 的会话生命周期仍由 Provider 侧负责，组合根
-/// 反转时改为原生装配 + ref.onDispose 配对）。
+/// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
+/// `ref.onDispose` 配对销毁，见 app.dart）。
 ///
 /// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
 /// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`
@@ -45,9 +43,8 @@ final class NotificationCenterControllerProvider
   /// 常驻通知中心控制器的桥。
   ///
   /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-  /// `overrideWithValue(context.read<NotificationCenterController>())` 注入
-  /// （构造即 bindSessionStore 的会话生命周期仍由 Provider 侧负责，组合根
-  /// 反转时改为原生装配 + ref.onDispose 配对）。
+  /// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
+  /// `ref.onDispose` 配对销毁，见 app.dart）。
   ///
   /// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
   /// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`

@@ -10,27 +10,24 @@ part of 'videos_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// videos 域三个 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<...>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(videosApi)
 final videosApiProvider = VideosApiProvider._();
 
 /// videos 域三个 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<...>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class VideosApiProvider
     extends $FunctionalProvider<VideosApi, VideosApi, VideosApi>
     with $Provider<VideosApi> {
   /// videos 域三个 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-  /// `overrideWithValue(context.read<...>())` 注入——与 `moviesApiProvider`
-  /// 同一范式，组合根反转后改为原生装配。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   VideosApiProvider._()
     : super(
         from: null,
@@ -64,7 +61,7 @@ final class VideosApiProvider
   }
 }
 
-String _$videosApiHash() => r'629b63c4a902db9b5880f1c30b64dcba3876ad0d';
+String _$videosApiHash() => r'755cd06605f593061d0e61343ccec1f0617a0f6b';
 
 @ProviderFor(videoCollectionsApi)
 final videoCollectionsApiProvider = VideoCollectionsApiProvider._();
@@ -112,7 +109,7 @@ final class VideoCollectionsApiProvider
 }
 
 String _$videoCollectionsApiHash() =>
-    r'187f1a5aea700b9be17f542bc8faf04a2f4b306d';
+    r'9810a6adbfdcc8fe2123ff4becce2a9b5323c534';
 
 @ProviderFor(videoImportsApi)
 final videoImportsApiProvider = VideoImportsApiProvider._();
@@ -154,4 +151,4 @@ final class VideoImportsApiProvider
   }
 }
 
-String _$videoImportsApiHash() => r'd7c4f8451f699066eb5a4e2d2ae274700e704bfb';
+String _$videoImportsApiHash() => r'd01ae981e300ad38484b2460522a17662ac18c03';

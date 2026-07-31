@@ -10,18 +10,16 @@ part of 'clip_collections_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// clip_collections 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<ClipCollectionsApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(clipCollectionsApi)
 final clipCollectionsApiProvider = ClipCollectionsApiProvider._();
 
 /// clip_collections 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<ClipCollectionsApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class ClipCollectionsApiProvider
     extends
@@ -33,9 +31,8 @@ final class ClipCollectionsApiProvider
     with $Provider<ClipCollectionsApi> {
   /// clip_collections 域 API 的 Riverpod 入口。
   ///
-  /// 原生装配（组合根反转后）。测试用
-  /// `overrideWithValue(context.read<ClipCollectionsApi>())` 注入——与 `moviesApiProvider`
-  /// 同一范式，组合根反转后改为原生装配。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   ClipCollectionsApiProvider._()
     : super(
         from: null,

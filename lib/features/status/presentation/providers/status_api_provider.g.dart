@@ -10,27 +10,24 @@ part of 'status_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// status 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(statusApi)
 final statusApiProvider = StatusApiProvider._();
 
 /// status 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class StatusApiProvider
     extends $FunctionalProvider<StatusApi, StatusApi, StatusApi>
     with $Provider<StatusApi> {
   /// status 域 API 的 Riverpod 入口。
   ///
-  /// 原生装配（组合根反转后）。测试用
-  /// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
-  /// 同一范式，组合根反转后改为原生装配。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   StatusApiProvider._()
     : super(
         from: null,

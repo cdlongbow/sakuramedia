@@ -834,12 +834,13 @@ final int _overviewBranchIndex = () {
 
 /// 移动壳作用域。
 ///
-/// 持有 [MobileOverviewTabIndexNotifier] 并下发给壳与 `navigationShell` 两侧:
-/// 首页在子树里上报当前 tab 序号,壳在这里读回来决定是否放开左边缘侧滑。
-/// **刻意不放 `app.dart` 的全局 providers**——它是纯移动端的 UI 手势状态,放全局
-/// 会让桌面/Web 白背一份、让每个 pump 移动路由的测试都得手动注入(漏注入时静默
-/// 降级成"侧滑永久关闭"),也会和那批跨页 mutation 广播 notifier 混淆语义。
-/// 作用域收在这里后,它随壳挂载而新建、随壳销毁而释放。
+/// 不再持有 [MobileOverviewTabIndexNotifier]——tab 序号由
+/// `mobileOverviewTabIndexProvider`(autoDispose)承载:首页在子树里
+/// `ref.watch(...notifier)` 上报,壳在这里 `ref.watch` 读回来决定是否放开
+/// 左边缘侧滑。**刻意不放 `app.dart` 的全局 providers**——它是纯移动端的
+/// UI 手势状态,放全局会让桌面/Web 白背一份、让每个 pump 移动路由的测试都得
+/// 手动注入(漏注入时静默降级成"侧滑永久关闭"),也会和那批跨页 mutation
+/// 广播 notifier 混淆语义。autoDispose 随壳挂载而新建、随壳销毁而释放。
 class _MobileRootShellScope extends ConsumerStatefulWidget {
   const _MobileRootShellScope({
     required this.state,

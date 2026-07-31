@@ -10,27 +10,27 @@ part of 'activity_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// activity 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<ActivityApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式。首个消费方是订阅管理页（统一资源任务操作走它）。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 首个消费方是订阅管理页（统一资源任务操作走它）。测试需要替身时用
+/// `overrideWithValue(...)`。
 
 @ProviderFor(activityApi)
 final activityApiProvider = ActivityApiProvider._();
 
 /// activity 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<ActivityApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式。首个消费方是订阅管理页（统一资源任务操作走它）。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 首个消费方是订阅管理页（统一资源任务操作走它）。测试需要替身时用
+/// `overrideWithValue(...)`。
 
 final class ActivityApiProvider
     extends $FunctionalProvider<ActivityApi, ActivityApi, ActivityApi>
     with $Provider<ActivityApi> {
   /// activity 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根用
-  /// `overrideWithValue(context.read<ActivityApi>())` 注入——与 `moviesApiProvider`
-  /// 同一范式。首个消费方是订阅管理页（统一资源任务操作走它）。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 首个消费方是订阅管理页（统一资源任务操作走它）。测试需要替身时用
+  /// `overrideWithValue(...)`。
   ActivityApiProvider._()
     : super(
         from: null,

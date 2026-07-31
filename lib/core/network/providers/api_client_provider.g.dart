@@ -10,27 +10,24 @@ part of 'api_client_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// 全局 [ApiClient] 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<ApiClient>())` 注入——迁移过渡期 Provider
-/// 侧是真源，组合根反转后改为原生装配。
+/// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(apiClient)
 final apiClientProvider = ApiClientProvider._();
 
 /// 全局 [ApiClient] 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<ApiClient>())` 注入——迁移过渡期 Provider
-/// 侧是真源，组合根反转后改为原生装配。
+/// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class ApiClientProvider
     extends $FunctionalProvider<ApiClient, ApiClient, ApiClient>
     with $Provider<ApiClient> {
   /// 全局 [ApiClient] 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-  /// `overrideWithValue(context.read<ApiClient>())` 注入——迁移过渡期 Provider
-  /// 侧是真源，组合根反转后改为原生装配。
+  /// 原生装配：依赖（[SessionStore]）经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   ApiClientProvider._()
     : super(
         from: null,

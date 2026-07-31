@@ -9,9 +9,10 @@ import 'package:flutter/foundation.dart';
 ///
 /// 首页在路由树里被壳包着,拿不到向上的通道,因此走这个 notifier 上报。
 ///
-/// **作用域是移动壳子树,不是 app 全局**:由 `mobile_routes.dart` 的
-/// `_MobileRootShellScope` 创建、下发并释放,不在 `app.dart` 的 providers 里。
-/// 因此壳侧与首页侧都可以按「必然存在」直接 `watch` / `read`,不需要可选兜底。
+/// **作用域是移动壳子树,不是 app 全局**:由 `mobileOverviewTabIndexProvider`
+/// (autoDispose)承载——壳与首页 reporter `ref.watch` 时创建,双方都不在时
+/// 自动释放,随壳挂载/销毁的生命周期语义与旧局部 provider 一致。因此壳侧与
+/// 首页侧都可以按「必然存在」直接 `watch` / `read`,不需要可选兜底。
 class MobileOverviewTabIndexNotifier extends ValueNotifier<int> {
   MobileOverviewTabIndexNotifier() : super(0);
 }

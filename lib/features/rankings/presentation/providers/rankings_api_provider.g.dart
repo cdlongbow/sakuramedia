@@ -10,27 +10,24 @@ part of 'rankings_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// rankings 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<RankingsApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(rankingsApi)
 final rankingsApiProvider = RankingsApiProvider._();
 
 /// rankings 域 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<RankingsApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class RankingsApiProvider
     extends $FunctionalProvider<RankingsApi, RankingsApi, RankingsApi>
     with $Provider<RankingsApi> {
   /// rankings 域 API 的 Riverpod 入口。
   ///
-  /// 原生装配（组合根反转后）。测试用
-  /// `overrideWithValue(context.read<RankingsApi>())` 注入——与 `moviesApiProvider`
-  /// 同一范式，组合根反转后改为原生装配。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   RankingsApiProvider._()
     : super(
         from: null,

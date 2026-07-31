@@ -10,24 +10,24 @@ part of 'downloads_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// downloads feature Riverpod Notifier 读 API 的入口。
 ///
-/// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根
-/// 用 `overrideWithValue(context.read<DownloadsApi>())` 注入。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(downloadsApi)
 final downloadsApiProvider = DownloadsApiProvider._();
 
 /// downloads feature Riverpod Notifier 读 API 的入口。
 ///
-/// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根
-/// 用 `overrideWithValue(context.read<DownloadsApi>())` 注入。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class DownloadsApiProvider
     extends $FunctionalProvider<DownloadsApi, DownloadsApi, DownloadsApi>
     with $Provider<DownloadsApi> {
   /// downloads feature Riverpod Notifier 读 API 的入口。
   ///
-  /// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根
-  /// 用 `overrideWithValue(context.read<DownloadsApi>())` 注入。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   DownloadsApiProvider._()
     : super(
         from: null,

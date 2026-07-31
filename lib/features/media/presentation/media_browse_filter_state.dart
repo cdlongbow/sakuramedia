@@ -69,7 +69,8 @@ extension MediaBrowseRapidUploadFilterX on MediaBrowseRapidUploadFilter {
   };
 }
 
-/// 「媒体管理」筛选状态：不可变值对象，UI 改后调 `controller.reload()` 生效。
+/// 「媒体管理」筛选状态：不可变值对象，UI 改后调
+/// `ref.read(mediaBrowseProvider.notifier).applyFilterState(next)` 生效。
 class MediaBrowseFilterState {
   const MediaBrowseFilterState({
     this.kind,

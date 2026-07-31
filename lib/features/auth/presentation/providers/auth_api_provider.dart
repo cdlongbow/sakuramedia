@@ -8,9 +8,8 @@ part 'auth_api_provider.g.dart';
 
 /// auth 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<AuthApi>())` 注入——与 `moviesApiProvider`
-/// 同一范式，组合根反转后改为原生装配。
+/// 原生装配：依赖（[ApiClient] / [SessionStore] / [CredentialStore]）经
+/// `ref.watch` 拉取，组合根不再 override。测试需要替身时用 `overrideWithValue(...)`。
 @Riverpod(keepAlive: true)
 AuthApi authApi(Ref ref) {
   return AuthApi(

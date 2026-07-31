@@ -8,8 +8,8 @@ part 'videos_api_provider.g.dart';
 
 /// videos 域三个 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用 `overrideWithValue(...)` 注入——与
-/// `moviesApiProvider` 同一范式。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 @Riverpod(keepAlive: true)
 VideosApi videosApi(Ref ref) {
   return VideosApi(apiClient: ref.watch(apiClientProvider));

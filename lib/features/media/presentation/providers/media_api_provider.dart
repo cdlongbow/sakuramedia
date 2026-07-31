@@ -7,9 +7,8 @@ part 'media_api_provider.g.dart';
 
 /// media feature 内所有 Riverpod Notifier 读 API 的统一入口。
 ///
-/// body 抛 [UnimplementedError]，实际实例由 `lib/app/app.dart` 的组合根
-/// 用 `overrideWithValue(context.read<MediaApi>())` 注入（R2 过渡期方案：
-/// legacy MultiProvider 里的 `MediaApi` 单例桥接到 Riverpod 侧）。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 @Riverpod(keepAlive: true)
 MediaApi mediaApi(Ref ref) {
   return MediaApi(apiClient: ref.watch(apiClientProvider));
@@ -17,9 +16,9 @@ MediaApi mediaApi(Ref ref) {
 
 /// media 页需要读媒体库列表（用于筛选、秒传目标选择、存储描述解析）。
 ///
-/// `MediaLibrariesApi` 归属 configuration 域，但目前该域尚未开始 R2 迁移；
-/// 先在 media 侧建 bridge，供 [mediaLibrariesProvider] 消费。等 configuration
-/// 迁 Riverpod 时把 bridge 上移到 configuration/presentation/providers/。
+/// `MediaLibrariesApi` 归属 configuration 域；configuration 迁移完成后该
+/// bridge 仍保持现状（configuration 页面、media、system_diagnostics、
+/// media_import 选择器等多处共用，原生装配无副作用）。
 @Riverpod(keepAlive: true)
 MediaLibrariesApi mediaLibrariesApi(Ref ref) {
   return MediaLibrariesApi(apiClient: ref.watch(apiClientProvider));

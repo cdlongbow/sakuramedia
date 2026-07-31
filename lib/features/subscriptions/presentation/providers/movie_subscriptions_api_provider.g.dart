@@ -10,16 +10,16 @@ part of 'movie_subscriptions_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// 订阅管理 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<MovieSubscriptionsApi>())` 注入。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 @ProviderFor(movieSubscriptionsApi)
 final movieSubscriptionsApiProvider = MovieSubscriptionsApiProvider._();
 
 /// 订阅管理 API 的 Riverpod 入口。
 ///
-/// 原生装配（组合根反转后）。测试用
-/// `overrideWithValue(context.read<MovieSubscriptionsApi>())` 注入。
+/// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+/// 测试需要替身时用 `overrideWithValue(...)`。
 
 final class MovieSubscriptionsApiProvider
     extends
@@ -31,8 +31,8 @@ final class MovieSubscriptionsApiProvider
     with $Provider<MovieSubscriptionsApi> {
   /// 订阅管理 API 的 Riverpod 入口。
   ///
-  /// 原生装配（组合根反转后）。测试用
-  /// `overrideWithValue(context.read<MovieSubscriptionsApi>())` 注入。
+  /// 原生装配：依赖经 `ref.watch` 拉取，组合根不再 override。
+  /// 测试需要替身时用 `overrideWithValue(...)`。
   MovieSubscriptionsApiProvider._()
     : super(
         from: null,

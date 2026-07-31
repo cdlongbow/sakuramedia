@@ -98,10 +98,10 @@ class AppPageStateCache extends ChangeNotifier {
 
 /// 软查找全局页面状态缓存。
 ///
-/// 经 Riverpod 容器读 [appPageStateCacheProvider]；以下两种情况返回 null，
-/// 页面降级为 owned state（与旧 `ProviderNotFoundException` 降级语义一致）：
-/// - 树上没有 `ProviderScope`（多数 widget 测试）；
-/// - 有 scope 但组合根没 override 该桥（body 抛 [UnimplementedError]）。
+/// 经 Riverpod 容器读 [appPageStateCacheProvider]；树上没有 `ProviderScope`
+/// （多数 widget 测试）时返回 null、页面降级为 owned state（与旧
+/// `ProviderNotFoundException` 降级语义一致）；`try/catch` 兼作上游依赖
+/// 异常兜底（如依赖的 sessionStore 构造失败时）。
 AppPageStateCache? maybeReadAppPageStateCache(BuildContext context) {
   try {
     return ProviderScope.containerOf(

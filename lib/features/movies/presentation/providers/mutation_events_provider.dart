@@ -13,8 +13,7 @@ part 'mutation_events_provider.g.dart';
 /// 侧，都 `reportChange` / `reportBatch` 到它；消费方在 Riverpod 侧走
 /// [movieSubscriptionEventsProvider]，**不 `context.read`**。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根
-/// `overrideWithValue(context.read<MovieSubscriptionChangeNotifier>())` 注入。
+/// 原生装配：body 直接构造 + `ref.onDispose` 配对销毁，组合根不再 override。
 ///
 /// 命名注意：函数名不要以 `Notifier` 结尾——riverpod_generator 会把它从生成的
 /// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
@@ -51,7 +50,7 @@ Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) {
 
 /// 跨页合集类型（单体/合集）变更广播源的桥——与
 /// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
-/// 保持「单一广播源」。实例由组合根 override 注入。
+/// 保持「单一广播源」。原生装配，组合根不再 override。
 @Riverpod(keepAlive: true)
 MovieCollectionTypeChangeNotifier collectionTypeBroadcaster(Ref ref) {
   final notifier = MovieCollectionTypeChangeNotifier();

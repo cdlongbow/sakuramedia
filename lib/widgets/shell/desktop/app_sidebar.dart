@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -16,7 +17,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
-class AppSidebar extends StatelessWidget {
+class AppSidebar extends ConsumerWidget {
   const AppSidebar({
     super.key,
     required this.currentPath,
@@ -27,9 +28,13 @@ class AppSidebar extends StatelessWidget {
   final List<AppNavGroup> navGroups;
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AppShellController>(
-      builder: (context, controller, child) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 桥 provider 只提供实例；折叠状态变化仍由 ListenableBuilder 驱动重建
+    // （与旧 Consumer<AppShellController> 等价）。
+    final controller = ref.watch(appShellControllerProvider);
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
         final sidebarTokens = context.appSidebarTokens;
         final appColors = context.appColors;
         final useMacSidebarGlass = _useMacSidebarGlass;
@@ -330,32 +335,45 @@ class _SidebarNavScrollAreaState extends State<_SidebarNavScrollArea> {
 
 const double _sidebarNavFadeHeight = 32;
 
-class _SidebarVersionInfo extends StatefulWidget {
+class _SidebarVersionInfo extends ConsumerStatefulWidget {
   const _SidebarVersionInfo({required this.isCompact});
 
   final bool isCompact;
 
   @override
-  State<_SidebarVersionInfo> createState() => _SidebarVersionInfoState();
+  ConsumerState<_SidebarVersionInfo> createState() =>
+      _SidebarVersionInfoState();
 }
 
-class _SidebarVersionInfoState extends State<_SidebarVersionInfo> {
+class _SidebarVersionInfoState extends ConsumerState<_SidebarVersionInfo> {
   AppVersionInfoController? _loadedController;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final controller = _readVersionInfoController(context);
-    if (controller == null || identical(controller, _loadedController)) {
+  void initState() {
+    super.initState();
+    final controller = _readVersionInfoController(ref);
+    if (controller == null) {
       return;
     }
-    _loadedController = controller;
+    _loadedController = controller..addListener(_onVersionChanged);
     unawaited(controller.load());
   }
 
   @override
+  void dispose() {
+    _loadedController?.removeListener(_onVersionChanged);
+    super.dispose();
+  }
+
+  void _onVersionChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = _watchVersionInfoController(context);
+    final controller = _loadedController;
     final frontendVersion = controller?.frontendVersionLabel ?? '--';
     final backendVersion = controller?.backendVersionLabel ?? '--';
 
@@ -454,23 +472,18 @@ class _SidebarVersionRow extends StatelessWidget {
   }
 }
 
-AppVersionInfoController? _readVersionInfoController(BuildContext context) {
+/// 防御式读取版本控制器：桥未 override（部分 widget 测试）时抛
+/// [UnimplementedError]，捕获后返回 null、版本行显示 '--'——与旧
+/// `ProviderNotFoundException` 降级语义一致。
+AppVersionInfoController? _readVersionInfoController(WidgetRef ref) {
   try {
-    return context.read<AppVersionInfoController>();
-  } on ProviderNotFoundException {
+    return ref.read(appVersionInfoControllerProvider);
+  } on Object {
     return null;
   }
 }
 
-AppVersionInfoController? _watchVersionInfoController(BuildContext context) {
-  try {
-    return context.watch<AppVersionInfoController>();
-  } on ProviderNotFoundException {
-    return null;
-  }
-}
-
-class AppSidebarGroup extends StatelessWidget {
+class AppSidebarGroup extends ConsumerWidget {
   const AppSidebarGroup({
     super.key,
     required this.group,
@@ -483,32 +496,39 @@ class AppSidebarGroup extends StatelessWidget {
   final bool isCompact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final primaryItem = group.items.first;
-    // 仅「通知」组订阅全局未读数，其它组不 watch、避免无谓重建。
-    final badgeCount =
-        group.id == 'notifications'
-            ? _watchNotificationUnreadCount(context)
-            : null;
 
-    return AppSidebarItem(
-      key: Key('nav-group-${group.id}'),
-      icon: group.icon,
-      label: group.label,
-      selected: currentPath == primaryItem.path,
-      collapsed: isCompact,
-      badgeCount: badgeCount,
-      onTap: () => context.goPrimaryRoute(primaryItem.path),
+    AppSidebarItem buildItem(int? badgeCount) {
+      return AppSidebarItem(
+        key: Key('nav-group-${group.id}'),
+        icon: group.icon,
+        label: group.label,
+        selected: currentPath == primaryItem.path,
+        collapsed: isCompact,
+        badgeCount: badgeCount,
+        onTap: () => context.goPrimaryRoute(primaryItem.path),
+      );
+    }
+
+    // 仅「通知」组订阅全局未读数，其它组不监听、避免无谓重建。
+    // 桥未 override（部分 widget 测试）时降级为无角标。
+    final center =
+        group.id == 'notifications' ? _readNotificationCenter(ref) : null;
+    if (center == null) {
+      return buildItem(null);
+    }
+    return ListenableBuilder(
+      listenable: center,
+      builder: (context, _) => buildItem(center.unreadCount),
     );
   }
 }
 
-/// 防御式读取全局未读数：缺 Provider（如部分 widget 测试）时返回 null 不显示角标，
-/// 而非抛 [ProviderNotFoundException]。
-int? _watchNotificationUnreadCount(BuildContext context) {
+NotificationCenterController? _readNotificationCenter(WidgetRef ref) {
   try {
-    return context.watch<NotificationCenterController>().unreadCount;
-  } on ProviderNotFoundException {
+    return ref.read(notificationCenterControllerProvider);
+  } on Object {
     return null;
   }
 }

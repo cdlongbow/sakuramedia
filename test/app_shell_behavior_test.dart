@@ -618,6 +618,7 @@ Future<void> _pumpDesktopApp(
   required MoviesApi moviesApi,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
+  final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
     MultiProvider(
       providers: [
@@ -629,8 +630,8 @@ Future<void> _pumpDesktopApp(
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
         Provider<AuthApi>.value(value: bundle.authApi),
         Provider<StatusApi>.value(value: statusApi),
-        ChangeNotifierProvider<AppVersionInfoController>(
-          create: (_) => AppVersionInfoController(statusApi: statusApi),
+        ChangeNotifierProvider<AppVersionInfoController>.value(
+          value: versionInfoController,
         ),
         Provider<MoviesApi>.value(value: moviesApi),
         Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
@@ -645,7 +646,9 @@ Future<void> _pumpDesktopApp(
         Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
       ],
       child: ProviderScope(
-        overrides: bundle.riverpodOverrides(),
+        overrides: bundle.riverpodOverrides(
+          versionInfoController: versionInfoController,
+        ),
         child: OKToast(
           child: MaterialApp.router(
             theme: sakuraThemeData,
@@ -666,6 +669,7 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
   required ActorsApi actorsApi,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
+  final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
     MultiProvider(
       providers: [
@@ -677,8 +681,8 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
         Provider<AuthApi>.value(value: bundle.authApi),
         Provider<StatusApi>.value(value: statusApi),
-        ChangeNotifierProvider<AppVersionInfoController>(
-          create: (_) => AppVersionInfoController(statusApi: statusApi),
+        ChangeNotifierProvider<AppVersionInfoController>.value(
+          value: versionInfoController,
         ),
         Provider<MoviesApi>.value(value: moviesApi),
         Provider<ActorsApi>.value(value: actorsApi),
@@ -694,7 +698,9 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
         Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
       ],
       child: ProviderScope(
-        overrides: bundle.riverpodOverrides(),
+        overrides: bundle.riverpodOverrides(
+          versionInfoController: versionInfoController,
+        ),
         child: OKToast(
           child: MaterialApp.router(
             theme: sakuraThemeData,

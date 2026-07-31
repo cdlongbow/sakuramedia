@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/theme.dart';
@@ -13,15 +14,16 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 /// 独立的「通知」消息中心页。消费全局 [NotificationCenterController]：
 /// 列表/分页/筛选来自 controller；已读为「无感」自动处理——卡片被渲染（展示）时
 /// 即上报已读，未读角标在侧边栏菜单项上常驻显示。
-class DesktopNotificationsPage extends StatefulWidget {
+class DesktopNotificationsPage extends ConsumerStatefulWidget {
   const DesktopNotificationsPage({super.key});
 
   @override
-  State<DesktopNotificationsPage> createState() =>
+  ConsumerState<DesktopNotificationsPage> createState() =>
       _DesktopNotificationsPageState();
 }
 
-class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
+class _DesktopNotificationsPageState
+    extends ConsumerState<DesktopNotificationsPage> {
   static const double _loadMoreTriggerOffset = 300;
 
   late final NotificationCenterController _controller;
@@ -30,7 +32,7 @@ class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
   @override
   void initState() {
     super.initState();
-    _controller = context.read<NotificationCenterController>();
+    _controller = ref.read(notificationCenterControllerProvider);
     _scrollController.addListener(_handleScroll);
     // 若全局 controller 尚未初始化（首个消费者），幂等触发一次。
     unawaited(_controller.initialize());

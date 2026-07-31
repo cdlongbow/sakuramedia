@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
@@ -24,17 +25,18 @@ import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 /// 后重新拍快照),而非实时 `isRead`——否则卡片刚滚进视口被无感已读、红点 400ms 内
 /// 就消失、「未读」列表也会在眼皮底下塌陷。快照让「本次有哪些是新的」在浏览期间稳定可见,
 /// 无感已读继续在底层清掉服务端未读数与入口角标。
-class MobileNotificationsPage extends StatefulWidget {
+class MobileNotificationsPage extends ConsumerStatefulWidget {
   const MobileNotificationsPage({super.key});
 
   @override
-  State<MobileNotificationsPage> createState() =>
+  ConsumerState<MobileNotificationsPage> createState() =>
       _MobileNotificationsPageState();
 }
 
 enum _NotificationSegment { all, unread }
 
-class _MobileNotificationsPageState extends State<MobileNotificationsPage>
+class _MobileNotificationsPageState
+    extends ConsumerState<MobileNotificationsPage>
     with SingleTickerProviderStateMixin {
   static const double _loadMoreTriggerOffset = 300;
   static const int _skeletonCount = 6;
@@ -50,7 +52,7 @@ class _MobileNotificationsPageState extends State<MobileNotificationsPage>
   @override
   void initState() {
     super.initState();
-    _controller = context.read<NotificationCenterController>();
+    _controller = ref.read(notificationCenterControllerProvider);
     _segmentController = TabController(length: 2, vsync: this);
     _controller.addListener(_handleControllerUpdate);
     _scrollController.addListener(_handleScroll);

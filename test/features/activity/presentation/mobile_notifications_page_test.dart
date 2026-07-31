@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
@@ -169,19 +169,23 @@ Future<void> _pumpNotificationsPage(
   WidgetTester tester, {
   required TestApiBundle bundle,
 }) async {
+  final notificationCenter = NotificationCenterController(
+    activityApi: bundle.activityApi,
+  );
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<NotificationCenterController>(
-          create:
-              (_) =>
-                  NotificationCenterController(activityApi: bundle.activityApi),
-        ),
-      ],
-      child: OKToast(
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: MobileNotificationsPage()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(
+        notificationCenter: notificationCenter,
+      ),
+      // 桥 override 不接管生命周期；挂在树上随测试框架的树销毁一起 dispose，
+      // 否则退避重连 Timer 在 invariant 检查时仍悬挂。
+      child: _ControllerLifecycle(
+        controller: notificationCenter,
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: MobileNotificationsPage()),
+          ),
         ),
       ),
     ),
@@ -254,4 +258,25 @@ Map<String, dynamic> _notificationJson({
     'created_at': '2026-03-26T09:10:00Z',
     'updated_at': '2026-03-26T09:10:00Z',
   };
+}
+
+class _ControllerLifecycle extends StatefulWidget {
+  const _ControllerLifecycle({required this.controller, required this.child});
+
+  final NotificationCenterController controller;
+  final Widget child;
+
+  @override
+  State<_ControllerLifecycle> createState() => _ControllerLifecycleState();
+}
+
+class _ControllerLifecycleState extends State<_ControllerLifecycle> {
+  @override
+  void dispose() {
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

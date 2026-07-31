@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_controller.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
-class MobileSystemOverviewPage extends StatefulWidget {
+class MobileSystemOverviewPage extends ConsumerStatefulWidget {
   const MobileSystemOverviewPage({super.key});
 
   @override
-  State<MobileSystemOverviewPage> createState() =>
+  ConsumerState<MobileSystemOverviewPage> createState() =>
       _MobileSystemOverviewPageState();
 }
 
-class _MobileSystemOverviewPageState extends State<MobileSystemOverviewPage> {
+class _MobileSystemOverviewPageState
+    extends ConsumerState<MobileSystemOverviewPage> {
   late final OverviewSystemInfoController _controller;
 
   @override
   void initState() {
     super.initState();
     _controller = OverviewSystemInfoController(
-      statusApi: context.read<StatusApi>(),
+      statusApi: ref.read(statusApiProvider),
     )..load();
   }
 

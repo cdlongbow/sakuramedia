@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_center_controller.dart';
@@ -56,7 +55,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   @override
   void initState() {
     super.initState();
-    final activityApi = context.read<ActivityApi>();
+    final activityApi = ref.read(activityApiProvider);
     _controller =
         ActivityCenterController(activityApi: activityApi)
           ..addListener(_syncTabSelection)

@@ -8,6 +8,7 @@ import 'package:sakuramedia/app/app_page_state_cache.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/app/web_platform_notice.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -23,6 +24,7 @@ import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
@@ -376,6 +378,15 @@ class _MyAppState extends State<MyApp> {
               ),
               appPageStateCacheProvider.overrideWithValue(
                 context.read<AppPageStateCache>(),
+              ),
+              appShellControllerProvider.overrideWithValue(
+                context.read<AppShellController>(),
+              ),
+              appVersionInfoControllerProvider.overrideWithValue(
+                context.read<AppVersionInfoController>(),
+              ),
+              notificationCenterControllerProvider.overrideWithValue(
+                context.read<NotificationCenterController>(),
               ),
               statusApiProvider.overrideWithValue(context.read<StatusApi>()),
               configApiProvider.overrideWithValue(context.read<ConfigApi>()),

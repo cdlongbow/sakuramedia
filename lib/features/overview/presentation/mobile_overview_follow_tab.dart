@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
@@ -19,15 +20,16 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/mobile_follow_movie_card.dart';
 
-class MobileOverviewFollowTab extends StatefulWidget {
+class MobileOverviewFollowTab extends ConsumerStatefulWidget {
   const MobileOverviewFollowTab({super.key});
 
   @override
-  State<MobileOverviewFollowTab> createState() =>
+  ConsumerState<MobileOverviewFollowTab> createState() =>
       _MobileOverviewFollowTabState();
 }
 
-class _MobileOverviewFollowTabState extends State<MobileOverviewFollowTab> {
+class _MobileOverviewFollowTabState
+    extends ConsumerState<MobileOverviewFollowTab> {
   static const int _detailConcurrentLimit = 1;
   static const int _detailStillImageLimit = 8;
 
@@ -43,22 +45,23 @@ class _MobileOverviewFollowTabState extends State<MobileOverviewFollowTab> {
   @override
   void initState() {
     super.initState();
-    _collectionChangeNotifier =
-        context.read<MovieCollectionTypeChangeNotifier>();
+    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
 
     _moviesController = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context
-              .read<MoviesApi>()
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
               .getSubscribedActorsLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 20,
@@ -135,9 +138,9 @@ class _MobileOverviewFollowTabState extends State<MobileOverviewFollowTab> {
   Future<void> _loadMovieDetail(String movieNumber) async {
     _activeDetailRequests += 1;
     try {
-      final detail = await context.read<MoviesApi>().getMovieDetail(
-        movieNumber: movieNumber,
-      );
+      final detail = await ref
+          .read(moviesApiProvider)
+          .getMovieDetail(movieNumber: movieNumber);
       if (!mounted) {
         return;
       }

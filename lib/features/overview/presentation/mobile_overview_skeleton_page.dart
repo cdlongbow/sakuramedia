@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_clips_tab.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/mobile_overview_hot_reviews_tab.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -13,8 +16,6 @@ import 'package:sakuramedia/features/overview/presentation/mobile_overview_follo
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_tab_index_notifier.dart';
 import 'package:sakuramedia/features/moments/presentation/mobile_overview_moments_tab.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -75,26 +76,27 @@ class MobileOverviewSkeletonPage extends StatelessWidget {
 
 /// 把当前 tab 序号上报给壳层,壳据此决定是否放开左边缘侧滑打开抽屉。
 /// 见 [MobileOverviewTabIndexNotifier]。
-class _MobileOverviewTabIndexReporter extends StatefulWidget {
+class _MobileOverviewTabIndexReporter extends ConsumerStatefulWidget {
   const _MobileOverviewTabIndexReporter({required this.child});
 
   final Widget child;
 
   @override
-  State<_MobileOverviewTabIndexReporter> createState() =>
+  ConsumerState<_MobileOverviewTabIndexReporter> createState() =>
       _MobileOverviewTabIndexReporterState();
 }
 
 class _MobileOverviewTabIndexReporterState
-    extends State<_MobileOverviewTabIndexReporter> {
+    extends ConsumerState<_MobileOverviewTabIndexReporter> {
   TabController? _controller;
   MobileOverviewTabIndexNotifier? _notifier;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // notifier 由移动壳子树(_MobileRootShellScope)下发,首页必在其下,直接 read。
-    _notifier ??= context.read<MobileOverviewTabIndexNotifier>();
+    // notifier 已迁 mobileOverviewTabIndexProvider(autoDispose):这里 read 拿
+    // 实例,build 里的 watch(.notifier) 负责持有订阅、防止 autoDispose 提前释放。
+    _notifier ??= ref.read(mobileOverviewTabIndexProvider.notifier);
     final controller = DefaultTabController.maybeOf(context);
     if (identical(controller, _controller)) {
       return;
@@ -128,7 +130,12 @@ class _MobileOverviewTabIndexReporterState
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    // 持有对 autoDispose provider 的订阅，防止 notifier 在壳未 watch 的
+    // 间隙被释放；watch `.notifier` 不随 value 变化重建。
+    ref.watch(mobileOverviewTabIndexProvider.notifier);
+    return widget.child;
+  }
 }
 
 class _MobileOverviewHeader extends StatelessWidget {
@@ -189,16 +196,17 @@ class _MobileOverviewHeader extends StatelessWidget {
   }
 }
 
-class _MobileOverviewMyTab extends StatefulWidget {
+class _MobileOverviewMyTab extends ConsumerStatefulWidget {
   const _MobileOverviewMyTab({required this.playlistOrderStore});
 
   final PlaylistOrderStore playlistOrderStore;
 
   @override
-  State<_MobileOverviewMyTab> createState() => _MobileOverviewMyTabState();
+  ConsumerState<_MobileOverviewMyTab> createState() =>
+      _MobileOverviewMyTabState();
 }
 
-class _MobileOverviewMyTabState extends State<_MobileOverviewMyTab> {
+class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   static const int _latestMoviePageSize = 12;
 
   late final TextEditingController _searchController;
@@ -211,7 +219,7 @@ class _MobileOverviewMyTabState extends State<_MobileOverviewMyTab> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    final playlistsApi = context.read<PlaylistsApi>();
+    final playlistsApi = ref.read(playlistsApiProvider);
     _playlistsController = PlaylistsOverviewController(
       fetchPlaylists: playlistsApi.getPlaylists,
       fetchPlaylistCoverUrl: (playlistId) async {
@@ -223,7 +231,7 @@ class _MobileOverviewMyTabState extends State<_MobileOverviewMyTab> {
       },
       createPlaylist: playlistsApi.createPlaylist,
       playlistOrderStore: widget.playlistOrderStore,
-      orderScopeKey: context.read<SessionStore>().baseUrl,
+      orderScopeKey: ref.read(sessionStoreProvider).baseUrl,
     )..load();
     _loadLatestMovies();
   }
@@ -242,10 +250,9 @@ class _MobileOverviewMyTabState extends State<_MobileOverviewMyTab> {
     });
 
     try {
-      final response = await context.read<MoviesApi>().getLatestMovies(
-        page: 1,
-        pageSize: _latestMoviePageSize,
-      );
+      final response = await ref
+          .read(moviesApiProvider)
+          .getLatestMovies(page: 1, pageSize: _latestMoviePageSize);
       if (!mounted) {
         return;
       }
@@ -348,10 +355,9 @@ class _MobileOverviewMyTabState extends State<_MobileOverviewMyTab> {
   }
 
   Future<void> _refreshLatestMovies() async {
-    final response = await context.read<MoviesApi>().getLatestMovies(
-      page: 1,
-      pageSize: _latestMoviePageSize,
-    );
+    final response = await ref
+        .read(moviesApiProvider)
+        .getLatestMovies(page: 1, pageSize: _latestMoviePageSize);
     if (!mounted) {
       return;
     }

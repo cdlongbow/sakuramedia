@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:sakuramedia/app/app_page_state_cache.dart';
+import 'package:sakuramedia/app/app_state.dart';
+import 'package:sakuramedia/app/app_version_info_controller.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
@@ -13,6 +16,8 @@ import 'package:sakuramedia/features/account/presentation/providers/account_api_
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
@@ -144,6 +149,10 @@ class TestApiBundle {
   final MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster =
       MovieSubscriptionChangeNotifier();
 
+  /// 桌面壳层折叠控制器默认实例——sidebar 无条件 watch 它，凡渲染壳层的
+  /// 测试都需要；无副作用，恒定注入。
+  final AppShellController appShellController = AppShellController();
+
   /// 图搜草稿仓默认实例——图搜启动器经 Riverpod 容器写入草稿，测试树里必须有
   /// override 才能落笔。需要自持实例（预置草稿）的测试仍可传参覆盖。
   final ImageSearchDraftStore defaultImageSearchDraftStore =
@@ -169,6 +178,10 @@ class TestApiBundle {
     MediaLibrariesApi? mediaLibrariesApi,
     DownloadClientsApi? downloadClientsApi,
     IndexerSettingsApi? indexerSettingsApi,
+    // 常驻控制器桥：默认不 override（角标/版本行降级隐藏、构造不发请求）；
+    // 断言通知/版本 UI 的测试自行传实例。
+    NotificationCenterController? notificationCenter,
+    AppVersionInfoController? versionInfoController,
   }) {
     final subscriptionBroadcaster =
         movieSubscriptionBroadcaster ?? this.movieSubscriptionBroadcaster;
@@ -222,6 +235,15 @@ class TestApiBundle {
       ),
       collectionTypeBroadcasterProvider.overrideWithValue(typeBroadcaster),
       clipMutationBroadcasterProvider.overrideWithValue(clipBroadcaster),
+      appShellControllerProvider.overrideWithValue(appShellController),
+      if (notificationCenter != null)
+        notificationCenterControllerProvider.overrideWithValue(
+          notificationCenter,
+        ),
+      if (versionInfoController != null)
+        appVersionInfoControllerProvider.overrideWithValue(
+          versionInfoController,
+        ),
     ];
   }
 

@@ -1,14 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -20,14 +21,15 @@ import 'package:sakuramedia/features/overview/presentation/widgets/external_data
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_stats_strip.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 
-class DesktopOverviewPage extends StatefulWidget {
+class DesktopOverviewPage extends ConsumerStatefulWidget {
   const DesktopOverviewPage({super.key});
 
   @override
-  State<DesktopOverviewPage> createState() => _DesktopOverviewPageState();
+  ConsumerState<DesktopOverviewPage> createState() =>
+      _DesktopOverviewPageState();
 }
 
-class _DesktopOverviewPageState extends State<DesktopOverviewPage> {
+class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
   late final OverviewSystemInfoController _systemInfoController;
   late final PagedMovieSummaryController _moviesController;
   late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
@@ -36,21 +38,22 @@ class _DesktopOverviewPageState extends State<DesktopOverviewPage> {
   void initState() {
     super.initState();
     _systemInfoController = OverviewSystemInfoController(
-      statusApi: context.read<StatusApi>(),
+      statusApi: ref.read(statusApiProvider),
     )..addListener(_onSystemInfoChanged);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
     _moviesController = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context.read<MoviesApi>().getLatestMovies(
-            page: page,
-            pageSize: pageSize,
-          ),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
+              .getLatestMovies(page: page, pageSize: pageSize),
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 24,

@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_password_page.dart';
@@ -838,7 +840,7 @@ final int _overviewBranchIndex = () {
 /// 会让桌面/Web 白背一份、让每个 pump 移动路由的测试都得手动注入(漏注入时静默
 /// 降级成"侧滑永久关闭"),也会和那批跨页 mutation 广播 notifier 混淆语义。
 /// 作用域收在这里后,它随壳挂载而新建、随壳销毁而释放。
-class _MobileRootShellScope extends StatefulWidget {
+class _MobileRootShellScope extends ConsumerStatefulWidget {
   const _MobileRootShellScope({
     required this.state,
     required this.navigationShell,
@@ -848,28 +850,15 @@ class _MobileRootShellScope extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  State<_MobileRootShellScope> createState() => _MobileRootShellScopeState();
+  ConsumerState<_MobileRootShellScope> createState() =>
+      _MobileRootShellScopeState();
 }
 
-class _MobileRootShellScopeState extends State<_MobileRootShellScope> {
-  final MobileOverviewTabIndexNotifier _overviewTabIndex =
-      MobileOverviewTabIndexNotifier();
-
-  @override
-  void dispose() {
-    _overviewTabIndex.dispose();
-    super.dispose();
-  }
-
+class _MobileRootShellScopeState extends ConsumerState<_MobileRootShellScope> {
+  // tab 序号已迁 mobileOverviewTabIndexProvider（autoDispose）：随壳 watch
+  // 而创建、壳与首页 reporter 都不在时释放，作用域语义与旧局部 provider 一致。
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<MobileOverviewTabIndexNotifier>.value(
-      value: _overviewTabIndex,
-      child: Builder(builder: _buildShell),
-    );
-  }
-
-  Widget _buildShell(BuildContext context) {
     final navigationShell = widget.navigationShell;
     final currentPath = widget.state.uri.path;
     // 按 branch 而非精确路径判定:概览分支内进子页时 drawer 也要保持存在。
@@ -886,7 +875,7 @@ class _MobileRootShellScopeState extends State<_MobileRootShellScope> {
     final enableOverviewDrawerDrag =
         enableOverviewDrawer &&
         currentPath == mobileOverviewPath &&
-        context.watch<MobileOverviewTabIndexNotifier>().value == 0;
+        ref.watch(mobileOverviewTabIndexProvider).value == 0;
     return AppMobileShell(
       currentPath: currentPath,
       navGroups: mobileNavGroups,
@@ -907,7 +896,7 @@ class _MobileRootShellScopeState extends State<_MobileRootShellScope> {
   }
 }
 
-class _MobileOverviewDrawer extends StatelessWidget {
+class _MobileOverviewDrawer extends ConsumerWidget {
   const _MobileOverviewDrawer({required this.hostContext});
 
   final BuildContext hostContext;
@@ -983,9 +972,21 @@ class _MobileOverviewDrawer extends StatelessWidget {
       );
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final center = _readNotificationCenter(ref);
+    if (center == null) {
+      return _buildDrawer(context, unreadCount: 0);
+    }
+    return ListenableBuilder(
+      listenable: center,
+      builder:
+          (context, _) =>
+              _buildDrawer(context, unreadCount: center.unreadCount),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, {required int unreadCount}) {
     final spacing = hostContext.appSpacing;
-    final unreadCount = _watchNotificationUnreadCount(context) ?? 0;
 
     return Drawer(
       key: const Key('mobile-overview-drawer'),
@@ -1209,31 +1210,44 @@ class _MobileOverviewDrawer extends StatelessWidget {
   }
 }
 
-class _MobileDrawerVersionCard extends StatefulWidget {
+class _MobileDrawerVersionCard extends ConsumerStatefulWidget {
   const _MobileDrawerVersionCard();
 
   @override
-  State<_MobileDrawerVersionCard> createState() =>
+  ConsumerState<_MobileDrawerVersionCard> createState() =>
       _MobileDrawerVersionCardState();
 }
 
-class _MobileDrawerVersionCardState extends State<_MobileDrawerVersionCard> {
+class _MobileDrawerVersionCardState
+    extends ConsumerState<_MobileDrawerVersionCard> {
   AppVersionInfoController? _loadedController;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final controller = _readVersionInfoController(context);
-    if (controller == null || identical(controller, _loadedController)) {
+  void initState() {
+    super.initState();
+    final controller = _readVersionInfoController(ref);
+    if (controller == null) {
       return;
     }
-    _loadedController = controller;
+    _loadedController = controller..addListener(_onVersionChanged);
     unawaited(controller.load());
   }
 
   @override
+  void dispose() {
+    _loadedController?.removeListener(_onVersionChanged);
+    super.dispose();
+  }
+
+  void _onVersionChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = _watchVersionInfoController(context);
+    final controller = _loadedController;
     final frontendVersion = controller?.frontendVersionLabel ?? '--';
     final backendVersion = controller?.backendVersionLabel ?? '--';
     final spacing = context.appSpacing;
@@ -1318,26 +1332,21 @@ class _MobileDrawerVersionRow extends StatelessWidget {
   }
 }
 
-int? _watchNotificationUnreadCount(BuildContext context) {
+/// 防御式读取通知中心：桥未 override（部分 widget 测试）时抛
+/// [UnimplementedError]，捕获后返回 null、角标隐藏——与旧
+/// `ProviderNotFoundException` 降级语义一致。
+NotificationCenterController? _readNotificationCenter(WidgetRef ref) {
   try {
-    return context.watch<NotificationCenterController>().unreadCount;
-  } on ProviderNotFoundException {
+    return ref.read(notificationCenterControllerProvider);
+  } on Object {
     return null;
   }
 }
 
-AppVersionInfoController? _readVersionInfoController(BuildContext context) {
+AppVersionInfoController? _readVersionInfoController(WidgetRef ref) {
   try {
-    return context.read<AppVersionInfoController>();
-  } on ProviderNotFoundException {
-    return null;
-  }
-}
-
-AppVersionInfoController? _watchVersionInfoController(BuildContext context) {
-  try {
-    return context.watch<AppVersionInfoController>();
-  } on ProviderNotFoundException {
+    return ref.read(appVersionInfoControllerProvider);
+  } on Object {
     return null;
   }
 }

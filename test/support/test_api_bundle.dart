@@ -6,6 +6,7 @@ import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/core/network/providers/sse_event_stream_client_provider.dart';
 import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
@@ -16,6 +17,7 @@ import 'package:sakuramedia/features/account/presentation/providers/account_api_
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_stream_client_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
@@ -38,6 +40,8 @@ import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
@@ -59,6 +63,8 @@ import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/rankings_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
@@ -68,6 +74,8 @@ import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provid
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
+import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 
 import 'fake_http_client_adapter.dart';
@@ -149,6 +157,23 @@ class TestApiBundle {
   final MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster =
       MovieSubscriptionChangeNotifier();
 
+  /// videos 域跨页变更广播源的默认实例——与组合根一致,videos 域各页/控制器
+  /// 都经 [videoMutationBroadcasterProvider] 拿它。需要预置事件/断言广播的
+  /// 测试仍可传参覆盖。
+  final VideoMutationChangeNotifier videoMutationBroadcaster =
+      VideoMutationChangeNotifier();
+
+  /// 合集详情 → 连播页交接信箱的默认实例——连播页 `ref.read` 取交接数据时
+  /// 测试树里必须有 override 才能落笔;无副作用,恒定注入。
+  final CollectionPlaybackHandoff collectionPlaybackHandoff =
+      CollectionPlaybackHandoff();
+
+  /// 外部播放器偏好 store 的默认实例。创建即触发 `load()`(与 provider body
+  /// 同构)——需要它「加载完成 / 预置选择」的测试请先在 `setUpAll` 里
+  /// `SharedPreferences.setMockInitialValues({...})` 再经
+  /// `riverpodOverrides(externalPlayerStore: ...)` 传自持实例。
+  final ExternalPlayerStore externalPlayerStore = ExternalPlayerStore()..load();
+
   /// 桌面壳层折叠控制器默认实例——sidebar 无条件 watch 它，凡渲染壳层的
   /// 测试都需要；无副作用，恒定注入。
   final AppShellController appShellController = AppShellController();
@@ -174,6 +199,9 @@ class TestApiBundle {
     MovieSubscriptionChangeNotifier? movieSubscriptionBroadcaster,
     MovieCollectionTypeChangeNotifier? collectionTypeBroadcaster,
     ClipMutationChangeNotifier? clipMutationBroadcaster,
+    VideoMutationChangeNotifier? videoMutationBroadcaster,
+    CollectionPlaybackHandoff? collectionPlaybackHandoff,
+    ExternalPlayerStore? externalPlayerStore,
     // 允许单测换成 fake 子类（如刷新必败的 API），默认用 bundle 实例。
     MediaLibrariesApi? mediaLibrariesApi,
     DownloadClientsApi? downloadClientsApi,
@@ -182,6 +210,10 @@ class TestApiBundle {
     // 断言通知/版本 UI 的测试自行传实例。
     NotificationCenterController? notificationCenter,
     AppVersionInfoController? versionInfoController,
+    // SSE 流客户端：默认用 bundle 实例（静默不推事件）；要打事件的测试传
+    // FakeSseEventStreamClient / 自定义实例。
+    SseEventStreamClient? sseEventStreamClient,
+    ActivityEventStreamClient? activityEventStreamClient,
   }) {
     final subscriptionBroadcaster =
         movieSubscriptionBroadcaster ?? this.movieSubscriptionBroadcaster;
@@ -189,6 +221,8 @@ class TestApiBundle {
         collectionTypeBroadcaster ?? this.collectionTypeBroadcaster;
     final clipBroadcaster =
         clipMutationBroadcaster ?? this.clipMutationBroadcaster;
+    final videoBroadcaster =
+        videoMutationBroadcaster ?? this.videoMutationBroadcaster;
     return <Override>[
       apiClientProvider.overrideWithValue(apiClient),
       sessionStoreProvider.overrideWithValue(sessionStore),
@@ -235,6 +269,21 @@ class TestApiBundle {
       ),
       collectionTypeBroadcasterProvider.overrideWithValue(typeBroadcaster),
       clipMutationBroadcasterProvider.overrideWithValue(clipBroadcaster),
+      videoMutationBroadcasterProvider.overrideWith(
+        (ref) => videoBroadcaster,
+      ),
+      collectionPlaybackHandoffProvider.overrideWithValue(
+        collectionPlaybackHandoff ?? this.collectionPlaybackHandoff,
+      ),
+      externalPlayerStoreProvider.overrideWith(
+        (ref) => externalPlayerStore ?? this.externalPlayerStore,
+      ),
+      sseEventStreamClientProvider.overrideWithValue(
+        sseEventStreamClient ?? this.sseEventStreamClient,
+      ),
+      activityEventStreamClientProvider.overrideWithValue(
+        activityEventStreamClient ?? this.activityEventStreamClient,
+      ),
       appShellControllerProvider.overrideWithValue(appShellController),
       if (notificationCenter != null)
         notificationCenterControllerProvider.overrideWithValue(

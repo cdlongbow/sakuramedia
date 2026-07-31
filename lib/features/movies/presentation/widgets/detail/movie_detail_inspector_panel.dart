@@ -849,7 +849,7 @@ class _MovieDetailMagnetTab extends StatelessWidget {
     return Align(
       alignment: alignment,
       child: AppButton(
-        size: AppButtonSize.xxSmall,
+        size: AppButtonSize.xSmall,
         key: const Key('movie-detail-magnet-search-button'),
         label: controller.isLoading ? '搜索中' : '搜索资源',
         isLoading: controller.isLoading,

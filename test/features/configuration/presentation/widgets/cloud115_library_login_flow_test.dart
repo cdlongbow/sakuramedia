@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_library_login_flow.dart';
 import 'package:sakuramedia/theme.dart';
@@ -212,16 +210,11 @@ Future<void> _pumpHarness(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-        ],
-        child: AppPlatformScope(
-          platform: platform,
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(body: _FlowHarness(reauthLibrary: reauthLibrary)),
-          ),
+      child: AppPlatformScope(
+        platform: platform,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(body: _FlowHarness(reauthLibrary: reauthLibrary)),
         ),
       ),
     ),

@@ -1,4 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 
 part 'auth_api_provider.g.dart';
@@ -10,5 +13,9 @@ part 'auth_api_provider.g.dart';
 /// 同一范式，组合根反转后改为原生装配。
 @Riverpod(keepAlive: true)
 AuthApi authApi(Ref ref) {
-  throw UnimplementedError('Override authApiProvider at the app root');
+  return AuthApi(
+    apiClient: ref.watch(apiClientProvider),
+    sessionStore: ref.watch(sessionStoreProvider),
+    credentialStore: ref.watch(credentialStoreProvider),
+  );
 }

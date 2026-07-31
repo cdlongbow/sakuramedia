@@ -1,16 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 
 /// 统一的影片播放入口：根据用户是否设置了默认外部播放器，决定跳应用内播放页
@@ -76,9 +75,10 @@ Future<void> launchMoviePlayback(
   var detail = movie;
   if (detail == null) {
     try {
-      detail = await context.read<MoviesApi>().getMovieDetail(
-        movieNumber: movieNumber,
-      );
+      detail = await ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(moviesApiProvider).getMovieDetail(movieNumber: movieNumber);
     } catch (_) {
       detail = null;
     }
@@ -88,7 +88,11 @@ Future<void> launchMoviePlayback(
   }
 
   final media = _resolvePlayableMedia(detail, mediaId);
-  final baseUrl = context.read<SessionStore>().baseUrl;
+  final baseUrl =
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(sessionStoreProvider).baseUrl;
   final resolvedUrl =
       media == null
           ? null
@@ -152,9 +156,10 @@ Future<void> _launchExternalMergedPlayback(
   var detail = movie;
   if (detail == null) {
     try {
-      detail = await context.read<MoviesApi>().getMovieDetail(
-        movieNumber: movieNumber,
-      );
+      detail = await ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(moviesApiProvider).getMovieDetail(movieNumber: movieNumber);
     } catch (_) {
       detail = null;
     }
@@ -170,11 +175,13 @@ Future<void> _launchExternalMergedPlayback(
 
   MoviePlayUrlDto playUrl;
   try {
-    playUrl = await context.read<MediaApi>().getMoviePlayUrl(
-      movieNumber: movieNumber,
-      source: source,
-      mode: MoviePlayUrlMode.merged,
-    );
+    playUrl = await ProviderScope.containerOf(context, listen: false)
+        .read(mediaApiProvider)
+        .getMoviePlayUrl(
+          movieNumber: movieNumber,
+          source: source,
+          mode: MoviePlayUrlMode.merged,
+        );
   } catch (_) {
     playUrl = const MoviePlayUrlDto(
       playUrl: null,
@@ -187,7 +194,11 @@ Future<void> _launchExternalMergedPlayback(
     return;
   }
 
-  final baseUrl = context.read<SessionStore>().baseUrl;
+  final baseUrl =
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(sessionStoreProvider).baseUrl;
   final resolvedUrl =
       playUrl.hasPlayableUrl
           ? resolveMediaUrl(rawUrl: playUrl.playUrl, baseUrl: baseUrl)
@@ -206,9 +217,10 @@ Future<void> _launchExternalMergedPlayback(
 
   // 拉起外部播放器前先探测合并流：规格不一致等校验在 merged-stream 端点进行，
   // 提前用 Range: bytes=0-0 触发，422/404 就直接提示用户，不跳外部播放器也不回退单播。
-  final probeOk = await context.read<MediaApi>().probeMergedPlayback(
-    playUrl: playUrl.playUrl!,
-  );
+  final probeOk = await ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(mediaApiProvider).probeMergedPlayback(playUrl: playUrl.playUrl!);
   if (!context.mounted) {
     return;
   }

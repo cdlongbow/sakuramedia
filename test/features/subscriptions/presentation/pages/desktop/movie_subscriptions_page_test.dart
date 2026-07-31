@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
@@ -48,35 +46,27 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<AppPlatform?>.value(value: AppPlatform.desktop),
-        ],
-        child: ProviderScope(
-          overrides: [
-            movieSubscriptionsApiProvider.overrideWithValue(
-              MovieSubscriptionsApi(apiClient: apiClient),
-            ),
-            moviesApiProvider.overrideWithValue(
-              MoviesApi(apiClient: apiClient),
-            ),
-            activityApiProvider.overrideWithValue(
-              ActivityApi(
+      ProviderScope(
+        overrides: [
+          movieSubscriptionsApiProvider.overrideWithValue(
+            MovieSubscriptionsApi(apiClient: apiClient),
+          ),
+          moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
+          activityApiProvider.overrideWithValue(
+            ActivityApi(
+              apiClient: apiClient,
+              streamClient: createActivityEventStreamClient(
                 apiClient: apiClient,
-                streamClient: createActivityEventStreamClient(
-                  apiClient: apiClient,
-                  sessionStore: sessionStore,
-                ),
+                sessionStore: sessionStore,
               ),
             ),
-            movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
-          ],
-          child: OKToast(
-            child: MaterialApp(
-              theme: sakuraDesktopThemeData,
-              home: const Scaffold(body: DesktopMovieSubscriptionsPage()),
-            ),
+          ),
+          movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraDesktopThemeData,
+            home: const Scaffold(body: DesktopMovieSubscriptionsPage()),
           ),
         ),
       ),

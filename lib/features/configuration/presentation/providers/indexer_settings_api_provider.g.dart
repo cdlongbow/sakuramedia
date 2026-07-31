@@ -10,7 +10,7 @@ part of 'indexer_settings_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// configuration 域 IndexerSettingsApi 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<IndexerSettingsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final indexerSettingsApiProvider = IndexerSettingsApiProvider._();
 
 /// configuration 域 IndexerSettingsApi 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<IndexerSettingsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -33,7 +33,7 @@ final class IndexerSettingsApiProvider
     with $Provider<IndexerSettingsApi> {
   /// configuration 域 IndexerSettingsApi 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<IndexerSettingsApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   IndexerSettingsApiProvider._()
@@ -71,4 +71,4 @@ final class IndexerSettingsApiProvider
 }
 
 String _$indexerSettingsApiHash() =>
-    r'b9e943f5ca9d2fe3acd72a15520f513aaf4b3957';
+    r'be3cef1febc229652d8866264e04a7e324db9870';

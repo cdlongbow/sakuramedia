@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -567,21 +566,16 @@ Future<void> _pumpPage(
   await tester.pumpWidget(
     // MaskedImage 内部 context.read<SessionStore>() 拼 baseUrl，所以 legacy Provider
     // 树仍要挂 SessionStore；上层 ProviderScope 承担 Riverpod bridge。
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+    ProviderScope(
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
+        mediaApiProvider.overrideWithValue(mediaApi),
+        mediaLibrariesApiProvider.overrideWithValue(librariesApi),
       ],
-      child: ProviderScope(
-        overrides: [
-          sessionStoreProvider.overrideWithValue(sessionStore),
-          mediaApiProvider.overrideWithValue(mediaApi),
-          mediaLibrariesApiProvider.overrideWithValue(librariesApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const OKToast(
-            child: Scaffold(body: DesktopMediaManagementPage()),
-          ),
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: const OKToast(
+          child: Scaffold(body: DesktopMediaManagementPage()),
         ),
       ),
     ),

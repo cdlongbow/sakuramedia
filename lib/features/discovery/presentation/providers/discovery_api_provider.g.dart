@@ -10,7 +10,7 @@ part of 'discovery_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// discovery 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<DiscoveryApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final discoveryApiProvider = DiscoveryApiProvider._();
 
 /// discovery 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<DiscoveryApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class DiscoveryApiProvider
     with $Provider<DiscoveryApi> {
   /// discovery 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<DiscoveryApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   DiscoveryApiProvider._()
@@ -64,4 +64,4 @@ final class DiscoveryApiProvider
   }
 }
 
-String _$discoveryApiHash() => r'6663824372b3019de6a1e7d66bd1a3807b17b68c';
+String _$discoveryApiHash() => r'e9d76186fa7039393fb9b6939cff3519ae54ca3c';

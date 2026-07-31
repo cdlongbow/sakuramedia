@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
@@ -17,16 +16,13 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: ChangeNotifierProvider<SessionStore>.value(
-          value: sessionStore,
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: PlaylistBannerCard(
-                title: '我的收藏',
-                coverImageUrl: 'https://example.com/cover.jpg',
-                onTap: () {},
-              ),
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: PlaylistBannerCard(
+              title: '我的收藏',
+              coverImageUrl: 'https://example.com/cover.jpg',
+              onTap: () {},
             ),
           ),
         ),
@@ -47,18 +43,15 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: ChangeNotifierProvider<SessionStore>.value(
-          value: sessionStore,
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: PlaylistBannerCard(
-                title: '空列表',
-                coverImageUrl: null,
-                onTap: () {
-                  tapped = true;
-                },
-              ),
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: PlaylistBannerCard(
+              title: '空列表',
+              coverImageUrl: null,
+              onTap: () {
+                tapped = true;
+              },
             ),
           ),
         ),

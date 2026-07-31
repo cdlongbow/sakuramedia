@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/tags/data/tags_api.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -18,7 +13,6 @@ void main() {
 
   late SessionStore sessionStore;
   late TestApiBundle bundle;
-  late TagsApi tagsApi;
 
   setUp(() async {
     sessionStore = SessionStore.inMemory();
@@ -29,7 +23,6 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     bundle = await createTestApiBundle(sessionStore);
-    tagsApi = TagsApi(apiClient: bundle.apiClient);
   });
 
   tearDown(() {
@@ -63,23 +56,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<TagsApi>.value(value: tagsApi),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-          ],
-          child: OKToast(
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: const Scaffold(body: DesktopTagsPage()),
-            ),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopTagsPage()),
           ),
         ),
       ),
@@ -151,23 +131,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<TagsApi>.value(value: tagsApi),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-          ],
-          child: OKToast(
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: const Scaffold(body: DesktopTagsPage(initialTagId: 1)),
-            ),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopTagsPage(initialTagId: 1)),
           ),
         ),
       ),

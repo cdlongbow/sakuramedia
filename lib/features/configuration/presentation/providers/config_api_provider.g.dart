@@ -10,7 +10,7 @@ part of 'config_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// configuration 域 ConfigApi 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ConfigApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final configApiProvider = ConfigApiProvider._();
 
 /// configuration 域 ConfigApi 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ConfigApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class ConfigApiProvider
     with $Provider<ConfigApi> {
   /// configuration 域 ConfigApi 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<ConfigApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   ConfigApiProvider._()
@@ -64,4 +64,4 @@ final class ConfigApiProvider
   }
 }
 
-String _$configApiHash() => r'c2e479622bd11509651a23204a75cc40934aee8e';
+String _$configApiHash() => r'254d46af7ff8a566249bbaf520a1dceb678b53c3';

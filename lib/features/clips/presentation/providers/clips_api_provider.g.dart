@@ -10,7 +10,7 @@ part of 'clips_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// clips 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ClipsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final clipsApiProvider = ClipsApiProvider._();
 
 /// clips 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ClipsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class ClipsApiProvider
     with $Provider<ClipsApi> {
   /// clips 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<ClipsApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   ClipsApiProvider._()
@@ -64,4 +64,4 @@ final class ClipsApiProvider
   }
 }
 
-String _$clipsApiHash() => r'fbfd84f7e9e084624b9cde46eb3decb48d96c172';
+String _$clipsApiHash() => r'0cc500587c13a3c11ba17732491588c43295dbcf';

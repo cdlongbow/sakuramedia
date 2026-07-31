@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
@@ -8,7 +9,9 @@ part 'llm_settings_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 MovieDescTranslationSettingsApi llmSettingsApi(Ref ref) {
-  throw UnimplementedError('Override llmSettingsApiProvider at the app root');
+  return MovieDescTranslationSettingsApi(
+    apiClient: ref.watch(apiClientProvider),
+  );
 }
 
 Duration? noLlmSettingsRetry(int retryCount, Object error) => null;

@@ -1,7 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -155,8 +156,8 @@ void main() {
 
 Widget awaitableGalleryApp({required Widget child}) {
   final sessionStore = SessionStore.inMemory();
-  return ChangeNotifierProvider<SessionStore>.value(
-    value: sessionStore,
+  return ProviderScope(
+    overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
     child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
   );
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
@@ -21,8 +21,9 @@ Future<void> showMovieDetailInspectorDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      final moviesApi = dialogContext.read<MoviesApi>();
-      final downloadsApi = dialogContext.read<DownloadsApi>();
+      final container = ProviderScope.containerOf(dialogContext, listen: false);
+      final moviesApi = container.read(moviesApiProvider);
+      final downloadsApi = container.read(downloadsApiProvider);
       return AppDesktopDialog(
         dialogKey: const Key('movie-detail-inspector-dialog'),
         contentKey: const Key('movie-detail-inspector-dialog-content'),
@@ -101,8 +102,9 @@ Future<void> showMobileMovieDetailInspectorBottomSheet({
     maxHeightFactor: 0.7,
     ignoreTopSafeArea: true,
     builder: (sheetContext) {
-      final moviesApi = sheetContext.read<MoviesApi>();
-      final downloadsApi = sheetContext.read<DownloadsApi>();
+      final container = ProviderScope.containerOf(sheetContext, listen: false);
+      final moviesApi = container.read(moviesApiProvider);
+      final downloadsApi = container.read(downloadsApiProvider);
       return MovieDetailInspectorPanel(
         movieNumber: movieNumber,
         selectedMedia: selectedMedia,

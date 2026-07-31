@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/config/app_image_config.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 
 class MoviePlotThumbnail extends StatefulWidget {
@@ -89,7 +89,11 @@ class _MoviePlotThumbnailState extends State<MoviePlotThumbnail> {
       return widget.imageProvider;
     }
 
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl =
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(
       rawUrl: widget.url ?? '',
       baseUrl: baseUrl,

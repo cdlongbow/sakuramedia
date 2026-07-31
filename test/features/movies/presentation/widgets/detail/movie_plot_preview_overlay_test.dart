@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -754,15 +753,12 @@ Widget awaitableOverlayApp({required Widget child}) {
   // movies 域的 MoviePlotThumbnail 仍 context.read<SessionStore>() 走 legacy。
   return ProviderScope(
     overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-    child: ChangeNotifierProvider<SessionStore>.value(
-      value: sessionStore,
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        builder:
-            (context, content) =>
-                AppImageFullscreenHost(child: content ?? const SizedBox()),
-        home: Scaffold(body: child),
-      ),
+    child: MaterialApp(
+      theme: sakuraThemeData,
+      builder:
+          (context, content) =>
+              AppImageFullscreenHost(child: content ?? const SizedBox()),
+      home: Scaffold(body: child),
     ),
   );
 }

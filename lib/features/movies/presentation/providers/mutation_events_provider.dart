@@ -20,9 +20,9 @@ part 'mutation_events_provider.g.dart';
 /// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
 @Riverpod(keepAlive: true)
 MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster(Ref ref) {
-  throw UnimplementedError(
-    'Override movieSubscriptionBroadcasterProvider at the app root',
-  );
+  final notifier = MovieSubscriptionChangeNotifier();
+  ref.onDispose(notifier.dispose);
+  return notifier;
 }
 
 /// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
@@ -54,9 +54,9 @@ Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) {
 /// 保持「单一广播源」。实例由组合根 override 注入。
 @Riverpod(keepAlive: true)
 MovieCollectionTypeChangeNotifier collectionTypeBroadcaster(Ref ref) {
-  throw UnimplementedError(
-    'Override collectionTypeBroadcasterProvider at the app root',
-  );
+  final notifier = MovieCollectionTypeChangeNotifier();
+  ref.onDispose(notifier.dispose);
+  return notifier;
 }
 
 /// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。

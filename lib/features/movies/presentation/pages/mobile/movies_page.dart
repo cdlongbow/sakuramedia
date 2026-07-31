@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_list_page_state.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
-class MobileMoviesPage extends StatefulWidget {
+class MobileMoviesPage extends ConsumerStatefulWidget {
   const MobileMoviesPage({super.key});
 
   @override
-  State<MobileMoviesPage> createState() => _MobileMoviesPageState();
+  ConsumerState<MobileMoviesPage> createState() => _MobileMoviesPageState();
 }
 
-class _MobileMoviesPageState extends State<MobileMoviesPage> {
+class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
   late final CachedPageStateHandle<MovieListPageStateEntry> _pageStateHandle;
 
   MovieListPageStateEntry get _pageState => _pageStateHandle.value;
@@ -33,9 +33,10 @@ class _MobileMoviesPageState extends State<MobileMoviesPage> {
       key: mobileMoviesPageStateKey(),
       create:
           () => MovieListPageStateEntry(
-            moviesApi: context.read<MoviesApi>(),
-            subscriptionChangeNotifier:
-                context.read<MovieSubscriptionChangeNotifier>(),
+            moviesApi: ref.read(moviesApiProvider),
+            subscriptionChangeNotifier: ref.read(
+              movieSubscriptionBroadcasterProvider,
+            ),
           ),
     );
   }

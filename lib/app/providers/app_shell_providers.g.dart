@@ -68,7 +68,7 @@ final class AppShellControllerProvider
 }
 
 String _$appShellControllerHash() =>
-    r'cf3cac70fd92ece3b08e2167a7a37cde8ac5979b';
+    r'6a01e5940099dc3a595bf85ac41b13d8cc9e55a1';
 
 /// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
 /// 与旧 MultiProvider 的 create 懒语义一致——真源仍在 Provider 侧）。

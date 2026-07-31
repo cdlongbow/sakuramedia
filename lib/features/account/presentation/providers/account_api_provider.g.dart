@@ -10,7 +10,7 @@ part of 'account_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// account 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<AccountApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final accountApiProvider = AccountApiProvider._();
 
 /// account 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<AccountApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class AccountApiProvider
     with $Provider<AccountApi> {
   /// account 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<AccountApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   AccountApiProvider._()
@@ -64,4 +64,4 @@ final class AccountApiProvider
   }
 }
 
-String _$accountApiHash() => r'6f83dc981357babb5f3ae33597aab6f95b0927ef';
+String _$accountApiHash() => r'9b4c06495a182892c41ff7226c2983b6633c3cdf';

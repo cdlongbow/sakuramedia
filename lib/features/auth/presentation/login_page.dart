@@ -2,28 +2,28 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key, required this.platform});
 
   final AppPlatform platform;
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _baseUrlController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _initBaseUrl(context.read<SessionStore>().baseUrl);
+    _initBaseUrl(ref.read(sessionStoreProvider).baseUrl);
     _loadSavedCredentials();
   }
 
@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
   String _composeBaseUrl() => '$_protocol://${_baseUrlController.text.trim()}';
 
   Future<void> _loadSavedCredentials() async {
-    final credentialStore = context.read<CredentialStore>();
+    final credentialStore = ref.read(credentialStoreProvider);
     final username = await credentialStore.readUsername();
     final password = await credentialStore.readPassword();
     if (!mounted) return;
@@ -102,8 +102,8 @@ class _LoginPageState extends State<LoginPage> {
       _submitError = null;
     });
 
-    final sessionStore = context.read<SessionStore>();
-    final authApi = context.read<AuthApi>();
+    final sessionStore = ref.read(sessionStoreProvider);
+    final authApi = ref.read(authApiProvider);
 
     try {
       await sessionStore.saveBaseUrl(_composeBaseUrl());

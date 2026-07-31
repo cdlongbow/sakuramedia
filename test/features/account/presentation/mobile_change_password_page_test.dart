@@ -6,18 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_password_page.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 
-import '../../../support/in_memory_credential_store.dart';
 import '../../../support/test_api_bundle.dart';
 
 late SessionStore _sessionStore;
@@ -356,18 +351,10 @@ Future<void> _pumpStandalonePage(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: _bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: _sessionStore),
-          Provider<AccountApi>.value(value: _bundle.accountApi),
-          Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-          Provider<AuthApi>.value(value: _bundle.authApi),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: MobileChangePasswordPage()),
-          ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: MobileChangePasswordPage()),
         ),
       ),
     ),
@@ -382,19 +369,8 @@ Future<void> _pumpRouterApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: _bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: _sessionStore),
-          Provider<AccountApi>.value(value: _bundle.accountApi),
-          Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-          Provider<AuthApi>.value(value: _bundle.authApi),
-        ],
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

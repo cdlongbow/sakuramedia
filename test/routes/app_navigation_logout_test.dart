@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 
@@ -26,10 +27,10 @@ void main() {
     expect(sessionStore.hasSession, isTrue);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<CredentialStore>.value(value: credentialStore),
+      ProviderScope(
+        overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
+          credentialStoreProvider.overrideWithValue(credentialStore),
         ],
         child: MaterialApp(
           home: Builder(

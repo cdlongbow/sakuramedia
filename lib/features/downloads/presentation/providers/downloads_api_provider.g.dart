@@ -61,7 +61,7 @@ final class DownloadsApiProvider
   }
 }
 
-String _$downloadsApiHash() => r'4837656ec6b6e12e8f6caccf274e223fd2f05067';
+String _$downloadsApiHash() => r'a164c06ff9f605afd85f0e5d18a4c63afd3091fa';
 
 /// 下载客户端配置 API 的桥接：下载中心需要读客户端列表用于筛选下拉与名称/kind 映射。
 ///
@@ -123,4 +123,4 @@ final class DownloadClientsApiProvider
 }
 
 String _$downloadClientsApiHash() =>
-    r'a77f4213a1d48b78c5314b4d92bb27bf43650fca';
+    r'600e51c3399f3b69d9759783804aa51357609557';

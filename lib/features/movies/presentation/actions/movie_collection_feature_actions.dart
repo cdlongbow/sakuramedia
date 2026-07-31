@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
@@ -61,7 +61,10 @@ Future<void> showMovieCollectionFeatureActionMenu({
   bool? isSubscribed,
   VoidCallback? onEnterSelection,
 }) async {
-  final moviesApi = context.read<MoviesApi>();
+  final moviesApi = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(moviesApiProvider);
   final deferLookup = onEnterSelection != null;
 
   _MovieCollectionStatusLookupResult? statusResult;
@@ -159,10 +162,13 @@ Future<void> _handleToggleSubscriptionAction({
 
   if (result.status == MovieSubscriptionToggleStatus.subscribed ||
       result.status == MovieSubscriptionToggleStatus.unsubscribed) {
-    context.read<MovieSubscriptionChangeNotifier>().reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: result.status == MovieSubscriptionToggleStatus.subscribed,
-    );
+    ProviderScope.containerOf(context, listen: false)
+        .read(movieSubscriptionBroadcasterProvider)
+        .reportChange(
+          movieNumber: movieNumber,
+          isSubscribed:
+              result.status == MovieSubscriptionToggleStatus.subscribed,
+        );
   }
 
   showMovieSubscriptionFeedback(result);
@@ -202,10 +208,12 @@ Future<void> _handleCollectionTypeToggleAction({
       showToast('未匹配到影片，未更新合集状态');
       return;
     }
-    context.read<MovieCollectionTypeChangeNotifier>().reportChange(
-      movieNumber: displayMovieNumber,
-      targetType: targetCollectionType,
-    );
+    ProviderScope.containerOf(context, listen: false)
+        .read(collectionTypeBroadcasterProvider)
+        .reportChange(
+          movieNumber: displayMovieNumber,
+          targetType: targetCollectionType,
+        );
     showToast(
       targetCollectionType == MovieCollectionType.collection
           ? '已将 $displayMovieNumber 标记为合集'

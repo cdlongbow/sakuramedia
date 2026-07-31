@@ -3,10 +3,10 @@ import 'dart:math' as math;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -550,7 +550,11 @@ class _PreviewMainImageActionTargetState
   }
 
   void _resolveImageProvider() {
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl =
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(
       rawUrl: widget.imageUrl,
       baseUrl: baseUrl,

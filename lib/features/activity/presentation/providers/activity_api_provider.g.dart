@@ -64,4 +64,4 @@ final class ActivityApiProvider
   }
 }
 
-String _$activityApiHash() => r'978d2c34f8093398a42e96b608297df85fcb6304';
+String _$activityApiHash() => r'd2735d3da948b00941af11648cf37eb62b9c080d';

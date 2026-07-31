@@ -4,7 +4,10 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
@@ -22,11 +25,11 @@ Future<void> _pumpLoginPage(
   required CredentialStore credentialStore,
 }) async {
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<AuthApi>.value(value: authApi),
-        Provider<CredentialStore>.value(value: credentialStore),
+    ProviderScope(
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
+        credentialStoreProvider.overrideWithValue(credentialStore),
+        authApiProvider.overrideWithValue(authApi),
       ],
       child: MaterialApp(
         theme: sakuraThemeData,

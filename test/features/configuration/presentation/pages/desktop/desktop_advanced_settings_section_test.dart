@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_advanced_settings_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -296,15 +294,12 @@ Future<void> _pumpSection(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [Provider<ConfigApi>.value(value: bundle.configApi)],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: DesktopAdvancedSettingsSection(active: active),
-              ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DesktopAdvancedSettingsSection(active: active),
             ),
           ),
         ),

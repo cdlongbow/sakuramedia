@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_rapid_upload_history_provider.dart';
@@ -149,23 +148,18 @@ Future<void> _pumpSection(
   final scrollController = ScrollController();
   addTearDown(scrollController.dispose);
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+    ProviderScope(
+      overrides: [
+        mediaApiProvider.overrideWithValue(bundle.mediaApi),
+        mediaLibrariesApiProvider.overrideWithValue(bundle.mediaLibrariesApi),
       ],
-      child: ProviderScope(
-        overrides: [
-          mediaApiProvider.overrideWithValue(bundle.mediaApi),
-          mediaLibrariesApiProvider.overrideWithValue(bundle.mediaLibrariesApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: RapidUploadHistorySection(
-              scrollController: scrollController,
-              retryingBatchId: null,
-              onRetry: (_) async {},
-            ),
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: RapidUploadHistorySection(
+            scrollController: scrollController,
+            retryingBatchId: null,
+            onRetry: (_) async {},
           ),
         ),
       ),

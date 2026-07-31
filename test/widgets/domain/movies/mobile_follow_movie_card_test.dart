@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -19,45 +18,40 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 360,
-                  child: MobileFollowMovieCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'movie-gap',
-                      movieNumber: 'ABP-099',
-                      title: 'Movie 099',
-                      coverImage: const MovieImageDto(
-                        id: 1,
-                        origin: '/cover-origin.jpg',
-                        small: '/cover-small.jpg',
-                        medium: '/cover-medium.jpg',
-                        large: '/cover-large.jpg',
-                      ),
-                      releaseDate: DateTime(2024, 1, 1),
-                      durationMinutes: 120,
-                      heat: 0,
-                      isSubscribed: true,
-                      canPlay: false,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 360,
+                child: MobileFollowMovieCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'movie-gap',
+                    movieNumber: 'ABP-099',
+                    title: 'Movie 099',
+                    coverImage: const MovieImageDto(
+                      id: 1,
+                      origin: '/cover-origin.jpg',
+                      small: '/cover-small.jpg',
+                      medium: '/cover-medium.jpg',
+                      large: '/cover-large.jpg',
                     ),
-                    onTap: () {},
-                    onSubscriptionTap: () {},
-                    isSubscriptionUpdating: false,
-                    isDetailLoading: false,
-                    detailStillImageUrls: const <String>[
-                      '/plot-1.jpg',
-                      '/plot-2.jpg',
-                    ],
-                    detailSummary: null,
-                    detailThinCoverUrl: null,
-                    detailCoverUrl: null,
+                    releaseDate: DateTime(2024, 1, 1),
+                    durationMinutes: 120,
+                    heat: 0,
+                    isSubscribed: true,
+                    canPlay: false,
                   ),
+                  onTap: () {},
+                  onSubscriptionTap: () {},
+                  isSubscriptionUpdating: false,
+                  isDetailLoading: false,
+                  detailStillImageUrls: const <String>[
+                    '/plot-1.jpg',
+                    '/plot-2.jpg',
+                  ],
+                  detailSummary: null,
+                  detailThinCoverUrl: null,
+                  detailCoverUrl: null,
                 ),
               ),
             ),
@@ -87,49 +81,44 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 360,
-                  child: MobileFollowMovieCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'movie-1',
-                      movieNumber: 'ABP-100',
-                      title: 'Movie 100',
-                      coverImage: const MovieImageDto(
-                        id: 1,
-                        origin: '/cover-origin.jpg',
-                        small: '/cover-small.jpg',
-                        medium: '/cover-medium.jpg',
-                        large: '/cover-large.jpg',
-                      ),
-                      thinCoverImage: const MovieImageDto(
-                        id: 2,
-                        origin: '/thin-origin.jpg',
-                        small: '/thin-small.jpg',
-                        medium: '/thin-medium.jpg',
-                        large: '/thin-large.jpg',
-                      ),
-                      releaseDate: DateTime(2024, 1, 1),
-                      durationMinutes: 120,
-                      heat: 0,
-                      isSubscribed: true,
-                      canPlay: true,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 360,
+                child: MobileFollowMovieCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'movie-1',
+                    movieNumber: 'ABP-100',
+                    title: 'Movie 100',
+                    coverImage: const MovieImageDto(
+                      id: 1,
+                      origin: '/cover-origin.jpg',
+                      small: '/cover-small.jpg',
+                      medium: '/cover-medium.jpg',
+                      large: '/cover-large.jpg',
                     ),
-                    onTap: () {},
-                    onSubscriptionTap: () {},
-                    isSubscriptionUpdating: false,
-                    isDetailLoading: false,
-                    detailStillImageUrls: const <String>[],
-                    detailSummary: null,
-                    detailThinCoverUrl: null,
-                    detailCoverUrl: null,
+                    thinCoverImage: const MovieImageDto(
+                      id: 2,
+                      origin: '/thin-origin.jpg',
+                      small: '/thin-small.jpg',
+                      medium: '/thin-medium.jpg',
+                      large: '/thin-large.jpg',
+                    ),
+                    releaseDate: DateTime(2024, 1, 1),
+                    durationMinutes: 120,
+                    heat: 0,
+                    isSubscribed: true,
+                    canPlay: true,
                   ),
+                  onTap: () {},
+                  onSubscriptionTap: () {},
+                  isSubscriptionUpdating: false,
+                  isDetailLoading: false,
+                  detailStillImageUrls: const <String>[],
+                  detailSummary: null,
+                  detailThinCoverUrl: null,
+                  detailCoverUrl: null,
                 ),
               ),
             ),
@@ -154,42 +143,37 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 360,
-                  child: MobileFollowMovieCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'movie-cover-fallback',
-                      movieNumber: 'ABP-103',
-                      title: 'Movie 103',
-                      coverImage: const MovieImageDto(
-                        id: 1,
-                        origin: '/cover-origin.jpg',
-                        small: '/cover-small.jpg',
-                        medium: '/cover-medium.jpg',
-                        large: '/cover-large.jpg',
-                      ),
-                      releaseDate: DateTime(2024, 1, 1),
-                      durationMinutes: 120,
-                      heat: 0,
-                      isSubscribed: true,
-                      canPlay: true,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 360,
+                child: MobileFollowMovieCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'movie-cover-fallback',
+                    movieNumber: 'ABP-103',
+                    title: 'Movie 103',
+                    coverImage: const MovieImageDto(
+                      id: 1,
+                      origin: '/cover-origin.jpg',
+                      small: '/cover-small.jpg',
+                      medium: '/cover-medium.jpg',
+                      large: '/cover-large.jpg',
                     ),
-                    onTap: () {},
-                    onSubscriptionTap: () {},
-                    isSubscriptionUpdating: false,
-                    isDetailLoading: false,
-                    detailStillImageUrls: const <String>[],
-                    detailSummary: null,
-                    detailThinCoverUrl: null,
-                    detailCoverUrl: null,
+                    releaseDate: DateTime(2024, 1, 1),
+                    durationMinutes: 120,
+                    heat: 0,
+                    isSubscribed: true,
+                    canPlay: true,
                   ),
+                  onTap: () {},
+                  onSubscriptionTap: () {},
+                  isSubscriptionUpdating: false,
+                  isDetailLoading: false,
+                  detailStillImageUrls: const <String>[],
+                  detailSummary: null,
+                  detailThinCoverUrl: null,
+                  detailCoverUrl: null,
                 ),
               ),
             ),
@@ -214,36 +198,31 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 360,
-                  child: MobileFollowMovieCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'movie-2',
-                      movieNumber: 'ABP-101',
-                      title: 'Movie 101',
-                      coverImage: null,
-                      releaseDate: DateTime(2024, 1, 1),
-                      durationMinutes: 120,
-                      heat: 0,
-                      isSubscribed: false,
-                      canPlay: false,
-                    ),
-                    onTap: () {},
-                    onSubscriptionTap: () {},
-                    isSubscriptionUpdating: false,
-                    isDetailLoading: false,
-                    detailStillImageUrls: const <String>[],
-                    detailSummary: null,
-                    detailThinCoverUrl: null,
-                    detailCoverUrl: null,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 360,
+                child: MobileFollowMovieCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'movie-2',
+                    movieNumber: 'ABP-101',
+                    title: 'Movie 101',
+                    coverImage: null,
+                    releaseDate: DateTime(2024, 1, 1),
+                    durationMinutes: 120,
+                    heat: 0,
+                    isSubscribed: false,
+                    canPlay: false,
                   ),
+                  onTap: () {},
+                  onSubscriptionTap: () {},
+                  isSubscriptionUpdating: false,
+                  isDetailLoading: false,
+                  detailStillImageUrls: const <String>[],
+                  detailSummary: null,
+                  detailThinCoverUrl: null,
+                  detailCoverUrl: null,
                 ),
               ),
             ),
@@ -270,36 +249,31 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp(
-            theme: sakuraMobileThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 360,
-                child: MobileFollowMovieCard(
-                  movie: MovieListItemDto(
-                    javdbId: 'movie-font',
-                    movieNumber: 'ABP-102',
-                    title: 'Movie 102',
-                    coverImage: null,
-                    releaseDate: DateTime(2024, 1, 1),
-                    durationMinutes: 120,
-                    heat: 0,
-                    isSubscribed: false,
-                    canPlay: true,
-                  ),
-                  onTap: () {},
-                  onSubscriptionTap: () {},
-                  isSubscriptionUpdating: false,
-                  isDetailLoading: false,
-                  detailStillImageUrls: const <String>[],
-                  detailSummary: '摘要文案',
-                  detailThinCoverUrl: null,
-                  detailCoverUrl: null,
+        child: MaterialApp(
+          theme: sakuraMobileThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: 360,
+              child: MobileFollowMovieCard(
+                movie: MovieListItemDto(
+                  javdbId: 'movie-font',
+                  movieNumber: 'ABP-102',
+                  title: 'Movie 102',
+                  coverImage: null,
+                  releaseDate: DateTime(2024, 1, 1),
+                  durationMinutes: 120,
+                  heat: 0,
+                  isSubscribed: false,
+                  canPlay: true,
                 ),
+                onTap: () {},
+                onSubscriptionTap: () {},
+                isSubscriptionUpdating: false,
+                isDetailLoading: false,
+                detailStillImageUrls: const <String>[],
+                detailSummary: '摘要文案',
+                detailThinCoverUrl: null,
+                detailCoverUrl: null,
               ),
             ),
           ),

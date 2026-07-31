@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
@@ -193,8 +194,10 @@ void main() {
     late MovieSubscriptionNotifierBinding binding;
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-        value: notifier,
+      ProviderScope(
+        overrides: [
+          movieSubscriptionBroadcasterProvider.overrideWithValue(notifier),
+        ],
         child: MaterialApp(
           home: Builder(
             builder: (context) {

@@ -10,7 +10,7 @@ part of 'playlists_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// playlists 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<PlaylistsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final playlistsApiProvider = PlaylistsApiProvider._();
 
 /// playlists 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<PlaylistsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class PlaylistsApiProvider
     with $Provider<PlaylistsApi> {
   /// playlists 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<PlaylistsApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   PlaylistsApiProvider._()
@@ -64,4 +64,4 @@ final class PlaylistsApiProvider
   }
 }
 
-String _$playlistsApiHash() => r'9e7b2485a126e49211ac53b4a8b972ac1052381a';
+String _$playlistsApiHash() => r'187c4ca7849a7e9314d6d7fb62b8c71ad1ed76fe';

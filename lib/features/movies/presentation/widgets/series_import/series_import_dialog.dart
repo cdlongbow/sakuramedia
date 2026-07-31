@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/series_import/series_import_controller.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
@@ -21,7 +22,10 @@ Future<bool> showSeriesImportDialog(BuildContext context, int seriesId) async {
       builder:
           (ctx) => _SeriesImportSheet(
             seriesId: seriesId,
-            moviesApi: context.read<MoviesApi>(),
+            moviesApi: ProviderScope.containerOf(
+              context,
+              listen: false,
+            ).read(moviesApiProvider),
           ),
     );
     return result ?? false;
@@ -32,7 +36,10 @@ Future<bool> showSeriesImportDialog(BuildContext context, int seriesId) async {
       builder:
           (ctx) => _SeriesImportDesktopDialog(
             seriesId: seriesId,
-            moviesApi: context.read<MoviesApi>(),
+            moviesApi: ProviderScope.containerOf(
+              context,
+              listen: false,
+            ).read(moviesApiProvider),
           ),
     );
     return result ?? false;

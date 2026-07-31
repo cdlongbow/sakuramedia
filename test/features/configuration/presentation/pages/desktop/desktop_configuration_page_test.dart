@@ -5,31 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_state.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_configuration_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/llm_settings_copy.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 
-import '../../../../../support/in_memory_credential_store.dart';
 import '../../../../../support/test_api_bundle.dart';
 
 void main() {
@@ -1970,35 +1954,12 @@ void main() {
     tester.view.devicePixelRatio = 1;
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => AppShellController()),
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-          Provider<AccountApi>.value(value: bundle.accountApi),
-          Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-          Provider<AuthApi>.value(value: bundle.authApi),
-          Provider<ConfigApi>.value(value: bundle.configApi),
-          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-          Provider<MediaApi>.value(value: bundle.mediaApi),
-          Provider<MovieDescTranslationSettingsApi>.value(
-            value: bundle.movieDescTranslationSettingsApi,
-          ),
-          Provider<StatusApi>.value(value: bundle.statusApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
-        ],
-        child: ProviderScope(
-          overrides: bundle.riverpodOverrides(),
-          child: OKToast(
-            child: MaterialApp.router(
-              theme: sakuraThemeData,
-              routerConfig: router,
-            ),
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
           ),
         ),
       ),
@@ -2049,32 +2010,12 @@ Future<void> _pumpPage(
   tester.view.devicePixelRatio = 1;
 
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-          value: bundle.movieSubscriptionBroadcaster,
-        ),
-        Provider<AccountApi>.value(value: bundle.accountApi),
-        Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-        Provider<AuthApi>.value(value: bundle.authApi),
-        Provider<ConfigApi>.value(value: bundle.configApi),
-        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-        Provider<MediaApi>.value(value: bundle.mediaApi),
-        Provider<MovieDescTranslationSettingsApi>.value(
-          value: bundle.movieDescTranslationSettingsApi,
-        ),
-        Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
-      ],
-      child: ProviderScope(
-        overrides: bundle.riverpodOverrides(),
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: DesktopConfigurationPage()),
-          ),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: DesktopConfigurationPage()),
         ),
       ),
     ),

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
@@ -34,10 +35,9 @@ mixin MovieClipSectionMixin<T extends StatefulWidget> on State<T> {
       return;
     }
     try {
-      final updated = await context.read<ClipsApi>().updateClipTitle(
-        clipId: clip.clipId,
-        title: newTitle,
-      );
+      final updated = await ProviderScope.containerOf(context, listen: false)
+          .read(clipsApiProvider)
+          .updateClipTitle(clipId: clip.clipId, title: newTitle);
       movieClipsController.replaceClip(updated);
       if (mounted) {
         showToast('已重命名');
@@ -61,9 +61,15 @@ mixin MovieClipSectionMixin<T extends StatefulWidget> on State<T> {
       return;
     }
     try {
-      await context.read<ClipsApi>().deleteClip(clipId: clip.clipId);
+      await ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(clipsApiProvider).deleteClip(clipId: clip.clipId);
       // 广播删除：本页控制器与「我的切片」页监听后各自就地移除。
-      context.read<ClipMutationChangeNotifier>().reportDeleted(clip.clipId);
+      ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(clipMutationBroadcasterProvider).reportDeleted(clip.clipId);
       if (mounted) {
         showToast('已删除切片');
       }
@@ -78,8 +84,8 @@ mixin MovieClipSectionMixin<T extends StatefulWidget> on State<T> {
       return;
     }
     // 合集归属可能变化（含新建）：广播信号，由切片各页统一刷新合集区。
-    context
-        .read<ClipMutationChangeNotifier>()
+    ProviderScope.containerOf(context, listen: false)
+        .read(clipMutationBroadcasterProvider)
         .reportCollectionMembershipChanged(clipId: clip.clipId);
   }
 }

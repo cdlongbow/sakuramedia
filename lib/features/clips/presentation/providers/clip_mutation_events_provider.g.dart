@@ -71,7 +71,7 @@ final class ClipMutationBroadcasterProvider
 }
 
 String _$clipMutationBroadcasterHash() =>
-    r'7d2d24601e668664c7a1309be53d241e88213155';
+    r'7558c20d61eac04ffc00d0f74b986a1f0464af9f';
 
 /// 切片变更事件流：把 `notifyListeners` 翻译成一条条 [ClipMutationChange]。
 ///

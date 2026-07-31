@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
@@ -51,10 +53,15 @@ MovieSubscriptionNotifierBinding resolveMovieSubscriptionNotifier(
 ) {
   try {
     return MovieSubscriptionNotifierBinding(
-      notifier: context.read<MovieSubscriptionChangeNotifier>(),
+      notifier: ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(movieSubscriptionBroadcasterProvider),
       ownsNotifier: false,
     );
-  } on ProviderNotFoundException {
+  } on Object {
+    // 无 ProviderScope / 桥未 override（部分 widget 测试）→ 自持一份,
+    // 与旧 ProviderNotFoundException 降级一致。
     return MovieSubscriptionNotifierBinding(
       notifier: MovieSubscriptionChangeNotifier(),
       ownsNotifier: true,
@@ -141,7 +148,9 @@ Future<bool> executeMovieDetailRemoteAction({
 
   onActiveActionChanged(action);
   try {
-    final movie = await spec.request(context.read<MoviesApi>());
+    final movie = await spec.request(
+      ProviderScope.containerOf(context, listen: false).read(moviesApiProvider),
+    );
     if (!context.mounted) {
       return false;
     }

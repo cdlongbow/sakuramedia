@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
@@ -182,7 +182,11 @@ Future<void> _saveToLocal({
   required String fileName,
 }) async {
   final result = await ImageSaveService(
-    fetchBytes: context.read<ApiClient>().getBytes,
+    fetchBytes:
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(apiClientProvider).getBytes,
   ).saveImageFromUrl(
     imageUrl: imageUrl,
     fileName: fileName,

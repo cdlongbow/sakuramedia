@@ -10,7 +10,7 @@ part of 'image_search_draft_store_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// 图搜草稿仓 [ImageSearchDraftStore] 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ImageSearchDraftStore>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final imageSearchDraftStoreProvider = ImageSearchDraftStoreProvider._();
 
 /// 图搜草稿仓 [ImageSearchDraftStore] 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ImageSearchDraftStore>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -33,7 +33,7 @@ final class ImageSearchDraftStoreProvider
     with $Provider<ImageSearchDraftStore> {
   /// 图搜草稿仓 [ImageSearchDraftStore] 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<ImageSearchDraftStore>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   ImageSearchDraftStoreProvider._()
@@ -71,4 +71,4 @@ final class ImageSearchDraftStoreProvider
 }
 
 String _$imageSearchDraftStoreHash() =>
-    r'111a764dc51171e9e7523428f939df2c5f4cae8e';
+    r'69b47dc582330a3cc76a89f0ae2f5ac84c449b74';

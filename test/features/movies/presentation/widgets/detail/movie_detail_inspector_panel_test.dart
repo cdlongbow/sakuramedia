@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
@@ -552,8 +553,8 @@ Future<void> _pumpInspectorPanel(
 }) async {
   final sessionStore = SessionStore.inMemory();
   await tester.pumpWidget(
-    ChangeNotifierProvider<SessionStore>.value(
-      value: sessionStore,
+    ProviderScope(
+      overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
       child: OKToast(
         child: MaterialApp(
           theme:

@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
 import 'package:sakuramedia/features/rankings/presentation/desktop_rankings_page.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
@@ -172,20 +168,10 @@ Future<void> _pumpRankingsPage(
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<RankingsApi>.value(value: bundle.rankingsApi),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: DesktopRankingsPage()),
-          ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: DesktopRankingsPage()),
         ),
       ),
     ),

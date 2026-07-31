@@ -56,7 +56,7 @@ final class LlmSettingsApiProvider
   }
 }
 
-String _$llmSettingsApiHash() => r'4c1271c76c5f80e35bcc62425b396cee01f9d8db';
+String _$llmSettingsApiHash() => r'5f94e355793ef5eb2da4dd0b9a26cd5a9ddb033e';
 
 @ProviderFor(LlmSettings)
 final llmSettingsProvider = LlmSettingsProvider._();

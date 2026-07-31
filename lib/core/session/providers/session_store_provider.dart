@@ -5,8 +5,9 @@ part 'session_store_provider.g.dart';
 
 /// 全局 [SessionStore] 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
-/// `overrideWithValue(context.read<SessionStore>())` 注入。
+/// 会话是应用输入：body 保持抛 [UnimplementedError]，实例由组合根
+/// （`lib/app/app.dart`，main 传入持久化实例 / 测试传 inMemory）用
+/// `overrideWithValue` 注入。
 @Riverpod(keepAlive: true)
 SessionStore sessionStore(Ref ref) {
   throw UnimplementedError('Override sessionStoreProvider at the app root');

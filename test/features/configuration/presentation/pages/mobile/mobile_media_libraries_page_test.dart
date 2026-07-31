@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -476,17 +475,10 @@ Future<void> _pumpPage(WidgetTester tester, {MediaLibrariesApi? api}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: _bundle.riverpodOverrides(mediaLibrariesApi: api),
-      child: MultiProvider(
-        providers: [
-          Provider<MediaLibrariesApi>.value(
-            value: api ?? _bundle.mediaLibrariesApi,
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: MobileMediaLibrariesPage()),
-          ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: MobileMediaLibrariesPage()),
         ),
       ),
     ),

@@ -5,27 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
-import 'package:sakuramedia/features/auth/data/auth_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
-import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 
-import 'support/in_memory_credential_store.dart';
 import 'support/test_api_bundle.dart';
 
 void main() {
@@ -620,41 +608,12 @@ Future<void> _pumpDesktopApp(
   final router = buildDesktopRouter(sessionStore: sessionStore);
   final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        ChangeNotifierProvider(create: (_) => AppShellController()),
-        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-          value: bundle.movieSubscriptionBroadcaster,
-        ),
-        Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-        Provider<AuthApi>.value(value: bundle.authApi),
-        Provider<StatusApi>.value(value: statusApi),
-        ChangeNotifierProvider<AppVersionInfoController>.value(
-          value: versionInfoController,
-        ),
-        Provider<MoviesApi>.value(value: moviesApi),
-        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-        Provider<MovieDescTranslationSettingsApi>.value(
-          value: bundle.movieDescTranslationSettingsApi,
-        ),
-        Provider<ImageSearchApi>(
-          create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
-        ),
-        Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
-      ],
-      child: ProviderScope(
-        overrides: bundle.riverpodOverrides(
-          versionInfoController: versionInfoController,
-        ),
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(
+        versionInfoController: versionInfoController,
+      ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );
@@ -671,42 +630,12 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
   final router = buildDesktopRouter(sessionStore: sessionStore);
   final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        ChangeNotifierProvider(create: (_) => AppShellController()),
-        ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-          value: bundle.movieSubscriptionBroadcaster,
-        ),
-        Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
-        Provider<AuthApi>.value(value: bundle.authApi),
-        Provider<StatusApi>.value(value: statusApi),
-        ChangeNotifierProvider<AppVersionInfoController>.value(
-          value: versionInfoController,
-        ),
-        Provider<MoviesApi>.value(value: moviesApi),
-        Provider<ActorsApi>.value(value: actorsApi),
-        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-        Provider<MovieDescTranslationSettingsApi>.value(
-          value: bundle.movieDescTranslationSettingsApi,
-        ),
-        Provider<ImageSearchApi>(
-          create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
-        ),
-        Provider<ImageSearchDraftStore>(create: (_) => ImageSearchDraftStore()),
-      ],
-      child: ProviderScope(
-        overrides: bundle.riverpodOverrides(
-          versionInfoController: versionInfoController,
-        ),
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(
+        versionInfoController: versionInfoController,
+      ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

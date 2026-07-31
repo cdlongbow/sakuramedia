@@ -3,9 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -294,8 +293,9 @@ extension AppNavigationActions on BuildContext {
   /// 先清空会话以触发 GoRouter 立即重定向到登录页，凭据清除随后进行，
   /// 不让其 I/O 阻塞登出的可见跳转。
   Future<void> logOut() async {
-    final credentialStore = read<CredentialStore>();
-    final sessionStore = read<SessionStore>();
+    final container = ProviderScope.containerOf(this, listen: false);
+    final credentialStore = container.read(credentialStoreProvider);
+    final sessionStore = container.read(sessionStoreProvider);
     await sessionStore.clearSession();
     await credentialStore.clearCredentials();
   }

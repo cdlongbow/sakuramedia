@@ -64,7 +64,7 @@ final class MediaApiProvider
   }
 }
 
-String _$mediaApiHash() => r'0b16b6d6f36c9d6d228e68d62f01b428e075acfb';
+String _$mediaApiHash() => r'7f047ba1ec647f0cbb74ace57db563dedb08b937';
 
 /// media 页需要读媒体库列表（用于筛选、秒传目标选择、存储描述解析）。
 ///
@@ -128,4 +128,4 @@ final class MediaLibrariesApiProvider
   }
 }
 
-String _$mediaLibrariesApiHash() => r'8d4201ef7e1e05034c70c025040d9ecb972f0b3f';
+String _$mediaLibrariesApiHash() => r'bf3e35aae513b857caf5201a233acdffe2a44782';

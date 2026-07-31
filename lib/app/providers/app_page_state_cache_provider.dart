@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/app/app_page_state_cache.dart';
 
 part 'app_page_state_cache_provider.g.dart';
@@ -11,7 +12,8 @@ part 'app_page_state_cache_provider.g.dart';
 /// 读不到（无 ProviderScope / 未 override）时页面降级为 owned state。
 @Riverpod(keepAlive: true)
 AppPageStateCache appPageStateCache(Ref ref) {
-  throw UnimplementedError(
-    'Override appPageStateCacheProvider at the app root',
-  );
+  final cache =
+      AppPageStateCache()..bindSessionStore(ref.watch(sessionStoreProvider));
+  ref.onDispose(cache.dispose);
+  return cache;
 }

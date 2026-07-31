@@ -10,9 +10,9 @@ part 'app_shell_providers.g.dart';
 /// `overrideWithValue(context.read<AppShellController>())` 注入。
 @Riverpod(keepAlive: true)
 AppShellController appShellController(Ref ref) {
-  throw UnimplementedError(
-    'Override appShellControllerProvider at the app root',
-  );
+  final controller = AppShellController();
+  ref.onDispose(controller.dispose);
+  return controller;
 }
 
 /// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，

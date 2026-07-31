@@ -5,11 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
-import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/media_import/presentation/directory_picker_dialog.dart';
 import 'package:sakuramedia/theme.dart';
@@ -261,15 +258,9 @@ Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
-          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const Scaffold(body: _PickerHarness()),
-        ),
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: const Scaffold(body: _PickerHarness()),
       ),
     ),
   );

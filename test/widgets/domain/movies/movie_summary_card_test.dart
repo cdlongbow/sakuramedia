@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -20,42 +19,37 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: MovieListItemDto(
-                    javdbId: 'MovieA1',
-                    movieNumber: 'ABC-001',
-                    title: 'Movie 1',
-                    coverImage: const MovieImageDto(
-                      id: 1,
-                      origin: '/poster-origin.jpg',
-                      small: '/poster-small.jpg',
-                      medium: '/poster-medium.jpg',
-                      large: '/poster-large.jpg',
-                    ),
-                    thinCoverImage: const MovieImageDto(
-                      id: 2,
-                      origin: '/thin-origin.jpg',
-                      small: '/thin-small.jpg',
-                      medium: '/thin-medium.jpg',
-                      large: '/thin-large.jpg',
-                    ),
-                    releaseDate: DateTime(2024, 1, 1),
-                    durationMinutes: 120,
-                    heat: 42,
-                    isSubscribed: true,
-                    canPlay: true,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: MovieSummaryCard(
+                movie: MovieListItemDto(
+                  javdbId: 'MovieA1',
+                  movieNumber: 'ABC-001',
+                  title: 'Movie 1',
+                  coverImage: const MovieImageDto(
+                    id: 1,
+                    origin: '/poster-origin.jpg',
+                    small: '/poster-small.jpg',
+                    medium: '/poster-medium.jpg',
+                    large: '/poster-large.jpg',
                   ),
-                  onSubscriptionTap: () {},
+                  thinCoverImage: const MovieImageDto(
+                    id: 2,
+                    origin: '/thin-origin.jpg',
+                    small: '/thin-small.jpg',
+                    medium: '/thin-medium.jpg',
+                    large: '/thin-large.jpg',
+                  ),
+                  releaseDate: DateTime(2024, 1, 1),
+                  durationMinutes: 120,
+                  heat: 42,
+                  isSubscribed: true,
+                  canPlay: true,
                 ),
+                onSubscriptionTap: () {},
               ),
             ),
           ),
@@ -134,40 +128,35 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: MovieListItemDto(
-                    javdbId: 'MovieA1-cover',
-                    movieNumber: 'ABC-101',
-                    title: 'Movie 101',
-                    coverImage: const MovieImageDto(
-                      id: 1,
-                      origin: '/cover-origin.jpg',
-                      small: '/cover-small.jpg',
-                      medium: '/cover-medium.jpg',
-                      large: '/cover-large.jpg',
-                    ),
-                    thinCoverImage: const MovieImageDto(
-                      id: 2,
-                      origin: '',
-                      small: '',
-                      medium: '',
-                      large: '',
-                    ),
-                    releaseDate: DateTime(2024, 1, 1),
-                    durationMinutes: 120,
-                    heat: 42,
-                    isSubscribed: false,
-                    canPlay: false,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: MovieSummaryCard(
+                movie: MovieListItemDto(
+                  javdbId: 'MovieA1-cover',
+                  movieNumber: 'ABC-101',
+                  title: 'Movie 101',
+                  coverImage: const MovieImageDto(
+                    id: 1,
+                    origin: '/cover-origin.jpg',
+                    small: '/cover-small.jpg',
+                    medium: '/cover-medium.jpg',
+                    large: '/cover-large.jpg',
                   ),
+                  thinCoverImage: const MovieImageDto(
+                    id: 2,
+                    origin: '',
+                    small: '',
+                    medium: '',
+                    large: '',
+                  ),
+                  releaseDate: DateTime(2024, 1, 1),
+                  durationMinutes: 120,
+                  heat: 42,
+                  isSubscribed: false,
+                  canPlay: false,
                 ),
               ),
             ),
@@ -193,29 +182,24 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 220,
-                  child: MovieSummaryCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'MovieA2',
-                      movieNumber: 'ABC-002',
-                      title: 'Movie 2',
-                      coverImage: null,
-                      releaseDate: null,
-                      durationMinutes: 0,
-                      heat: 0,
-                      isSubscribed: false,
-                      canPlay: false,
-                    ),
-                    onSubscriptionTap: () {},
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 220,
+                child: MovieSummaryCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'MovieA2',
+                    movieNumber: 'ABC-002',
+                    title: 'Movie 2',
+                    coverImage: null,
+                    releaseDate: null,
+                    durationMinutes: 0,
+                    heat: 0,
+                    isSubscribed: false,
+                    canPlay: false,
                   ),
+                  onSubscriptionTap: () {},
                 ),
               ),
             ),
@@ -247,30 +231,25 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 220,
-                  child: MovieSummaryCard(
-                    movie: MovieListItemDto(
-                      javdbId: 'MovieA3',
-                      movieNumber: 'ABC-003',
-                      title: 'Movie 3',
-                      coverImage: null,
-                      releaseDate: null,
-                      durationMinutes: 0,
-                      heat: 0,
-                      isSubscribed: true,
-                      canPlay: false,
-                    ),
-                    onSubscriptionTap: () {},
-                    isSubscriptionUpdating: true,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 220,
+                child: MovieSummaryCard(
+                  movie: MovieListItemDto(
+                    javdbId: 'MovieA3',
+                    movieNumber: 'ABC-003',
+                    title: 'Movie 3',
+                    coverImage: null,
+                    releaseDate: null,
+                    durationMinutes: 0,
+                    heat: 0,
+                    isSubscribed: true,
+                    canPlay: false,
                   ),
+                  onSubscriptionTap: () {},
+                  isSubscriptionUpdating: true,
                 ),
               ),
             ),
@@ -297,29 +276,24 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: const MovieListItemDto(
-                    javdbId: 'MovieA4',
-                    movieNumber: 'OFJE-888',
-                    title: 'Movie 4',
-                    coverImage: null,
-                    releaseDate: null,
-                    durationMinutes: 0,
-                    heat: 7,
-                    isSubscribed: false,
-                    canPlay: false,
-                  ),
-                  onRequestMenu: (position) => menuPosition = position,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: MovieSummaryCard(
+                movie: const MovieListItemDto(
+                  javdbId: 'MovieA4',
+                  movieNumber: 'OFJE-888',
+                  title: 'Movie 4',
+                  coverImage: null,
+                  releaseDate: null,
+                  durationMinutes: 0,
+                  heat: 7,
+                  isSubscribed: false,
+                  canPlay: false,
                 ),
+                onRequestMenu: (position) => menuPosition = position,
               ),
             ),
           ),
@@ -345,29 +319,24 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MultiProvider(
-            providers: [
-              ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ],
-            child: MaterialApp(
-              theme: sakuraThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 220,
-                  child: MovieSummaryCard(
-                    movie: const MovieListItemDto(
-                      javdbId: 'MovieA4-rank',
-                      movieNumber: 'OFJE-777',
-                      title: 'Movie Rank',
-                      coverImage: null,
-                      releaseDate: null,
-                      durationMinutes: 0,
-                      heat: 99,
-                      isSubscribed: false,
-                      canPlay: false,
-                    ),
-                    rank: 3,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 220,
+                child: MovieSummaryCard(
+                  movie: const MovieListItemDto(
+                    javdbId: 'MovieA4-rank',
+                    movieNumber: 'OFJE-777',
+                    title: 'Movie Rank',
+                    coverImage: null,
+                    releaseDate: null,
+                    durationMinutes: 0,
+                    heat: 99,
+                    isSubscribed: false,
+                    canPlay: false,
                   ),
+                  rank: 3,
                 ),
               ),
             ),
@@ -444,29 +413,24 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: const MovieListItemDto(
-                    javdbId: 'MovieA5',
-                    movieNumber: 'OFJE-889',
-                    title: 'Movie 5',
-                    coverImage: null,
-                    releaseDate: null,
-                    durationMinutes: 0,
-                    heat: 0,
-                    isSubscribed: false,
-                    canPlay: false,
-                  ),
-                  onRequestMenu: (position) => menuPosition = position,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: 220,
+              child: MovieSummaryCard(
+                movie: const MovieListItemDto(
+                  javdbId: 'MovieA5',
+                  movieNumber: 'OFJE-889',
+                  title: 'Movie 5',
+                  coverImage: null,
+                  releaseDate: null,
+                  durationMinutes: 0,
+                  heat: 0,
+                  isSubscribed: false,
+                  canPlay: false,
                 ),
+                onRequestMenu: (position) => menuPosition = position,
               ),
             ),
           ),

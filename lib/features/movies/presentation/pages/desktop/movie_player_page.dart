@@ -3,20 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -48,7 +48,7 @@ typedef MoviePlayerSurfaceBuilder =
       bool useTouchOptimizedControls,
     );
 
-class DesktopMoviePlayerPage extends StatefulWidget {
+class DesktopMoviePlayerPage extends ConsumerStatefulWidget {
   const DesktopMoviePlayerPage({
     super.key,
     required this.movieNumber,
@@ -73,10 +73,12 @@ class DesktopMoviePlayerPage extends StatefulWidget {
   final MoviePlayerSurfaceBuilder? surfaceBuilder;
 
   @override
-  State<DesktopMoviePlayerPage> createState() => _DesktopMoviePlayerPageState();
+  ConsumerState<DesktopMoviePlayerPage> createState() =>
+      _DesktopMoviePlayerPageState();
 }
 
-class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
+class _DesktopMoviePlayerPageState
+    extends ConsumerState<DesktopMoviePlayerPage> {
   late final MoviePlayerController _controller;
   late final MultiSplitViewController _splitController;
   late final MoviePlayerSurfaceController _surfaceController;
@@ -91,11 +93,11 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
       movieNumber: widget.movieNumber,
       initialMediaId: widget.initialMediaId,
       initialPositionSeconds: widget.initialPositionSeconds,
-      baseUrl: context.read<SessionStore>().baseUrl,
-      fetchMovieDetail: context.read<MoviesApi>().getMovieDetail,
-      fetchMediaThumbnails: context.read<MoviesApi>().getMediaThumbnails,
-      fetchMovieSubtitles: context.read<MoviesApi>().getMovieSubtitles,
-      updateMediaProgress: context.read<MoviesApi>().updateMediaProgress,
+      baseUrl: ref.read(sessionStoreProvider).baseUrl,
+      fetchMovieDetail: ref.read(moviesApiProvider).getMovieDetail,
+      fetchMediaThumbnails: ref.read(moviesApiProvider).getMediaThumbnails,
+      fetchMovieSubtitles: ref.read(moviesApiProvider).getMovieSubtitles,
+      updateMediaProgress: ref.read(moviesApiProvider).updateMediaProgress,
       fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
     )..load();
     _splitController = MultiSplitViewController(
@@ -106,8 +108,9 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
 
   MediaLibrariesApi? _readMediaLibrariesApi() {
     try {
-      return context.read<MediaLibrariesApi>();
-    } on ProviderNotFoundException {
+      return ref.read(mediaLibrariesApiProvider);
+    } on Object {
+      // 无 scope / 桥未 override 时降级为 null（隐藏相关入口），语义同旧。
       return null;
     }
   }
@@ -384,9 +387,9 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
     if (thumbnail.mediaId <= 0 || thumbnail.thumbnailId <= 0) {
       return null;
     }
-    final points = await context.read<MediaApi>().getMediaPoints(
-      mediaId: thumbnail.mediaId,
-    );
+    final points = await ref
+        .read(mediaApiProvider)
+        .getMediaPoints(mediaId: thumbnail.mediaId);
     for (final point in points) {
       if (point.thumbnailId == thumbnail.thumbnailId) {
         return point;
@@ -422,7 +425,7 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
         break;
       case AppImageActionType.saveToLocal:
         final result = await ImageSaveService(
-          fetchBytes: context.read<ApiClient>().getBytes,
+          fetchBytes: ref.read(apiClientProvider).getBytes,
         ).saveImageFromUrl(
           imageUrl: imageUrl,
           fileName: fileName,
@@ -448,15 +451,19 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
         }
         try {
           if (point == null) {
-            await context.read<MediaApi>().createMediaPoint(
-              mediaId: thumbnail.mediaId,
-              thumbnailId: thumbnail.thumbnailId,
-            );
+            await ref
+                .read(mediaApiProvider)
+                .createMediaPoint(
+                  mediaId: thumbnail.mediaId,
+                  thumbnailId: thumbnail.thumbnailId,
+                );
           } else {
-            await context.read<MediaApi>().deleteMediaPoint(
-              mediaId: thumbnail.mediaId,
-              pointId: point.pointId,
-            );
+            await ref
+                .read(mediaApiProvider)
+                .deleteMediaPoint(
+                  mediaId: thumbnail.mediaId,
+                  pointId: point.pointId,
+                );
           }
         } catch (_) {
           ScaffoldMessenger.of(

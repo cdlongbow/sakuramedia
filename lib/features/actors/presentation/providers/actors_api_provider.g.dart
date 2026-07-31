@@ -10,7 +10,7 @@ part of 'actors_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// actors 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ActorsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final actorsApiProvider = ActorsApiProvider._();
 
 /// actors 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<ActorsApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class ActorsApiProvider
     with $Provider<ActorsApi> {
   /// actors 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<ActorsApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   ActorsApiProvider._()
@@ -64,4 +64,4 @@ final class ActorsApiProvider
   }
 }
 
-String _$actorsApiHash() => r'f1a6463f59b5ca6e12438bdafe04b801370191e3';
+String _$actorsApiHash() => r'965b6274ca93a4aff4a19ec324bf8fb53fd2dadf';

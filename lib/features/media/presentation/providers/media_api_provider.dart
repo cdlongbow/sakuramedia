@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 
@@ -11,7 +12,7 @@ part 'media_api_provider.g.dart';
 /// legacy MultiProvider 里的 `MediaApi` 单例桥接到 Riverpod 侧）。
 @Riverpod(keepAlive: true)
 MediaApi mediaApi(Ref ref) {
-  throw UnimplementedError('Override mediaApiProvider at the app root');
+  return MediaApi(apiClient: ref.watch(apiClientProvider));
 }
 
 /// media 页需要读媒体库列表（用于筛选、秒传目标选择、存储描述解析）。
@@ -21,7 +22,5 @@ MediaApi mediaApi(Ref ref) {
 /// 迁 Riverpod 时把 bridge 上移到 configuration/presentation/providers/。
 @Riverpod(keepAlive: true)
 MediaLibrariesApi mediaLibrariesApi(Ref ref) {
-  throw UnimplementedError(
-    'Override mediaLibrariesApiProvider at the app root',
-  );
+  return MediaLibrariesApi(apiClient: ref.watch(apiClientProvider));
 }

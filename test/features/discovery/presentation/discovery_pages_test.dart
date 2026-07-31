@@ -2,19 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/discovery/presentation/desktop_discover_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
-import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../support/test_api_bundle.dart';
@@ -219,38 +210,15 @@ Future<void> _pumpDiscoveryWidget(
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<ApiClient>.value(value: bundle.apiClient),
-          Provider<DiscoveryApi>.value(value: bundle.discoveryApi),
-          Provider<MediaApi>(
-            create: (_) => MediaApi(apiClient: bundle.apiClient),
-          ),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-            value: bundle.collectionTypeBroadcaster,
-          ),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-          Provider<ImageSearchApi>(
-            create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
-          ),
-          Provider<ImageSearchDraftStore>(
-            create: (_) => ImageSearchDraftStore(),
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraMobileThemeData,
-            onGenerateRoute:
-                (settings) => MaterialPageRoute<void>(
-                  settings: settings,
-                  builder: (_) => child,
-                ),
-            home: child,
-          ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraMobileThemeData,
+          onGenerateRoute:
+              (settings) => MaterialPageRoute<void>(
+                settings: settings,
+                builder: (_) => child,
+              ),
+          home: child,
         ),
       ),
     ),

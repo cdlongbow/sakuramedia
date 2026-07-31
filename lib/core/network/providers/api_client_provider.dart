@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 
 part 'api_client_provider.g.dart';
@@ -10,5 +11,7 @@ part 'api_client_provider.g.dart';
 /// 侧是真源，组合根反转后改为原生装配。
 @Riverpod(keepAlive: true)
 ApiClient apiClient(Ref ref) {
-  throw UnimplementedError('Override apiClientProvider at the app root');
+  final client = ApiClient(sessionStore: ref.watch(sessionStoreProvider));
+  ref.onDispose(client.dispose);
+  return client;
 }

@@ -10,7 +10,7 @@ part of 'status_api_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// status 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -19,7 +19,7 @@ final statusApiProvider = StatusApiProvider._();
 
 /// status 域 API 的 Riverpod 入口。
 ///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+/// 原生装配（组合根反转后）。测试用
 /// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
 /// 同一范式，组合根反转后改为原生装配。
 
@@ -28,7 +28,7 @@ final class StatusApiProvider
     with $Provider<StatusApi> {
   /// status 域 API 的 Riverpod 入口。
   ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 的组合根用
+  /// 原生装配（组合根反转后）。测试用
   /// `overrideWithValue(context.read<StatusApi>())` 注入——与 `moviesApiProvider`
   /// 同一范式，组合根反转后改为原生装配。
   StatusApiProvider._()
@@ -64,4 +64,4 @@ final class StatusApiProvider
   }
 }
 
-String _$statusApiHash() => r'14a99ae5390dc38d481fac67a4308cbc62209914';
+String _$statusApiHash() => r'deacc5ad931f4158c5ae88c23bd00640cc2d4e1a';

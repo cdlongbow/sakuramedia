@@ -9,5 +9,5 @@ part 'credential_store_provider.g.dart';
 /// `overrideWithValue(context.read<CredentialStore>())` 注入。
 @Riverpod(keepAlive: true)
 CredentialStore credentialStore(Ref ref) {
-  throw UnimplementedError('Override credentialStoreProvider at the app root');
+  return CredentialStore();
 }

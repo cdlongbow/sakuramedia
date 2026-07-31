@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
@@ -404,17 +403,12 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-            builder:
-                (context, content) =>
-                    AppImageFullscreenHost(child: content ?? const SizedBox()),
-          ),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          routerConfig: router,
+          builder:
+              (context, content) =>
+                  AppImageFullscreenHost(child: content ?? const SizedBox()),
         ),
       ),
     );

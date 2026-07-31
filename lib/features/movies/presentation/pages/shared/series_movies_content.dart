@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
@@ -28,7 +29,7 @@ typedef SeriesMoviesBodyBuilder =
       Future<void> Function()? onRefresh,
     );
 
-class SeriesMoviesContent extends StatefulWidget {
+class SeriesMoviesContent extends ConsumerStatefulWidget {
   const SeriesMoviesContent({
     super.key,
     required this.seriesId,
@@ -67,10 +68,11 @@ class SeriesMoviesContent extends StatefulWidget {
   final bool hoistTitleToSubpageShell;
 
   @override
-  State<SeriesMoviesContent> createState() => _SeriesMoviesContentState();
+  ConsumerState<SeriesMoviesContent> createState() =>
+      _SeriesMoviesContentState();
 }
 
-class _SeriesMoviesContentState extends State<SeriesMoviesContent>
+class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     with
         MultiSelectStateMixin<SeriesMoviesContent, String>,
         MovieBatchSelectionMixin<SeriesMoviesContent> {
@@ -94,20 +96,24 @@ class _SeriesMoviesContentState extends State<SeriesMoviesContent>
   void initState() {
     super.initState();
     _initialSeriesName = _normalizeSeriesName(widget.initialSeriesName);
-    _subscriptionChangeNotifier =
-        context.read<MovieSubscriptionChangeNotifier>();
+    _subscriptionChangeNotifier = ref.read(
+      movieSubscriptionBroadcasterProvider,
+    );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
     _controller = PagedMovieSummaryController(
       fetchPage:
-          (page, pageSize) => context.read<MoviesApi>().getMoviesBySeries(
-            seriesId: widget.seriesId,
-            page: page,
-            pageSize: pageSize,
-          ),
-      subscribeMovie: context.read<MoviesApi>().subscribeMovie,
-      unsubscribeMovie: context.read<MoviesApi>().unsubscribeMovie,
-      batchSubscribeMovies: context.read<MoviesApi>().batchSubscribeMovies,
-      batchUnsubscribeMovies: context.read<MoviesApi>().batchUnsubscribeMovies,
+          (page, pageSize) => ref
+              .read(moviesApiProvider)
+              .getMoviesBySeries(
+                seriesId: widget.seriesId,
+                page: page,
+                pageSize: pageSize,
+              ),
+      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
+      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
+      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
+      batchUnsubscribeMovies:
+          ref.read(moviesApiProvider).batchUnsubscribeMovies,
       onSubscriptionChanged: _reportSubscriptionChange,
       onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
       pageSize: 24,

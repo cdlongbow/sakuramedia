@@ -73,4 +73,4 @@ final class AppPageStateCacheProvider
   }
 }
 
-String _$appPageStateCacheHash() => r'6eea613c557ffebcaf1b7a822ed11a09064cf2b9';
+String _$appPageStateCacheHash() => r'c02f8c0dcd6f08b501c7bebaf8068d28084e01af';

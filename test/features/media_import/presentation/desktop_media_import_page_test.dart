@@ -4,13 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/activity/data/activity_api.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
-import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/desktop_media_import_page.dart';
-import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
@@ -538,20 +533,10 @@ Future<void> _pumpPage(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          Provider<ActivityEventStreamClient>.value(
-            value: bundle.activityEventStreamClient,
-          ),
-          Provider<ActivityApi>.value(value: bundle.activityApi),
-          Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
-          Provider<VideoImportsApi>.value(value: bundle.videoImportsApi),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(body: DesktopMediaImportPage()),
-          ),
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: DesktopMediaImportPage()),
         ),
       ),
     ),

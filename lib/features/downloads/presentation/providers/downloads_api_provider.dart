@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/core/network/providers/sse_event_stream_client_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 
@@ -10,7 +12,10 @@ part 'downloads_api_provider.g.dart';
 /// 用 `overrideWithValue(context.read<DownloadsApi>())` 注入。
 @Riverpod(keepAlive: true)
 DownloadsApi downloadsApi(Ref ref) {
-  throw UnimplementedError('Override downloadsApiProvider at the app root');
+  return DownloadsApi(
+    apiClient: ref.watch(apiClientProvider),
+    streamClient: ref.watch(sseEventStreamClientProvider),
+  );
 }
 
 /// 下载客户端配置 API 的桥接：下载中心需要读客户端列表用于筛选下拉与名称/kind 映射。
@@ -19,7 +24,5 @@ DownloadsApi downloadsApi(Ref ref) {
 /// configuration 迁 Riverpod 时再上移。
 @Riverpod(keepAlive: true)
 DownloadClientsApi downloadClientsApi(Ref ref) {
-  throw UnimplementedError(
-    'Override downloadClientsApiProvider at the app root',
-  );
+  return DownloadClientsApi(apiClient: ref.watch(apiClientProvider));
 }

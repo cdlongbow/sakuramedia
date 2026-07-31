@@ -6,44 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/app/app_page_state_cache.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/app/app_state.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
-import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/account/data/account_api.dart';
-import 'package:sakuramedia/features/activity/data/activity_api.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
-import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
-import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
-import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
-import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
-import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
-import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
-import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -2231,40 +2204,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2287,40 +2227,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2341,40 +2248,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2398,40 +2272,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-            Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2724,40 +2565,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2794,40 +2602,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -2887,40 +2662,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -3060,40 +2802,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -3126,40 +2835,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -3234,40 +2910,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<ActorsApi>.value(value: bundle.actorsApi),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -3830,39 +3473,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-            ChangeNotifierProvider(create: (_) => AppShellController()),
-            Provider<CredentialStore>(create: (_) => CredentialStore()),
-            Provider<StatusApi>.value(value: bundle.statusApi),
-            Provider<MoviesApi>.value(value: bundle.moviesApi),
-            Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-            Provider<DownloadClientsApi>.value(
-              value: bundle.downloadClientsApi,
-            ),
-            Provider<IndexerSettingsApi>.value(
-              value: bundle.indexerSettingsApi,
-            ),
-            Provider<MovieDescTranslationSettingsApi>.value(
-              value: bundle.movieDescTranslationSettingsApi,
-            ),
-            Provider<ClipsApi>.value(value: bundle.clipsApi),
-            ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-              value: bundle.clipMutationBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-              value: bundle.collectionTypeBroadcaster,
-            ),
-            ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-              value: bundle.movieSubscriptionBroadcaster,
-            ),
-          ],
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -3881,68 +3492,15 @@ Future<void> _pumpRouterApp(
 }) {
   final draftStore = imageSearchDraftStore ?? ImageSearchDraftStore();
   final pageStateCache = AppPageStateCache()..bindSessionStore(sessionStore);
-  final providers = [
-    ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-    ChangeNotifierProvider<AppPageStateCache>.value(value: pageStateCache),
-    if (includeShellController)
-      ChangeNotifierProvider(create: (_) => AppShellController()),
-    // 路由现在只传 draftId，测试环境也要注入临时草稿仓库。
-    Provider<ImageSearchDraftStore>.value(value: draftStore),
-    Provider<ApiClient>.value(value: bundle.apiClient),
-    Provider<CredentialStore>(create: (_) => CredentialStore()),
-    Provider<AccountApi>.value(value: bundle.accountApi),
-    Provider<ActivityEventStreamClient>.value(
-      value: bundle.activityEventStreamClient,
-    ),
-    Provider<ActivityApi>.value(value: bundle.activityApi),
-    Provider<ActorsApi>.value(value: bundle.actorsApi),
-    Provider<DiscoveryApi>.value(value: bundle.discoveryApi),
-    Provider<MediaApi>(create: (_) => MediaApi(apiClient: bundle.apiClient)),
-    Provider<ImageSearchApi>(
-      create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
-    ),
-    Provider<StatusApi>.value(value: bundle.statusApi),
-    Provider<MoviesApi>.value(value: bundle.moviesApi),
-    ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-      value: bundle.collectionTypeBroadcaster,
-    ),
-    ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-      value: bundle.movieSubscriptionBroadcaster,
-    ),
-    Provider<PlaylistsApi>.value(value: bundle.playlistsApi),
-    Provider<ClipsApi>(create: (_) => ClipsApi(apiClient: bundle.apiClient)),
-    Provider<ClipCollectionsApi>(
-      create: (_) => ClipCollectionsApi(apiClient: bundle.apiClient),
-    ),
-    ChangeNotifierProvider<ClipMutationChangeNotifier>.value(
-      value: bundle.clipMutationBroadcaster,
-    ),
-    Provider<RankingsApi>.value(value: bundle.rankingsApi),
-    Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-    Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
-    Provider<DownloadsApi>.value(value: bundle.downloadsApi),
-    Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
-    Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-    Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
-    Provider<MovieDescTranslationSettingsApi>.value(
-      value: bundle.movieDescTranslationSettingsApi,
-    ),
-  ];
 
   return tester.pumpWidget(
-    MultiProvider(
-      providers: providers,
-      child: ProviderScope(
-        overrides: bundle.riverpodOverrides(
-          pageStateCache: pageStateCache,
-          imageSearchDraftStore: draftStore,
-        ),
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(
+        pageStateCache: pageStateCache,
+        imageSearchDraftStore: draftStore,
+      ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

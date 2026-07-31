@@ -3,12 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/moments/presentation/desktop_moments_page.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
@@ -171,21 +167,8 @@ Future<void> _pumpMomentsApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<ApiClient>.value(value: bundle.apiClient),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<MediaApi>(
-            create: (_) => MediaApi(apiClient: bundle.apiClient),
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

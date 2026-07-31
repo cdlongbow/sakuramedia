@@ -64,4 +64,4 @@ final class ApiClientProvider
   }
 }
 
-String _$apiClientHash() => r'c99ed08f20b03a35541db46b56b22fede1cc56b1';
+String _$apiClientHash() => r'5aa2af31962c8f4383a2875e4ac316038a928b56';

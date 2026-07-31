@@ -4,17 +4,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -35,7 +35,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_pl
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
-class MovieDetailInspectorPanel extends StatefulWidget {
+class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
   const MovieDetailInspectorPanel({
     super.key,
     required this.movieNumber,
@@ -85,11 +85,12 @@ class MovieDetailInspectorPanel extends StatefulWidget {
   final void Function(MovieMediaThumbnailDto thumbnail)? onPlay;
 
   @override
-  State<MovieDetailInspectorPanel> createState() =>
+  ConsumerState<MovieDetailInspectorPanel> createState() =>
       _MovieDetailInspectorPanelState();
 }
 
-class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
+class _MovieDetailInspectorPanelState
+    extends ConsumerState<MovieDetailInspectorPanel>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final MovieDetailReviewController _reviewController;
@@ -211,9 +212,9 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
     if (thumbnail.mediaId <= 0 || thumbnail.thumbnailId <= 0) {
       return null;
     }
-    final points = await context.read<MediaApi>().getMediaPoints(
-      mediaId: thumbnail.mediaId,
-    );
+    final points = await ref
+        .read(mediaApiProvider)
+        .getMediaPoints(mediaId: thumbnail.mediaId);
     for (final point in points) {
       if (point.thumbnailId == thumbnail.thumbnailId) {
         return point;
@@ -244,7 +245,7 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
         break;
       case AppImageActionType.saveToLocal:
         final result = await ImageSaveService(
-          fetchBytes: context.read<ApiClient>().getBytes,
+          fetchBytes: ref.read(apiClientProvider).getBytes,
         ).saveImageFromUrl(
           imageUrl: imageUrl,
           fileName: fileName,
@@ -266,18 +267,22 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
         }
         try {
           if (point == null) {
-            await context.read<MediaApi>().createMediaPoint(
-              mediaId: thumbnail.mediaId,
-              thumbnailId: thumbnail.thumbnailId,
-            );
+            await ref
+                .read(mediaApiProvider)
+                .createMediaPoint(
+                  mediaId: thumbnail.mediaId,
+                  thumbnailId: thumbnail.thumbnailId,
+                );
             if (mounted) {
               showToast('已添加标记');
             }
           } else {
-            await context.read<MediaApi>().deleteMediaPoint(
-              mediaId: thumbnail.mediaId,
-              pointId: point.pointId,
-            );
+            await ref
+                .read(mediaApiProvider)
+                .deleteMediaPoint(
+                  mediaId: thumbnail.mediaId,
+                  pointId: point.pointId,
+                );
             if (mounted) {
               showToast('已删除标记');
             }

@@ -2,13 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -39,24 +34,8 @@ void main() {
   Widget wrap(Widget child) {
     return ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          Provider<ActorsApi>.value(value: bundle.actorsApi),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-            value: bundle.collectionTypeBroadcaster,
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(body: child),
-          ),
-        ),
+      child: OKToast(
+        child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
       ),
     );
   }

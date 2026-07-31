@@ -12,9 +12,9 @@ part 'clip_mutation_events_provider.g.dart';
 /// movies 三域的 report 方与 listen 方彼此可见）。实例由组合根 override 注入。
 @Riverpod(keepAlive: true)
 ClipMutationChangeNotifier clipMutationBroadcaster(Ref ref) {
-  throw UnimplementedError(
-    'Override clipMutationBroadcasterProvider at the app root',
-  );
+  final notifier = ClipMutationChangeNotifier();
+  ref.onDispose(notifier.dispose);
+  return notifier;
 }
 
 /// 切片变更事件流：把 `notifyListeners` 翻译成一条条 [ClipMutationChange]。

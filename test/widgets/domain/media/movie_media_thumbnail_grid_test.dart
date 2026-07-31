@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -838,26 +837,23 @@ Future<void> _pumpGrid(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-      child: ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SizedBox(
-              width: width,
-              height: height,
-              child: MovieMediaThumbnailGrid(
-                thumbnails: thumbnails,
-                isLoading: false,
-                errorMessage: errorMessage,
-                columns: columns,
-                activeIndex: activeIndex,
-                isScrollLocked: isScrollLocked,
-                onThumbnailTap: (_) {},
-                onRetry: onRetry ?? () {},
-                onThumbnailMenuRequested: onThumbnailMenuRequested,
-                layout: layout,
-              ),
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: SizedBox(
+            width: width,
+            height: height,
+            child: MovieMediaThumbnailGrid(
+              thumbnails: thumbnails,
+              isLoading: false,
+              errorMessage: errorMessage,
+              columns: columns,
+              activeIndex: activeIndex,
+              isScrollLocked: isScrollLocked,
+              onThumbnailTap: (_) {},
+              onRetry: onRetry ?? () {},
+              onThumbnailMenuRequested: onThumbnailMenuRequested,
+              layout: layout,
             ),
           ),
         ),

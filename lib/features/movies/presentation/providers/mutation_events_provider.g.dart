@@ -95,7 +95,7 @@ final class MovieSubscriptionBroadcasterProvider
 }
 
 String _$movieSubscriptionBroadcasterHash() =>
-    r'7a888303ba630404223b7f57ab2bd5dfd4f07257';
+    r'30d9a1ff0aefd67626874d360b36c47efdc519eb';
 
 /// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
 /// 翻译成一条条「本次广播的变更列表」。
@@ -227,7 +227,7 @@ final class CollectionTypeBroadcasterProvider
 }
 
 String _$collectionTypeBroadcasterHash() =>
-    r'9208f0dff0403c3c315e64d2f6f1a667642d8c93';
+    r'e1ecae7d05b9c1554b6ea735d47a982cfebf1f75';
 
 /// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
 ///

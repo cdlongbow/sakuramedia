@@ -2,29 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
-import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/external_player/presentation/external_player_availability.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clip_section_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clips_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -47,16 +47,17 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 
-class MobileMovieDetailPage extends StatefulWidget {
+class MobileMovieDetailPage extends ConsumerStatefulWidget {
   const MobileMovieDetailPage({super.key, required this.movieNumber});
 
   final String movieNumber;
 
   @override
-  State<MobileMovieDetailPage> createState() => _MobileMovieDetailPageState();
+  ConsumerState<MobileMovieDetailPage> createState() =>
+      _MobileMovieDetailPageState();
 }
 
-class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
+class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
     with MovieClipSectionMixin {
   late final MovieDetailController _controller;
   late final MovieClipsController _movieClipsController;
@@ -98,22 +99,23 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     _ownsSubscriptionChangeNotifier = binding.ownsNotifier;
     _controller = MovieDetailController(
       movieNumber: widget.movieNumber,
-      fetchMovieDetail: context.read<MoviesApi>().getMovieDetail,
-      fetchSimilarMovies: context.read<MoviesApi>().getSimilarMovies,
+      fetchMovieDetail: ref.read(moviesApiProvider).getMovieDetail,
+      fetchSimilarMovies: ref.read(moviesApiProvider).getSimilarMovies,
       fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
     )..load();
     _movieClipsController = MovieClipsController(
       movieNumber: widget.movieNumber,
-      fetchClips: context.read<ClipsApi>().getClipsByMovieNumber,
-      mutationNotifier: context.read<ClipMutationChangeNotifier>(),
+      fetchClips: ref.read(clipsApiProvider).getClipsByMovieNumber,
+      mutationNotifier: ref.read(clipMutationBroadcasterProvider),
     )..load();
     _loadMovieCollectionStatus();
   }
 
   MediaLibrariesApi? _readMediaLibrariesApi() {
     try {
-      return context.read<MediaLibrariesApi>();
-    } on ProviderNotFoundException {
+      return ref.read(mediaLibrariesApiProvider);
+    } on Object {
+      // 无 scope / 桥未 override 时降级为 null（隐藏相关入口），语义同旧。
       return null;
     }
   }
@@ -328,9 +330,9 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
 
   Future<void> _loadMovieCollectionStatus() async {
     try {
-      final status = await context.read<MoviesApi>().getMovieCollectionStatus(
-        movieNumber: widget.movieNumber,
-      );
+      final status = await ref
+          .read(moviesApiProvider)
+          .getMovieCollectionStatus(movieNumber: widget.movieNumber);
       if (!mounted) {
         return;
       }
@@ -355,10 +357,12 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
             ? MovieCollectionType.single
             : MovieCollectionType.collection;
     try {
-      final result = await context.read<MoviesApi>().updateMovieCollectionType(
-        movieNumbers: <String>[widget.movieNumber],
-        collectionType: targetType,
-      );
+      final result = await ref
+          .read(moviesApiProvider)
+          .updateMovieCollectionType(
+            movieNumbers: <String>[widget.movieNumber],
+            collectionType: targetType,
+          );
       if (!mounted) {
         return;
       }
@@ -369,10 +373,12 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       setState(() {
         _isCollectionOverride = !isCollection;
       });
-      context.read<MovieCollectionTypeChangeNotifier>().reportChange(
-        movieNumber: widget.movieNumber,
-        targetType: targetType,
-      );
+      ref
+          .read(collectionTypeBroadcasterProvider)
+          .reportChange(
+            movieNumber: widget.movieNumber,
+            targetType: targetType,
+          );
       showToast(
         targetType == MovieCollectionType.collection ? '已标记为合集' : '已标记为单体',
       );
@@ -404,7 +410,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     });
 
     try {
-      await context.read<MediaApi>().deleteMedia(mediaId: mediaItem.mediaId);
+      await ref.read(mediaApiProvider).deleteMedia(mediaId: mediaItem.mediaId);
       await _refreshAfterMediaDelete(deletedMediaId: mediaItem.mediaId);
       if (mounted) {
         showToast('媒体文件已删除');
@@ -797,7 +803,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       return;
     }
     final result = await ImageSaveService(
-      fetchBytes: context.read<ApiClient>().getBytes,
+      fetchBytes: ref.read(apiClientProvider).getBytes,
     ).saveImageFromUrl(
       imageUrl: imageUrl,
       fileName: _buildPointFileName(point),
@@ -821,10 +827,12 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
   ) async {
     try {
       if (existingPoint == null) {
-        final createdPoint = await context.read<MediaApi>().createMediaPoint(
-          mediaId: mediaItem.mediaId,
-          thumbnailId: point.thumbnailId,
-        );
+        final createdPoint = await ref
+            .read(mediaApiProvider)
+            .createMediaPoint(
+              mediaId: mediaItem.mediaId,
+              thumbnailId: point.thumbnailId,
+            );
         if (!mounted) {
           return;
         }
@@ -837,10 +845,12 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         return;
       }
 
-      await context.read<MediaApi>().deleteMediaPoint(
-        mediaId: mediaItem.mediaId,
-        pointId: existingPoint.pointId,
-      );
+      await ref
+          .read(mediaApiProvider)
+          .deleteMediaPoint(
+            mediaId: mediaItem.mediaId,
+            pointId: existingPoint.pointId,
+          );
       if (!mounted) {
         return;
       }
@@ -1029,15 +1039,17 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     required String fileName,
   }) async {
     try {
-      final imageBytes = await context.read<ApiClient>().getBytes(imageUrl);
+      final imageBytes = await ref.read(apiClientProvider).getBytes(imageUrl);
       if (!mounted) {
         return;
       }
-      final draftId = context.read<ImageSearchDraftStore>().save(
-        fileName: fileName,
-        bytes: imageBytes,
-        mimeType: guessImageMimeType(fileName),
-      );
+      final draftId = ref
+          .read(imageSearchDraftStoreProvider)
+          .save(
+            fileName: fileName,
+            bytes: imageBytes,
+            mimeType: guessImageMimeType(fileName),
+          );
       MobileImageSearchRouteData(
         draftId: draftId,
         currentMovieNumber: widget.movieNumber,
@@ -1063,16 +1075,18 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
 
     try {
       if (isSubscribed) {
-        await context.read<MoviesApi>().unsubscribeMovie(
-          movieNumber: widget.movieNumber,
-          deleteMedia: false,
-        );
+        await ref
+            .read(moviesApiProvider)
+            .unsubscribeMovie(
+              movieNumber: widget.movieNumber,
+              deleteMedia: false,
+            );
         result = const MovieSubscriptionToggleResult.unsubscribed();
         _isSubscribedOverride = false;
       } else {
-        await context.read<MoviesApi>().subscribeMovie(
-          movieNumber: widget.movieNumber,
-        );
+        await ref
+            .read(moviesApiProvider)
+            .subscribeMovie(movieNumber: widget.movieNumber);
         result = const MovieSubscriptionToggleResult.subscribed();
         _isSubscribedOverride = true;
       }

@@ -1,4 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_stream_client_provider.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 
 part 'activity_api_provider.g.dart';
@@ -10,5 +12,8 @@ part 'activity_api_provider.g.dart';
 /// 同一范式。首个消费方是订阅管理页（统一资源任务操作走它）。
 @Riverpod(keepAlive: true)
 ActivityApi activityApi(Ref ref) {
-  throw UnimplementedError('Override activityApiProvider at the app root');
+  return ActivityApi(
+    apiClient: ref.watch(apiClientProvider),
+    streamClient: ref.watch(activityEventStreamClientProvider),
+  );
 }

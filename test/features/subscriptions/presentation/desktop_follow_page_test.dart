@@ -7,11 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
@@ -318,8 +314,7 @@ void main() {
       await _pumpFollowPage(tester, sessionStore: sessionStore, bundle: bundle);
       await tester.pumpAndSettle();
 
-      final context = tester.element(find.byType(DesktopFollowPage));
-      context.read<MovieSubscriptionChangeNotifier>().reportChange(
+      bundle.movieSubscriptionBroadcaster.reportChange(
         movieNumber: 'ABC-001',
         isSubscribed: false,
       );
@@ -347,21 +342,9 @@ Future<void> _pumpFollowPage(
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-            value: bundle.collectionTypeBroadcaster,
-          ),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-        ],
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: const OKToast(child: Scaffold(body: DesktopFollowPage())),
-        ),
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: const OKToast(child: Scaffold(body: DesktopFollowPage())),
       ),
     ),
   );
@@ -381,23 +364,8 @@ Future<void> _pumpFollowRouter(
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<MoviesApi>.value(value: bundle.moviesApi),
-          ChangeNotifierProvider<MovieCollectionTypeChangeNotifier>.value(
-            value: bundle.collectionTypeBroadcaster,
-          ),
-          ChangeNotifierProvider<MovieSubscriptionChangeNotifier>.value(
-            value: bundle.movieSubscriptionBroadcaster,
-          ),
-        ],
-        child: OKToast(
-          child: MaterialApp.router(
-            theme: sakuraThemeData,
-            routerConfig: router,
-          ),
-        ),
+      child: OKToast(
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );

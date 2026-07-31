@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
@@ -225,9 +223,5 @@ void main() {
 }
 
 Widget _testApp({required Widget child}) {
-  final sessionStore = SessionStore.inMemory();
-  return ChangeNotifierProvider<SessionStore>.value(
-    value: sessionStore,
-    child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
-  );
+  return MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child));
 }

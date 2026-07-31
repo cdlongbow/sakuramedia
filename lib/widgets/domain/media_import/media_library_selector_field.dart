@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -21,7 +22,7 @@ import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 /// - 首次成功加载后，若 caller 未指定选中值，自动通过 [onLibraryChanged] 上抛
 ///   列表首项；若 caller 已指定但该 id 在新列表里找不到，会回退到首项。
 /// - dropdown 条目标签固定为 `名称 · 本地存储 / 115 网盘`，两个导入弹窗共用。
-class MediaLibrarySelectorField extends StatefulWidget {
+class MediaLibrarySelectorField extends ConsumerStatefulWidget {
   const MediaLibrarySelectorField({
     super.key,
     required this.selectedLibraryId,
@@ -34,11 +35,12 @@ class MediaLibrarySelectorField extends StatefulWidget {
   final ValueChanged<MediaLibraryDto?> onLibraryChanged;
 
   @override
-  State<MediaLibrarySelectorField> createState() =>
+  ConsumerState<MediaLibrarySelectorField> createState() =>
       _MediaLibrarySelectorFieldState();
 }
 
-class _MediaLibrarySelectorFieldState extends State<MediaLibrarySelectorField> {
+class _MediaLibrarySelectorFieldState
+    extends ConsumerState<MediaLibrarySelectorField> {
   late final MediaLibrariesApi _librariesApi;
 
   List<MediaLibraryDto> _libraries = const <MediaLibraryDto>[];
@@ -48,7 +50,7 @@ class _MediaLibrarySelectorFieldState extends State<MediaLibrarySelectorField> {
   @override
   void initState() {
     super.initState();
-    _librariesApi = context.read<MediaLibrariesApi>();
+    _librariesApi = ref.read(mediaLibrariesApiProvider);
     unawaited(_load());
   }
 

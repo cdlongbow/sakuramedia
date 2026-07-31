@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -572,6 +573,7 @@ Future<void> _pumpPage(
       ],
       child: ProviderScope(
         overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
           mediaApiProvider.overrideWithValue(mediaApi),
           mediaLibrariesApiProvider.overrideWithValue(librariesApi),
         ],

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
@@ -54,23 +56,26 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SizedBox(
-              width: 1200,
-              child: MovieDetailHeroCard(
-                height: 420,
-                mainImageKey: 'cover',
-                mainImageUrl: '/covers/main.jpg',
-                heat: 24,
-                canPlay: true,
-                isSubscribed: true,
-                isCollection: false,
-                onPlayTap: null,
-                onSubscriptionTap: null,
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 1200,
+                child: MovieDetailHeroCard(
+                  height: 420,
+                  mainImageKey: 'cover',
+                  mainImageUrl: '/covers/main.jpg',
+                  heat: 24,
+                  canPlay: true,
+                  isSubscribed: true,
+                  isCollection: false,
+                  onPlayTap: null,
+                  onSubscriptionTap: null,
+                ),
               ),
             ),
           ),
@@ -95,25 +100,28 @@ void main() {
       var tapped = false;
 
       await tester.pumpWidget(
-        ChangeNotifierProvider<SessionStore>.value(
-          value: sessionStore,
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 1200,
-                child: MovieDetailHeroCard(
-                  height: 420,
-                  mainImageKey: 'cover',
-                  mainImageUrl: '/covers/main.jpg',
-                  heat: 24,
-                  canPlay: true,
-                  isSubscribed: false,
-                  isCollection: false,
-                  onPlayTap: null,
-                  onSubscriptionTap: () {
-                    tapped = true;
-                  },
+        ProviderScope(
+          overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+          child: ChangeNotifierProvider<SessionStore>.value(
+            value: sessionStore,
+            child: MaterialApp(
+              theme: sakuraThemeData,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 1200,
+                  child: MovieDetailHeroCard(
+                    height: 420,
+                    mainImageKey: 'cover',
+                    mainImageUrl: '/covers/main.jpg',
+                    heat: 24,
+                    canPlay: true,
+                    isSubscribed: false,
+                    isCollection: false,
+                    onPlayTap: null,
+                    onSubscriptionTap: () {
+                      tapped = true;
+                    },
+                  ),
                 ),
               ),
             ),
@@ -142,25 +150,28 @@ void main() {
     var tapped = false;
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SizedBox(
-              width: 1200,
-              child: MovieDetailHeroCard(
-                height: 420,
-                mainImageKey: 'cover',
-                mainImageUrl: '/covers/main.jpg',
-                heat: 24,
-                canPlay: true,
-                isSubscribed: false,
-                isCollection: false,
-                onPlayTap: () {
-                  tapped = true;
-                },
-                onSubscriptionTap: null,
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 1200,
+                child: MovieDetailHeroCard(
+                  height: 420,
+                  mainImageKey: 'cover',
+                  mainImageUrl: '/covers/main.jpg',
+                  heat: 24,
+                  canPlay: true,
+                  isSubscribed: false,
+                  isCollection: false,
+                  onPlayTap: () {
+                    tapped = true;
+                  },
+                  onSubscriptionTap: null,
+                ),
               ),
             ),
           ),
@@ -178,23 +189,26 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SizedBox(
-              width: 1200,
-              child: MovieDetailHeroCard(
-                height: 420,
-                mainImageKey: 'cover',
-                mainImageUrl: '/covers/main.jpg',
-                heat: 24,
-                canPlay: true,
-                isSubscribed: false,
-                isCollection: false,
-                onPlayTap: () {},
-                onSubscriptionTap: null,
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 1200,
+                child: MovieDetailHeroCard(
+                  height: 420,
+                  mainImageKey: 'cover',
+                  mainImageUrl: '/covers/main.jpg',
+                  heat: 24,
+                  canPlay: true,
+                  isSubscribed: false,
+                  isCollection: false,
+                  onPlayTap: () {},
+                  onSubscriptionTap: null,
+                ),
               ),
             ),
           ),
@@ -277,23 +291,26 @@ void main() {
     'movie detail hero card shows placeholder when main image is absent',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        ChangeNotifierProvider<SessionStore>.value(
-          value: sessionStore,
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 1200,
-                child: MovieDetailHeroCard(
-                  height: 420,
-                  mainImageKey: 'placeholder',
-                  mainImageUrl: null,
-                  heat: 24,
-                  canPlay: false,
-                  isSubscribed: false,
-                  isCollection: false,
-                  onPlayTap: null,
-                  onSubscriptionTap: null,
+        ProviderScope(
+          overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+          child: ChangeNotifierProvider<SessionStore>.value(
+            value: sessionStore,
+            child: MaterialApp(
+              theme: sakuraThemeData,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 1200,
+                  child: MovieDetailHeroCard(
+                    height: 420,
+                    mainImageKey: 'placeholder',
+                    mainImageUrl: null,
+                    heat: 24,
+                    canPlay: false,
+                    isSubscribed: false,
+                    isCollection: false,
+                    onPlayTap: null,
+                    onSubscriptionTap: null,
+                  ),
                 ),
               ),
             ),
@@ -316,26 +333,29 @@ void main() {
     Offset? tappedPosition;
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: SizedBox(
-              width: 1200,
-              child: MovieDetailHeroCard(
-                height: 420,
-                mainImageKey: 'cover',
-                mainImageUrl: '/covers/main.jpg',
-                heat: 24,
-                canPlay: true,
-                isSubscribed: false,
-                isCollection: false,
-                onPlayTap: null,
-                onSubscriptionTap: null,
-                onMoreActionsTap: (globalPosition) async {
-                  tappedPosition = globalPosition;
-                },
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: SizedBox(
+                width: 1200,
+                child: MovieDetailHeroCard(
+                  height: 420,
+                  mainImageKey: 'cover',
+                  mainImageUrl: '/covers/main.jpg',
+                  heat: 24,
+                  canPlay: true,
+                  isSubscribed: false,
+                  isCollection: false,
+                  onPlayTap: null,
+                  onSubscriptionTap: null,
+                  onMoreActionsTap: (globalPosition) async {
+                    tappedPosition = globalPosition;
+                  },
+                ),
               ),
             ),
           ),
@@ -353,23 +373,26 @@ void main() {
 }
 
 Widget _buildApp({required SessionStore sessionStore}) {
-  return ChangeNotifierProvider<SessionStore>.value(
-    value: sessionStore,
-    child: MaterialApp(
-      theme: sakuraThemeData,
-      home: Scaffold(
-        body: SizedBox(
-          width: 1200,
-          child: MovieDetailHeroCard(
-            height: 420,
-            mainImageKey: 'cover',
-            mainImageUrl: '/covers/main.jpg',
-            heat: 24,
-            canPlay: true,
-            isSubscribed: false,
-            isCollection: false,
-            onPlayTap: null,
-            onSubscriptionTap: null,
+  return ProviderScope(
+    overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+    child: ChangeNotifierProvider<SessionStore>.value(
+      value: sessionStore,
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            child: MovieDetailHeroCard(
+              height: 420,
+              mainImageKey: 'cover',
+              mainImageUrl: '/covers/main.jpg',
+              heat: 24,
+              canPlay: true,
+              isSubscribed: false,
+              isCollection: false,
+              onPlayTap: null,
+              onSubscriptionTap: null,
+            ),
           ),
         ),
       ),

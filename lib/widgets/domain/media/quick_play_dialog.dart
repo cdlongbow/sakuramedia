@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
@@ -202,8 +202,12 @@ Future<void> showVideoQuickPlayDialog(
           guardInitialSeek: true,
           subtitle: subtitle,
           resolvePlayUrl: (innerContext) async {
-            final videosApi = innerContext.read<VideosApi>();
-            final baseUrl = innerContext.read<SessionStore>().baseUrl;
+            final container = ProviderScope.containerOf(
+              innerContext,
+              listen: false,
+            );
+            final videosApi = container.read(videosApiProvider);
+            final baseUrl = container.read(sessionStoreProvider).baseUrl;
             final detail = await videosApi.getVideoDetail(videoId: videoId);
             for (final media in detail.mediaItems) {
               if (!media.hasPlayableUrl) {

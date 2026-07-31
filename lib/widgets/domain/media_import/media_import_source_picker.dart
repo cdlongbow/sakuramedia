@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
@@ -11,6 +11,8 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/media_import/data/filesystem_entry_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -34,7 +36,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 /// - 选中源只在合法可提交时通过 [onSourceChanged] 吐 non-null 值；否则吐 `null`。
 ///   合法性包括：本地已下钻到具体目录、115 已下钻到非根目录。caller 只需按
 ///   `source != null` 判断是否可提交，不用重复实现规则。
-class MediaImportSourcePicker extends StatefulWidget {
+class MediaImportSourcePicker extends ConsumerStatefulWidget {
   const MediaImportSourcePicker({
     super.key,
     required this.selectedLibrary,
@@ -62,11 +64,12 @@ class MediaImportSourcePicker extends StatefulWidget {
           : const <TransferMode>[TransferMode.auto, TransferMode.cleanupSource];
 
   @override
-  State<MediaImportSourcePicker> createState() =>
+  ConsumerState<MediaImportSourcePicker> createState() =>
       _MediaImportSourcePickerState();
 }
 
-class _MediaImportSourcePickerState extends State<MediaImportSourcePicker> {
+class _MediaImportSourcePickerState
+    extends ConsumerState<MediaImportSourcePicker> {
   static const int _cloudPageSize = 200;
 
   late final MediaImportApi _mediaImportApi;
@@ -101,8 +104,8 @@ class _MediaImportSourcePickerState extends State<MediaImportSourcePicker> {
   @override
   void initState() {
     super.initState();
-    _mediaImportApi = context.read<MediaImportApi>();
-    _librariesApi = context.read<MediaLibrariesApi>();
+    _mediaImportApi = ref.read(mediaImportApiProvider);
+    _librariesApi = ref.read(mediaLibrariesApiProvider);
     if (widget.selectedLibrary != null) {
       unawaited(_resetAndBrowse(widget.selectedLibrary!));
     }

@@ -1,7 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/config/app_image_config.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
@@ -217,10 +218,8 @@ class _TestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-      ],
+    return ProviderScope(
+      overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
       child: MaterialApp(
         theme: sakuraThemeData,
         home: Scaffold(body: Center(child: SizedBox(width: 160, child: child))),

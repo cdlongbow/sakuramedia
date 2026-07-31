@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 
@@ -89,7 +89,7 @@ class _AppFullscreenBottomDrawerSession {
   final bool showHandle;
 }
 
-class AppImageFullscreenHost extends StatefulWidget {
+class AppImageFullscreenHost extends ConsumerStatefulWidget {
   const AppImageFullscreenHost({super.key, required this.child});
 
   final Widget child;
@@ -120,10 +120,11 @@ class AppImageFullscreenHost extends StatefulWidget {
   }
 
   @override
-  State<AppImageFullscreenHost> createState() => _AppImageFullscreenHostState();
+  ConsumerState<AppImageFullscreenHost> createState() =>
+      _AppImageFullscreenHostState();
 }
 
-class _AppImageFullscreenHostState extends State<AppImageFullscreenHost>
+class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   static const Duration _transitionDuration = Duration(milliseconds: 180);
   static const Duration _resetDuration = Duration(milliseconds: 140);
@@ -447,7 +448,7 @@ class _AppImageFullscreenHostState extends State<AppImageFullscreenHost>
 
     final resolvedUrl = resolveMediaUrl(
       rawUrl: item.url,
-      baseUrl: context.read<SessionStore>().baseUrl,
+      baseUrl: ref.read(sessionStoreProvider).baseUrl,
     );
     if (resolvedUrl == null) {
       return null;
@@ -914,7 +915,7 @@ class _AppFullscreenImageSurface extends StatelessWidget {
   }
 }
 
-class AppPinchToFullscreenImage extends StatefulWidget {
+class AppPinchToFullscreenImage extends ConsumerStatefulWidget {
   const AppPinchToFullscreenImage({
     super.key,
     required this.child,
@@ -948,11 +949,12 @@ class AppPinchToFullscreenImage extends StatefulWidget {
   final ValueChanged<bool>? onFullscreenChanged;
 
   @override
-  State<AppPinchToFullscreenImage> createState() =>
+  ConsumerState<AppPinchToFullscreenImage> createState() =>
       _AppPinchToFullscreenImageState();
 }
 
-class _AppPinchToFullscreenImageState extends State<AppPinchToFullscreenImage> {
+class _AppPinchToFullscreenImageState
+    extends ConsumerState<AppPinchToFullscreenImage> {
   ImageStream? _imageStream;
   ImageStreamListener? _imageStreamListener;
   ImageProvider<Object>? _resolvedImageProvider;
@@ -1003,7 +1005,7 @@ class _AppPinchToFullscreenImageState extends State<AppPinchToFullscreenImage> {
       return widget.imageProvider;
     }
 
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(rawUrl: widget.url, baseUrl: baseUrl);
     if (resolvedUrl == null) {
       return null;

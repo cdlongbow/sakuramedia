@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -220,27 +222,30 @@ Future<void> _pumpPanel(
   await sessionStore.saveBaseUrl('https://api.example.com');
 
   await tester.pumpWidget(
-    ChangeNotifierProvider<SessionStore>.value(
-      value: sessionStore,
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: Scaffold(
-          body: SizedBox(
-            width: width,
-            height: 720,
-            child: MoviePlayerThumbnailPanel(
-              thumbnails: thumbnails,
-              isLoading: false,
-              errorMessage: null,
-              columns: columns,
-              activeIndex: activeIndex,
-              isScrollLocked: isScrollLocked,
-              usesAutoColumns: usesAutoColumns,
-              onAutoColumnsResolved: (_) {},
-              onColumnsChanged: onColumnsChanged ?? (_) {},
-              onToggleScrollLock: onToggleScrollLock ?? () {},
-              onThumbnailTap: (_) {},
-              onRetry: () {},
+    ProviderScope(
+      overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+      child: ChangeNotifierProvider<SessionStore>.value(
+        value: sessionStore,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SizedBox(
+              width: width,
+              height: 720,
+              child: MoviePlayerThumbnailPanel(
+                thumbnails: thumbnails,
+                isLoading: false,
+                errorMessage: null,
+                columns: columns,
+                activeIndex: activeIndex,
+                isScrollLocked: isScrollLocked,
+                usesAutoColumns: usesAutoColumns,
+                onAutoColumnsResolved: (_) {},
+                onColumnsChanged: onColumnsChanged ?? (_) {},
+                onToggleScrollLock: onToggleScrollLock ?? () {},
+                onThumbnailTap: (_) {},
+                onRetry: () {},
+              ),
             ),
           ),
         ),

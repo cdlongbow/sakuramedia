@@ -2,16 +2,16 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -74,7 +74,7 @@ Future<MediaPreviewAction?> showMediaPreviewOverlay({
   }
 }
 
-class MediaPreviewDialog extends StatefulWidget {
+class MediaPreviewDialog extends ConsumerStatefulWidget {
   const MediaPreviewDialog({
     super.key,
     required this.item,
@@ -91,10 +91,10 @@ class MediaPreviewDialog extends StatefulWidget {
   final MediaPreviewPresentation presentation;
 
   @override
-  State<MediaPreviewDialog> createState() => _MediaPreviewDialogState();
+  ConsumerState<MediaPreviewDialog> createState() => _MediaPreviewDialogState();
 }
 
-class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
+class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   final ScrollController _actorScrollController = ScrollController();
   MovieDetailDto? _movieDetail;
   List<MediaPointDto> _mediaPoints = const <MediaPointDto>[];
@@ -136,9 +136,9 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
       _movieDetailErrorMessage = null;
     });
     try {
-      final movieDetail = await context.read<MoviesApi>().getMovieDetail(
-        movieNumber: movieNumber,
-      );
+      final movieDetail = await ref
+          .read(moviesApiProvider)
+          .getMovieDetail(movieNumber: movieNumber);
       if (!mounted) {
         return;
       }
@@ -175,9 +175,9 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
       _mediaPointsErrorMessage = null;
     });
     try {
-      final points = await context.read<MediaApi>().getMediaPoints(
-        mediaId: widget.item.mediaId,
-      );
+      final points = await ref
+          .read(mediaApiProvider)
+          .getMediaPoints(mediaId: widget.item.mediaId);
       if (!mounted) {
         return;
       }
@@ -519,7 +519,7 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
     setState(() => _isSavingImage = true);
     try {
       final result = await ImageSaveService(
-        fetchBytes: context.read<ApiClient>().getBytes,
+        fetchBytes: ref.read(apiClientProvider).getBytes,
       ).saveImageFromUrl(
         imageUrl: widget.item.imageUrl,
         fileName: widget.item.fileName,
@@ -550,10 +550,12 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
     try {
       final existingPoint = _existingPoint;
       if (existingPoint == null) {
-        final point = await context.read<MediaApi>().createMediaPoint(
-          mediaId: widget.item.mediaId,
-          thumbnailId: widget.item.thumbnailId,
-        );
+        final point = await ref
+            .read(mediaApiProvider)
+            .createMediaPoint(
+              mediaId: widget.item.mediaId,
+              thumbnailId: widget.item.thumbnailId,
+            );
         if (!mounted) {
           return;
         }
@@ -562,10 +564,12 @@ class _MediaPreviewDialogState extends State<MediaPreviewDialog> {
         });
         showToast('已添加标记');
       } else {
-        await context.read<MediaApi>().deleteMediaPoint(
-          mediaId: widget.item.mediaId,
-          pointId: existingPoint.pointId,
-        );
+        await ref
+            .read(mediaApiProvider)
+            .deleteMediaPoint(
+              mediaId: widget.item.mediaId,
+              pointId: existingPoint.pointId,
+            );
         if (!mounted) {
           return;
         }

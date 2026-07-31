@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -860,7 +860,7 @@ class _ClipEndpointBadge extends StatelessWidget {
 /// 单独起一个测量 provider（与 [MaskedImage] 同 url、同 decode 提示 → 共享解码缓存键，
 /// 不触发额外整图解码），用既有「`ImageStreamListener` 读 `ImageInfo` 真实尺寸」范式
 /// （对齐 `MoviePlotThumbnail`）。blur / 占位 / URL 解析仍全部走 [MaskedImage]。
-class _AdaptiveFitThumbnailImage extends StatefulWidget {
+class _AdaptiveFitThumbnailImage extends ConsumerStatefulWidget {
   const _AdaptiveFitThumbnailImage({
     required this.url,
     required this.memCacheWidth,
@@ -872,12 +872,12 @@ class _AdaptiveFitThumbnailImage extends StatefulWidget {
   final int? memCacheHeight;
 
   @override
-  State<_AdaptiveFitThumbnailImage> createState() =>
+  ConsumerState<_AdaptiveFitThumbnailImage> createState() =>
       _AdaptiveFitThumbnailImageState();
 }
 
 class _AdaptiveFitThumbnailImageState
-    extends State<_AdaptiveFitThumbnailImage> {
+    extends ConsumerState<_AdaptiveFitThumbnailImage> {
   ImageStream? _imageStream;
   ImageStreamListener? _imageStreamListener;
   ImageProvider<Object>? _measureProvider;
@@ -917,7 +917,7 @@ class _AdaptiveFitThumbnailImageState
   }
 
   ImageProvider<Object>? _buildMeasureProvider() {
-    final baseUrl = context.read<SessionStore>().baseUrl;
+    final baseUrl = ref.read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(rawUrl: widget.url, baseUrl: baseUrl);
     if (resolvedUrl == null) {
       // 与 MaskedImage 的 null 处理一致：不测量，由 MaskedImage 自渲占位。

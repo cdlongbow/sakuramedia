@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/config/app_image_config.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
-import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 通用远程图入口（列表/卡片封面/头像等）。
@@ -19,7 +19,7 @@ import 'package:sakuramedia/theme.dart';
 ///
 /// 兼容原 API：`visibleWidthFactor` + `visibleAlignment` 分支保留（hot_reviews 卡片依赖）。
 /// 新增可选 `alignment`——直接传给 `Image.alignment`，用于横图裁竖封面时需要 topCenter 等场景。
-class MaskedImage extends StatefulWidget {
+class MaskedImage extends ConsumerStatefulWidget {
   const MaskedImage({
     super.key,
     required this.url,
@@ -50,10 +50,10 @@ class MaskedImage extends StatefulWidget {
   final int? memCacheHeight;
 
   @override
-  State<MaskedImage> createState() => _MaskedImageState();
+  ConsumerState<MaskedImage> createState() => _MaskedImageState();
 }
 
-class _MaskedImageState extends State<MaskedImage> {
+class _MaskedImageState extends ConsumerState<MaskedImage> {
   /// baseUrl 拼过后的完整 URL；null 表示解析不出可用地址（会走 placeholder）。
   String? _resolvedUrl;
 
@@ -66,23 +66,7 @@ class _MaskedImageState extends State<MaskedImage> {
   int? _lastDecodeWidth;
   int? _lastDecodeHeight;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // baseUrl 可能来自 SessionStore（登录切后端时会变），依赖变更时兜底重算。
-    _rebuildBaseProviderIfNeeded();
-  }
-
-  @override
-  void didUpdateWidget(covariant MaskedImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url) {
-      _rebuildBaseProviderIfNeeded();
-    }
-  }
-
-  void _rebuildBaseProviderIfNeeded() {
-    final baseUrl = context.read<SessionStore>().baseUrl;
+  void _rebuildBaseProviderIfNeeded(String baseUrl) {
     final resolvedUrl = resolveMediaUrl(rawUrl: widget.url, baseUrl: baseUrl);
     if (resolvedUrl == _resolvedUrl) {
       return;
@@ -125,6 +109,8 @@ class _MaskedImageState extends State<MaskedImage> {
 
   @override
   Widget build(BuildContext context) {
+    // baseUrl 细粒度订阅（登录切后端时精准重建）；url/decodeHint 的缓存策略不变。
+    _rebuildBaseProviderIfNeeded(ref.watch(baseUrlProvider));
     if (_baseProvider == null) {
       return const _MaskedImagePlaceholder(icon: Icons.image_outlined);
     }

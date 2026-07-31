@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
@@ -27,7 +27,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_co
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_coordinators.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_readiness.dart';
 
-class MoviePlayerSurface extends StatefulWidget {
+class MoviePlayerSurface extends ConsumerStatefulWidget {
   const MoviePlayerSurface({
     super.key,
     required this.movieNumber,
@@ -73,10 +73,10 @@ class MoviePlayerSurface extends StatefulWidget {
   final MoviePlayerMediaInfo? mediaInfo;
 
   @override
-  State<MoviePlayerSurface> createState() => _MoviePlayerSurfaceState();
+  ConsumerState<MoviePlayerSurface> createState() => _MoviePlayerSurfaceState();
 }
 
-class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
+class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
   late final Player _player;
   late final VideoController _controller;
   late final MoviePlayerSurfaceReadiness _readiness;
@@ -404,7 +404,7 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   }
 
   Future<String> _loadSubtitleText(MoviePlayerSubtitleOption option) async {
-    final apiClient = context.read<ApiClient>();
+    final apiClient = ref.read(apiClientProvider);
     debugPrint(
       '[player-debug] subtitle_text_load_begin subtitleId=${option.subtitleId} url=${option.resolvedUrl}',
     );

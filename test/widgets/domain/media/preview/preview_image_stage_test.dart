@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:provider/provider.dart';
@@ -400,16 +402,19 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        ],
-        child: MaterialApp.router(
-          theme: sakuraThemeData,
-          routerConfig: router,
-          builder:
-              (context, content) =>
-                  AppImageFullscreenHost(child: content ?? const SizedBox()),
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
+          ],
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+            builder:
+                (context, content) =>
+                    AppImageFullscreenHost(child: content ?? const SizedBox()),
+          ),
         ),
       ),
     );
@@ -455,10 +460,8 @@ class _TestApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-      ],
+    return ProviderScope(
+      overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
       child: MaterialApp(
         theme: sakuraThemeData,
         builder:

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -258,14 +259,17 @@ Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) async {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
-    MultiProvider(
-      providers: [
-        Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
-        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
-      ],
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(body: _PickerHarness()),
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MultiProvider(
+        providers: [
+          Provider<MediaImportApi>.value(value: bundle.mediaImportApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: _PickerHarness()),
+        ),
       ),
     ),
   );

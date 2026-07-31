@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
@@ -13,15 +15,18 @@ void main() {
     addTearDown(sessionStore.dispose);
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: PlaylistBannerCard(
-              title: '我的收藏',
-              coverImageUrl: 'https://example.com/cover.jpg',
-              onTap: () {},
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: PlaylistBannerCard(
+                title: '我的收藏',
+                coverImageUrl: 'https://example.com/cover.jpg',
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -40,17 +45,20 @@ void main() {
     addTearDown(sessionStore.dispose);
 
     await tester.pumpWidget(
-      ChangeNotifierProvider<SessionStore>.value(
-        value: sessionStore,
-        child: MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: PlaylistBannerCard(
-              title: '空列表',
-              coverImageUrl: null,
-              onTap: () {
-                tapped = true;
-              },
+      ProviderScope(
+        overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+        child: ChangeNotifierProvider<SessionStore>.value(
+          value: sessionStore,
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: PlaylistBannerCard(
+                title: '空列表',
+                coverImageUrl: null,
+                onTap: () {
+                  tapped = true;
+                },
+              ),
             ),
           ),
         ),

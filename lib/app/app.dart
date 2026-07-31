@@ -49,7 +49,6 @@ import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_playability_change_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
@@ -279,7 +278,6 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider(create: (_) => VideoMutationChangeNotifier()),
         ChangeNotifierProvider(create: (_) => ClipMutationChangeNotifier()),
-        ChangeNotifierProvider(create: (_) => MoviePlayabilityChangeNotifier()),
         // 合集详情页 → 连播页 的一次性成员交接信箱（详情 offer、连播 take），
         // 免去连播页重复全量拉取。无依赖，纯被动存取。
         Provider<CollectionPlaybackHandoff>(

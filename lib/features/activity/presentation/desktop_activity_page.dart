@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/activity/presentation/activity_filter_state
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_pane.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_pane.dart';
+import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/theme.dart';
@@ -27,7 +28,10 @@ import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
 class DesktopActivityPage extends ConsumerStatefulWidget {
-  const DesktopActivityPage({super.key});
+  const DesktopActivityPage({super.key, this.initialDownloadMovieNumber});
+
+  /// 打开后直接定位到「下载任务」tab 并按该番号过滤；null（普通入口）行为不变。
+  final String? initialDownloadMovieNumber;
 
   @override
   ConsumerState<DesktopActivityPage> createState() =>
@@ -75,6 +79,36 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       }
     });
     _controller.initialize();
+    // 订阅卡片跳转进来的下载意图：等首帧后统一走同一路径（切 tab + 应用筛选），
+    // 避免与 _controller.initialize() 的初始化互相踩。
+    if (widget.initialDownloadMovieNumber != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_applyInitialDownloadIntent());
+        }
+      });
+    }
+  }
+
+  /// 消费「打开即看某番号下载任务」的意图：先应用筛选再切 tab，保证
+  /// connectStream 在 _activeFilter 就位后才建立 SSE。
+  Future<void> _applyInitialDownloadIntent() async {
+    final movieNumber = widget.initialDownloadMovieNumber?.trim();
+    if (movieNumber == null || movieNumber.isEmpty) {
+      return;
+    }
+    await ref.read(downloadTaskCenterProvider.notifier).applyFilter(
+      DownloadTaskFilterState(
+        // 用 all 而不是默认 downloading：订阅的 import_failed 档任务往往已下载完成
+        // （download_state=completed/seeding），按 downloading 过滤会把它们滤掉。
+        stateFilter: DownloadTaskStateFilter.all,
+        search: movieNumber,
+      ),
+    );
+    if (!mounted) {
+      return;
+    }
+    _controller.setActiveTab(ActivityTab.downloadTasks);
   }
 
   @override

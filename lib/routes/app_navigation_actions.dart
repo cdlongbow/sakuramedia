@@ -68,6 +68,15 @@ extension AppNavigationActions on BuildContext {
     const DesktopSystemDiagnosticsRouteData().push(this);
   }
 
+  /// 跳转到任务中心的「下载任务」tab，并按指定番号过滤。
+  ///
+  /// 订阅管理页的卡片用它查看该订阅片对应的下载记录；筛选走 query 参数，
+  /// 由 [DesktopActivityPage] 在打开时消费。
+  void goDesktopDownloadTasks({required String movieNumber}) {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    DesktopActivityRouteData(downloadMovieNumber: movieNumber).go(this);
+  }
+
   void pushDesktopMovieSeries({
     required int seriesId,
     String? seriesName,

@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -506,6 +507,8 @@ class _RowConsumer extends ConsumerWidget {
           selectionMode
               ? () => notifier.toggleSelection(item.movieNumber)
               : () => onOpenMovie(context, item.movieNumber),
+      onOpenDownloads: () =>
+          context.goDesktopDownloadTasks(movieNumber: item.movieNumber),
       onResetSearch: () => unawaited(_resetRow(ref, item.movieNumber)),
       onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
     );

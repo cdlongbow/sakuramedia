@@ -35,6 +35,7 @@ class MovieSubscriptionRow extends StatelessWidget {
     required this.isSelected,
     required this.isPending,
     required this.onTap,
+    required this.onOpenDownloads,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
@@ -48,6 +49,9 @@ class MovieSubscriptionRow extends StatelessWidget {
 
   /// 常规态 = 打开影片详情；多选态 = 切换选中。由调用方按 [selectionMode] 决定。
   final VoidCallback onTap;
+
+  /// 跳转到任务中心的下载任务视图，并定位到本订阅片对应番号。
+  final VoidCallback onOpenDownloads;
 
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
@@ -88,6 +92,7 @@ class MovieSubscriptionRow extends StatelessWidget {
             item: item,
             selectionMode: selectionMode,
             isPending: isPending,
+            onOpenDownloads: onOpenDownloads,
             onResetSearch: onResetSearch,
             onUnsubscribe: onUnsubscribe,
           ),
@@ -353,6 +358,7 @@ class _FooterLine extends StatelessWidget {
     required this.item,
     required this.selectionMode,
     required this.isPending,
+    required this.onOpenDownloads,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
@@ -360,6 +366,7 @@ class _FooterLine extends StatelessWidget {
   final MovieSubscriptionListItemDto item;
   final bool selectionMode;
   final bool isPending;
+  final VoidCallback onOpenDownloads;
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
 
@@ -407,6 +414,7 @@ class _FooterLine extends StatelessWidget {
           else
             _RowActions(
               item: item,
+              onOpenDownloads: onOpenDownloads,
               onResetSearch: onResetSearch,
               onUnsubscribe: onUnsubscribe,
             ),
@@ -419,11 +427,13 @@ class _FooterLine extends StatelessWidget {
 class _RowActions extends StatelessWidget {
   const _RowActions({
     required this.item,
+    required this.onOpenDownloads,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
 
   final MovieSubscriptionListItemDto item;
+  final VoidCallback onOpenDownloads;
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
 
@@ -451,6 +461,16 @@ class _RowActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // 查看下载任务：这部订阅片的资源查询走到哪一步，最终都落到下载记录上。
+        // 摆在最左，是对「下载中 / 导入失败」卡片最直接的跟进入口。
+        AppIconButton(
+          key: Key('movie-subscription-row-downloads-${item.movieNumber}'),
+          icon: const Icon(Icons.download_outlined),
+          size: AppIconButtonSize.regular,
+          tooltip: '查看下载任务',
+          semanticLabel: '查看下载任务',
+          onPressed: onOpenDownloads,
+        ),
         // 导入补救出口（Wave 4）：按后端 available_actions 渲染，绝不伪造重试按钮。
         if (importOperation != null && importOperation.canRetryFailedFiles)
           AppIconButton(

@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
+import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/desktop_system_diagnostics_page.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
@@ -371,7 +372,32 @@ class DesktopConfigurationRouteData extends _DesktopShellSpecRouteData
 
 class DesktopActivityRouteData extends _DesktopShellSpecRouteData
     with $DesktopActivityRouteData {
-  const DesktopActivityRouteData() : super(desktopActivityPath);
+  const DesktopActivityRouteData({this.downloadMovieNumber})
+      : super(desktopActivityPath);
+
+  /// 打开任务中心后直接定位到「下载任务」tab 并按番号过滤的意图。
+  /// 走 query 参数而非 path：侧边栏等普通入口不携带，行为与原来一致。
+  final String? downloadMovieNumber;
+
+  @override
+  String get location => buildRouteLocation(
+    path: desktopActivityPath,
+    queryParameters: <String, String?>{
+      'downloadMovieNumber': downloadMovieNumber,
+    },
+  );
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    // 兼容 typed route 新参数名与未来可能的 URL 旧参数名；程序化导航时
+    // 实例字段有值，URL 深链时从 state 读 query。
+    final movieNumber = resolveStringQueryParameter(
+      state,
+      names: const <String>['downloadMovieNumber'],
+      fallback: downloadMovieNumber,
+    );
+    return DesktopActivityPage(initialDownloadMovieNumber: movieNumber);
+  }
 }
 
 class DesktopMediaRouteData extends _DesktopShellSpecRouteData

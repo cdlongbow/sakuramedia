@@ -45,6 +45,7 @@ class DownloadsApi {
         'movie_number': movieNumber,
         'candidate': candidate.toCreatePayloadJson(),
       },
+      receiveTimeout: const Duration(minutes: 2),
     );
     return DownloadRequestResponseDto.fromJson(response);
   }

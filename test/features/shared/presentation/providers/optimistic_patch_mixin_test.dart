@@ -283,6 +283,33 @@ void main() {
     expect(container.read(_toggleProvider), original);
   });
 
+  test('批量 apply 抛异常：与单条对称，走整体失败路径（不冒到调用方）', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await container.read(_toggleProvider.future);
+    final notifier = container.read(_toggleProvider.notifier);
+    final original = container.read(_toggleProvider);
+
+    var actionCalls = 0;
+    final result = await notifier.withBatchOptimisticPatch<int, Set<int>>(
+      keys: const [1, 2],
+      apply: (s, keys) => throw StateError('apply boom'),
+      action: (keys) async {
+        actionCalls++;
+        return keys;
+      },
+      skippedFromResult: (result) => const <int>{},
+      rollback: (current, original, keys) => current.restoreFrom(original, keys),
+    );
+
+    // apply 抛出 → 不冒泡：整批走 total-failure、action 不发出、状态还原。
+    expect(result.isTotalFailure, isTrue);
+    expect(result.errorMessage, contains('apply boom'));
+    expect(result.accepted, isEmpty);
+    expect(actionCalls, 0);
+    expect(container.read(_toggleProvider), original);
+  });
+
   test('批量空 key 集短路：不调 action、不动 state', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);

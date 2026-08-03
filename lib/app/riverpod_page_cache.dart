@@ -17,6 +17,11 @@ class RiverpodPageHandle {
   int _refCount = 1;
 
   /// 当前引用计数：同一 key 被多次 [RiverpodPageCache.obtain] 会累加。
+  ///
+  /// **目前仅供窥视，不参与驱逐决策**——LRU 驱逐只按
+  /// [RiverpodPageCache.maxEntries] 踢最旧条目，不看 refCount；活页面
+  /// （引用计数 > 0）在 25 个之外被驱逐是已知语义局限（继承自
+  /// [AppPageStateCache]），波 B 再决策是否加引用保护。
   int get refCount => _refCount;
 
   /// 页面 dispose 时调用：减引用计数。不减到 0 也**不** close link——
@@ -42,10 +47,56 @@ class RiverpodPageHandle {
 ///
 /// ⚠️ link 的获取（batch 5 波 B 接线用）：riverpod 3.x 的 `ref.keepAlive()`
 /// 只能在本 provider 的 `build` 内调用（返回该 provider 自己的
-/// [KeepAliveLink]），页面侧的 `WidgetRef` 没有该 API——落地范式是业务
-/// provider 在 `build` 首行 `final link = ref.keepAlive();` 并把 link 暴露给
-/// 宿主（放进 State / 伴生 provider），页面再经 [obtain] 的 `resolveLinks`
-/// 闭包收集。本批只提供基建 + 单测，不接业务页。
+/// [KeepAliveLink]），页面侧的 `WidgetRef` 没有该 API。完整接线示例
+/// （notifier 端 + 页面端两端）：
+///
+/// ```dart
+/// // 1) notifier 端：build() 首行同步取 link 并暴露给宿主。
+/// @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+/// class FooList extends _$FooList {
+///   KeepAliveLink? _link;
+///
+///   /// 页面侧经 `ref.read(fooListProvider.notifier).link` 收集进缓存。
+///   KeepAliveLink? get link => _link;
+///
+///   @override
+///   Future<FooListState> build() async {
+///     // 同步首行赋值：即使 build() 后续是 async，link 也在 await 之前就绪，
+///     // 页面在 pending 期也能读到非空 link，不存在时序竞态。
+///     _link = ref.keepAlive();
+///     attachDisposeGuard();
+///     final paged = await loadInitialPage();
+///     return FooListState(paged: paged);
+///   }
+/// }
+///
+/// // 2) 页面端：initState 把 link 塞进缓存，dispose 释放引用。
+/// class _FooListPageState extends ConsumerState<FooListPage> {
+///   RiverpodPageHandle? _handle;
+///
+///   @override
+///   void initState() {
+///     super.initState();
+///     _handle = ref.read(riverpodPageCacheProvider).obtain(
+///           key: 'desktop:foo:list',
+///           resolveLinks: () {
+///             final link = ref.read(fooListProvider.notifier).link;
+///             return link == null
+///                 ? const <KeepAliveLink>[]
+///                 : <KeepAliveLink>[link];
+///           },
+///         );
+///   }
+///
+///   @override
+///   void dispose() {
+///     _handle?.release(); // 只减引用，link 关闭由缓存（驱逐/登出）决定
+///     super.dispose();
+///   }
+/// }
+/// ```
+///
+/// 本批只提供基建 + 单测，不接业务页。
 class RiverpodPageCache extends ChangeNotifier {
   RiverpodPageCache({this.maxEntries = 24});
 

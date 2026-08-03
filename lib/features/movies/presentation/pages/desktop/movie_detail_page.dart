@@ -143,17 +143,24 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
           final isSubscribed = _isSubscribedOverride ?? movie.isSubscribed;
           final isCollection = _isCollectionOverride ?? movie.isCollection;
           final isActionControlsLocked = _isMovieActionLocked;
-          final selectedMedia =
-              mediaItems
-                  .where((item) => item.mediaId == _selectedMediaId)
-                  .firstOrNull ??
-              (mediaItems.isNotEmpty ? mediaItems.first : null);
           final sourceOptions = resolveMoviePlaybackSourceOptions(
             mediaItems: mediaItems,
             storageDescriptors: _controller.storageDescriptors,
           );
           final effectivePlaySource =
               _playSource ?? sourceOptions.defaultSource;
+          // 详情页下方媒体列表按当前播放源过滤,避免用户切了"本地"却仍能点到
+          // 115 媒体、播放失败时收到"115 网盘媒体"文案的歧义。
+          final visibleMediaItems = filterMediaItemsByPlaybackSource(
+            mediaItems: mediaItems,
+            storageDescriptors: _controller.storageDescriptors,
+            source: effectivePlaySource,
+          );
+          final selectedMedia =
+              visibleMediaItems
+                  .where((item) => item.mediaId == _selectedMediaId)
+                  .firstOrNull ??
+              (visibleMediaItems.isNotEmpty ? visibleMediaItems.first : null);
           final mergedPlaybackAvailable =
               isExternalPlayerReady(context) &&
               effectivePlaySource == MoviePlayUrlSource.local &&
@@ -163,7 +170,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             builder: (context, child) {
               return MovieDetailPageContent(
                 movie: movie,
-                mediaItemsOverride: mediaItems,
+                mediaItemsOverride: visibleMediaItems,
                 storageDescriptors: _controller.storageDescriptors,
                 selectedPreviewKey: _controller.selectedPreviewKey,
                 selectedPreviewUrl: _controller.selectedPreviewUrl,

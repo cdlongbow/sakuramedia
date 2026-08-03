@@ -134,6 +134,90 @@ void main() {
     });
   });
 
+  group('filterMediaItemsByPlaybackSource', () {
+    test('keeps only local media when source is local', () {
+      final mediaItems = <MovieMediaItemDto>[
+        media(mediaId: 1, libraryId: 1),
+        media(mediaId: 2, libraryId: 2),
+        media(mediaId: 3, libraryId: 1),
+      ];
+
+      final result = filterMediaItemsByPlaybackSource(
+        mediaItems: mediaItems,
+        storageDescriptors: storageDescriptors,
+        source: MoviePlayUrlSource.local,
+      );
+
+      expect(result.map((item) => item.mediaId), <int>[1, 3]);
+    });
+
+    test('keeps only cloud115 media when source is cloud115', () {
+      final mediaItems = <MovieMediaItemDto>[
+        media(mediaId: 1, libraryId: 1),
+        media(mediaId: 2, libraryId: 2),
+      ];
+
+      final result = filterMediaItemsByPlaybackSource(
+        mediaItems: mediaItems,
+        storageDescriptors: storageDescriptors,
+        source: MoviePlayUrlSource.cloud115,
+      );
+
+      expect(result.map((item) => item.mediaId), <int>[2]);
+    });
+
+    test('excludes orphan media in both source views', () {
+      final orphan = MovieMediaItemDto(
+        mediaId: 99,
+        libraryId: null,
+        playUrl: '/media/99/stream?expires=1&signature=x',
+        storageMode: 'copy',
+        resolution: '1920x1080',
+        fileSizeBytes: 1024,
+        durationSeconds: 3600,
+        specialTags: '孤儿',
+        valid: true,
+        progress: null,
+        points: const <MovieMediaPointDto>[],
+        videoInfo: null,
+      );
+      final mediaItems = <MovieMediaItemDto>[
+        media(mediaId: 1, libraryId: 1),
+        orphan,
+        media(mediaId: 2, libraryId: 2),
+      ];
+
+      final localOnly = filterMediaItemsByPlaybackSource(
+        mediaItems: mediaItems,
+        storageDescriptors: storageDescriptors,
+        source: MoviePlayUrlSource.local,
+      );
+      final cloudOnly = filterMediaItemsByPlaybackSource(
+        mediaItems: mediaItems,
+        storageDescriptors: storageDescriptors,
+        source: MoviePlayUrlSource.cloud115,
+      );
+
+      expect(localOnly.map((item) => item.mediaId), <int>[1]);
+      expect(cloudOnly.map((item) => item.mediaId), <int>[2]);
+    });
+
+    test('returns original list when source is null (fallback)', () {
+      final mediaItems = <MovieMediaItemDto>[
+        media(mediaId: 1, libraryId: 1),
+        media(mediaId: 2, libraryId: 2),
+      ];
+
+      final result = filterMediaItemsByPlaybackSource(
+        mediaItems: mediaItems,
+        storageDescriptors: storageDescriptors,
+        source: null,
+      );
+
+      expect(result, same(mediaItems));
+    });
+  });
+
   group('MoviePlaybackOptionsBar', () {
     testWidgets('hides entirely when single source and no merge', (
       WidgetTester tester,

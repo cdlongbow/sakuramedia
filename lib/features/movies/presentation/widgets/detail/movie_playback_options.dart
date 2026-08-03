@@ -87,3 +87,27 @@ int? resolveFirstPlayableMediaId({
   }
   return null;
 }
+
+/// 按当前播放源过滤 media 列表。source 为 `null` 时不过滤（兜底整片无可播源
+/// 的场景，避免列表空掉）；孤儿/未知归属媒体（`libraryId == null` 或库不在
+/// [storageDescriptors] 里）严格排除,不在任一源视图出现,避免"选了本地却看到
+/// 不明媒体"的歧义。
+List<MovieMediaItemDto> filterMediaItemsByPlaybackSource({
+  required List<MovieMediaItemDto> mediaItems,
+  required Map<int, MediaStorageDescriptor> storageDescriptors,
+  required MoviePlayUrlSource? source,
+}) {
+  if (source == null) {
+    return mediaItems;
+  }
+  return mediaItems.where((item) {
+    final storage = resolveMediaStorageDescriptor(
+      item.libraryId,
+      storageDescriptors,
+    );
+    return switch (source) {
+      MoviePlayUrlSource.local => storage.isLocal,
+      MoviePlayUrlSource.cloud115 => storage.isCloud115,
+    };
+  }).toList(growable: false);
+}

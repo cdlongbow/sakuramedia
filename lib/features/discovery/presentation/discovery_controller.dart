@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
-import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 
 class DiscoveryController extends ChangeNotifier {
   DiscoveryController({

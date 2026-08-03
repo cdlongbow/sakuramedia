@@ -1,5 +1,5 @@
 import 'package:sakuramedia/core/format/image_file_extension.dart';
-import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 
 String resolveMomentImageUrl(MomentListItem item) {
   final image = item.image;

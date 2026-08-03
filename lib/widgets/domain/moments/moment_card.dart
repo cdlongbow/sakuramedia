@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
-import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 

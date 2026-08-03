@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 /// 批量乐观更新 + 回滚的结果，业务侧决定广播与文案：
 /// - [accepted]：请求发出且后端接受（未在 skipped 里）的 key 集。
@@ -55,7 +55,7 @@ class BatchOptimisticResult<K> {
 /// 4. **「已达目标态不广播」责任下推**：抽象层不做过滤，业务方用
 ///    `result.accepted.intersection(patchedKeys)` 过滤要广播的 key（patchedKeys
 ///    在 apply 闭包里自行收集，参照本仓库测试范式）。
-mixin OptimisticPatchMixin<S extends Object> on AsyncNotifier<S> {
+mixin OptimisticPatchMixin<S extends Object> on $AsyncNotifier<S> {
   final Set<Object> _inFlight = <Object>{};
 
   /// 该 key 是否正处于一次 in-flight 操作中。

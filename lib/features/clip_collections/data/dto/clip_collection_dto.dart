@@ -37,12 +37,16 @@ class ClipCollectionDto {
     );
   }
 
-  ClipCollectionDto copyWith({String? name, String? description}) {
+  ClipCollectionDto copyWith({
+    String? name,
+    String? description,
+    int? clipCount,
+  }) {
     return ClipCollectionDto(
       id: id,
       name: name ?? this.name,
       description: description ?? this.description,
-      clipCount: clipCount,
+      clipCount: clipCount ?? this.clipCount,
       coverImage: coverImage,
       createdAt: createdAt,
       updatedAt: updatedAt,

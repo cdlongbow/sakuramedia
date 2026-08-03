@@ -2,41 +2,40 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clips_overview_controller.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
-
-import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 
 /// 概览页「切片」tab：上方「我的合集」横滑区 + 下方「全部切片」网格。
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
-
 ///
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
-
-/// 数据层与桌面 `DesktopClipsPage` 完全一致（复用同一组 controller 与 mutation
+/// 数据层与桌面 `DesktopClipsPage` 完全一致（复用同一组 provider 与 mutation
 /// 广播），仅在布局上改为移动端竖屏网格 + 底部抽屉形态的编辑交互；长按切片卡进入
 /// 多选模式，支持批量加入合集 / 删除（与移动 PornBox 对齐）。
 class MobileOverviewClipsTab extends ConsumerStatefulWidget {
@@ -49,56 +48,28 @@ class MobileOverviewClipsTab extends ConsumerStatefulWidget {
 
 class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     with MultiSelectStateMixin<MobileOverviewClipsTab, int> {
-  late final ClipsOverviewController _clipsController;
-  late final ClipCollectionsOverviewController _collectionsController;
-  late final ClipMutationChangeNotifier _mutationNotifier;
   final ScrollController _scrollController = ScrollController();
   bool _railRefreshScheduled = false;
-
-  Listenable get _pageListenable =>
-      Listenable.merge(<Listenable>[_clipsController, _collectionsController]);
 
   @override
   void initState() {
     super.initState();
-    final clipsApi = ref.read(clipsApiProvider);
-    final collectionsApi = ref.read(clipCollectionsApiProvider);
-    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
-    _clipsController = ClipsOverviewController(
-      fetchClips:
-          ({
-            int page = 1,
-            int pageSize = 24,
-            String sort = 'created_at:desc',
-          }) => clipsApi.getMyClips(page: page, pageSize: pageSize, sort: sort),
-    )..load();
-    _collectionsController = ClipCollectionsOverviewController(
-      fetchCollections: collectionsApi.getCollections,
-    )..load();
     _scrollController.addListener(_onScroll);
-    _mutationNotifier.addListener(_onMutation);
   }
 
   @override
   void dispose() {
-    _mutationNotifier.removeListener(_onMutation);
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
-    _clipsController.dispose();
-    _collectionsController.dispose();
     super.dispose();
   }
 
   /// 删除 / 合集成员变化都可能改变合集横滑区的封面与计数；用微任务合并一轮内多次
   /// 信号成一次刷新。切片本身被删除时再从「全部切片」网格精准移除。
-  void _onMutation() {
-    final change = _mutationNotifier.lastChange;
-    if (change == null) {
-      return;
-    }
+  void _onMutation(ClipMutationChange change) {
     if (change.kind == ClipMutationKind.deleted && change.clipId != null) {
-      _clipsController.removeClip(change.clipId!);
+      ref.read(clipsOverviewProvider.notifier).removeClip(change.clipId!);
     }
     if (_railRefreshScheduled) {
       return;
@@ -109,7 +80,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       if (!mounted) {
         return;
       }
-      _collectionsController.refresh();
+      unawaited(
+        ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
+      );
     });
   }
 
@@ -118,59 +91,85 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       return;
     }
     final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 320) {
-      _clipsController.loadMore();
+    if (position.pixels < position.maxScrollExtent - 320) {
+      return;
+    }
+    final paged = ref.read(clipsOverviewProvider).value?.paged;
+    if (paged != null && paged.loadMoreErrorMessage == null) {
+      unawaited(ref.read(clipsOverviewProvider.notifier).loadMore());
     }
   }
 
   Future<void> _refresh() async {
     await Future.wait<void>([
-      _clipsController.refresh(),
-      _collectionsController.refresh(),
+      ref.read(clipsOverviewProvider.notifier).refresh(),
+      ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
     ]);
   }
 
-  List<MediaClipDto> _selectedClips() => _clipsController.clips
-      .where((c) => isSelected(c.clipId))
-      .toList(growable: false);
+  List<MediaClipDto> _selectedClips() {
+    final clips =
+        ref.read(clipsOverviewProvider).value?.paged.items ??
+            const <MediaClipDto>[];
+    return clips.where((c) => isSelected(c.clipId)).toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pageListenable,
-      builder: (context, _) {
-        return Column(
-          children: [
-            if (selectionMode) _buildSelectionBar(context),
-            Expanded(
-              child: AppAdaptiveRefreshScrollView(
-                key: const Key('mobile-clips-tab-scroll'),
-                controller: _scrollController,
-                onRefresh: _refresh,
-                slivers: <Widget>[
-                  // 选择模式下隐藏合集横滑区，只剩切片网格，与移动 PornBox 一致。
-                  if (!selectionMode)
-                    SliverToBoxAdapter(
-                      child: _buildCollectionsSection(context),
-                    ),
-                  SliverToBoxAdapter(child: _buildClipsHeader(context)),
-                  _buildClipsSliver(context),
-                  SliverToBoxAdapter(child: _buildFooter(context)),
-                ],
-              ),
-            ),
-            if (selectionMode) _buildBatchBar(context),
-          ],
-        );
+    ref.listen<AsyncValue<ClipMutationChange>>(
+      clipMutationEventsProvider,
+      (previous, next) {
+        final change = next.value;
+        if (change != null) {
+          _onMutation(change);
+        }
       },
+    );
+
+    final clipsAsync = ref.watch(clipsOverviewProvider);
+    final collectionsAsync = ref.watch(clipCollectionsOverviewProvider);
+    final clipsState = clipsAsync.value;
+    final clips = clipsState?.paged.items ?? const <MediaClipDto>[];
+
+    return Column(
+      children: [
+        if (selectionMode) _buildSelectionBar(context, clips),
+        Expanded(
+          child: AppAdaptiveRefreshScrollView(
+            key: const Key('mobile-clips-tab-scroll'),
+            controller: _scrollController,
+            onRefresh: _refresh,
+            slivers: <Widget>[
+              // 选择模式下隐藏合集横滑区，只剩切片网格，与移动 PornBox 一致。
+              if (!selectionMode)
+                SliverToBoxAdapter(
+                  child: _buildCollectionsSection(
+                    context,
+                    collectionsAsync,
+                  ),
+                ),
+              SliverToBoxAdapter(child: _buildClipsHeader(context, clips)),
+              _buildClipsSliver(context, clipsAsync, clips),
+              SliverToBoxAdapter(
+                child: _buildFooter(context, clipsState?.paged),
+              ),
+            ],
+          ),
+        ),
+        if (selectionMode) _buildBatchBar(context),
+      ],
     );
   }
 
   // ----------------------------------------------------------- 合集区
 
-  Widget _buildCollectionsSection(BuildContext context) {
+  Widget _buildCollectionsSection(
+    BuildContext context,
+    AsyncValue<List<ClipCollectionDto>> collectionsAsync,
+  ) {
     final spacing = context.appSpacing;
-    final collections = _collectionsController.collections;
+    final collections =
+        collectionsAsync.value ?? const <ClipCollectionDto>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -205,7 +204,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
           ],
         ),
         SizedBox(height: spacing.sm),
-        _buildCollectionsRow(context, collections),
+        _buildCollectionsRow(context, collectionsAsync, collections),
         SizedBox(height: spacing.lg),
       ],
     );
@@ -213,12 +212,18 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   Widget _buildCollectionsRow(
     BuildContext context,
+    AsyncValue<List<ClipCollectionDto>> collectionsAsync,
     List<ClipCollectionDto> collections,
   ) {
-    if (_collectionsController.errorMessage != null) {
-      return _HintBox(message: _collectionsController.errorMessage!);
+    if (collectionsAsync.hasError && collections.isEmpty) {
+      return _HintBox(
+        message: apiErrorMessage(
+          collectionsAsync.error!,
+          fallback: '合集暂时无法加载，请稍后重试',
+        ),
+      );
     }
-    if (_collectionsController.isLoading && collections.isEmpty) {
+    if (collectionsAsync.isLoading && collections.isEmpty) {
       return const SizedBox(
         height: 60,
         child: Center(child: CircularProgressIndicator()),
@@ -255,9 +260,14 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   // ----------------------------------------------------------- 切片区
 
-  Widget _buildClipsHeader(BuildContext context) {
+  Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
     final spacing = context.appSpacing;
-    final hasClips = _clipsController.clips.isNotEmpty;
+    final hasClips = clips.isNotEmpty;
+    final currentSort = ref.watch(
+      clipsOverviewProvider.select(
+        (async) => async.value?.filter.sort ?? ClipsFilter.defaultSort,
+      ),
+    );
     return Padding(
       padding: EdgeInsets.only(bottom: spacing.sm),
       child: Row(
@@ -277,6 +287,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             actionKey: const Key('mobile-clips-sort-latest'),
             label: '最新',
             sort: 'created_at:desc',
+            currentSort: currentSort,
           ),
           SizedBox(width: spacing.sm),
           _buildSortAction(
@@ -284,6 +295,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             actionKey: const Key('mobile-clips-sort-earliest'),
             label: '最早',
             sort: 'created_at:asc',
+            currentSort: currentSort,
           ),
           if (!selectionMode && hasClips) ...[
             SizedBox(width: spacing.sm),
@@ -305,18 +317,24 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     required Key actionKey,
     required String label,
     required String sort,
+    required String currentSort,
   }) {
     return AppTextButton(
       key: actionKey,
       label: label,
       size: AppTextButtonSize.xSmall,
-      isSelected: _clipsController.sort == sort,
-      onPressed: () => _clipsController.setSort(sort),
+      isSelected: currentSort == sort,
+      onPressed: () =>
+          unawaited(ref.read(clipsOverviewProvider.notifier).applySort(sort)),
     );
   }
 
-  Widget _buildClipsSliver(BuildContext context) {
-    if (_clipsController.isLoading && _clipsController.clips.isEmpty) {
+  Widget _buildClipsSliver(
+    BuildContext context,
+    AsyncValue<Object?> clipsAsync,
+    List<MediaClipDto> clips,
+  ) {
+    if (clipsAsync.isLoading && clips.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -331,16 +349,19 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         ),
       );
     }
-    if (_clipsController.errorMessage != null &&
-        _clipsController.clips.isEmpty) {
+    if (clipsAsync.hasError && clips.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
-          child: AppEmptyState(message: _clipsController.errorMessage!),
+          child: AppEmptyState(
+            message: apiErrorMessage(
+              clipsAsync.error!,
+              fallback: '切片暂时无法加载，请稍后重试',
+            ),
+          ),
         ),
       );
     }
-    final clips = _clipsController.clips;
     if (clips.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(
@@ -393,8 +414,8 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     return math.max(2, math.min(4, columns));
   }
 
-  Widget _buildFooter(BuildContext context) {
-    if (_clipsController.loadMoreErrorMessage != null) {
+  Widget _buildFooter(BuildContext context, PagedListState<MediaClipDto>? paged) {
+    if (paged?.loadMoreErrorMessage != null) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
         child: Center(
@@ -403,12 +424,13 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             label: '加载更多失败，点击重试',
             variant: AppButtonVariant.secondary,
             size: AppButtonSize.small,
-            onPressed: _clipsController.loadMore,
+            onPressed: () =>
+                unawaited(ref.read(clipsOverviewProvider.notifier).loadMore()),
           ),
         ),
       );
     }
-    if (_clipsController.isLoadingMore) {
+    if (paged?.isLoadingMore ?? false) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
         child: const Center(
@@ -425,10 +447,10 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   // ----------------------------------------------------------- 选择栏
 
-  Widget _buildSelectionBar(BuildContext context) {
+  Widget _buildSelectionBar(BuildContext context, List<MediaClipDto> clips) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
-    final clipIds = _clipsController.clips.map((c) => c.clipId);
+    final clipIds = clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     return Container(
       padding: EdgeInsets.symmetric(
@@ -555,7 +577,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       final updated = await ref
           .read(clipsApiProvider)
           .updateClipTitle(clipId: clip.clipId, title: newTitle);
-      _clipsController.replaceClip(updated);
+      ref.read(clipsOverviewProvider.notifier).replaceClip(updated);
       if (mounted) {
         showToast('已重命名');
       }
@@ -579,7 +601,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     }
     try {
       await ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId);
-      _mutationNotifier.reportDeleted(clip.clipId);
+      ref.read(clipMutationBroadcasterProvider).reportDeleted(clip.clipId);
       if (mounted) {
         showToast('已删除切片');
       }
@@ -597,7 +619,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted) {
       return;
     }
-    _mutationNotifier.reportCollectionMembershipChanged(clipId: clip.clipId);
+    ref
+        .read(clipMutationBroadcasterProvider)
+        .reportCollectionMembershipChanged(clipId: clip.clipId);
   }
 
   Future<void> _createCollection() async {
@@ -608,7 +632,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted || created == null) {
       return;
     }
-    _collectionsController.insertCollection(created);
+    ref.read(clipCollectionsOverviewProvider.notifier).insertCollection(created);
     showToast('已创建合集');
   }
 
@@ -654,8 +678,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted) {
       return;
     }
+    final broadcaster = ref.read(clipMutationBroadcasterProvider);
     for (final clip in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      broadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
         collectionId: target.id,
       );
@@ -690,8 +715,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted) {
       return;
     }
+    final broadcaster = ref.read(clipMutationBroadcasterProvider);
     for (final clip in result.succeeded) {
-      _mutationNotifier.reportDeleted(clip.clipId);
+      broadcaster.reportDeleted(clip.clipId);
     }
     _showBatchToast('删除', result);
     exitSelection();

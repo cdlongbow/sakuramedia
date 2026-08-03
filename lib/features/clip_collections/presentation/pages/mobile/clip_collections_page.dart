@@ -1,23 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 /// 移动端切片合集列表页：全部合集网格 + 新建 / 编辑 / 删除（编辑与确认走底部抽屉）。
 class MobileClipCollectionsPage extends ConsumerStatefulWidget {
@@ -30,31 +30,11 @@ class MobileClipCollectionsPage extends ConsumerStatefulWidget {
 
 class _MobileClipCollectionsPageState
     extends ConsumerState<MobileClipCollectionsPage> {
-  late final ClipCollectionsOverviewController _controller;
-  late final ClipMutationChangeNotifier _mutationNotifier;
   bool _refreshScheduled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final api = ref.read(clipCollectionsApiProvider);
-    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
-    _controller = ClipCollectionsOverviewController(
-      fetchCollections: api.getCollections,
-    )..load();
-    _mutationNotifier.addListener(_onMutation);
-  }
-
-  @override
-  void dispose() {
-    _mutationNotifier.removeListener(_onMutation);
-    _controller.dispose();
-    super.dispose();
-  }
 
   /// 详情页（压在本页之上）增删 / 改名后，合集卡的封面、计数、名称可能变化；
   /// 用微任务合并一轮内的多次信号成一次整列表刷新。
-  void _onMutation() {
+  void _onMutation(ClipMutationChange _) {
     if (_refreshScheduled) {
       return;
     }
@@ -64,21 +44,34 @@ class _MobileClipCollectionsPageState
       if (!mounted) {
         return;
       }
-      _controller.refresh();
+      unawaited(
+        ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<ClipMutationChange>>(
+      clipMutationEventsProvider,
+      (previous, next) {
+        final change = next.value;
+        if (change != null) {
+          _onMutation(change);
+        }
+      },
+    );
+
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final async = ref.watch(clipCollectionsOverviewProvider);
 
     return ColoredBox(
       key: const Key('mobile-clip-collections-page'),
       color: colors.surfaceCard,
       child: Column(
         children: [
-          Expanded(child: _buildBody(context)),
+          Expanded(child: _buildBody(context, async)),
           Container(
             padding: EdgeInsets.all(spacing.md),
             decoration: BoxDecoration(
@@ -101,63 +94,67 @@ class _MobileClipCollectionsPageState
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        if (_controller.isLoading) {
-          return const AppMobileSkeletonList(
-            key: Key('mobile-clip-collections-loading'),
-          );
-        }
-        final spacing = context.appSpacing;
-        final collections = _controller.collections;
-        return AppAdaptiveRefreshScrollView(
-          key: const Key('mobile-clip-collections-scroll'),
-          onRefresh: _controller.refresh,
-          slivers: <Widget>[
-            if (_controller.errorMessage != null)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: AppEmptyState(message: _controller.errorMessage!),
-              )
-            else if (collections.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
-              )
-            else
-              SliverPadding(
-                // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
-                padding: EdgeInsets.symmetric(vertical: spacing.md),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    mainAxisSpacing: spacing.md,
-                    crossAxisSpacing: spacing.sm,
-                    // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
-                    // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
-                    // 贴合内容，对齐桌面合集卡的紧凑观感（此前 1.05 会留 ~30px 底部空白）。
-                    childAspectRatio: 1.25,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final collection = collections[index];
-                    return CollectionCard.clip(
-                      key: Key('mobile-clip-collection-card-${collection.id}'),
-                      collection: collection,
-                      onTap:
-                          () => MobileClipCollectionDetailRouteData(
-                            collectionId: collection.id,
-                          ).push(context),
-                      onEdit: () => _editCollection(collection),
-                      onDelete: () => _deleteCollection(collection),
-                    );
-                  }, childCount: collections.length),
-                ),
+  Widget _buildBody(
+    BuildContext context,
+    AsyncValue<List<ClipCollectionDto>> async,
+  ) {
+    if (async.isLoading && async.value == null) {
+      return const AppMobileSkeletonList(
+        key: Key('mobile-clip-collections-loading'),
+      );
+    }
+    final spacing = context.appSpacing;
+    final collections = async.value ?? const <ClipCollectionDto>[];
+    return AppAdaptiveRefreshScrollView(
+      key: const Key('mobile-clip-collections-scroll'),
+      onRefresh:
+          ref.read(clipCollectionsOverviewProvider.notifier).refresh,
+      slivers: <Widget>[
+        if (async.hasError && collections.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(
+              message: apiErrorMessage(
+                async.error!,
+                fallback: '合集暂时无法加载，请稍后重试',
               ),
-          ],
-        );
-      },
+            ),
+          )
+        else if (collections.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+          )
+        else
+          SliverPadding(
+            // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
+            padding: EdgeInsets.symmetric(vertical: spacing.md),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                mainAxisSpacing: spacing.md,
+                crossAxisSpacing: spacing.sm,
+                // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
+                // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
+                // 贴合内容，对齐桌面合集卡的紧凑观感（此前 1.05 会留 ~30px 底部空白）。
+                childAspectRatio: 1.25,
+              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final collection = collections[index];
+                return CollectionCard.clip(
+                  key: Key('mobile-clip-collection-card-${collection.id}'),
+                  collection: collection,
+                  onTap:
+                      () => MobileClipCollectionDetailRouteData(
+                        collectionId: collection.id,
+                      ).push(context),
+                  onEdit: () => _editCollection(collection),
+                  onDelete: () => _deleteCollection(collection),
+                );
+              }, childCount: collections.length),
+            ),
+          ),
+      ],
     );
   }
 
@@ -169,7 +166,7 @@ class _MobileClipCollectionsPageState
     if (!mounted || created == null) {
       return;
     }
-    _controller.insertCollection(created);
+    ref.read(clipCollectionsOverviewProvider.notifier).insertCollection(created);
     showToast('已创建合集');
   }
 
@@ -182,7 +179,9 @@ class _MobileClipCollectionsPageState
     if (!mounted || updated == null) {
       return;
     }
-    _controller.replaceCollection(updated);
+    ref
+        .read(clipCollectionsOverviewProvider.notifier)
+        .replaceCollection(updated);
     showToast('已保存');
   }
 
@@ -206,7 +205,9 @@ class _MobileClipCollectionsPageState
       await ref
           .read(clipCollectionsApiProvider)
           .deleteCollection(collectionId: collection.id);
-      _controller.removeCollection(collection.id);
+      ref
+          .read(clipCollectionsOverviewProvider.notifier)
+          .removeCollection(collection.id);
       if (mounted) {
         showToast('已删除合集');
       }

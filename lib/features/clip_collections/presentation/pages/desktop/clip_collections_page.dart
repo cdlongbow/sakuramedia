@@ -1,21 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collections_overview_controller.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/widgets/clip_collection_delete_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/widgets/clip_collection_delete_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 /// 切片合集列表页：全部合集网格 + 新建 / 编辑 / 删除。
@@ -29,31 +29,11 @@ class DesktopClipCollectionsPage extends ConsumerStatefulWidget {
 
 class _DesktopClipCollectionsPageState
     extends ConsumerState<DesktopClipCollectionsPage> {
-  late final ClipCollectionsOverviewController _controller;
-  late final ClipMutationChangeNotifier _mutationNotifier;
   bool _refreshScheduled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final api = ref.read(clipCollectionsApiProvider);
-    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
-    _controller = ClipCollectionsOverviewController(
-      fetchCollections: api.getCollections,
-    )..load();
-    _mutationNotifier.addListener(_onMutation);
-  }
-
-  @override
-  void dispose() {
-    _mutationNotifier.removeListener(_onMutation);
-    _controller.dispose();
-    super.dispose();
-  }
 
   /// 详情页（压在本页之上）增删 / 拖序 / 改名后，合集卡的封面、计数、名称可能变化；
   /// 用微任务合并一轮内的多次信号成一次整列表刷新。
-  void _onMutation() {
+  void _onMutation(ClipMutationChange _) {
     if (_refreshScheduled) {
       return;
     }
@@ -63,54 +43,67 @@ class _DesktopClipCollectionsPageState
       if (!mounted) {
         return;
       }
-      _controller.refresh();
+      unawaited(
+        ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<ClipMutationChange>>(
+      clipMutationEventsProvider,
+      (previous, next) {
+        final change = next.value;
+        if (change != null) {
+          _onMutation(change);
+        }
+      },
+    );
+
+    final async = ref.watch(clipCollectionsOverviewProvider);
+    final notifier = ref.read(clipCollectionsOverviewProvider.notifier);
+
     return AppPageRefreshScope(
-      onRefresh: _controller.refresh,
+      onRefresh: notifier.refresh,
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      '切片合集',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s18,
-                        weight: AppTextWeight.semibold,
-                        tone: AppTextTone.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    AppTextButton(
-                      key: const Key('clip-collections-create-button'),
-                      label: '新建合集',
-                      size: AppTextButtonSize.small,
-                      onPressed: _createCollection,
-                    ),
-                  ],
+                Text(
+                  '切片合集',
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s18,
+                    weight: AppTextWeight.semibold,
+                    tone: AppTextTone.primary,
+                  ),
                 ),
-                SizedBox(height: context.appSpacing.lg),
-                Expanded(child: _buildBody(context)),
+                const Spacer(),
+                AppTextButton(
+                  key: const Key('clip-collections-create-button'),
+                  label: '新建合集',
+                  size: AppTextButtonSize.small,
+                  onPressed: _createCollection,
+                ),
               ],
-            );
-          },
+            ),
+            SizedBox(height: context.appSpacing.lg),
+            Expanded(child: _buildBody(context, async)),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_controller.isLoading) {
+  Widget _buildBody(
+    BuildContext context,
+    AsyncValue<List<ClipCollectionDto>> async,
+  ) {
+    if (async.isLoading && async.value == null) {
       return const Center(
         child: SizedBox(
           key: Key('clip-collections-loading'),
@@ -120,10 +113,15 @@ class _DesktopClipCollectionsPageState
         ),
       );
     }
-    if (_controller.errorMessage != null) {
-      return AppEmptyState(message: _controller.errorMessage!);
+    if (async.hasError && async.value == null) {
+      return AppEmptyState(
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '合集暂时无法加载，请稍后重试',
+        ),
+      );
     }
-    final collections = _controller.collections;
+    final collections = async.value ?? const <ClipCollectionDto>[];
     if (collections.isEmpty) {
       return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
     }
@@ -160,7 +158,7 @@ class _DesktopClipCollectionsPageState
     if (!mounted || created == null) {
       return;
     }
-    _controller.insertCollection(created);
+    ref.read(clipCollectionsOverviewProvider.notifier).insertCollection(created);
     showToast('已创建合集');
   }
 
@@ -172,7 +170,9 @@ class _DesktopClipCollectionsPageState
     if (!mounted || updated == null) {
       return;
     }
-    _controller.replaceCollection(updated);
+    ref
+        .read(clipCollectionsOverviewProvider.notifier)
+        .replaceCollection(updated);
     showToast('已保存');
   }
 
@@ -188,7 +188,9 @@ class _DesktopClipCollectionsPageState
       await ref
           .read(clipCollectionsApiProvider)
           .deleteCollection(collectionId: collection.id);
-      _controller.removeCollection(collection.id);
+      ref
+          .read(clipCollectionsOverviewProvider.notifier)
+          .removeCollection(collection.id);
       if (mounted) {
         showToast('已删除合集');
       }

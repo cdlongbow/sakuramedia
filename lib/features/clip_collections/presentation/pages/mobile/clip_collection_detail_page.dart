@@ -1,15 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
-import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collection_detail_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collection_detail_state.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/controllers/clip_collection_detail_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
@@ -17,21 +15,25 @@ import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutatio
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
-import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
+import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
 /// 合集详情的切片排布方式：纵向列表或网格（侧重浏览）。
 enum _ClipLayout { list, grid }
@@ -57,8 +59,6 @@ class MobileClipCollectionDetailPage extends ConsumerStatefulWidget {
 class _MobileClipCollectionDetailPageState
     extends ConsumerState<MobileClipCollectionDetailPage>
     with MultiSelectStateMixin<MobileClipCollectionDetailPage, int> {
-  late final ClipCollectionDetailController _controller;
-  late final ClipMutationChangeNotifier _mutationNotifier;
   _ClipLayout _layout = _ClipLayout.grid;
 
   void _toggleLayout() {
@@ -68,52 +68,50 @@ class _MobileClipCollectionDetailPageState
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _mutationNotifier = ref.read(clipMutationBroadcasterProvider);
-    _controller = ClipCollectionDetailController(
-      collectionId: widget.collectionId,
-      api: ref.read(clipCollectionsApiProvider),
-      clipsApi: ref.read(clipsApiProvider),
-    )..load();
-  }
+  ClipCollectionDetailProvider get _providerRef =>
+      clipCollectionDetailProvider(widget.collectionId);
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  ClipMutationChangeNotifier get _mutationBroadcaster =>
+      ref.read(clipMutationBroadcasterProvider);
 
   @override
   Widget build(BuildContext context) {
+    final async = ref.watch(_providerRef);
+    final state = async.value;
+
     return ColoredBox(
       color: context.appColors.surfaceCard,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          if (_controller.isLoading && _controller.collection == null) {
+      child: Builder(
+        builder: (context) {
+          if (async.isLoading && state == null) {
             return const AppMobileSkeletonList(
               key: Key('mobile-clip-collection-detail-loading'),
             );
           }
-          if (_controller.errorMessage != null &&
-              _controller.collection == null) {
-            return AppEmptyState(message: _controller.errorMessage!);
+          if (async.hasError && state == null) {
+            return AppEmptyState(
+              message: apiErrorMessage(
+                async.error!,
+                fallback: '合集详情暂时无法加载，请稍后重试',
+              ),
+            );
+          }
+          if (state == null) {
+            return const SizedBox.shrink();
           }
           // 合集名报给外层返回栏（见 AppMobileSubpageTitle），页面内不再重复写
           // 一遍标题——窄屏上标题块会把列表压得很靠下。
-          _reportTitleToShell();
+          _reportTitleToShell(state.collection);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (selectionMode)
-                _buildSelectionHeader(context)
+                _buildSelectionHeader(context, state)
               else
-                _buildListHeader(context),
+                _buildListHeader(context, state),
               SizedBox(height: context.appSpacing.md),
-              Expanded(child: _buildClips(context)),
-              if (selectionMode) _buildBatchBar(context),
+              Expanded(child: _buildClips(context, state)),
+              if (selectionMode) _buildBatchBar(context, state),
             ],
           );
         },
@@ -123,9 +121,9 @@ class _MobileClipCollectionDetailPageState
 
   /// 把合集名报给外层返回栏。数据是异步来的，所以用 post-frame 回调写——直接在
   /// build 里改 notifier 会触发 build-during-build。
-  void _reportTitleToShell() {
-    final name = _controller.collection?.name.trim();
-    if (name == null || name.isEmpty) {
+  void _reportTitleToShell(ClipCollectionDto collection) {
+    final name = collection.name.trim();
+    if (name.isEmpty) {
       return;
     }
     final notifier = AppMobileSubpageTitle.read(context);
@@ -143,10 +141,12 @@ class _MobileClipCollectionDetailPageState
   ///
   /// **本页没有筛选维度**（切片合集是手动顺序，没有排序参数），所以不接筛选入口。
   /// 「选择」也不进操作槽——移动端长按卡片即可进多选，顶栏不必常驻这个入口。
-  Widget _buildListHeader(BuildContext context) {
-    final collection = _controller.collection;
-    final count = collection?.clipCount ?? _controller.clips.length;
-    final hasClips = _controller.clips.isNotEmpty;
+  Widget _buildListHeader(
+    BuildContext context,
+    ClipCollectionDetailState state,
+  ) {
+    final count = state.collection.clipCount;
+    final hasClips = state.clips.isNotEmpty;
     return AppListHeader(
       informationSlots: [
         AppListHeaderInfo(
@@ -160,7 +160,7 @@ class _MobileClipCollectionDetailPageState
             key: const Key('mobile-clip-collection-play-all-button'),
             label: '播放',
             size: AppTextButtonSize.xSmall,
-            onPressed: () => _playFrom(0),
+            onPressed: () => _playFrom(0, state),
           ),
         AppTextButton(
           key: const Key('mobile-clip-collection-add-clips-button'),
@@ -183,7 +183,7 @@ class _MobileClipCollectionDetailPageState
         AppIconButton(
           key: const Key('mobile-clip-collection-rename-button'),
           tooltip: '编辑合集',
-          onPressed: collection == null ? null : _editCollection,
+          onPressed: _editCollection,
           icon: Icon(
             Icons.edit_outlined,
             size: context.appComponentTokens.iconSizeSm,
@@ -195,8 +195,11 @@ class _MobileClipCollectionDetailPageState
 
   /// 多选态原地改写整条顶栏：只留退出 / 计数 / 全选，批量动作在贴底的
   /// [_buildBatchBar]（与影片 / PornBox 移动列表一致）。
-  Widget _buildSelectionHeader(BuildContext context) {
-    final clipIds = _controller.clips.map((clip) => clip.clipId);
+  Widget _buildSelectionHeader(
+    BuildContext context,
+    ClipCollectionDetailState state,
+  ) {
+    final clipIds = state.clips.map((clip) => clip.clipId);
     final allSelected = isAllSelected(clipIds);
     return AppListHeader.selection(
       selectionLabel: '已选 $selectedCount 个',
@@ -217,18 +220,18 @@ class _MobileClipCollectionDetailPageState
     );
   }
 
-  Widget _buildClips(BuildContext context) {
-    if (_controller.clips.isEmpty) {
+  Widget _buildClips(BuildContext context, ClipCollectionDetailState state) {
+    if (state.clips.isEmpty) {
       return const AppEmptyState(message: '合集还没有切片，点右上角「添加」加入吧');
     }
     return _layout == _ClipLayout.grid
-        ? _buildGrid(context)
-        : _buildList(context);
+        ? _buildGrid(context, state)
+        : _buildList(context, state);
   }
 
-  Widget _buildList(BuildContext context) {
+  Widget _buildList(BuildContext context, ClipCollectionDetailState state) {
     final spacing = context.appSpacing;
-    final clips = _controller.clips;
+    final clips = state.clips;
     return ListView.separated(
       key: const Key('mobile-clip-collection-detail-list'),
       // 横向缩进由 shell 提供，此处只补底部留白。
@@ -270,9 +273,9 @@ class _MobileClipCollectionDetailPageState
     );
   }
 
-  Widget _buildGrid(BuildContext context) {
+  Widget _buildGrid(BuildContext context, ClipCollectionDetailState state) {
     final spacing = context.appSpacing;
-    final clips = _controller.clips;
+    final clips = state.clips;
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = _resolveColumnCount(constraints.maxWidth, spacing.md);
@@ -328,7 +331,7 @@ class _MobileClipCollectionDetailPageState
     );
   }
 
-  Future<void> _playFrom(int index) async {
+  Future<void> _playFrom(int index, ClipCollectionDetailState state) async {
     // 进入连播前先询问形态（列表连播 / 合并播放）；外部关闭返回 null → 放弃跳转。
     // 移动壳传 useBottomDrawer 走底部抽屉范式，对齐其它图片菜单两端。
     final mode = await showCollectionPlaybackModePicker(
@@ -342,7 +345,7 @@ class _MobileClipCollectionDetailPageState
     // 切片自带 streamUrl，把当前列表交给连播页直接用，免其二次全量拉取。
     handoff.offerClips(
       collectionId: widget.collectionId,
-      clips: _controller.clips,
+      clips: state.clips,
     );
     handoff.offerMode(key: 'clip:${widget.collectionId}', mode: mode);
     MobileClipCollectionPlayRouteData(
@@ -376,7 +379,7 @@ class _MobileClipCollectionDetailPageState
   }
 
   Future<void> _editCollection() async {
-    final collection = _controller.collection;
+    final collection = ref.read(_providerRef).value?.collection;
     if (collection == null) {
       return;
     }
@@ -388,20 +391,22 @@ class _MobileClipCollectionDetailPageState
     if (!mounted || updated == null) {
       return;
     }
-    _controller.applyCollectionMeta(updated);
-    _mutationNotifier.reportCollectionMembershipChanged(
+    ref.read(_providerRef.notifier).applyCollectionMeta(updated);
+    _mutationBroadcaster.reportCollectionMembershipChanged(
       collectionId: widget.collectionId,
     );
     showToast('已保存');
   }
 
   Future<void> _removeClip(MediaClipDto clip) async {
-    final error = await _controller.removeClip(clip.clipId);
+    final error = await ref
+        .read(_providerRef.notifier)
+        .removeClip(clip.clipId);
     if (!mounted) {
       return;
     }
     if (error == null) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      _mutationBroadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
         collectionId: widget.collectionId,
       );
@@ -409,7 +414,7 @@ class _MobileClipCollectionDetailPageState
     showToast(error ?? '已从合集移除');
   }
 
-  /// 彻底删除切片本体（含文件，不可恢复）：先弹底部确认抽屉，再走控制器乐观删除并广播
+  /// 彻底删除切片本体（含文件，不可恢复）：先弹底部确认抽屉，再走 notifier 乐观删除并广播
   /// [ClipMutationChangeNotifier.reportDeleted]，与「全部切片」页的删除一致。
   Future<void> _deleteClip(MediaClipDto clip) async {
     final title = clip.displayTitle.trim();
@@ -427,42 +432,45 @@ class _MobileClipCollectionDetailPageState
     if (!mounted || confirmed != true) {
       return;
     }
-    final error = await _controller.deleteClip(clip.clipId);
+    final error = await ref
+        .read(_providerRef.notifier)
+        .deleteClip(clip.clipId);
     if (!mounted) {
       return;
     }
     if (error == null) {
-      _mutationNotifier.reportDeleted(clip.clipId);
+      _mutationBroadcaster.reportDeleted(clip.clipId);
     }
     showToast(error ?? '已删除切片');
   }
 
   Future<void> _addClips() async {
+    final currentClips =
+        ref.read(_providerRef).value?.clips ?? const <MediaClipDto>[];
     await showAddClipsToCollectionDialog(
       context,
       collectionId: widget.collectionId,
-      memberClipIds: _controller.clips.map((clip) => clip.clipId).toSet(),
+      memberClipIds: currentClips.map((clip) => clip.clipId).toSet(),
       presentation: ClipCollectionEditPresentation.bottomDrawer,
     );
     if (!mounted) {
       return;
     }
     // 选择器内可能增删了成员，回来统一刷新切片列表与计数。
-    await _controller.refresh();
+    await ref.read(_providerRef.notifier).refresh();
     if (!mounted) {
       return;
     }
     // 成员 / 封面 / 计数可能变化，广播给上层合集列表。
-    _mutationNotifier.reportCollectionMembershipChanged(
+    _mutationBroadcaster.reportCollectionMembershipChanged(
       collectionId: widget.collectionId,
     );
   }
 
   // --------------------------------------------------------- 选择 / 批量
 
-  List<MediaClipDto> _selectedClips() => _controller.clips
-      .where((c) => isSelected(c.clipId))
-      .toList(growable: false);
+  List<MediaClipDto> _selectedClips(ClipCollectionDetailState state) =>
+      state.clips.where((c) => isSelected(c.clipId)).toList(growable: false);
 
   void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
     if (result.failed.isEmpty) {
@@ -474,8 +482,10 @@ class _MobileClipCollectionDetailPageState
     }
   }
 
-  Future<void> _batchAddToOtherCollection() async {
-    final selected = _selectedClips();
+  Future<void> _batchAddToOtherCollection(
+    ClipCollectionDetailState state,
+  ) async {
+    final selected = _selectedClips(state);
     if (selected.isEmpty) {
       return;
     }
@@ -501,8 +511,9 @@ class _MobileClipCollectionDetailPageState
     if (!mounted) {
       return;
     }
+    final broadcaster = _mutationBroadcaster;
     for (final clip in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      broadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
         collectionId: target.id,
       );
@@ -511,8 +522,8 @@ class _MobileClipCollectionDetailPageState
     exitSelection();
   }
 
-  Future<void> _batchRemove() async {
-    final selected = _selectedClips();
+  Future<void> _batchRemove(ClipCollectionDetailState state) async {
+    final selected = _selectedClips(state);
     if (selected.isEmpty) {
       return;
     }
@@ -529,12 +540,13 @@ class _MobileClipCollectionDetailPageState
     if (!mounted || confirmed != true) {
       return;
     }
+    final notifier = ref.read(_providerRef.notifier);
     final result = await runBatchOperation<MediaClipDto>(
       context,
       title: '正在从合集移除',
       items: selected,
       action: (clip) async {
-        final error = await _controller.removeClip(clip.clipId);
+        final error = await notifier.removeClip(clip.clipId);
         if (error != null) {
           throw Exception(error);
         }
@@ -543,12 +555,13 @@ class _MobileClipCollectionDetailPageState
     if (!mounted) {
       return;
     }
-    await _controller.refresh();
+    await notifier.refresh();
     if (!mounted) {
       return;
     }
+    final broadcaster = _mutationBroadcaster;
     for (final clip in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      broadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
         collectionId: widget.collectionId,
       );
@@ -557,8 +570,8 @@ class _MobileClipCollectionDetailPageState
     exitSelection();
   }
 
-  Future<void> _batchDelete() async {
-    final selected = _selectedClips();
+  Future<void> _batchDelete(ClipCollectionDetailState state) async {
+    final selected = _selectedClips(state);
     if (selected.isEmpty) {
       return;
     }
@@ -585,18 +598,22 @@ class _MobileClipCollectionDetailPageState
     if (!mounted) {
       return;
     }
-    await _controller.refresh();
+    await ref.read(_providerRef.notifier).refresh();
     if (!mounted) {
       return;
     }
+    final broadcaster = _mutationBroadcaster;
     for (final clip in result.succeeded) {
-      _mutationNotifier.reportDeleted(clip.clipId);
+      broadcaster.reportDeleted(clip.clipId);
     }
     _showBatchToast('删除', result);
     exitSelection();
   }
 
-  Widget _buildBatchBar(BuildContext context) {
+  Widget _buildBatchBar(
+    BuildContext context,
+    ClipCollectionDetailState state,
+  ) {
     final hasSelection = selectedCount > 0;
     return AppSelectionBottomBar(
       key: const Key('mobile-clip-collection-batch-bottom-bar'),
@@ -605,19 +622,20 @@ class _MobileClipCollectionDetailPageState
           key: const Key('mobile-clip-collection-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? _batchAddToOtherCollection : null,
+          onPressed:
+              hasSelection ? () => _batchAddToOtherCollection(state) : null,
         ),
         AppButton(
           key: const Key('mobile-clip-collection-batch-remove-button'),
           label: '移除',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? _batchRemove : null,
+          onPressed: hasSelection ? () => _batchRemove(state) : null,
         ),
         AppButton(
           key: const Key('mobile-clip-collection-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection ? () => _batchDelete(state) : null,
         ),
       ],
     );

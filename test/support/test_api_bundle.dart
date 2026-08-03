@@ -39,8 +39,6 @@ import 'package:sakuramedia/features/discovery/data/discovery_api.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
-import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
-import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
@@ -167,11 +165,10 @@ class TestApiBundle {
   final CollectionPlaybackHandoff collectionPlaybackHandoff =
       CollectionPlaybackHandoff();
 
-  /// 外部播放器偏好 store 的默认实例。创建即触发 `load()`(与 provider body
-  /// 同构)——需要它「加载完成 / 预置选择」的测试请先在 `setUpAll` 里
-  /// `SharedPreferences.setMockInitialValues({...})` 再经
-  /// `riverpodOverrides(externalPlayerStore: ...)` 传自持实例。
-  final ExternalPlayerStore externalPlayerStore = ExternalPlayerStore()..load();
+  // 外部播放器偏好已迁 keepAlive AsyncNotifier
+  // (externalPlayerPreferenceProvider),直接读 SharedPreferences——需要
+  // 预置选择的测试用 `SharedPreferences.setMockInitialValues({...})`,
+  // 无 mock 时读盘异常被吞、降级为「未选择」,无需注入。
 
   // 桌面壳侧边栏折叠状态已迁 @riverpod bool Notifier
   // (appShellSidebarCollapsedProvider),默认展开无需注入,不再持实例。
@@ -199,7 +196,6 @@ class TestApiBundle {
     ClipMutationChangeNotifier? clipMutationBroadcaster,
     VideoMutationChangeNotifier? videoMutationBroadcaster,
     CollectionPlaybackHandoff? collectionPlaybackHandoff,
-    ExternalPlayerStore? externalPlayerStore,
     // 允许单测换成 fake 子类（如刷新必败的 API），默认用 bundle 实例。
     MediaLibrariesApi? mediaLibrariesApi,
     DownloadClientsApi? downloadClientsApi,
@@ -272,9 +268,6 @@ class TestApiBundle {
       ),
       collectionPlaybackHandoffProvider.overrideWithValue(
         collectionPlaybackHandoff ?? this.collectionPlaybackHandoff,
-      ),
-      externalPlayerStoreProvider.overrideWith(
-        (ref) => externalPlayerStore ?? this.externalPlayerStore,
       ),
       sseEventStreamClientProvider.overrideWithValue(
         sseEventStreamClient ?? this.sseEventStreamClient,

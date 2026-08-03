@@ -5,7 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_app.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
-import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
@@ -47,12 +47,12 @@ class _MobileExternalPlayerSettingsPageState
   }
 
   Future<void> _selectInApp() async {
-    await ref.read(externalPlayerStoreProvider).useInAppPlayer();
+    await ref.read(externalPlayerPreferenceProvider.notifier).useInAppPlayer();
   }
 
   Future<void> _selectPlayer(ExternalPlayerApp player) async {
     await ref
-        .read(externalPlayerStoreProvider)
+        .read(externalPlayerPreferenceProvider.notifier)
         .selectExternalPlayer(
           packageName: player.packageName,
           label: player.label,
@@ -62,8 +62,10 @@ class _MobileExternalPlayerSettingsPageState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final store = ref.watch(externalPlayerStoreProvider);
-    final selectedPackage = store.packageName;
+    // 读盘中 selection 为 null → 勾在「应用内播放器」上,与旧 isLoaded=false
+    // 时 packageName 为 null 的表现一致。
+    final selection = ref.watch(externalPlayerPreferenceProvider).value;
+    final selectedPackage = selection?.packageName;
 
     final cells = <Widget>[
       AppSettingCell(

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_stream_client_provider.dart';
-import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
 import 'package:sakuramedia/core/network/providers/sse_event_stream_client_provider.dart';
@@ -34,8 +33,8 @@ void main() {
 
     expect(container.read(videoMutationBroadcasterProvider),
         same(bundle.videoMutationBroadcaster));
-    expect(container.read(externalPlayerStoreProvider),
-        same(bundle.externalPlayerStore));
+    // externalPlayerPreference 已迁 AsyncNotifier 且不再由 bundle 注入,
+    // 无 SharedPreferences mock 时读盘异常被吞、降级为「未选择」。
     expect(container.read(collectionPlaybackHandoffProvider),
         same(bundle.collectionPlaybackHandoff));
     expect(

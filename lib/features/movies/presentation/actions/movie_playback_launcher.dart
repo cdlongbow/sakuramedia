@@ -6,8 +6,8 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
-import 'package:sakuramedia/features/external_player/data/external_player_store.dart';
-import 'package:sakuramedia/features/external_player/presentation/providers/external_player_store_provider.dart';
+import 'package:sakuramedia/features/external_player/data/external_player_selection.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -28,10 +28,10 @@ Future<void> launchMoviePlayback(
   MoviePlayUrlSource? playSource,
   MoviePlayUrlMode playMode = MoviePlayUrlMode.single,
 }) async {
-  final store = _readExternalPlayerStore(context);
+  final selection = _readExternalPlayerSelection(context);
   const channel = ExternalPlayerChannel();
   final canUseExternal =
-      store != null && store.hasExternalPlayer && channel.isSupported;
+      selection != null && selection.hasExternalPlayer && channel.isSupported;
 
   if (playMode == MoviePlayUrlMode.merged) {
     if (!canUseExternal) {
@@ -51,7 +51,7 @@ Future<void> launchMoviePlayback(
       mediaId: mediaId,
       positionSeconds: positionSeconds,
       movie: movie,
-      store: store,
+      selection: selection,
       source: playSource ?? MoviePlayUrlSource.local,
     );
     return;
@@ -69,7 +69,7 @@ Future<void> launchMoviePlayback(
     return;
   }
 
-  final packageName = store.packageName!;
+  final packageName = selection.packageName!;
 
   // 外部播放器需要完整直链与标题，按需补齐影片详情。
   var detail = movie;
@@ -148,7 +148,7 @@ Future<void> _launchExternalMergedPlayback(
   int? mediaId,
   int? positionSeconds,
   MovieDetailDto? movie,
-  required ExternalPlayerStore store,
+  required ExternalPlayerSelection selection,
   required MoviePlayUrlSource source,
 }) async {
   const channel = ExternalPlayerChannel();
@@ -231,7 +231,7 @@ Future<void> _launchExternalMergedPlayback(
 
   // 合并播放不传续播位置：逻辑文件跨多个分段，单段 stored progress 对不上。
   final launched = await channel.launch(
-    packageName: store.packageName!,
+    packageName: selection.packageName!,
     url: resolvedUrl,
     title: title,
   );
@@ -250,13 +250,14 @@ Future<void> _launchExternalMergedPlayback(
 }
 
 /// 安全读取偏好；树上没有 `ProviderScope` 的局部上下文（部分 widget 测试）
-/// 返回 null（降级为应用内播放），与旧 `ProviderNotFoundException` 语义一致。
-ExternalPlayerStore? _readExternalPlayerStore(BuildContext context) {
+/// 或偏好尚未读完（AsyncValue 无值）返回 null（降级为应用内播放），与旧
+/// `ProviderNotFoundException` / isLoaded=false 语义一致。
+ExternalPlayerSelection? _readExternalPlayerSelection(BuildContext context) {
   try {
     return ProviderScope.containerOf(
       context,
       listen: false,
-    ).read(externalPlayerStoreProvider);
+    ).read(externalPlayerPreferenceProvider).value;
   } on Object {
     return null;
   }

@@ -42,11 +42,18 @@ dependencies:
   riverpod_annotation: 4.0.0
   clock: ^1.1.1
   dio: ^5.7.0
+  native_dio_adapter: ^1.7.0
+  # 由 native_dio_adapter 传递引入，这里显式声明是为了给 app_native_image_cache_manager
+  # 的原生 http.Client 工厂直接用（cronet_http.CronetClient / cupertino_http.CupertinoClient）。
+  cronet_http: ^1.5.0
+  cupertino_http: '>=2.3.0 <4.0.0'
   window_manager: ^0.4.2
   intl: ^0.19.0
   shared_preferences: ^2.2.2
   oktoast: ^3.4.0
   cached_network_image: ^3.4.0
+  flutter_cache_manager: ^3.4.0
+  http: ^1.5.0
   photo_view: ^0.15.0
   media_kit: ^1.1.11
   media_kit_video: ^1.2.5

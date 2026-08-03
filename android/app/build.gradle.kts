@@ -31,7 +31,9 @@ android {
         applicationId = "com.example.sakuramedia"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // cronet_http 的 org.chromium.net:cronet-embedded 要求 minSdk >= 24。
+        // Flutter 默认是 21，这里强制拉到 24；Android 7.0 以下的机器已不支持。
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

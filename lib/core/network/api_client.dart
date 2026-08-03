@@ -7,6 +7,9 @@ import 'package:sakuramedia/core/network/api_error_dto.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/auth_interceptor.dart';
+import 'package:sakuramedia/core/network/native_dio_adapter_installer_stub.dart'
+    if (dart.library.io)
+        'package:sakuramedia/core/network/native_dio_adapter_installer_io.dart';
 import 'package:sakuramedia/core/network/sse_decoder.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_tokens_dto.dart';
@@ -43,6 +46,9 @@ class ApiClient {
         onUnauthorized: onUnauthorized,
       ),
     );
+    // Android/iOS/macOS：换成平台原生栈（Cronet / URLSession），
+    // 让 TLS 指纹与浏览器/系统一致。Windows/Linux/Web 保持 dio 默认。
+    installNativePlatformAdapters(dio: _dio, refreshDio: _refreshDio);
   }
 
   final SessionStore _sessionStore;

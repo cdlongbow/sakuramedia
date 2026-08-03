@@ -6,7 +6,8 @@ import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provid
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
-import 'package:sakuramedia/features/account/presentation/account_profile_controller.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -28,7 +29,6 @@ class _AccountSecuritySectionState
     extends ConsumerState<AccountSecuritySection> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _profileFormKey = GlobalKey<FormState>();
-  late final AccountProfileController _profileController;
   late final TextEditingController _usernameController;
   late final TextEditingController _currentPasswordController;
   late final TextEditingController _newPasswordController;
@@ -36,29 +36,20 @@ class _AccountSecuritySectionState
 
   bool _isSubmitting = false;
   bool _hasAttemptedUsernameSubmit = false;
-
-  bool get _canSubmitUsername =>
-      !_profileController.isLoading &&
-      !_profileController.isSaving &&
-      _profileController.account != null;
+  bool _hasSyncedInitialUsername = false;
 
   @override
   void initState() {
     super.initState();
-    _profileController = AccountProfileController(
-      accountApi: ref.read(accountApiProvider),
-    );
     _usernameController =
         TextEditingController()..addListener(_handleUsernameChanged);
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
-    _loadProfile();
   }
 
   @override
   void dispose() {
-    _profileController.dispose();
     _usernameController
       ..removeListener(_handleUsernameChanged)
       ..dispose();
@@ -68,12 +59,13 @@ class _AccountSecuritySectionState
     super.dispose();
   }
 
-  Future<void> _loadProfile() async {
-    await _profileController.load();
-    if (!mounted) {
-      return;
-    }
-    _usernameController.text = _profileController.account?.username ?? '';
+  /// 首次拉到 account 后灌 username 到输入框；后续不再自动覆盖（尊重用户已改动）。
+  void _syncInitialUsername(AccountProfileState state) {
+    if (_hasSyncedInitialUsername) return;
+    final account = state.account;
+    if (account == null) return;
+    _hasSyncedInitialUsername = true;
+    _usernameController.text = account.username;
   }
 
   void _handleUsernameChanged() {
@@ -83,7 +75,8 @@ class _AccountSecuritySectionState
   }
 
   Future<void> _submitUsername() async {
-    if (_profileController.isSaving) {
+    final notifier = ref.read(accountProfileProvider.notifier);
+    if (ref.read(accountProfileProvider).isSaving) {
       return;
     }
 
@@ -97,20 +90,18 @@ class _AccountSecuritySectionState
       return;
     }
 
-    final saved = await _profileController.saveUsername(
-      _usernameController.text,
-    );
+    final saved = await notifier.saveUsername(_usernameController.text);
     if (!mounted) {
       return;
     }
-
+    final state = ref.read(accountProfileProvider);
     if (saved) {
-      _usernameController.text = _profileController.account?.username ?? '';
+      _usernameController.text = state.account?.username ?? '';
       showToast('用户名已更新');
       return;
     }
 
-    final message = _profileController.errorMessage;
+    final message = state.errorMessage;
     if (message != null && message.isNotEmpty) {
       showToast(message);
     }
@@ -128,9 +119,10 @@ class _AccountSecuritySectionState
     try {
       final accountApi = ref.read(accountApiProvider);
       final authApi = ref.read(authApiProvider);
+      final cachedAccount = ref.read(accountProfileProvider).account;
       final username =
-          (_profileController.account?.username.trim().isNotEmpty ?? false)
-              ? _profileController.account!.username.trim()
+          (cachedAccount?.username.trim().isNotEmpty ?? false)
+              ? cachedAccount!.username.trim()
               : (await accountApi.getAccount()).username.trim();
 
       await accountApi.changePassword(
@@ -220,23 +212,28 @@ class _AccountSecuritySectionState
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final profileState = ref.watch(accountProfileProvider);
+    _syncInitialUsername(profileState);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AnimatedBuilder(
-          animation: _profileController,
-          builder: (context, _) => _buildAccountProfileCard(context),
-        ),
+        _buildAccountProfileCard(context, profileState),
         SizedBox(height: spacing.xl),
         _buildPasswordCard(context),
       ],
     );
   }
 
-  Widget _buildAccountProfileCard(BuildContext context) {
+  Widget _buildAccountProfileCard(
+    BuildContext context,
+    AccountProfileState profileState,
+  ) {
     final spacing = context.appSpacing;
-    final account = _profileController.account;
+    final account = profileState.account;
+    final canSubmitUsername = !profileState.isLoading &&
+        !profileState.isSaving &&
+        account != null;
 
     return AppContentCard(
       title: '账号资料',
@@ -257,12 +254,13 @@ class _AccountSecuritySectionState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_profileController.isLoading && account == null)
+            if (profileState.isLoading && account == null)
               const _AccountProfileLoadingBlock()
-            else if (_profileController.errorMessage != null && account == null)
+            else if (profileState.errorMessage != null && account == null)
               _AccountProfileErrorBlock(
-                message: _profileController.errorMessage!,
-                onRetry: _loadProfile,
+                message: profileState.errorMessage!,
+                onRetry: () =>
+                    ref.read(accountProfileProvider.notifier).load(),
               )
             else ...[
               Text(
@@ -284,14 +282,13 @@ class _AccountSecuritySectionState
                 controller: _usernameController,
                 label: '用户名',
                 hintText: '请输入新的用户名',
-                enabled: !_profileController.isSaving,
+                enabled: !profileState.isSaving,
                 validator: _validateUsername,
               ),
-              if (_profileController.errorMessage != null &&
-                  account != null) ...[
+              if (profileState.errorMessage != null && account != null) ...[
                 SizedBox(height: spacing.sm),
                 Text(
-                  _profileController.errorMessage!,
+                  profileState.errorMessage!,
                   key: const Key('configuration-username-error-text'),
                   style: resolveAppTextStyle(
                     context,
@@ -305,10 +302,10 @@ class _AccountSecuritySectionState
                 alignment: Alignment.centerRight,
                 child: AppButton(
                   key: const Key('configuration-username-submit-button'),
-                  onPressed: _canSubmitUsername ? _submitUsername : null,
+                  onPressed: canSubmitUsername ? _submitUsername : null,
                   label: '保存用户名',
                   variant: AppButtonVariant.primary,
-                  isLoading: _profileController.isSaving,
+                  isLoading: profileState.isSaving,
                 ),
               ),
             ],

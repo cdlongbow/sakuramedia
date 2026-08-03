@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
-import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
-import 'package:sakuramedia/features/account/presentation/account_profile_controller.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 
 class MobileChangeUsernamePage extends ConsumerStatefulWidget {
   const MobileChangeUsernamePage({super.key});
@@ -22,50 +22,31 @@ class MobileChangeUsernamePage extends ConsumerStatefulWidget {
 class _MobileChangeUsernamePageState
     extends ConsumerState<MobileChangeUsernamePage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late final AccountProfileController _controller;
   late final TextEditingController _usernameController;
   late final FocusNode _usernameFocusNode;
   bool _hasAttemptedSubmit = false;
+  bool _hasSyncedInitialUsername = false;
 
   AutovalidateMode get _autovalidateMode =>
       _hasAttemptedSubmit
           ? AutovalidateMode.onUserInteraction
           : AutovalidateMode.disabled;
 
-  bool get _canSubmit =>
-      !_controller.isLoading &&
-      !_controller.isSaving &&
-      _controller.account != null;
-
   @override
   void initState() {
     super.initState();
-    _controller = AccountProfileController(
-      accountApi: ref.read(accountApiProvider),
-    );
     _usernameController =
         TextEditingController()..addListener(_handleInputChanged);
     _usernameFocusNode = FocusNode();
-    _loadAccount();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     _usernameController
       ..removeListener(_handleInputChanged)
       ..dispose();
     _usernameFocusNode.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadAccount() async {
-    await _controller.load();
-    if (!mounted) {
-      return;
-    }
-    final username = _controller.account?.username ?? '';
-    _usernameController.text = username;
   }
 
   void _handleInputChanged() {
@@ -74,8 +55,18 @@ class _MobileChangeUsernamePageState
     }
   }
 
+  /// 首次拉到 account 后把 username 灌进输入框（只灌一次，用户已开始改动时不覆盖）。
+  void _syncInitialUsername(AccountProfileState state) {
+    if (_hasSyncedInitialUsername) return;
+    final account = state.account;
+    if (account == null) return;
+    _hasSyncedInitialUsername = true;
+    _usernameController.text = account.username;
+  }
+
   Future<void> _submit() async {
-    if (_controller.isSaving) {
+    final notifier = ref.read(accountProfileProvider.notifier);
+    if (ref.read(accountProfileProvider).isSaving) {
       return;
     }
 
@@ -90,18 +81,18 @@ class _MobileChangeUsernamePageState
       return;
     }
 
-    final saved = await _controller.saveUsername(_usernameController.text);
+    final saved = await notifier.saveUsername(_usernameController.text);
     if (!mounted) {
       return;
     }
-
+    final state = ref.read(accountProfileProvider);
     if (saved) {
-      _usernameController.text = _controller.account?.username ?? '';
+      _usernameController.text = state.account?.username ?? '';
       showToast('用户名已更新');
       return;
     }
 
-    final message = _controller.errorMessage;
+    final message = state.errorMessage;
     if (message != null && message.isNotEmpty) {
       showToast(message);
     }
@@ -116,75 +107,75 @@ class _MobileChangeUsernamePageState
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final spacing = context.appSpacing;
-        final colors = context.appColors;
-        final viewInsets = MediaQuery.of(context).viewInsets;
+    final state = ref.watch(accountProfileProvider);
+    _syncInitialUsername(state);
 
-        return ColoredBox(
-          key: const Key('mobile-settings-username'),
-          color: colors.surfaceCard,
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    spacing.md,
-                    spacing.md,
-                    spacing.md,
-                    spacing.lg,
-                  ),
-                  child: _buildBody(context),
-                ),
+    final spacing = context.appSpacing;
+    final colors = context.appColors;
+    final viewInsets = MediaQuery.of(context).viewInsets;
+    final canSubmit =
+        !state.isLoading && !state.isSaving && state.account != null;
+
+    return ColoredBox(
+      key: const Key('mobile-settings-username'),
+      color: colors.surfaceCard,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                spacing.md,
+                spacing.md,
+                spacing.md,
+                spacing.lg,
               ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                padding: EdgeInsets.fromLTRB(
-                  spacing.md,
-                  spacing.md,
-                  spacing.md,
-                  spacing.md + viewInsets.bottom,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.surfaceCard,
-                  border: Border(top: BorderSide(color: colors.divider)),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: AppButton(
-                    key: const Key('mobile-username-submit-button'),
-                    label: _controller.isSaving ? '保存中' : '保存用户名',
-                    variant: AppButtonVariant.primary,
-                    isLoading: _controller.isSaving,
-                    onPressed: _canSubmit ? _submit : null,
-                  ),
-                ),
-              ),
-            ],
+              child: _buildBody(context, state),
+            ),
           ),
-        );
-      },
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.fromLTRB(
+              spacing.md,
+              spacing.md,
+              spacing.md,
+              spacing.md + viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: colors.surfaceCard,
+              border: Border(top: BorderSide(color: colors.divider)),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: AppButton(
+                key: const Key('mobile-username-submit-button'),
+                label: state.isSaving ? '保存中' : '保存用户名',
+                variant: AppButtonVariant.primary,
+                isLoading: state.isSaving,
+                onPressed: canSubmit ? _submit : null,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildBody(BuildContext context, AccountProfileState state) {
     final spacing = context.appSpacing;
 
-    if (_controller.isLoading && _controller.account == null) {
+    if (state.isLoading && state.account == null) {
       return const _MobileUsernameLoadingSection();
     }
 
-    if (_controller.errorMessage != null && _controller.account == null) {
+    if (state.errorMessage != null && state.account == null) {
       return _MobileUsernameErrorSection(
-        message: _controller.errorMessage!,
-        onRetry: _loadAccount,
+        message: state.errorMessage!,
+        onRetry: () => ref.read(accountProfileProvider.notifier).load(),
       );
     }
 
-    final account = _controller.account;
+    final account = state.account;
     return Form(
       key: _formKey,
       autovalidateMode: _autovalidateMode,
@@ -209,15 +200,15 @@ class _MobileChangeUsernamePageState
                 focusNode: _usernameFocusNode,
                 label: '用户名',
                 hintText: '请输入新的用户名',
-                enabled: !_controller.isSaving,
+                enabled: !state.isSaving,
                 validator: _validateUsername,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _submit(),
               ),
-              if (_controller.errorMessage != null && account != null) ...[
+              if (state.errorMessage != null && account != null) ...[
                 SizedBox(height: spacing.sm),
                 Text(
-                  _controller.errorMessage!,
+                  state.errorMessage!,
                   key: const Key('mobile-username-error-text'),
                   style: resolveAppTextStyle(
                     context,

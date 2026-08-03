@@ -18,7 +18,7 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_acti
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_sort_drawer.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
@@ -52,16 +52,10 @@ class MobilePornboxPage extends ConsumerStatefulWidget {
 class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     with MultiSelectStateMixin<MobilePornboxPage, int> {
   late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
-  late final VideoCollectionsOverviewController _collectionsController;
   late final VideoMutationChangeNotifier _mutationNotifier;
   bool _railRefreshScheduled = false;
 
   VideoListPageStateEntry get _pageState => _pageStateHandle.value;
-
-  Listenable get _pageListenable => Listenable.merge(<Listenable>[
-    _pageState.controller,
-    _collectionsController,
-  ]);
 
   @override
   void initState() {
@@ -76,16 +70,12 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
             mutationNotifier: _mutationNotifier,
           ),
     );
-    _collectionsController = VideoCollectionsOverviewController(
-      collectionsApi: ref.read(videoCollectionsApiProvider),
-    )..load();
     _mutationNotifier.addListener(_onMutation);
   }
 
   @override
   void dispose() {
     _mutationNotifier.removeListener(_onMutation);
-    _collectionsController.dispose();
     _pageStateHandle.dispose();
     super.dispose();
   }
@@ -102,14 +92,16 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       if (!mounted) {
         return;
       }
-      _collectionsController.refresh();
+      unawaited(
+        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
+      );
     });
   }
 
   Future<void> _refresh() async {
     await Future.wait<void>(<Future<void>>[
       _pageState.controller.refresh(),
-      _collectionsController.refresh(),
+      ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
     ]);
   }
 
@@ -288,7 +280,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (!mounted || created == null) {
       return;
     }
-    await _collectionsController.refresh();
+    await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
     if (mounted) {
       showToast('已创建合集');
     }
@@ -299,7 +291,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (!mounted) {
       return;
     }
-    await _collectionsController.refresh();
+    await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
   }
 
   // --------------------------------------------------------- build
@@ -309,7 +301,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     return ColoredBox(
       color: context.appColors.surfaceCard,
       child: AnimatedBuilder(
-        animation: _pageListenable,
+        animation: _pageState.controller,
         builder: (context, _) {
           return Column(
             children: [
@@ -342,67 +334,78 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   Widget _buildCollectionsSection(BuildContext context) {
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
-    final collections = _collectionsController.collections;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 与 _buildVideosHeader 的 AppListHeader 对齐：top: xs + 固定
-        // mobileTopTabHeight 容器，标题行垂直居中。
-        Padding(
-          padding: EdgeInsets.only(top: spacing.xs),
-          child: SizedBox(
-            height: componentTokens.mobileTopTabHeight,
-            child: Row(
-              children: [
-                Text(
-                  '视频合集',
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s16,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.primary,
-                  ),
-                ),
-                const Spacer(),
-                AppIconButton(
-                  key: const Key('mobile-pornbox-create-collection-button'),
-                  tooltip: '新建合集',
-                  onPressed: _createCollection,
-                  icon: const Icon(Icons.add_rounded),
-                ),
-                if (collections.isNotEmpty) ...[
-                  SizedBox(width: spacing.xs),
-                  AppTextButton(
-                    key: const Key(
-                      'mobile-pornbox-view-all-collections-button',
+    return Consumer(
+      builder: (context, ref, _) {
+        final async = ref.watch(videoCollectionsOverviewProvider);
+        final collections = async.value ?? const <VideoCollectionDto>[];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 与 _buildVideosHeader 的 AppListHeader 对齐：top: xs + 固定
+            // mobileTopTabHeight 容器，标题行垂直居中。
+            Padding(
+              padding: EdgeInsets.only(top: spacing.xs),
+              child: SizedBox(
+                height: componentTokens.mobileTopTabHeight,
+                child: Row(
+                  children: [
+                    Text(
+                      '视频合集',
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s16,
+                        weight: AppTextWeight.semibold,
+                        tone: AppTextTone.primary,
+                      ),
                     ),
-                    label: '查看全部',
-                    size: AppTextButtonSize.xSmall,
-                    onPressed: _viewAllCollections,
-                  ),
-                ],
-              ],
+                    const Spacer(),
+                    AppIconButton(
+                      key: const Key('mobile-pornbox-create-collection-button'),
+                      tooltip: '新建合集',
+                      onPressed: _createCollection,
+                      icon: const Icon(Icons.add_rounded),
+                    ),
+                    if (collections.isNotEmpty) ...[
+                      SizedBox(width: spacing.xs),
+                      AppTextButton(
+                        key: const Key(
+                          'mobile-pornbox-view-all-collections-button',
+                        ),
+                        label: '查看全部',
+                        size: AppTextButtonSize.xSmall,
+                        onPressed: _viewAllCollections,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: spacing.md),
-          child: _buildCollectionsRow(context, collections),
-        ),
-        SizedBox(height: spacing.sm),
-      ],
+            Padding(
+              padding: EdgeInsets.only(top: spacing.md),
+              child: _buildCollectionsRow(context, async, collections),
+            ),
+            SizedBox(height: spacing.sm),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildCollectionsRow(
     BuildContext context,
+    AsyncValue<List<VideoCollectionDto>> async,
     List<VideoCollectionDto> collections,
   ) {
     final spacing = context.appSpacing;
-    if (_collectionsController.errorMessage != null) {
-      return _HintBox(message: _collectionsController.errorMessage!);
+    if (async.hasError && collections.isEmpty) {
+      return _HintBox(
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '合集加载失败，请稍后重试',
+        ),
+      );
     }
-    if (_collectionsController.isLoading && collections.isEmpty) {
+    if (async.isLoading && collections.isEmpty) {
       return const SizedBox(
         height: 60,
         child: Center(child: CircularProgressIndicator()),

@@ -1,67 +1,55 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 
-class DesktopVideoCollectionsPage extends ConsumerStatefulWidget {
+class DesktopVideoCollectionsPage extends ConsumerWidget {
   const DesktopVideoCollectionsPage({super.key});
 
-  @override
-  ConsumerState<DesktopVideoCollectionsPage> createState() =>
-      _DesktopVideoCollectionsPageState();
-}
-
-class _DesktopVideoCollectionsPageState
-    extends ConsumerState<DesktopVideoCollectionsPage> {
-  late final VideoCollectionsOverviewController _controller;
-  late final VideoCollectionsApi _api;
-
-  @override
-  void initState() {
-    super.initState();
-    _api = ref.read(videoCollectionsApiProvider);
-    _controller = VideoCollectionsOverviewController(collectionsApi: _api)
-      ..load();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _create() async {
+  Future<void> _create(BuildContext context, WidgetRef ref) async {
     final created = await showVideoCollectionDialog(context);
     if (created != null) {
-      unawaited(_controller.refresh());
+      unawaited(
+        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
+      );
     }
   }
 
-  Future<void> _edit(VideoCollectionDto collection) async {
+  Future<void> _edit(
+    BuildContext context,
+    WidgetRef ref,
+    VideoCollectionDto collection,
+  ) async {
     final updated = await showVideoCollectionDialog(
       context,
       existing: collection,
     );
     if (updated != null) {
-      unawaited(_controller.refresh());
+      unawaited(
+        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
+      );
     }
   }
 
-  Future<void> _delete(VideoCollectionDto collection) async {
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    VideoCollectionDto collection,
+  ) async {
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',
@@ -73,22 +61,25 @@ class _DesktopVideoCollectionsPageState
       return;
     }
     try {
-      await _api.deleteCollection(collection.id);
-      await _controller.refresh();
-      if (mounted) {
+      await ref.read(videoCollectionsApiProvider).deleteCollection(collection.id);
+      await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
+      if (context.mounted) {
         showToast('已删除');
       }
     } catch (_) {
-      if (mounted) {
+      if (context.mounted) {
         showToast('删除失败，请稍后重试');
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(videoCollectionsOverviewProvider);
+    final notifier = ref.read(videoCollectionsOverviewProvider.notifier);
+
     return AppPageRefreshScope(
-      onRefresh: _controller.refresh,
+      onRefresh: notifier.refresh,
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         // 页面边距由桌面 shell 的 AppPageInsets.desktopStandard (24px) 统一提供，
@@ -106,54 +97,62 @@ class _DesktopVideoCollectionsPageState
                     key: const Key('video-collections-create-button'),
                     label: '新建合集',
                     variant: AppButtonVariant.primary,
-                    onPressed: _create,
+                    onPressed: () => _create(context, ref),
                   ),
                 ],
               ),
               SizedBox(height: context.appSpacing.lg),
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) {
-                  if (_controller.isLoading) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-                  final error = _controller.errorMessage;
-                  if (error != null) {
-                    return AppEmptyState(message: error);
-                  }
-                  if (_controller.collections.isEmpty) {
-                    return const AppEmptyState(message: '暂无合集，点击「新建合集」创建');
-                  }
-                  return Wrap(
-                    spacing: context.appSpacing.md,
-                    runSpacing: context.appSpacing.md,
-                    children: [
-                      for (final collection in _controller.collections)
-                        SizedBox(
-                          width: 280,
-                          child: CollectionCard.video(
-                            collection: collection,
-                            onTap:
-                                () => context.go(
-                                  '$desktopVideoCollectionsPath/${collection.id}',
-                                ),
-                            onEdit: () => _edit(collection),
-                            onDelete: () => _delete(collection),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
+              _buildBody(context, ref, async),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<VideoCollectionDto>> async,
+  ) {
+    if (async.isLoading && async.value == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (async.hasError && async.value == null) {
+      return AppEmptyState(
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '合集加载失败，请稍后重试',
+        ),
+      );
+    }
+    final collections = async.value ?? const <VideoCollectionDto>[];
+    if (collections.isEmpty) {
+      return const AppEmptyState(message: '暂无合集，点击「新建合集」创建');
+    }
+    return Wrap(
+      spacing: context.appSpacing.md,
+      runSpacing: context.appSpacing.md,
+      children: [
+        for (final collection in collections)
+          SizedBox(
+            width: 280,
+            child: CollectionCard.video(
+              collection: collection,
+              onTap:
+                  () => context.go(
+                    '$desktopVideoCollectionsPath/${collection.id}',
+                  ),
+              onEdit: () => _edit(context, ref, collection),
+              onDelete: () => _delete(context, ref, collection),
+            ),
+          ),
+      ],
     );
   }
 }

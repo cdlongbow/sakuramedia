@@ -13,7 +13,7 @@ import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.da
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list_content.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
@@ -45,7 +45,6 @@ class DesktopVideoListPage extends ConsumerStatefulWidget {
 class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     with MultiSelectStateMixin<DesktopVideoListPage, int> {
   late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
-  late final VideoCollectionsOverviewController _collectionsController;
   late final VideoMutationChangeNotifier _mutationNotifier;
   bool _railRefreshScheduled = false;
 
@@ -64,16 +63,12 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
             mutationNotifier: _mutationNotifier,
           ),
     );
-    _collectionsController = VideoCollectionsOverviewController(
-      collectionsApi: ref.read(videoCollectionsApiProvider),
-    )..load();
     _mutationNotifier.addListener(_onMutation);
   }
 
   @override
   void dispose() {
     _mutationNotifier.removeListener(_onMutation);
-    _collectionsController.dispose();
     _pageStateHandle.dispose();
     super.dispose();
   }
@@ -91,7 +86,9 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       if (!mounted) {
         return;
       }
-      _collectionsController.refresh();
+      unawaited(
+        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
+      );
     });
   }
 
@@ -108,7 +105,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   Future<void> _createCollection() async {
     final created = await showVideoCollectionDialog(context);
     if (created != null) {
-      await _collectionsController.refresh();
+      await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
     }
   }
 
@@ -118,7 +115,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       return;
     }
     // 全部合集页内可能重命名/删除合集，返回后刷新首页合集横滑区。
-    await _collectionsController.refresh();
+    await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
   }
 
   Future<void> _addToCollection(VideoItemListItemDto video) async {
@@ -269,7 +266,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   Future<void> _handlePageRefresh() async {
     await Future.wait<void>([
       _pageState.controller.refresh(),
-      _collectionsController.refresh(),
+      ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
     ]);
   }
 
@@ -360,10 +357,10 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   }
 
   Widget _buildCollectionsSection(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _collectionsController,
-      builder: (context, _) {
-        final collections = _collectionsController.collections;
+    return Consumer(
+      builder: (context, ref, _) {
+        final async = ref.watch(videoCollectionsOverviewProvider);
+        final collections = async.value ?? const <VideoCollectionDto>[];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -397,7 +394,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
               ],
             ),
             SizedBox(height: context.appSpacing.sm),
-            _buildCollectionsRow(context, collections),
+            _buildCollectionsRow(context, async, collections),
           ],
         );
       },
@@ -406,13 +403,18 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
 
   Widget _buildCollectionsRow(
     BuildContext context,
+    AsyncValue<List<VideoCollectionDto>> async,
     List<VideoCollectionDto> collections,
   ) {
-    final error = _collectionsController.errorMessage;
-    if (error != null) {
-      return _HintBox(message: error);
+    if (async.hasError && collections.isEmpty) {
+      return _HintBox(
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '合集加载失败，请稍后重试',
+        ),
+      );
     }
-    if (_collectionsController.isLoading && collections.isEmpty) {
+    if (async.isLoading && collections.isEmpty) {
       return const SizedBox(
         height: 60,
         child: Center(child: CircularProgressIndicator()),

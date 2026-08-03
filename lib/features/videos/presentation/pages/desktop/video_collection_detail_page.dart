@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collection_detail_controller.dart';
+import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_state.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_filter_sections.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
-import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/media/quick_play_dialog.dart';
 
 /// 合集详情的成员排布方式：纵向列表（可拖序）或网格（侧重浏览）。
@@ -51,27 +53,14 @@ class DesktopVideoCollectionDetailPage extends ConsumerStatefulWidget {
 class _DesktopVideoCollectionDetailPageState
     extends ConsumerState<DesktopVideoCollectionDetailPage>
     with MultiSelectStateMixin<DesktopVideoCollectionDetailPage, int> {
-  late final VideoCollectionDetailController _controller;
-  late final VideoMutationChangeNotifier _mutationNotifier;
   int? _hoveredItemId;
   _VideoLayout _layout = _VideoLayout.list;
 
-  @override
-  void initState() {
-    super.initState();
-    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
-    _controller = VideoCollectionDetailController(
-      collectionId: widget.collectionId,
-      collectionsApi: ref.read(videoCollectionsApiProvider),
-      videosApi: ref.read(videosApiProvider),
-    )..load();
-  }
+  VideoCollectionDetailProvider get _providerRef =>
+      videoCollectionDetailProvider(widget.collectionId);
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  VideoMutationChangeNotifier get _mutationBroadcaster =>
+      ref.read(videoMutationBroadcasterProvider);
 
   void _setHovered(int? itemId) {
     if (_hoveredItemId == itemId) {
@@ -88,19 +77,22 @@ class _DesktopVideoCollectionDetailPageState
   }
 
   /// 进入合集连播页：从第 [index] 集开始，原生 Playlist 自动连播（与切片合集一致）。
-  Future<void> _playFrom(int index) async {
+  Future<void> _playFrom(
+    int index,
+    VideoCollectionDetailState state,
+  ) async {
     // 进入连播前先询问形态（列表连播 / 合并播放）；外部点关闭返回 null → 放弃跳转。
     final mode = await showCollectionPlaybackModePicker(context: context);
     if (mode == null || !mounted) {
       return;
     }
     final handoff = ref.read(collectionPlaybackHandoffProvider);
-    final sort = _controller.sortExpression;
+    final sort = state.sort.apiValue;
     // 把当前已排序、带播放地址的成员交给连播页直接用，免其二次全量拉取。
     handoff.offerVideoItems(
       collectionId: widget.collectionId,
       sort: sort,
-      items: _controller.items,
+      items: state.items,
     );
     // key 与连播页 takeMode 处保持一致：合集 + 排序，避免同合集换排序后串。
     handoff.offerMode(
@@ -143,20 +135,22 @@ class _DesktopVideoCollectionDetailPageState
   }
 
   Future<void> _removeItem(int itemId) async {
+    final items = ref.read(_providerRef).value?.items ??
+        const <VideoCollectionItemDto>[];
     int? videoId;
-    for (final item in _controller.items) {
+    for (final item in items) {
       if (item.itemId == itemId) {
         videoId = item.video.id;
         break;
       }
     }
-    final error = await _controller.removeItem(itemId);
+    final error = await ref.read(_providerRef.notifier).removeItem(itemId);
     if (!mounted) {
       return;
     }
     if (error == null && videoId != null) {
       // 合集封面/计数可能变化，广播给列表页的合集横滑区。
-      _mutationNotifier.reportCollectionMembershipChanged(
+      _mutationBroadcaster.reportCollectionMembershipChanged(
         videoId: videoId,
         collectionId: widget.collectionId,
       );
@@ -164,12 +158,14 @@ class _DesktopVideoCollectionDetailPageState
     showToast(error ?? '已从合集移除');
   }
 
-  /// 彻底删除视频本体（含文件，不可恢复）：先确认，再走控制器乐观删除并广播
+  /// 彻底删除视频本体（含文件，不可恢复）：先确认，再走 notifier 乐观删除并广播
   /// [VideoMutationChangeNotifier.reportDeleted]，让列表页网格精准移除、合集横滑区刷新。
   Future<void> _deleteVideo(int itemId) async {
+    final items = ref.read(_providerRef).value?.items ??
+        const <VideoCollectionItemDto>[];
     int? videoId;
     var title = '';
-    for (final item in _controller.items) {
+    for (final item in items) {
       if (item.itemId == itemId) {
         videoId = item.video.id;
         title = item.video.preferredTitle.trim();
@@ -191,19 +187,22 @@ class _DesktopVideoCollectionDetailPageState
     if (!mounted || !ok) {
       return;
     }
-    final error = await _controller.deleteVideo(itemId, videoId);
+    final error = await ref
+        .read(_providerRef.notifier)
+        .deleteVideo(itemId, videoId);
     if (!mounted) {
       return;
     }
     if (error == null) {
-      _mutationNotifier.reportDeleted(videoId);
+      _mutationBroadcaster.reportDeleted(videoId);
     }
     showToast(error ?? '已删除视频');
   }
 
-  List<VideoCollectionItemDto> _selectedItems() => _controller.items
-      .where((it) => isSelected(it.itemId))
-      .toList(growable: false);
+  List<VideoCollectionItemDto> _selectedItems(
+    VideoCollectionDetailState state,
+  ) =>
+      state.items.where((it) => isSelected(it.itemId)).toList(growable: false);
 
   void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
     if (result.failed.isEmpty) {
@@ -225,8 +224,10 @@ class _DesktopVideoCollectionDetailPageState
     );
   }
 
-  Future<void> _batchAddToOtherCollection() async {
-    final selected = _selectedItems();
+  Future<void> _batchAddToOtherCollection(
+    VideoCollectionDetailState state,
+  ) async {
+    final selected = _selectedItems(state);
     if (selected.isEmpty) {
       return;
     }
@@ -252,8 +253,9 @@ class _DesktopVideoCollectionDetailPageState
       return;
     }
     // 合集封面/计数变化：逐条广播给列表页的合集横滑区。
+    final broadcaster = _mutationBroadcaster;
     for (final item in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      broadcaster.reportCollectionMembershipChanged(
         videoId: item.video.id,
         collectionId: target.id,
       );
@@ -262,8 +264,8 @@ class _DesktopVideoCollectionDetailPageState
     exitSelection();
   }
 
-  Future<void> _batchRemove() async {
-    final selected = _selectedItems();
+  Future<void> _batchRemove(VideoCollectionDetailState state) async {
+    final selected = _selectedItems(state);
     if (selected.isEmpty) {
       return;
     }
@@ -274,12 +276,13 @@ class _DesktopVideoCollectionDetailPageState
     if (!mounted || !ok) {
       return;
     }
+    final notifier = ref.read(_providerRef.notifier);
     final result = await runBatchOperation<VideoCollectionItemDto>(
       context,
       title: '正在从合集移除',
       items: selected,
       action: (item) async {
-        final error = await _controller.removeItem(item.itemId);
+        final error = await notifier.removeItem(item.itemId);
         if (error != null) {
           throw Exception(error);
         }
@@ -289,13 +292,14 @@ class _DesktopVideoCollectionDetailPageState
       return;
     }
     // 重新拉取合集与成员，校准本页头部计数（collection.itemCount）与列表。
-    await _controller.refresh();
+    await notifier.refresh();
     if (!mounted) {
       return;
     }
     // 广播给列表页的合集横滑区（封面/计数变化）。
+    final broadcaster = _mutationBroadcaster;
     for (final item in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
+      broadcaster.reportCollectionMembershipChanged(
         videoId: item.video.id,
         collectionId: widget.collectionId,
       );
@@ -304,8 +308,8 @@ class _DesktopVideoCollectionDetailPageState
     exitSelection();
   }
 
-  Future<void> _batchDelete() async {
-    final selected = _selectedItems();
+  Future<void> _batchDelete(VideoCollectionDetailState state) async {
+    final selected = _selectedItems(state);
     if (selected.isEmpty) {
       return;
     }
@@ -327,13 +331,14 @@ class _DesktopVideoCollectionDetailPageState
       return;
     }
     // 重新拉取合集与成员，校准本页头部计数与列表。
-    await _controller.refresh();
+    await ref.read(_providerRef.notifier).refresh();
     if (!mounted) {
       return;
     }
     // 广播删除信号：列表页网格精准移除 + 合集横滑区刷新。
+    final broadcaster = _mutationBroadcaster;
     for (final item in result.succeeded) {
-      _mutationNotifier.reportDeleted(item.video.id);
+      broadcaster.reportDeleted(item.video.id);
     }
     _showBatchToast('删除', result);
     exitSelection();
@@ -341,30 +346,40 @@ class _DesktopVideoCollectionDetailPageState
 
   @override
   Widget build(BuildContext context) {
+    final async = ref.watch(_providerRef);
+    final state = async.value;
+    final notifier = ref.read(_providerRef.notifier);
+
     return AppPageRefreshScope(
-      onRefresh: _controller.refresh,
+      onRefresh: notifier.refresh,
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            if (_controller.isLoading) {
+        child: Builder(
+          builder: (context) {
+            if (async.isLoading && state == null) {
               return const Center(child: CircularProgressIndicator());
             }
-            final error = _controller.errorMessage;
-            if (error != null) {
+            if (async.hasError && state == null) {
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  AppEmptyState(message: error),
+                  AppEmptyState(
+                    message: apiErrorMessage(
+                      async.error!,
+                      fallback: '合集加载失败，请稍后重试',
+                    ),
+                  ),
                   SizedBox(height: context.appSpacing.md),
                   AppButton(
                     label: '重试',
                     variant: AppButtonVariant.secondary,
-                    onPressed: _controller.load,
+                    onPressed: notifier.refresh,
                   ),
                 ],
               );
+            }
+            if (state == null) {
+              return const SizedBox.shrink();
             }
             // 页面边距由桌面 shell 的 AppPageInsets.desktopStandard (24px) 统一提供，
             // 此处不再叠加 EdgeInsets.all(spacing.lg)，否则合计 40px 比切片合集详情等
@@ -373,17 +388,17 @@ class _DesktopVideoCollectionDetailPageState
               key: const Key('video-collection-detail-page'),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTitleBlock(context),
+                _buildTitleBlock(context, state),
                 // 空合集没什么可排序 / 可选择的，顶栏整条省掉。
-                if (_controller.items.isNotEmpty) ...[
+                if (state.items.isNotEmpty) ...[
                   SizedBox(height: context.appSpacing.md),
                   if (selectionMode)
-                    _buildSelectionHeader(context)
+                    _buildSelectionHeader(context, state)
                   else
-                    _buildListHeader(context),
+                    _buildListHeader(context, state),
                 ],
                 SizedBox(height: context.appSpacing.lg),
-                Expanded(child: _buildBody(context)),
+                Expanded(child: _buildBody(context, state)),
               ],
             );
           },
@@ -395,10 +410,13 @@ class _DesktopVideoCollectionDetailPageState
   /// 标题块：合集名 + 简介 + 「播放全部」主行动。
   /// 「选择 / 视图切换」在下面那条 [AppListHeader] 的操作槽里，成员数在它的信息槽里
   /// ——标题块只放这一页的身份信息，不再堆第二行文字。
-  Widget _buildTitleBlock(BuildContext context) {
-    final collection = _controller.collection;
-    final items = _controller.items;
-    final description = collection?.description.trim() ?? '';
+  Widget _buildTitleBlock(
+    BuildContext context,
+    VideoCollectionDetailState state,
+  ) {
+    final collection = state.collection;
+    final items = state.items;
+    final description = collection.description.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -407,7 +425,7 @@ class _DesktopVideoCollectionDetailPageState
           children: [
             Expanded(
               child: Text(
-                collection?.name ?? '合集详情',
+                collection.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: resolveAppTextStyle(
@@ -425,7 +443,8 @@ class _DesktopVideoCollectionDetailPageState
                 key: const Key('video-collection-play-all-button'),
                 label: '播放全部',
                 variant: AppButtonVariant.primary,
-                onPressed: items.isEmpty ? null : () => _playFrom(0),
+                onPressed:
+                    items.isEmpty ? null : () => _playFrom(0, state),
               ),
           ],
         ),
@@ -448,18 +467,23 @@ class _DesktopVideoCollectionDetailPageState
   /// 成员列表顶栏：与影片 / PornBox 列表页共用同一条 `AppListHeader`。
   /// 筛选入口收排序（含「手动顺序」），信息槽放成员数，右侧操作槽放
   /// 「选择 / 视图切换」。
-  Widget _buildListHeader(BuildContext context) {
-    final count = _controller.collection?.itemCount ?? _controller.items.length;
+  Widget _buildListHeader(
+    BuildContext context,
+    VideoCollectionDetailState state,
+  ) {
+    final count = state.collection.itemCount == 0
+        ? state.items.length
+        : state.collection.itemCount;
     return AppListHeader(
       filterButtonKey: const Key('video-collection-sort-trigger'),
       filterIcon: Icons.swap_vert_rounded,
-      filterLabel: videoCollectionSortLabel(_controller.sortField),
+      filterLabel: videoCollectionSortLabel(state.sort.field),
       filterPanelKey: const Key('video-collection-sort-panel'),
       filterPanelExtraWidth: 180,
       filterPanelBuilder:
           (_) => VideoCollectionFilterSectionGroup(
-            sortField: _controller.sortField,
-            sortDirection: _controller.sortDirection,
+            sortField: state.sort.field,
+            sortDirection: state.sort.direction,
             onChanged: _applySort,
           ),
       informationSlots: [
@@ -489,13 +513,17 @@ class _DesktopVideoCollectionDetailPageState
   }
 
   void _applySort({required VideoSortField? field, SortDirection? direction}) {
-    _controller.applySort(field: field, direction: direction);
+    ref
+        .read(_providerRef.notifier)
+        .applySort(field: field, direction: direction);
   }
 
   /// 多选态**原地改写整条列表顶栏**（与视频列表页一致），不在顶栏下面另起一行。
-  Widget _buildSelectionHeader(BuildContext context) {
-    final items = _controller.items;
-    final itemIds = items.map((it) => it.itemId);
+  Widget _buildSelectionHeader(
+    BuildContext context,
+    VideoCollectionDetailState state,
+  ) {
+    final itemIds = state.items.map((it) => it.itemId);
     final allSelected = isAllSelected(itemIds);
     final hasSelection = selectedCount > 0;
 
@@ -510,21 +538,22 @@ class _DesktopVideoCollectionDetailPageState
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchAddToOtherCollection : null,
+          onPressed:
+              hasSelection ? () => _batchAddToOtherCollection(state) : null,
         ),
         AppButton(
           key: const Key('video-collection-batch-remove-button'),
           label: '从合集移除',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchRemove : null,
+          onPressed: hasSelection ? () => _batchRemove(state) : null,
         ),
         AppButton(
           key: const Key('video-collection-batch-delete-button'),
           label: '删除视频',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection ? () => _batchDelete(state) : null,
         ),
       ],
       exitKey: const Key('video-collection-exit-selection-button'),
@@ -532,19 +561,19 @@ class _DesktopVideoCollectionDetailPageState
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_controller.items.isEmpty) {
+  Widget _buildBody(BuildContext context, VideoCollectionDetailState state) {
+    if (state.items.isEmpty) {
       return const AppEmptyState(message: '合集还没有视频，去视频列表用「加入合集」添加吧');
     }
     return _layout == _VideoLayout.grid
-        ? _buildGrid(context)
-        : _buildList(context);
+        ? _buildGrid(context, state)
+        : _buildList(context, state);
   }
 
-  Widget _buildList(BuildContext context) {
-    final items = _controller.items;
+  Widget _buildList(BuildContext context, VideoCollectionDetailState state) {
+    final items = state.items;
     // 仅手动顺序且非选择模式下允许拖拽重排：其它排序下拖拽会与排序冲突。
-    final canReorder = !selectionMode && _controller.isManualOrder;
+    final canReorder = !selectionMode && state.sort.isManual;
 
     CollectionMemberRow buildRow(int index) {
       final item = items[index];
@@ -587,7 +616,8 @@ class _DesktopVideoCollectionDetailPageState
       key: const Key('video-collection-detail-list'),
       buildDefaultDragHandles: false,
       itemCount: items.length,
-      onReorder: _controller.reorder,
+      onReorder: (oldIndex, newIndex) =>
+          ref.read(_providerRef.notifier).reorder(oldIndex, newIndex),
       // 默认 proxyDecorator 会给拖动项叠加带阴影的 Material，这里换成无阴影透明包装。
       proxyDecorator:
           (child, index, animation) =>
@@ -611,8 +641,8 @@ class _DesktopVideoCollectionDetailPageState
     );
   }
 
-  Widget _buildGrid(BuildContext context) {
-    final items = _controller.items;
+  Widget _buildGrid(BuildContext context, VideoCollectionDetailState state) {
+    final items = state.items;
     final spacing = context.appSpacing.md;
     return LayoutBuilder(
       builder: (context, constraints) {

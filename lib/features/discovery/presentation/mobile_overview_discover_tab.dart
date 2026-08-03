@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
+import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
+import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
+import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -22,169 +26,162 @@ import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart'
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
-
-class MobileOverviewDiscoverTab extends ConsumerStatefulWidget {
+class MobileOverviewDiscoverTab extends ConsumerWidget {
   const MobileOverviewDiscoverTab({super.key});
 
-  @override
-  ConsumerState<MobileOverviewDiscoverTab> createState() =>
-      _MobileOverviewDiscoverTabState();
-}
-
-class _MobileOverviewDiscoverTabState
-    extends ConsumerState<MobileOverviewDiscoverTab> {
   static const int _dailyPreviewCount = 6;
   static const int _momentPreviewCount = 4;
-
-  late final DiscoveryController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = DiscoveryController(
-      discoveryApi: ref.read(discoveryApiProvider),
-      dailyPageSize: 10,
-      momentPageSize: 10,
-    )..load();
-  }
+  static const int _dailyPageSize = 10;
+  static const int _momentPageSize = 10;
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final daily = ref.watch(discoveryDailyPreviewProvider(_dailyPageSize));
+    final moment = ref.watch(discoveryMomentPreviewProvider(_momentPageSize));
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return AppAdaptiveRefreshScrollView(
-          key: const Key('mobile-overview-discover-tab'),
-          onRefresh: _handleRefresh,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(height: context.appSpacing.sm),
-                  _buildDailySection(context),
-                  SizedBox(height: context.appSpacing.lg),
-                  _buildMomentSection(context),
-                  SizedBox(height: context.appSpacing.lg),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
+    return AppAdaptiveRefreshScrollView(
+      key: const Key('mobile-overview-discover-tab'),
+      onRefresh: () => _handleRefresh(ref),
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: context.appSpacing.sm),
+              _buildDailySection(context, ref, daily),
+              SizedBox(height: context.appSpacing.lg),
+              _buildMomentSection(context, ref, moment),
+              SizedBox(height: context.appSpacing.lg),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Future<void> _handleRefresh() async {
-    try {
-      await _controller.refresh();
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
-    }
+  /// 双腿并行刷新;各腿失败自行静默/置错(见 provider),这里不 toast——
+  /// 对齐迁移前 `DiscoveryController.refresh()` 吞异常的行为。
+  Future<void> _handleRefresh(WidgetRef ref) async {
+    await Future.wait(<Future<void>>[
+      ref.read(discoveryDailyPreviewProvider(_dailyPageSize).notifier).refresh(),
+      ref
+          .read(discoveryMomentPreviewProvider(_momentPageSize).notifier)
+          .refresh(),
+    ]);
   }
 
-  Widget _buildDailySection(BuildContext context) {
+  Widget _buildDailySection(
+    BuildContext context,
+    WidgetRef ref,
+    DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _MobileDiscoverSectionTitle(
           title: '今日推荐',
-          totalText: '${_controller.dailyTotal} 部',
+          totalText: '${daily.total} 部',
           actionKey: const Key('mobile-discover-load-more-daily'),
           actionLabel: '更多',
           onActionTap: () => context.push(mobileDiscoverMoviesPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        _buildDailyBody(context),
+        _buildDailyBody(context, ref, daily),
       ],
     );
   }
 
-  Widget _buildDailyBody(BuildContext context) {
-    if (_controller.dailyErrorMessage != null) {
+  Widget _buildDailyBody(
+    BuildContext context,
+    WidgetRef ref,
+    DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
+  ) {
+    if (daily.errorMessage != null) {
       return _RetryEmptyState(
-        message: _controller.dailyErrorMessage!,
-        onRetry: _controller.refresh,
+        message: daily.errorMessage!,
+        onRetry: () => _handleRefresh(ref),
       );
     }
     return MovieSummaryGrid(
-      items: _controller.dailyItems
+      items: daily.items
           .take(_dailyPreviewCount)
           .map((item) => item.movie)
           .toList(growable: false),
-      isLoading: _controller.isLoadingDaily,
+      isLoading: daily.isLoading,
       emptyMessage: '暂无每日推荐，去搜索看看吧',
       placeholderCount: _dailyPreviewCount,
-      onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
+      onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
     );
   }
 
-  Widget _buildMomentSection(BuildContext context) {
+  Widget _buildMomentSection(
+    BuildContext context,
+    WidgetRef ref,
+    DiscoveryPreviewState<MomentRecommendationDto> moment,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _MobileDiscoverSectionTitle(
           title: '推荐时刻',
-          totalText: '${_controller.momentTotal} 个',
+          totalText: '${moment.total} 个',
           actionKey: const Key('mobile-discover-load-more-moments'),
           actionLabel: '更多',
           onActionTap: () => context.push(mobileDiscoverMomentsPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        _buildMomentBody(context),
+        _buildMomentBody(context, ref, moment),
       ],
     );
   }
 
-  Widget _buildMomentBody(BuildContext context) {
-    if (_controller.isLoadingMoments) {
+  Widget _buildMomentBody(
+    BuildContext context,
+    WidgetRef ref,
+    DiscoveryPreviewState<MomentRecommendationDto> moment,
+  ) {
+    if (moment.isLoading) {
       return const AppMobileSkeletonList();
     }
-    if (_controller.momentErrorMessage != null) {
+    if (moment.errorMessage != null) {
       return _RetryEmptyState(
-        message: _controller.momentErrorMessage!,
-        onRetry: _controller.refresh,
+        message: moment.errorMessage!,
+        onRetry: () => _handleRefresh(ref),
       );
     }
-    if (_controller.momentItems.isEmpty) {
+    if (moment.items.isEmpty) {
       return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
     }
     return MomentGrid(
-      items: _controller.momentItems
+      items: moment.items
           .take(_momentPreviewCount)
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
-      onItemTap: _openMomentPreview,
+      onItemTap: (item) => _openMomentPreview(context, item),
     );
   }
 
-  void _openMovieDetail(String movieNumber) {
+  void _openMovieDetail(BuildContext context, String movieNumber) {
     MobileMovieDetailRouteData(movieNumber: movieNumber).push(context);
   }
 
-  Future<void> _openMomentPreview(MomentListItem item) async {
+  Future<void> _openMomentPreview(
+    BuildContext context,
+    MomentListItem item,
+  ) async {
     final action = await showMomentPreviewOverlay(
       context: context,
       item: item,
       presentation: MediaPreviewPresentation.bottomDrawer,
       drawerKey: const Key('mobile-discover-moment-preview-bottom-sheet'),
     );
-    if (!mounted || action == null) {
+    if (!context.mounted || action == null) {
       return;
     }
     switch (action) {
       case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(item);
+        await _searchSimilarFromMoment(context, item);
       case MediaPreviewAction.play:
         final movieNumber = item.movieNumber;
         if (movieNumber == null || movieNumber.isEmpty) {
@@ -209,7 +206,10 @@ class _MobileOverviewDiscoverTabState
     }
   }
 
-  Future<void> _searchSimilarFromMoment(MomentListItem item) async {
+  Future<void> _searchSimilarFromMoment(
+    BuildContext context,
+    MomentListItem item,
+  ) async {
     final imageUrl = resolveMomentImageUrl(item);
     if (imageUrl.isEmpty) {
       return;
@@ -223,7 +223,7 @@ class _MobileOverviewDiscoverTabState
         fileName: buildMomentImageFileName(item, imageUrl),
       );
     } catch (_) {
-      if (mounted) {
+      if (context.mounted) {
         showToast('读取结果图片失败，请稍后重试');
       }
     }

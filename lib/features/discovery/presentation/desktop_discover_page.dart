@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
+import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
+import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
+import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
@@ -26,7 +30,6 @@ import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 
@@ -39,7 +42,12 @@ class DesktopDiscoverPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
-  late final DiscoveryController _controller;
+  // discovery 双腿已迁 Riverpod(discoveryDailyPreview/discoveryMomentPreview,
+  // build 里 ref.watch);本 State 只剩「女优上新」半边——PagedMovieSummaryController
+  // 与两个广播 addListener 属 movies 订阅体系,留待批 5 迁移。
+  static const int _dailyPageSize = 6;
+  static const int _momentPageSize = 8;
+
   late final PagedMovieSummaryController _followController;
   late final MovieCollectionTypeChangeNotifier _collectionChangeNotifier;
   late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
@@ -47,12 +55,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   @override
   void initState() {
     super.initState();
-    _controller = DiscoveryController(
-      discoveryApi: ref.read(discoveryApiProvider),
-      dailyPageSize: 6,
-      momentPageSize: 8,
-    )..load();
-
     _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
     _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
     _subscriptionChangeNotifier = ref.read(
@@ -83,7 +85,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     _collectionChangeNotifier.removeListener(_onCollectionTypeChanged);
     _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
     _followController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
@@ -123,15 +124,25 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     showMovieSubscriptionFeedback(result);
   }
 
-  Future<void> _handleRefresh() async {
-    await Future.wait<void>([
-      _controller.refresh(),
-      _followController.refresh(),
+  /// discovery 双腿并行刷新;各腿失败自行静默/置错(见 provider),不 toast——
+  /// 对齐迁移前 `DiscoveryController.refresh()` 吞异常的行为。
+  Future<void> _refreshDiscovery() async {
+    await Future.wait(<Future<void>>[
+      ref.read(discoveryDailyPreviewProvider(_dailyPageSize).notifier).refresh(),
+      ref
+          .read(discoveryMomentPreviewProvider(_momentPageSize).notifier)
+          .refresh(),
     ]);
+  }
+
+  Future<void> _handleRefresh() async {
+    await Future.wait<void>([_refreshDiscovery(), _followController.refresh()]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final daily = ref.watch(discoveryDailyPreviewProvider(_dailyPageSize));
+    final moment = ref.watch(discoveryMomentPreviewProvider(_momentPageSize));
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
       child: ColoredBox(
@@ -139,10 +150,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
         child: AppPageFrame(
           title: '',
           child: AnimatedBuilder(
-            animation: Listenable.merge(<Listenable>[
-              _controller,
-              _followController,
-            ]),
+            animation: _followController,
             builder: (context, _) {
               return Column(
                 key: const Key('desktop-discover-page'),
@@ -150,9 +158,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
                 children: [
                   _buildFollowSection(context),
                   SizedBox(height: context.appSpacing.xl),
-                  _buildDailySection(context),
+                  _buildDailySection(context, daily),
                   SizedBox(height: context.appSpacing.xl),
-                  _buildMomentSection(context),
+                  _buildMomentSection(context, moment),
                 ],
               );
             },
@@ -198,35 +206,39 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     );
   }
 
-  Widget _buildDailySection(BuildContext context) {
+  Widget _buildDailySection(
+    BuildContext context,
+    DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _DiscoverSectionTitle(
           title: '今日推荐',
-          totalText: '${_controller.dailyTotal} 部',
+          totalText: '${daily.total} 部',
           actionKey: const Key('desktop-discover-load-more-daily'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopDiscoverMoviesPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        _buildDailyBody(context),
+        _buildDailyBody(context, daily),
       ],
     );
   }
 
-  Widget _buildDailyBody(BuildContext context) {
-    if (_controller.dailyErrorMessage != null) {
+  Widget _buildDailyBody(
+    BuildContext context,
+    DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
+  ) {
+    if (daily.errorMessage != null) {
       return _RetryEmptyState(
-        message: _controller.dailyErrorMessage!,
-        onRetry: _controller.refresh,
+        message: daily.errorMessage!,
+        onRetry: _refreshDiscovery,
       );
     }
     return MovieSummaryGrid(
-      items: _controller.dailyItems
-          .map((item) => item.movie)
-          .toList(growable: false),
-      isLoading: _controller.isLoadingDaily,
+      items: daily.items.map((item) => item.movie).toList(growable: false),
+      isLoading: daily.isLoading,
       emptyMessage: '暂无每日推荐，去搜索看看吧',
       placeholderCount: 6,
       onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
@@ -240,25 +252,31 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     );
   }
 
-  Widget _buildMomentSection(BuildContext context) {
+  Widget _buildMomentSection(
+    BuildContext context,
+    DiscoveryPreviewState<MomentRecommendationDto> moment,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _DiscoverSectionTitle(
           title: '推荐时刻',
-          totalText: '${_controller.momentTotal} 个',
+          totalText: '${moment.total} 个',
           actionKey: const Key('desktop-discover-load-more-moments'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopDiscoverMomentsPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        _buildMomentBody(context),
+        _buildMomentBody(context, moment),
       ],
     );
   }
 
-  Widget _buildMomentBody(BuildContext context) {
-    if (_controller.isLoadingMoments) {
+  Widget _buildMomentBody(
+    BuildContext context,
+    DiscoveryPreviewState<MomentRecommendationDto> moment,
+  ) {
+    if (moment.isLoading) {
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -268,17 +286,17 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
         ),
       );
     }
-    if (_controller.momentErrorMessage != null) {
+    if (moment.errorMessage != null) {
       return _RetryEmptyState(
-        message: _controller.momentErrorMessage!,
-        onRetry: _controller.refresh,
+        message: moment.errorMessage!,
+        onRetry: _refreshDiscovery,
       );
     }
-    if (_controller.momentItems.isEmpty) {
+    if (moment.items.isEmpty) {
       return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
     }
     return MomentGrid(
-      items: _controller.momentItems
+      items: moment.items
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: _openMomentPreview,

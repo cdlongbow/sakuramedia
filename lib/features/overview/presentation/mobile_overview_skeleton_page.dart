@@ -13,7 +13,6 @@ import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_cl
 import 'package:sakuramedia/features/hot_reviews/presentation/mobile_overview_hot_reviews_tab.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_follow_tab.dart';
-import 'package:sakuramedia/features/overview/presentation/mobile_overview_tab_index_notifier.dart';
 import 'package:sakuramedia/features/moments/presentation/mobile_overview_moments_tab.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
@@ -75,7 +74,7 @@ class MobileOverviewSkeletonPage extends StatelessWidget {
 }
 
 /// 把当前 tab 序号上报给壳层,壳据此决定是否放开左边缘侧滑打开抽屉。
-/// 见 [MobileOverviewTabIndexNotifier]。
+/// 见 [mobileOverviewTabIndexProvider]。
 class _MobileOverviewTabIndexReporter extends ConsumerStatefulWidget {
   const _MobileOverviewTabIndexReporter({required this.child});
 
@@ -89,13 +88,13 @@ class _MobileOverviewTabIndexReporter extends ConsumerStatefulWidget {
 class _MobileOverviewTabIndexReporterState
     extends ConsumerState<_MobileOverviewTabIndexReporter> {
   TabController? _controller;
-  MobileOverviewTabIndexNotifier? _notifier;
+  MobileOverviewTabIndex? _notifier;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // notifier 已迁 mobileOverviewTabIndexProvider(autoDispose):这里 read 拿
-    // 实例,build 里的 watch(.notifier) 负责持有订阅、防止 autoDispose 提前释放。
+    // 这里 read 拿 notifier 实例,build 里的 watch(.notifier) 负责持有订阅、
+    // 防止 autoDispose 提前释放。
     _notifier ??= ref.read(mobileOverviewTabIndexProvider.notifier);
     final controller = DefaultTabController.maybeOf(context);
     if (identical(controller, _controller)) {
@@ -103,7 +102,7 @@ class _MobileOverviewTabIndexReporterState
     }
     _controller?.removeListener(_report);
     _controller = controller?..addListener(_report);
-    // 这里仍在 build 期,直接写 notifier 会 markNeedsBuild 正在构建中的祖先(壳
+    // 这里仍在 build 期,直接写 provider 会 markNeedsBuild 正在构建中的祖先(壳
     // builder watch 着它),抛「setState() called during build」。挂载时的首次对齐
     // 推迟到本帧结束;之后的变更都由 TabController 回调驱动,那本就在 build 之外。
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -125,8 +124,9 @@ class _MobileOverviewTabIndexReporterState
     if (controller == null) {
       return;
     }
-    // 相同值 ValueNotifier 不会通知,拖动动画期间的每帧回调不会引起重建。
-    _notifier?.value = controller.index;
+    // 相同 state Riverpod Notifier 按 == 去重不通知,拖动动画期间的每帧回调
+    // 不会引起重建。
+    _notifier?.report(controller.index);
   }
 
   @override

@@ -37,7 +37,6 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_coll
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
-import 'package:sakuramedia/features/overview/presentation/mobile_overview_tab_index_notifier.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_system_overview_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlists_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
@@ -834,9 +833,9 @@ final int _overviewBranchIndex = () {
 
 /// 移动壳作用域。
 ///
-/// 不再持有 [MobileOverviewTabIndexNotifier]——tab 序号由
-/// `mobileOverviewTabIndexProvider`(autoDispose)承载:首页在子树里
-/// `ref.watch(...notifier)` 上报,壳在这里 `ref.watch` 读回来决定是否放开
+/// tab 序号由 `mobileOverviewTabIndexProvider`(autoDispose 的 `@riverpod`
+/// int Notifier)承载:首页在子树里经 notifier 上报,壳在这里 `ref.watch`
+/// 读回来决定是否放开
 /// 左边缘侧滑。**刻意不放 `app.dart` 的全局 providers**——它是纯移动端的
 /// UI 手势状态,放全局会让桌面/Web 白背一份、让每个 pump 移动路由的测试都得
 /// 手动注入(漏注入时静默降级成"侧滑永久关闭"),也会和那批跨页 mutation
@@ -876,7 +875,7 @@ class _MobileRootShellScopeState extends ConsumerState<_MobileRootShellScope> {
     final enableOverviewDrawerDrag =
         enableOverviewDrawer &&
         currentPath == mobileOverviewPath &&
-        ref.watch(mobileOverviewTabIndexProvider).value == 0;
+        ref.watch(mobileOverviewTabIndexProvider) == 0;
     return AppMobileShell(
       currentPath: currentPath,
       navGroups: mobileNavGroups,

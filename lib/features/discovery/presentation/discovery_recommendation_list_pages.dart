@@ -1,18 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
-import 'package:sakuramedia/features/discovery/presentation/providers/discovery_api_provider.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_controller.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/discovery_recommendation_feeds_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/paged_moment_controller.dart';
-import 'package:sakuramedia/features/shared/presentation/paged_load_controller.dart';
+import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -67,108 +67,84 @@ class MobileDiscoverMomentsPage extends StatelessWidget {
 
 enum _DiscoveryListPlatform { desktop, mobile }
 
-class _DiscoveryMoviesPage extends ConsumerStatefulWidget {
+class _DiscoveryMoviesPage extends HookConsumerWidget {
   const _DiscoveryMoviesPage({required this.platform});
 
   final _DiscoveryListPlatform platform;
 
-  @override
-  ConsumerState<_DiscoveryMoviesPage> createState() =>
-      _DiscoveryMoviesPageState();
-}
-
-class _DiscoveryMoviesPageState extends ConsumerState<_DiscoveryMoviesPage> {
-  late final PagedLoadController<DailyRecommendationMovieDto> _controller;
-
-  bool get _isMobile => widget.platform == _DiscoveryListPlatform.mobile;
+  bool get _isMobile => platform == _DiscoveryListPlatform.mobile;
 
   @override
-  void initState() {
-    super.initState();
-    _controller = PagedLoadController<DailyRecommendationMovieDto>(
-      fetchPage:
-          (page, pageSize) => ref
-              .read(discoveryApiProvider)
-              .getDailyRecommendations(page: page, pageSize: pageSize),
-      pageSize: _isMobile ? 18 : 24,
-      loadMoreTriggerOffset: 300,
-      initialLoadErrorText: '推荐影片加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多推荐影片失败，请点击重试',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = dailyRecommendationFeedProvider(_isMobile ? 18 : 24);
+    final async = ref.watch(provider);
+    final paged =
+        async.value ?? const PagedListState<DailyRecommendationMovieDto>();
+    final scrollController = usePagedLoadMoreScroll(
+      onReachBottom: () {
+        // 对齐旧 PagedLoadController:loadMore 失败存续期间滚动不自动重试，
+        // 恢复分页的唯一入口是 footer 的重试按钮。
+        if (paged.loadMoreErrorMessage == null) {
+          unawaited(ref.read(provider.notifier).loadMore());
+        }
+      },
+      triggerOffset: 300,
     );
-    _controller.attachScrollListener();
-    _controller.initialize();
-  }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sliver = AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final showFooter =
-            _controller.items.isNotEmpty &&
-            (_controller.isLoadingMore ||
-                _controller.loadMoreErrorMessage != null);
-        return SliverMainAxisGroup(
-          key: Key(
-            _isMobile
-                ? 'mobile-discover-movies-page'
-                : 'desktop-discover-movies-page',
-          ),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppFilterTotalHeader(
-                    leading: const SizedBox.shrink(),
-                    totalText: '${_controller.total} 部',
-                    totalKey: Key(
-                      _isMobile
-                          ? 'mobile-discover-movies-total'
-                          : 'desktop-discover-movies-total',
-                    ),
-                  ),
-                  SizedBox(
-                    height:
-                        _isMobile
-                            ? context.appSpacing.md
-                            : context.appSpacing.lg,
-                  ),
-                ],
-              ),
-            ),
-            _buildBody(context),
-            if (showFooter)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: context.appSpacing.md),
-                  child: AppPagedLoadMoreFooter(
-                    isLoading: _controller.isLoadingMore,
-                    errorMessage: _controller.loadMoreErrorMessage,
-                    onRetry: _controller.loadMore,
-                  ),
+    final showFooter =
+        paged.isNotEmpty &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
+    final sliver = SliverMainAxisGroup(
+      key: Key(
+        _isMobile
+            ? 'mobile-discover-movies-page'
+            : 'desktop-discover-movies-page',
+      ),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppFilterTotalHeader(
+                leading: const SizedBox.shrink(),
+                totalText: '${paged.total} 部',
+                totalKey: Key(
+                  _isMobile
+                      ? 'mobile-discover-movies-total'
+                      : 'desktop-discover-movies-total',
                 ),
               ),
-          ],
-        );
-      },
+              SizedBox(
+                height:
+                    _isMobile ? context.appSpacing.md : context.appSpacing.lg,
+              ),
+            ],
+          ),
+        ),
+        _buildBody(context, ref, async, paged),
+        if (showFooter)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: context.appSpacing.md),
+              child: AppPagedLoadMoreFooter(
+                isLoading: paged.isLoadingMore,
+                errorMessage: paged.loadMoreErrorMessage,
+                onRetry: () => unawaited(ref.read(provider.notifier).loadMore()),
+              ),
+            ),
+          ),
+      ],
     );
 
     return AppPageRefreshScope(
-      onRefresh: _handleRefresh,
+      onRefresh: () => _handleRefresh(context, ref),
       child:
           _isMobile
               ? ColoredBox(
                 color: context.appColors.surfaceCard,
                 child: AppAdaptiveRefreshScrollView(
-                  controller: _controller.scrollController,
-                  onRefresh: _handleRefresh,
+                  controller: scrollController,
+                  onRefresh: () => _handleRefresh(context, ref),
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: <Widget>[sliver],
                 ),
@@ -176,40 +152,42 @@ class _DiscoveryMoviesPageState extends ConsumerState<_DiscoveryMoviesPage> {
               : ColoredBox(
                 color: context.appColors.surfaceElevated,
                 child: CustomScrollView(
-                  controller: _controller.scrollController,
+                  controller: scrollController,
                   slivers: [sliver],
                 ),
               ),
     );
   }
 
-  Future<void> _handleRefresh() async {
-    try {
-      await _controller.refresh();
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
+  Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
+    final provider = dailyRecommendationFeedProvider(_isMobile ? 18 : 24);
+    final errorMessage = await ref.read(provider.notifier).refresh();
+    if (errorMessage != null && context.mounted) {
+      showToast('刷新失败');
     }
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_controller.initialErrorMessage != null) {
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<PagedListState<DailyRecommendationMovieDto>> async,
+    PagedListState<DailyRecommendationMovieDto> paged,
+  ) {
+    if (async.hasError) {
+      final provider = dailyRecommendationFeedProvider(_isMobile ? 18 : 24);
       return SliverToBoxAdapter(
         child: _RetryEmptyState(
-          message: _controller.initialErrorMessage!,
-          onRetry: _controller.reload,
+          message: '推荐影片加载失败，请稍后重试',
+          onRetry: () => ref.read(provider.notifier).reload(),
         ),
       );
     }
     return MovieSummarySliver(
-      items: _controller.items
-          .map((item) => item.movie)
-          .toList(growable: false),
-      isLoading: _controller.isInitialLoading,
+      items: paged.items.map((item) => item.movie).toList(growable: false),
+      isLoading: async.isLoading,
       emptyMessage: '暂无推荐影片，去搜索看看吧',
       placeholderCount: _isMobile ? 6 : 12,
-      onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
+      onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
       onMovieMenuRequest:
           (movie, globalPosition) => requestMovieCollectionMenu(
             context,
@@ -220,125 +198,88 @@ class _DiscoveryMoviesPageState extends ConsumerState<_DiscoveryMoviesPage> {
     );
   }
 
-  void _openMovieDetail(String movieNumber) {
+  void _openMovieDetail(BuildContext context, String movieNumber) {
     context.push(_movieDetailPath(movieNumber, isMobile: _isMobile));
   }
 }
 
-class _DiscoveryMomentsPage extends ConsumerStatefulWidget {
+class _DiscoveryMomentsPage extends HookConsumerWidget {
   const _DiscoveryMomentsPage({required this.platform});
 
   final _DiscoveryListPlatform platform;
 
-  @override
-  ConsumerState<_DiscoveryMomentsPage> createState() =>
-      _DiscoveryMomentsPageState();
-}
-
-class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
-  late final PagedLoadController<MomentRecommendationDto> _controller;
-
-  bool get _isMobile => widget.platform == _DiscoveryListPlatform.mobile;
+  bool get _isMobile => platform == _DiscoveryListPlatform.mobile;
 
   @override
-  void initState() {
-    super.initState();
-    _controller = PagedLoadController<MomentRecommendationDto>(
-      fetchPage: _fetchPage,
-      pageSize: _isMobile ? 18 : 24,
-      loadMoreTriggerOffset: 300,
-      initialLoadErrorText: '推荐时刻加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多推荐时刻失败，请点击重试',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = momentRecommendationFeedProvider(_isMobile ? 18 : 24);
+    final async = ref.watch(provider);
+    final paged =
+        async.value ?? const PagedListState<MomentRecommendationDto>();
+    final scrollController = usePagedLoadMoreScroll(
+      onReachBottom: () {
+        // 同影片页：loadMore 失败存续期间滚动不自动重试。
+        if (paged.loadMoreErrorMessage == null) {
+          unawaited(ref.read(provider.notifier).loadMore());
+        }
+      },
+      triggerOffset: 300,
     );
-    _controller.attachScrollListener();
-    _controller.initialize();
-  }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<PaginatedResponseDto<MomentRecommendationDto>> _fetchPage(
-    int page,
-    int pageSize,
-  ) async {
-    final response = await ref
-        .read(discoveryApiProvider)
-        .getMomentRecommendations(page: page, pageSize: pageSize);
-    return PaginatedResponseDto<MomentRecommendationDto>(
-      items: response.items,
-      page: response.page,
-      pageSize: response.pageSize,
-      total: response.total,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final sliver = AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final showFooter =
-            _controller.items.isNotEmpty &&
-            (_controller.isLoadingMore ||
-                _controller.loadMoreErrorMessage != null);
-        return SliverMainAxisGroup(
-          key: Key(
-            _isMobile
-                ? 'mobile-discover-moments-page'
-                : 'desktop-discover-moments-page',
-          ),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppFilterTotalHeader(
-                    leading: const SizedBox.shrink(),
-                    totalText: '${_controller.total} 个',
-                    totalKey: Key(
-                      _isMobile
-                          ? 'mobile-discover-moments-total'
-                          : 'desktop-discover-moments-total',
-                    ),
-                  ),
-                  SizedBox(
-                    height:
-                        _isMobile
-                            ? context.appSpacing.md
-                            : context.appSpacing.lg,
-                  ),
-                ],
-              ),
-            ),
-            _buildBody(context),
-            if (showFooter)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: context.appSpacing.md),
-                  child: AppPagedLoadMoreFooter(
-                    isLoading: _controller.isLoadingMore,
-                    errorMessage: _controller.loadMoreErrorMessage,
-                    onRetry: _controller.loadMore,
-                  ),
+    final showFooter =
+        paged.isNotEmpty &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
+    final sliver = SliverMainAxisGroup(
+      key: Key(
+        _isMobile
+            ? 'mobile-discover-moments-page'
+            : 'desktop-discover-moments-page',
+      ),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppFilterTotalHeader(
+                leading: const SizedBox.shrink(),
+                totalText: '${paged.total} 个',
+                totalKey: Key(
+                  _isMobile
+                      ? 'mobile-discover-moments-total'
+                      : 'desktop-discover-moments-total',
                 ),
               ),
-          ],
-        );
-      },
+              SizedBox(
+                height:
+                    _isMobile ? context.appSpacing.md : context.appSpacing.lg,
+              ),
+            ],
+          ),
+        ),
+        _buildBody(context, ref, async, paged),
+        if (showFooter)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: context.appSpacing.md),
+              child: AppPagedLoadMoreFooter(
+                isLoading: paged.isLoadingMore,
+                errorMessage: paged.loadMoreErrorMessage,
+                onRetry: () => unawaited(ref.read(provider.notifier).loadMore()),
+              ),
+            ),
+          ),
+      ],
     );
 
     return AppPageRefreshScope(
-      onRefresh: _handleRefresh,
+      onRefresh: () => _handleRefresh(context, ref),
       child:
           _isMobile
               ? ColoredBox(
                 color: context.appColors.surfaceCard,
                 child: AppAdaptiveRefreshScrollView(
-                  controller: _controller.scrollController,
-                  onRefresh: _handleRefresh,
+                  controller: scrollController,
+                  onRefresh: () => _handleRefresh(context, ref),
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: <Widget>[sliver],
                 ),
@@ -346,25 +287,28 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
               : ColoredBox(
                 color: context.appColors.surfaceElevated,
                 child: CustomScrollView(
-                  controller: _controller.scrollController,
+                  controller: scrollController,
                   slivers: [sliver],
                 ),
               ),
     );
   }
 
-  Future<void> _handleRefresh() async {
-    try {
-      await _controller.refresh();
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
+  Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
+    final provider = momentRecommendationFeedProvider(_isMobile ? 18 : 24);
+    final errorMessage = await ref.read(provider.notifier).refresh();
+    if (errorMessage != null && context.mounted) {
+      showToast('刷新失败');
     }
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_controller.isInitialLoading) {
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<PagedListState<MomentRecommendationDto>> async,
+    PagedListState<MomentRecommendationDto> paged,
+  ) {
+    if (async.isLoading) {
       return SliverToBoxAdapter(
         child: Center(
           child: Padding(
@@ -376,28 +320,32 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
         ),
       );
     }
-    if (_controller.initialErrorMessage != null) {
+    if (async.hasError) {
+      final provider = momentRecommendationFeedProvider(_isMobile ? 18 : 24);
       return SliverToBoxAdapter(
         child: _RetryEmptyState(
-          message: _controller.initialErrorMessage!,
-          onRetry: _controller.reload,
+          message: '推荐时刻加载失败，请稍后重试',
+          onRetry: () => ref.read(provider.notifier).reload(),
         ),
       );
     }
-    if (_controller.items.isEmpty) {
+    if (paged.isEmpty) {
       return const SliverToBoxAdapter(
         child: AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示'),
       );
     }
     return MomentSliver(
-      items: _controller.items
+      items: paged.items
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
-      onItemTap: _openMomentPreview,
+      onItemTap: (item) => _openMomentPreview(context, item),
     );
   }
 
-  Future<void> _openMomentPreview(MomentListItem item) async {
+  Future<void> _openMomentPreview(
+    BuildContext context,
+    MomentListItem item,
+  ) async {
     final action = await showMomentPreviewOverlay(
       context: context,
       item: item,
@@ -410,20 +358,23 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
               ? const Key('mobile-discover-moments-preview-bottom-sheet')
               : null,
     );
-    if (!mounted || action == null) {
+    if (!context.mounted || action == null) {
       return;
     }
     switch (action) {
       case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(item);
+        await _searchSimilarFromMoment(context, item);
       case MediaPreviewAction.play:
-        _openPlayerForMoment(item);
+        _openPlayerForMoment(context, item);
       case MediaPreviewAction.openMovieDetail:
-        _openMovieDetailForMoment(item);
+        _openMovieDetailForMoment(context, item);
     }
   }
 
-  Future<bool> _searchSimilarFromMoment(MomentListItem item) async {
+  Future<bool> _searchSimilarFromMoment(
+    BuildContext context,
+    MomentListItem item,
+  ) async {
     final imageUrl = resolveMomentImageUrl(item);
     if (imageUrl.isEmpty) {
       return false;
@@ -439,7 +390,7 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
         );
         return true;
       } catch (_) {
-        if (mounted) {
+        if (context.mounted) {
           showToast('读取结果图片失败，请稍后重试');
         }
         return false;
@@ -454,7 +405,7 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
     return true;
   }
 
-  void _openPlayerForMoment(MomentListItem item) {
+  void _openPlayerForMoment(BuildContext context, MomentListItem item) {
     final movieNumber = item.movieNumber;
     if (movieNumber == null || movieNumber.isEmpty) {
       // discovery 推荐时刻仅 JAV，番号必有；视频时刻不会进入此列表。
@@ -469,7 +420,7 @@ class _DiscoveryMomentsPageState extends ConsumerState<_DiscoveryMomentsPage> {
     context.push(path);
   }
 
-  void _openMovieDetailForMoment(MomentListItem item) {
+  void _openMovieDetailForMoment(BuildContext context, MomentListItem item) {
     final movieNumber = item.movieNumber;
     if (movieNumber == null || movieNumber.isEmpty) {
       return;

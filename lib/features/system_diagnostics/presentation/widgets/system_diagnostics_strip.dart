@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_category_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
@@ -21,10 +16,9 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 /// - probing：显示进度 + "取消"（第一期 disabled）
 /// - healthy/warning/unhealthy：显示 6 个分组徽章 + 上次检测时间 + 「刷新」/「进入诊断页」
 ///
-/// Strip 内部自建 controller（跟旧 OverviewSystemInfoController 一样在 initState
-/// 里 new + dispose 释放）；不进 app.dart 全局 provider。诊断页会另建一份自己的
-/// controller，两份状态互不共享——用户视角常见的操作路径是"strip 上看一眼→进
-/// 诊断页点重新检测"，两份状态各自独立没问题。
+/// Strip 通过 autoDispose family provider 持有自己的诊断会话；诊断页使用另一
+/// host 参数，所以两处状态互不共享。用户可以在 strip 看一眼，再进入诊断页运行
+/// 独立的一次完整检测。
 class SystemDiagnosticsStrip extends ConsumerStatefulWidget {
   const SystemDiagnosticsStrip({super.key});
 
@@ -35,35 +29,12 @@ class SystemDiagnosticsStrip extends ConsumerStatefulWidget {
 
 class _SystemDiagnosticsStripState
     extends ConsumerState<SystemDiagnosticsStrip> {
-  late final SystemDiagnosticsController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = SystemDiagnosticsController(
-      mediaLibrariesApi: ref.read(mediaLibrariesApiProvider),
-      downloadClientsApi: ref.read(downloadClientsApiProvider),
-      indexerSettingsApi: ref.read(indexerSettingsApiProvider),
-      statusApi: ref.read(statusApiProvider),
-      llmApi: ref.read(llmSettingsApiProvider),
-    )..addListener(_onChanged);
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_onChanged);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onChanged() {
-    if (mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final controller = _controller;
+    final controller = ref.watch(
+      systemDiagnosticsProvider(SystemDiagnosticsHost.overviewStrip),
+    );
     final overall = controller.overallStatus;
     final hasRun = controller.lastRunAt != null;
 
@@ -71,7 +42,12 @@ class _SystemDiagnosticsStripState
       key: const Key('system-diagnostics-strip'),
       title: '组件诊断',
       headerBottomSpacing: spacing.md,
-      headerTrailing: _buildHeaderTrailing(context, hasRun, overall),
+      headerTrailing: _buildHeaderTrailing(
+        context,
+        controller,
+        hasRun,
+        overall,
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: spacing.xl,
         vertical: spacing.lg,
@@ -82,10 +58,11 @@ class _SystemDiagnosticsStripState
 
   Widget _buildHeaderTrailing(
     BuildContext context,
+    SystemDiagnosticsState controller,
     bool hasRun,
     DiagnosticItemStatus overall,
   ) {
-    if (_controller.isRunning || !hasRun) return const SizedBox.shrink();
+    if (controller.isRunning || !hasRun) return const SizedBox.shrink();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -95,7 +72,14 @@ class _SystemDiagnosticsStripState
           semanticLabel: '重新检测',
           size: AppIconButtonSize.mini,
           icon: const Icon(Icons.refresh),
-          onPressed: _controller.runAll,
+          onPressed:
+              ref
+                  .read(
+                    systemDiagnosticsProvider(
+                      SystemDiagnosticsHost.overviewStrip,
+                    ).notifier,
+                  )
+                  .runAll,
         ),
         SizedBox(width: context.appSpacing.xs),
         AppIconButton(
@@ -110,7 +94,7 @@ class _SystemDiagnosticsStripState
     );
   }
 
-  Widget _buildBody(BuildContext context, SystemDiagnosticsController c) {
+  Widget _buildBody(BuildContext context, SystemDiagnosticsState c) {
     final spacing = context.appSpacing;
     if (c.isRunning) {
       return Row(
@@ -161,7 +145,14 @@ class _SystemDiagnosticsStripState
             variant: AppButtonVariant.primary,
             size: AppButtonSize.small,
             icon: const Icon(Icons.radar_rounded),
-            onPressed: c.runAll,
+            onPressed:
+                ref
+                    .read(
+                      systemDiagnosticsProvider(
+                        SystemDiagnosticsHost.overviewStrip,
+                      ).notifier,
+                    )
+                    .runAll,
           ),
         ],
       );
@@ -217,7 +208,7 @@ class _SystemDiagnosticsStripState
     return null;
   }
 
-  String _buildFooterLine(SystemDiagnosticsController c) {
+  String _buildFooterLine(SystemDiagnosticsState c) {
     final rel = formatRelativeTimeLabel(c.lastRunAt!, suffix: '检测');
     if (c.unhealthyCount > 0) {
       return '$rel · ${c.unhealthyCount} 项异常';

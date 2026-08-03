@@ -24,7 +24,6 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
   static const int _advancedSettingsIndex = 7;
 
   int _selectedIndex = _defaultSelectedIndex;
-  int _mediaLibrariesRevision = 0;
   bool _advancedSettingsDirty = false;
 
   // 顺序即右侧 IndexedStack 的索引；itemKey 沿用原 tab key，保持深链/测试兼容。
@@ -95,12 +94,6 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
     });
   }
 
-  void _handleMediaLibrariesChanged() {
-    setState(() {
-      _mediaLibrariesRevision += 1;
-    });
-  }
-
   void _handleAdvancedDirtyChanged(bool dirty) {
     if (_advancedSettingsDirty == dirty) {
       return;
@@ -155,15 +148,11 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
                       child: AccountSecuritySection(),
                     ),
                     _ConfigurationTabScrollView(
-                      child: MediaLibrariesSection(
-                        active: _selectedIndex == 1,
-                        onLibrariesChanged: _handleMediaLibrariesChanged,
-                      ),
+                      child: MediaLibrariesSection(active: _selectedIndex == 1),
                     ),
                     _ConfigurationTabScrollView(
                       child: DownloadClientsSection(
                         active: _selectedIndex == 2,
-                        librariesRevision: _mediaLibrariesRevision,
                       ),
                     ),
                     _ConfigurationTabScrollView(

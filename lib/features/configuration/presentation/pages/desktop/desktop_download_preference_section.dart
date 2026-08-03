@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/download_preference_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/download_preference_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
@@ -23,91 +25,42 @@ class DesktopDownloadPreferenceSection extends ConsumerStatefulWidget {
 }
 
 class _DesktopDownloadPreferenceSectionState
-    extends ConsumerState<DesktopDownloadPreferenceSection>
-    with
-        SectionLoaderMixin<
-          ConfigResourceDto,
-          DesktopDownloadPreferenceSection
-        > {
-  List<DownloadClientKind> _preferredClientKinds = const <DownloadClientKind>[
-    DownloadClientKind.qbittorrent,
-    DownloadClientKind.cloud115,
-  ];
-  bool _isSaving = false;
-
-  @override
-  bool get isSectionActive => widget.active;
-
-  @override
-  Future<ConfigResourceDto> fetchSectionData() =>
-      ref.read(configApiProvider).get();
-
-  @override
-  void applySectionData(ConfigResourceDto data) {
-    _preferredClientKinds = data.downloads.preferredClientKinds;
-  }
-
-  @override
-  String get sectionLoadErrorFallback => '下载偏好加载失败，请稍后重试。';
-
-  @override
-  void initState() {
-    super.initState();
-    tryLoadIfActive();
-  }
-
-  @override
-  void didUpdateWidget(covariant DesktopDownloadPreferenceSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    tryLoadIfActive();
-  }
-
+    extends ConsumerState<DesktopDownloadPreferenceSection> {
   Future<void> _save() async {
-    if (_isSaving) {
-      return;
-    }
-    setState(() {
-      _isSaving = true;
-    });
     try {
-      final result = await ref.read(configApiProvider).patch(<String, dynamic>{
-        'downloads': <String, dynamic>{
-          'preferred_client_kinds': _preferredClientKinds
-              .map((kind) => kind.wireValue)
-              .toList(growable: false),
-        },
-      });
+      final pendingRestart =
+          await ref.read(downloadPreferenceProvider.notifier).save();
       if (!mounted) {
         return;
       }
-      setState(() {
-        _preferredClientKinds = result.values.downloads.preferredClientKinds;
-        _isSaving = false;
-      });
-      showToast(_saveMessage(result.pendingRestart));
+      showToast(_saveMessage(pendingRestart));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _isSaving = false;
-      });
       showToast(apiErrorMessage(error, fallback: '保存下载偏好失败'));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildSectionStates(
-      errorTitle: '下载偏好加载失败',
-      skeletonLineCount: 3,
-      buildLoaded: _buildLoaded,
+    if (!widget.active) return const SizedBox.shrink();
+    final async = ref.watch(downloadPreferenceProvider);
+    return async.when(
+      loading: () => const AppSectionSkeleton(lineCount: 3),
+      error:
+          (error, _) => AppSectionError(
+            title: '下载偏好加载失败',
+            message: apiErrorMessage(error, fallback: '下载偏好加载失败，请稍后重试。'),
+            onRetry: () async => ref.invalidate(downloadPreferenceProvider),
+          ),
+      data: (state) => _buildLoaded(context, state),
     );
   }
 
-  Widget _buildLoaded(BuildContext context) {
+  Widget _buildLoaded(BuildContext context, DownloadPreferenceState state) {
     final spacing = context.appSpacing;
-    final selectedKind = _preferredClientKinds.first;
+    final selectedKind = state.draftKinds.first;
     return AppContentCard(
       key: const Key('configuration-download-preference-card'),
       title: '默认下载顺序',
@@ -157,25 +110,25 @@ class _DesktopDownloadPreferenceSectionState
                 ),
             ],
             onChanged:
-                _isSaving
+                state.isSaving
                     ? null
                     : (value) {
                       if (value == null || value == selectedKind) {
                         return;
                       }
-                      setState(() {
-                        _preferredClientKinds = <DownloadClientKind>[
-                          value,
-                          ...DownloadClientKind.values.where(
-                            (kind) => kind != value,
-                          ),
-                        ];
-                      });
+                      ref
+                          .read(downloadPreferenceProvider.notifier)
+                          .updateDraft(<DownloadClientKind>[
+                            value,
+                            ...DownloadClientKind.values.where(
+                              (kind) => kind != value,
+                            ),
+                          ]);
                     },
           ),
           SizedBox(height: spacing.sm),
           Text(
-            '${_preferredClientKinds.last.label} 会作为候补下载器。',
+            '${state.draftKinds.last.label} 会作为候补下载器。',
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -190,8 +143,8 @@ class _DesktopDownloadPreferenceSectionState
               key: const Key('configuration-download-preference-save-button'),
               label: '保存偏好',
               variant: AppButtonVariant.primary,
-              isLoading: _isSaving,
-              onPressed: _save,
+              isLoading: state.isSaving,
+              onPressed: state.isSaving ? null : _save,
             ),
           ),
         ],

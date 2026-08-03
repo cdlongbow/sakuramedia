@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
-import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/download_client_diagnostics_dialog.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_kind.dart';
@@ -26,48 +22,37 @@ class DesktopSystemDiagnosticsPage extends ConsumerStatefulWidget {
 
 class _DesktopSystemDiagnosticsPageState
     extends ConsumerState<DesktopSystemDiagnosticsPage> {
-  late final SystemDiagnosticsController _controller;
-
   @override
   void initState() {
     super.initState();
-    _controller = SystemDiagnosticsController(
-      mediaLibrariesApi: ref.read(mediaLibrariesApiProvider),
-      downloadClientsApi: ref.read(downloadClientsApiProvider),
-      indexerSettingsApi: ref.read(indexerSettingsApiProvider),
-      statusApi: ref.read(statusApiProvider),
-      llmApi: ref.read(llmSettingsApiProvider),
-    )..addListener(_onChanged);
     // 进入页面直接跑一次 —— 页面本身是低频访问入口，不需要用户再点一次按钮才能看到结果。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _controller.runAll();
+      ref
+          .read(
+            systemDiagnosticsProvider(
+              SystemDiagnosticsHost.desktopPage,
+            ).notifier,
+          )
+          .runAll();
     });
-  }
-
-  @override
-  void dispose() {
-    _controller.removeListener(_onChanged);
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onChanged() {
-    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final diagnostics = ref.watch(
+      systemDiagnosticsProvider(SystemDiagnosticsHost.desktopPage),
+    );
     return AppPageFrame(
       title: '',
       child: Column(
         key: const Key('desktop-system-diagnostics-page'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context),
+          _buildHeader(context, diagnostics),
           SizedBox(height: spacing.xl),
-          for (final cat in _controller.categories) ...[
+          for (final cat in diagnostics.categories) ...[
             DiagnosticCategoryCard(
               key: Key('diagnostic-category-${cat.label}'),
               category: cat,
@@ -80,7 +65,10 @@ class _DesktopSystemDiagnosticsPageState
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(
+    BuildContext context,
+    SystemDiagnosticsState diagnostics,
+  ) {
     final spacing = context.appSpacing;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -101,7 +89,7 @@ class _DesktopSystemDiagnosticsPageState
               ),
               SizedBox(height: spacing.xs),
               Text(
-                _buildSubtitle(),
+                _buildSubtitle(diagnostics),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -118,15 +106,23 @@ class _DesktopSystemDiagnosticsPageState
           label: '重新检测',
           variant: AppButtonVariant.primary,
           icon: const Icon(Icons.refresh),
-          isLoading: _controller.isRunning,
-          onPressed: _controller.isRunning ? null : _controller.runAll,
+          isLoading: diagnostics.isRunning,
+          onPressed:
+              diagnostics.isRunning
+                  ? null
+                  : ref
+                      .read(
+                        systemDiagnosticsProvider(
+                          SystemDiagnosticsHost.desktopPage,
+                        ).notifier,
+                      )
+                      .runAll,
         ),
       ],
     );
   }
 
-  String _buildSubtitle() {
-    final c = _controller;
+  String _buildSubtitle(SystemDiagnosticsState c) {
     if (c.isRunning) {
       return '正在检测 ${c.completedItemCount}/${c.totalItemCount}…';
     }
@@ -162,7 +158,9 @@ class _DesktopSystemDiagnosticsPageState
   ) {
     final clientId = _extractClientId(item.itemKey);
     if (clientId == null) return null;
-    final result = _controller.connectivityResultFor(clientId);
+    final result = ref
+        .read(systemDiagnosticsProvider(SystemDiagnosticsHost.desktopPage))
+        .connectivityResultFor(clientId);
     if (result == null) return null;
     return DiagnosticItemDetailAction(
       label: '查看诊断详情',
@@ -185,8 +183,11 @@ class _DesktopSystemDiagnosticsPageState
   DiagnosticItemDetailAction? _storageDetailAction(DiagnosticItemState item) {
     final clientId = _extractClientId(item.itemKey);
     if (clientId == null) return null;
-    final result = _controller.storageResultFor(clientId);
-    final client = _controller.clientFor(clientId);
+    final diagnostics = ref.read(
+      systemDiagnosticsProvider(SystemDiagnosticsHost.desktopPage),
+    );
+    final result = diagnostics.storageResultFor(clientId);
+    final client = diagnostics.clientFor(clientId);
     if (result == null || client == null) return null;
     return DiagnosticItemDetailAction(
       label: '查看目录映射详情',

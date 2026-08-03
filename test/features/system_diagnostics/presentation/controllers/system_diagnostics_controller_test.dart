@@ -1,6 +1,13 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
+import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_category_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_kind.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
@@ -9,6 +16,7 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/controllers
 import '../../../../support/test_api_bundle.dart';
 
 late TestApiBundle _bundle;
+ProviderContainer? _container;
 
 Future<SessionStore> _buildLoggedInSessionStore() async {
   final store = SessionStore.inMemory();
@@ -21,14 +29,39 @@ Future<SessionStore> _buildLoggedInSessionStore() async {
   return store;
 }
 
-SystemDiagnosticsController _newController() {
-  return SystemDiagnosticsController(
-    mediaLibrariesApi: _bundle.mediaLibrariesApi,
-    downloadClientsApi: _bundle.downloadClientsApi,
-    indexerSettingsApi: _bundle.indexerSettingsApi,
-    statusApi: _bundle.statusApi,
-    llmApi: _bundle.movieDescTranslationSettingsApi,
+_SystemDiagnosticsHarness _newController() {
+  _container = ProviderContainer(
+    overrides: [
+      mediaLibrariesApiProvider.overrideWithValue(_bundle.mediaLibrariesApi),
+      downloadClientsApiProvider.overrideWithValue(_bundle.downloadClientsApi),
+      indexerSettingsApiProvider.overrideWithValue(_bundle.indexerSettingsApi),
+      statusApiProvider.overrideWithValue(_bundle.statusApi),
+      llmSettingsApiProvider.overrideWithValue(
+        _bundle.movieDescTranslationSettingsApi,
+      ),
+    ],
+    retry: (_, __) => null,
   );
+  _container!.listen<SystemDiagnosticsState>(
+    systemDiagnosticsProvider(SystemDiagnosticsHost.desktopPage),
+    (_, _) {},
+  );
+  final notifier = _container!.read(
+    systemDiagnosticsProvider(SystemDiagnosticsHost.desktopPage).notifier,
+  );
+  return _SystemDiagnosticsHarness(notifier);
+}
+
+class _SystemDiagnosticsHarness {
+  const _SystemDiagnosticsHarness(this._notifier);
+
+  final SystemDiagnostics _notifier;
+
+  Future<void> runAll() => _notifier.runAll();
+  List<DiagnosticCategoryState> get categories => _notifier.state.categories;
+  DiagnosticItemStatus get overallStatus => _notifier.state.overallStatus;
+  int get unhealthyCount => _notifier.state.unhealthyCount;
+  DateTime? get lastRunAt => _notifier.state.lastRunAt;
 }
 
 Map<String, dynamic> _library({int id = 1, String name = 'Main'}) {
@@ -260,7 +293,7 @@ void _enqueueIndependentProbes({
 }
 
 DiagnosticItemState _find(
-  SystemDiagnosticsController c,
+  _SystemDiagnosticsHarness c,
   bool Function(DiagnosticItemState) predicate,
 ) {
   for (final cat in c.categories) {
@@ -281,6 +314,8 @@ void main() {
   });
 
   tearDown(() {
+    _container?.dispose();
+    _container = null;
     _bundle.dispose();
   });
 
@@ -743,7 +778,7 @@ void main() {
   });
 
   // 只跑独立探针的最小骨架：媒体库有 1 个、下载器 0 个，Stage C/D 不产生额外请求。
-  Future<SystemDiagnosticsController> _runWithProbes({
+  Future<_SystemDiagnosticsHarness> _runWithProbes({
     required void Function() enqueueProbes,
   }) async {
     _bundle.adapter.enqueueJson(

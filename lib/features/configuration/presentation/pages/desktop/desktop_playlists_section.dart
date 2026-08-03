@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -195,7 +196,10 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     );
   }
 
-  Widget _buildContent(BuildContext context, dynamic async) {
+  Widget _buildContent(
+    BuildContext context,
+    AsyncValue<PlaylistsOverviewState> async,
+  ) {
     final state = async.value;
     final allPlaylists = state?.playlists ?? const <PlaylistDto>[];
     if (async.isLoading && allPlaylists.isEmpty) {
@@ -203,20 +207,15 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     }
     if (async.hasError && allPlaylists.isEmpty) {
       return AppEmptyState(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '播放列表加载失败，请稍后重试',
-        ),
-        onRetry: () => unawaited(
-          ref.read(playlistsOverviewProvider(_scope).notifier).refresh(),
-        ),
+        message: apiErrorMessage(async.error!, fallback: '播放列表加载失败，请稍后重试'),
+        onRetry:
+            () => unawaited(
+              ref.read(playlistsOverviewProvider(_scope).notifier).refresh(),
+            ),
         retryLabel: '重试',
       );
     }
-    final playlists =
-        (allPlaylists as List<PlaylistDto>)
-            .where((item) => !item.isSystem)
-            .toList();
+    final playlists = allPlaylists.where((item) => !item.isSystem).toList();
     if (playlists.isEmpty) {
       return const AppEmptyState(message: '还没有自定义播放列表');
     }

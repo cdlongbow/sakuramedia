@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_backend_picker.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_library_login_flow.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
@@ -14,56 +13,21 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
 class MediaLibrariesSection extends ConsumerStatefulWidget {
-  const MediaLibrariesSection({
-    super.key,
-    required this.active,
-    required this.onLibrariesChanged,
-  });
+  const MediaLibrariesSection({super.key, required this.active});
 
   final bool active;
-  final VoidCallback onLibrariesChanged;
 
   @override
   ConsumerState<MediaLibrariesSection> createState() =>
       _MediaLibrariesSectionState();
 }
 
-class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
-    with SectionLoaderMixin<List<MediaLibraryDto>, MediaLibrariesSection> {
-  List<MediaLibraryDto> _libraries = const <MediaLibraryDto>[];
-
-  @override
-  bool get isSectionActive => widget.active;
-
-  @override
-  Future<List<MediaLibraryDto>> fetchSectionData() =>
-      ref.read(mediaLibrariesApiProvider).getLibraries();
-
-  @override
-  void applySectionData(List<MediaLibraryDto> data) {
-    _libraries = data;
-  }
-
-  @override
-  String get sectionLoadErrorFallback => '媒体库加载失败，请稍后重试。';
-
-  Future<void> _loadLibraries() => loadSectionData();
-
-  @override
-  void initState() {
-    super.initState();
-    tryLoadIfActive();
-  }
-
-  @override
-  void didUpdateWidget(covariant MediaLibrariesSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    tryLoadIfActive();
-  }
-
+class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
   Future<void> _createLibrary() async {
     final backend = await showMediaLibraryBackendPicker(context);
     if (!mounted || backend == null) {
@@ -75,8 +39,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
         return;
       }
       showToast('115 媒体库已创建');
-      widget.onLibrariesChanged();
-      await _loadLibraries();
+      ref.read(mediaLibrariesProvider.notifier).upsert(created);
       return;
     }
 
@@ -89,10 +52,8 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
     }
 
     try {
-      await ref.read(mediaLibrariesApiProvider).createLibrary(payload);
+      await ref.read(mediaLibrariesProvider.notifier).create(payload);
       showToast('媒体库已创建');
-      widget.onLibrariesChanged();
-      await _loadLibraries();
     } catch (error) {
       showToast(apiErrorMessage(error, fallback: '创建媒体库失败'));
     }
@@ -107,8 +68,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
       return;
     }
     showToast('115 媒体库认证已更新');
-    widget.onLibrariesChanged();
-    await _loadLibraries();
+    ref.read(mediaLibrariesProvider.notifier).upsert(updated);
   }
 
   Future<void> _editLibrary(MediaLibraryDto library) async {
@@ -124,38 +84,44 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
 
     try {
       await ref
-          .read(mediaLibrariesApiProvider)
+          .read(mediaLibrariesProvider.notifier)
           .updateLibrary(libraryId: library.id, payload: payload);
       showToast('媒体库已更新');
-      widget.onLibrariesChanged();
-      await _loadLibraries();
     } catch (error) {
       showToast(apiErrorMessage(error, fallback: '更新媒体库失败'));
     }
   }
 
   Future<void> _deleteLibrary(MediaLibraryDto library) async {
-    final api = ref.read(mediaLibrariesApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除媒体库',
       message: '确认删除媒体库“${library.name}”？该操作不可恢复。',
-      onDelete: () => api.deleteLibrary(library.id),
+      onDelete:
+          () => ref.read(mediaLibrariesProvider.notifier).delete(library.id),
       successToast: '媒体库已删除',
       failureFallback: '删除媒体库失败',
     );
-    if (ok && mounted) {
-      widget.onLibrariesChanged();
-      await _loadLibraries();
-    }
+    if (!ok || !mounted) return;
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildSectionStates(errorTitle: '媒体库加载失败', buildLoaded: _buildLoaded);
+    if (!widget.active) return const SizedBox.shrink();
+    final async = ref.watch(mediaLibrariesProvider);
+    return async.when(
+      loading: () => const AppSectionSkeleton(lineCount: 4),
+      error:
+          (error, _) => AppSectionError(
+            title: '媒体库加载失败',
+            message: apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。'),
+            onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
+          ),
+      data: (libraries) => _buildLoaded(context, libraries),
+    );
   }
 
-  Widget _buildLoaded(BuildContext context) {
+  Widget _buildLoaded(BuildContext context, List<MediaLibraryDto> libraries) {
     final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,14 +136,14 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection>
           ),
         ),
         SizedBox(height: spacing.lg),
-        if (_libraries.isEmpty)
+        if (libraries.isEmpty)
           const AppEmptyState(message: '还没有媒体库')
         else
           AppSettingsGroup(
             // 分隔线缩到主标题起点（行左边距 + 图标盒 + 间隙）。
             dividerIndent: spacing.lg + spacing.xxl + spacing.md,
             children: [
-              for (final library in _libraries)
+              for (final library in libraries)
                 AppSettingCell(
                   key: Key('media-library-card-${library.id}'),
                   icon:

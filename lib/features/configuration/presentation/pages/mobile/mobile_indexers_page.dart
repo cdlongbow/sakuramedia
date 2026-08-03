@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_state.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/indexer_connection_test_controller.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_connection_test_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/indexer_connection_test_panel.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_onboarding_card.dart';
@@ -46,7 +48,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   List<IndexerEntryDto> _indexers = const <IndexerEntryDto>[];
   List<DownloadClientDto> _downloadClients = const <DownloadClientDto>[];
   IndexerSettingsDto? _savedSettings;
-  late final IndexerConnectionTestController _connectionTestController;
+  final Object _connectionTestScope = Object();
 
   bool get _hasDownloadClients => _downloadClients.isNotEmpty;
 
@@ -62,9 +64,6 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
     super.initState();
     _apiKeyController = TextEditingController();
     _apiKeyController.addListener(_handleApiKeyChanged);
-    _connectionTestController = IndexerConnectionTestController(
-      runTest: () => ref.read(indexerSettingsApiProvider).testConnection(),
-    )..addListener(_handleConnectionTestChanged);
     unawaited(_loadData());
   }
 
@@ -72,9 +71,6 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   void dispose() {
     _apiKeyController.removeListener(_handleApiKeyChanged);
     _apiKeyController.dispose();
-    _connectionTestController
-      ..removeListener(_handleConnectionTestChanged)
-      ..dispose();
     super.dispose();
   }
 
@@ -150,7 +146,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         key: const Key('mobile-indexers-error-state'),
         title: '索引器加载失败',
         message: _errorMessage!,
-        onRetry: _loadData,
+        onRetry: _retryData,
         retryButtonKey: const Key('mobile-indexers-retry-button'),
       );
     }
@@ -196,6 +192,9 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   Widget _buildApiKeyCard(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final connectionTest = ref.watch(
+      indexerConnectionTestProvider(_connectionTestScope),
+    );
 
     return Container(
       key: const Key('mobile-indexers-api-key-card'),
@@ -268,11 +267,11 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
           SizedBox(height: spacing.lg),
           IndexerConnectionTestPanel(
             key: const Key('mobile-indexers-connection-test-panel'),
-            isTesting: _connectionTestController.isTesting,
+            isTesting: connectionTest.isTesting,
             isTestEnabled: _isConnectionTestEnabled,
             onTest: _testConnection,
-            result: _connectionTestController.result,
-            requestError: _connectionTestController.requestError,
+            result: connectionTest.result,
+            requestError: connectionTest.requestError,
             disabledMessage: _connectionTestDisabledMessage,
             testButtonKey: const Key('mobile-indexers-connection-test-button'),
             resultKey: const Key('mobile-indexers-connection-test-result'),
@@ -378,14 +377,14 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
     try {
       final results = await Future.wait<Object>([
-        ref.read(indexerSettingsApiProvider).getSettings(),
-        ref.read(downloadClientsApiProvider).getClients(),
+        ref.read(indexerSettingsProvider.future),
+        ref.read(downloadClientsProvider.future),
       ]);
       if (!mounted) {
         return;
       }
       setState(() {
-        _applySettings(results[0] as IndexerSettingsDto);
+        _applySettings((results[0] as IndexerSettingsState).draft);
         _downloadClients = results[1] as List<DownloadClientDto>;
         _isLoading = false;
       });
@@ -401,17 +400,22 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   }
 
   Future<void> _refreshData() async {
+    final messages = await Future.wait<String?>([
+      ref.read(indexerSettingsProvider.notifier).refresh(),
+      ref.read(downloadClientsProvider.notifier).refresh(),
+    ]);
+    final message = messages.whereType<String>().firstOrNull;
+    if (message != null) {
+      if (mounted) showToast(message);
+      return;
+    }
     try {
-      final results = await Future.wait<Object>([
-        ref.read(indexerSettingsApiProvider).getSettings(),
-        ref.read(downloadClientsApiProvider).getClients(),
-      ]);
       if (!mounted) {
         return;
       }
       setState(() {
-        _applySettings(results[0] as IndexerSettingsDto);
-        _downloadClients = results[1] as List<DownloadClientDto>;
+        _applySettings(ref.read(indexerSettingsProvider).requireValue.draft);
+        _downloadClients = ref.read(downloadClientsProvider).requireValue;
         _errorMessage = null;
       });
     } catch (error) {
@@ -419,6 +423,33 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
         return;
       }
       showToast(apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。'));
+    }
+  }
+
+  Future<void> _retryData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await Future.wait<void>([
+        ref.read(indexerSettingsProvider.notifier).reload(),
+        ref.read(downloadClientsProvider.notifier).reload(),
+      ]);
+      if (!mounted) return;
+      final settings = ref.read(indexerSettingsProvider).requireValue;
+      final clients = ref.read(downloadClientsProvider).requireValue;
+      setState(() {
+        _applySettings(settings.draft);
+        _downloadClients = clients;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。');
+      });
     }
   }
 
@@ -438,13 +469,11 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
     try {
       final saved = await ref
-          .read(indexerSettingsApiProvider)
-          .updateSettings(
-            UpdateIndexerSettingsPayload(
-              type: _resolvedSettingsType,
-              apiKey: apiKey,
-              indexers: _indexers,
-            ),
+          .read(indexerSettingsProvider.notifier)
+          .saveDraft(
+            type: _resolvedSettingsType,
+            apiKey: apiKey,
+            indexers: _indexers,
           );
       if (!mounted) {
         return;
@@ -469,7 +498,11 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
     if (!_isConnectionTestEnabled) {
       return;
     }
-    final result = await _connectionTestController.testConnection();
+    final result = await ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .testConnection(
+          () => ref.read(indexerSettingsApiProvider).testConnection(),
+        );
     if (!mounted || result == null) {
       return;
     }
@@ -529,7 +562,6 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   }
 
   Future<void> _handleDeleteIndexer(IndexerEntryDto entry) async {
-    final api = ref.read(indexerSettingsApiProvider);
     final settingsType = _resolvedSettingsType;
     final apiKey = _apiKeyController.text.trim();
     final nextEntries = _indexers
@@ -546,13 +578,13 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
       confirmKey: const Key('mobile-indexer-delete-confirm-button'),
       failureFallback: '删除索引器失败',
       onConfirm: () async {
-        savedSettings = await api.updateSettings(
-          UpdateIndexerSettingsPayload(
-            type: settingsType,
-            apiKey: apiKey,
-            indexers: nextEntries,
-          ),
-        );
+        savedSettings = await ref
+            .read(indexerSettingsProvider.notifier)
+            .saveDraft(
+              type: settingsType,
+              apiKey: apiKey,
+              indexers: nextEntries,
+            );
       },
     );
     if (!confirmed || !mounted || savedSettings == null) {
@@ -572,20 +604,18 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
     _apiKeyController.addListener(_handleApiKeyChanged);
     _indexers = List<IndexerEntryDto>.from(settings.indexers);
     _savedSettings = settings;
-    _connectionTestController.invalidate(notify: false);
+    ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .invalidate();
   }
 
   void _handleApiKeyChanged() {
     if (!mounted) {
       return;
     }
-    _connectionTestController.invalidate();
-  }
-
-  void _handleConnectionTestChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+    ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .invalidate();
   }
 
   bool get _hasUnsavedChanges {
@@ -615,7 +645,9 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
   bool get _isConnectionTestEnabled =>
       !_isLoading &&
       !_isSavingApiKey &&
-      !_connectionTestController.isTesting &&
+      !ref
+          .read(indexerConnectionTestProvider(_connectionTestScope))
+          .isTesting &&
       !_hasUnsavedChanges;
 
   String? get _connectionTestDisabledMessage {
@@ -849,13 +881,11 @@ class _MobileIndexerEditorDrawerState
 
     try {
       final saved = await ref
-          .read(indexerSettingsApiProvider)
-          .updateSettings(
-            UpdateIndexerSettingsPayload(
-              type: widget.settingsType,
-              apiKey: widget.apiKey,
-              indexers: nextEntries,
-            ),
+          .read(indexerSettingsProvider.notifier)
+          .saveDraft(
+            type: widget.settingsType,
+            apiKey: widget.apiKey,
+            indexers: nextEntries,
           );
       if (!mounted) {
         return;

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Icons;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
@@ -13,6 +14,11 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_category_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_fix_target.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_kind.dart';
@@ -26,6 +32,54 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/llm_h
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/media_library_hints.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/metadata_provider_hints.dart';
 
+part 'system_diagnostics_controller.g.dart';
+
+/// 两个宿主各自保留一次诊断会话，维持迁移前 strip 与独立页互不共享的语义。
+enum SystemDiagnosticsHost { overviewStrip, desktopPage }
+
+@immutable
+class SystemDiagnosticsState {
+  const SystemDiagnosticsState({
+    required this.categories,
+    required this.isRunning,
+    required this.lastRunAt,
+    required this.connectivityResults,
+    required this.storageResults,
+    required this.clients,
+  });
+
+  final List<DiagnosticCategoryState> categories;
+  final bool isRunning;
+  final DateTime? lastRunAt;
+  final Map<int, DownloadClientTestResultDto> connectivityResults;
+  final Map<int, DownloadClientStorageTestResultDto> storageResults;
+  final Map<int, DownloadClientDto> clients;
+
+  DiagnosticItemStatus get overallStatus =>
+      mergeDiagnosticStatuses(categories.map((cat) => cat.aggregate));
+  int get unhealthyCount =>
+      categories
+          .expand((cat) => cat.items)
+          .where((item) => item.status == DiagnosticItemStatus.unhealthy)
+          .length;
+  int get totalItemCount =>
+      categories.fold(0, (sum, cat) => sum + cat.items.length);
+  int get completedItemCount =>
+      categories
+          .expand((cat) => cat.items)
+          .where(
+            (item) =>
+                item.status != DiagnosticItemStatus.notTested &&
+                item.status != DiagnosticItemStatus.probing,
+          )
+          .length;
+  DownloadClientTestResultDto? connectivityResultFor(int clientId) =>
+      connectivityResults[clientId];
+  DownloadClientStorageTestResultDto? storageResultFor(int clientId) =>
+      storageResults[clientId];
+  DownloadClientDto? clientFor(int clientId) => clients[clientId];
+}
+
 /// 一次「组件诊断」检测的调度器。
 ///
 /// 调度算法（[runAll]）：
@@ -35,26 +89,26 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/metad
 ///   Stage D（依赖 C）：索引器 —— 静态校验、下载器绑定核对和真实搜索测试。
 ///
 /// 单项 try/catch 隔离，任何一项抛异常不影响整体流水推进。
-class SystemDiagnosticsController extends ChangeNotifier {
-  SystemDiagnosticsController({
-    required MediaLibrariesApi mediaLibrariesApi,
-    required DownloadClientsApi downloadClientsApi,
-    required IndexerSettingsApi indexerSettingsApi,
-    required StatusApi statusApi,
-    required MovieDescTranslationSettingsApi llmApi,
-  }) : _mediaLibrariesApi = mediaLibrariesApi,
-       _downloadClientsApi = downloadClientsApi,
-       _indexerSettingsApi = indexerSettingsApi,
-       _statusApi = statusApi,
-       _llmApi = llmApi {
-    _categories = _buildInitialCategories();
-  }
+@riverpod
+class SystemDiagnostics extends _$SystemDiagnostics {
+  late final MediaLibrariesApi _mediaLibrariesApi;
+  late final DownloadClientsApi _downloadClientsApi;
+  late final IndexerSettingsApi _indexerSettingsApi;
+  late final StatusApi _statusApi;
+  late final MovieDescTranslationSettingsApi _llmApi;
+  var _disposed = false;
 
-  final MediaLibrariesApi _mediaLibrariesApi;
-  final DownloadClientsApi _downloadClientsApi;
-  final IndexerSettingsApi _indexerSettingsApi;
-  final StatusApi _statusApi;
-  final MovieDescTranslationSettingsApi _llmApi;
+  @override
+  SystemDiagnosticsState build(SystemDiagnosticsHost host) {
+    _mediaLibrariesApi = ref.read(mediaLibrariesApiProvider);
+    _downloadClientsApi = ref.read(downloadClientsApiProvider);
+    _indexerSettingsApi = ref.read(indexerSettingsApiProvider);
+    _statusApi = ref.read(statusApiProvider);
+    _llmApi = ref.read(llmSettingsApiProvider);
+    ref.onDispose(() => _disposed = true);
+    _categories = _buildInitialCategories();
+    return _snapshot();
+  }
 
   static const String _mediaLibraryItemKey = 'media-library';
   static const String _indexerItemKey = 'indexer';
@@ -75,56 +129,29 @@ class SystemDiagnosticsController extends ChangeNotifier {
   final Map<int, DownloadClientDto> _lastKnownClients =
       <int, DownloadClientDto>{};
 
-  bool get isRunning => _isRunning;
-  DateTime? get lastRunAt => _lastRunAt;
-  List<DiagnosticCategoryState> get categories => _categories;
-
-  DiagnosticItemStatus get overallStatus =>
-      mergeDiagnosticStatuses(_categories.map((cat) => cat.aggregate));
-
-  int get unhealthyCount {
-    var count = 0;
-    for (final cat in _categories) {
-      for (final item in cat.items) {
-        if (item.status == DiagnosticItemStatus.unhealthy) count++;
-      }
-    }
-    return count;
+  void _publish() {
+    if (!_disposed) state = _snapshot();
   }
 
-  int get totalItemCount {
-    var count = 0;
-    for (final cat in _categories) {
-      count += cat.items.length;
-    }
-    return count;
-  }
-
-  int get completedItemCount {
-    var count = 0;
-    for (final cat in _categories) {
-      for (final item in cat.items) {
-        if (item.status != DiagnosticItemStatus.notTested &&
-            item.status != DiagnosticItemStatus.probing) {
-          count++;
-        }
-      }
-    }
-    return count;
-  }
-
-  DownloadClientTestResultDto? connectivityResultFor(int clientId) =>
-      _lastConnectivityResults[clientId];
-  DownloadClientStorageTestResultDto? storageResultFor(int clientId) =>
-      _lastStorageResults[clientId];
-  DownloadClientDto? clientFor(int clientId) => _lastKnownClients[clientId];
+  SystemDiagnosticsState _snapshot() => SystemDiagnosticsState(
+    categories: List<DiagnosticCategoryState>.unmodifiable(_categories),
+    isRunning: _isRunning,
+    lastRunAt: _lastRunAt,
+    connectivityResults: Map<int, DownloadClientTestResultDto>.unmodifiable(
+      _lastConnectivityResults,
+    ),
+    storageResults: Map<int, DownloadClientStorageTestResultDto>.unmodifiable(
+      _lastStorageResults,
+    ),
+    clients: Map<int, DownloadClientDto>.unmodifiable(_lastKnownClients),
+  );
 
   /// 幂等：正在跑就直接 return。
   Future<void> runAll() async {
     if (_isRunning) return;
     _isRunning = true;
     _categories = _buildInitialCategories(status: DiagnosticItemStatus.probing);
-    notifyListeners();
+    _publish();
 
     // Stage A + Stage B 完全并发（独立项互不依赖）。
     final mediaLibraryFuture = _probeMediaLibrary();
@@ -135,7 +162,7 @@ class SystemDiagnosticsController extends ChangeNotifier {
 
     final mediaLibrary = await mediaLibraryFuture;
     _replaceItem('基础资源', mediaLibrary);
-    notifyListeners();
+    _publish();
 
     // Stage C：媒体库不通 → 下载器 + 索引器全 blocked。
     if (mediaLibrary.status != DiagnosticItemStatus.healthy) {
@@ -167,7 +194,7 @@ class SystemDiagnosticsController extends ChangeNotifier {
         indexerItem,
       ]);
     }
-    notifyListeners();
+    _publish();
 
     // 收 stage B。
     final javdb = await javdbFuture;
@@ -180,7 +207,7 @@ class SystemDiagnosticsController extends ChangeNotifier {
 
     _isRunning = false;
     _lastRunAt = DateTime.now();
-    notifyListeners();
+    _publish();
   }
 
   // --------- 单项探针 ---------

@@ -16,7 +16,7 @@ enum DiagnosticItemStatus {
 }
 
 /// 一组状态的汇总规则，[DiagnosticCategoryState.aggregate] 和
-/// [SystemDiagnosticsController.overallStatus] 共用同一份优先级：
+/// [SystemDiagnosticsState.overallStatus] 共用同一份优先级：
 /// 有任意 unhealthy → unhealthy；否则有 warning → warning；否则有 probing →
 /// probing；否则全 healthy（不含 blocked）→ healthy；全 blocked（不含
 /// healthy）→ blocked；healthy 与 blocked 混合（半通半挡）→ warning；

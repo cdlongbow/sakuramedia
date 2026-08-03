@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_backend_picker.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/cloud115_library_login_flow.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
@@ -33,59 +33,10 @@ class MobileMediaLibrariesPage extends ConsumerStatefulWidget {
 
 class _MobileMediaLibrariesPageState
     extends ConsumerState<MobileMediaLibrariesPage> {
-  List<MediaLibraryDto> _libraries = const <MediaLibraryDto>[];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadLibraries());
-  }
-
-  Future<void> _loadLibraries() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final libraries =
-          await ref.read(mediaLibrariesApiProvider).getLibraries();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _libraries = libraries;
-        _isLoading = false;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。');
-      });
-    }
-  }
-
   Future<void> _refreshLibraries() async {
-    try {
-      final libraries =
-          await ref.read(mediaLibrariesApiProvider).getLibraries();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _libraries = libraries;
-        _errorMessage = null;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      showToast(apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。'));
+    final message = await ref.read(mediaLibrariesProvider.notifier).refresh();
+    if (mounted && message != null) {
+      showToast(message);
     }
   }
 
@@ -107,7 +58,6 @@ class _MobileMediaLibrariesPageState
       showToast('115 媒体库已创建');
     }
     _upsertLibrary(createdLibrary);
-    unawaited(_syncLibrariesInBackground());
   }
 
   Future<void> _handleEditLibrary(MediaLibraryDto library) async {
@@ -119,7 +69,6 @@ class _MobileMediaLibrariesPageState
       return;
     }
     _upsertLibrary(updatedLibrary);
-    unawaited(_syncLibrariesInBackground());
   }
 
   Future<void> _handleLibraryActions(MediaLibraryDto library) async {
@@ -150,70 +99,34 @@ class _MobileMediaLibrariesPageState
     }
     showToast('115 媒体库认证已更新');
     _upsertLibrary(updated);
-    unawaited(_syncLibrariesInBackground());
   }
 
   Future<void> _handleDeleteLibrary(MediaLibraryDto library) async {
-    final api = ref.read(mediaLibrariesApiProvider);
     final ok = await showAppConfigDeleteConfirm(
       context: context,
       title: '删除媒体库',
       message: '确认删除媒体库"${library.name}"？删除后下载器等依赖该路径的配置可能失效，该操作不可恢复。',
       dialogKey: const Key('mobile-media-library-delete-drawer'),
       confirmKey: const Key('mobile-media-library-delete-confirm-button'),
-      onDelete: () => api.deleteLibrary(library.id),
+      onDelete:
+          () => ref.read(mediaLibrariesProvider.notifier).delete(library.id),
       successToast: '媒体库已删除',
       failureFallback: '删除媒体库失败',
     );
     if (!ok || !mounted) {
       return;
     }
-    setState(() {
-      _libraries = _libraries
-          .where((item) => item.id != library.id)
-          .toList(growable: false);
-      _errorMessage = null;
-    });
-    unawaited(_syncLibrariesInBackground());
-  }
-
-  Future<void> _syncLibrariesInBackground() async {
-    try {
-      final libraries =
-          await ref.read(mediaLibrariesApiProvider).getLibraries();
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _libraries = libraries;
-        _errorMessage = null;
-      });
-    } catch (error) {
-      if (!mounted) {
-        return;
-      }
-      showToast(apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。'));
-    }
   }
 
   void _upsertLibrary(MediaLibraryDto library) {
-    final nextLibraries = List<MediaLibraryDto>.of(_libraries);
-    final index = nextLibraries.indexWhere((item) => item.id == library.id);
-    if (index >= 0) {
-      nextLibraries[index] = library;
-    } else {
-      nextLibraries.add(library);
-    }
-    setState(() {
-      _libraries = nextLibraries;
-      _errorMessage = null;
-    });
+    ref.read(mediaLibrariesProvider.notifier).upsert(library);
   }
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final async = ref.watch(mediaLibrariesProvider);
 
     return ColoredBox(
       key: const Key('mobile-settings-media-libraries'),
@@ -243,7 +156,7 @@ class _MobileMediaLibrariesPageState
                           description: '媒体库可使用本地目录或 115 网盘；下载器等本地模块仅使用本地媒体库。',
                         ),
                         SizedBox(height: spacing.md),
-                        _buildContentSection(context),
+                        _buildContentSection(context, async),
                       ],
                     ),
                   ),
@@ -280,20 +193,24 @@ class _MobileMediaLibrariesPageState
     );
   }
 
-  Widget _buildContentSection(BuildContext context) {
-    if (_isLoading) {
+  Widget _buildContentSection(
+    BuildContext context,
+    AsyncValue<List<MediaLibraryDto>> async,
+  ) {
+    if (async.isLoading) {
       return const _MobileMediaLibraryLoadingSection();
     }
-    if (_errorMessage != null) {
+    if (async.hasError) {
       return AppMobileSectionError(
         key: const Key('mobile-media-libraries-error-state'),
         title: '媒体库加载失败',
-        message: _errorMessage!,
-        onRetry: _loadLibraries,
+        message: apiErrorMessage(async.error!, fallback: '媒体库加载失败，请稍后重试。'),
+        onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
         retryButtonKey: const Key('mobile-media-libraries-retry-button'),
       );
     }
-    if (_libraries.isEmpty) {
+    final libraries = async.value ?? const <MediaLibraryDto>[];
+    if (libraries.isEmpty) {
       return const MobileConfigEmptyCard(
         key: Key('mobile-media-libraries-empty-state'),
         message: '还没有媒体库',
@@ -302,11 +219,11 @@ class _MobileMediaLibrariesPageState
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: _libraries
+      children: libraries
           .expand(
             (library) => <Widget>[
               _buildLibraryCard(context, library),
-              if (library != _libraries.last)
+              if (library != libraries.last)
                 SizedBox(height: context.appSpacing.sm),
             ],
           )
@@ -589,14 +506,17 @@ class _MobileMediaLibraryEditorDrawerState
     );
 
     try {
-      final api = ref.read(mediaLibrariesApiProvider);
       final library =
           _isEditing
-              ? await api.updateLibrary(
-                libraryId: widget.initialLibrary!.id,
-                payload: value.toUpdatePayload(),
-              )
-              : await api.createLibrary(value.toCreatePayload());
+              ? await ref
+                  .read(mediaLibrariesProvider.notifier)
+                  .updateLibrary(
+                    libraryId: widget.initialLibrary!.id,
+                    payload: value.toUpdatePayload(),
+                  )
+              : await ref
+                  .read(mediaLibrariesProvider.notifier)
+                  .create(value.toCreatePayload());
       if (!mounted) {
         return;
       }

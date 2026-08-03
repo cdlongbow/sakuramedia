@@ -87,7 +87,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(bundle.adapter.hitCount('GET', '/download-clients'), 1);
-      expect(bundle.adapter.hitCount('GET', '/media-libraries'), 2);
+      expect(bundle.adapter.hitCount('GET', '/media-libraries'), 1);
       expect(find.text('还没有下载器配置'), findsOneWidget);
     });
 

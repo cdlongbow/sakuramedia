@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_state.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/indexer_connection_test_controller.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/indexer_connection_test_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/indexer_connection_test_panel.dart';
 import 'package:sakuramedia/theme.dart';
@@ -19,6 +22,8 @@ import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 
 class IndexerSettingsSection extends ConsumerStatefulWidget {
   const IndexerSettingsSection({super.key, required this.active});
@@ -30,73 +35,70 @@ class IndexerSettingsSection extends ConsumerStatefulWidget {
       _IndexerSettingsSectionState();
 }
 
-class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
-    with
-        SectionLoaderMixin<
-          (IndexerSettingsDto, List<DownloadClientDto>),
-          IndexerSettingsSection
-        > {
+class _IndexerSettingsSectionState
+    extends ConsumerState<IndexerSettingsSection> {
   static const List<String> _supportedTypes = <String>['jackett'];
 
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
   bool _isSaving = false;
+  bool _initialized = false;
+  bool _isLoading = false;
+  String? _errorMessage;
   String _selectedType = _supportedTypes.first;
   List<IndexerEntryDto> _indexers = <IndexerEntryDto>[];
   List<DownloadClientDto> _downloadClients = <DownloadClientDto>[];
   IndexerSettingsDto? _savedSettings;
-  late final IndexerConnectionTestController _connectionTestController;
-
-  @override
-  bool get isSectionActive => widget.active;
-
-  @override
-  Future<(IndexerSettingsDto, List<DownloadClientDto>)>
-  fetchSectionData() async {
-    final futures = await Future.wait<Object>([
-      ref.read(indexerSettingsApiProvider).getSettings(),
-      ref.read(downloadClientsApiProvider).getClients(),
-    ]);
-    return (
-      futures[0] as IndexerSettingsDto,
-      futures[1] as List<DownloadClientDto>,
-    );
-  }
-
-  @override
-  void applySectionData((IndexerSettingsDto, List<DownloadClientDto>) data) {
-    _applySettings(data.$1);
-    _downloadClients = List<DownloadClientDto>.from(data.$2);
-  }
-
-  @override
-  String get sectionLoadErrorFallback => '索引器配置加载失败，请稍后重试。';
+  final Object _connectionTestScope = Object();
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_handleSearchChanged);
     _apiKeyController.addListener(_handleApiKeyChanged);
-    _connectionTestController = IndexerConnectionTestController(
-      runTest: () => ref.read(indexerSettingsApiProvider).testConnection(),
-    )..addListener(_handleConnectionTestChanged);
-    tryLoadIfActive();
+    if (widget.active) unawaited(_loadData());
   }
 
   @override
   void didUpdateWidget(covariant IndexerSettingsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    tryLoadIfActive();
+    if (widget.active && !oldWidget.active && !_initialized && !_isLoading) {
+      unawaited(_loadData());
+    }
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final values = await Future.wait<Object>([
+        ref.read(indexerSettingsProvider.future),
+        ref.read(downloadClientsProvider.future),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _applySettings((values[0] as IndexerSettingsState).draft);
+        _downloadClients = values[1] as List<DownloadClientDto>;
+        _initialized = true;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _initialized = true;
+        _isLoading = false;
+        _errorMessage = apiErrorMessage(error, fallback: '索引器配置加载失败，请稍后重试。');
+      });
+    }
   }
 
   @override
   void dispose() {
     _apiKeyController.removeListener(_handleApiKeyChanged);
     _apiKeyController.dispose();
-    _connectionTestController
-      ..removeListener(_handleConnectionTestChanged)
-      ..dispose();
     _searchController.removeListener(_handleSearchChanged);
     _searchController.dispose();
     super.dispose();
@@ -113,13 +115,9 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     if (!mounted) {
       return;
     }
-    _connectionTestController.invalidate();
-  }
-
-  void _handleConnectionTestChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+    ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .invalidate();
   }
 
   void _applySettings(IndexerSettingsDto settings) {
@@ -130,7 +128,9 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     _apiKeyController.addListener(_handleApiKeyChanged);
     _indexers = List<IndexerEntryDto>.from(settings.indexers);
     _savedSettings = settings;
-    _connectionTestController.invalidate(notify: false);
+    ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .invalidate();
   }
 
   bool get _hasUnsavedChanges {
@@ -158,7 +158,11 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
   }
 
   bool get _isConnectionTestEnabled =>
-      !_isSaving && !_connectionTestController.isTesting && !_hasUnsavedChanges;
+      !_isSaving &&
+      !ref
+          .read(indexerConnectionTestProvider(_connectionTestScope))
+          .isTesting &&
+      !_hasUnsavedChanges;
 
   String? get _connectionTestDisabledMessage {
     if (_hasUnsavedChanges) {
@@ -204,14 +208,8 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     });
     try {
       final saved = await ref
-          .read(indexerSettingsApiProvider)
-          .updateSettings(
-            UpdateIndexerSettingsPayload(
-              type: type,
-              apiKey: apiKey,
-              indexers: _indexers,
-            ),
-          );
+          .read(indexerSettingsProvider.notifier)
+          .saveDraft(type: type, apiKey: apiKey, indexers: _indexers);
       if (!mounted) {
         return;
       }
@@ -235,7 +233,11 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     if (!_isConnectionTestEnabled) {
       return;
     }
-    final result = await _connectionTestController.testConnection();
+    final result = await ref
+        .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+        .testConnection(
+          () => ref.read(indexerSettingsApiProvider).testConnection(),
+        );
     if (!mounted || result == null) {
       return;
     }
@@ -256,7 +258,9 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     }
     setState(() {
       _indexers = List<IndexerEntryDto>.from(_indexers)..add(result);
-      _connectionTestController.invalidate(notify: false);
+      ref
+          .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+          .invalidate();
     });
   }
 
@@ -275,27 +279,39 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
     }
     setState(() {
       _indexers = List<IndexerEntryDto>.from(_indexers)..[index] = result;
-      _connectionTestController.invalidate(notify: false);
+      ref
+          .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+          .invalidate();
     });
   }
 
   void _deleteIndexer(int index) {
     setState(() {
       _indexers = List<IndexerEntryDto>.from(_indexers)..removeAt(index);
-      _connectionTestController.invalidate(notify: false);
+      ref
+          .read(indexerConnectionTestProvider(_connectionTestScope).notifier)
+          .invalidate();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildSectionStates(
-      errorTitle: '索引器配置加载失败',
-      skeletonLineCount: 5,
-      buildLoaded: _buildLoaded,
-    );
+    if (!_initialized && !widget.active) return const SizedBox.shrink();
+    if (_isLoading) return const AppSectionSkeleton(lineCount: 5);
+    if (_errorMessage != null) {
+      return AppSectionError(
+        title: '索引器配置加载失败',
+        message: _errorMessage!,
+        onRetry: _loadData,
+      );
+    }
+    return _buildLoaded(context);
   }
 
   Widget _buildLoaded(BuildContext context) {
+    final connectionTest = ref.watch(
+      indexerConnectionTestProvider(_connectionTestScope),
+    );
     final query = _searchController.text.trim().toLowerCase();
     final filteredIndexers =
         query.isEmpty
@@ -344,11 +360,11 @@ class _IndexerSettingsSectionState extends ConsumerState<IndexerSettingsSection>
               SizedBox(height: spacing.lg),
               IndexerConnectionTestPanel(
                 key: const Key('configuration-indexer-connection-test-panel'),
-                isTesting: _connectionTestController.isTesting,
+                isTesting: connectionTest.isTesting,
                 isTestEnabled: _isConnectionTestEnabled,
                 onTest: _testConnection,
-                result: _connectionTestController.result,
-                requestError: _connectionTestController.requestError,
+                result: connectionTest.result,
+                requestError: connectionTest.requestError,
                 disabledMessage: _connectionTestDisabledMessage,
                 testButtonKey: const Key(
                   'configuration-indexer-connection-test-button',

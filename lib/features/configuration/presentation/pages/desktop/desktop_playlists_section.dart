@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -27,26 +29,17 @@ class PlaylistsSection extends ConsumerStatefulWidget {
 }
 
 class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
-  late final PlaylistsOverviewController _controller;
+  // configuration 内的播放列表管理 section：不持久化顺序 + 排除系统列表。
+  static const PlaylistsOverviewScope _scope = PlaylistsOverviewScope(
+    orderScopeKey: null,
+    includeSystem: false,
+  );
+
   bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    final api = ref.read(playlistsApiProvider);
-    _controller = PlaylistsOverviewController(
-      fetchPlaylists:
-          ({bool includeSystem = true}) =>
-              api.getPlaylists(includeSystem: false),
-      fetchPlaylistCoverUrl: (playlistId) async {
-        final page = await api.getPlaylistMovies(
-          playlistId: playlistId,
-          pageSize: 1,
-        );
-        return page.items.firstOrNull?.coverImage?.bestAvailableUrl;
-      },
-      createPlaylist: api.createPlaylist,
-    );
     _tryLoadIfActive();
   }
 
@@ -56,18 +49,13 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     _tryLoadIfActive();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+  /// IndexedStack 懒加载：只有 active 后才首次订阅 provider，避免所有 tab
+  /// 一起发请求。首次订阅由 build 时 `ref.watch` 触发。
   void _tryLoadIfActive() {
     if (!widget.active || _initialized) {
       return;
     }
     _initialized = true;
-    unawaited(_controller.load());
   }
 
   Future<void> _createPlaylist() async {
@@ -75,7 +63,9 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     if (!mounted || created == null) {
       return;
     }
-    _controller.insertPlaylist(created);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .insertPlaylist(created);
     showToast('播放列表已创建');
     unawaited(_syncInBackground());
   }
@@ -92,7 +82,9 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     if (!mounted || updated == null) {
       return;
     }
-    _controller.replacePlaylist(updated);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .replacePlaylist(updated);
     unawaited(_syncInBackground());
   }
 
@@ -110,7 +102,9 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
       failureFallback: '删除播放列表失败',
     );
     if (ok && mounted) {
-      _controller.removePlaylist(playlist.id);
+      ref
+          .read(playlistsOverviewProvider(_scope).notifier)
+          .removePlaylist(playlist.id);
       unawaited(_syncInBackground());
     }
   }
@@ -121,7 +115,7 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
 
   Future<void> _syncInBackground() async {
     try {
-      await _controller.refresh();
+      await ref.read(playlistsOverviewProvider(_scope).notifier).refresh();
     } catch (_) {
       // 对账失败静默：本地已乐观更新，下一次进入时自然刷新。
     }
@@ -133,9 +127,9 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
       return const SizedBox.shrink();
     }
     final spacing = context.appSpacing;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
+    final async = ref.watch(playlistsOverviewProvider(_scope));
+    return Builder(
+      builder: (context) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -163,18 +157,21 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
               ],
             ),
             SizedBox(height: spacing.md),
-            _buildNoticeCard(context),
+            _buildNoticeCard(context, async.value?.playlists ?? const []),
             SizedBox(height: spacing.md),
-            _buildContent(context),
+            _buildContent(context, async),
           ],
         );
       },
     );
   }
 
-  Widget _buildNoticeCard(BuildContext context) {
+  Widget _buildNoticeCard(
+    BuildContext context,
+    List<PlaylistDto> allPlaylists,
+  ) {
     final customPlaylists =
-        _controller.playlists.where((item) => !item.isSystem).toList();
+        allPlaylists.where((item) => !item.isSystem).toList();
     final movieCount = customPlaylists.fold<int>(
       0,
       (total, item) => total + item.movieCount,
@@ -198,19 +195,28 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    if (_controller.isLoading && _controller.playlists.isEmpty) {
+  Widget _buildContent(BuildContext context, dynamic async) {
+    final state = async.value;
+    final allPlaylists = state?.playlists ?? const <PlaylistDto>[];
+    if (async.isLoading && allPlaylists.isEmpty) {
       return const AppSectionSkeleton(lineCount: 4);
     }
-    if (_controller.errorMessage != null && _controller.playlists.isEmpty) {
+    if (async.hasError && allPlaylists.isEmpty) {
       return AppEmptyState(
-        message: _controller.errorMessage!,
-        onRetry: () => unawaited(_controller.load()),
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '播放列表加载失败，请稍后重试',
+        ),
+        onRetry: () => unawaited(
+          ref.read(playlistsOverviewProvider(_scope).notifier).refresh(),
+        ),
         retryLabel: '重试',
       );
     }
     final playlists =
-        _controller.playlists.where((item) => !item.isSystem).toList();
+        (allPlaylists as List<PlaylistDto>)
+            .where((item) => !item.isSystem)
+            .toList();
     if (playlists.isEmpty) {
       return const AppEmptyState(message: '还没有自定义播放列表');
     }
@@ -238,7 +244,7 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
                 width: cardWidth,
                 child: PlaylistManagementCard(
                   playlist: playlist,
-                  coverImageUrl: _controller.coverUrlFor(playlist.id),
+                  coverImageUrl: state?.coverUrlFor(playlist.id),
                   layout: PlaylistCardLayout.dense,
                   keyPrefix: 'desktop-playlist',
                   onViewTap: () => _viewPlaylist(playlist),

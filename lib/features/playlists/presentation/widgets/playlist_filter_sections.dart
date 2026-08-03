@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_resolution_option_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_resolution_options_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_resolution_options_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -10,21 +10,23 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动筛选底部抽屉都用它，
 /// 避免双份维护。底栏/重置按钮由调用方自己附加。
 ///
-/// **分辨率状态用 [PlaylistResolutionOptionsController]（`ChangeNotifier`）
-/// 订阅**——移动抽屉是 modal route，快照式挂载不会被父级 `setState` 唤醒；
-/// 用 controller 让桌面/移动都实时跟随后端返回，避免「抽屉里重试永远转圈」
-/// 的历史 bug。
+/// **分辨率状态由调用方（页面 / 抽屉容器）通过 [resolutionState] 传入**——widgets
+/// 层禁 import features providers，纯值 in + [onResolutionRetry] 回调 out。
+/// 移动抽屉需要实时反映后端返回时，抽屉容器内部要用 `Consumer` 包裹并把
+/// [ref.watch(...)] 结果传给本 group。
 class PlaylistFilterSectionGroup extends StatelessWidget {
   const PlaylistFilterSectionGroup({
     super.key,
     required this.filterState,
     required this.onChanged,
-    required this.resolutionOptions,
+    required this.resolutionState,
+    required this.onResolutionRetry,
   });
 
   final PlaylistFilterState filterState;
   final ValueChanged<PlaylistFilterState> onChanged;
-  final PlaylistResolutionOptionsController resolutionOptions;
+  final PlaylistResolutionOptionsState resolutionState;
+  final VoidCallback onResolutionRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -32,19 +34,14 @@ class PlaylistFilterSectionGroup extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListenableBuilder(
-          listenable: resolutionOptions,
-          builder:
-              (context, _) => _PlaylistResolutionSection(
-                options: resolutionOptions.options,
-                selectedResolution: filterState.resolution,
-                isLoading: resolutionOptions.isLoading,
-                errorMessage: resolutionOptions.errorMessage,
-                onRetry: () => resolutionOptions.retry(),
-                onSelected:
-                    (value) =>
-                        onChanged(filterState.copyWith(resolution: value)),
-              ),
+        _PlaylistResolutionSection(
+          options: resolutionState.options,
+          selectedResolution: filterState.resolution,
+          isLoading: resolutionState.isLoading,
+          errorMessage: resolutionState.errorMessage,
+          onRetry: onResolutionRetry,
+          onSelected:
+              (value) => onChanged(filterState.copyWith(resolution: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
         _PlaylistSortSection(filterState: filterState, onChanged: onChanged),

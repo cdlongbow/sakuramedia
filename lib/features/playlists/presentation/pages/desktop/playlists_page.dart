@@ -1,27 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
-import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
-import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
-import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-
 class DesktopPlaylistsPage extends ConsumerStatefulWidget {
-  const DesktopPlaylistsPage({
-    super.key,
-    this.playlistOrderStore = const SharedPreferencesPlaylistOrderStore(),
-  });
-
-  final PlaylistOrderStore playlistOrderStore;
+  const DesktopPlaylistsPage({super.key});
 
   @override
   ConsumerState<DesktopPlaylistsPage> createState() =>
@@ -29,32 +25,16 @@ class DesktopPlaylistsPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
-  late final PlaylistsOverviewController _controller;
   int? _hoveredPlaylistId;
+  late final PlaylistsOverviewScope _scope;
 
   @override
   void initState() {
     super.initState();
-    final api = ref.read(playlistsApiProvider);
-    _controller = PlaylistsOverviewController(
-      fetchPlaylists: api.getPlaylists,
-      fetchPlaylistCoverUrl: (playlistId) async {
-        final page = await api.getPlaylistMovies(
-          playlistId: playlistId,
-          pageSize: 1,
-        );
-        return page.items.firstOrNull?.coverImage?.bestAvailableUrl;
-      },
-      createPlaylist: api.createPlaylist,
-      playlistOrderStore: widget.playlistOrderStore,
+    _scope = PlaylistsOverviewScope(
       orderScopeKey: ref.read(sessionStoreProvider).baseUrl,
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+      // 桌面 playlists 独立页展示全部（含系统列表）。
+    );
   }
 
   void _setHoveredPlaylistId(int? playlistId) {
@@ -66,12 +46,14 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final async = ref.watch(playlistsOverviewProvider(_scope));
+    final notifier = ref.read(playlistsOverviewProvider(_scope).notifier);
+
     return AppPageRefreshScope(
-      onRefresh: _controller.refresh,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          if (_controller.isLoading) {
+      onRefresh: notifier.refresh,
+      child: Builder(
+        builder: (context) {
+          if (async.isLoading && async.value == null) {
             return const SizedBox.expand(
               child: Center(
                 child: SizedBox(
@@ -83,11 +65,18 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
               ),
             );
           }
-
-          if (_controller.errorMessage != null) {
-            return AppEmptyState(message: _controller.errorMessage!);
+          if (async.hasError && async.value == null) {
+            return AppEmptyState(
+              message: apiErrorMessage(
+                async.error!,
+                fallback: '播放列表暂时无法加载，请稍后重试',
+              ),
+            );
           }
-
+          final state = async.value;
+          if (state == null) {
+            return const SizedBox.shrink();
+          }
           return ColoredBox(
             color: context.appColors.surfaceElevated,
             child: Column(
@@ -115,7 +104,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
                   ],
                 ),
                 SizedBox(height: context.appSpacing.lg),
-                Expanded(child: _buildPlaylistsList(context)),
+                Expanded(child: _buildPlaylistsList(context, state, notifier)),
               ],
             ),
           );
@@ -124,8 +113,12 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
     );
   }
 
-  Widget _buildPlaylistsList(BuildContext context) {
-    final playlists = _controller.playlists;
+  Widget _buildPlaylistsList(
+    BuildContext context,
+    dynamic state,
+    dynamic notifier,
+  ) {
+    final playlists = state.playlists;
     if (playlists.isEmpty) {
       return const AppEmptyState(message: '暂无播放列表');
     }
@@ -137,7 +130,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
           PlaylistBannerCard(
             key: Key('playlist-banner-card-${playlist.id}'),
             title: playlist.name,
-            coverImageUrl: _controller.coverUrlFor(playlist.id),
+            coverImageUrl: state.coverUrlFor(playlist.id),
             onTap:
                 () => context.pushDesktopPlaylistDetail(
                   playlistId: playlist.id,
@@ -152,7 +145,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
       key: const Key('desktop-playlists-reorderable-list'),
       buildDefaultDragHandles: false,
       itemCount: playlists.length,
-      onReorder: _controller.reorderPlaylists,
+      onReorder: notifier.reorderPlaylists,
       itemBuilder: (context, index) {
         final playlist = playlists[index];
         final isHovered = _hoveredPlaylistId == playlist.id;
@@ -171,7 +164,7 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
                 PlaylistBannerCard(
                   key: Key('playlist-banner-card-${playlist.id}'),
                   title: playlist.name,
-                  coverImageUrl: _controller.coverUrlFor(playlist.id),
+                  coverImageUrl: state.coverUrlFor(playlist.id),
                   onTap:
                       () => context.pushDesktopPlaylistDetail(
                         playlistId: playlist.id,
@@ -232,7 +225,9 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
     if (!mounted || playlist == null) {
       return;
     }
-    _controller.insertPlaylist(playlist);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .insertPlaylist(playlist);
     if (!mounted) {
       return;
     }

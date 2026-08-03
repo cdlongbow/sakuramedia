@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
-import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
@@ -15,8 +14,10 @@ import 'package:sakuramedia/features/image_search/presentation/image_search_file
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_follow_tab.dart';
 import 'package:sakuramedia/features/moments/presentation/mobile_overview_moments_tab.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -29,12 +30,7 @@ import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
 class MobileOverviewSkeletonPage extends StatelessWidget {
-  const MobileOverviewSkeletonPage({
-    super.key,
-    this.playlistOrderStore = const SharedPreferencesPlaylistOrderStore(),
-  });
-
-  final PlaylistOrderStore playlistOrderStore;
+  const MobileOverviewSkeletonPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +49,13 @@ class MobileOverviewSkeletonPage extends StatelessWidget {
               Expanded(
                 child: TabBarView(
                   key: const Key('mobile-overview-tab-view'),
-                  children: [
-                    _MobileOverviewMyTab(
-                      playlistOrderStore: playlistOrderStore,
-                    ),
-                    const MobileOverviewClipsTab(),
-                    const MobileOverviewFollowTab(),
-                    const MobileOverviewDiscoverTab(),
-                    const MobileOverviewMomentsTab(),
-                    const MobileOverviewHotReviewsTab(),
+                  children: const [
+                    _MobileOverviewMyTab(),
+                    MobileOverviewClipsTab(),
+                    MobileOverviewFollowTab(),
+                    MobileOverviewDiscoverTab(),
+                    MobileOverviewMomentsTab(),
+                    MobileOverviewHotReviewsTab(),
                   ],
                 ),
               ),
@@ -197,9 +191,7 @@ class _MobileOverviewHeader extends StatelessWidget {
 }
 
 class _MobileOverviewMyTab extends ConsumerStatefulWidget {
-  const _MobileOverviewMyTab({required this.playlistOrderStore});
-
-  final PlaylistOrderStore playlistOrderStore;
+  const _MobileOverviewMyTab();
 
   @override
   ConsumerState<_MobileOverviewMyTab> createState() =>
@@ -210,7 +202,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   static const int _latestMoviePageSize = 12;
 
   late final TextEditingController _searchController;
-  late final PlaylistsOverviewController _playlistsController;
+  late final PlaylistsOverviewScope _playlistsScope;
   bool _isLoadingLatestMovies = true;
   String? _latestMoviesErrorMessage;
   List<MovieListItemDto> _latestMovies = const <MovieListItemDto>[];
@@ -219,27 +211,17 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    final playlistsApi = ref.read(playlistsApiProvider);
-    _playlistsController = PlaylistsOverviewController(
-      fetchPlaylists: playlistsApi.getPlaylists,
-      fetchPlaylistCoverUrl: (playlistId) async {
-        final page = await playlistsApi.getPlaylistMovies(
-          playlistId: playlistId,
-          pageSize: 1,
-        );
-        return page.items.firstOrNull?.coverImage?.bestAvailableUrl;
-      },
-      createPlaylist: playlistsApi.createPlaylist,
-      playlistOrderStore: widget.playlistOrderStore,
+    // overview 「我的」tab 按 NAS baseUrl 作 order scope，包含系统列表；
+    // 与桌面 playlists 独立页共享同一份持久化顺序。
+    _playlistsScope = PlaylistsOverviewScope(
       orderScopeKey: ref.read(sessionStoreProvider).baseUrl,
-    )..load();
+    );
     _loadLatestMovies();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _playlistsController.dispose();
     super.dispose();
   }
 
@@ -345,7 +327,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
     try {
       await Future.wait<void>([
         _refreshLatestMovies(),
-        _playlistsController.refresh(),
+        ref
+            .read(playlistsOverviewProvider(_playlistsScope).notifier)
+            .refresh(),
       ]);
     } catch (_) {
       if (mounted) {
@@ -436,20 +420,28 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   }
 
   Widget _buildPlaylistsSection() {
-    return AnimatedBuilder(
-      animation: _playlistsController,
-      builder: (context, _) {
-        if (_playlistsController.isLoading) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final async = ref.watch(playlistsOverviewProvider(_playlistsScope));
+        final state = async.value;
+        if (async.isLoading && state == null) {
           return _buildPlaylistsSkeleton();
         }
-        if (_playlistsController.errorMessage != null) {
-          return AppEmptyState(message: _playlistsController.errorMessage!);
+        if (async.hasError && state == null) {
+          return AppEmptyState(
+            message: apiErrorMessage(
+              async.error!,
+              fallback: '播放列表暂时无法加载，请稍后重试',
+            ),
+          );
         }
-        if (_playlistsController.playlists.isEmpty) {
+        final PlaylistsOverviewState effective =
+            state ?? const PlaylistsOverviewState();
+        if (effective.playlists.isEmpty) {
           return const AppEmptyState(message: '暂无播放列表');
         }
 
-        final playlists = _playlistsController.playlists;
+        final playlists = effective.playlists;
         if (playlists.length < 2) {
           final playlist = playlists.single;
           return Column(
@@ -460,7 +452,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                 child: PlaylistBannerCard(
                   key: Key('mobile-overview-playlist-${playlist.id}'),
                   title: playlist.name,
-                  coverImageUrl: _playlistsController.coverUrlFor(playlist.id),
+                  coverImageUrl: effective.coverUrlFor(playlist.id),
                   onTap:
                       () => MobilePlaylistDetailRouteData(
                         playlistId: playlist.id,
@@ -477,7 +469,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
           buildDefaultDragHandles: false,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: playlists.length,
-          onReorder: _playlistsController.reorderPlaylists,
+          onReorder: ref
+              .read(playlistsOverviewProvider(_playlistsScope).notifier)
+              .reorderPlaylists,
           onReorderStart: _handlePlaylistReorderStart,
           itemBuilder: (context, index) {
             final playlist = playlists[index];
@@ -489,7 +483,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                 child: PlaylistBannerCard(
                   key: Key('mobile-overview-playlist-${playlist.id}'),
                   title: playlist.name,
-                  coverImageUrl: _playlistsController.coverUrlFor(playlist.id),
+                  coverImageUrl: effective.coverUrlFor(playlist.id),
                   onTap:
                       () => MobilePlaylistDetailRouteData(
                         playlistId: playlist.id,

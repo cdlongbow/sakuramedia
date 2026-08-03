@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_resolution_options_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_resolution_options_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -12,14 +12,17 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 /// [PlaylistFilterSectionGroup] + 同一个 [AppFilterPanelFooter]），行为也一致：
 /// 即时生效、重置在 footer 里。两端只有外层容器不同。
 ///
-/// 分辨率状态通过 [resolutionOptions]（`ChangeNotifier`）传入，抽屉内部靠
-/// [PlaylistFilterSectionGroup] 的 `ListenableBuilder` 订阅它——因此**打开
-/// 抽屉后再重试加载**依然会实时反映到抽屉里，不再是快照。
+/// **分辨率状态**由调用方通过 [resolutionStateBuilder] 惰性提供（模态 route 无法
+/// 直接 watch 外层 provider，实时更新由抽屉内部再 rebuild）——通常调用方用
+/// `Consumer` 包 `ref.watch(playlistResolutionOptionsProvider(playlistId))`
+/// 后传下来，[onResolutionRetry] 触发 `.retry()`。
 Future<void> showMobilePlaylistFilterDrawer(
   BuildContext context, {
   required PlaylistFilterState current,
   required ValueChanged<PlaylistFilterState> onChanged,
-  required PlaylistResolutionOptionsController resolutionOptions,
+  required PlaylistResolutionOptionsState Function(BuildContext ctx)
+      resolutionStateBuilder,
+  required VoidCallback onResolutionRetry,
 }) {
   return showAppBottomDrawer<void>(
     context: context,
@@ -29,7 +32,8 @@ Future<void> showMobilePlaylistFilterDrawer(
         (sheetContext) => _MobilePlaylistFilterDrawerContent(
           current: current,
           onChanged: onChanged,
-          resolutionOptions: resolutionOptions,
+          resolutionStateBuilder: resolutionStateBuilder,
+          onResolutionRetry: onResolutionRetry,
         ),
   );
 }
@@ -38,12 +42,15 @@ class _MobilePlaylistFilterDrawerContent extends StatefulWidget {
   const _MobilePlaylistFilterDrawerContent({
     required this.current,
     required this.onChanged,
-    required this.resolutionOptions,
+    required this.resolutionStateBuilder,
+    required this.onResolutionRetry,
   });
 
   final PlaylistFilterState current;
   final ValueChanged<PlaylistFilterState> onChanged;
-  final PlaylistResolutionOptionsController resolutionOptions;
+  final PlaylistResolutionOptionsState Function(BuildContext ctx)
+      resolutionStateBuilder;
+  final VoidCallback onResolutionRetry;
 
   @override
   State<_MobilePlaylistFilterDrawerContent> createState() =>
@@ -68,6 +75,7 @@ class _MobilePlaylistFilterDrawerContentState
 
   @override
   Widget build(BuildContext context) {
+    final resolutionState = widget.resolutionStateBuilder(context);
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: const Key('mobile-playlist-filter-scroll-view'),
       footer: AppFilterPanelFooter(
@@ -77,7 +85,8 @@ class _MobilePlaylistFilterDrawerContentState
       child: PlaylistFilterSectionGroup(
         filterState: _local,
         onChanged: _apply,
-        resolutionOptions: widget.resolutionOptions,
+        resolutionState: resolutionState,
+        onResolutionRetry: widget.onResolutionRetry,
       ),
     );
   }

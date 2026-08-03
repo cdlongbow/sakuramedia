@@ -5,7 +5,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -28,32 +29,11 @@ class MobilePlaylistsPage extends ConsumerStatefulWidget {
 }
 
 class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
-  late final PlaylistsOverviewController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    final api = ref.read(playlistsApiProvider);
-    _controller = PlaylistsOverviewController(
-      fetchPlaylists:
-          ({bool includeSystem = true}) =>
-              api.getPlaylists(includeSystem: false),
-      fetchPlaylistCoverUrl: (playlistId) async {
-        final page = await api.getPlaylistMovies(
-          playlistId: playlistId,
-          pageSize: 1,
-        );
-        return page.items.firstOrNull?.coverImage?.bestAvailableUrl;
-      },
-      createPlaylist: api.createPlaylist,
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  // 移动 playlists 独立页：不持久化拖排顺序（页面 UI 也不支持拖排）+ 排除系统列表。
+  static const PlaylistsOverviewScope _scope = PlaylistsOverviewScope(
+    orderScopeKey: null,
+    includeSystem: false,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +61,12 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) {
-                            final customPlaylists = _controller.playlists
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final state =
+                                ref.watch(playlistsOverviewProvider(_scope)).value;
+                            final customPlaylists = (state?.playlists ??
+                                    const <PlaylistDto>[])
                                 .where((item) => !item.isSystem)
                                 .toList(growable: false);
                             final movieCount = customPlaylists.fold<int>(
@@ -150,21 +132,29 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
   }
 
   Widget _buildContentSection(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        if (_controller.isLoading) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final async = ref.watch(playlistsOverviewProvider(_scope));
+        final state = async.value;
+        if (async.isLoading && state == null) {
           return const _MobilePlaylistsLoadingSection();
         }
-        if (_controller.errorMessage != null) {
+        if (async.hasError && state == null) {
           return _MobilePlaylistsErrorSection(
-            message: _controller.errorMessage!,
-            onRetry: _controller.load,
+            message: apiErrorMessage(
+              async.error!,
+              fallback: '播放列表暂时无法加载，请稍后重试',
+            ),
+            onRetry: () =>
+                ref.read(playlistsOverviewProvider(_scope).notifier).refresh(),
           );
+        }
+        if (state == null) {
+          return const SizedBox.shrink();
         }
 
         final playlists =
-            _controller.playlists.where((item) => !item.isSystem).toList();
+            state.playlists.where((item) => !item.isSystem).toList();
         if (playlists.isEmpty) {
           return const _MobilePlaylistsEmptySection();
         }
@@ -176,7 +166,7 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
                 (playlist) => <Widget>[
                   PlaylistManagementCard(
                     playlist: playlist,
-                    coverImageUrl: _controller.coverUrlFor(playlist.id),
+                    coverImageUrl: state.coverUrlFor(playlist.id),
                     layout: PlaylistCardLayout.normal,
                     keyPrefix: 'mobile-playlist',
                     onViewTap: () {
@@ -205,7 +195,7 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
 
   Future<void> _refreshPlaylists() async {
     try {
-      await _controller.refresh();
+      await ref.read(playlistsOverviewProvider(_scope).notifier).refresh();
     } catch (error) {
       if (!mounted) {
         return;
@@ -222,7 +212,9 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
     if (!mounted || playlist == null) {
       return;
     }
-    _controller.insertPlaylist(playlist);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .insertPlaylist(playlist);
     unawaited(_syncPlaylistsInBackground());
     showToast('播放列表已创建');
   }
@@ -236,7 +228,9 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
     if (!mounted || updated == null) {
       return;
     }
-    _controller.replacePlaylist(updated);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .replacePlaylist(updated);
     unawaited(_syncPlaylistsInBackground());
   }
 
@@ -256,14 +250,16 @@ class _MobilePlaylistsPageState extends ConsumerState<MobilePlaylistsPage> {
     if (!confirmed || !mounted) {
       return;
     }
-    _controller.removePlaylist(playlist.id);
+    ref
+        .read(playlistsOverviewProvider(_scope).notifier)
+        .removePlaylist(playlist.id);
     showToast('播放列表已删除');
     unawaited(_syncPlaylistsInBackground());
   }
 
   Future<void> _syncPlaylistsInBackground() async {
     try {
-      await _controller.refresh();
+      await ref.read(playlistsOverviewProvider(_scope).notifier).refresh();
     } catch (error) {
       if (!mounted) {
         return;

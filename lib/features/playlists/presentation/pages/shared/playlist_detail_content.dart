@@ -1,37 +1,36 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_detail_controller.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
-import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_resolution_options_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_resolution_options_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
-
-import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 
 class PlaylistDetailContent extends ConsumerStatefulWidget {
   const PlaylistDetailContent({
@@ -54,11 +53,11 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     with
         MultiSelectStateMixin<PlaylistDetailContent, String>,
         MovieBatchSelectionMixin<PlaylistDetailContent> {
-  late final PlaylistDetailController _detailController;
+  // _moviesController 是 PagedMovieSummaryController，属批 5 波 A 迁移目标；
+  // 本批（3 波 C）仅迁移 PlaylistDetail + PlaylistResolutionOptions 两个 controller。
   late final PagedMovieSummaryController _moviesController;
   late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
   late final PlaylistsApi _playlistsApi;
-  late final PlaylistResolutionOptionsController _resolutionOptionsController;
   PlaylistFilterState _filterState = PlaylistFilterState.initial;
 
   @override
@@ -73,9 +72,6 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       .map((movie) => movie.movieNumber)
       .toList(growable: false);
 
-  Listenable get _pageListenable =>
-      Listenable.merge(<Listenable>[_detailController, _moviesController]);
-
   @override
   void initState() {
     super.initState();
@@ -85,14 +81,6 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       movieSubscriptionBroadcasterProvider,
     );
     _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-    _detailController = PlaylistDetailController(
-      playlistId: widget.playlistId,
-      fetchPlaylistDetail: _playlistsApi.getPlaylistDetail,
-    )..load();
-    _resolutionOptionsController = PlaylistResolutionOptionsController(
-      playlistsApi: _playlistsApi,
-      playlistId: widget.playlistId,
-    );
     _moviesController = PagedMovieSummaryController(
       // 筛选状态惰性读取：UI 改完 `_filterState` 后必须 reload() 才会重新走闭包。
       fetchPage:
@@ -121,9 +109,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   @override
   void dispose() {
     _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _detailController.dispose();
     _moviesController.dispose();
-    _resolutionOptionsController.dispose();
     super.dispose();
   }
 
@@ -145,26 +131,30 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
 
   @override
   Widget build(BuildContext context) {
+    final detailAsync =
+        ref.watch(playlistDetailProvider(widget.playlistId));
+
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
       child: AnimatedBuilder(
-        animation: _pageListenable,
+        animation: _moviesController,
         builder: (context, _) {
-          if (_detailController.isLoading &&
-              _detailController.playlist == null) {
+          if (detailAsync.isLoading && detailAsync.value == null) {
             return const SizedBox.expand(
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          if (_detailController.errorMessage != null ||
-              _detailController.playlist == null) {
+          if (detailAsync.hasError && detailAsync.value == null) {
             return AppEmptyState(
-              message: _detailController.errorMessage ?? '播放列表详情暂时无法加载，请稍后重试',
+              message: playlistDetailErrorMessage(detailAsync.error!),
             );
           }
 
-          final playlist = _detailController.playlist!;
+          final playlist = detailAsync.value;
+          if (playlist == null) {
+            return const SizedBox.shrink();
+          }
           final footer = _buildLoadMoreFooter(context);
           final slivers = <Widget>[
             SliverToBoxAdapter(
@@ -185,7 +175,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                 child:
                     selectionMode
                         ? buildBatchSelectionToolbar()
-                        : _buildListHeader(context),
+                        : _buildListHeader(context, playlist.movieCount),
               ),
             ),
             MovieSummarySliver(
@@ -251,9 +241,15 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   Future<void> _handleRefresh() async {
     try {
       await Future.wait<void>([
-        _detailController.refresh(),
+        ref
+            .read(playlistDetailProvider(widget.playlistId).notifier)
+            .refresh(),
         _moviesController.refresh(),
-        _resolutionOptionsController.refresh(),
+        ref
+            .read(
+              playlistResolutionOptionsProvider(widget.playlistId).notifier,
+            )
+            .refresh(),
       ]);
     } catch (_) {
       if (mounted) {
@@ -265,10 +261,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   /// 列表顶栏：与影片 / 女优列表共用同一条 `AppListHeader`。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
   ///
-  /// 分辨率状态通过 [_resolutionOptionsController]（`ChangeNotifier`）传给两端
-  /// 面板，桌面/移动都实时跟随后端返回：抽屉不再是打开那一刻的快照，抽屉里
-  /// 的重试按钮也能正确刷新数据。
-  Widget _buildListHeader(BuildContext context) {
+  /// 分辨率状态通过 [playlistResolutionOptionsProvider] 暴露（惰性加载，面板首次
+  /// 打开才拉取），widgets 层通过纯值 [PlaylistResolutionOptionsState] 传入，
+  /// 桌面/移动都实时跟随 provider 更新；抽屉里的重试按钮也能正确刷新。
+  Widget _buildListHeader(BuildContext context, int totalMovies) {
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     return AppListHeader(
       filterButtonKey: const Key('playlist-detail-filter-trigger'),
@@ -278,15 +274,39 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       filterPanelBuilder:
           isMobile
               ? null
-              : (_) => PlaylistFilterSectionGroup(
-                filterState: _filterState,
-                onChanged: _applyFilter,
-                resolutionOptions: _resolutionOptionsController,
-              ),
+              : (_) => Consumer(
+                    builder: (context, ref, _) {
+                      final resolutionState = ref.watch(
+                        playlistResolutionOptionsProvider(widget.playlistId),
+                      );
+                      return PlaylistFilterSectionGroup(
+                        filterState: _filterState,
+                        onChanged: _applyFilter,
+                        resolutionState: resolutionState,
+                        onResolutionRetry: () => unawaited(
+                          ref
+                              .read(
+                                playlistResolutionOptionsProvider(
+                                  widget.playlistId,
+                                ).notifier,
+                              )
+                              .retry(),
+                        ),
+                      );
+                    },
+                  ),
       onFilterPanelOpened:
           isMobile
               ? null
-              : () => unawaited(_resolutionOptionsController.ensureLoaded()),
+              : () => unawaited(
+                    ref
+                        .read(
+                          playlistResolutionOptionsProvider(
+                            widget.playlistId,
+                          ).notifier,
+                        )
+                        .ensureLoaded(),
+                  ),
       filterPanelFooter: AppFilterPanelFooter(
         isDefault: _filterState.isDefault,
         onReset: _resetFilters,
@@ -294,7 +314,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('playlist-detail-total'),
-          label: '${_detailController.playlist?.movieCount ?? 0} 部影片',
+          label: '$totalMovies 部影片',
         ),
       ],
       actionSlots: [buildEnterSelectionButton()],
@@ -322,15 +342,30 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 
   Future<void> _openFilterDrawer() async {
-    // 分辨率状态通过 controller 订阅，抽屉打开时若还没加载过就触发一次，
-    // 加载中/失败/成功的 UI 都由 filter sections 内部随 controller 实时更新，
-    // 这里不再需要「先 await 再弹」的规避。
-    unawaited(_resolutionOptionsController.ensureLoaded());
+    // 分辨率状态由 provider 惰性加载，抽屉打开时若还没加载过就触发一次。
+    // 抽屉内部通过 resolutionStateBuilder 回调实时读 provider 快照——移动抽屉
+    // 是 modal route 且 build 是同步的，每次 build 都会调 builder 拿最新状态。
+    unawaited(
+      ref
+          .read(
+            playlistResolutionOptionsProvider(widget.playlistId).notifier,
+          )
+          .ensureLoaded(),
+    );
     await showMobilePlaylistFilterDrawer(
       context,
       current: _filterState,
       onChanged: _applyFilter,
-      resolutionOptions: _resolutionOptionsController,
+      resolutionStateBuilder: (_) => ref.read(
+        playlistResolutionOptionsProvider(widget.playlistId),
+      ),
+      onResolutionRetry: () => unawaited(
+        ref
+            .read(
+              playlistResolutionOptionsProvider(widget.playlistId).notifier,
+            )
+            .retry(),
+      ),
     );
   }
 

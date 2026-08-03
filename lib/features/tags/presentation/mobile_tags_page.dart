@@ -1,32 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// 标签页展示的就是影片列表，筛选抽屉与移动影片页共用同一个（与已复用的
-// MovieListContent 同源）。
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
-import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_list_content.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_selection_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
+import 'package:sakuramedia/features/tags/presentation/tag_movie_summary_content.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_selector_panel.dart';
-import 'package:sakuramedia/features/tags/presentation/tags_page_state.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
-import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
-
 /// 移动端标签页：标签多选区 + 所选标签下的影片列表。
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-
-///
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-
-/// 与桌面端 `DesktopTagsPage` 共用状态层（[TagsPageStateEntry]）与选择面板
-/// （[TagSelectorPanel]）。无论一级抽屉入口还是详情页预选跳入，移动端都以
-/// push 的子页面形式呈现，状态随页面自建自销，不接入缓存。
 class MobileTagsPage extends ConsumerStatefulWidget {
   const MobileTagsPage({super.key, this.initialTagId});
 
@@ -38,106 +32,108 @@ class MobileTagsPage extends ConsumerStatefulWidget {
 }
 
 class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
-  late final TagsPageStateEntry _pageState;
-
-  TagSelectionController get _selection => _pageState.selection;
+  late final TagSelectionScope _selectionScope =
+      widget.initialTagId == null
+          ? const TagSelectionScope.mobileRoot()
+          : TagSelectionScope.mobileDetail(initialTagId: widget.initialTagId!);
+  late final MovieSummaryScope _movieScope = MovieSummaryScope.tags(
+    instanceKey: _selectionScope.instanceKey,
+    cacheKey: _selectionScope.cacheKey,
+  );
+  RiverpodPageHandle? _pageCacheHandle;
 
   @override
   void initState() {
     super.initState();
-    _pageState = TagsPageStateEntry(
-      tagsApi: ref.read(tagsApiProvider),
-      moviesApi: ref.read(moviesApiProvider),
-      subscriptionChangeNotifier: ref.read(
-        movieSubscriptionBroadcasterProvider,
-      ),
-      initialSelectedTagIds:
-          widget.initialTagId == null
-              ? const <int>[]
-              : <int>[widget.initialTagId!],
-      popularLimit: 5,
-    );
+    final cacheKey = _selectionScope.cacheKey;
+    if (cacheKey == null) {
+      return;
+    }
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: cacheKey,
+          resolveLinks: () {
+            final selectionLink =
+                ref
+                    .read(tagSelectionProvider(_selectionScope).notifier)
+                    .cacheLink;
+            final moviesLink =
+                ref.read(movieSummaryProvider(_movieScope).notifier).cacheLink;
+            return [
+              if (selectionLink != null) selectionLink,
+              if (moviesLink != null) moviesLink,
+            ];
+          },
+        );
   }
 
   @override
   void dispose() {
-    _pageState.dispose();
+    _pageCacheHandle?.release();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      // 仅监听选择区：影片网格的重建由内部 MovieListContent 自行处理。
-      animation: _selection,
-      builder: (context, _) {
-        if (!_selection.hasSelection) {
-          return _buildEmptyState(context);
-        }
-        return _buildMoviesArea(context);
-      },
-    );
-  }
+    final selection = ref.watch(tagSelectionProvider(_selectionScope));
+    if (!selection.hasSelection) {
+      return SingleChildScrollView(
+        key: const Key('tags-page'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSelectorPanel(selection),
+            SizedBox(height: context.appSpacing.lg),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: context.appSpacing.xxl),
+              child: const AppEmptyState(message: '请选择标签查看影片'),
+            ),
+          ],
+        ),
+      );
+    }
 
-  /// 未选标签：仅展示选择面板 + 引导空态（无需下拉刷新）。
-  Widget _buildEmptyState(BuildContext context) {
-    return SingleChildScrollView(
+    return TagMovieSummaryContent(
       key: const Key('tags-page'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSelectorPanel(),
-          SizedBox(height: context.appSpacing.lg),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: context.appSpacing.xxl),
-            child: const AppEmptyState(message: '请选择标签查看影片'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 已选标签：复用影片页「筛选条 + 总数 + 网格 + 分页底栏」呈现逻辑，
-  /// 选择面板作为列表上方的 sliver 一起滚动，并支持下拉刷新。
-  Widget _buildMoviesArea(BuildContext context) {
-    return MovieListContent(
-      key: const Key('tags-page'),
-      pageState: _pageState,
+      selection: selection,
+      scope: _movieScope,
       surfaceColor: context.appColors.surfaceCard,
       contentKey: const Key('tags-page-movies'),
       totalKey: const Key('tags-page-total'),
       sectionSpacing: context.appSpacing.md,
-      emptyMessage: '该标签下暂无影片',
+      enableRefresh: true,
+      onRefreshFailure: (_) => showToast('刷新失败'),
       onMovieTap:
           (context, movieNumber) => MobileMovieDetailRouteData(
             movieNumber: movieNumber,
           ).push(context),
-      // 与移动影片页同一套移动范式：筛选走底部抽屉（不是桌面就地浮层），
-      // 多选态顶栏只留退出/计数/全选、批量动作下沉到底部条。
       headerBuilder: _buildMobileHeader,
       useMobileSelectionLayout: true,
       bodyBuilder:
           (context, scrollController, sliver, onRefresh) =>
               AppAdaptiveRefreshScrollView(
+                key: PageStorageKey<String>(
+                  '${_selectionScope.instanceKey}:movies',
+                ),
                 onRefresh: onRefresh!,
                 controller: scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: <Widget>[
-                  SliverToBoxAdapter(child: _buildSelectorPanel()),
+                  SliverToBoxAdapter(child: _buildSelectorPanel(selection)),
                   SliverToBoxAdapter(
                     child: SizedBox(height: context.appSpacing.lg),
                   ),
                   sliver,
                 ],
               ),
-      enableRefresh: true,
-      onRefreshFailure: (_) => showToast('刷新失败'),
     );
   }
 
-  /// 影片区顶栏：与移动影片页逐字同构，只换 Key 前缀。标签选择区不在这条顶栏里，
-  /// 它仍是列表上方的常驻面板。
-  Widget _buildMobileHeader(BuildContext context, MovieListHeaderArgs args) {
+  Widget _buildMobileHeader(
+    BuildContext context,
+    MovieSummaryListHeaderArgs args,
+  ) {
     return AppListHeader(
       filterButtonKey: const Key('mobile-tags-filter-button'),
       filterTooltip: '筛选',
@@ -154,7 +150,7 @@ class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
 
   Future<void> _openFilterDrawer(
     BuildContext context,
-    MovieListHeaderArgs args,
+    MovieSummaryListHeaderArgs args,
   ) async {
     await showMobileMovieFilterDrawer(
       context,
@@ -163,16 +159,17 @@ class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
     );
   }
 
-  Widget _buildSelectorPanel() {
+  Widget _buildSelectorPanel(TagSelectionState selection) {
+    final notifier = ref.read(tagSelectionProvider(_selectionScope).notifier);
     return TagSelectorPanel(
-      selection: _selection,
-      onToggleTag: _selection.toggle,
-      onRemoveTag: _selection.remove,
-      onClear: _selection.clear,
-      onQueryChanged: _selection.setQuery,
-      onToggleExpanded: _selection.toggleExpanded,
-      onMatchModeChanged: _selection.setMatchMode,
-      onRetry: () => unawaited(_selection.retry()),
+      selection: selection,
+      onToggleTag: notifier.toggle,
+      onRemoveTag: notifier.remove,
+      onClear: notifier.clear,
+      onQueryChanged: notifier.setQuery,
+      onToggleExpanded: notifier.toggleExpanded,
+      onMatchModeChanged: notifier.setMatchMode,
+      onRetry: () => unawaited(notifier.retry()),
     );
   }
 }

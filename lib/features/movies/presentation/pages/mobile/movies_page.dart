@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/app/cached_page_state_handle.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
-import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_list_content.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_list_page_state.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
@@ -21,36 +21,37 @@ class MobileMoviesPage extends ConsumerStatefulWidget {
 }
 
 class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
-  late final CachedPageStateHandle<MovieListPageStateEntry> _pageStateHandle;
+  static const _scope = MovieSummaryScope.movies(
+    cacheKey: 'mobile:movies:list',
+  );
 
-  MovieListPageStateEntry get _pageState => _pageStateHandle.value;
+  late final RiverpodPageHandle _pageCacheHandle;
 
   @override
   void initState() {
     super.initState();
-    _pageStateHandle = obtainCachedPageState<MovieListPageStateEntry>(
-      context,
-      key: mobileMoviesPageStateKey(),
-      create:
-          () => MovieListPageStateEntry(
-            moviesApi: ref.read(moviesApiProvider),
-            subscriptionChangeNotifier: ref.read(
-              movieSubscriptionBroadcasterProvider,
-            ),
-          ),
-    );
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: mobileMoviesPageStateKey(),
+          resolveLinks: () {
+            final link =
+                ref.read(movieSummaryProvider(_scope).notifier).cacheLink;
+            return link == null ? const [] : [link];
+          },
+        );
   }
 
   @override
   void dispose() {
-    _pageStateHandle.dispose();
+    _pageCacheHandle.release();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MovieListContent(
-      pageState: _pageState,
+    return MovieSummaryListContent(
+      scope: _scope,
       surfaceColor: context.appColors.surfaceCard,
       contentKey: const Key('mobile-movies-page'),
       totalKey: const Key('mobile-movies-page-total'),
@@ -64,6 +65,7 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
       bodyBuilder:
           (context, scrollController, sliver, onRefresh) =>
               AppAdaptiveRefreshScrollView(
+                key: const PageStorageKey<String>('mobile:movies:list'),
                 onRefresh: onRefresh!,
                 controller: scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -74,7 +76,10 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
     );
   }
 
-  Widget _buildMobileHeader(BuildContext context, MovieListHeaderArgs args) {
+  Widget _buildMobileHeader(
+    BuildContext context,
+    MovieSummaryListHeaderArgs args,
+  ) {
     return AppListHeader(
       filterButtonKey: const Key('mobile-movies-filter-button'),
       filterTooltip: '筛选',
@@ -91,7 +96,7 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
 
   Future<void> _openFilterDrawer(
     BuildContext context,
-    MovieListHeaderArgs args,
+    MovieSummaryListHeaderArgs args,
   ) async {
     await showMobileMovieFilterDrawer(
       context,

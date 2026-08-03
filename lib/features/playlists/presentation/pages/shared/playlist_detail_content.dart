@@ -7,15 +7,12 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_resolution_options_provider.dart';
-import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -53,92 +50,72 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     with
         MultiSelectStateMixin<PlaylistDetailContent, String>,
         MovieBatchSelectionMixin<PlaylistDetailContent> {
-  // _moviesController 是 PagedMovieSummaryController，属批 5 波 A 迁移目标；
-  // 本批（3 波 C）仅迁移 PlaylistDetail + PlaylistResolutionOptions 两个 controller。
-  late final PagedMovieSummaryController _moviesController;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
-  late final PlaylistsApi _playlistsApi;
-  PlaylistFilterState _filterState = PlaylistFilterState.initial;
+  late final ScrollController _scrollController;
+
+  MovieSummaryScope get _scope =>
+      MovieSummaryScope.playlist(playlistId: widget.playlistId);
+
+  PlaylistFilterState get _filterState =>
+      ref.read(movieSummaryProvider(_scope)).value?.filter.playlist ??
+      PlaylistFilterState.initial;
 
   @override
   String get batchKeyPrefix => 'playlist-detail';
 
   @override
   MovieBatchToggleExecutor get batchSubscriptionExecutor =>
-      _moviesController.batchToggleSubscription;
+      ref.read(movieSummaryProvider(_scope).notifier).batchToggleSubscription;
 
   @override
-  List<String> get batchSelectableNumbers => _moviesController.items
-      .map((movie) => movie.movieNumber)
-      .toList(growable: false);
+  List<String> get batchSelectableNumbers =>
+      ref
+          .read(movieSummaryProvider(_scope))
+          .value
+          ?.paged
+          .items
+          .map((movie) => movie.movieNumber)
+          .toList(growable: false) ??
+      const <String>[];
 
   @override
   void initState() {
     super.initState();
-    _playlistsApi = ref.read(playlistsApiProvider);
-    final moviesApi = ref.read(moviesApiProvider);
-    _subscriptionChangeNotifier = ref.read(
-      movieSubscriptionBroadcasterProvider,
-    );
-    _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-    _moviesController = PagedMovieSummaryController(
-      // 筛选状态惰性读取：UI 改完 `_filterState` 后必须 reload() 才会重新走闭包。
-      fetchPage:
-          (page, pageSize) => _playlistsApi.getPlaylistMovies(
-            playlistId: widget.playlistId,
-            page: page,
-            pageSize: pageSize,
-            sort: _filterState.sortExpression,
-            resolution: _filterState.resolution?.apiValue,
-          ),
-      subscribeMovie: moviesApi.subscribeMovie,
-      unsubscribeMovie: moviesApi.unsubscribeMovie,
-      batchSubscribeMovies: moviesApi.batchSubscribeMovies,
-      batchUnsubscribeMovies: moviesApi.batchUnsubscribeMovies,
-      onSubscriptionChanged: _reportSubscriptionChange,
-      onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
-      pageSize: 24,
-      loadMoreTriggerOffset: 300,
-      initialLoadErrorText: '影片列表加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多失败，请点击重试',
-    );
-    _moviesController.attachScrollListener();
-    _moviesController.initialize();
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
   }
 
   @override
   void dispose() {
-    _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _moviesController.dispose();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
-  void _onMovieSubscriptionChanged() {
-    _subscriptionChangeNotifier.consumePendingChanges(
-      _moviesController.applySubscriptionChanges,
-    );
-  }
-
-  void _reportSubscriptionChange({
-    required String movieNumber,
-    required bool isSubscribed,
-  }) {
-    _subscriptionChangeNotifier.reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: isSubscribed,
-    );
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    final summary = ref.read(movieSummaryProvider(_scope)).value;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
+    }
+    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
   }
 
   @override
   Widget build(BuildContext context) {
-    final detailAsync =
-        ref.watch(playlistDetailProvider(widget.playlistId));
+    final detailAsync = ref.watch(playlistDetailProvider(widget.playlistId));
+    final moviesAsync = ref.watch(movieSummaryProvider(_scope));
+    final movies = moviesAsync.value;
+    final paged = movies?.paged;
 
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
-      child: AnimatedBuilder(
-        animation: _moviesController,
-        builder: (context, _) {
+      child: Builder(
+        builder: (context) {
           if (detailAsync.isLoading && detailAsync.value == null) {
             return const SizedBox.expand(
               child: Center(child: CircularProgressIndicator()),
@@ -155,18 +132,14 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           if (playlist == null) {
             return const SizedBox.shrink();
           }
-          final footer = _buildLoadMoreFooter(context);
+          final footer = _buildLoadMoreFooter(context, movies);
           final slivers = <Widget>[
             SliverToBoxAdapter(
               child: PlaylistBannerCard(
                 key: Key('playlist-banner-card-${playlist.id}'),
                 title: playlist.name,
                 coverImageUrl:
-                    _moviesController
-                        .items
-                        .firstOrNull
-                        ?.coverImage
-                        ?.bestAvailableUrl,
+                    paged?.items.firstOrNull?.coverImage?.bestAvailableUrl,
               ),
             ),
             SliverToBoxAdapter(
@@ -179,9 +152,12 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
               ),
             ),
             MovieSummarySliver(
-              items: _moviesController.items,
-              isLoading: _moviesController.isInitialLoading,
-              errorMessage: _moviesController.initialErrorMessage,
+              items: paged?.items ?? const [],
+              isLoading: moviesAsync.isLoading && movies == null,
+              errorMessage:
+                  moviesAsync.hasError && movies == null
+                      ? _scope.initialLoadErrorText
+                      : null,
               onMovieTap: widget.onMovieTap,
               onMovieMenuRequest:
                   (movie, globalPosition) => requestMovieCollectionMenu(
@@ -193,9 +169,9 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
               onMovieSubscriptionTap:
                   (movie) => _toggleMovieSubscription(movie.movieNumber),
               isMovieSubscriptionUpdating:
-                  (movie) => _moviesController.isSubscriptionUpdating(
-                    movie.movieNumber,
-                  ),
+                  (movie) =>
+                      movies?.isSubscriptionUpdating(movie.movieNumber) ??
+                      false,
               emptyMessage: _filterState.isDefault ? '暂无影片数据' : '当前筛选条件下暂无匹配影片',
               selectionMode: selectionMode,
               isMovieSelected: (movie) => isSelected(movie.movieNumber),
@@ -215,7 +191,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                 widget.enablePullToRefresh
                     ? const AlwaysScrollableScrollPhysics()
                     : null,
-            controller: _moviesController.scrollController,
+            controller: _scrollController,
             slivers: slivers,
           );
 
@@ -226,7 +202,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
             return AppAdaptiveRefreshScrollView(
               onRefresh: _handleRefresh,
-              controller: _moviesController.scrollController,
+              controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: slivers,
             );
@@ -241,14 +217,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   Future<void> _handleRefresh() async {
     try {
       await Future.wait<void>([
+        ref.read(playlistDetailProvider(widget.playlistId).notifier).refresh(),
+        ref.read(movieSummaryProvider(_scope).notifier).refresh(),
         ref
-            .read(playlistDetailProvider(widget.playlistId).notifier)
-            .refresh(),
-        _moviesController.refresh(),
-        ref
-            .read(
-              playlistResolutionOptionsProvider(widget.playlistId).notifier,
-            )
+            .read(playlistResolutionOptionsProvider(widget.playlistId).notifier)
             .refresh(),
       ]);
     } catch (_) {
@@ -275,15 +247,16 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           isMobile
               ? null
               : (_) => Consumer(
-                    builder: (context, ref, _) {
-                      final resolutionState = ref.watch(
-                        playlistResolutionOptionsProvider(widget.playlistId),
-                      );
-                      return PlaylistFilterSectionGroup(
-                        filterState: _filterState,
-                        onChanged: _applyFilter,
-                        resolutionState: resolutionState,
-                        onResolutionRetry: () => unawaited(
+                builder: (context, ref, _) {
+                  final resolutionState = ref.watch(
+                    playlistResolutionOptionsProvider(widget.playlistId),
+                  );
+                  return PlaylistFilterSectionGroup(
+                    filterState: _filterState,
+                    onChanged: _applyFilter,
+                    resolutionState: resolutionState,
+                    onResolutionRetry:
+                        () => unawaited(
                           ref
                               .read(
                                 playlistResolutionOptionsProvider(
@@ -292,21 +265,21 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                               )
                               .retry(),
                         ),
-                      );
-                    },
-                  ),
+                  );
+                },
+              ),
       onFilterPanelOpened:
           isMobile
               ? null
               : () => unawaited(
-                    ref
-                        .read(
-                          playlistResolutionOptionsProvider(
-                            widget.playlistId,
-                          ).notifier,
-                        )
-                        .ensureLoaded(),
-                  ),
+                ref
+                    .read(
+                      playlistResolutionOptionsProvider(
+                        widget.playlistId,
+                      ).notifier,
+                    )
+                    .ensureLoaded(),
+              ),
       filterPanelFooter: AppFilterPanelFooter(
         isDefault: _filterState.isDefault,
         onReset: _resetFilters,
@@ -325,16 +298,18 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     if (nextState.matches(_filterState)) {
       return;
     }
-    setState(() => _filterState = nextState);
     // 切筛选跨结果集，选中态失去意义。
     if (selectionMode) {
       exitSelection();
     }
-    final controller = _moviesController;
-    if (controller.scrollController.hasClients) {
-      controller.scrollController.jumpTo(0);
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
     }
-    unawaited(controller.reload());
+    unawaited(
+      ref
+          .read(movieSummaryProvider(_scope).notifier)
+          .applyPlaylistFilter(nextState),
+    );
   }
 
   void _resetFilters() {
@@ -347,44 +322,47 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     // 是 modal route 且 build 是同步的，每次 build 都会调 builder 拿最新状态。
     unawaited(
       ref
-          .read(
-            playlistResolutionOptionsProvider(widget.playlistId).notifier,
-          )
+          .read(playlistResolutionOptionsProvider(widget.playlistId).notifier)
           .ensureLoaded(),
     );
     await showMobilePlaylistFilterDrawer(
       context,
       current: _filterState,
       onChanged: _applyFilter,
-      resolutionStateBuilder: (_) => ref.read(
-        playlistResolutionOptionsProvider(widget.playlistId),
-      ),
-      onResolutionRetry: () => unawaited(
-        ref
-            .read(
-              playlistResolutionOptionsProvider(widget.playlistId).notifier,
-            )
-            .retry(),
-      ),
+      resolutionStateBuilder:
+          (_) => ref.read(playlistResolutionOptionsProvider(widget.playlistId)),
+      onResolutionRetry:
+          () => unawaited(
+            ref
+                .read(
+                  playlistResolutionOptionsProvider(widget.playlistId).notifier,
+                )
+                .retry(),
+          ),
     );
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
-    final result = await _moviesController.toggleSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(movieSummaryProvider(_scope).notifier)
+        .toggleSubscription(movieNumber);
     if (!mounted) {
       return;
     }
     showMovieSubscriptionFeedback(result);
   }
 
-  Widget? _buildLoadMoreFooter(BuildContext context) {
-    if (_moviesController.items.isEmpty) {
+  Widget? _buildLoadMoreFooter(
+    BuildContext context, [
+    MovieSummaryState? summary,
+  ]) {
+    final paged =
+        summary?.paged ?? ref.read(movieSummaryProvider(_scope)).value?.paged;
+    if (paged == null || paged.items.isEmpty) {
       return null;
     }
 
-    if (_moviesController.isLoadingMore) {
+    if (paged.isLoadingMore) {
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
@@ -393,14 +371,15 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       );
     }
 
-    if (_moviesController.loadMoreErrorMessage == null) {
+    if (paged.loadMoreErrorMessage == null) {
       return null;
     }
 
     return Center(
       child: TextButton(
-        onPressed: _moviesController.loadMore,
-        child: Text(_moviesController.loadMoreErrorMessage!),
+        onPressed:
+            () => ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
+        child: Text(paged.loadMoreErrorMessage!),
       ),
     );
   }

@@ -10,11 +10,10 @@ import 'package:sakuramedia/features/discovery/presentation/providers/discovery_
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
-import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -30,9 +29,6 @@ import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-
 class DesktopDiscoverPage extends ConsumerStatefulWidget {
   const DesktopDiscoverPage({super.key});
 
@@ -42,82 +38,19 @@ class DesktopDiscoverPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
-  // discovery 双腿已迁 Riverpod(discoveryDailyPreview/discoveryMomentPreview,
-  // build 里 ref.watch);本 State 只剩「女优上新」半边——PagedMovieSummaryController
-  // 与两个广播 addListener 属 movies 订阅体系,留待批 5 迁移。
+  // discovery 三腿均由 provider 驱动；本 State 只保留页面交互与导航职责。
   static const int _dailyPageSize = 6;
   static const int _momentPageSize = 8;
 
-  late final PagedMovieSummaryController _followController;
-  late final MovieCollectionTypeChangeNotifier _collectionChangeNotifier;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
-
-  @override
-  void initState() {
-    super.initState();
-    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
-    _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier = ref.read(
-      movieSubscriptionBroadcasterProvider,
-    );
-    _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-
-    _followController = PagedMovieSummaryController(
-      fetchPage:
-          (page, pageSize) => ref
-              .read(moviesApiProvider)
-              .getSubscribedActorsLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
-      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
-      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
-      batchUnsubscribeMovies:
-          ref.read(moviesApiProvider).batchUnsubscribeMovies,
-      onSubscriptionChanged: _reportSubscriptionChange,
-      onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
-      pageSize: 6,
-      initialLoadErrorText: '女优上新加载失败，请稍后重试',
-    );
-    _followController.initialize();
-  }
-
-  @override
-  void dispose() {
-    _collectionChangeNotifier.removeListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _followController.dispose();
-    super.dispose();
-  }
-
-  void _onCollectionTypeChanged() {
-    final change = _collectionChangeNotifier.lastChange;
-    if (change == null) {
-      return;
-    }
-    if (change.targetType == MovieCollectionType.collection) {
-      _followController.removeItem(change.movieNumber);
-    }
-  }
-
-  void _onMovieSubscriptionChanged() {
-    _subscriptionChangeNotifier.consumePendingChanges(
-      _followController.applySubscriptionChanges,
-    );
-  }
-
-  void _reportSubscriptionChange({
-    required String movieNumber,
-    required bool isSubscribed,
-  }) {
-    _subscriptionChangeNotifier.reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: isSubscribed,
-    );
-  }
+  static const _followScope = MovieSummaryScope.subscribedActorsLatest(
+    pageSize: 6,
+    initialLoadErrorText: '女优上新加载失败，请稍后重试',
+  );
 
   Future<void> _toggleFollowSubscription(String movieNumber) async {
-    final result = await _followController.toggleSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(movieSummaryProvider(_followScope).notifier)
+        .toggleSubscription(movieNumber);
     if (!mounted) {
       return;
     }
@@ -128,7 +61,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   /// 对齐迁移前 `DiscoveryController.refresh()` 吞异常的行为。
   Future<void> _refreshDiscovery() async {
     await Future.wait(<Future<void>>[
-      ref.read(discoveryDailyPreviewProvider(_dailyPageSize).notifier).refresh(),
+      ref
+          .read(discoveryDailyPreviewProvider(_dailyPageSize).notifier)
+          .refresh(),
       ref
           .read(discoveryMomentPreviewProvider(_momentPageSize).notifier)
           .refresh(),
@@ -136,56 +71,63 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   }
 
   Future<void> _handleRefresh() async {
-    await Future.wait<void>([_refreshDiscovery(), _followController.refresh()]);
+    await Future.wait<void>([
+      _refreshDiscovery(),
+      ref.read(movieSummaryProvider(_followScope).notifier).refresh(),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     final daily = ref.watch(discoveryDailyPreviewProvider(_dailyPageSize));
     final moment = ref.watch(discoveryMomentPreviewProvider(_momentPageSize));
+    final follow = ref.watch(movieSummaryProvider(_followScope));
     return AppPageRefreshScope(
       onRefresh: _handleRefresh,
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: AppPageFrame(
           title: '',
-          child: AnimatedBuilder(
-            animation: _followController,
-            builder: (context, _) {
-              return Column(
-                key: const Key('desktop-discover-page'),
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildFollowSection(context),
-                  SizedBox(height: context.appSpacing.xl),
-                  _buildDailySection(context, daily),
-                  SizedBox(height: context.appSpacing.xl),
-                  _buildMomentSection(context, moment),
-                ],
-              );
-            },
+          child: Column(
+            key: const Key('desktop-discover-page'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildFollowSection(context, follow),
+              SizedBox(height: context.appSpacing.xl),
+              _buildDailySection(context, daily),
+              SizedBox(height: context.appSpacing.xl),
+              _buildMomentSection(context, moment),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildFollowSection(BuildContext context) {
+  Widget _buildFollowSection(
+    BuildContext context,
+    AsyncValue<MovieSummaryState> followAsync,
+  ) {
+    final follow = followAsync.value;
+    final paged = follow?.paged;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _DiscoverSectionTitle(
           title: '女优上新',
-          totalText: '${_followController.total} 部',
+          totalText: '${paged?.total ?? 0} 部',
           actionKey: const Key('desktop-discover-load-more-follow'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopFollowPath),
         ),
         SizedBox(height: context.appSpacing.md),
         MovieSummaryGrid(
-          items: _followController.items,
-          isLoading: _followController.isInitialLoading,
-          errorMessage: _followController.initialErrorMessage,
+          items: paged?.items ?? const [],
+          isLoading: followAsync.isLoading && follow == null,
+          errorMessage:
+              followAsync.hasError && follow == null
+                  ? _followScope.initialLoadErrorText
+                  : null,
           onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
           onMovieMenuRequest:
               (movie, globalPosition) => requestMovieCollectionMenu(
@@ -198,7 +140,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
               (movie) => _toggleFollowSubscription(movie.movieNumber),
           isMovieSubscriptionUpdating:
               (movie) =>
-                  _followController.isSubscriptionUpdating(movie.movieNumber),
+                  follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
           emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
           placeholderCount: 6,
         ),

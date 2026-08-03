@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/series_import/series_import_dialog.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
@@ -59,7 +58,7 @@ class SeriesMoviesContent extends ConsumerStatefulWidget {
 
   /// 移动端多选布局：入口挂到**卡片长按浮层**（顶栏不再常驻「选择」），多选态
   /// 顶栏只留退出/计数/全选，批量动作走贴底的 `AppSelectionBottomBar`。
-  /// 桌面端保持 `false`——批量动作在顶栏内联。语义对齐 `MovieListContent`。
+  /// 桌面端保持 `false`——批量动作在顶栏内联。语义对齐 `MovieSummaryListContent`。
   final bool useMobileSelectionLayout;
 
   /// 把系列名报给外层移动子页壳的返回栏（见 [AppMobileSubpageTitle]），信息槽里
@@ -76,68 +75,65 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     with
         MultiSelectStateMixin<SeriesMoviesContent, String>,
         MovieBatchSelectionMixin<SeriesMoviesContent> {
-  late final PagedMovieSummaryController _controller;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
   late final String? _initialSeriesName;
+  late final ScrollController _scrollController;
+
+  MovieSummaryScope get _scope =>
+      MovieSummaryScope.series(seriesId: widget.seriesId);
 
   @override
   String get batchKeyPrefix => 'series-movies';
 
   @override
   MovieBatchToggleExecutor get batchSubscriptionExecutor =>
-      _controller.batchToggleSubscription;
+      ref.read(movieSummaryProvider(_scope).notifier).batchToggleSubscription;
 
   @override
-  List<String> get batchSelectableNumbers => _controller.items
-      .map((movie) => movie.movieNumber)
-      .toList(growable: false);
+  List<String> get batchSelectableNumbers =>
+      ref
+          .read(movieSummaryProvider(_scope))
+          .value
+          ?.paged
+          .items
+          .map((movie) => movie.movieNumber)
+          .toList(growable: false) ??
+      const <String>[];
 
   @override
   void initState() {
     super.initState();
     _initialSeriesName = _normalizeSeriesName(widget.initialSeriesName);
-    _subscriptionChangeNotifier = ref.read(
-      movieSubscriptionBroadcasterProvider,
-    );
-    _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-    _controller = PagedMovieSummaryController(
-      fetchPage:
-          (page, pageSize) => ref
-              .read(moviesApiProvider)
-              .getMoviesBySeries(
-                seriesId: widget.seriesId,
-                page: page,
-                pageSize: pageSize,
-              ),
-      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
-      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
-      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
-      batchUnsubscribeMovies:
-          ref.read(moviesApiProvider).batchUnsubscribeMovies,
-      onSubscriptionChanged: _reportSubscriptionChange,
-      onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
-      pageSize: 24,
-      loadMoreTriggerOffset: 300,
-      initialLoadErrorText: '系列影片加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多失败，请点击重试',
-    );
-    _controller.attachScrollListener();
-    _controller.initialize();
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
   }
 
   @override
   void dispose() {
-    _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _controller.dispose();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
-  String get _displaySeriesName {
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    final summary = ref.read(movieSummaryProvider(_scope)).value;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
+    }
+    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
+  }
+
+  String _displaySeriesName(MovieSummaryState? summary) {
     final initialSeriesName = _initialSeriesName;
     if (initialSeriesName != null) {
       return initialSeriesName;
     }
-    for (final movie in _controller.items) {
+    for (final movie in summary?.paged.items ?? const []) {
       final seriesName = movie.seriesName.trim();
       if (seriesName.isNotEmpty) {
         return seriesName;
@@ -146,26 +142,10 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     return '系列 #${widget.seriesId}';
   }
 
-  void _onMovieSubscriptionChanged() {
-    _subscriptionChangeNotifier.consumePendingChanges(
-      _controller.applySubscriptionChanges,
-    );
-  }
-
-  void _reportSubscriptionChange({
-    required String movieNumber,
-    required bool isSubscribed,
-  }) {
-    _subscriptionChangeNotifier.reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: isSubscribed,
-    );
-  }
-
   Future<void> _toggleMovieSubscription(String movieNumber) async {
-    final result = await _controller.toggleSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(movieSummaryProvider(_scope).notifier)
+        .toggleSubscription(movieNumber);
     if (!mounted) {
       return;
     }
@@ -174,7 +154,11 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
 
   Future<void> _handleRefresh() async {
     try {
-      await _controller.refresh();
+      final error =
+          await ref.read(movieSummaryProvider(_scope).notifier).refresh();
+      if (error != null) {
+        throw Exception(error);
+      }
     } catch (_) {
       if (!mounted) {
         return;
@@ -191,14 +175,17 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   Future<void> _handleImport() async {
     final hasNewMovies = await showSeriesImportDialog(context, widget.seriesId);
     if (hasNewMovies && mounted) {
-      await _controller.refresh();
+      await ref.read(movieSummaryProvider(_scope).notifier).refresh();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final moviesAsync = ref.watch(movieSummaryProvider(_scope));
+    final summary = moviesAsync.value;
+    final paged = summary?.paged;
     if (widget.hoistTitleToSubpageShell) {
-      _reportTitleToShell();
+      _reportTitleToShell(summary);
     }
     // AnimatedBuilder 只包住 sliver body——bodyBuilder 产出的
     // CustomScrollView / AppAdaptiveRefreshScrollView 不需要跟着分页 tick 重建。
@@ -208,46 +195,43 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         color: widget.surfaceColor,
         child: widget.bodyBuilder(
           context,
-          _controller.scrollController,
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              final showFooter =
-                  _controller.items.isNotEmpty &&
-                  (_controller.isLoadingMore ||
-                      _controller.loadMoreErrorMessage != null);
-              return SliverMainAxisGroup(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      key: widget.contentKey,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (selectionMode)
-                          (widget.useMobileSelectionLayout
-                              ? buildMobileBatchSelectionHeader()
-                              : buildBatchSelectionToolbar())
-                        else
-                          _buildHeader(context),
-                        SizedBox(height: widget.sectionSpacing),
-                      ],
+          _scrollController,
+          SliverMainAxisGroup(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  key: widget.contentKey,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (selectionMode)
+                      (widget.useMobileSelectionLayout
+                          ? buildMobileBatchSelectionHeader()
+                          : buildBatchSelectionToolbar())
+                    else
+                      _buildHeader(context, summary),
+                    SizedBox(height: widget.sectionSpacing),
+                  ],
+                ),
+              ),
+              _buildMoviesArea(context, moviesAsync),
+              if (paged != null &&
+                  paged.items.isNotEmpty &&
+                  (paged.isLoadingMore || paged.loadMoreErrorMessage != null))
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: context.appSpacing.md),
+                    child: AppPagedLoadMoreFooter(
+                      isLoading: paged.isLoadingMore,
+                      errorMessage: paged.loadMoreErrorMessage,
+                      onRetry:
+                          () =>
+                              ref
+                                  .read(movieSummaryProvider(_scope).notifier)
+                                  .loadMore(),
                     ),
                   ),
-                  _buildMoviesArea(context),
-                  if (showFooter)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: context.appSpacing.md),
-                        child: AppPagedLoadMoreFooter(
-                          isLoading: _controller.isLoadingMore,
-                          errorMessage: _controller.loadMoreErrorMessage,
-                          onRetry: _controller.loadMore,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
+                ),
+            ],
           ),
           widget.enableRefresh ? _handleRefresh : null,
         ),
@@ -257,23 +241,19 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     if (!widget.useMobileSelectionLayout) {
       return body;
     }
-    // 底部批量条贴在列表下方常驻，不随列表滚动（对齐 MovieListContent）。
+    // 底部批量条贴在列表下方常驻，不随列表滚动（对齐 MovieSummaryListContent）。
     return Column(
       children: [
         Expanded(child: body),
-        if (selectionMode)
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) => buildMobileBatchSelectionBottomBar(),
-          ),
+        if (selectionMode) buildMobileBatchSelectionBottomBar(),
       ],
     );
   }
 
   /// 把系列名报给外层返回栏。数据是异步来的，所以用 post-frame 回调写——直接在
   /// build 里改 notifier 会触发 build-during-build。
-  void _reportTitleToShell() {
-    final name = _displaySeriesName.trim();
+  void _reportTitleToShell(MovieSummaryState? summary) {
+    final name = _displaySeriesName(summary).trim();
     if (name.isEmpty) {
       return;
     }
@@ -293,18 +273,18 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   /// **本页没有筛选维度**——后端 `/movies/by-series` 只吃 seriesId + 分页，所以
   /// 不接筛选入口，左侧留给信息槽。系列名与总数都是只读信息，「同步系列影片」
   /// 与「选择」是操作。
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, MovieSummaryState? summary) {
     return AppListHeader(
       informationSlots: [
         // 系列名报到返回栏时信息槽就不再放它，免得同一个名字出现两次。
         if (!widget.hoistTitleToSubpageShell)
           AppListHeaderInfo(
             key: const Key('series-movies-title'),
-            label: _displaySeriesName,
+            label: _displaySeriesName(summary),
           ),
         AppListHeaderInfo(
           key: widget.totalKey,
-          label: '共 ${_controller.total} 部',
+          label: '共 ${summary?.paged.total ?? 0} 部',
         ),
       ],
       actionSlots: [
@@ -320,18 +300,25 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     );
   }
 
-  Widget _buildMoviesArea(BuildContext context) {
-    if (_controller.initialErrorMessage != null &&
-        !_controller.isInitialLoading) {
+  Widget _buildMoviesArea(
+    BuildContext context,
+    AsyncValue<MovieSummaryState> moviesAsync,
+  ) {
+    final summary = moviesAsync.value;
+    if (moviesAsync.hasError && summary == null) {
       return SliverToBoxAdapter(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            AppEmptyState(message: _controller.initialErrorMessage!),
+            AppEmptyState(message: _scope.initialLoadErrorText),
             SizedBox(height: context.appSpacing.md),
             Center(
               child: TextButton(
-                onPressed: _controller.reload,
+                onPressed:
+                    () =>
+                        ref
+                            .read(movieSummaryProvider(_scope).notifier)
+                            .reload(),
                 child: const Text('重试'),
               ),
             ),
@@ -341,8 +328,8 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     }
 
     return MovieSummarySliver(
-      items: _controller.items,
-      isLoading: _controller.isInitialLoading,
+      items: summary?.paged.items ?? const [],
+      isLoading: moviesAsync.isLoading && summary == null,
       onMovieTap: (movie) => widget.onMovieTap(context, movie.movieNumber),
       onMovieMenuRequest: (movie, globalPosition) {
         unawaited(
@@ -365,7 +352,8 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
       onMovieSubscriptionTap:
           (movie) => _toggleMovieSubscription(movie.movieNumber),
       isMovieSubscriptionUpdating:
-          (movie) => _controller.isSubscriptionUpdating(movie.movieNumber),
+          (movie) =>
+              summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
       emptyMessage: '该系列暂无影片',
       selectionMode: selectionMode,
       isMovieSelected: (movie) => isSelected(movie.movieNumber),

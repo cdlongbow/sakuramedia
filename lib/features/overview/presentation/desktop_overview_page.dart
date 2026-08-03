@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -31,73 +30,49 @@ class DesktopOverviewPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
-  // 系统信息已迁 Riverpod(overviewSystemInfoProvider,build 里 ref.watch,
-  // 创建即自加载);本 State 只剩「最近添加」半边——PagedMovieSummaryController
-  // 与订阅广播 addListener 属 movies 订阅体系,留待批 5 迁移。
-  late final PagedMovieSummaryController _moviesController;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
+  static const _latestScope = MovieSummaryScope.latest();
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _subscriptionChangeNotifier = ref.read(
-      movieSubscriptionBroadcasterProvider,
-    );
-    _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-    _moviesController = PagedMovieSummaryController(
-      fetchPage:
-          (page, pageSize) => ref
-              .read(moviesApiProvider)
-              .getLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
-      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
-      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
-      batchUnsubscribeMovies:
-          ref.read(moviesApiProvider).batchUnsubscribeMovies,
-      onSubscriptionChanged: _reportSubscriptionChange,
-      onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
-      pageSize: 24,
-      loadMoreTriggerOffset: 300,
-    );
-    _moviesController.attachScrollListener();
-    _moviesController.initialize();
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
   }
 
   @override
   void dispose() {
-    _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _moviesController.dispose();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
-  void _onMovieSubscriptionChanged() {
-    _subscriptionChangeNotifier.consumePendingChanges(
-      _moviesController.applySubscriptionChanges,
-    );
-  }
-
-  void _reportSubscriptionChange({
-    required String movieNumber,
-    required bool isSubscribed,
-  }) {
-    _subscriptionChangeNotifier.reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: isSubscribed,
-    );
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final position = _scrollController.position;
+    final summary = ref.read(movieSummaryProvider(_latestScope)).value;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
+    }
+    unawaited(ref.read(movieSummaryProvider(_latestScope).notifier).loadMore());
   }
 
   Future<void> _refreshOverview() async {
     await Future.wait<void>([
       // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),统计条不闪骨架。
       ref.read(overviewSystemInfoProvider.notifier).load(),
-      _moviesController.refresh(),
+      ref.read(movieSummaryProvider(_latestScope).notifier).refresh(),
     ]);
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
-    final result = await _moviesController.toggleSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(movieSummaryProvider(_latestScope).notifier)
+        .toggleSubscription(movieNumber);
     if (!mounted) {
       return;
     }
@@ -107,6 +82,9 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
   @override
   Widget build(BuildContext context) {
     final systemInfo = ref.watch(overviewSystemInfoProvider);
+    final moviesAsync = ref.watch(movieSummaryProvider(_latestScope));
+    final movies = moviesAsync.value;
+    final paged = movies?.paged;
     final stats =
         systemInfo.status == null
             ? const <OverviewStatItem>[]
@@ -200,7 +178,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: CustomScrollView(
-          controller: _moviesController.scrollController,
+          controller: _scrollController,
           slivers: [
             SliverMainAxisGroup(
               slivers: [
@@ -237,49 +215,47 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
                 SliverToBoxAdapter(
                   child: SizedBox(height: context.appSpacing.md),
                 ),
-                AnimatedBuilder(
-                  animation: _moviesController,
-                  builder: (context, _) {
-                    final footer = _buildMovieLoadMoreFooter(context);
-                    return SliverMainAxisGroup(
-                      slivers: [
-                        MovieSummarySliver(
-                          items: _moviesController.items,
-                          isLoading: _moviesController.isInitialLoading,
-                          errorMessage: _moviesController.initialErrorMessage,
-                          onMovieTap:
-                              (movie) => context.pushDesktopMovieDetail(
-                                movieNumber: movie.movieNumber,
-                                fallbackPath: desktopOverviewPath,
-                              ),
-                          onMovieMenuRequest:
-                              (movie, globalPosition) =>
-                                  requestMovieCollectionMenu(
-                                    context,
-                                    movie.movieNumber,
-                                    globalPosition,
-                                    isSubscribed: movie.isSubscribed,
-                                  ),
-                          onMovieSubscriptionTap:
-                              (movie) =>
-                                  _toggleMovieSubscription(movie.movieNumber),
-                          isMovieSubscriptionUpdating:
-                              (movie) => _moviesController
-                                  .isSubscriptionUpdating(movie.movieNumber),
-                          emptyMessage: '暂无入库影片，去搜索看看吧',
-                        ),
-                        if (footer != null)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                top: context.appSpacing.md,
-                              ),
-                              child: footer,
-                            ),
+                SliverMainAxisGroup(
+                  slivers: [
+                    MovieSummarySliver(
+                      items: paged?.items ?? const [],
+                      isLoading: moviesAsync.isLoading && movies == null,
+                      errorMessage:
+                          moviesAsync.hasError && movies == null
+                              ? _latestScope.initialLoadErrorText
+                              : null,
+                      onMovieTap:
+                          (movie) => context.pushDesktopMovieDetail(
+                            movieNumber: movie.movieNumber,
+                            fallbackPath: desktopOverviewPath,
                           ),
-                      ],
-                    );
-                  },
+                      onMovieMenuRequest:
+                          (movie, globalPosition) => requestMovieCollectionMenu(
+                            context,
+                            movie.movieNumber,
+                            globalPosition,
+                            isSubscribed: movie.isSubscribed,
+                          ),
+                      onMovieSubscriptionTap:
+                          (movie) =>
+                              _toggleMovieSubscription(movie.movieNumber),
+                      isMovieSubscriptionUpdating:
+                          (movie) =>
+                              movies?.isSubscriptionUpdating(
+                                movie.movieNumber,
+                              ) ??
+                              false,
+                      emptyMessage: '暂无入库影片，去搜索看看吧',
+                    ),
+                    if (_buildMovieLoadMoreFooter(context, movies)
+                        case final footer?)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: context.appSpacing.md),
+                          child: footer,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -347,8 +323,12 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     );
   }
 
-  Widget? _buildMovieLoadMoreFooter(BuildContext context) {
-    if (_moviesController.items.isEmpty) {
+  Widget? _buildMovieLoadMoreFooter(
+    BuildContext context,
+    MovieSummaryState? summary,
+  ) {
+    final paged = summary?.paged;
+    if (paged == null || paged.items.isEmpty) {
       return null;
     }
 
@@ -356,7 +336,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
 
-    if (_moviesController.isLoadingMore) {
+    if (paged.isLoadingMore) {
       return Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: spacing.md),
@@ -371,7 +351,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
       );
     }
 
-    if (_moviesController.loadMoreErrorMessage == null) {
+    if (paged.loadMoreErrorMessage == null) {
       return null;
     }
 
@@ -396,7 +376,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
               ),
               SizedBox(width: spacing.sm),
               Text(
-                _moviesController.loadMoreErrorMessage!,
+                paged.loadMoreErrorMessage!,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -406,7 +386,11 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
               ),
               SizedBox(width: spacing.sm),
               TextButton(
-                onPressed: _moviesController.loadMore,
+                onPressed:
+                    () =>
+                        ref
+                            .read(movieSummaryProvider(_latestScope).notifier)
+                            .loadMore(),
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.primary,
                   padding: EdgeInsets.symmetric(

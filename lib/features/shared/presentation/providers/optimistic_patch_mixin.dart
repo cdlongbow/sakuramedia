@@ -58,6 +58,10 @@ class BatchOptimisticResult<K> {
 mixin OptimisticPatchMixin<S extends Object> on $AsyncNotifier<S> {
   final Set<Object> _inFlight = <Object>{};
 
+  /// 宿主若有异步 dispose 守卫可覆写为 `true`，阻止请求迟到后写回已销毁的
+  /// provider。默认 `false` 保持既有独立 Notifier 的使用方式不变。
+  bool get isOptimisticPatchDisposed => false;
+
   /// 该 key 是否正处于一次 in-flight 操作中。
   bool isInFlight(Object key) => _inFlight.contains(key);
 
@@ -81,7 +85,9 @@ mixin OptimisticPatchMixin<S extends Object> on $AsyncNotifier<S> {
       }
       return await action();
     } catch (error) {
-      if (original != null && state.value != null) {
+      if (!isOptimisticPatchDisposed &&
+          original != null &&
+          state.value != null) {
         state = AsyncData(original);
       }
       rethrow;
@@ -130,7 +136,9 @@ mixin OptimisticPatchMixin<S extends Object> on $AsyncNotifier<S> {
       }
       result = await action(applyingKeys);
     } catch (error) {
-      if (original != null && state.value != null) {
+      if (!isOptimisticPatchDisposed &&
+          original != null &&
+          state.value != null) {
         state = AsyncData(rollback(original, original, applyingKeys));
       }
       return BatchOptimisticResult<K>(
@@ -141,7 +149,10 @@ mixin OptimisticPatchMixin<S extends Object> on $AsyncNotifier<S> {
     }
 
     final skipped = skippedFromResult(result);
-    if (skipped.isNotEmpty && original != null && state.value != null) {
+    if (!isOptimisticPatchDisposed &&
+        skipped.isNotEmpty &&
+        original != null &&
+        state.value != null) {
       state = AsyncData(rollback(state.value!, original, skipped));
     }
     return BatchOptimisticResult<K>(

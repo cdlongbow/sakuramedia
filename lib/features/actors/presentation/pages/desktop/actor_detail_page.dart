@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_detail_content.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -61,15 +61,16 @@ class _DesktopActorDetailPageState extends State<DesktopActorDetailPage> {
 
   Widget? _buildLoadMoreFooter(
     BuildContext context,
-    PagedMovieSummaryController moviesController,
+    MovieSummaryState movies,
+    VoidCallback onRetry,
   ) {
-    if (moviesController.items.isEmpty) {
+    if (movies.paged.items.isEmpty) {
       return null;
     }
     return AppPagedLoadMoreFooter(
-      isLoading: moviesController.isLoadingMore,
-      errorMessage: moviesController.loadMoreErrorMessage,
-      onRetry: moviesController.loadMore,
+      isLoading: movies.paged.isLoadingMore,
+      errorMessage: movies.paged.loadMoreErrorMessage,
+      onRetry: onRetry,
     );
   }
 }

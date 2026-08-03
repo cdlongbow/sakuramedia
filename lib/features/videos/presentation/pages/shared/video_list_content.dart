@@ -11,7 +11,7 @@ import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_s
 
 /// 视频列表「排序条 + 总数 + 网格 + 分页底栏」的 Sliver 呈现层。
 ///
-/// 与 `MovieListContent` 平行，但去掉订阅/合集类型变更联动，主键为 `int id`。
+/// 与 `MovieSummaryListContent` 平行，但去掉订阅/合集类型变更联动，主键为 `int id`。
 /// 标签/人物筛选面板由外层页面承载（见 `desktop_video_list_page`），本组件只负责
 /// 列表本体与排序即时切换。
 class VideoListContent extends StatelessWidget {

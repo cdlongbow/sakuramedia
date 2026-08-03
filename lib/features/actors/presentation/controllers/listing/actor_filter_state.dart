@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum ActorSubscriptionStatus { all, subscribed, unsubscribed }
 
 extension ActorSubscriptionStatusX on ActorSubscriptionStatus {
@@ -60,6 +62,7 @@ extension ActorSortDirectionX on ActorSortDirection {
   };
 }
 
+@immutable
 class ActorFilterState {
   const ActorFilterState({
     this.subscriptionStatus = ActorSubscriptionStatus.subscribed,
@@ -101,4 +104,17 @@ class ActorFilterState {
       sortDirection: sortDirection ?? this.sortDirection,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ActorFilterState &&
+        other.subscriptionStatus == subscriptionStatus &&
+        other.gender == gender &&
+        other.sortField == sortField &&
+        other.sortDirection == sortDirection;
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(subscriptionStatus, gender, sortField, sortDirection);
 }

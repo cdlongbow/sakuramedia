@@ -4,13 +4,13 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -32,10 +32,9 @@ class _MobileOverviewFollowTabState
     extends ConsumerState<MobileOverviewFollowTab> {
   static const int _detailConcurrentLimit = 1;
   static const int _detailStillImageLimit = 8;
+  static const _scope = MovieSummaryScope.subscribedActorsLatest(pageSize: 20);
 
-  late final PagedMovieSummaryController _moviesController;
-  late final MovieCollectionTypeChangeNotifier _collectionChangeNotifier;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
+  late final ScrollController _scrollController;
   final Map<String, _FollowMovieDetailState> _movieDetailStates =
       <String, _FollowMovieDetailState>{};
   final Queue<String> _detailQueue = Queue<String>();
@@ -45,73 +44,35 @@ class _MobileOverviewFollowTabState
   @override
   void initState() {
     super.initState();
-    _collectionChangeNotifier = ref.read(collectionTypeBroadcasterProvider);
-    _collectionChangeNotifier.addListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier = ref.read(
-      movieSubscriptionBroadcasterProvider,
-    );
-    _subscriptionChangeNotifier.addListener(_onMovieSubscriptionChanged);
-
-    _moviesController = PagedMovieSummaryController(
-      fetchPage:
-          (page, pageSize) => ref
-              .read(moviesApiProvider)
-              .getSubscribedActorsLatestMovies(page: page, pageSize: pageSize),
-      subscribeMovie: ref.read(moviesApiProvider).subscribeMovie,
-      unsubscribeMovie: ref.read(moviesApiProvider).unsubscribeMovie,
-      batchSubscribeMovies: ref.read(moviesApiProvider).batchSubscribeMovies,
-      batchUnsubscribeMovies:
-          ref.read(moviesApiProvider).batchUnsubscribeMovies,
-      onSubscriptionChanged: _reportSubscriptionChange,
-      onSubscriptionsBatchChanged: _subscriptionChangeNotifier.reportBatch,
-      pageSize: 20,
-      loadMoreTriggerOffset: 300,
-      initialLoadErrorText: '关注影片加载失败，请稍后重试',
-      loadMoreErrorText: '加载更多失败，请点击重试',
-    );
-    _moviesController.attachScrollListener();
-    _moviesController.initialize();
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
   }
 
   @override
   void dispose() {
-    _collectionChangeNotifier.removeListener(_onCollectionTypeChanged);
-    _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
-    _moviesController.dispose();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
-  void _onCollectionTypeChanged() {
-    final change = _collectionChangeNotifier.lastChange;
-    if (change == null) {
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
       return;
     }
-    if (change.targetType == MovieCollectionType.collection) {
-      _movieDetailStates.remove(change.movieNumber);
-      _moviesController.removeItem(change.movieNumber);
+    final position = _scrollController.position;
+    final summary = ref.read(movieSummaryProvider(_scope)).value;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
     }
-  }
-
-  void _onMovieSubscriptionChanged() {
-    _subscriptionChangeNotifier.consumePendingChanges(
-      _moviesController.applySubscriptionChanges,
-    );
-  }
-
-  void _reportSubscriptionChange({
-    required String movieNumber,
-    required bool isSubscribed,
-  }) {
-    _subscriptionChangeNotifier.reportChange(
-      movieNumber: movieNumber,
-      isSubscribed: isSubscribed,
-    );
+    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
-    final result = await _moviesController.toggleSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(movieSummaryProvider(_scope).notifier)
+        .toggleSubscription(movieNumber);
     if (!mounted) {
       return;
     }
@@ -179,43 +140,56 @@ class _MobileOverviewFollowTabState
 
   @override
   Widget build(BuildContext context) {
+    final moviesAsync = ref.watch(movieSummaryProvider(_scope));
+    ref.listen(movieCollectionTypeEventsProvider, (_, next) {
+      final change = next.value;
+      if (change == null ||
+          change.targetType != MovieCollectionType.collection) {
+        return;
+      }
+      if (_movieDetailStates.containsKey(change.movieNumber) && mounted) {
+        _movieDetailStates.remove(change.movieNumber);
+        setState(() {});
+      }
+    });
     return ColoredBox(
       color: context.appColors.surfaceCard,
       child: AppAdaptiveRefreshScrollView(
         onRefresh: _handleRefresh,
-        controller: _moviesController.scrollController,
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        slivers: <Widget>[
-          AnimatedBuilder(
-            animation: _moviesController,
-            builder: (context, _) => _buildContentSliver(context),
-          ),
-        ],
+        slivers: <Widget>[_buildContentSliver(context, moviesAsync)],
       ),
     );
   }
 
-  Widget _buildContentSliver(BuildContext context) {
-    if (_moviesController.isInitialLoading && _moviesController.items.isEmpty) {
+  Widget _buildContentSliver(
+    BuildContext context,
+    AsyncValue<MovieSummaryState> moviesAsync,
+  ) {
+    final summary = moviesAsync.value;
+    final paged = summary?.paged;
+    if (moviesAsync.isLoading && summary == null) {
       return const SliverToBoxAdapter(child: _FollowTabLoadingState());
     }
 
-    if (_moviesController.initialErrorMessage != null &&
-        _moviesController.items.isEmpty) {
+    if (moviesAsync.hasError && summary == null) {
       return SliverToBoxAdapter(
         child: Column(
           children: [
             SizedBox(height: MediaQuery.of(context).size.height * 0.3),
             AppEmptyState(
-              message: _moviesController.initialErrorMessage!,
-              onRetry: _moviesController.reload,
+              message: _scope.initialLoadErrorText,
+              onRetry:
+                  () =>
+                      ref.read(movieSummaryProvider(_scope).notifier).reload(),
             ),
           ],
         ),
       );
     }
 
-    if (_moviesController.items.isEmpty) {
+    if (paged == null || paged.items.isEmpty) {
       return SliverToBoxAdapter(
         child: Column(
           children: [
@@ -233,23 +207,31 @@ class _MobileOverviewFollowTabState
       ),
       sliver: SliverList(
         key: const Key('mobile-overview-follow-list'),
-        delegate: SliverChildListDelegate(_buildFollowListChildren(context)),
+        delegate: SliverChildListDelegate(
+          _buildFollowListChildren(context, summary),
+        ),
       ),
     );
   }
 
-  List<Widget> _buildFollowListChildren(BuildContext context) {
+  List<Widget> _buildFollowListChildren(
+    BuildContext context,
+    MovieSummaryState? summary,
+  ) {
+    final paged = summary?.paged;
+    if (paged == null) {
+      return const <Widget>[];
+    }
     final children = <Widget>[];
     final showFooter =
-        _moviesController.isLoadingMore ||
-        _moviesController.loadMoreErrorMessage != null;
+        paged.isLoadingMore || paged.loadMoreErrorMessage != null;
 
-    for (var index = 0; index < _moviesController.items.length; index += 1) {
+    for (var index = 0; index < paged.items.length; index += 1) {
       if (index > 0) {
         children.add(SizedBox(height: context.appSpacing.sm));
       }
 
-      final movie = _moviesController.items[index];
+      final movie = paged.items[index];
       final detailState = _movieDetailStates[movie.movieNumber];
       children.add(
         MobileFollowMovieCard(
@@ -259,9 +241,8 @@ class _MobileOverviewFollowTabState
                 movieNumber: movie.movieNumber,
               ).push(context),
           onSubscriptionTap: () => _toggleMovieSubscription(movie.movieNumber),
-          isSubscriptionUpdating: _moviesController.isSubscriptionUpdating(
-            movie.movieNumber,
-          ),
+          isSubscriptionUpdating:
+              summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
           isDetailLoading:
               detailState == null ||
               detailState.status == _FollowMovieDetailStatus.loading,
@@ -278,9 +259,10 @@ class _MobileOverviewFollowTabState
       children.add(SizedBox(height: context.appSpacing.sm));
       children.add(
         AppPagedLoadMoreFooter(
-          isLoading: _moviesController.isLoadingMore,
-          errorMessage: _moviesController.loadMoreErrorMessage,
-          onRetry: _moviesController.loadMore,
+          isLoading: paged.isLoadingMore,
+          errorMessage: paged.loadMoreErrorMessage,
+          onRetry:
+              () => ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
         ),
       );
     }
@@ -294,7 +276,7 @@ class _MobileOverviewFollowTabState
       _detailQueue.clear();
       _queuedMovieNumbers.clear();
       _activeDetailRequests = 0;
-      await _moviesController.refresh();
+      await ref.read(movieSummaryProvider(_scope).notifier).refresh();
     } catch (_) {
       if (mounted) {
         showToast('刷新失败');

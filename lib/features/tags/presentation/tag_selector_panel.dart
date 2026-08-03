@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_selection_controller.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -24,7 +24,7 @@ class TagSelectorPanel extends StatefulWidget {
     this.showMatchModeToggle = true,
   });
 
-  final TagSelectionController selection;
+  final TagSelectionState selection;
   final ValueChanged<int> onToggleTag;
   final ValueChanged<int> onRemoveTag;
   final VoidCallback onClear;

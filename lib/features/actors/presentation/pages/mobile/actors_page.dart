@@ -2,22 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/app/cached_page_state_handle.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_list_page_state.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
-import 'package:sakuramedia/features/actors/presentation/controllers/listing/paged_actor_summary_controller.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-
-import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class MobileActorsPage extends ConsumerStatefulWidget {
   const MobileActorsPage({super.key});
@@ -27,48 +26,67 @@ class MobileActorsPage extends ConsumerStatefulWidget {
 }
 
 class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
-  late final CachedPageStateHandle<ActorListPageStateEntry> _pageStateHandle;
+  static const _scope = ActorSummaryScope.mobile();
 
-  ActorListPageStateEntry get _pageState => _pageStateHandle.value;
-
-  PagedActorSummaryController get _actorsController => _pageState.controller;
-  ActorFilterState get _filterState => _pageState.filterState;
+  late final RiverpodPageHandle _pageCacheHandle;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _pageStateHandle = obtainCachedPageState<ActorListPageStateEntry>(
-      context,
-      key: mobileActorsPageStateKey(),
-      create:
-          () => ActorListPageStateEntry(actorsApi: ref.read(actorsApiProvider)),
-    );
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: mobileActorsPageStateKey(),
+          resolveLinks: () {
+            final link =
+                ref.read(actorSummaryProvider(_scope).notifier).cacheLink;
+            return link == null ? const [] : [link];
+          },
+        );
   }
 
   @override
   void dispose() {
-    _pageStateHandle.dispose();
+    _pageCacheHandle.release();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
-  void _applyFilter(ActorFilterState nextState) {
-    if (nextState.subscriptionStatus == _filterState.subscriptionStatus &&
-        nextState.gender == _filterState.gender &&
-        nextState.sortField == _filterState.sortField &&
-        nextState.sortDirection == _filterState.sortDirection) {
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
       return;
     }
-    setState(() {
-      _pageState.filterState = nextState;
-    });
-    if (_actorsController.scrollController.hasClients) {
-      _actorsController.scrollController.jumpTo(0);
+    final summary = ref.read(actorSummaryProvider(_scope)).value;
+    final position = _scrollController.position;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
     }
-    unawaited(_actorsController.reload());
+    unawaited(ref.read(actorSummaryProvider(_scope).notifier).loadMore());
+  }
+
+  void _applyFilter(ActorFilterState nextState) {
+    final current = ref.read(actorSummaryProvider(_scope)).value?.filter;
+    if (current == nextState) {
+      return;
+    }
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    unawaited(
+      ref.read(actorSummaryProvider(_scope).notifier).applyFilter(nextState),
+    );
   }
 
   Future<void> _toggleActorSubscription(int actorId) async {
-    final result = await _actorsController.toggleSubscription(actorId: actorId);
+    final result = await ref
+        .read(actorSummaryProvider(_scope).notifier)
+        .toggleSubscription(actorId);
     if (!mounted) {
       return;
     }
@@ -77,77 +95,81 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final actorsAsync = ref.watch(actorSummaryProvider(_scope));
+    final summary = actorsAsync.value;
+    final paged = summary?.paged;
+    final filter = summary?.filter ?? ActorFilterState.initial;
+    final items = paged?.items ?? const [];
+    final isInitialLoading = actorsAsync.isLoading && summary == null;
+    final initialErrorMessage =
+        actorsAsync.hasError && summary == null ? '女优列表加载失败，请稍后重试' : null;
+    final showFooter =
+        items.isNotEmpty &&
+        (paged!.isLoadingMore || paged.loadMoreErrorMessage != null);
+
     return ColoredBox(
       color: context.appColors.surfaceCard,
       child: AppAdaptiveRefreshScrollView(
+        key: const PageStorageKey<String>('mobile:actors:list'),
         onRefresh: _handleRefresh,
-        controller: _actorsController.scrollController,
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: <Widget>[
-          AnimatedBuilder(
-            animation: _actorsController,
-            builder: (context, _) {
-              final showFooter =
-                  _actorsController.items.isNotEmpty &&
-                  (_actorsController.isLoadingMore ||
-                      _actorsController.loadMoreErrorMessage != null);
-              return SliverMainAxisGroup(
-                key: const Key('mobile-actors-page'),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppListHeader(
-                          filterButtonKey: const Key(
-                            'mobile-actors-filter-button',
-                          ),
-                          filterTooltip: '筛选',
-                          filterLabel: _filterState.triggerLabel,
-                          onFilterTap: _openFilterDrawer,
-                          informationSlots: [
-                            AppListHeaderInfo(
-                              key: const Key('mobile-actors-total'),
-                              label: '${_actorsController.total} 位',
-                            ),
-                          ],
+          SliverMainAxisGroup(
+            key: const Key('mobile-actors-page'),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppListHeader(
+                      filterButtonKey: const Key('mobile-actors-filter-button'),
+                      filterTooltip: '筛选',
+                      filterLabel: filter.triggerLabel,
+                      onFilterTap: _openFilterDrawer,
+                      informationSlots: [
+                        AppListHeaderInfo(
+                          key: const Key('mobile-actors-total'),
+                          label: '${paged?.total ?? 0} 位',
                         ),
-                        SizedBox(height: context.appSpacing.md),
                       ],
                     ),
-                  ),
-                  ActorSummarySliver(
-                    items: _actorsController.items,
-                    isLoading: _actorsController.isInitialLoading,
-                    errorMessage: _actorsController.initialErrorMessage,
-                    onActorTap:
-                        (actor) => MobileActorDetailRouteData(
-                          actorId: actor.id,
-                        ).push(context),
-                    onActorSubscriptionTap:
-                        (actor) => _toggleActorSubscription(actor.id),
-                    isActorSubscriptionUpdating:
-                        (actor) =>
-                            _actorsController.isSubscriptionUpdating(actor.id),
-                    emptyMessage:
-                        _filterState.isDefault
-                            ? '暂无女优，去搜索看看吧'
-                            : '当前筛选条件下暂无匹配女优',
-                  ),
-                  if (showFooter)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: context.appSpacing.md),
-                        child: AppPagedLoadMoreFooter(
-                          isLoading: _actorsController.isLoadingMore,
-                          errorMessage: _actorsController.loadMoreErrorMessage,
-                          onRetry: _actorsController.loadMore,
-                        ),
-                      ),
+                    SizedBox(height: context.appSpacing.md),
+                  ],
+                ),
+              ),
+              ActorSummarySliver(
+                items: items,
+                isLoading: isInitialLoading,
+                errorMessage: initialErrorMessage,
+                onActorTap:
+                    (actor) => MobileActorDetailRouteData(
+                      actorId: actor.id,
+                    ).push(context),
+                onActorSubscriptionTap:
+                    (actor) => _toggleActorSubscription(actor.id),
+                isActorSubscriptionUpdating:
+                    (actor) =>
+                        summary?.isSubscriptionUpdating(actor.id) ?? false,
+                emptyMessage:
+                    filter.isDefault ? '暂无女优，去搜索看看吧' : '当前筛选条件下暂无匹配女优',
+              ),
+              if (showFooter)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: context.appSpacing.md),
+                    child: AppPagedLoadMoreFooter(
+                      isLoading: paged.isLoadingMore,
+                      errorMessage: paged.loadMoreErrorMessage,
+                      onRetry:
+                          () =>
+                              ref
+                                  .read(actorSummaryProvider(_scope).notifier)
+                                  .loadMore(),
                     ),
-                ],
-              );
-            },
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -155,19 +177,20 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
   }
 
   Future<void> _handleRefresh() async {
-    try {
-      await _actorsController.refresh();
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
+    final error =
+        await ref.read(actorSummaryProvider(_scope).notifier).refresh();
+    if (error != null && mounted) {
+      showToast('刷新失败');
     }
   }
 
   Future<void> _openFilterDrawer() async {
+    final current =
+        ref.read(actorSummaryProvider(_scope)).value?.filter ??
+        ActorFilterState.initial;
     await showMobileActorFilterDrawer(
       context,
-      current: _filterState,
+      current: current,
       onChanged: _applyFilter,
     );
   }

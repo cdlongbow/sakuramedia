@@ -319,6 +319,8 @@ void main() {
         isSubscribed: false,
       );
       await tester.pump();
+      // 订阅变更经 Riverpod StreamProvider 转发；第二帧消费事件并回写列表快照。
+      await tester.pump();
 
       expect(
         find.byKey(const Key('movie-summary-card-ABC-001')),

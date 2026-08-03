@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
@@ -254,5 +256,56 @@ void main() {
     final state = container.read(_preserveProvider).value!;
     expect(state.filter, 3);
     expect(state.paged.items, [300, 301, 302]);
+  });
+
+  test('preserveList 切筛选前有 in-flight loadMore：失败后 isLoadingMore 被清、可再触发', () async {
+    final gate = Completer<PaginatedResponseDto<int>>();
+    var loadMoreCalls = 0;
+    final gated = ProviderContainer(
+      overrides: [
+        _fetcherProvider.overrideWithValue((page, pageSize, filter) async {
+          if (filter == 0 && page == 2) {
+            loadMoreCalls++;
+            return gate.future;
+          }
+          if (filter == 1) {
+            throw Exception('boom');
+          }
+          return _page(page: 1, items: const [1, 2, 3], total: 100);
+        }),
+      ],
+    );
+    addTearDown(gated.dispose);
+    await gated.read(_preserveProvider.future);
+
+    final notifier = gated.read(_preserveProvider.notifier);
+    // 制造 in-flight loadMore：isLoadingMore = true，fetch 被 gate 卡住。
+    final loadMoreFut = notifier.loadMore();
+    expect(gated.read(_preserveProvider).value!.paged.isLoadingMore, isTrue);
+
+    // 切筛选（失败路径）：不再死锁，isLoadingMore 被显式清掉。
+    await expectLater(
+      notifier.applyFilterState(1),
+      throwsA(isA<Exception>()),
+    );
+    final after = gated.read(_preserveProvider).value!;
+    expect(after.isReloading, isFalse);
+    expect(after.paged.isLoadingMore, isFalse);
+    expect(after.paged.loadMoreErrorMessage, isNull);
+    expect(after.paged.items, [1, 2, 3]);
+
+    // 被代次作废的旧 loadMore 回来后不回写：isLoadingMore 不复活、items 不变。
+    gate.complete(_page(page: 2, items: const [100], total: 100));
+    await loadMoreFut;
+    final afterDiscard = gated.read(_preserveProvider).value!;
+    expect(afterDiscard.paged.isLoadingMore, isFalse);
+    expect(afterDiscard.paged.items, [1, 2, 3]);
+    expect(loadMoreCalls, 1);
+
+    // 可再次触发 loadMore（不死锁）——filter=1 的 fetchPage 抛错 → loadMoreError
+    await notifier.loadMore();
+    final afterRetry = gated.read(_preserveProvider).value!;
+    expect(afterRetry.paged.isLoadingMore, isFalse);
+    expect(afterRetry.paged.loadMoreErrorMessage, 'load-more-err');
   });
 }

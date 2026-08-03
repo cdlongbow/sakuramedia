@@ -460,7 +460,20 @@ mixin FilterablePagedAsyncNotifierMixin<S, T, F>
     }
 
     invalidateInFlightLoadMore();
-    state = AsyncData(copyWithReloading(applyFilterToState(current, next), true));
+    // 若当前挂着 in-flight loadMore（isLoadingMore: true），先显式清掉再写
+    // 新 State——被代次作废的 loadMore 失败/成功后都不会再回写，不清会永远
+    // 卡在 loading 态、loadMore 再也触发不了（死锁）。
+    final currentPaged = pagedOf(current);
+    final base = currentPaged.isLoadingMore
+        ? applyPaged(
+            current,
+            currentPaged.copyWith(
+              isLoadingMore: false,
+              loadMoreErrorMessage: null,
+            ),
+          )
+        : current;
+    state = AsyncData(copyWithReloading(applyFilterToState(base, next), true));
 
     try {
       final firstPage = await loadInitialPage();

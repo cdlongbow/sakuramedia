@@ -2,12 +2,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/core/format/synced_at_label.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_review_list_item_dto.dart';
-import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_api_provider.dart';
+import 'package:sakuramedia/features/hot_reviews/data/hot_review_period.dart';
 import 'package:sakuramedia/features/hot_reviews/presentation/hot_review_filter_sections.dart';
-import 'package:sakuramedia/features/hot_reviews/presentation/paged_hot_review_controller.dart';
+import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_provider.dart';
+import 'package:sakuramedia/features/hot_reviews/presentation/providers/hot_reviews_state.dart';
+import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -25,7 +28,7 @@ typedef HotReviewMovieOpenHandler =
     void Function(BuildContext context, HotReviewListItemDto item);
 const double _hotReviewCardHeight = 150;
 
-class DesktopHotReviewsPage extends ConsumerStatefulWidget {
+class DesktopHotReviewsPage extends HookConsumerWidget {
   const DesktopHotReviewsPage({
     super.key,
     this.onOpenMovieDetail,
@@ -51,147 +54,164 @@ class DesktopHotReviewsPage extends ConsumerStatefulWidget {
   final bool useMobileFilterDrawer;
 
   @override
-  ConsumerState<DesktopHotReviewsPage> createState() =>
-      _DesktopHotReviewsPageState();
-}
-
-class _DesktopHotReviewsPageState extends ConsumerState<DesktopHotReviewsPage> {
-  late final PagedHotReviewController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PagedHotReviewController(
-      fetchPage:
-          (page, pageSize, period) => ref
-              .read(hotReviewsApiProvider)
-              .getHotReviews(period: period, page: page, pageSize: pageSize),
-      pageSize: 20,
-      loadMoreTriggerOffset: 300,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(hotReviewsProvider);
+    final state = async.value;
+    final paged =
+        state?.paged ?? const PagedListState<HotReviewListItemDto>();
+    // AsyncLoading 期间（切周期 reload 中）state 无值，从 notifier 读当前周期，
+    // 避免顶栏标签闪回默认值。
+    final period = state?.period ?? ref.read(hotReviewsProvider.notifier).period;
+    final scrollController = usePagedLoadMoreScroll(
+      onReachBottom: () {
+        // 对齐旧基类：loadMore 失败存续期间滚动不自动重试。
+        if (paged.loadMoreErrorMessage == null) {
+          unawaited(ref.read(hotReviewsProvider.notifier).loadMore());
+        }
+      },
+      triggerOffset: 300,
     );
-    _controller.attachScrollListener();
-    _controller.initialize();
-  }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+    final showFooter =
+        paged.isNotEmpty &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final slivers = <Widget>[
-      AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final showFooter =
-              _controller.items.isNotEmpty &&
-              (_controller.isLoadingMore ||
-                  _controller.loadMoreErrorMessage != null);
-          return SliverMainAxisGroup(
-            key: const Key('desktop-hot-reviews-page'),
-            slivers: [
-              SliverToBoxAdapter(child: _buildHeader(context)),
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.appSpacing.lg),
-              ),
-              _buildBodySliver(context),
-              if (showFooter)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: context.appSpacing.md),
-                    child: AppPagedLoadMoreFooter(
-                      isLoading: _controller.isLoadingMore,
-                      errorMessage: _controller.loadMoreErrorMessage,
-                      onRetry: _controller.loadMore,
-                    ),
-                  ),
+      SliverMainAxisGroup(
+        key: const Key('desktop-hot-reviews-page'),
+        slivers: [
+          SliverToBoxAdapter(
+            child: _buildHeader(context, ref, scrollController, paged, period),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
+          _buildBodySliver(context, ref, async, paged),
+          if (showFooter)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: context.appSpacing.md),
+                child: AppPagedLoadMoreFooter(
+                  isLoading: paged.isLoadingMore,
+                  errorMessage: paged.loadMoreErrorMessage,
+                  onRetry:
+                      () => unawaited(
+                        ref.read(hotReviewsProvider.notifier).loadMore(),
+                      ),
                 ),
-            ],
-          );
-        },
+              ),
+            ),
+        ],
       ),
     ];
     final scrollView = CustomScrollView(
       key: const Key('desktop-hot-reviews-scroll-view'),
       physics:
-          widget.enablePullToRefresh
-              ? widget.scrollPhysics ?? const AlwaysScrollableScrollPhysics()
-              : widget.scrollPhysics,
-      controller: _controller.scrollController,
+          enablePullToRefresh
+              ? scrollPhysics ?? const AlwaysScrollableScrollPhysics()
+              : scrollPhysics,
+      controller: scrollController,
       slivers: slivers,
     );
 
     return AppPageRefreshScope(
-      onRefresh: _handleRefresh,
+      onRefresh: () => _handleRefresh(context, ref),
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
-        child: _buildRefreshableBody(context, scrollView, slivers),
+        child: _buildRefreshableBody(
+          context,
+          ref,
+          scrollController,
+          scrollView,
+          slivers,
+        ),
       ),
     );
   }
 
   Widget _buildRefreshableBody(
     BuildContext context,
+    WidgetRef ref,
+    ScrollController scrollController,
     CustomScrollView scrollView,
     List<Widget> slivers,
   ) {
-    if (!widget.enablePullToRefresh) {
+    if (!enablePullToRefresh) {
       return scrollView;
     }
 
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
       return AppAdaptiveRefreshScrollView(
-        onRefresh: _handleRefresh,
-        controller: _controller.scrollController,
-        physics: widget.scrollPhysics ?? const AlwaysScrollableScrollPhysics(),
+        onRefresh: () => _handleRefresh(context, ref),
+        controller: scrollController,
+        physics: scrollPhysics ?? const AlwaysScrollableScrollPhysics(),
         slivers: slivers,
       );
     }
 
-    return AppPullToRefresh(onRefresh: _handleRefresh, child: scrollView);
+    return AppPullToRefresh(
+      onRefresh: () => _handleRefresh(context, ref),
+      child: scrollView,
+    );
   }
 
-  Future<void> _handleRefresh() async {
-    try {
-      await _controller.refresh();
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
+  Future<void> _handleRefresh(BuildContext context, WidgetRef ref) async {
+    final errorMessage =
+        await ref.read(hotReviewsProvider.notifier).refresh();
+    if (errorMessage != null && context.mounted) {
+      showToast('刷新失败');
     }
+  }
+
+  Future<void> _applyPeriod(
+    WidgetRef ref,
+    ScrollController scrollController,
+    HotReviewPeriod period,
+  ) async {
+    final notifier = ref.read(hotReviewsProvider.notifier);
+    // 同值去重在这里做（applyFilterState 内部也会短路），避免同值时误 jumpTo(0)。
+    if (notifier.period == period) {
+      return;
+    }
+    if (scrollController.hasClients) {
+      scrollController.jumpTo(0);
+    }
+    await notifier.applyFilterState(period);
   }
 
   /// 桌面与移动共用同一条顶栏：筛选入口（当前周期）+ 总数 / 抓取时间信息槽。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
-  Widget _buildHeader(BuildContext context) {
-    final syncedAtLabel = formatSyncedAtLabel(
-      _controller.syncedAt,
-      withPrefix: false,
-    );
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    ScrollController scrollController,
+    PagedListState<HotReviewListItemDto> paged,
+    HotReviewPeriod period,
+  ) {
+    final syncedAtLabel = formatSyncedAtLabel(paged.syncedAt, withPrefix: false);
 
     return AppListHeader(
       filterButtonKey: const Key('hot-reviews-filter-trigger'),
       filterIcon: Icons.date_range_rounded,
-      filterLabel: _controller.period.label,
+      filterLabel: period.label,
       filterPanelKey: const Key('hot-reviews-filter-panel'),
       filterPanelExtraWidth: 180,
       onFilterTap:
-          widget.useMobileFilterDrawer
-              ? () => unawaited(_openFilterDrawer(context))
+          useMobileFilterDrawer
+              ? () => unawaited(
+                _openFilterDrawer(context, ref, scrollController, period),
+              )
               : null,
       filterPanelBuilder:
-          widget.useMobileFilterDrawer
+          useMobileFilterDrawer
               ? null
               : (_) => HotReviewFilterSectionGroup(
-                period: _controller.period,
-                onChanged: (period) => unawaited(_controller.setPeriod(period)),
+                period: period,
+                onChanged:
+                    (next) =>
+                        unawaited(_applyPeriod(ref, scrollController, next)),
               ),
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('desktop-hot-reviews-page-total'),
-          label: '${_controller.total} 条',
+          label: '${paged.total} 条',
         ),
         if (syncedAtLabel != null)
           AppListHeaderInfo(
@@ -203,51 +223,62 @@ class _DesktopHotReviewsPageState extends ConsumerState<DesktopHotReviewsPage> {
     );
   }
 
-  Future<void> _openFilterDrawer(BuildContext context) async {
+  Future<void> _openFilterDrawer(
+    BuildContext context,
+    WidgetRef ref,
+    ScrollController scrollController,
+    HotReviewPeriod period,
+  ) async {
     await showMobileHotReviewFilterDrawer(
       context,
-      current: _controller.period,
-      onChanged: (period) => unawaited(_controller.setPeriod(period)),
+      current: period,
+      onChanged:
+          (next) => unawaited(_applyPeriod(ref, scrollController, next)),
     );
   }
 
-  Widget _buildBodySliver(BuildContext context) {
-    if (_controller.isInitialLoading && _controller.items.isEmpty) {
+  Widget _buildBodySliver(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<HotReviewsState> async,
+    PagedListState<HotReviewListItemDto> paged,
+  ) {
+    if (async.isLoading) {
       return _HotReviewSliver(
         isLoading: true,
         items: <HotReviewListItemDto>[],
-        minColumns: widget.minColumns,
-        maxColumns: widget.maxColumns,
-        targetCardWidth: widget.targetCardWidth,
+        minColumns: minColumns,
+        maxColumns: maxColumns,
+        targetCardWidth: targetCardWidth,
       );
     }
 
-    if (_controller.initialErrorMessage != null && _controller.items.isEmpty) {
-      return SliverToBoxAdapter(
-        child: AppEmptyState(message: _controller.initialErrorMessage!),
+    if (async.hasError && paged.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: AppEmptyState(message: '热评加载失败，请稍后重试'),
       );
     }
 
-    if (_controller.items.isEmpty) {
+    if (paged.isEmpty) {
       return const SliverToBoxAdapter(child: AppEmptyState(message: '暂无热评数据'));
     }
 
     return _HotReviewSliver(
       isLoading: false,
-      items: _controller.items,
-      onItemTap: _openMovieDetail,
-      minColumns: widget.minColumns,
-      maxColumns: widget.maxColumns,
-      targetCardWidth: widget.targetCardWidth,
+      items: paged.items,
+      onItemTap: (item) => _openMovieDetail(context, item),
+      minColumns: minColumns,
+      maxColumns: maxColumns,
+      targetCardWidth: targetCardWidth,
     );
   }
 
-  void _openMovieDetail(HotReviewListItemDto item) {
+  void _openMovieDetail(BuildContext context, HotReviewListItemDto item) {
     final movieNumber = item.movie.movieNumber.trim();
     if (movieNumber.isEmpty) {
       return;
     }
-    final onOpenMovieDetail = widget.onOpenMovieDetail;
+    final onOpenMovieDetail = this.onOpenMovieDetail;
     if (onOpenMovieDetail != null) {
       onOpenMovieDetail(context, item);
       return;

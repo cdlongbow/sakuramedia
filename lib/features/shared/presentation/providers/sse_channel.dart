@@ -31,6 +31,21 @@ enum SseChannelState {
   unsupportedAbandoned,
 }
 
+/// 事件合批模式。
+///
+/// - [none]：事件立即逐条 sink（import 双子星现状——每条事件立即刷新）。
+/// - [microtask]：`scheduleMicrotask` 合批——同 event loop tick 内多条事件
+///   合并成一次 flush，tick 结尾就出手。download / notification / activity
+///   三家现状。**语义等价于**「同一帧内的多条事件合并成一次状态更新」，60fps
+///   顺滑，用户视觉无卡顿。
+/// - [timerDebounce]：`Timer(mergeDebounce)` 合批——第一条事件起计时，窗口内
+///   后续事件合入同一批，窗口到期一次 flush。语义等价于「debounce」，
+///   `mergeDebounce=800ms` 会让 UI 800ms 才动一次。**注意**：这**不是**
+///   download 现状——download 的 800ms 只用来去抖「拉第一页」的网络请求，
+///   事件本身仍走 [microtask] 合批。此模式是给"事件流量极大、UI 不追求
+///   实时性、可以牺牲响应换稳定"的场景保留的。
+enum SseMergeMode { none, microtask, timerDebounce }
+
 /// SSE 连接状态机封装，收敛 download / notification / activity / media_import /
 /// video_import 五家的重复管理代码。差异全部走构造参数：
 ///
@@ -38,16 +53,19 @@ enum SseChannelState {
 /// |---|---|---|---|
 /// | 退避表 | 默认 [kActivityBackoff] | 默认 | `importBackoff: true`（[kImportBackoff]） |
 /// | unsupported 后 | 30s 轮询 | 30s 轮询 | 放弃订阅不重连 |
-/// | bootstrap 前置 | 无 | 需要（拿 afterEventId） | 需要；失败不订阅 |
-/// | 合批 | 800ms 微任务合批 + 15s 硬闸 | 无 | 无 |
-/// | 长断线补拉 | 2min | 2min | 无 |
+/// | bootstrap 前置 | 无 | 需要（拿 afterEventId，只跑首次） | 需要（只跑首次；失败不订阅但走 backoff 自动重试） |
+/// | 合批 | microtask + 拉页 15s 硬闸 | microtask | none（逐条 sink） |
+/// | 长断线补拉 | 2min（消费方 [onLongDisconnectRecover] 里 await 拉页） | 2min（同左） | 无 |
 ///
 /// 生命周期：`start(onEvent:)` → [SseChannelState.live]；断线按退避表
 /// [SseChannelState.reconnecting] 重连；unsupported 依 [giveUpOnUnsupported]
 /// 走轮询或放弃；`shutdown()` 幂等清场。
 ///
 /// [connect] 闭包负责拼 afterEventId（消费方自持 `_lastEventId`，闭包内读）；
-/// [needsBootstrapBeforeStream] 时每轮连流前先跑 [bootstrap] 拿起始事件 id。
+/// [needsBootstrapBeforeStream] 时**首轮**连流前先跑 [bootstrap] 拿起始事件
+/// id——非首轮（普通重连）复用 [connect] 闭包里的 `_lastEventId`；长断线
+/// 补拉时机由 [onLongDisconnectRecover] 承担（消费方在 callback 里显式跑
+/// bootstrap，见其 dartdoc）。
 class SseChannel<E> {
   SseChannel({
     Stream<E> Function({String? afterEventId})? connect,
@@ -56,6 +74,7 @@ class SseChannel<E> {
     this.pollingInterval,
     this.giveUpOnUnsupported = false,
     this.mergeDebounce,
+    SseMergeMode? mergeMode,
     this.minMergeInterval,
     this.longDisconnectThreshold,
     this.needsBootstrapBeforeStream = false,
@@ -65,7 +84,8 @@ class SseChannel<E> {
     this.onStateChanged,
     this.onPollingTick,
     this.onLongDisconnectRecover,
-  }) : _connect = connect;
+  })  : _connect = connect,
+        _explicitMergeMode = mergeMode;
 
   final Stream<E> Function({String? afterEventId})? _connect;
 
@@ -82,9 +102,22 @@ class SseChannel<E> {
   /// 不再重连/轮询）——import 双子星；false = polling fallback。
   final bool giveUpOnUnsupported;
 
-  /// 非 null = 事件先入 pending 队列，微任务合批后一次性交给 [flushPending]。
-  /// null = 事件立即 sink。
+  /// [SseMergeMode.timerDebounce] 模式下的窗口时长。非该模式时忽略。
   final Duration? mergeDebounce;
+
+  /// 显式指定的合批模式；null 时按 [mergeDebounce] 兼容旧写法推断
+  /// （非空 → [SseMergeMode.timerDebounce]；空 → [SseMergeMode.none]）。
+  final SseMergeMode? _explicitMergeMode;
+
+  /// 生效的合批模式。
+  SseMergeMode get mergeMode {
+    if (_explicitMergeMode != null) {
+      return _explicitMergeMode;
+    }
+    return mergeDebounce != null
+        ? SseMergeMode.timerDebounce
+        : SseMergeMode.none;
+  }
 
   /// 硬闸：距上次实际 flush 不足此间隔时，本次合批被拦下、顺延到闸满再发
   /// （download 15s，防死循环打爆第一页接口）。
@@ -93,12 +126,15 @@ class SseChannel<E> {
   /// 长断线阈值：断线超过此时间，重连前先调 [onLongDisconnectRecover] 补拉。
   final Duration? longDisconnectThreshold;
 
-  /// true = 每轮连流前先跑 [bootstrap] 拿 afterEventId（import + notification
-  /// / activity）。
+  /// true = **首轮**连流前先跑 [bootstrap] 拿 afterEventId（import +
+  /// notification / activity）；普通重连不重复跑，由 [connect] 闭包内读
+  /// 消费方自持的 `_lastEventId` 拼参；长断线补拉走 [onLongDisconnectRecover]。
   final bool needsBootstrapBeforeStream;
 
   /// true = bootstrap 失败**本次不订阅**（防 after_event_id=0 全量回放），
-  /// 消费方自行安排重试；false = 失败也照常连（afterEventId 为 null）。
+  /// 但走 backoff 自动重试整个 bootstrap+connect 循环（对齐 import 双子星的
+  /// `catch { _scheduleReconnect(); }` 语义，消费方不必自行安排重试）；
+  /// false = 失败也照常连（afterEventId 为 null，会触发全量回放，谨慎）。
   final bool abandonOnBootstrapFailure;
 
   /// 返回起始 afterEventId；失败抛异常（依 [abandonOnBootstrapFailure] 处置）。
@@ -114,13 +150,18 @@ class SseChannel<E> {
   final void Function()? onPollingTick;
 
   /// 长断线补拉回调（消费方重新拉第一页）。
-  final void Function()? onLongDisconnectRecover;
+  ///
+  /// 返回 `Future` 让重连流程可以 `await` 补拉完成再进 [connect]——避免"补
+  /// 拉与连流并发跑"导致的 UI 闪一下旧数据（消费方内部一般是
+  /// `await api.getBootstrap()` + `await loadInitialPage()` 等异步动作）。
+  final Future<void> Function()? onLongDisconnectRecover;
 
   StreamSubscription<E>? _subscription;
   Timer? _reconnectTimer;
   Timer? _pollingTimer;
   Timer? _mergeDebounceTimer;
   Timer? _mergeGateTimer;
+  bool _microtaskFlushScheduled = false;
   void Function(E)? _onEvent;
   void Function(List<E>)? _onBatch;
   int _reconnectAttempt = 0;
@@ -128,6 +169,7 @@ class SseChannel<E> {
   DateTime? _lastFlushAt;
   final List<E> _pending = <E>[];
   bool _shutdown = false;
+  bool _bootstrapCompleted = false;
   SseChannelState _state = SseChannelState.idle;
 
   SseChannelState get state => _state;
@@ -163,9 +205,12 @@ class SseChannel<E> {
     _cancelPollingTimer();
     _cancelMergeDebounceTimer();
     _cancelMergeGateTimer();
+    // 已经在队列里的 microtask 已被安排、无法撤销；靠 `_shutdown` 守卫短路。
+    _microtaskFlushScheduled = false;
     _pending.clear();
     _disconnectStartedAt = null;
     _reconnectAttempt = 0;
+    _bootstrapCompleted = false;
     final sub = _subscription;
     _subscription = null;
     unawaited(sub?.cancel());
@@ -221,24 +266,44 @@ class SseChannel<E> {
     _cancelPollingTimer();
     _setState(SseChannelState.connecting);
 
-    // 长断线补拉：断线超过阈值，重连前先让消费方补拉第一页。
+    // 长断线补拉：断线超过阈值，重连前先让消费方补拉第一页——await 完再连流,
+    // 避免"补拉与连流并发"造成 UI 闪一下旧数据。
     if (longDisconnectThreshold != null &&
         _disconnectStartedAt != null &&
         clock.now().difference(_disconnectStartedAt!) >
             longDisconnectThreshold!) {
-      onLongDisconnectRecover?.call();
+      final recover = onLongDisconnectRecover;
+      if (recover != null) {
+        try {
+          await recover();
+        } catch (error) {
+          onError?.call(error);
+        }
+        if (_shutdown) {
+          return;
+        }
+      }
     }
 
     String? afterEventId;
-    if (needsBootstrapBeforeStream && bootstrap != null) {
+    // bootstrap 只在首轮跑：常规重连由消费方在 [connect] 闭包里读自己维护的
+    // `_lastEventId` 拼 afterEventId，不再走 bootstrap；长断线补拉由
+    // [onLongDisconnectRecover] 承担（消费方在 callback 里显式跑 bootstrap，
+    // 见其 dartdoc）。
+    if (needsBootstrapBeforeStream &&
+        !_bootstrapCompleted &&
+        bootstrap != null) {
       try {
         afterEventId = await bootstrap!();
+        _bootstrapCompleted = true;
       } catch (error) {
         onError?.call(error);
         if (abandonOnBootstrapFailure) {
-          // 拿不到起始事件 id 就不订阅（防 after_event_id=0 全量回放）；
-          // 回 idle 让消费方能再次 start() 安排重试。
-          _setState(SseChannelState.idle);
+          // 拿不到起始事件 id 就不订阅（防 after_event_id=0 全量回放），
+          // 但走 backoff 自动重试整个 bootstrap+connect 循环——对齐
+          // media_import / video_import 的 `catch { _scheduleReconnect(); }`
+          // 语义（消费方不必自行安排重试）。
+          _scheduleReconnect();
           return;
         }
       }
@@ -269,19 +334,42 @@ class SseChannel<E> {
     if (_shutdown) {
       return;
     }
-    if (mergeDebounce == null) {
-      _onEvent?.call(event);
-      return;
+    switch (mergeMode) {
+      case SseMergeMode.none:
+        _onEvent?.call(event);
+        return;
+      case SseMergeMode.microtask:
+        _pending.add(event);
+        if (_microtaskFlushScheduled) {
+          return;
+        }
+        _microtaskFlushScheduled = true;
+        scheduleMicrotask(() {
+          _microtaskFlushScheduled = false;
+          if (_shutdown) {
+            return;
+          }
+          final batch = _onBatch;
+          if (batch != null) {
+            flushPending(batch);
+          }
+        });
+        return;
+      case SseMergeMode.timerDebounce:
+        _pending.add(event);
+        // 合批窗口：从第一条事件起计时，窗口内到达的事件合并成一次 flush。
+        _mergeDebounceTimer ??= Timer(mergeDebounce!, () {
+          _mergeDebounceTimer = null;
+          if (_shutdown) {
+            return;
+          }
+          final batch = _onBatch;
+          if (batch != null) {
+            flushPending(batch);
+          }
+        });
+        return;
     }
-    _pending.add(event);
-    // 合批窗口：从第一条事件起计时，窗口内到达的事件合并成一次 flush。
-    _mergeDebounceTimer ??= Timer(mergeDebounce!, () {
-      _mergeDebounceTimer = null;
-      final batch = _onBatch;
-      if (batch != null) {
-        flushPending(batch);
-      }
-    });
   }
 
   void _handleStreamError(Object error, StackTrace stackTrace) {

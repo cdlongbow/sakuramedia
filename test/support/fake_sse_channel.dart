@@ -18,6 +18,7 @@ class FakeSseChannel<E> extends SseChannel<E> {
     super.pollingInterval,
     super.giveUpOnUnsupported,
     super.mergeDebounce,
+    super.mergeMode,
     super.minMergeInterval,
     super.longDisconnectThreshold,
     super.needsBootstrapBeforeStream,
@@ -38,7 +39,10 @@ class FakeSseChannel<E> extends SseChannel<E> {
     };
   }
 
-  StreamController<E> _controller = StreamController<E>.broadcast();
+  // sync：`emit` 在同一个同步栈内到达 `_handleStreamEvent`，让「同 tick 突发」
+  // 语义可测（microtask 合批真正合并突发事件）；异步控制器会把每个事件拆成
+  // 独立的交付微任务，合批永远测不出合并效果。
+  StreamController<E> _controller = StreamController<E>.broadcast(sync: true);
   bool _bootstrapShouldFail = false;
   bool _unsupportedOnNextConnect = false;
   final List<Object> _connectErrors = <Object>[];
@@ -59,7 +63,7 @@ class FakeSseChannel<E> extends SseChannel<E> {
     }
     if (_controller.isClosed) {
       // 上一轮流被 closeStream 关闭（模拟服务端断流）：重连时开新流。
-      _controller = StreamController<E>.broadcast();
+      _controller = StreamController<E>.broadcast(sync: true);
     }
     return _controller.stream;
   }

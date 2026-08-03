@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
-import 'package:sakuramedia/features/overview/presentation/overview_system_info_controller.dart';
+import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
 import 'package:sakuramedia/theme.dart';
@@ -10,61 +11,39 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
-class MobileSystemOverviewPage extends ConsumerStatefulWidget {
+class MobileSystemOverviewPage extends ConsumerWidget {
   const MobileSystemOverviewPage({super.key});
 
   @override
-  ConsumerState<MobileSystemOverviewPage> createState() =>
-      _MobileSystemOverviewPageState();
-}
-
-class _MobileSystemOverviewPageState
-    extends ConsumerState<MobileSystemOverviewPage> {
-  late final OverviewSystemInfoController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = OverviewSystemInfoController(
-      statusApi: ref.read(statusApiProvider),
-    )..load();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return KeyedSubtree(
-          key: const Key('mobile-system-overview-page'),
-          child: AppAdaptiveRefreshScrollView(
-            onRefresh: _controller.refresh,
-            slivers: <Widget>[
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _MobileSystemOverviewIntroCard(),
-                    SizedBox(height: context.appSpacing.md),
-                    _buildSystemInfoContent(context),
-                  ],
-                ),
-              ),
-            ],
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(overviewSystemInfoProvider);
+    final notifier = ref.read(overviewSystemInfoProvider.notifier);
+    return KeyedSubtree(
+      key: const Key('mobile-system-overview-page'),
+      child: AppAdaptiveRefreshScrollView(
+        onRefresh: notifier.refresh,
+        slivers: <Widget>[
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _MobileSystemOverviewIntroCard(),
+                SizedBox(height: context.appSpacing.md),
+                _buildSystemInfoContent(context, state, notifier),
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildSystemInfoContent(BuildContext context) {
-    if (_controller.isLoadingStatus) {
+  Widget _buildSystemInfoContent(
+    BuildContext context,
+    OverviewSystemInfoState systemInfo,
+    OverviewSystemInfo notifier,
+  ) {
+    if (systemInfo.isLoadingStatus) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: const [
@@ -74,19 +53,19 @@ class _MobileSystemOverviewPageState
       );
     }
 
-    if (_controller.statusError != null) {
+    if (systemInfo.statusError != null) {
       return AppContentCard(
         title: '系统信息',
         padding: EdgeInsets.all(context.appSpacing.lg),
         child: AppEmptyState(
-          message: _controller.statusError!,
+          message: systemInfo.statusError!,
           retryKey: const Key('mobile-system-overview-retry-button'),
-          onRetry: _controller.refresh,
+          onRetry: notifier.refresh,
         ),
       );
     }
 
-    final status = _controller.status;
+    final status = systemInfo.status;
     if (status == null) {
       return const AppEmptyState(message: '暂无系统信息');
     }
@@ -126,9 +105,7 @@ class _MobileSystemOverviewPageState
             _MobileSystemOverviewMetricItem(
               id: 'media-files-size',
               label: '媒体总量',
-              value: _controller.formatGigabytes(
-                status.mediaFiles.totalSizeBytes,
-              ),
+              value: formatGigabytes(status.mediaFiles.totalSizeBytes),
             ),
             _MobileSystemOverviewMetricItem(
               id: 'thumbnails-total',
@@ -150,46 +127,46 @@ class _MobileSystemOverviewPageState
             _MobileSystemOverviewMetricItem(
               id: 'joytag-health',
               label: 'JoyTag 健康',
-              value: _controller.buildJoyTagHealthValue(),
-              isLoading: _controller.isLoadingImageSearchStatus,
+              value: systemInfo.buildJoyTagHealthValue(),
+              isLoading: systemInfo.isLoadingImageSearchStatus,
             ),
             _MobileSystemOverviewMetricItem(
               id: 'joytag-device',
               label: '推理设备',
-              value: _controller.buildJoyTagDeviceValue(),
-              isLoading: _controller.isLoadingImageSearchStatus,
+              value: systemInfo.buildJoyTagDeviceValue(),
+              isLoading: systemInfo.isLoadingImageSearchStatus,
             ),
             _MobileSystemOverviewMetricItem(
               id: 'joytag-indexing-backlog',
               label: '待索引',
-              value: _controller.buildJoyTagIndexingValue(),
-              isLoading: _controller.isLoadingImageSearchStatus,
+              value: systemInfo.buildJoyTagIndexingValue(),
+              isLoading: systemInfo.isLoadingImageSearchStatus,
             ),
             _MobileSystemOverviewMetricItem(
               id: 'external-data-sources',
               label: '外部数据源',
               valueWidget: ExternalDataSourceStatusChips(
-                javdbHealthy: _controller.javdbHealthy,
-                dmmHealthy: _controller.dmmHealthy,
-                isTesting: _controller.isTestingMetadataProviders,
+                javdbHealthy: systemInfo.javdbHealthy,
+                dmmHealthy: systemInfo.dmmHealthy,
+                isTesting: systemInfo.isTestingMetadataProviders,
                 keyPrefix: 'mobile-system-overview',
               ),
               actionLabel: '检测',
-              isActionLoading: _controller.isTestingMetadataProviders,
-              onActionPressed: _controller.testExternalDataSources,
+              isActionLoading: systemInfo.isTestingMetadataProviders,
+              onActionPressed: notifier.testExternalDataSources,
             ),
             _MobileSystemOverviewMetricItem(
               id: 'cloud115-authentication',
               label: '115 认证状态',
               valueWidget: Cloud115AuthenticationStatusChips(
-                summary: _controller.cloud115CookiesStatus?.summary,
-                isTesting: _controller.isTestingCloud115Authentication,
-                requestFailed: _controller.cloud115AuthenticationRequestFailed,
+                summary: systemInfo.cloud115CookiesStatus?.summary,
+                isTesting: systemInfo.isTestingCloud115Authentication,
+                requestFailed: systemInfo.cloud115AuthenticationRequestFailed,
                 keyPrefix: 'mobile-system-overview',
               ),
               actionLabel: '检测',
-              isActionLoading: _controller.isTestingCloud115Authentication,
-              onActionPressed: _controller.testCloud115Authentication,
+              isActionLoading: systemInfo.isTestingCloud115Authentication,
+              onActionPressed: notifier.testCloud115Authentication,
             ),
           ],
         ),

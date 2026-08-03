@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/overview/presentation/overview_system_info_controller.dart';
+import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -30,16 +31,15 @@ class DesktopOverviewPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
-  late final OverviewSystemInfoController _systemInfoController;
+  // 系统信息已迁 Riverpod(overviewSystemInfoProvider,build 里 ref.watch,
+  // 创建即自加载);本 State 只剩「最近添加」半边——PagedMovieSummaryController
+  // 与订阅广播 addListener 属 movies 订阅体系,留待批 5 迁移。
   late final PagedMovieSummaryController _moviesController;
   late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
 
   @override
   void initState() {
     super.initState();
-    _systemInfoController = OverviewSystemInfoController(
-      statusApi: ref.read(statusApiProvider),
-    )..addListener(_onSystemInfoChanged);
     _subscriptionChangeNotifier = ref.read(
       movieSubscriptionBroadcasterProvider,
     );
@@ -60,22 +60,14 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
       loadMoreTriggerOffset: 300,
     );
     _moviesController.attachScrollListener();
-    _loadOverview();
+    _moviesController.initialize();
   }
 
   @override
   void dispose() {
-    _systemInfoController.removeListener(_onSystemInfoChanged);
-    _systemInfoController.dispose();
     _subscriptionChangeNotifier.removeListener(_onMovieSubscriptionChanged);
     _moviesController.dispose();
     super.dispose();
-  }
-
-  void _onSystemInfoChanged() {
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   void _onMovieSubscriptionChanged() {
@@ -94,15 +86,10 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     );
   }
 
-  Future<void> _loadOverview() async {
-    final systemInfoFuture = _systemInfoController.load();
-    final moviesFuture = _moviesController.initialize();
-    await Future.wait<void>([systemInfoFuture, moviesFuture]);
-  }
-
   Future<void> _refreshOverview() async {
     await Future.wait<void>([
-      _systemInfoController.load(),
+      // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),统计条不闪骨架。
+      ref.read(overviewSystemInfoProvider.notifier).load(),
       _moviesController.refresh(),
     ]);
   }
@@ -119,7 +106,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final systemInfo = _systemInfoController;
+    final systemInfo = ref.watch(overviewSystemInfoProvider);
     final stats =
         systemInfo.status == null
             ? const <OverviewStatItem>[]
@@ -152,7 +139,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
               OverviewStatItem(
                 id: 'media-files-size',
                 label: '媒体总量',
-                value: systemInfo.formatGigabytes(
+                value: formatGigabytes(
                   systemInfo.status!.mediaFiles.totalSizeBytes,
                 ),
               ),
@@ -193,7 +180,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
                   isTesting: systemInfo.isTestingMetadataProviders,
                 ),
                 maxWidth: 260,
-                action: _buildExternalDataSourcesAction(context),
+                action: _buildExternalDataSourcesAction(context, systemInfo),
               ),
               OverviewStatItem(
                 id: 'cloud115-authentication',
@@ -204,7 +191,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
                   requestFailed: systemInfo.cloud115AuthenticationRequestFailed,
                 ),
                 maxWidth: 260,
-                action: _buildCloud115AuthenticationAction(context),
+                action: _buildCloud115AuthenticationAction(context, systemInfo),
               ),
             ];
 
@@ -302,18 +289,23 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     );
   }
 
-  Widget _buildExternalDataSourcesAction(BuildContext context) {
+  Widget _buildExternalDataSourcesAction(
+    BuildContext context,
+    OverviewSystemInfoState systemInfo,
+  ) {
     return AppIconButton(
       key: const Key('overview-external-data-sources-test-button'),
       tooltip: '检测外部数据源',
       semanticLabel: '检测外部数据源',
       size: AppIconButtonSize.mini,
       onPressed:
-          _systemInfoController.isTestingMetadataProviders
+          systemInfo.isTestingMetadataProviders
               ? null
-              : _systemInfoController.testExternalDataSources,
+              : ref
+                  .read(overviewSystemInfoProvider.notifier)
+                  .testExternalDataSources,
       icon:
-          _systemInfoController.isTestingMetadataProviders
+          systemInfo.isTestingMetadataProviders
               ? SizedBox(
                 width: context.appComponentTokens.iconSizeSm,
                 height: context.appComponentTokens.iconSizeSm,
@@ -326,18 +318,23 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     );
   }
 
-  Widget _buildCloud115AuthenticationAction(BuildContext context) {
+  Widget _buildCloud115AuthenticationAction(
+    BuildContext context,
+    OverviewSystemInfoState systemInfo,
+  ) {
     return AppIconButton(
       key: const Key('overview-cloud115-authentication-test-button'),
       tooltip: '检测 115 认证状态',
       semanticLabel: '检测 115 认证状态',
       size: AppIconButtonSize.mini,
       onPressed:
-          _systemInfoController.isTestingCloud115Authentication
+          systemInfo.isTestingCloud115Authentication
               ? null
-              : _systemInfoController.testCloud115Authentication,
+              : ref
+                  .read(overviewSystemInfoProvider.notifier)
+                  .testCloud115Authentication,
       icon:
-          _systemInfoController.isTestingCloud115Authentication
+          systemInfo.isTestingCloud115Authentication
               ? SizedBox(
                 width: context.appComponentTokens.iconSizeSm,
                 height: context.appComponentTokens.iconSizeSm,

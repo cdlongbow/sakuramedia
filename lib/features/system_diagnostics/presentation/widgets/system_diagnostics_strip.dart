@@ -21,7 +21,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 /// - probing：显示进度 + "取消"（第一期 disabled）
 /// - healthy/warning/unhealthy：显示 6 个分组徽章 + 上次检测时间 + 「刷新」/「进入诊断页」
 ///
-/// Strip 内部自建 controller（跟 [OverviewSystemInfoController] 一样在 initState
+/// Strip 内部自建 controller（跟旧 OverviewSystemInfoController 一样在 initState
 /// 里 new + dispose 释放）；不进 app.dart 全局 provider。诊断页会另建一份自己的
 /// controller，两份状态互不共享——用户视角常见的操作路径是"strip 上看一眼→进
 /// 诊断页点重新检测"，两份状态各自独立没问题。

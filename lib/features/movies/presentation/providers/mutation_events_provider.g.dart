@@ -163,7 +163,7 @@ final class MovieSubscriptionEventsProvider
 }
 
 String _$movieSubscriptionEventsHash() =>
-    r'c19cdac0e0993056126ec9f8c49fd55bff54df25';
+    r'4fce409ea30347ff968decfee2b0028fff0f79f8';
 
 /// 跨页合集类型（单体/合集）变更广播源的桥——与
 /// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
@@ -280,4 +280,4 @@ final class MovieCollectionTypeEventsProvider
 }
 
 String _$movieCollectionTypeEventsHash() =>
-    r'41e5c72305ea8e4dedc9e19edb5e0171f1e2c326';
+    r'd57ec78682ed37bebc5e98ec4a755bbdd25f14bf';

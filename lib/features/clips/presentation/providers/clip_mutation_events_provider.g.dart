@@ -10,18 +10,18 @@ part of 'clip_mutation_events_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
 ///
-/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：过渡期 Provider 侧与
-/// Riverpod 侧共用**同一个**实例，保持「单一广播源」（clips / clip_collections /
-/// movies 三域的 report 方与 listen 方彼此可见）。实例由组合根 override 注入。
+/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
+/// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
+/// 原生装配，组合根不再 override。
 
 @ProviderFor(clipMutationBroadcaster)
 final clipMutationBroadcasterProvider = ClipMutationBroadcasterProvider._();
 
 /// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
 ///
-/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：过渡期 Provider 侧与
-/// Riverpod 侧共用**同一个**实例，保持「单一广播源」（clips / clip_collections /
-/// movies 三域的 report 方与 listen 方彼此可见）。实例由组合根 override 注入。
+/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
+/// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
+/// 原生装配，组合根不再 override。
 
 final class ClipMutationBroadcasterProvider
     extends
@@ -33,9 +33,9 @@ final class ClipMutationBroadcasterProvider
     with $Provider<ClipMutationChangeNotifier> {
   /// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
   ///
-  /// 与 `movieSubscriptionBroadcasterProvider` 同一范式：过渡期 Provider 侧与
-  /// Riverpod 侧共用**同一个**实例，保持「单一广播源」（clips / clip_collections /
-  /// movies 三域的 report 方与 listen 方彼此可见）。实例由组合根 override 注入。
+  /// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
+  /// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
+  /// 原生装配，组合根不再 override。
   ClipMutationBroadcasterProvider._()
     : super(
         from: null,
@@ -127,4 +127,4 @@ final class ClipMutationEventsProvider
 }
 
 String _$clipMutationEventsHash() =>
-    r'87dc03982b15d4d80135a2eb6dc65c44e843b6c4';
+    r'6e6b9201b7ba302bb8de5e6c9aeaa7cea9e51653';

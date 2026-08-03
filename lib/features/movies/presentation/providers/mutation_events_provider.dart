@@ -1,8 +1,7 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/broadcast_events_factory.dart';
 
 part 'mutation_events_provider.g.dart';
 
@@ -34,19 +33,12 @@ MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster(Ref ref) {
 /// 单条 `reportChange` 与批量 `reportBatch` 在这里被统一成列表形式（复用
 /// notifier 自己的 `consumePendingChanges` 分派），下游不必再区分两条路径。
 @Riverpod(keepAlive: true)
-Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) {
-  final notifier = ref.watch(movieSubscriptionBroadcasterProvider);
-  // 单订阅 controller 足够：只有本 provider 自己监听，下游共享的是 provider 的
-  // AsyncValue 而非 stream 本身。
-  final controller = StreamController<List<MovieSubscriptionChange>>();
-  void onChanged() => notifier.consumePendingChanges(controller.add);
-  notifier.addListener(onChanged);
-  ref.onDispose(() {
-    notifier.removeListener(onChanged);
-    unawaited(controller.close());
-  });
-  return controller.stream;
-}
+Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) =>
+    createBroadcastEventStream(
+      ref: ref,
+      resolveNotifier: (r) => r.watch(movieSubscriptionBroadcasterProvider),
+      drain: (n, emit) => n.consumePendingChanges(emit),
+    );
 
 /// 跨页合集类型（单体/合集）变更广播源的桥——与
 /// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
@@ -63,20 +55,14 @@ MovieCollectionTypeChangeNotifier collectionTypeBroadcaster(Ref ref) {
 /// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
 /// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
 @Riverpod(keepAlive: true)
-Stream<MovieCollectionTypeChange> movieCollectionTypeEvents(Ref ref) {
-  final notifier = ref.watch(collectionTypeBroadcasterProvider);
-  final controller = StreamController<MovieCollectionTypeChange>();
-  void onChanged() {
-    final change = notifier.lastChange;
-    if (change != null) {
-      controller.add(change);
-    }
-  }
-
-  notifier.addListener(onChanged);
-  ref.onDispose(() {
-    notifier.removeListener(onChanged);
-    unawaited(controller.close());
-  });
-  return controller.stream;
-}
+Stream<MovieCollectionTypeChange> movieCollectionTypeEvents(Ref ref) =>
+    createBroadcastEventStream(
+      ref: ref,
+      resolveNotifier: (r) => r.watch(collectionTypeBroadcasterProvider),
+      drain: (n, emit) {
+        final c = n.lastChange;
+        if (c != null) {
+          emit(c);
+        }
+      },
+    );

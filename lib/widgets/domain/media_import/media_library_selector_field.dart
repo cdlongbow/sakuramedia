@@ -14,7 +14,7 @@ import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 /// 媒体导入弹窗顶部的媒体库选择器：自管媒体库加载、错误/空态/重试、下拉渲染。
 ///
 /// ⚠️ **胶水层例外（与 `MediaPreviewDialog` 同类）**：
-/// 本组件位于 `widgets/domain/`，但会自行 `context.read<MediaLibrariesApi>()`
+/// 本组件位于 `widgets/domain/`，但会自行 `ref.read(mediaLibrariesApiProvider)`
 /// 发起真实 HTTP 请求并自持 loading/error state。复用时 caller 无需再包一层控制器。
 ///
 /// 边界：

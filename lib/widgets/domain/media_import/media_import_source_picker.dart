@@ -26,8 +26,8 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 /// `/video-imports` 两条导入弹窗共同复用。
 ///
 /// ⚠️ **胶水层例外（与 `MediaPreviewDialog` 同类）**：
-/// 本组件位于 `widgets/domain/`，但会自行 `context.read<MediaImportApi>()`
-/// 与 `context.read<MediaLibrariesApi>()` 发起真实 HTTP 请求（目录浏览、翻页），
+/// 本组件位于 `widgets/domain/`，但会自行 `ref.read(mediaImportApiProvider)`
+/// 与 `ref.read(mediaLibrariesApiProvider)` 发起真实 HTTP 请求（目录浏览、翻页），
 /// 并自持 loading/error state。复用时 caller 无需再包一层控制器。
 ///
 /// 边界：

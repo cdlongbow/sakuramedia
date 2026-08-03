@@ -1,17 +1,21 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 
 part 'app_shell_providers.g.dart';
 
-/// 桌面壳层折叠状态控制器的桥。
+/// 桌面壳侧边栏折叠状态。
 ///
-/// 原生装配：body 直接构造，组合根不再 override。
+/// 迁移前形态:`AppShellController extends ChangeNotifier`(仅一个 bool)
+/// + 桥 provider。keepAlive:折叠偏好在会话内跨路由存续(与旧常驻控制器
+/// 语义一致)。
 @Riverpod(keepAlive: true)
-AppShellController appShellController(Ref ref) {
-  final controller = AppShellController();
-  ref.onDispose(controller.dispose);
-  return controller;
+class AppShellSidebarCollapsed extends _$AppShellSidebarCollapsed {
+  @override
+  bool build() => false;
+
+  void toggle() {
+    state = !state;
+  }
 }
 
 /// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，

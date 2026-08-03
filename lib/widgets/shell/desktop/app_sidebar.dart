@@ -29,132 +29,122 @@ class AppSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 桥 provider 只提供实例；折叠状态变化仍由 ListenableBuilder 驱动重建
-    // （与旧 Consumer<AppShellController> 等价）。
-    final controller = ref.watch(appShellControllerProvider);
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, child) {
-        final sidebarTokens = context.appSidebarTokens;
-        final appColors = context.appColors;
-        final useMacSidebarGlass = _useMacSidebarGlass;
-        final width =
-            controller.isSidebarCollapsed
-                ? sidebarTokens.collapsedWidth
-                : sidebarTokens.expandedWidth;
-        final isCompact = controller.isSidebarCollapsed;
+    final isCompact = ref.watch(appShellSidebarCollapsedProvider);
+    final sidebarTokens = context.appSidebarTokens;
+    final appColors = context.appColors;
+    final useMacSidebarGlass = _useMacSidebarGlass;
+    final width =
+        isCompact ? sidebarTokens.collapsedWidth : sidebarTokens.expandedWidth;
 
-        return AnimatedContainer(
-          key: const Key('desktop-shell-sidebar'),
-          duration: const Duration(milliseconds: 180),
-          width: width,
-          decoration: BoxDecoration(
+    return AnimatedContainer(
+      key: const Key('desktop-shell-sidebar'),
+      duration: const Duration(milliseconds: 180),
+      width: width,
+      decoration: BoxDecoration(
+        color:
+            useMacSidebarGlass
+                ? appColors.desktopSidebarGlassTint
+                : appColors.sidebarBackground,
+        border: Border(
+          right: BorderSide(
             color:
                 useMacSidebarGlass
-                    ? appColors.desktopSidebarGlassTint
-                    : appColors.sidebarBackground,
-            border: Border(
-              right: BorderSide(
-                color:
-                    useMacSidebarGlass
-                        ? appColors.borderSubtle.withValues(alpha: 0.68)
-                        : appColors.borderSubtle,
-              ),
-            ),
-            boxShadow: useMacSidebarGlass ? const [] : context.appShadows.panel,
+                    ? appColors.borderSubtle.withValues(alpha: 0.68)
+                    : appColors.borderSubtle,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                key: const Key('sidebar-header'),
-                height: context.appComponentTokens.desktopTitleBarHeight,
-                child: Builder(
-                  builder: (context) {
-                    final toggleButton = AppIconButton(
-                      key: const Key('sidebar-toggle-button'),
-                      iconColor: context.appTextPalette.primary,
-                      onPressed: controller.toggleSidebar,
-                      icon: Icon(isCompact ? Icons.menu_open : Icons.menu_open),
-                    );
-                    if (useMacSidebarGlass) {
-                      return Stack(
-                        children: [
-                          const Positioned.fill(
-                            child: AppWindowDragArea(
-                              child: ColoredBox(color: Colors.transparent),
-                            ),
+        ),
+        boxShadow: useMacSidebarGlass ? const [] : context.appShadows.panel,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            key: const Key('sidebar-header'),
+            height: context.appComponentTokens.desktopTitleBarHeight,
+            child: Builder(
+              builder: (context) {
+                final toggleButton = AppIconButton(
+                  key: const Key('sidebar-toggle-button'),
+                  iconColor: context.appTextPalette.primary,
+                  onPressed:
+                      ref
+                          .read(appShellSidebarCollapsedProvider.notifier)
+                          .toggle,
+                  icon: Icon(isCompact ? Icons.menu_open : Icons.menu_open),
+                );
+                if (useMacSidebarGlass) {
+                  return Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: AppWindowDragArea(
+                          child: ColoredBox(color: Colors.transparent),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: context.appSpacing.xs,
                           ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: context.appSpacing.xs,
-                              ),
-                              child: toggleButton,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return Center(child: toggleButton);
+                          child: toggleButton,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Center(child: toggleButton);
+              },
+            ),
+          ),
+          Divider(
+            key: const Key('sidebar-header-divider'),
+            height: 1,
+            color: _sidebarDividerColor(appColors, useMacSidebarGlass),
+          ),
+          Padding(
+            padding: EdgeInsets.all(context.appSpacing.sm),
+            child: _SidebarSearchSection(
+              currentPath: currentPath,
+              isCompact: isCompact,
+            ),
+          ),
+          Expanded(
+            child: _SidebarNavScrollArea(
+              horizontalPadding: context.appSpacing.sm,
+              fadeColor:
+                  useMacSidebarGlass
+                      ? appColors.desktopSidebarGlassTint
+                      : appColors.sidebarBackground,
+              children: _buildNavChildren(context, isCompact),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(context.appSpacing.sm),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Divider(
+                  height: 1,
+                  color: _sidebarDividerColor(appColors, useMacSidebarGlass),
+                ),
+                SizedBox(height: context.appSpacing.sm),
+                _SidebarVersionInfo(isCompact: isCompact),
+                SizedBox(height: context.appSpacing.sm),
+                AppSidebarItem(
+                  key: const Key('sidebar-logout-button'),
+                  icon: Icons.logout_rounded,
+                  label: '退出登录',
+                  selected: false,
+                  collapsed: isCompact,
+                  onTap: () {
+                    context.logOut();
                   },
                 ),
-              ),
-              Divider(
-                key: const Key('sidebar-header-divider'),
-                height: 1,
-                color: _sidebarDividerColor(appColors, useMacSidebarGlass),
-              ),
-              Padding(
-                padding: EdgeInsets.all(context.appSpacing.sm),
-                child: _SidebarSearchSection(
-                  currentPath: currentPath,
-                  isCompact: isCompact,
-                ),
-              ),
-              Expanded(
-                child: _SidebarNavScrollArea(
-                  horizontalPadding: context.appSpacing.sm,
-                  fadeColor:
-                      useMacSidebarGlass
-                          ? appColors.desktopSidebarGlassTint
-                          : appColors.sidebarBackground,
-                  children: _buildNavChildren(context, isCompact),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(context.appSpacing.sm),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Divider(
-                      height: 1,
-                      color: _sidebarDividerColor(
-                        appColors,
-                        useMacSidebarGlass,
-                      ),
-                    ),
-                    SizedBox(height: context.appSpacing.sm),
-                    _SidebarVersionInfo(isCompact: isCompact),
-                    SizedBox(height: context.appSpacing.sm),
-                    AppSidebarItem(
-                      key: const Key('sidebar-logout-button'),
-                      icon: Icons.logout_rounded,
-                      label: '退出登录',
-                      selected: false,
-                      collapsed: isCompact,
-                      onTap: () {
-                        context.logOut();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 

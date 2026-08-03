@@ -8,64 +8,80 @@ part of 'app_shell_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 桌面壳层折叠状态控制器的桥。
+/// 桌面壳侧边栏折叠状态。
 ///
-/// 原生装配：body 直接构造，组合根不再 override。
+/// 迁移前形态:`AppShellController extends ChangeNotifier`(仅一个 bool)
+/// + 桥 provider。keepAlive:折叠偏好在会话内跨路由存续(与旧常驻控制器
+/// 语义一致)。
 
-@ProviderFor(appShellController)
-final appShellControllerProvider = AppShellControllerProvider._();
+@ProviderFor(AppShellSidebarCollapsed)
+final appShellSidebarCollapsedProvider = AppShellSidebarCollapsedProvider._();
 
-/// 桌面壳层折叠状态控制器的桥。
+/// 桌面壳侧边栏折叠状态。
 ///
-/// 原生装配：body 直接构造，组合根不再 override。
-
-final class AppShellControllerProvider
-    extends
-        $FunctionalProvider<
-          AppShellController,
-          AppShellController,
-          AppShellController
-        >
-    with $Provider<AppShellController> {
-  /// 桌面壳层折叠状态控制器的桥。
+/// 迁移前形态:`AppShellController extends ChangeNotifier`(仅一个 bool)
+/// + 桥 provider。keepAlive:折叠偏好在会话内跨路由存续(与旧常驻控制器
+/// 语义一致)。
+final class AppShellSidebarCollapsedProvider
+    extends $NotifierProvider<AppShellSidebarCollapsed, bool> {
+  /// 桌面壳侧边栏折叠状态。
   ///
-  /// 原生装配：body 直接构造，组合根不再 override。
-  AppShellControllerProvider._()
+  /// 迁移前形态:`AppShellController extends ChangeNotifier`(仅一个 bool)
+  /// + 桥 provider。keepAlive:折叠偏好在会话内跨路由存续(与旧常驻控制器
+  /// 语义一致)。
+  AppShellSidebarCollapsedProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'appShellControllerProvider',
+        name: r'appShellSidebarCollapsedProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$appShellControllerHash();
+  String debugGetCreateSourceHash() => _$appShellSidebarCollapsedHash();
 
   @$internal
   @override
-  $ProviderElement<AppShellController> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  AppShellController create(Ref ref) {
-    return appShellController(ref);
-  }
+  AppShellSidebarCollapsed create() => AppShellSidebarCollapsed();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AppShellController value) {
+  Override overrideWithValue(bool value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AppShellController>(value),
+      providerOverride: $SyncValueProvider<bool>(value),
     );
   }
 }
 
-String _$appShellControllerHash() =>
-    r'6a01e5940099dc3a595bf85ac41b13d8cc9e55a1';
+String _$appShellSidebarCollapsedHash() =>
+    r'96b9b66c1b4d5c41aeafe05d7c1eec34f35fd3e2';
+
+/// 桌面壳侧边栏折叠状态。
+///
+/// 迁移前形态:`AppShellController extends ChangeNotifier`(仅一个 bool)
+/// + 桥 provider。keepAlive:折叠偏好在会话内跨路由存续(与旧常驻控制器
+/// 语义一致)。
+
+abstract class _$AppShellSidebarCollapsed extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<bool, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<bool, bool>,
+              bool,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
 
 /// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
 /// 与旧 MultiProvider 的 create 懒语义一致——真源由 `lib/app/app.dart` 的

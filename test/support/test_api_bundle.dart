@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:sakuramedia/app/app_page_state_cache.dart';
-import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
@@ -174,9 +173,8 @@ class TestApiBundle {
   /// `riverpodOverrides(externalPlayerStore: ...)` 传自持实例。
   final ExternalPlayerStore externalPlayerStore = ExternalPlayerStore()..load();
 
-  /// 桌面壳层折叠控制器默认实例——sidebar 无条件 watch 它，凡渲染壳层的
-  /// 测试都需要；无副作用，恒定注入。
-  final AppShellController appShellController = AppShellController();
+  // 桌面壳侧边栏折叠状态已迁 @riverpod bool Notifier
+  // (appShellSidebarCollapsedProvider),默认展开无需注入,不再持实例。
 
   /// 图搜草稿仓默认实例——图搜启动器经 Riverpod 容器写入草稿，测试树里必须有
   /// override 才能落笔。需要自持实例（预置草稿）的测试仍可传参覆盖。
@@ -284,7 +282,6 @@ class TestApiBundle {
       activityEventStreamClientProvider.overrideWithValue(
         activityEventStreamClient ?? this.activityEventStreamClient,
       ),
-      appShellControllerProvider.overrideWithValue(appShellController),
       if (notificationCenter != null)
         notificationCenterControllerProvider.overrideWithValue(
           notificationCenter,

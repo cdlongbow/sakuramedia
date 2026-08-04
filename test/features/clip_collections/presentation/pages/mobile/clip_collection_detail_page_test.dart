@@ -140,6 +140,19 @@ void main() {
     expect(find.text('2 个切片'), findsOneWidget);
   });
 
+  testWidgets('空合集顶栏仍有「添加」入口，空态文案才不至于指向空气', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad(total: 0);
+    await pumpPage(tester);
+
+    expect(
+      find.byKey(const Key('mobile-clip-collection-add-clips-button')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('点右上角「添加」'), findsOneWidget);
+  });
+
   testWidgets('顶栏无筛选入口、不常驻「选择」，长按卡片进多选', (WidgetTester tester) async {
     enqueueInitialLoad();
     await pumpPage(tester);

@@ -347,14 +347,14 @@ class _ClipCollectionDetailContentState
             enabled: true,
             onPlayFrom: () => _playFrom(0),
           ),
-        if (hasClips && _isMobile)
+        if (_isMobile)
           AppTextButton(
             key: Key('${widget.keyPrefix}-add-clips-button'),
             label: '添加',
             size: AppTextButtonSize.xSmall,
             onPressed: () => _addClips(context),
           )
-        else if (!_isMobile)
+        else
           AppTextButton(
             key: Key('${widget.keyPrefix}-add-clips-button'),
             label: '添加切片',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
@@ -11,29 +14,40 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_state.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 
 /// 影片详情页双端共用的**业务行为 mixin**——把桌面 / 移动详情页里逐字重复的
-/// 18 个方法与 7 个本地 override 态收敛到一处。
+/// 方法与本地 override 态收敛到一处。
+///
+/// 已下沉（改一处两端生效）：订阅 / 合集 / 删媒体 / 标记点 / 保存图 / 找当前点 /
+/// 空媒体项、**pageCache 挂载**（[mountPageCache]，key 由 [pageCacheKey] 抽象提供）、
+/// build 前半段派生计算（[resolveDerived]）、[executeMovieAction]（远端动作装配）、
+/// [showMediaPointActions]（4 个 descriptor + 分派）与 [buildMediaPointPreviewItem]。
 ///
 /// **仍留在页面侧**（差异纯粹在呈现层，不放 mixin）：
 /// - `_confirmDeleteMedia`——桌面弹 dialog、移动弹 bottom drawer
 /// - `_openInspector`——桌面对话框 / 移动底部抽屉
 /// - `_openMediaPointPreview`——预览浮层弹出方式两端不同
-/// - `_showMediaPointActions`——桌面右键菜单 / 移动底部抽屉
 /// - `_showMovieActionMenu` / `_showMovieActionDrawer`
 /// - `_confirmRefreshMetadata`（桌面）/ `_handleRefresh`（移动）
-/// - `_executeMovieAction`（差异在 refresh confirmation 承载方式）
 /// - `_handlePlaySourceChanged`（移动有 `_playMode` 附加逻辑）
 /// - `_searchSimilarFromPoint`（桌面/移动 launcher 不同）
 /// - `openPlayerForPoint`（桌面 push 播放路由 / 移动经 external player launcher）
+/// - 移动独有的合并播放（`_playMode` / `_effectivePlayMode` / `_isMergedPlaybackAvailable`）是真业务差异
 ///
 /// **约束**：宿主必须提供 `movieNumber` getter（同名 [MovieClipSectionMixin]
-/// 也要）及 `subscriptionChangeNotifier`（页面 `initState` 抓 `movieSubscriptionEventsProvider.notifier`）。
+/// 也要）、`subscriptionChangeNotifier`（页面 `initState` 抓 `movieSubscriptionEventsProvider.notifier`）
+/// 及 `pageCacheKey`（页面 initState 调 [mountPageCache]、dispose 调 [unmountPageCache]）。
 mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     on ConsumerState<T> {
   /// 页面对应的影片编号（如 `widget.movieNumber`）。
@@ -41,6 +55,38 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
 
   /// 页面在 `initState` 抓的订阅广播 notifier（避免每次订阅都走 containerOf）。
   MovieSubscriptionEvents get subscriptionChangeNotifier;
+
+  /// 页面挂 RiverpodPageCache 的 key（桌面 / 移动各用各自的 `xxxMovieDetailPageCacheKey`）。
+  String get pageCacheKey;
+
+  RiverpodPageHandle? _pageCacheHandle;
+
+  /// 在 `initState` 调用：把详情 + 切片 provider 的 cacheLink 挂进 RiverpodPageCache，
+  /// 跨导航保活；LRU 驱逐时统一 close。
+  void mountPageCache() {
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: pageCacheKey,
+          resolveLinks: () {
+            final links = <KeepAliveLink>[];
+            final detailLink = ref
+                .read(movieDetailProvider(movieNumber).notifier)
+                .cacheLink;
+            final clipsLink = ref
+                .read(movieClipsProvider(movieNumber).notifier)
+                .cacheLink;
+            if (detailLink != null) links.add(detailLink);
+            if (clipsLink != null) links.add(clipsLink);
+            return links;
+          },
+        );
+  }
+
+  /// 在 `dispose` 调用：释放 page cache handle。
+  void unmountPageCache() {
+    _pageCacheHandle?.release();
+  }
 
   /// 页面自持的本地 override 态（跨 mixin 方法共享）。
   final Map<int, List<MovieMediaPointDto>> pointOverrides =
@@ -399,6 +445,103 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   }
 
   // ==========================================================================
+  //  派生计算 / 媒体点预览与动作（双端逐字相同）
+  // ==========================================================================
+
+  /// build 前半段的公共派生计算：媒体列表（含 point override）、订阅 / 合集
+  /// override、播放源解析、按源过滤与当前选中媒体。`mergedPlaybackAvailable`
+  /// 因两端语义不同（移动还吃 cloud115 合并）留在页面侧单独算。
+  MovieDetailDerived resolveDerived(
+    MovieDetailDto movie,
+    MovieDetailState detailState,
+  ) {
+    final mediaItems = resolveMediaItems(movie);
+    final isSubscribed = isSubscribedOverride ?? movie.isSubscribed;
+    final isCollection = isCollectionOverride ?? movie.isCollection;
+    final sourceOptions = resolveMoviePlaybackSourceOptions(
+      mediaItems: mediaItems,
+      storageDescriptors: detailState.storageDescriptors,
+    );
+    final effectivePlaySource = playSource ?? sourceOptions.defaultSource;
+    // 详情页下方媒体列表按当前播放源过滤,避免用户切了"本地"却仍能点到
+    // 115 媒体、播放失败时收到"115 网盘媒体"文案的歧义。
+    final visibleMediaItems = filterMediaItemsByPlaybackSource(
+      mediaItems: mediaItems,
+      storageDescriptors: detailState.storageDescriptors,
+      source: effectivePlaySource,
+    );
+    final selectedMedia =
+        visibleMediaItems
+                .where((item) => item.mediaId == selectedMediaId)
+                .firstOrNull ??
+            (visibleMediaItems.isNotEmpty ? visibleMediaItems.first : null);
+    return MovieDetailDerived(
+      mediaItems: mediaItems,
+      isSubscribed: isSubscribed,
+      isCollection: isCollection,
+      isActionControlsLocked: isMovieActionLocked,
+      sourceOptions: sourceOptions,
+      effectivePlaySource: effectivePlaySource,
+      visibleMediaItems: visibleMediaItems,
+      selectedMedia: selectedMedia,
+    );
+  }
+
+  /// 媒体点预览条目（桌面 / 移动共用，供 `_openMediaPointPreview` 装配预览弹层）。
+  MediaPreviewItem buildMediaPointPreviewItem(
+    MovieMediaItemDto mediaItem,
+    MovieMediaPointDto point,
+  ) {
+    return MediaPreviewItem(
+      imageUrl: resolvePointImageUrl(point),
+      fileName: buildPointFileName(point),
+      mediaId: mediaItem.mediaId,
+      movieNumber: movieNumber,
+      thumbnailId: point.thumbnailId,
+      offsetSeconds: point.offsetSeconds,
+    );
+  }
+
+  /// 媒体点右键 / 长按菜单的 4 个 descriptor（两端逐字相同）。
+  List<AppImageActionDescriptor> buildMediaPointActionDescriptors(
+    MovieMediaItemDto mediaItem,
+    MovieMediaPointDto point,
+    MovieMediaPointDto? currentPoint,
+    bool hasImage,
+  ) {
+    return <AppImageActionDescriptor>[
+      AppImageActionDescriptor(
+        type: AppImageActionType.searchSimilar,
+        label: '相似图片',
+        icon: Icons.image_search_outlined,
+        enabled: hasImage,
+      ),
+      AppImageActionDescriptor(
+        type: AppImageActionType.saveToLocal,
+        label: '保存到本地',
+        icon: Icons.download_outlined,
+        enabled: hasImage,
+      ),
+      AppImageActionDescriptor(
+        type: AppImageActionType.toggleMark,
+        label: currentPoint == null ? '添加标记' : '删除标记',
+        icon:
+            currentPoint == null
+                ? Icons.bookmark_add_outlined
+                : Icons.bookmark_remove_outlined,
+        enabled:
+            mediaItem.mediaId > 0 && (currentPoint != null || point.thumbnailId > 0),
+      ),
+      AppImageActionDescriptor(
+        type: AppImageActionType.play,
+        label: '播放',
+        icon: Icons.play_circle_outline_rounded,
+        enabled: mediaItem.mediaId > 0 && mediaItem.hasPlayableUrl,
+      ),
+    ];
+  }
+
+  // ==========================================================================
   //  订阅
   // ==========================================================================
 
@@ -481,6 +624,92 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   }
 
   // ==========================================================================
+  //  媒体点动作菜单 / 详情动作执行（双端逐字相同）
+  // ==========================================================================
+
+  /// 媒体点右键 / 长按菜单：4 个 descriptor + 菜单呈现 + 动作分派两端共用；
+  /// 播放与相似图跳转经抽象 `openPlayerForPoint` / `searchSimilarFromPoint` 落平台。
+  Future<void> showMediaPointActions(
+    BuildContext menuContext,
+    MovieMediaItemDto mediaItem,
+    MovieMediaPointDto point,
+    Offset globalPosition,
+  ) async {
+    final hasImage = resolvePointImageUrl(point).isNotEmpty;
+    final currentPoint = findCurrentPoint(mediaItem.mediaId, point.pointId);
+    final action = await showAppImageActionMenu(
+      context: menuContext,
+      globalPosition: globalPosition,
+      actions: buildMediaPointActionDescriptors(
+        mediaItem,
+        point,
+        currentPoint,
+        hasImage,
+      ),
+    );
+    if (!mounted || action == null) {
+      return;
+    }
+
+    switch (action) {
+      case AppImageActionType.searchSimilar:
+        await searchSimilarFromPoint(point);
+        break;
+      case AppImageActionType.saveToLocal:
+        await savePointImageToLocal(point);
+        break;
+      case AppImageActionType.toggleMark:
+        await toggleMediaPoint(mediaItem, point, currentPoint);
+        break;
+      case AppImageActionType.play:
+        openPlayerForPoint(mediaItem, point);
+        break;
+      case AppImageActionType.movieDetail:
+        break;
+    }
+  }
+
+  /// 详情动作统一入口：订阅走本 mixin 的订阅切换，其余远端动作经
+  /// `executeMovieDetailRemoteAction` 装配（桌面 / 移动逐字相同）。
+  Future<bool> executeMovieAction(MovieDetailActionType action) {
+    if (action == MovieDetailActionType.toggleSubscription) {
+      return toggleMovieSubscription(
+        isSubscribed:
+            isSubscribedOverride ??
+            ref.read(movieDetailProvider(movieNumber)).movie?.isSubscribed ??
+            false,
+      );
+    }
+
+    return executeMovieDetailRemoteAction(
+      context: context,
+      ref: ref,
+      action: action,
+      movieNumber: movieNumber,
+      isLocked: isMovieActionLocked,
+      selectedMediaId: selectedMediaId,
+      onActiveActionChanged: (nextAction) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          activeMovieAction = nextAction;
+        });
+      },
+      onMovieApplied: (result) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          selectedMediaId = result.selectedMediaId;
+          isSubscribedOverride = result.isSubscribedOverride;
+          isCollectionOverride = result.isCollectionOverride;
+        });
+      },
+    );
+  }
+
+  // ==========================================================================
   //  page-specific 抽象（双端呈现差异）
   // ==========================================================================
 
@@ -494,19 +723,33 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     MovieMediaPointDto point,
   );
 
-  Future<void> showMediaPointActions(
-    BuildContext menuContext,
-    MovieMediaItemDto mediaItem,
-    MovieMediaPointDto point,
-    Offset globalPosition,
-  );
-
   Future<bool> searchSimilarFromPoint(MovieMediaPointDto point);
 
   void openPlayerForPoint(
     MovieMediaItemDto mediaItem,
     MovieMediaPointDto point,
   );
+}
 
-  Future<bool> executeMovieAction(MovieDetailActionType action);
+/// [MovieDetailBehaviorMixin.resolveDerived] 的产物：详情页 build 前半段公共派生值。
+class MovieDetailDerived {
+  const MovieDetailDerived({
+    required this.mediaItems,
+    required this.isSubscribed,
+    required this.isCollection,
+    required this.isActionControlsLocked,
+    required this.sourceOptions,
+    required this.effectivePlaySource,
+    required this.visibleMediaItems,
+    required this.selectedMedia,
+  });
+
+  final List<MovieMediaItemDto> mediaItems;
+  final bool isSubscribed;
+  final bool isCollection;
+  final bool isActionControlsLocked;
+  final MoviePlaybackSourceOptions sourceOptions;
+  final MoviePlayUrlSource? effectivePlaySource;
+  final List<MovieMediaItemDto> visibleMediaItems;
+  final MovieMediaItemDto? selectedMedia;
 }

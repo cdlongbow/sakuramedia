@@ -2,11 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
-import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
-import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/external_player/presentation/external_player_availability.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
@@ -32,7 +29,6 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -50,10 +46,12 @@ class DesktopMovieDetailPage extends ConsumerStatefulWidget {
 class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     with MovieClipSectionMixin, MovieDetailBehaviorMixin {
   late final MovieSubscriptionEvents _subscriptionChangeNotifier;
-  RiverpodPageHandle? _pageCacheHandle;
 
   @override
   String get movieNumber => widget.movieNumber;
+
+  @override
+  String get pageCacheKey => desktopMovieDetailPageCacheKey(widget.movieNumber);
 
   @override
   MovieSubscriptionEvents get subscriptionChangeNotifier =>
@@ -65,23 +63,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     _subscriptionChangeNotifier = resolveMovieSubscriptionNotifier(context);
     // 挂 keepAlive link 到 RiverpodPageCache：详情 + 切片 provider 的
     // cacheLink 一并托管，跨导航保活；LRU 驱逐时统一 close。
-    _pageCacheHandle = ref
-        .read(riverpodPageCacheProvider)
-        .obtain(
-          key: desktopMovieDetailPageCacheKey(widget.movieNumber),
-          resolveLinks: () {
-            final links = <KeepAliveLink>[];
-            final detailLink = ref
-                .read(movieDetailProvider(widget.movieNumber).notifier)
-                .cacheLink;
-            final clipsLink = ref
-                .read(movieClipsProvider(widget.movieNumber).notifier)
-                .cacheLink;
-            if (detailLink != null) links.add(detailLink);
-            if (clipsLink != null) links.add(clipsLink);
-            return links;
-          },
-        );
+    mountPageCache();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
@@ -96,7 +78,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
 
   @override
   void dispose() {
-    _pageCacheHandle?.release();
+    unmountPageCache();
     super.dispose();
   }
 
@@ -123,35 +105,20 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
           }
 
           final movie = detailState.movie!;
-          final mediaItems = resolveMediaItems(movie);
-          final isSubscribed = isSubscribedOverride ?? movie.isSubscribed;
-          final isCollection = isCollectionOverride ?? movie.isCollection;
-          final isActionControlsLocked = isMovieActionLocked;
-          final sourceOptions = resolveMoviePlaybackSourceOptions(
-            mediaItems: mediaItems,
-            storageDescriptors: detailState.storageDescriptors,
-          );
-          final effectivePlaySource =
-              playSource ?? sourceOptions.defaultSource;
-          // 详情页下方媒体列表按当前播放源过滤,避免用户切了"本地"却仍能点到
-          // 115 媒体、播放失败时收到"115 网盘媒体"文案的歧义。
-          final visibleMediaItems = filterMediaItemsByPlaybackSource(
-            mediaItems: mediaItems,
-            storageDescriptors: detailState.storageDescriptors,
-            source: effectivePlaySource,
-          );
-          final selectedMedia =
-              visibleMediaItems
-                  .where((item) => item.mediaId == selectedMediaId)
-                  .firstOrNull ??
-              (visibleMediaItems.isNotEmpty ? visibleMediaItems.first : null);
+          final derived = resolveDerived(movie, detailState);
+          final isSubscribed = derived.isSubscribed;
+          final isCollection = derived.isCollection;
+          final isActionControlsLocked = derived.isActionControlsLocked;
+          final sourceOptions = derived.sourceOptions;
+          final effectivePlaySource = derived.effectivePlaySource;
+          final selectedMedia = derived.selectedMedia;
           final mergedPlaybackAvailable =
               isExternalPlayerReady(context) &&
               effectivePlaySource == MoviePlayUrlSource.local &&
               sourceOptions.localCount >= 2;
           return MovieDetailPageContent(
                 movie: movie,
-                mediaItemsOverride: visibleMediaItems,
+                mediaItemsOverride: derived.visibleMediaItems,
                 storageDescriptors: detailState.storageDescriptors,
                 selectedPreviewKey: detailState.selectedPreviewKey,
                 selectedPreviewUrl: detailState.selectedPreviewUrl,
@@ -459,44 +426,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     );
   }
 
-  @override
-  Future<bool> executeMovieAction(MovieDetailActionType action) {
-    if (action == MovieDetailActionType.toggleSubscription) {
-      return toggleMovieSubscription(
-        isSubscribed: isSubscribedOverride ??
-            ref.read(movieDetailProvider(widget.movieNumber)).movie?.isSubscribed ??
-            false,
-      );
-    }
-
-    return executeMovieDetailRemoteAction(
-      context: context,
-      ref: ref,
-      action: action,
-      movieNumber: widget.movieNumber,
-      isLocked: isMovieActionLocked,
-      selectedMediaId: selectedMediaId,
-      onActiveActionChanged: (nextAction) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          activeMovieAction = nextAction;
-        });
-      },
-      onMovieApplied: (result) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          selectedMediaId = result.selectedMediaId;
-          isSubscribedOverride = result.isSubscribedOverride;
-          isCollectionOverride = result.isCollectionOverride;
-        });
-      },
-    );
-  }
-
   /// 切换播放源：选中该源下第一个可播放媒体。桌面无外部播放器，不涉及合并模式。
   void _handlePlaySourceChanged(MoviePlayUrlSource source) {
     final detailState = ref.read(movieDetailProvider(widget.movieNumber));
@@ -527,7 +456,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       presentation: MediaPreviewPresentation.dialog,
       builder:
           (_) => MediaPreviewDialog(
-            item: _buildMediaPointPreviewItem(mediaItem, point),
+            item: buildMediaPointPreviewItem(mediaItem, point),
             availableActions: <MediaPreviewAction>{
               if (resolvePointImageUrl(point).isNotEmpty)
                 MediaPreviewAction.searchSimilar,
@@ -554,86 +483,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       case MediaPreviewAction.openMovieDetail:
         return;
     }
-  }
-
-  @override
-  Future<void> showMediaPointActions(
-    BuildContext menuContext,
-    MovieMediaItemDto mediaItem,
-    MovieMediaPointDto point,
-    Offset globalPosition,
-  ) async {
-    final hasImage = resolvePointImageUrl(point).isNotEmpty;
-    final currentPoint = findCurrentPoint(mediaItem.mediaId, point.pointId);
-    final action = await showAppImageActionMenu(
-      context: menuContext,
-      globalPosition: globalPosition,
-      actions: <AppImageActionDescriptor>[
-        AppImageActionDescriptor(
-          type: AppImageActionType.searchSimilar,
-          label: '相似图片',
-          icon: Icons.image_search_outlined,
-          enabled: hasImage,
-        ),
-        AppImageActionDescriptor(
-          type: AppImageActionType.saveToLocal,
-          label: '保存到本地',
-          icon: Icons.download_outlined,
-          enabled: hasImage,
-        ),
-        AppImageActionDescriptor(
-          type: AppImageActionType.toggleMark,
-          label: currentPoint == null ? '添加标记' : '删除标记',
-          icon:
-              currentPoint == null
-                  ? Icons.bookmark_add_outlined
-                  : Icons.bookmark_remove_outlined,
-          enabled:
-              mediaItem.mediaId > 0 &&
-              (currentPoint != null || point.thumbnailId > 0),
-        ),
-        AppImageActionDescriptor(
-          type: AppImageActionType.play,
-          label: '播放',
-          icon: Icons.play_circle_outline_rounded,
-          enabled: mediaItem.mediaId > 0 && mediaItem.hasPlayableUrl,
-        ),
-      ],
-    );
-    if (!mounted || action == null) {
-      return;
-    }
-
-    switch (action) {
-      case AppImageActionType.searchSimilar:
-        await searchSimilarFromPoint(point);
-        break;
-      case AppImageActionType.saveToLocal:
-        await savePointImageToLocal(point);
-        break;
-      case AppImageActionType.toggleMark:
-        await toggleMediaPoint(mediaItem, point, currentPoint);
-        break;
-      case AppImageActionType.play:
-        openPlayerForPoint(mediaItem, point);
-        break;
-      case AppImageActionType.movieDetail:
-        break;
-    }
-  }
-
-  MediaPreviewItem _buildMediaPointPreviewItem(
-    MovieMediaItemDto mediaItem,
-    MovieMediaPointDto point,
-  ) {
-    return MediaPreviewItem(
-      imageUrl: resolvePointImageUrl(point),
-      fileName: buildPointFileName(point),
-      mediaId: mediaItem.mediaId,
-      movieNumber: widget.movieNumber,
-      thumbnailId: point.thumbnailId,
-      offsetSeconds: point.offsetSeconds,
-    );
   }
 
   @override

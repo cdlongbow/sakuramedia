@@ -9,12 +9,12 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

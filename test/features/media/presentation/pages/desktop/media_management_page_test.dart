@@ -8,13 +8,13 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
-import 'package:sakuramedia/features/media/presentation/desktop_media_management_page.dart';
+import 'package:sakuramedia/features/media/presentation/pages/desktop/media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
-import '../../../support/fake_http_client_adapter.dart';
+import '../../../../../support/fake_http_client_adapter.dart';
 
 /// 「媒体管理」三 tab 页测试。失效巡检用例迁自原 `desktop_media_maintenance_page_test`
 /// （维护页并入本页后删除），pump 后先切到「失效巡检」tab 再断言。

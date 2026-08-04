@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/overview/presentation/mobile_overview_skeleton_page.dart';
+import 'package:sakuramedia/features/overview/presentation/pages/mobile/overview_skeleton_page.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../support/pump_with_providers.dart';
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/pump_with_providers.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 /// 锁住 tab 序号 reporter 的三个易碎语义(迁 Riverpod Notifier 前后都必须成立):
 /// 1. 首帧对齐推迟到 postFrame——build 期写 provider 会抛

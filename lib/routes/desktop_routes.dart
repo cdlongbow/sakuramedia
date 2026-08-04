@@ -18,10 +18,10 @@ import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playli
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collections_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';
-import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
-import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
-import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/desktop_system_diagnostics_page.dart';
-import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
+import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
+import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/system_diagnostics_page.dart';
+import 'package:sakuramedia/features/tags/presentation/pages/desktop/tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';

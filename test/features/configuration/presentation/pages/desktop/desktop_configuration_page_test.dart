@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
-import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_configuration_page.dart';
+import 'package:sakuramedia/features/configuration/presentation/pages/desktop/configuration_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/llm_settings_copy.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';

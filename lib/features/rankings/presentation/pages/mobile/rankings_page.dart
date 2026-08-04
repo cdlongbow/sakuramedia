@@ -7,7 +7,7 @@ import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/format/synced_at_label.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/rankings/presentation/mobile_ranking_filter_drawer.dart';
+import 'package:sakuramedia/features/rankings/presentation/pages/mobile/ranking_filter_drawer.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_provider.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';

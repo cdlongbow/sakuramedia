@@ -7,10 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/account/presentation/mobile_change_username_page.dart';
+import 'package:sakuramedia/features/account/presentation/pages/mobile/change_username_page.dart';
 import 'package:sakuramedia/theme.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

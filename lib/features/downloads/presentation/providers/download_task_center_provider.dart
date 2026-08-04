@@ -161,7 +161,18 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     // 用 isReloading（而非 AsyncLoading）：pane 保留筛选栏 + 速度栏 + 旧 items，
     // 只在列表顶叠 LinearProgressIndicator。避免整页 spinner 造成的筛选栏闪烁。
     invalidateInFlightLoadMore();
-    state = AsyncData(current.copyWith(filter: next, isReloading: true));
+    // 与 mixin 版 applyFilter 同款清理：被代次作废的 in-flight loadMore 失败/成功
+    // 都不会再回写，不清 isLoadingMore 会永远卡 loading——loadMore 短路、refresh
+    // 静默 no-op、SSE 首页合并也不碰该标志，列表死锁到换筛选成功为止。
+    final basePaged = current.paged.isLoadingMore
+        ? current.paged.copyWith(
+            isLoadingMore: false,
+            loadMoreErrorMessage: null,
+          )
+        : current.paged;
+    state = AsyncData(
+      current.copyWith(filter: next, paged: basePaged, isReloading: true),
+    );
 
     try {
       final firstPage = await loadInitialPage();

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
@@ -201,6 +203,100 @@ void main() {
       expect(
         bundle.adapter.requests.last.uri.queryParameters,
         containsPair('download_state', 'paused'),
+      );
+    },
+  );
+
+  test(
+    'applyFilter 清掉 in-flight loadMore 的 isLoadingMore，首页失败不死锁',
+    () async {
+      enqueueTaskPage([taskJson(id: 1)], total: 3);
+      enqueueClients();
+      await container.read(downloadTaskCenterProvider.future);
+
+      // 挂起一个 loadMore：响应悬置，模拟切筛选时仍在飞的第 2 页请求。
+      final pendingLoadMore = Completer<ResponseBody>();
+      bundle.adapter.enqueueResponder(
+        method: 'GET',
+        path: '/download-tasks',
+        responder: (_, __) => pendingLoadMore.future,
+      );
+      final loadMoreFuture =
+          container.read(downloadTaskCenterProvider.notifier).loadMore();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container
+            .read(downloadTaskCenterProvider)
+            .requireValue
+            .paged
+            .isLoadingMore,
+        isTrue,
+      );
+
+      // 新筛选的首页拉取失败：被作废的 loadMore 永不回写，若不显式清
+      // isLoadingMore 会永远卡 true——loadMore 短路、refresh 静默 no-op。
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-tasks',
+        statusCode: 500,
+        body: <String, dynamic>{'detail': 'boom'},
+      );
+      await container.read(downloadTaskCenterProvider.notifier).applyFilter(
+            DownloadTaskFilterState.initial.copyWith(
+              stateFilter: DownloadTaskStateFilter.paused,
+            ),
+          );
+
+      final afterFailure =
+          container.read(downloadTaskCenterProvider).requireValue;
+      expect(afterFailure.paged.isLoadingMore, isFalse);
+      expect(afterFailure.isReloading, isFalse);
+      // 切换失败保留旧 items，filter 已生效可再触发重试。
+      expect(afterFailure.paged.items.map((row) => row.task.id), [1]);
+      expect(
+        afterFailure.filter.stateFilter,
+        DownloadTaskStateFilter.paused,
+      );
+
+      // 未死锁的证明：手动 refresh 能正常发起并成功。
+      enqueueTaskPage([taskJson(id: 7, downloadState: 'paused')]);
+      final refreshError =
+          await container.read(downloadTaskCenterProvider.notifier).refresh();
+      expect(refreshError, isNull);
+      expect(
+        container
+            .read(downloadTaskCenterProvider)
+            .requireValue
+            .paged
+            .items
+            .map((row) => row.task.id),
+        [7],
+      );
+
+      // 收尾：让被作废的 loadMore 回来，断言不会覆盖新状态。
+      pendingLoadMore.complete(
+        ResponseBody.fromString(
+          jsonEncode(<String, dynamic>{
+            'items': <Map<String, dynamic>>[taskJson(id: 2), taskJson(id: 3)],
+            'page': 2,
+            'page_size': 20,
+            'total': 3,
+          }),
+          200,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        ),
+      );
+      await loadMoreFuture;
+      expect(
+        container
+            .read(downloadTaskCenterProvider)
+            .requireValue
+            .paged
+            .items
+            .map((row) => row.task.id),
+        [7],
       );
     },
   );

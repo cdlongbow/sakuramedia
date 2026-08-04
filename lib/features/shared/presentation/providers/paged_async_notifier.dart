@@ -385,8 +385,11 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
   }
 }
 
-/// 筛选驱动分页 mixin：统一「值对象筛选状态 → reload/preserveList」两套切换语义，
-/// 收敛 4 处业务副本（订阅管理 / 媒体管理 / downloads / resource task center）。
+/// 筛选驱动分页 mixin：统一「值对象筛选状态 → reload/preserveList」两套切换语义。
+/// 现有 adopter：movies / actors / videos / clips / moments / hot_reviews 六个
+/// listing 域。订阅管理 / 媒体管理 / downloads / resource task center 仍各自手写
+/// 筛选切换（downloads 因 SSE 合并等额外语义未收编）——**改本 mixin 的切换语义
+/// （如清 isLoadingMore 的死锁修复）时，这几处手写副本要同步对齐**。
 ///
 /// 约定：`F` 是不可变值对象（`==` 即"筛选未变"）；`fetchPage` 从 [activeFilter]
 /// 读参数；UI 改筛选后调 [applyFilterState]。State 里的 filter 字段由

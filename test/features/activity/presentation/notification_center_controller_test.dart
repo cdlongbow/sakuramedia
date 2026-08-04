@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 
+import '../../../support/fake_sse_event_stream_client.dart';
 import '../../../support/test_api_bundle.dart';
 
 void main() {
@@ -276,14 +278,79 @@ void main() {
       expect(controller.unreadCount, 0);
     },
   );
+
+  group('SSE 连接状态机', () {
+    late FakeSseEventStreamClient sseClient;
+    late _NotificationCenterHarness harness;
+
+    Future<void> connect() async {
+      _enqueueBootstrap(bundle, latestEventId: 7);
+      sseClient = FakeSseEventStreamClient();
+      addTearDown(sseClient.dispose);
+      harness = _NotificationCenterHarness(bundle, sseClient: sseClient);
+      addTearDown(harness.dispose);
+      await harness.initialize();
+      await pumpEventQueue();
+      expect(harness.connectionState, NotificationConnectionState.live);
+    }
+
+    test('流出错 → 进重连态（退避重试，不切轮询）', () async {
+      await connect();
+
+      sseClient.emitError(
+        FakeSseEventStreamClient.activityEndpoint,
+        StateError('boom'),
+      );
+      await pumpEventQueue();
+
+      expect(
+        harness.connectionState,
+        NotificationConnectionState.reconnecting,
+      );
+    });
+
+    test('流被服务端关闭 → 进重连态', () async {
+      await connect();
+
+      sseClient.closeAll();
+      await pumpEventQueue();
+
+      expect(
+        harness.connectionState,
+        NotificationConnectionState.reconnecting,
+      );
+    });
+
+    test('端不支持 SSE（Web）→ 切 30 秒轮询兜底，不再重连', () async {
+      await connect();
+
+      sseClient.emitUnsupported(FakeSseEventStreamClient.activityEndpoint);
+      await pumpEventQueue();
+
+      expect(harness.connectionState, NotificationConnectionState.polling);
+    });
+  });
 }
 
 class _NotificationCenterHarness {
-  _NotificationCenterHarness(TestApiBundle bundle)
-    : container = ProviderContainer(
-        overrides: bundle.riverpodOverrides(),
-        retry: null,
-      ) {
+  /// [sseClient] 非空时把活动域 SSE 换成可控传输层——注意必须连 `ActivityApi`
+  /// 一起换掉:bundle 的 ActivityApi 是构造注入 streamClient 的,只 override
+  /// `activityEventStreamClientProvider` 到不了它。
+  _NotificationCenterHarness(
+    TestApiBundle bundle, {
+    FakeSseEventStreamClient? sseClient,
+  }) : container = ProviderContainer(
+         overrides: bundle.riverpodOverrides(
+           activityApi:
+               sseClient == null
+                   ? null
+                   : ActivityApi(
+                     apiClient: bundle.apiClient,
+                     streamClient: FakeActivityEventStreamClient(sseClient),
+                   ),
+         ),
+         retry: null,
+       ) {
     _subscription = container.listen(
       notificationCenterProvider,
       (_, _) {},

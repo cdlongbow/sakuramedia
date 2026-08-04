@@ -179,13 +179,16 @@ class TestApiBundle {
     // FakeSseEventStreamClient / 自定义实例。
     SseEventStreamClient? sseEventStreamClient,
     ActivityEventStreamClient? activityEventStreamClient,
+    // 活动域 SSE 要换传输层时**必须连 ActivityApi 一起换**:它是构造注入
+    // streamClient 的,只 override activityEventStreamClientProvider 到不了它。
+    ActivityApi? activityApi,
   }) {
     return <Override>[
       apiClientProvider.overrideWithValue(apiClient),
       sessionStoreProvider.overrideWithValue(sessionStore),
       credentialStoreProvider.overrideWithValue(credentialStore),
       accountApiProvider.overrideWithValue(accountApi),
-      activityApiProvider.overrideWithValue(activityApi),
+      activityApiProvider.overrideWithValue(activityApi ?? this.activityApi),
       actorsApiProvider.overrideWithValue(actorsApi),
       authApiProvider.overrideWithValue(authApi),
       clipsApiProvider.overrideWithValue(clipsApi),

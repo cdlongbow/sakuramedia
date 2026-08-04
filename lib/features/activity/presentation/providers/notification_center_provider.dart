@@ -5,12 +5,12 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/data/activity_bootstrap_dto.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_stream_event.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/sse_channel.dart';
 
 part 'notification_center_provider.g.dart';
 
@@ -21,29 +21,16 @@ class NotificationCenter extends _$NotificationCenter {
   static const Duration _longDisconnectThreshold = Duration(minutes: 2);
   static const Duration _pollingInterval = Duration(seconds: 30);
   static const Duration _readDebounceDelay = Duration(milliseconds: 400);
-  static const List<Duration> _reconnectDelays = <Duration>[
-    Duration(seconds: 1),
-    Duration(seconds: 2),
-    Duration(seconds: 4),
-    Duration(seconds: 8),
-    Duration(seconds: 16),
-    Duration(seconds: 30),
-  ];
 
   SessionStore? _sessionStore;
   bool _lastHasSession = false;
-  Timer? _reconnectTimer;
-  Timer? _pollingTimer;
-  StreamSubscription<ActivityStreamEvent>? _eventSubscription;
-  DateTime? _disconnectStartedAt;
-  int _reconnectAttempt = 0;
+  /// SSE 连接状态机：重连退避 / unsupported 轮询兜底 / 长断线补拉 / 微任务
+  /// 合批全部由它承担，本 provider 只负责「事件怎么改状态」。
+  SseChannel<ActivityStreamEvent>? _channel;
   int _lastEventId = 0;
   int _nextPage = 1;
   int _refreshRequestId = 0;
   int _lifecycleGeneration = 0;
-  final List<ActivityStreamEvent> _pendingStreamEvents =
-      <ActivityStreamEvent>[];
-  bool _isStreamFlushScheduled = false;
   final Set<int> _pendingReadIds = <int>{};
   final Set<int> _inFlightReadIds = <int>{};
   Timer? _readDebounce;
@@ -57,11 +44,7 @@ class NotificationCenter extends _$NotificationCenter {
     ref.onDispose(() {
       sessionStore.removeListener(_handleSessionChanged);
       _readDebounce?.cancel();
-      _cancelReconnectTimer();
-      _cancelPollingTimer();
-      unawaited(_eventSubscription?.cancel());
-      _eventSubscription = null;
-      _resetPendingStreamEvents();
+      unawaited(_shutdownChannel());
     });
     if (_lastHasSession) {
       scheduleMicrotask(initialize);
@@ -104,11 +87,7 @@ class NotificationCenter extends _$NotificationCenter {
       connectionState: NotificationConnectionState.connecting,
       connectionMessage: '正在同步通知',
     );
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
-    await _eventSubscription?.cancel();
-    _eventSubscription = null;
-    _resetPendingStreamEvents();
+    await _shutdownChannel();
     if (!ref.mounted || generation != _lifecycleGeneration) {
       return;
     }
@@ -123,7 +102,7 @@ class NotificationCenter extends _$NotificationCenter {
         isInitialLoading: false,
         initialErrorMessage: null,
       );
-      await _connectStream(generation: generation);
+      await _startChannel(generation: generation);
     } catch (error) {
       if (!ref.mounted || generation != _lifecycleGeneration) {
         return;
@@ -316,18 +295,12 @@ class NotificationCenter extends _$NotificationCenter {
   void _teardown() {
     _lifecycleGeneration += 1;
     _refreshRequestId += 1;
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
     _readDebounce?.cancel();
-    unawaited(_eventSubscription?.cancel());
-    _eventSubscription = null;
-    _resetPendingStreamEvents();
+    unawaited(_shutdownChannel());
     _pendingReadIds.clear();
     _inFlightReadIds.clear();
     _lastEventId = 0;
     _nextPage = 1;
-    _disconnectStartedAt = null;
-    _reconnectAttempt = 0;
     state = NotificationCenterState.initial;
   }
 
@@ -350,140 +323,112 @@ class NotificationCenter extends _$NotificationCenter {
     );
   }
 
-  Future<void> _connectStream({required int generation}) async {
+  Future<void> _shutdownChannel() async {
+    final channel = _channel;
+    _channel = null;
+    await channel?.shutdown();
+  }
+
+  /// 建连。重连退避（[kActivityBackoff]）、unsupported→30s 轮询兜底、断线
+  /// 超过 2 分钟先补拉、微任务合批——全部是 [SseChannel] 的既有行为，这里只
+  /// 提供「怎么连」「状态怎么映射到 UI」「事件怎么改 state」三个回调。
+  Future<void> _startChannel({required int generation}) async {
+    await _shutdownChannel();
     if (!ref.mounted || generation != _lifecycleGeneration) {
       return;
     }
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
-    state = state.copyWith(
-      connectionState: NotificationConnectionState.connecting,
-      connectionMessage: '正在连接实时通知',
+    final channel = SseChannel<ActivityStreamEvent>(
+      // afterEventId 由本 provider 自持的 _lastEventId 决定（连流那一刻才读，
+      // 重连时自然带上断线期间已消费到的最大事件 id）。
+      connect:
+          ({String? afterEventId}) => ref
+              .read(activityApiProvider)
+              .streamEvents(afterEventId: _lastEventId),
+      mergeMode: SseMergeMode.microtask,
+      pollingInterval: _pollingInterval,
+      longDisconnectThreshold: _longDisconnectThreshold,
+      onStateChanged:
+          (next) => _applyChannelState(next, generation: generation),
+      onPollingTick:
+          () => unawaited(_refreshFromBootstrap(generation: generation)),
+      onLongDisconnectRecover:
+          () => _refreshFromBootstrap(generation: generation),
     );
+    _channel = channel;
+    await channel.start(
+      // microtask 合批模式下事件走 onBatch；onEvent 只是模式改变时的等价兜底。
+      onEvent:
+          (event) => _applyStreamEvents(<ActivityStreamEvent>[
+            event,
+          ], generation: generation),
+      onBatch: (events) => _applyStreamEvents(events, generation: generation),
+    );
+  }
 
-    if (_disconnectStartedAt != null &&
-        DateTime.now().difference(_disconnectStartedAt!) >
-            _longDisconnectThreshold) {
-      try {
-        final bootstrap = await _loadBootstrapState();
-        if (ref.mounted && generation == _lifecycleGeneration) {
-          _applyBootstrapState(bootstrap);
-        }
-      } catch (_) {}
-    }
+  void _applyChannelState(
+    SseChannelState next, {
+    required int generation,
+  }) {
     if (!ref.mounted || generation != _lifecycleGeneration) {
       return;
     }
-    final stream = ref
-        .read(activityApiProvider)
-        .streamEvents(afterEventId: _lastEventId);
-    _eventSubscription = stream.listen(
-      _handleStreamEvent,
-      onError: _handleStreamError,
-      onDone: _handleStreamDone,
-      cancelOnError: false,
-    );
-    state = state.copyWith(
-      connectionState: NotificationConnectionState.live,
-      connectionMessage: '实时连接中',
-    );
-    _reconnectAttempt = 0;
-    _disconnectStartedAt = null;
-  }
-
-  void _handleStreamEvent(ActivityStreamEvent event) {
-    if (event.id != null && event.id! > _lastEventId) {
-      _lastEventId = event.id!;
-    }
-    _pendingStreamEvents.add(event);
-    if (_isStreamFlushScheduled) {
-      return;
-    }
-    _isStreamFlushScheduled = true;
-    scheduleMicrotask(_flushPendingStreamEvents);
-  }
-
-  void _handleStreamError(Object error, StackTrace stackTrace) {
-    if (!ref.mounted) {
-      return;
-    }
-    if (error is ActivityEventStreamUnsupportedException) {
-      _startPollingFallback();
-      return;
-    }
-    _scheduleReconnect();
-  }
-
-  void _handleStreamDone() {
-    if (ref.mounted && !state.isPollingFallback) {
-      _scheduleReconnect();
-    }
-  }
-
-  void _scheduleReconnect() {
-    if (!ref.mounted || state.isPollingFallback) {
-      return;
-    }
-    _disconnectStartedAt ??= DateTime.now();
-    state = state.copyWith(
-      connectionState: NotificationConnectionState.reconnecting,
-      connectionMessage: '实时连接已断开，正在重连',
-    );
-    final delay =
-        _reconnectDelays[_reconnectAttempt.clamp(
-          0,
-          _reconnectDelays.length - 1,
-        )];
-    _reconnectAttempt += 1;
-    _cancelReconnectTimer();
-    final generation = _lifecycleGeneration;
-    _reconnectTimer = Timer(delay, () async {
-      if (!ref.mounted || generation != _lifecycleGeneration) {
+    switch (next) {
+      // idle 只在 shutdown 时出现，连接文案由 _teardown / reloadAll 自己写。
+      case SseChannelState.idle:
         return;
-      }
-      try {
-        await _eventSubscription?.cancel();
-        _eventSubscription = null;
-        await _connectStream(generation: generation);
-      } catch (error) {
-        if (error is ActivityEventStreamUnsupportedException) {
-          _startPollingFallback();
-        } else {
-          _scheduleReconnect();
-        }
-      }
-    });
+      case SseChannelState.connecting:
+        state = state.copyWith(
+          connectionState: NotificationConnectionState.connecting,
+          connectionMessage: '正在连接实时通知',
+        );
+      case SseChannelState.live:
+        state = state.copyWith(
+          connectionState: NotificationConnectionState.live,
+          connectionMessage: '实时连接中',
+        );
+      case SseChannelState.reconnecting:
+        state = state.copyWith(
+          connectionState: NotificationConnectionState.reconnecting,
+          connectionMessage: '实时连接已断开，正在重连',
+        );
+      case SseChannelState.polling:
+        state = state.copyWith(
+          connectionState: NotificationConnectionState.polling,
+          connectionMessage: '当前浏览器不支持实时连接，已切换为 30 秒轮询',
+        );
+      // 通知中心配了 pollingInterval，不会走「放弃订阅」这一支。
+      case SseChannelState.unsupportedAbandoned:
+        state = state.copyWith(
+          connectionState: NotificationConnectionState.reconnecting,
+          connectionMessage: null,
+        );
+    }
   }
 
-  void _startPollingFallback() {
-    _resetPendingStreamEvents();
-    _cancelReconnectTimer();
-    state = state.copyWith(
-      connectionState: NotificationConnectionState.polling,
-      connectionMessage: '当前浏览器不支持实时连接，已切换为 30 秒轮询',
-    );
-    _cancelPollingTimer();
-    final generation = _lifecycleGeneration;
-    _pollingTimer = Timer.periodic(_pollingInterval, (_) async {
-      if (!ref.mounted || generation != _lifecycleGeneration) {
-        return;
+  /// 轮询 tick 与长断线补拉共用：重新 bootstrap 一次覆盖本地快照。
+  Future<void> _refreshFromBootstrap({required int generation}) async {
+    try {
+      final bootstrap = await _loadBootstrapState();
+      if (ref.mounted && generation == _lifecycleGeneration) {
+        _applyBootstrapState(bootstrap);
       }
-      try {
-        final bootstrap = await _loadBootstrapState();
-        if (ref.mounted && generation == _lifecycleGeneration) {
-          _applyBootstrapState(bootstrap);
-        }
-      } catch (_) {}
-    });
+    } catch (_) {}
   }
 
-  void _flushPendingStreamEvents() {
-    _isStreamFlushScheduled = false;
-    if (!ref.mounted || _pendingStreamEvents.isEmpty) {
+  void _applyStreamEvents(
+    List<ActivityStreamEvent> events, {
+    required int generation,
+  }) {
+    if (!ref.mounted ||
+        generation != _lifecycleGeneration ||
+        events.isEmpty) {
       return;
     }
-    final events = List<ActivityStreamEvent>.from(_pendingStreamEvents);
-    _pendingStreamEvents.clear();
+    for (final event in events) {
+      if (event.id != null && event.id! > _lastEventId) {
+        _lastEventId = event.id!;
+      }
+    }
     var next = state;
     var changed = false;
 
@@ -627,18 +572,4 @@ class NotificationCenter extends _$NotificationCenter {
     return sorted;
   }
 
-  void _cancelReconnectTimer() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-  }
-
-  void _cancelPollingTimer() {
-    _pollingTimer?.cancel();
-    _pollingTimer = null;
-  }
-
-  void _resetPendingStreamEvents() {
-    _pendingStreamEvents.clear();
-    _isStreamFlushScheduled = false;
-  }
 }

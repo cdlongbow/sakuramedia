@@ -15,7 +15,8 @@ import 'package:sakuramedia/features/account/presentation/mobile_change_username
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
-import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
+import 'package:sakuramedia/features/discovery/presentation/pages/mobile/discover_moments_page.dart';
+import 'package:sakuramedia/features/discovery/presentation/pages/mobile/discover_movies_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/mobile/image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart';

@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/discovery/presentation/desktop_discover_page.dart';
-import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
 import 'package:sakuramedia/theme.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   testWidgets('mobile discover tab uses simple movie and moment grids', (
@@ -45,149 +43,6 @@ void main() {
     expect(find.text('近期热度较高'), findsNothing);
     expect(find.text('与你收藏的时刻画面相似'), findsNothing);
   });
-
-  testWidgets('desktop discover page uses simple movie and moment grids', (
-    tester,
-  ) async {
-    final sessionStore = await _buildSessionStore();
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    _enqueueDiscoveryResponses(bundle);
-
-    await _pumpDiscoveryWidget(
-      tester,
-      sessionStore: sessionStore,
-      bundle: bundle,
-      child: const DesktopDiscoverPage(),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('desktop-discover-page')), findsOneWidget);
-    expect(find.text('DISCOVERY'), findsNothing);
-    expect(find.text('读取后端最新推荐快照，集中展示今日推荐影片和推荐时刻。'), findsNothing);
-    expect(
-      find.byKey(const Key('desktop-discover-summary-card')),
-      findsNothing,
-    );
-    // 女优上新区块 + 今日推荐区块各一个影片网格。
-    expect(find.byKey(const Key('movie-summary-grid')), findsNWidgets(2));
-    expect(find.text('女优上新'), findsOneWidget);
-    expect(find.byKey(const Key('movie-summary-card-FOL-001')), findsOneWidget);
-    expect(
-      find.byKey(const Key('desktop-discover-load-more-follow')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
-    expect(find.byKey(const Key('moment-grid')), findsOneWidget);
-    expect(find.byKey(const Key('moment-card-1')), findsOneWidget);
-    expect(
-      find.byKey(const Key('desktop-discover-load-more-daily')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('desktop-discover-load-more-moments')),
-      findsOneWidget,
-    );
-    expect(find.text('近期热度较高'), findsNothing);
-    expect(find.text('与你收藏的时刻画面相似'), findsNothing);
-  });
-
-  testWidgets('desktop discover movies page loads more on scroll', (
-    tester,
-  ) async {
-    final sessionStore = await _buildSessionStore();
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    _enqueueDailyPage(bundle, page: 1, start: 1, count: 24, total: 25);
-    _enqueueDailyPage(bundle, page: 2, start: 25, count: 1, total: 25);
-
-    await _pumpDiscoveryWidget(
-      tester,
-      sessionStore: sessionStore,
-      bundle: bundle,
-      child: const DesktopDiscoverMoviesPage(),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const Key('desktop-discover-movies-page')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
-    await tester.pumpAndSettle();
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('movie-summary-card-ABC-025')), findsOneWidget);
-  });
-
-  testWidgets('desktop discover moments page loads more on scroll', (
-    tester,
-  ) async {
-    final sessionStore = await _buildSessionStore();
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    _enqueueMomentPage(bundle, page: 1, start: 1, count: 24, total: 25);
-    _enqueueMomentPage(bundle, page: 2, start: 25, count: 1, total: 25);
-
-    await _pumpDiscoveryWidget(
-      tester,
-      sessionStore: sessionStore,
-      bundle: bundle,
-      child: const DesktopDiscoverMomentsPage(),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const Key('desktop-discover-moments-page')),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('moment-card-1')), findsOneWidget);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
-    await tester.pumpAndSettle();
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('moment-card-25')), findsOneWidget);
-  });
-
-  testWidgets(
-    'desktop discover movies page keeps items after load more error',
-    (tester) async {
-      final sessionStore = await _buildSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
-      _enqueueDailyPage(bundle, page: 1, start: 1, count: 24, total: 25);
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/daily-recommendations',
-        statusCode: 500,
-        body: <String, dynamic>{'detail': 'failed'},
-      );
-
-      await _pumpDiscoveryWidget(
-        tester,
-        sessionStore: sessionStore,
-        bundle: bundle,
-        child: const DesktopDiscoverMoviesPage(),
-      );
-      await tester.pumpAndSettle();
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
-      await tester.pumpAndSettle();
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
-      expect(
-        find.byKey(const Key('movie-summary-card-ABC-024')),
-        findsOneWidget,
-      );
-      expect(find.text('加载更多推荐影片失败，请点击重试'), findsOneWidget);
-    },
-  );
 }
 
 Future<SessionStore> _buildSessionStore() async {

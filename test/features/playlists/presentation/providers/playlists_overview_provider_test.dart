@@ -252,4 +252,33 @@ void main() {
         .requireValue;
     expect(state.playlists.map((p) => p.id), <int>[10, 20]);
   });
+
+  test('refresh rethrows and keeps existing playlists on failure', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: <Map<String, dynamic>>[_playlistJson(id: 10, name: 'A')],
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      statusCode: 500,
+      body: <String, dynamic>{'detail': 'boom'},
+    );
+
+    keepAlive(_scopeNoOrder);
+    await container.read(playlistsOverviewProvider(_scopeNoOrder).future);
+
+    await expectLater(
+      container.read(playlistsOverviewProvider(_scopeNoOrder).notifier)
+          .refresh(),
+      throwsA(anything),
+    );
+
+    // 失败后已展示列表必须保留（state 原样不动）——页面据 value != null
+    // 继续渲染列表而非整页错误空态；失败提示由调用方 catch 后 toast。
+    final async = container.read(playlistsOverviewProvider(_scopeNoOrder));
+    expect(async.hasError, isFalse);
+    expect(async.value?.playlists.map((p) => p.id), <int>[10]);
+  });
 }

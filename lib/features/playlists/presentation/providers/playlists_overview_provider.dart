@@ -43,24 +43,22 @@ class PlaylistsOverview extends _$PlaylistsOverview
     );
   }
 
-  /// 保留态刷新：不切 loading；失败置 [AsyncError] 由 UI 兜底展示。
+  /// 保留态刷新：不切 loading；失败**保留已展示列表**（state 原样不动,不可写
+  /// `AsyncError`——那会把 `state.value` 清成 null,页面整页替换成错误空态）并
+  /// 向上抛——4 个调用点都按「抛出即失败」契约处理（桌面壳 `_runRefresh` 兜底
+  /// toast、移动页/概览骨架自行 catch + toast、configuration 对账刻意静默）。
   Future<void> refresh() async {
-    try {
-      final playlists = await _loadAndApplyPlaylists(scope);
-      if (isDisposed) return;
-      state = AsyncData(
-        PlaylistsOverviewState(
-          playlists: playlists,
-          coverUrls: <int, String?>{
-            for (final playlist in playlists) playlist.id: null,
-          },
-        ),
-      );
-      unawaited(_startCoverUrlFetches(playlists));
-    } catch (error, stack) {
-      if (isDisposed) return;
-      state = AsyncError(error, stack);
-    }
+    final playlists = await _loadAndApplyPlaylists(scope);
+    if (isDisposed) return;
+    state = AsyncData(
+      PlaylistsOverviewState(
+        playlists: playlists,
+        coverUrls: <int, String?>{
+          for (final playlist in playlists) playlist.id: null,
+        },
+      ),
+    );
+    unawaited(_startCoverUrlFetches(playlists));
   }
 
   /// 拖排序：本地立即改 + fire-and-forget 保存新顺序（与原 controller 一致，

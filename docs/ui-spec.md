@@ -602,7 +602,7 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 - 当前菜单项自上而下依次为：
   1. `订阅影片` / `取消订阅`（顶部；已订阅态图标为 `favorite_border_rounded`、tone 为 `error`；未订阅态图标为 `favorite_rounded`、tone 为 `primary`）
   2. `标记为合集/单体`
-- `订阅影片` / `取消订阅` 直接调用 `PUT/DELETE /movies/{movie_number}/subscription`（取消订阅默认 `delete_media=false`）；成功后通过 `MovieSubscriptionChangeNotifier` 广播，所有监听列表就地补丁刷新心形与订阅计数；后端返回 `movie_subscription_has_media` 时展示“该影片存在媒体，默认不能取消订阅”toast，与详情页动作菜单一致
+- `订阅影片` / `取消订阅` 直接调用 `PUT/DELETE /movies/{movie_number}/subscription`（取消订阅默认 `delete_media=false`）；成功后经 `movieSubscriptionEventsProvider.reportChange` 广播，所有监听列表就地补丁刷新心形与订阅计数；后端返回 `movie_subscription_has_media` 时展示“该影片存在媒体，默认不能取消订阅”toast，与详情页动作菜单一致
 - 打开菜单时会先请求 `GET /movies/{movie_number}/collection-status`，根据返回状态动态展示 `标记为合集` 或 `标记为单体`
 - `标记为合集/单体` 会调用 `PATCH /movies/collection-type` 更新当前影片
 - 合集番号特征不再从影片菜单内快捷追加；当前统一在桌面端系统设置的「高级设置」分类中通过 `media.others_number_features` 维护
@@ -1102,7 +1102,7 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 - 批量重置**不弹确认**（可逆的加法，最坏只多打一轮索引器）；批量取消订阅、一键重置全部**弹确认**
 - 单条取消订阅也不弹确认（可逆、不删文件），结果走 `showMovieSubscriptionFeedback`；批量取消订阅走后端「部分成功」语义，被跳过的番号**保持选中**并复用 `showMovieSubscriptionBatchFeedback` 展开清单
 - 重置成功后就地打补丁：条目回「待查」，当前分段签容不下它就移除并扣减总数——不整页重拉
-- 取消订阅广播到全局 `MovieSubscriptionChangeNotifier`；反向广播经 `movieSubscriptionEventsProvider` 回来时就地摘行。页面离屏时该订阅被 Riverpod 挂起，但事件会缓冲、回来时补投，不会丢
+- 取消订阅经 `movieSubscriptionEventsProvider.reportChange` 广播；反向广播经 `movieSubscriptionEventsProvider` 回来时就地摘行。页面离屏时该订阅被 Riverpod 挂起，但事件会缓冲、回来时补投，不会丢
 - 空态按状态分文案：待办三态为空是**好消息**（「没有缺资源的订阅」+「查看全部订阅」出口），不用「暂无数据」的失败口吻
 
 新增 token：`subscriptionRowCoverWidth`（桌面 168）、`subscriptionRowMinHeight`（桌面 132）。移动档位按 `AppComponentTokens` 的类型要求同样给了值（116 / 108），但本页无移动端，当前用不到。

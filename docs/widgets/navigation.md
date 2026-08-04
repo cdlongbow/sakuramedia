@@ -42,5 +42,5 @@
 ## 相关约定
 
 - 路由 tab(切页) → `AppTabBar`;列表顶栏(筛选 / 信息 / 操作) → `AppListHeader`(双端同一条)。
-- 平台判定:统一读 `context.watch<AppPlatform?>()`。`AppTabBar(variant: auto)` 已经内部读了,不要在业务侧再判一次。
+- 平台判定:统一读 `AppPlatformScope.maybeOf(context)`(InheritedWidget,`lib/app/app_platform.dart`)。`AppTabBar(variant: auto)` 已经内部读了,不要在业务侧再判一次。
 - 筛选抽屉里的具体筛选控件(Choice / Sort / Chips)由各业务域自建(见 movies / actors / rankings 的 `filter_sections.dart` / `filter_toolbar.dart`),本目录只管外壳。

@@ -1,15 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/downloads/data/download_task_stream_event_dto.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 
 import '../../../../support/test_api_bundle.dart';
 
-/// 覆盖迁 Riverpod 后 DownloadTaskCenter 的核心用户路径：
-/// 首页加载 + 加载更多、筛选切换（保留 items + isReloading）、
-/// 暂停/恢复/删除 mutation。SSE 消费由集成路径覆盖，此处不重复。
+// 覆盖迁 Riverpod 后 DownloadTaskCenter 的核心用户路径：
+// 首页加载 + 加载更多、筛选切换（保留 items + isReloading）、
+// 暂停/恢复/删除 mutation，以及 SSE 重连期的连接收敛。
+
+/// 把 SSE 换成可控的 [StreamController]：记录开了几条流、关了几条，
+/// 用来验证「重连退避期间再次 connectStream」不会漏掉旧连接。
+class _StreamingDownloadsApi extends DownloadsApi {
+  _StreamingDownloadsApi({
+    required super.apiClient,
+    required super.streamClient,
+  });
+
+  final List<StreamController<DownloadTaskStreamEvent>> controllers =
+      <StreamController<DownloadTaskStreamEvent>>[];
+  int cancelCount = 0;
+
+  @override
+  Stream<DownloadTaskStreamEvent> streamDownloadTasks({
+    int? clientId,
+    String? movieNumber,
+  }) {
+    final controller = StreamController<DownloadTaskStreamEvent>(
+      onCancel: () => cancelCount += 1,
+    );
+    controllers.add(controller);
+    return controller.stream;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -28,6 +60,7 @@ void main() {
     bundle = await createTestApiBundle(sessionStore);
     container = ProviderContainer(
       overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
         downloadsApiProvider.overrideWithValue(bundle.downloadsApi),
         downloadClientsApiProvider.overrideWithValue(bundle.downloadClientsApi),
       ],
@@ -237,5 +270,46 @@ void main() {
     expect(state.paged.items.map((row) => row.task.id), [4]);
     expect(state.paged.total, 4);
     expect(state.paged.hasMore, isTrue); // 1/4
+  });
+
+  test('重连退避期间再次 connectStream 不留下第二条 SSE', () async {
+    final streamingApi = _StreamingDownloadsApi(
+      apiClient: bundle.apiClient,
+      streamClient: bundle.sseEventStreamClient,
+    );
+    final streamContainer = ProviderContainer(
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
+        downloadsApiProvider.overrideWithValue(streamingApi),
+        downloadClientsApiProvider.overrideWithValue(bundle.downloadClientsApi),
+      ],
+      retry: (_, _) => null,
+    );
+    addTearDown(streamContainer.dispose);
+
+    enqueueTaskPage([taskJson(id: 1)]);
+    enqueueClients();
+    await streamContainer.read(downloadTaskCenterProvider.future);
+
+    final notifier = streamContainer.read(downloadTaskCenterProvider.notifier);
+    await notifier.connectStream();
+    expect(streamingApi.controllers, hasLength(1));
+    expect(
+      streamContainer.read(downloadTaskCenterProvider).requireValue.streamState,
+      DownloadTaskStreamState.live,
+    );
+
+    // 流出错 → 进入退避重连。listen 用的是 cancelOnError: false，旧订阅还活着。
+    streamingApi.controllers.first.addError(StateError('boom'));
+    await pumpEventQueue();
+    expect(
+      streamContainer.read(downloadTaskCenterProvider).requireValue.streamState,
+      DownloadTaskStreamState.reconnecting,
+    );
+
+    // 退避计时器还没到点时页面重新挂载并 connect：必须先关旧连接再开新的。
+    await notifier.connectStream();
+    expect(streamingApi.controllers, hasLength(2));
+    expect(streamingApi.cancelCount, 1);
   });
 }

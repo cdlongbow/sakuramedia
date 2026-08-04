@@ -18,6 +18,9 @@ import 'package:sakuramedia/features/downloads/presentation/providers/downloads_
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_review_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_thumbnail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/theme.dart';
@@ -105,6 +108,51 @@ class _FakeDownloadsApi extends DownloadsApi {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('inspector releases its three providers when the panel unmounts', (
+    WidgetTester tester,
+  ) async {
+    final container = await _pumpInspectorPanel(
+      tester,
+      panelHeight: 480,
+      fetchMovieReviews: ({
+        required String movieNumber,
+        required int page,
+        required int pageSize,
+        required MovieReviewSort sort,
+      }) async => const <MovieReviewDto>[],
+    );
+    await tester.pump();
+
+    // 打开期间三者都被面板收编的 KeepAliveLink 保活：切 Tab 不丢已加载数据。
+    expect(container.exists(movieDetailReviewProvider('ABC-001')), isTrue);
+    expect(container.exists(movieDetailMagnetProvider('ABC-001')), isTrue);
+    expect(
+      container.exists(movieDetailThumbnailProvider(mediaId: null)),
+      isTrue,
+    );
+
+    // 只换掉面板、保留同一个 scope：ProviderScope 卸载时会 cancel 掉 riverpod
+    // 的 vsync timer，整棵树拆掉的话待释放队列永远不会结算。
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: SizedBox.shrink()),
+      ),
+    );
+    // autoDispose 的实际释放挂在 `Timer(Duration.zero)`，要推进时钟才结算。
+    await tester.pump(const Duration(milliseconds: 16));
+
+    // 回归守卫：link 必须由面板在 dispose 里 close。provider 自持 link 而无人
+    // close 会形成「link 不关 → 永不 dispose → onDispose 里的 close 永不执行」
+    // 的死锁式泄漏，打开过检查器的影片会常驻到登出。
+    expect(container.exists(movieDetailReviewProvider('ABC-001')), isFalse);
+    expect(container.exists(movieDetailMagnetProvider('ABC-001')), isFalse);
+    expect(
+      container.exists(movieDetailThumbnailProvider(mediaId: null)),
+      isFalse,
+    );
+  });
 
   testWidgets(
     'movie detail inspector review loading skeleton keeps at least three items',
@@ -613,7 +661,9 @@ void main() {
   );
 }
 
-Future<void> _pumpInspectorPanel(
+/// 返回承载面板的 [ProviderContainer]（用 [UncontrolledProviderScope] 注入，
+/// 容器由本函数持有并在 tearDown 释放），便于断言 provider 的存活/释放。
+Future<ProviderContainer> _pumpInspectorPanel(
   WidgetTester tester, {
   required double panelHeight,
   TargetPlatform? platform,
@@ -655,13 +705,18 @@ Future<void> _pumpInspectorPanel(
         ),
   );
 
+  final container = ProviderContainer(
+    overrides: [
+      sessionStoreProvider.overrideWithValue(sessionStore),
+      moviesApiProvider.overrideWithValue(fakeMoviesApi),
+      downloadsApiProvider.overrideWithValue(fakeDownloadsApi),
+    ],
+  );
+  addTearDown(container.dispose);
+
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        sessionStoreProvider.overrideWithValue(sessionStore),
-        moviesApiProvider.overrideWithValue(fakeMoviesApi),
-        downloadsApiProvider.overrideWithValue(fakeDownloadsApi),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: OKToast(
         child: MaterialApp(
           theme:
@@ -686,6 +741,8 @@ Future<void> _pumpInspectorPanel(
       ),
     ),
   );
+
+  return container;
 }
 
 DownloadTaskDto _emptyDownloadTask({required int clientId}) {

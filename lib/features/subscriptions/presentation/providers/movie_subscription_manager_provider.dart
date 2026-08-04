@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movies_api_pr
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/movie_subscription_filter_state.dart';
@@ -88,6 +89,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
 
   @override
   Future<MovieSubscriptionManagerState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     // 页面离开后本 provider 没有监听者，Riverpod 会**挂起**这条入站订阅——但底层
     // 是 `StreamSubscription.pause()`，事件会缓冲、在页面回来恢复监听时补投，

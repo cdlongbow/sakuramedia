@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/download_t
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'download_task_center_provider.g.dart';
 
@@ -112,6 +113,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
 
   @override
   Future<DownloadTaskCenterState> build() async {
+    // 登出即失效：SSE / 重连退避 / 轮询都由下面的 onDispose 收尾。
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     ref.onDispose(() {
       _cancelStream();
@@ -306,6 +309,11 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   }
 
   Future<void> _openStream() async {
+    // 开新流前必须 cancel 旧订阅：listen 用的是 `cancelOnError: false`，出错的流
+    // 不会自动关闭，而 [connectStream] 的守卫放行 `reconnecting`——退避期间外部
+    // 再次 connect（任务面板重新挂载）会直接覆盖 `_streamSubscription`，留下一条
+    // 无人持有却仍在推事件的连接。
+    _cancelStream();
     _cancelReconnectTimer();
     _cancelPollingTimer();
     _updateStreamState(DownloadTaskStreamState.connecting);

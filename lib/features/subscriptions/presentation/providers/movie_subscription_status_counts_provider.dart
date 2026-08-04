@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status_counts_dto.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
 
@@ -17,6 +18,7 @@ class MovieSubscriptionStatusCounts extends _$MovieSubscriptionStatusCounts
     with AsyncNotifierDisposeGuardMixin<MovieSubscriptionStatusCountsDto> {
   @override
   Future<MovieSubscriptionStatusCountsDto> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     return ref.read(movieSubscriptionsApiProvider).getStatusCounts();
   }

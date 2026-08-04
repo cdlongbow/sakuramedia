@@ -190,8 +190,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
     BoxConstraints constraints,
   ) {
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final effectiveDpr =
-        dpr.clamp(1.0, MaskedImage._decodeDevicePixelRatioCap) as double;
+    final effectiveDpr = dpr.clamp(1.0, MaskedImage._decodeDevicePixelRatioCap);
 
     int? cacheWidth;
     if (constraints.hasBoundedWidth &&
@@ -200,22 +199,17 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
       final factor = widget.visibleWidthFactor;
       final widthMultiplier =
           (factor != null && factor > 0 && factor <= 1) ? 1 / factor : 1.0;
-      cacheWidth =
-          ((constraints.maxWidth * widthMultiplier * effectiveDpr).round())
-                  .clamp(1, MaskedImage._decodeSizeUpperBound)
-              as int;
+      final rawWidth =
+          (constraints.maxWidth * widthMultiplier * effectiveDpr).round();
+      cacheWidth = rawWidth.clamp(1, MaskedImage._decodeSizeUpperBound);
     }
 
     int? cacheHeight;
     if (constraints.hasBoundedHeight &&
         constraints.maxHeight.isFinite &&
         constraints.maxHeight > 0) {
-      cacheHeight =
-          ((constraints.maxHeight * effectiveDpr).round()).clamp(
-                1,
-                MaskedImage._decodeSizeUpperBound,
-              )
-              as int;
+      final rawHeight = (constraints.maxHeight * effectiveDpr).round();
+      cacheHeight = rawHeight.clamp(1, MaskedImage._decodeSizeUpperBound);
     }
 
     if (cacheWidth != null && cacheHeight != null) {

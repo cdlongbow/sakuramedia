@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'media_browse_provider.g.dart';
 
@@ -62,6 +63,7 @@ class MediaBrowse extends _$MediaBrowse
 
   @override
   Future<MediaBrowseState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final paged = await loadInitialPage();
     return MediaBrowseState(paged: paged, filter: _activeFilter);

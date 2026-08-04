@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
@@ -31,7 +32,8 @@ void main() {
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
     mediaApi = MediaApi(apiClient: apiClient);
     container = ProviderContainer(
-      overrides: [mediaApiProvider.overrideWithValue(mediaApi)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),mediaApiProvider.overrideWithValue(mediaApi)],
       retry: (_, __) => null,
     );
   });

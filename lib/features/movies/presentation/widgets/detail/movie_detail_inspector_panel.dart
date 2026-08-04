@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
@@ -15,7 +16,6 @@ import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
-import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -71,6 +71,16 @@ class _MovieDetailInspectorPanelState
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
+  /// 检查器三 provider 的 `KeepAliveLink` 收编表（key → link，去重用）。
+  ///
+  /// 三者都是 autoDispose family，build 里自持 `ref.keepAlive()`——link 必须
+  /// 由**面板**关闭：面板打开期间保活（切 Tab 不丢已加载的评论/磁力/缩略图），
+  /// [dispose] 时逐个 close → provider 释放。若无人 close 会形成「link 不关 →
+  /// provider 永不 dispose → onDispose 里的 close 永不执行」的死锁式泄漏
+  /// （见 `lib/features/CLAUDE.md`「页面保活缓存」）。缩略图按 mediaId 分实例，
+  /// 切换媒体源时新实例也要登记，故用 map 而非三个字段。
+  final Map<String, KeepAliveLink> _retainedLinks = <String, KeepAliveLink>{};
+
   MovieDetailReview get _reviewController =>
       ref.read(movieDetailReviewProvider(widget.movieNumber).notifier);
   MovieDetailMagnet get _magnetController =>
@@ -83,10 +93,26 @@ class _MovieDetailInspectorPanelState
     movieDetailThumbnailProvider(mediaId: widget.selectedMedia?.mediaId),
   );
 
+  void _retainLink(String key, KeepAliveLink? link) {
+    if (link == null || _retainedLinks.containsKey(key)) return;
+    _retainedLinks[key] = link;
+  }
+
+  /// 登记当前 mediaId 对应的缩略图实例（初次挂载与切换媒体源时都要调）。
+  void _retainThumbnailLink() {
+    final mediaId = widget.selectedMedia?.mediaId;
+    _retainLink('thumbnail:$mediaId', _thumbnailController.cacheLink);
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    // 收编在 initState 同步做（不等 post-frame）：link 是 provider 在 build 里
+    // 自持的，只要 provider 被创建就已存在——晚一帧收编，中途被销毁就没人 close。
+    _retainLink('review', _reviewController.cacheLink);
+    _retainLink('magnet', _magnetController.cacheLink);
+    _retainThumbnailLink();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_reviewController.loadInitial());
@@ -95,7 +121,19 @@ class _MovieDetailInspectorPanelState
   }
 
   @override
+  void didUpdateWidget(covariant MovieDetailInspectorPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedMedia?.mediaId != widget.selectedMedia?.mediaId) {
+      _retainThumbnailLink();
+    }
+  }
+
+  @override
   void dispose() {
+    for (final link in _retainedLinks.values) {
+      link.close();
+    }
+    _retainedLinks.clear();
     _tabController.dispose();
     super.dispose();
   }

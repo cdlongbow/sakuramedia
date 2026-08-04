@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'media_rapid_upload_history_provider.g.dart';
 
@@ -50,6 +51,7 @@ class MediaRapidUploadHistory extends _$MediaRapidUploadHistory
 
   @override
   Future<PagedListState<MediaRapidUploadBatchListItemDto>> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     return loadInitialPage();
   }

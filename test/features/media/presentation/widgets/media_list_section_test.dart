@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
@@ -49,6 +50,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
           mediaApiProvider.overrideWithValue(bundle.mediaApi),
           mediaLibrariesApiProvider.overrideWithValue(bundle.mediaLibrariesApi),
         ],

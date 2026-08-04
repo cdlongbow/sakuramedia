@@ -43,6 +43,11 @@ class _PlainNotifier extends AsyncNotifier<PagedListState<int>>
     attachDisposeGuard();
     return loadInitialPage();
   }
+
+  /// 模拟 mutation 广播到达时的就地补丁（取消订阅摘行 / 删除等）。
+  void patchRemove(int value) {
+    state = AsyncData(state.requireValue.removeWhere((item) => item == value));
+  }
 }
 
 final _plainProvider =
@@ -392,6 +397,31 @@ void main() {
       expect(finalState.currentPage, 1);
       expect(finalState.total, 3);
       expect(finalState.isLoadingMore, isFalse);
+    });
+
+    test('loadMore 以 await 后的状态为合并基线，不覆盖期间的就地补丁', () async {
+      // 场景：page 2 还没回来时，一条 mutation 广播把已加载的某条就地摘掉。
+      // 合并若拿 await 前的 items 快照，补丁会被整体覆盖、数据短暂回退。
+      final page2Completer = Completer<PaginatedResponseDto<int>>();
+      final container = _makeContainer((page, size) async {
+        if (page == 1) return _page(page: 1, items: [1, 2, 3], total: 6);
+        if (page == 2) return page2Completer.future;
+        throw StateError('unexpected page $page');
+      });
+      addTearDown(container.dispose);
+
+      await container.read(_plainProvider.future);
+
+      final loadMoreFuture = container.read(_plainProvider.notifier).loadMore();
+      container.read(_plainProvider.notifier).patchRemove(2);
+
+      page2Completer.complete(_page(page: 2, items: [4, 5, 6], total: 6));
+      await loadMoreFuture;
+
+      final state = container.read(_plainProvider).requireValue;
+      expect(state.items, [1, 3, 4, 5, 6]);
+      expect(state.currentPage, 2);
+      expect(state.isLoadingMore, isFalse);
     });
 
     test('dispose during in-flight loadMore does not throw', () async {

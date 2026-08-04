@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/media/presentation/providers/invalid_media_
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'invalid_media_provider.g.dart';
 
@@ -46,6 +47,7 @@ class InvalidMedia extends _$InvalidMedia
 
   @override
   Future<InvalidMediaState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final paged = await loadInitialPage();
     return InvalidMediaState(paged: paged);

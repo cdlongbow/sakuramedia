@@ -110,12 +110,9 @@ class _MoviePlotThumbnailState extends State<MoviePlotThumbnail> {
       return null;
     }
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final effectiveDpr = dpr.clamp(1.0, _decodeDevicePixelRatioCap) as double;
-    return ((widget.maxHeight * effectiveDpr).round()).clamp(
-          1,
-          _decodeSizeUpperBound,
-        )
-        as int;
+    final effectiveDpr = dpr.clamp(1.0, _decodeDevicePixelRatioCap);
+    final rawHeight = (widget.maxHeight * effectiveDpr).round();
+    return rawHeight.clamp(1, _decodeSizeUpperBound);
   }
 
   void _listenToImageStream(ImageProvider<Object>? provider) {

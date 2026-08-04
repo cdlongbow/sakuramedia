@@ -344,15 +344,19 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
     try {
       final response = await fetchPage(paged.currentPage + 1, pageSize);
       if (_disposed || generation != _generation) return;
+      // 合并基线取 await **之后**的分页态，不是入口处的 `paged` 快照：await 期间
+      // mutation 广播可能已对 items 做过就地补丁（取消订阅摘行、删除等），拿旧快照
+      // 整体覆盖会把补丁抹掉、让数据短暂回退。失败分支一直是这么写的，这里对齐。
+      final currentAfter = state.value ?? current;
+      final pagedAfter = pagedOf(currentAfter);
       final merged = List<T>.unmodifiable(<T>[
-        ...paged.items,
+        ...pagedAfter.items,
         ...response.items,
       ]);
-      final currentAfter = state.value ?? current;
       state = AsyncData(
         applyPaged(
           currentAfter,
-          paged.copyWith(
+          pagedAfter.copyWith(
             items: merged,
             currentPage: response.page,
             total: response.total,

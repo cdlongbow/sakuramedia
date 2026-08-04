@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_play_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/shared/video_collection_play_content.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/landscape_player_system_ui.dart';
 
-/// 移动端视频合集连播页：在桌面连播页（左播放器 + 右队列）外薄包一层横屏沉浸式
-/// `SystemChrome`，对齐 `MobileClipCollectionPlayPage` / `MobileMoviePlayerPage` 的包壳方式。
+/// 移动端视频合集连播壳：横屏沉浸式 `SystemChrome` 是唯一有状态职责，
+/// 播放器全部实现在共享的 [VideoCollectionPlayContent]（`useTouchOptimizedControls: true`）。
 class MobileVideoCollectionPlayPage extends StatefulWidget {
   const MobileVideoCollectionPlayPage({
     super.key,
@@ -41,7 +41,7 @@ class _MobileVideoCollectionPlayPageState
 
   @override
   Widget build(BuildContext context) {
-    return DesktopVideoCollectionPlayPage(
+    return VideoCollectionPlayContent(
       collectionId: widget.collectionId,
       startIndex: widget.startIndex,
       sort: widget.sort,

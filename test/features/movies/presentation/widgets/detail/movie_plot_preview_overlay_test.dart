@@ -749,8 +749,8 @@ void main() {
 
 Widget awaitableOverlayApp({required Widget child}) {
   final sessionStore = SessionStore.inMemory();
-  // 过渡期双注入：MaskedImage 等已迁 Riverpod 走 ProviderScope，
-  // movies 域的 MoviePlotThumbnail 仍 context.read<SessionStore>() 走 legacy。
+  // MaskedImage 走 ref.watch(baseUrlProvider)、MoviePlotThumbnail 经容器
+  // read(sessionStoreProvider) 拼 baseUrl——两者都从这份 override 取会话。
   return ProviderScope(
     overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
     child: MaterialApp(

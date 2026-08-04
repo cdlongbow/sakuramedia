@@ -7,7 +7,7 @@
 - **用途**: 通用 tab 条,`PreferredSizeWidget`。**四种 variant 自动分流**。
 - **required**: `tabs`
 - **可选**: `controller` · `onTap` · `variant: auto|desktop|compact|mobileTop`(默认 auto) · `tabHeight` · `indicatorSize`
-- **`variant: auto`**: 读 `Provider<AppPlatform?>`——移动 → `mobileTop` 样式;桌面/web → `desktop` 样式。参考 `feedback/app_confirm_dialog.dart` 的分流风格。
+- **`variant: auto`**: 读 `AppPlatformScope.maybeOf`——移动 → `mobileTop` 样式;桌面/web → `desktop` 样式。参考 `feedback/app_confirm_dialog.dart` 的分流风格。
 - **何时用**: 任何 tab 场景——列表 tab、详情 tab、批量任务 tab。**不要**用 Material `TabBar`。
 - **注意**: 指示器是自绘 `_ThinTabIndicator`。改样式改这里,别在业务侧覆盖。
 

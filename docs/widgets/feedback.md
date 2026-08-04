@@ -65,7 +65,7 @@
 - **用途**: **自适应**确认框——一套 API 双端通用。
 - **签名**: `Future<bool> showAppConfirmDialog(BuildContext context, { required String title, required String message, String confirmLabel = '确认', String cancelLabel = '取消', bool danger = false, AppConfirmVariant variant = AppConfirmVariant.auto, Future<void> Function()? onConfirm, String failureFallback = '操作失败', Key? dialogKey, Key? cancelKey, Key? confirmKey })`
 - **variant**:
-  - `auto`(默认): 读 `Provider<AppPlatform?>` → `mobile` = `showAppBottomDrawer`;桌面/web/null = `showDialog + AppDesktopDialog`。
+  - `auto`(默认): 读 `AppPlatformScope.maybeOf` → `mobile` = `showAppBottomDrawer`;桌面/web/null = `showDialog + AppDesktopDialog`。
   - `dialog` / `drawer`:显式覆盖。
 - **返回类型**: `Future<bool>` **恒非空**(drawer 分支 `?? false`),契约不变。
 - **`onConfirm` slot**(推荐):传了 → 点确认时内部把确认按钮置 `isLoading`、禁用取消,`await onConfirm()` 成功后 pop(true);抛异常 → toast(`apiErrorMessage(error, fallback: failureFallback)`) + 恢复按钮 + **不 pop**。

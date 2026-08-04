@@ -564,8 +564,8 @@ Future<void> _pumpPage(
       mediaLibrariesApi ?? _EmptyMediaLibrariesApi(apiClient: apiClient);
 
   await tester.pumpWidget(
-    // MaskedImage 内部 context.read<SessionStore>() 拼 baseUrl，所以 legacy Provider
-    // 树仍要挂 SessionStore；上层 ProviderScope 承担 Riverpod bridge。
+    // MaskedImage 内部 ref.watch(baseUrlProvider) 拼 baseUrl，其派生自
+    // sessionStoreProvider——所以这里必须 override 会话。
     ProviderScope(
       overrides: [
         sessionStoreProvider.overrideWithValue(sessionStore),

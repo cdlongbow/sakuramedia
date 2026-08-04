@@ -5,7 +5,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
-import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
+import 'package:sakuramedia/features/image_search/presentation/pages/desktop/image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';

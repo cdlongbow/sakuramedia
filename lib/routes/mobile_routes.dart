@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
@@ -16,12 +15,9 @@ import 'package:sakuramedia/features/account/presentation/mobile_change_username
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
-import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/discovery/presentation/discovery_recommendation_list_pages.dart';
-import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
+import 'package:sakuramedia/features/image_search/presentation/pages/mobile/image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
-import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart';
@@ -165,7 +161,7 @@ class MobileImageSearchRouteData extends _MobileSubpageRouteData
       context,
       listen: false,
     ).read(imageSearchDraftStoreProvider).get(resolvedDraftId);
-    return DesktopImageSearchPage(
+    return MobileImageSearchPage(
       initialFileName: draft?.fileName,
       initialFileBytes: draft?.bytes,
       initialMimeType: draft?.mimeType,
@@ -182,50 +178,6 @@ class MobileImageSearchRouteData extends _MobileSubpageRouteData
             ) ??
             currentMovieScope,
       ),
-      imagePicker: pickMobileImageSearchFile,
-      onSearchSimilar: (context, item) async {
-        final imageUrl = item.image.resolvedUrl;
-        final fileName =
-            'image_search_${item.movieNumber}_${item.thumbnailId}.${guessImageFileExtension(imageUrl)}';
-        try {
-          final imageBytes = await ProviderScope.containerOf(
-            context,
-            listen: false,
-          ).read(apiClientProvider).getBytes(imageUrl);
-          if (!context.mounted) {
-            return false;
-          }
-          final nextDraftId = ProviderScope.containerOf(context, listen: false)
-              .read(imageSearchDraftStoreProvider)
-              .save(
-                fileName: fileName,
-                bytes: imageBytes,
-                mimeType: guessImageMimeType(fileName),
-              );
-          await MobileImageSearchRouteData(
-            draftId: nextDraftId,
-            currentMovieNumber: item.movieNumber,
-          ).push<bool>(context);
-          return true;
-        } catch (error) {
-          if (context.mounted) {
-            showToast(apiErrorMessage(error, fallback: '读取结果图片失败，请稍后重试'));
-          }
-          return false;
-        }
-      },
-      onOpenPlayer: (context, item) {
-        MobileMoviePlayerRouteData(
-          movieNumber: item.movieNumber,
-          mediaId: item.mediaId > 0 ? item.mediaId : null,
-          positionSeconds: item.offsetSeconds,
-        ).push(context);
-      },
-      onOpenMovieDetail: (context, item) {
-        MobileMovieDetailRouteData(movieNumber: item.movieNumber).push(context);
-      },
-      resultPreviewPresentation:
-          ImageSearchResultPreviewPresentation.bottomDrawer,
     );
   }
 }

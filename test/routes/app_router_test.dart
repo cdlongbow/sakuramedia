@@ -12,7 +12,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
-import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
+import 'package:sakuramedia/features/image_search/presentation/pages/shared/image_search_content.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -1916,11 +1916,11 @@ void main() {
       router.go(mobileImageSearchPath);
       await tester.pumpAndSettle();
 
-      final page = tester.widget<DesktopImageSearchPage>(
-        find.byType(DesktopImageSearchPage),
+      final content = tester.widget<ImageSearchContent>(
+        find.byType(ImageSearchContent),
       );
       expect(
-        page.resultPreviewPresentation,
+        content.resultPreviewPresentation,
         ImageSearchResultPreviewPresentation.bottomDrawer,
       );
     },
@@ -1947,12 +1947,12 @@ void main() {
     router.go(mobileImageSearchPath);
     await tester.pumpAndSettle();
 
-    final page = tester.widget<DesktopImageSearchPage>(
-      find.byType(DesktopImageSearchPage),
+    final content = tester.widget<ImageSearchContent>(
+      find.byType(ImageSearchContent),
     );
-    expect(page.onSearchSimilar, isNotNull);
-    expect(page.onOpenPlayer, isNotNull);
-    expect(page.onOpenMovieDetail, isNotNull);
+    expect(content.onSearchSimilar, isNotNull);
+    expect(content.onOpenPlayer, isNotNull);
+    expect(content.onOpenMovieDetail, isNotNull);
   });
 
   testWidgets(
@@ -1976,10 +1976,10 @@ void main() {
       router.go(mobileImageSearchPath);
       await tester.pumpAndSettle();
 
-      final page = tester.widget<DesktopImageSearchPage>(
-        find.byType(DesktopImageSearchPage),
+      final content = tester.widget<ImageSearchContent>(
+        find.byType(ImageSearchContent),
       );
-      final hostContext = tester.element(find.byType(DesktopImageSearchPage));
+      final hostContext = tester.element(find.byType(ImageSearchContent));
       final resultItem = ImageSearchResultItemDto(
         thumbnailId: 123,
         mediaId: 456,
@@ -1996,7 +1996,7 @@ void main() {
         ),
       );
 
-      page.onOpenMovieDetail!(hostContext, resultItem);
+      content.onOpenMovieDetail!(hostContext, resultItem);
       expect(
         router.routeInformationProvider.value.uri.path,
         buildMobileMovieDetailRoutePath('ABC-001'),
@@ -2004,14 +2004,14 @@ void main() {
 
       router.go(mobileImageSearchPath);
       await tester.pumpAndSettle();
-      final pageAfterDetail = tester.widget<DesktopImageSearchPage>(
-        find.byType(DesktopImageSearchPage),
+      final contentAfterDetail = tester.widget<ImageSearchContent>(
+        find.byType(ImageSearchContent),
       );
       final contextAfterDetail = tester.element(
-        find.byType(DesktopImageSearchPage),
+        find.byType(ImageSearchContent),
       );
 
-      pageAfterDetail.onOpenPlayer!(contextAfterDetail, resultItem);
+      contentAfterDetail.onOpenPlayer!(contextAfterDetail, resultItem);
       expect(
         router.routeInformationProvider.value.uri.path,
         '/mobile/library/movies/ABC-001/player',

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
@@ -20,7 +21,10 @@ void main() {
     apiClient = ApiClient(sessionStore: sessionStore);
     api = _FakeLlmSettingsApi(apiClient: apiClient);
     container = ProviderContainer(
-      overrides: [llmSettingsApiProvider.overrideWithValue(api)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
+        llmSettingsApiProvider.overrideWithValue(api),
+      ],
       retry: (_, __) => null,
     );
   });

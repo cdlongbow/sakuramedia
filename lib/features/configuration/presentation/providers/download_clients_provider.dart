@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'download_clients_provider.g.dart';
 
@@ -12,6 +13,7 @@ class DownloadClients extends _$DownloadClients
     with AsyncNotifierDisposeGuardMixin<List<DownloadClientDto>> {
   @override
   Future<List<DownloadClientDto>> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     return ref.read(downloadClientsApiProvider).getClients();
   }

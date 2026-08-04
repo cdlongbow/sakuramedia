@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'indexer_settings_provider.g.dart';
 
@@ -16,6 +17,7 @@ class IndexerSettings extends _$IndexerSettings
     with AsyncNotifierDisposeGuardMixin<IndexerSettingsState> {
   @override
   Future<IndexerSettingsState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final settings = await ref.read(indexerSettingsApiProvider).getSettings();
     return IndexerSettingsState.fromDto(settings);

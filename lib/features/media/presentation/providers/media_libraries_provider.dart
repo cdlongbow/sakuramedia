@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'media_libraries_provider.g.dart';
 
@@ -47,6 +48,7 @@ class MediaLibraries extends _$MediaLibraries
     with AsyncNotifierDisposeGuardMixin<MediaLibrariesState> {
   @override
   Future<MediaLibrariesState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final libraries = await ref.read(mediaLibrariesApiProvider).getLibraries();
     return MediaLibrariesState(libraries: libraries);

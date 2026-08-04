@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/download_preference_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'download_preference_provider.g.dart';
 
@@ -12,6 +13,7 @@ class DownloadPreference extends _$DownloadPreference
     with AsyncNotifierDisposeGuardMixin<DownloadPreferenceState> {
   @override
   Future<DownloadPreferenceState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final resource = await ref.read(configApiProvider).get();
     final kinds = resource.downloads.preferredClientKinds;

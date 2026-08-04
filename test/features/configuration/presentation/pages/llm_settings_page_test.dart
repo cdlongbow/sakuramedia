@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
@@ -295,6 +296,7 @@ Future<void> _pumpPage(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sessionStoreProvider.overrideWithValue(_sessionStore),
         llmSettingsApiProvider.overrideWithValue(
           api ?? _bundle.movieDescTranslationSettingsApi,
         ),

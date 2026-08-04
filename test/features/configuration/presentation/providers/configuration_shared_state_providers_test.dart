@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
@@ -19,6 +20,8 @@ import 'package:sakuramedia/features/configuration/presentation/providers/indexe
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart'
+    as media;
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 
 void main() {
@@ -38,7 +41,10 @@ void main() {
   test('媒体库 provider 加载、失败恢复、CRUD 本地补丁和销毁后迟到回包', () async {
     final api = _FakeMediaLibrariesApi(apiClient: apiClient);
     final container = ProviderContainer(
-      overrides: [mediaLibrariesApiProvider.overrideWithValue(api)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        mediaLibrariesApiProvider.overrideWithValue(api),
+      ],
       retry: (_, __) => null,
     );
     addTearDown(container.dispose);
@@ -87,7 +93,10 @@ void main() {
   test('下载器 provider 会本地 upsert/remove，刷新失败保留当前列表', () async {
     final api = _FakeDownloadClientsApi(apiClient: apiClient);
     final container = ProviderContainer(
-      overrides: [downloadClientsApiProvider.overrideWithValue(api)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        downloadClientsApiProvider.overrideWithValue(api),
+      ],
       retry: (_, __) => null,
     );
     addTearDown(container.dispose);
@@ -123,7 +132,10 @@ void main() {
   test('索引器 provider 保存草稿，刷新失败保留草稿', () async {
     final api = _FakeIndexerSettingsApi(apiClient: apiClient);
     final container = ProviderContainer(
-      overrides: [indexerSettingsApiProvider.overrideWithValue(api)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        indexerSettingsApiProvider.overrideWithValue(api),
+      ],
       retry: (_, __) => null,
     );
     addTearDown(container.dispose);
@@ -157,7 +169,10 @@ void main() {
   test('下载偏好仅 patch preferred_client_kinds 并保留 pending restart', () async {
     final api = _FakeConfigApi(apiClient: apiClient);
     final container = ProviderContainer(
-      overrides: [configApiProvider.overrideWithValue(api)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        configApiProvider.overrideWithValue(api),
+      ],
       retry: (_, __) => null,
     );
     addTearDown(container.dispose);
@@ -189,6 +204,79 @@ void main() {
     final state = container.read(downloadPreferenceProvider).requireValue;
     expect(state.isDirty, isFalse);
     expect(state.savedKinds, const [DownloadClientKind.cloud115]);
+  });
+
+  test('登出后配置型 keepAlive provider 失效，下次读拿的是新会话的数据', () async {
+    await store.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-05T12:00:00Z'),
+    );
+    final api = _FakeIndexerSettingsApi(apiClient: apiClient);
+    final container = ProviderContainer(
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        indexerSettingsApiProvider.overrideWithValue(api),
+      ],
+      retry: (_, _) => null,
+    );
+    addTearDown(container.dispose);
+
+    var fetches = 0;
+    api.getHandler = () async {
+      fetches += 1;
+      return _settings(apiKey: 'account-$fetches');
+    };
+    expect(
+      (await container.read(indexerSettingsProvider.future)).draft.apiKey,
+      'account-1',
+    );
+
+    // 索引器/LLM/下载器这类是账号级服务端配置，登出必须失效，
+    // 否则换账号后仍会读到上一账号的设置。
+    await store.clearSession();
+
+    expect(
+      (await container.read(indexerSettingsProvider.future)).draft.apiKey,
+      'account-2',
+    );
+    expect(fetches, 2);
+  });
+
+  test('媒体库 CRUD 让 media 域那份副本失效（否则媒体管理页库筛选一直是旧的）', () async {
+    final api = _FakeMediaLibrariesApi(apiClient: apiClient);
+    final container = ProviderContainer(
+      overrides: [
+        sessionStoreProvider.overrideWithValue(store),
+        mediaLibrariesApiProvider.overrideWithValue(api),
+      ],
+      retry: (_, _) => null,
+    );
+    addTearDown(container.dispose);
+
+    var fetches = 0;
+    api.getHandler = () async {
+      fetches += 1;
+      return [_library(1, 'Main')];
+    };
+    await container.read(mediaLibrariesProvider.future);
+    await container.read(media.mediaLibrariesProvider.future);
+    expect(fetches, 2); // 两份副本各拉一次
+
+    api.createHandler = (_) async => _library(2, 'Archive');
+    await container
+        .read(mediaLibrariesProvider.notifier)
+        .create(
+          const CreateMediaLibraryPayload(
+            name: 'Archive',
+            rootPath: '/archive',
+          ),
+        );
+
+    // media 域那份被 invalidate，下次读重新拉取。
+    final refreshed = await container.read(media.mediaLibrariesProvider.future);
+    expect(fetches, 3);
+    expect(refreshed.libraries, isNotEmpty);
   });
 }
 

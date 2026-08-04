@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/configuration/data/api/movie_desc_translati
 import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/llm_settings_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'llm_settings_provider.g.dart';
 
@@ -20,6 +21,7 @@ class LlmSettings extends _$LlmSettings
     with AsyncNotifierDisposeGuardMixin<LlmSettingsState> {
   @override
   Future<LlmSettingsState> build() async {
+    invalidateOnSignOut(ref);
     attachDisposeGuard();
     final settings = await ref.read(llmSettingsApiProvider).getSettings();
     return LlmSettingsState.fromDto(settings);

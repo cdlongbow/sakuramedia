@@ -15,7 +15,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/activity_ap
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

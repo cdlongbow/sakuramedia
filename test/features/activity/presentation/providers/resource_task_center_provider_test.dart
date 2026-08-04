@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/resource_ta
 import 'package:sakuramedia/features/activity/presentation/providers/resource_task_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_filter_state.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

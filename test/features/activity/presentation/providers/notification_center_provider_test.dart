@@ -6,8 +6,8 @@ import 'package:sakuramedia/features/activity/data/activity_notification_dto.dar
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 
-import '../../../support/fake_sse_event_stream_client.dart';
-import '../../../support/test_api_bundle.dart';
+import '../../../../support/fake_sse_event_stream_client.dart';
+import '../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

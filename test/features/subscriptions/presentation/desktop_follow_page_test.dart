@@ -3,11 +3,12 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
@@ -314,10 +315,13 @@ void main() {
       await _pumpFollowPage(tester, sessionStore: sessionStore, bundle: bundle);
       await tester.pumpAndSettle();
 
-      bundle.movieSubscriptionBroadcaster.reportChange(
-        movieNumber: 'ABC-001',
-        isSubscribed: false,
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DesktopFollowPage)),
+        listen: false,
       );
+      container
+          .read(movieSubscriptionEventsProvider.notifier)
+          .reportChange(movieNumber: 'ABC-001', isSubscribed: false);
       await tester.pump();
       // 订阅变更经 Riverpod StreamProvider 转发；第二帧消费事件并回写列表快照。
       await tester.pump();

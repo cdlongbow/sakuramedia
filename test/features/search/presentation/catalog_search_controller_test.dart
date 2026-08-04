@@ -1,17 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
-import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
 
 import '../../../support/test_api_bundle.dart';
+import 'catalog_search_harness.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late SessionStore sessionStore;
   late TestApiBundle bundle;
-  late CatalogSearchController controller;
+  late CatalogSearchHarness controller;
 
   setUp(() async {
     sessionStore = SessionStore.inMemory();
@@ -22,7 +23,7 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     bundle = await createTestApiBundle(sessionStore);
-    controller = CatalogSearchController(
+    controller = CatalogSearchHarness(
       moviesApi: bundle.moviesApi,
       actorsApi: bundle.actorsApi,
     );

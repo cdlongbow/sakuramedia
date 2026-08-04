@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
+import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
@@ -14,7 +14,7 @@ import 'package:sakuramedia/widgets/domain/search/catalog_search_stream_status_c
 class CatalogSearchContent extends StatelessWidget {
   const CatalogSearchContent({
     super.key,
-    required this.controller,
+    required this.state,
     required this.textController,
     required this.tabController,
     required this.useOnlineSearch,
@@ -29,7 +29,7 @@ class CatalogSearchContent extends StatelessWidget {
     this.onFallbackToOnlineSearch,
   });
 
-  final CatalogSearchController controller;
+  final CatalogSearchState state;
   final TextEditingController textController;
   final TabController tabController;
   final bool useOnlineSearch;
@@ -69,11 +69,9 @@ class CatalogSearchContent extends StatelessWidget {
                   onSubmitted: (_) => onSubmitSearch(),
                   onSearchTap: onSubmitSearch,
                 ),
-                if (controller.streamStatus != null) ...[
+                if (state.streamStatus != null) ...[
                   SizedBox(height: context.appSpacing.md),
-                  CatalogSearchStreamStatusCard(
-                    status: controller.streamStatus!,
-                  ),
+                  CatalogSearchStreamStatusCard(status: state.streamStatus!),
                 ],
                 SizedBox(height: context.appSpacing.xs),
                 AppTabBar(
@@ -92,30 +90,30 @@ class CatalogSearchContent extends StatelessWidget {
   }
 
   Widget _buildBodySliver(BuildContext context) {
-    if (controller.query.isEmpty && !controller.isLoading) {
+    if (state.query.isEmpty && !state.isLoading) {
       return const SliverToBoxAdapter(
         child: AppEmptyState(message: '输入关键词开始搜索'),
       );
     }
 
-    if (controller.errorMessage != null) {
+    if (state.errorMessage != null) {
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: controller.errorMessage!,
+          message: state.errorMessage!,
           onRetry: onSubmitSearch,
           retryKey: const Key('catalog-search-retry'),
         ),
       );
     }
 
-    if (controller.isLoading) {
+    if (state.isLoading) {
       return const SliverToBoxAdapter(child: _CatalogSearchLoadingIndicator());
     }
 
-    switch (controller.activeKind) {
+    switch (state.activeKind) {
       case CatalogSearchKind.movies:
-        if (!controller.isOnlineSearchActive &&
-            controller.movieResults.isEmpty &&
+        if (!state.isOnlineSearchActive &&
+            state.movieResults.isEmpty &&
             onFallbackToOnlineSearch != null) {
           return SliverToBoxAdapter(
             child: _CatalogSearchOnlineFallback(
@@ -124,28 +122,27 @@ class CatalogSearchContent extends StatelessWidget {
           );
         }
         return MovieSummarySliver(
-          items: controller.movieResults,
+          items: state.movieResults,
           isLoading: false,
           emptyMessage:
-              controller.isOnlineSearchActive
+              state.isOnlineSearchActive
                   ? '在线源未找到该番号或未成功入库'
                   : '本地库中没有匹配该番号的影片。',
           onMovieTap: onMovieTap,
           onMovieMenuRequest: onMovieMenuRequest,
           onMovieSubscriptionTap: onMovieSubscriptionTap,
           isMovieSubscriptionUpdating:
-              (movie) =>
-                  controller.isMovieSubscriptionUpdating(movie.movieNumber),
+              (movie) => state.isMovieSubscriptionUpdating(movie.movieNumber),
         );
       case CatalogSearchKind.actors:
         return ActorSummarySliver(
-          items: controller.actorResults,
+          items: state.actorResults,
           isLoading: false,
           emptyMessage: '在线源未找到匹配女优',
           onActorTap: onActorTap,
           onActorSubscriptionTap: onActorSubscriptionTap,
           isActorSubscriptionUpdating:
-              (actor) => controller.isActorSubscriptionUpdating(actor.id),
+              (actor) => state.isActorSubscriptionUpdating(actor.id),
         );
     }
   }

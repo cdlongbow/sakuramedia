@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 
 void main() {

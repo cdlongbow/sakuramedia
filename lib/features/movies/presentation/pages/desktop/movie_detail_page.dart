@@ -1,33 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/external_player/presentation/external_player_availability.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_copy.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clip_section_mixin.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clips_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_behavior_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_plot_image_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playlist_picker_dialog.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -54,138 +58,127 @@ class DesktopMovieDetailPage extends ConsumerStatefulWidget {
 }
 
 class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
-    with MovieClipSectionMixin {
-  late final MovieDetailController _controller;
-  late final MovieClipsController _movieClipsController;
-  late final MovieSubscriptionChangeNotifier _subscriptionChangeNotifier;
-  var _ownsSubscriptionChangeNotifier = false;
-  final Map<int, List<MovieMediaPointDto>> _pointOverrides =
-      <int, List<MovieMediaPointDto>>{};
-  int? _selectedMediaId;
-  bool? _isSubscribedOverride;
-  bool? _isCollectionOverride;
-  bool _isSubscriptionUpdating = false;
-  bool _isCollectionUpdating = false;
-  int? _deletingMediaId;
-  MovieDetailActionType? _activeMovieAction;
-
-  /// 播放源选择（媒体区设置行）。源为 null 表示自动（首个有可播媒体的源）。
-  /// 桌面无外部播放器，合并模式恒不可用，不持有播放模式状态。
-  MoviePlayUrlSource? _playSource;
-
-  bool get _isMovieActionLocked =>
-      _isSubscriptionUpdating ||
-      _isCollectionUpdating ||
-      _activeMovieAction != null;
+    with MovieClipSectionMixin, MovieDetailBehaviorMixin {
+  late final MovieSubscriptionEvents _subscriptionChangeNotifier;
+  RiverpodPageHandle? _pageCacheHandle;
 
   @override
-  MovieClipsController get movieClipsController => _movieClipsController;
+  String get movieNumber => widget.movieNumber;
+
+  @override
+  MovieSubscriptionEvents get subscriptionChangeNotifier =>
+      _subscriptionChangeNotifier;
 
   @override
   void initState() {
     super.initState();
-    final binding = resolveMovieSubscriptionNotifier(context);
-    _subscriptionChangeNotifier = binding.notifier;
-    _ownsSubscriptionChangeNotifier = binding.ownsNotifier;
-    _controller = MovieDetailController(
-      movieNumber: widget.movieNumber,
-      fetchMovieDetail: ref.read(moviesApiProvider).getMovieDetail,
-      fetchSimilarMovies: ref.read(moviesApiProvider).getSimilarMovies,
-      fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
-    )..load();
-    _movieClipsController = MovieClipsController(
-      movieNumber: widget.movieNumber,
-      fetchClips: ref.read(clipsApiProvider).getClipsByMovieNumber,
-      mutationNotifier: ref.read(clipMutationBroadcasterProvider),
-    )..load();
-    _loadMovieCollectionStatus();
-  }
-
-  MediaLibrariesApi? _readMediaLibrariesApi() {
-    try {
-      return ref.read(mediaLibrariesApiProvider);
-    } on Object {
-      // 无 scope / 桥未 override 时降级为 null（隐藏相关入口），语义同旧。
-      return null;
-    }
+    _subscriptionChangeNotifier = resolveMovieSubscriptionNotifier(context);
+    // 挂 keepAlive link 到 RiverpodPageCache：详情 + 切片 provider 的
+    // cacheLink 一并托管，跨导航保活；LRU 驱逐时统一 close。
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: desktopMovieDetailPageCacheKey(widget.movieNumber),
+          resolveLinks: () {
+            final links = <KeepAliveLink>[];
+            final detailLink = ref
+                .read(movieDetailProvider(widget.movieNumber).notifier)
+                .cacheLink;
+            final clipsLink = ref
+                .read(movieClipsProvider(widget.movieNumber).notifier)
+                .cacheLink;
+            if (detailLink != null) links.add(detailLink);
+            if (clipsLink != null) links.add(clipsLink);
+            return links;
+          },
+        );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        ref.read(movieDetailProvider(widget.movieNumber).notifier).load(),
+      );
+      unawaited(
+        ref.read(movieClipsProvider(widget.movieNumber).notifier).load(),
+      );
+      loadMovieCollectionStatus();
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _movieClipsController.dispose();
-    if (_ownsSubscriptionChangeNotifier) {
-      _subscriptionChangeNotifier.dispose();
-    }
+    _pageCacheHandle?.release();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final detailState = ref.watch(movieDetailProvider(widget.movieNumber));
+    final clipsState = ref.watch(movieClipsProvider(widget.movieNumber));
     return AppPageRefreshScope(
-      onRefresh: _controller.refresh,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          if (_controller.isLoading) {
-            return MovieDetailLoadingSkeleton(controller: _controller);
+      onRefresh: () =>
+          ref.read(movieDetailProvider(widget.movieNumber).notifier).refresh(),
+      child: Builder(
+        builder: (context) {
+          if (detailState.isLoading) {
+            return const MovieDetailLoadingSkeleton();
           }
 
-          if (_controller.errorMessage != null || _controller.movie == null) {
+          if (detailState.errorMessage != null || detailState.movie == null) {
             return MovieDetailErrorState(
-              message: _controller.errorMessage ?? '影片详情暂时无法加载，请稍后重试',
-              onRetry: _controller.load,
+              message: detailState.errorMessage ?? '影片详情暂时无法加载，请稍后重试',
+              onRetry: () => ref
+                  .read(movieDetailProvider(widget.movieNumber).notifier)
+                  .load(),
             );
           }
 
-          final movie = _controller.movie!;
-          final mediaItems = _resolveMediaItems(movie);
-          final isSubscribed = _isSubscribedOverride ?? movie.isSubscribed;
-          final isCollection = _isCollectionOverride ?? movie.isCollection;
-          final isActionControlsLocked = _isMovieActionLocked;
+          final movie = detailState.movie!;
+          final mediaItems = resolveMediaItems(movie);
+          final isSubscribed = isSubscribedOverride ?? movie.isSubscribed;
+          final isCollection = isCollectionOverride ?? movie.isCollection;
+          final isActionControlsLocked = isMovieActionLocked;
           final sourceOptions = resolveMoviePlaybackSourceOptions(
             mediaItems: mediaItems,
-            storageDescriptors: _controller.storageDescriptors,
+            storageDescriptors: detailState.storageDescriptors,
           );
           final effectivePlaySource =
-              _playSource ?? sourceOptions.defaultSource;
+              playSource ?? sourceOptions.defaultSource;
           // 详情页下方媒体列表按当前播放源过滤,避免用户切了"本地"却仍能点到
           // 115 媒体、播放失败时收到"115 网盘媒体"文案的歧义。
           final visibleMediaItems = filterMediaItemsByPlaybackSource(
             mediaItems: mediaItems,
-            storageDescriptors: _controller.storageDescriptors,
+            storageDescriptors: detailState.storageDescriptors,
             source: effectivePlaySource,
           );
           final selectedMedia =
               visibleMediaItems
-                  .where((item) => item.mediaId == _selectedMediaId)
+                  .where((item) => item.mediaId == selectedMediaId)
                   .firstOrNull ??
               (visibleMediaItems.isNotEmpty ? visibleMediaItems.first : null);
           final mergedPlaybackAvailable =
               isExternalPlayerReady(context) &&
               effectivePlaySource == MoviePlayUrlSource.local &&
               sourceOptions.localCount >= 2;
-          return AnimatedBuilder(
-            animation: _movieClipsController,
-            builder: (context, child) {
-              return MovieDetailPageContent(
+          return MovieDetailPageContent(
                 movie: movie,
                 mediaItemsOverride: visibleMediaItems,
-                storageDescriptors: _controller.storageDescriptors,
-                selectedPreviewKey: _controller.selectedPreviewKey,
-                selectedPreviewUrl: _controller.selectedPreviewUrl,
+                storageDescriptors: detailState.storageDescriptors,
+                selectedPreviewKey: detailState.selectedPreviewKey,
+                selectedPreviewUrl: detailState.selectedPreviewUrl,
                 isCollection: isCollection,
                 isSubscribed: isSubscribed,
-                isCollectionUpdating: _isCollectionUpdating,
-                isSubscriptionUpdating: _isSubscriptionUpdating,
-                isMoreActionsUpdating: _activeMovieAction != null,
+                isCollectionUpdating: isCollectionUpdating,
+                isSubscriptionUpdating: isSubscriptionUpdating,
+                isMoreActionsUpdating: activeMovieAction != null,
                 selectedMediaId: selectedMedia?.mediaId,
                 statItems: buildMovieDetailStatItems(context, movie),
-                similarMovies: _controller.similarMovies,
-                isSimilarMoviesLoading: _controller.isSimilarMoviesLoading,
+                similarMovies: detailState.similarMovies,
+                isSimilarMoviesLoading: detailState.isSimilarMoviesLoading,
                 similarMoviesErrorMessage:
-                    _controller.similarMoviesErrorMessage,
-                onRetrySimilarMovies: _controller.retryLoadSimilarMovies,
+                    detailState.similarMoviesErrorMessage,
+                onRetrySimilarMovies: () => ref
+                    .read(movieDetailProvider(widget.movieNumber).notifier)
+                    .retryLoadSimilarMovies(),
                 onSimilarMovieTap:
                     (similarMovie) => context.pushDesktopMovieDetail(
                       movieNumber: similarMovie.movieNumber,
@@ -196,7 +189,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 onSubscriptionTap:
                     isActionControlsLocked
                         ? null
-                        : () => _toggleMovieSubscription(
+                        : () => toggleMovieSubscription(
                           isSubscribed: isSubscribed,
                         ),
                 onMoreActionsTap:
@@ -232,20 +225,20 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 onCollectionToggle:
                     isActionControlsLocked
                         ? null
-                        : () => _toggleMovieCollectionType(
+                        : () => toggleMovieCollectionType(
                           isCollection: isCollection,
                         ),
                 onMediaSelect:
                     (item) => setState(() {
-                      _selectedMediaId = item.mediaId;
+                      selectedMediaId = item.mediaId;
                     }),
                 isDeletingSelectedMedia:
                     selectedMedia != null &&
-                    _deletingMediaId == selectedMedia.mediaId,
+                    deletingMediaId == selectedMedia.mediaId,
                 onDeleteSelectedMedia:
-                    selectedMedia == null ? null : _deleteSelectedMedia,
-                onOpenMediaPointPreview: _openMediaPointPreview,
-                onRequestMediaPointMenu: _showMediaPointActions,
+                    selectedMedia == null ? null : deleteSelectedMedia,
+                onOpenMediaPointPreview: openMediaPointPreview,
+                onRequestMediaPointMenu: showMediaPointActions,
                 onActorTap:
                     (actor) => context.pushDesktopActorDetail(
                       actorId: actor.id,
@@ -291,139 +284,44 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                                 closeCurrentRouteOnSearch: true,
                               ),
                     ),
-                onInspectorTap: () => _openInspector(movie, selectedMedia),
-                clips: _movieClipsController.clips,
-                isClipsLoading: _movieClipsController.isLoading,
-                clipsErrorMessage: _movieClipsController.errorMessage,
-                onRetryClips: _movieClipsController.retry,
+                onInspectorTap: () => openInspector(movie, selectedMedia),
+                clips: clipsState.clips,
+                isClipsLoading: clipsState.isLoading,
+                clipsErrorMessage: clipsState.errorMessage,
+                onRetryClips: () => ref
+                    .read(movieClipsProvider(widget.movieNumber).notifier)
+                    .retry(),
                 onPlayClip: playMovieClip,
                 onRenameClip: renameMovieClip,
                 onDeleteClip: deleteMovieClip,
                 onAddClipToCollection: addMovieClipToCollection,
               );
-            },
-          );
         },
       ),
     );
   }
 
-  Future<void> _loadMovieCollectionStatus() async {
-    try {
-      final status = await ref
-          .read(moviesApiProvider)
-          .getMovieCollectionStatus(movieNumber: widget.movieNumber);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _isCollectionOverride = status.isCollection;
-      });
-    } catch (_) {
-      // Fall back to detail payload value when status lookup fails.
-    }
-  }
-
-  Future<void> _toggleMovieCollectionType({required bool isCollection}) async {
-    if (_isCollectionUpdating) {
-      return;
-    }
-    setState(() {
-      _isCollectionUpdating = true;
-    });
-
-    final targetType =
-        isCollection
-            ? MovieCollectionType.single
-            : MovieCollectionType.collection;
-    try {
-      final result = await ref
-          .read(moviesApiProvider)
-          .updateMovieCollectionType(
-            movieNumbers: <String>[widget.movieNumber],
-            collectionType: targetType,
-          );
-      if (!mounted) {
-        return;
-      }
-      if (result.updatedCount <= 0) {
-        showToast('未匹配到影片，未更新合集状态');
-        return;
-      }
-      setState(() {
-        _isCollectionOverride = !isCollection;
-      });
-      ref
-          .read(collectionTypeBroadcasterProvider)
-          .reportChange(
-            movieNumber: widget.movieNumber,
-            targetType: targetType,
-          );
-      showToast(
-        targetType == MovieCollectionType.collection ? '已标记为合集' : '已标记为单体',
-      );
-    } catch (error) {
-      if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新合集状态失败'));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isCollectionUpdating = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _deleteSelectedMedia(MovieMediaItemDto mediaItem) async {
-    if (_deletingMediaId != null) {
-      return;
-    }
-
-    final confirmed = await _confirmDeleteMedia(mediaItem);
-    if (!mounted || confirmed != true) {
-      return;
-    }
-
-    setState(() {
-      _deletingMediaId = mediaItem.mediaId;
-    });
-
-    try {
-      await ref.read(mediaApiProvider).deleteMedia(mediaId: mediaItem.mediaId);
-      await _refreshAfterMediaDelete(deletedMediaId: mediaItem.mediaId);
-      if (mounted) {
-        showToast('媒体文件已删除');
-      }
-    } catch (error) {
-      if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除媒体文件失败'));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _deletingMediaId = null;
-        });
-      }
-    }
-  }
-
-  Future<bool?> _confirmDeleteMedia(MovieMediaItemDto mediaItem) {
+  @override
+  Future<bool?> confirmDeleteMedia(MovieMediaItemDto mediaItem) {
     final storage = resolveMediaStorageDescriptor(
       mediaItem.libraryId,
-      _controller.storageDescriptors,
+      ref.read(movieDetailProvider(widget.movieNumber)).storageDescriptors,
     );
     return showAppConfirmDialog(
       context,
       title: '删除媒体文件',
-      message: _mediaDeleteMessage(mediaItem, storage),
+      message: mediaDeleteMessage(
+        mediaItem,
+        isCloud115: storage.isCloud115,
+        isLocal: storage.isLocal,
+      ),
       confirmLabel: '删除',
       danger: true,
       dialogKey: const Key('movie-media-delete-confirm-dialog'),
       confirmKey: const Key('movie-media-delete-confirm'),
       cancelKey: const Key('movie-media-delete-cancel'),
       extraContent: Text(
-        _mediaStorageLabel(storage),
+        mediaStorageLabel(storage),
         key: const Key('movie-media-delete-path'),
         style: resolveAppTextStyle(
           context,
@@ -432,40 +330,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
         ),
       ),
     );
-  }
-
-  String _mediaDeleteMessage(
-    MovieMediaItemDto mediaItem,
-    MediaStorageDescriptor storage,
-  ) {
-    final prefix = '确认删除媒体“${_buildMediaDeleteLabel(mediaItem)}”？';
-    if (storage.isCloud115) {
-      return '$prefix 该操作会删除 115 网盘中的媒体文件（进入 115 回收站），并删除 SakuraMedia 记录。';
-    }
-    if (storage.isLocal) {
-      return '$prefix 该操作会删除本地媒体文件且不可恢复。';
-    }
-    return '$prefix 该操作会删除媒体文件及 SakuraMedia 记录，且可能无法恢复。';
-  }
-
-  String _mediaStorageLabel(MediaStorageDescriptor storage) {
-    final libraryName = storage.normalizedLibraryName;
-    return libraryName == null
-        ? storage.sourceLabel
-        : '${storage.sourceLabel} · $libraryName';
-  }
-
-  Future<void> _refreshAfterMediaDelete({required int deletedMediaId}) async {
-    try {
-      await _controller.refresh();
-    } catch (_) {
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
-    _resetDetailOverridesAfterRefresh(deletedMediaId: deletedMediaId);
-    await _loadMovieCollectionStatus();
   }
 
   Future<void> _showMovieActionMenu(
@@ -487,7 +351,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     }
 
     if (action == MovieDetailActionType.openInspector) {
-      await _openInspector(movie, selectedMedia);
+      await openInspector(movie, selectedMedia);
       return;
     }
 
@@ -496,10 +360,11 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       return;
     }
 
-    await _executeMovieAction(action);
+    await executeMovieAction(action);
   }
 
-  Future<void> _openInspector(
+  @override
+  Future<void> openInspector(
     MovieDetailDto movie,
     MovieMediaItemDto? selectedMedia,
   ) {
@@ -525,7 +390,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 setDialogState(() {
                   isSubmitting = true;
                 });
-                final succeeded = await _executeMovieAction(
+                final succeeded = await executeMovieAction(
                   MovieDetailActionType.refreshMetadata,
                 );
                 if (!dialogContext.mounted) {
@@ -604,27 +469,29 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     );
   }
 
-  Future<bool> _executeMovieAction(MovieDetailActionType action) {
+  @override
+  Future<bool> executeMovieAction(MovieDetailActionType action) {
     if (action == MovieDetailActionType.toggleSubscription) {
-      return _toggleMovieSubscription(
-        isSubscribed:
-            _isSubscribedOverride ?? _controller.movie?.isSubscribed ?? false,
+      return toggleMovieSubscription(
+        isSubscribed: isSubscribedOverride ??
+            ref.read(movieDetailProvider(widget.movieNumber)).movie?.isSubscribed ??
+            false,
       );
     }
 
     return executeMovieDetailRemoteAction(
       context: context,
+      ref: ref,
       action: action,
       movieNumber: widget.movieNumber,
-      isLocked: _isMovieActionLocked,
-      controller: _controller,
-      selectedMediaId: _selectedMediaId,
+      isLocked: isMovieActionLocked,
+      selectedMediaId: selectedMediaId,
       onActiveActionChanged: (nextAction) {
         if (!mounted) {
           return;
         }
         setState(() {
-          _activeMovieAction = nextAction;
+          activeMovieAction = nextAction;
         });
       },
       onMovieApplied: (result) {
@@ -632,79 +499,36 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
           return;
         }
         setState(() {
-          _selectedMediaId = result.selectedMediaId;
-          _isSubscribedOverride = result.isSubscribedOverride;
-          _isCollectionOverride = result.isCollectionOverride;
+          selectedMediaId = result.selectedMediaId;
+          isSubscribedOverride = result.isSubscribedOverride;
+          isCollectionOverride = result.isCollectionOverride;
         });
       },
     );
   }
 
-  void _resetDetailOverridesAfterRefresh({required int deletedMediaId}) {
-    final refreshedMediaItems = _controller.movie?.mediaItems ?? const [];
-    final retainedSelectedMediaId =
-        _selectedMediaId != null &&
-                _selectedMediaId != deletedMediaId &&
-                refreshedMediaItems.any(
-                  (item) => item.mediaId == _selectedMediaId,
-                )
-            ? _selectedMediaId
-            : null;
-    setState(() {
-      _pointOverrides.clear();
-      _selectedMediaId =
-          retainedSelectedMediaId ??
-          (refreshedMediaItems.isNotEmpty
-              ? refreshedMediaItems.first.mediaId
-              : null);
-      _isSubscribedOverride = null;
-      _isCollectionOverride = null;
-    });
-  }
-
-  List<MovieMediaItemDto> _resolveMediaItems(MovieDetailDto movie) {
-    if (_pointOverrides.isEmpty) {
-      return movie.mediaItems;
-    }
-    return movie.mediaItems
-        .map((item) {
-          final pointsOverride = _pointOverrides[item.mediaId];
-          if (pointsOverride == null) {
-            return item;
-          }
-          return item.copyWith(points: pointsOverride);
-        })
-        .toList(growable: false);
-  }
-
   /// 切换播放源：选中该源下第一个可播放媒体。桌面无外部播放器，不涉及合并模式。
   void _handlePlaySourceChanged(MoviePlayUrlSource source) {
-    final movie = _controller.movie;
+    final detailState = ref.read(movieDetailProvider(widget.movieNumber));
+    final movie = detailState.movie;
     if (movie == null) {
       return;
     }
     setState(() {
-      _playSource = source;
+      playSource = source;
       final target = resolveFirstPlayableMediaId(
-        mediaItems: _resolveMediaItems(movie),
-        storageDescriptors: _controller.storageDescriptors,
+        mediaItems: resolveMediaItems(movie),
+        storageDescriptors: detailState.storageDescriptors,
         source: source,
       );
       if (target != null) {
-        _selectedMediaId = target;
+        selectedMediaId = target;
       }
     });
   }
 
-  String _buildMediaDeleteLabel(MovieMediaItemDto mediaItem) {
-    final label = mediaItem.specialTags.trim();
-    if (label.isNotEmpty) {
-      return label;
-    }
-    return '媒体源 ${mediaItem.mediaId}';
-  }
-
-  Future<void> _openMediaPointPreview(
+  @override
+  Future<void> openMediaPointPreview(
     MovieMediaItemDto mediaItem,
     MovieMediaPointDto point,
   ) async {
@@ -715,12 +539,12 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
           (_) => MediaPreviewDialog(
             item: _buildMediaPointPreviewItem(mediaItem, point),
             availableActions: <MediaPreviewAction>{
-              if (_resolvePointImageUrl(point).isNotEmpty)
+              if (resolvePointImageUrl(point).isNotEmpty)
                 MediaPreviewAction.searchSimilar,
               if (mediaItem.hasPlayableUrl) MediaPreviewAction.play,
             },
             onPointRemoved:
-                () => _applyPointListOverride(
+                () => applyPointListOverride(
                   mediaItem.mediaId,
                   mediaItem.points
                       .where((candidate) => candidate.pointId != point.pointId)
@@ -734,22 +558,23 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     }
     switch (action) {
       case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromPoint(point);
+        await searchSimilarFromPoint(point);
       case MediaPreviewAction.play:
-        _openPlayerForPoint(mediaItem, point);
+        openPlayerForPoint(mediaItem, point);
       case MediaPreviewAction.openMovieDetail:
         return;
     }
   }
 
-  Future<void> _showMediaPointActions(
+  @override
+  Future<void> showMediaPointActions(
     BuildContext menuContext,
     MovieMediaItemDto mediaItem,
     MovieMediaPointDto point,
     Offset globalPosition,
   ) async {
-    final hasImage = _resolvePointImageUrl(point).isNotEmpty;
-    final currentPoint = _findCurrentPoint(mediaItem.mediaId, point.pointId);
+    final hasImage = resolvePointImageUrl(point).isNotEmpty;
+    final currentPoint = findCurrentPoint(mediaItem.mediaId, point.pointId);
     final action = await showAppImageActionMenu(
       context: menuContext,
       globalPosition: globalPosition,
@@ -791,16 +616,16 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
 
     switch (action) {
       case AppImageActionType.searchSimilar:
-        await _searchSimilarFromPoint(point);
+        await searchSimilarFromPoint(point);
         break;
       case AppImageActionType.saveToLocal:
-        await _savePointImageToLocal(point);
+        await savePointImageToLocal(point);
         break;
       case AppImageActionType.toggleMark:
-        await _toggleMediaPoint(mediaItem, point, currentPoint);
+        await toggleMediaPoint(mediaItem, point, currentPoint);
         break;
       case AppImageActionType.play:
-        _openPlayerForPoint(mediaItem, point);
+        openPlayerForPoint(mediaItem, point);
         break;
       case AppImageActionType.movieDetail:
         break;
@@ -812,8 +637,8 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     MovieMediaPointDto point,
   ) {
     return MediaPreviewItem(
-      imageUrl: _resolvePointImageUrl(point),
-      fileName: _buildPointFileName(point),
+      imageUrl: resolvePointImageUrl(point),
+      fileName: buildPointFileName(point),
       mediaId: mediaItem.mediaId,
       movieNumber: widget.movieNumber,
       thumbnailId: point.thumbnailId,
@@ -821,21 +646,9 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     );
   }
 
-  String _resolvePointImageUrl(MovieMediaPointDto point) {
-    final origin = point.image?.origin.trim() ?? '';
-    if (origin.isNotEmpty) {
-      return origin;
-    }
-    return point.image?.bestAvailableUrl.trim() ?? '';
-  }
-
-  String _buildPointFileName(MovieMediaPointDto point) {
-    final suffix = point.thumbnailId > 0 ? point.thumbnailId : point.pointId;
-    return 'movie_point_${widget.movieNumber}_$suffix.webp';
-  }
-
-  Future<bool> _searchSimilarFromPoint(MovieMediaPointDto point) async {
-    final imageUrl = _resolvePointImageUrl(point);
+  @override
+  Future<bool> searchSimilarFromPoint(MovieMediaPointDto point) async {
+    final imageUrl = resolvePointImageUrl(point);
     if (imageUrl.isEmpty) {
       return false;
     }
@@ -844,7 +657,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
         context,
         imageUrl: imageUrl,
         fallbackPath: buildDesktopMovieDetailRoutePath(widget.movieNumber),
-        fileName: _buildPointFileName(point),
+        fileName: buildPointFileName(point),
         currentMovieNumber: widget.movieNumber,
       );
       return true;
@@ -856,135 +669,8 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     }
   }
 
-  Future<void> _savePointImageToLocal(MovieMediaPointDto point) async {
-    final imageUrl = _resolvePointImageUrl(point);
-    if (imageUrl.isEmpty) {
-      return;
-    }
-    final result = await ImageSaveService(
-      fetchBytes: ref.read(apiClientProvider).getBytes,
-    ).saveImageFromUrl(
-      imageUrl: imageUrl,
-      fileName: _buildPointFileName(point),
-      dialogTitle: '保存到本地',
-    );
-    if (!mounted) {
-      return;
-    }
-    if (result.status == ImageSaveStatus.success) {
-      showToast(result.message ?? '图片已保存');
-    }
-    if (result.status == ImageSaveStatus.failed) {
-      showToast(result.message ?? '保存失败，请稍后重试');
-    }
-  }
-
-  Future<void> _toggleMediaPoint(
-    MovieMediaItemDto mediaItem,
-    MovieMediaPointDto point,
-    MovieMediaPointDto? existingPoint,
-  ) async {
-    try {
-      if (existingPoint == null) {
-        final createdPoint = await ref
-            .read(mediaApiProvider)
-            .createMediaPoint(
-              mediaId: mediaItem.mediaId,
-              thumbnailId: point.thumbnailId,
-            );
-        if (!mounted) {
-          return;
-        }
-        final nextPoints = <MovieMediaPointDto>[
-          ...mediaItem.points,
-          _movieMediaPointFromMediaPoint(createdPoint, fallback: point),
-        ];
-        _applyPointListOverride(mediaItem.mediaId, nextPoints);
-        showToast('已添加标记');
-        return;
-      }
-
-      await ref
-          .read(mediaApiProvider)
-          .deleteMediaPoint(
-            mediaId: mediaItem.mediaId,
-            pointId: existingPoint.pointId,
-          );
-      if (!mounted) {
-        return;
-      }
-      final nextPoints = mediaItem.points
-          .where((candidate) => candidate.pointId != existingPoint.pointId)
-          .toList(growable: false);
-      _applyPointListOverride(mediaItem.mediaId, nextPoints);
-      showToast('已删除标记');
-    } catch (error) {
-      if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新标记失败'));
-      }
-    }
-  }
-
-  MovieMediaPointDto? _findCurrentPoint(int mediaId, int pointId) {
-    final movie = _controller.movie;
-    if (movie == null) {
-      return null;
-    }
-    final mediaItem = _resolveMediaItems(movie).firstWhere(
-      (item) => item.mediaId == mediaId,
-      orElse: () => _emptyMediaItem(mediaId),
-    );
-    for (final point in mediaItem.points) {
-      if (point.pointId == pointId) {
-        return point;
-      }
-    }
-    return null;
-  }
-
-  MovieMediaItemDto _emptyMediaItem(int mediaId) {
-    return MovieMediaItemDto(
-      mediaId: mediaId,
-      libraryId: null,
-      libraryBackend: null,
-      playUrl: '',
-      storageMode: '',
-      resolution: '',
-      fileSizeBytes: 0,
-      durationSeconds: 0,
-      specialTags: '',
-      valid: false,
-      progress: null,
-      points: const <MovieMediaPointDto>[],
-      videoInfo: null,
-    );
-  }
-
-  MovieMediaPointDto _movieMediaPointFromMediaPoint(
-    MediaPointDto point, {
-    required MovieMediaPointDto fallback,
-  }) {
-    return MovieMediaPointDto(
-      pointId: point.pointId,
-      thumbnailId: point.thumbnailId,
-      offsetSeconds:
-          point.offsetSeconds > 0
-              ? point.offsetSeconds
-              : fallback.offsetSeconds,
-      image: point.image ?? fallback.image,
-    );
-  }
-
-  void _applyPointListOverride(int mediaId, List<MovieMediaPointDto> points) {
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _pointOverrides[mediaId] = points;
-    });
-  }
-
-  void _openPlayerForPoint(
+  @override
+  void openPlayerForPoint(
     MovieMediaItemDto mediaItem,
     MovieMediaPointDto point,
   ) {
@@ -994,86 +680,5 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       mediaId: mediaItem.mediaId,
       positionSeconds: point.offsetSeconds,
     );
-  }
-
-  Future<bool> _toggleMovieSubscription({required bool isSubscribed}) async {
-    if (_isSubscriptionUpdating) {
-      return false;
-    }
-
-    setState(() {
-      _isSubscriptionUpdating = true;
-    });
-
-    MovieSubscriptionToggleResult result;
-
-    try {
-      if (isSubscribed) {
-        await ref
-            .read(moviesApiProvider)
-            .unsubscribeMovie(
-              movieNumber: widget.movieNumber,
-              deleteMedia: false,
-            );
-        result = const MovieSubscriptionToggleResult.unsubscribed();
-        _isSubscribedOverride = false;
-      } else {
-        await ref
-            .read(moviesApiProvider)
-            .subscribeMovie(movieNumber: widget.movieNumber);
-        result = const MovieSubscriptionToggleResult.subscribed();
-        _isSubscribedOverride = true;
-      }
-    } catch (error) {
-      if (_isBlockedByMedia(error)) {
-        result = const MovieSubscriptionToggleResult.blockedByMedia();
-      } else {
-        result = MovieSubscriptionToggleResult.failed(
-          message: apiErrorMessage(
-            error,
-            fallback: isSubscribed ? '取消订阅影片失败' : '订阅影片失败',
-          ),
-        );
-      }
-    }
-
-    _reportSubscriptionChange(result);
-
-    if (!mounted) {
-      return false;
-    }
-
-    setState(() {
-      _isSubscriptionUpdating = false;
-    });
-    showMovieSubscriptionFeedback(result);
-    return result.status == MovieSubscriptionToggleStatus.subscribed ||
-        result.status == MovieSubscriptionToggleStatus.unsubscribed;
-  }
-
-  bool _isBlockedByMedia(Object error) {
-    return error is ApiException &&
-        error.error?.code == 'movie_subscription_has_media';
-  }
-
-  void _reportSubscriptionChange(MovieSubscriptionToggleResult result) {
-    switch (result.status) {
-      case MovieSubscriptionToggleStatus.subscribed:
-        _subscriptionChangeNotifier.reportChange(
-          movieNumber: widget.movieNumber,
-          isSubscribed: true,
-        );
-        break;
-      case MovieSubscriptionToggleStatus.unsubscribed:
-        _subscriptionChangeNotifier.reportChange(
-          movieNumber: widget.movieNumber,
-          isSubscribed: false,
-        );
-        break;
-      case MovieSubscriptionToggleStatus.blockedByMedia:
-      case MovieSubscriptionToggleStatus.failed:
-      case MovieSubscriptionToggleStatus.ignored:
-        break;
-    }
   }
 }

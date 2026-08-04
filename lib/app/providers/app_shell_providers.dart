@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
+import 'package:sakuramedia/app/app_version_info_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 
 part 'app_shell_providers.g.dart';
 
@@ -18,15 +23,59 @@ class AppShellSidebarCollapsed extends _$AppShellSidebarCollapsed {
   }
 }
 
-/// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
-/// 与旧 MultiProvider 的 create 懒语义一致——真源由 `lib/app/app.dart` 的
-/// 组合根 `overrideWith` 工厂注入，这里 body 保持抛 [UnimplementedError]）。
-///
-/// 消费方（sidebar / 移动抽屉）在 try/catch 里取：未 override 的测试
-/// 得到 null、版本行隐藏，与旧 `ProviderNotFoundException` 降级一致。
+typedef AppPackageInfoLoader = Future<PackageInfo> Function();
+
 @Riverpod(keepAlive: true)
-AppVersionInfoController appVersionInfoController(Ref ref) {
-  throw UnimplementedError(
-    'Override appVersionInfoControllerProvider at the app root',
-  );
+AppPackageInfoLoader appPackageInfoLoader(Ref ref) => PackageInfo.fromPlatform;
+
+/// 前后端版本信息。provider 本身常驻，但 [load] 仍由版本 UI 首次出现时显式
+/// 触发，避免仅创建应用容器就请求 `/status`。
+@Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
+class AppVersionInfo extends _$AppVersionInfo {
+  Future<void>? _loadFuture;
+
+  @override
+  FutureOr<AppVersionInfoState> build() => AppVersionInfoState.initial;
+
+  Future<void> load() {
+    return _loadFuture ??= _loadVersions();
+  }
+
+  Future<void> _loadVersions() async {
+    final current = state.value ?? AppVersionInfoState.initial;
+    state = AsyncData(current.copyWith(isLoading: true));
+
+    final results = await Future.wait<String>([
+      _loadFrontendVersion(),
+      _loadBackendVersion(),
+    ]);
+    if (!ref.mounted) {
+      return;
+    }
+    state = AsyncData(
+      AppVersionInfoState(
+        frontendVersion: results[0],
+        backendVersion: results[1],
+        hasLoaded: true,
+      ),
+    );
+  }
+
+  Future<String> _loadFrontendVersion() async {
+    try {
+      final packageInfo = await ref.read(appPackageInfoLoaderProvider)();
+      return packageInfo.version.trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<String> _loadBackendVersion() async {
+    try {
+      final status = await ref.read(statusApiProvider).getStatus();
+      return status.backendVersion.trim();
+    } catch (_) {
+      return '';
+    }
+  }
 }

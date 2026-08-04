@@ -8,134 +8,58 @@ part of 'mutation_events_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 跨页订阅变更广播源（legacy `ChangeNotifier`）的桥。
+/// 跨页订阅变更广播 —— 单一 provider 兼「事件流 + 发布 API」。
 ///
-/// 过渡期方案 B：Provider 侧与 Riverpod 侧共用**同一个**
-/// [MovieSubscriptionChangeNotifier] 实例，保持「单一广播源」。发起方无论在哪一
-/// 侧，都 `reportChange` / `reportBatch` 到它；消费方在 Riverpod 侧走
-/// [movieSubscriptionEventsProvider]，**不 `context.read`**。
+/// **消费方**：`ref.listen(movieSubscriptionEventsProvider, (prev, next) {
+/// final changes = next.value; if (changes != null) applyChanges(changes); })`
+/// 收到后做**就地补丁**（移除 / 改字段），不 invalidate 整页重拉。
 ///
-/// 原生装配：body 直接构造 + `ref.onDispose` 配对销毁，组合根不再 override。
+/// **发起方**：`ref.read(movieSubscriptionEventsProvider.notifier).reportChange(...)`
+/// 或 `reportBatch(...)`。单条 / 批量都统一成列表广播一次。
 ///
-/// 命名注意：函数名不要以 `Notifier` 结尾——riverpod_generator 会把它从生成的
-/// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
+/// 迁移前形态：`MovieSubscriptionChangeNotifier extends ChangeNotifier` +
+/// broadcaster 桥 provider + Stream 派生 provider 三件套；
+/// 现在合成单一 `@Riverpod` class Notifier，`StreamController.broadcast(sync: true)`
+/// 承载事件流，`reportXxx` 直接推入。**离屏挂起**：没有监听者时 riverpod 会挂起
+/// 派生 Stream，事件缓冲、恢复监听时补投（写测试须挂监听者）。
 
-@ProviderFor(movieSubscriptionBroadcaster)
-final movieSubscriptionBroadcasterProvider =
-    MovieSubscriptionBroadcasterProvider._();
-
-/// 跨页订阅变更广播源（legacy `ChangeNotifier`）的桥。
-///
-/// 过渡期方案 B：Provider 侧与 Riverpod 侧共用**同一个**
-/// [MovieSubscriptionChangeNotifier] 实例，保持「单一广播源」。发起方无论在哪一
-/// 侧，都 `reportChange` / `reportBatch` 到它；消费方在 Riverpod 侧走
-/// [movieSubscriptionEventsProvider]，**不 `context.read`**。
-///
-/// 原生装配：body 直接构造 + `ref.onDispose` 配对销毁，组合根不再 override。
-///
-/// 命名注意：函数名不要以 `Notifier` 结尾——riverpod_generator 会把它从生成的
-/// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
-
-final class MovieSubscriptionBroadcasterProvider
-    extends
-        $FunctionalProvider<
-          MovieSubscriptionChangeNotifier,
-          MovieSubscriptionChangeNotifier,
-          MovieSubscriptionChangeNotifier
-        >
-    with $Provider<MovieSubscriptionChangeNotifier> {
-  /// 跨页订阅变更广播源（legacy `ChangeNotifier`）的桥。
-  ///
-  /// 过渡期方案 B：Provider 侧与 Riverpod 侧共用**同一个**
-  /// [MovieSubscriptionChangeNotifier] 实例，保持「单一广播源」。发起方无论在哪一
-  /// 侧，都 `reportChange` / `reportBatch` 到它；消费方在 Riverpod 侧走
-  /// [movieSubscriptionEventsProvider]，**不 `context.read`**。
-  ///
-  /// 原生装配：body 直接构造 + `ref.onDispose` 配对销毁，组合根不再 override。
-  ///
-  /// 命名注意：函数名不要以 `Notifier` 结尾——riverpod_generator 会把它从生成的
-  /// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
-  MovieSubscriptionBroadcasterProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'movieSubscriptionBroadcasterProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$movieSubscriptionBroadcasterHash();
-
-  @$internal
-  @override
-  $ProviderElement<MovieSubscriptionChangeNotifier> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  MovieSubscriptionChangeNotifier create(Ref ref) {
-    return movieSubscriptionBroadcaster(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(MovieSubscriptionChangeNotifier value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<MovieSubscriptionChangeNotifier>(
-        value,
-      ),
-    );
-  }
-}
-
-String _$movieSubscriptionBroadcasterHash() =>
-    r'30d9a1ff0aefd67626874d360b36c47efdc519eb';
-
-/// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
-/// 翻译成一条条「本次广播的变更列表」。
-///
-/// 消费方 `ref.listen(movieSubscriptionEventsProvider, ...)` 后对自己的列表做
-/// **就地补丁**（移除 / 改字段），语义与 Provider 侧监听方一致——不要
-/// `invalidate` 触发整页重拉。
-///
-/// 单条 `reportChange` 与批量 `reportBatch` 在这里被统一成列表形式（复用
-/// notifier 自己的 `consumePendingChanges` 分派），下游不必再区分两条路径。
-
-@ProviderFor(movieSubscriptionEvents)
+@ProviderFor(MovieSubscriptionEvents)
 final movieSubscriptionEventsProvider = MovieSubscriptionEventsProvider._();
 
-/// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
-/// 翻译成一条条「本次广播的变更列表」。
+/// 跨页订阅变更广播 —— 单一 provider 兼「事件流 + 发布 API」。
 ///
-/// 消费方 `ref.listen(movieSubscriptionEventsProvider, ...)` 后对自己的列表做
-/// **就地补丁**（移除 / 改字段），语义与 Provider 侧监听方一致——不要
-/// `invalidate` 触发整页重拉。
+/// **消费方**：`ref.listen(movieSubscriptionEventsProvider, (prev, next) {
+/// final changes = next.value; if (changes != null) applyChanges(changes); })`
+/// 收到后做**就地补丁**（移除 / 改字段），不 invalidate 整页重拉。
 ///
-/// 单条 `reportChange` 与批量 `reportBatch` 在这里被统一成列表形式（复用
-/// notifier 自己的 `consumePendingChanges` 分派），下游不必再区分两条路径。
-
+/// **发起方**：`ref.read(movieSubscriptionEventsProvider.notifier).reportChange(...)`
+/// 或 `reportBatch(...)`。单条 / 批量都统一成列表广播一次。
+///
+/// 迁移前形态：`MovieSubscriptionChangeNotifier extends ChangeNotifier` +
+/// broadcaster 桥 provider + Stream 派生 provider 三件套；
+/// 现在合成单一 `@Riverpod` class Notifier，`StreamController.broadcast(sync: true)`
+/// 承载事件流，`reportXxx` 直接推入。**离屏挂起**：没有监听者时 riverpod 会挂起
+/// 派生 Stream，事件缓冲、恢复监听时补投（写测试须挂监听者）。
 final class MovieSubscriptionEventsProvider
     extends
-        $FunctionalProvider<
-          AsyncValue<List<MovieSubscriptionChange>>,
-          List<MovieSubscriptionChange>,
-          Stream<List<MovieSubscriptionChange>>
-        >
-    with
-        $FutureModifier<List<MovieSubscriptionChange>>,
-        $StreamProvider<List<MovieSubscriptionChange>> {
-  /// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
-  /// 翻译成一条条「本次广播的变更列表」。
+        $StreamNotifierProvider<
+          MovieSubscriptionEvents,
+          List<MovieSubscriptionChange>
+        > {
+  /// 跨页订阅变更广播 —— 单一 provider 兼「事件流 + 发布 API」。
   ///
-  /// 消费方 `ref.listen(movieSubscriptionEventsProvider, ...)` 后对自己的列表做
-  /// **就地补丁**（移除 / 改字段），语义与 Provider 侧监听方一致——不要
-  /// `invalidate` 触发整页重拉。
+  /// **消费方**：`ref.listen(movieSubscriptionEventsProvider, (prev, next) {
+  /// final changes = next.value; if (changes != null) applyChanges(changes); })`
+  /// 收到后做**就地补丁**（移除 / 改字段），不 invalidate 整页重拉。
   ///
-  /// 单条 `reportChange` 与批量 `reportBatch` 在这里被统一成列表形式（复用
-  /// notifier 自己的 `consumePendingChanges` 分派），下游不必再区分两条路径。
+  /// **发起方**：`ref.read(movieSubscriptionEventsProvider.notifier).reportChange(...)`
+  /// 或 `reportBatch(...)`。单条 / 批量都统一成列表广播一次。
+  ///
+  /// 迁移前形态：`MovieSubscriptionChangeNotifier extends ChangeNotifier` +
+  /// broadcaster 桥 provider + Stream 派生 provider 三件套；
+  /// 现在合成单一 `@Riverpod` class Notifier，`StreamController.broadcast(sync: true)`
+  /// 承载事件流，`reportXxx` 直接推入。**离屏挂起**：没有监听者时 riverpod 会挂起
+  /// 派生 Stream，事件缓冲、恢复监听时补投（写测试须挂监听者）。
   MovieSubscriptionEventsProvider._()
     : super(
         from: null,
@@ -152,107 +76,70 @@ final class MovieSubscriptionEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<MovieSubscriptionChange>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<List<MovieSubscriptionChange>> create(Ref ref) {
-    return movieSubscriptionEvents(ref);
-  }
+  MovieSubscriptionEvents create() => MovieSubscriptionEvents();
 }
 
 String _$movieSubscriptionEventsHash() =>
-    r'4fce409ea30347ff968decfee2b0028fff0f79f8';
+    r'7c28fecf3971bc16a42574b65de8aa8e39c4c5be';
 
-/// 跨页合集类型（单体/合集）变更广播源的桥——与
-/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
-/// 保持「单一广播源」。原生装配，组合根不再 override。
+/// 跨页订阅变更广播 —— 单一 provider 兼「事件流 + 发布 API」。
+///
+/// **消费方**：`ref.listen(movieSubscriptionEventsProvider, (prev, next) {
+/// final changes = next.value; if (changes != null) applyChanges(changes); })`
+/// 收到后做**就地补丁**（移除 / 改字段），不 invalidate 整页重拉。
+///
+/// **发起方**：`ref.read(movieSubscriptionEventsProvider.notifier).reportChange(...)`
+/// 或 `reportBatch(...)`。单条 / 批量都统一成列表广播一次。
+///
+/// 迁移前形态：`MovieSubscriptionChangeNotifier extends ChangeNotifier` +
+/// broadcaster 桥 provider + Stream 派生 provider 三件套；
+/// 现在合成单一 `@Riverpod` class Notifier，`StreamController.broadcast(sync: true)`
+/// 承载事件流，`reportXxx` 直接推入。**离屏挂起**：没有监听者时 riverpod 会挂起
+/// 派生 Stream，事件缓冲、恢复监听时补投（写测试须挂监听者）。
 
-@ProviderFor(collectionTypeBroadcaster)
-final collectionTypeBroadcasterProvider = CollectionTypeBroadcasterProvider._();
-
-/// 跨页合集类型（单体/合集）变更广播源的桥——与
-/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
-/// 保持「单一广播源」。原生装配，组合根不再 override。
-
-final class CollectionTypeBroadcasterProvider
-    extends
-        $FunctionalProvider<
-          MovieCollectionTypeChangeNotifier,
-          MovieCollectionTypeChangeNotifier,
-          MovieCollectionTypeChangeNotifier
-        >
-    with $Provider<MovieCollectionTypeChangeNotifier> {
-  /// 跨页合集类型（单体/合集）变更广播源的桥——与
-  /// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
-  /// 保持「单一广播源」。原生装配，组合根不再 override。
-  CollectionTypeBroadcasterProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'collectionTypeBroadcasterProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
+abstract class _$MovieSubscriptionEvents
+    extends $StreamNotifier<List<MovieSubscriptionChange>> {
+  Stream<List<MovieSubscriptionChange>> build();
+  @$mustCallSuper
   @override
-  String debugGetCreateSourceHash() => _$collectionTypeBroadcasterHash();
-
-  @$internal
-  @override
-  $ProviderElement<MovieCollectionTypeChangeNotifier> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  MovieCollectionTypeChangeNotifier create(Ref ref) {
-    return collectionTypeBroadcaster(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(MovieCollectionTypeChangeNotifier value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<MovieCollectionTypeChangeNotifier>(
-        value,
-      ),
-    );
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<List<MovieSubscriptionChange>>,
+              List<MovieSubscriptionChange>
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<List<MovieSubscriptionChange>>,
+                List<MovieSubscriptionChange>
+              >,
+              AsyncValue<List<MovieSubscriptionChange>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
   }
 }
 
-String _$collectionTypeBroadcasterHash() =>
-    r'e1ecae7d05b9c1554b6ea735d47a982cfebf1f75';
+/// 跨页合集类型（单体/合集）变更广播 —— 与 [MovieSubscriptionEvents] 同范式，
+/// 每次广播携带单个 [MovieCollectionTypeChange]。
 
-/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
-///
-/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
-/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
-
-@ProviderFor(movieCollectionTypeEvents)
+@ProviderFor(MovieCollectionTypeEvents)
 final movieCollectionTypeEventsProvider = MovieCollectionTypeEventsProvider._();
 
-/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
-///
-/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
-/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
-
+/// 跨页合集类型（单体/合集）变更广播 —— 与 [MovieSubscriptionEvents] 同范式，
+/// 每次广播携带单个 [MovieCollectionTypeChange]。
 final class MovieCollectionTypeEventsProvider
     extends
-        $FunctionalProvider<
-          AsyncValue<MovieCollectionTypeChange>,
-          MovieCollectionTypeChange,
-          Stream<MovieCollectionTypeChange>
-        >
-    with
-        $FutureModifier<MovieCollectionTypeChange>,
-        $StreamProvider<MovieCollectionTypeChange> {
-  /// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
-  ///
-  /// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
-  /// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
+        $StreamNotifierProvider<
+          MovieCollectionTypeEvents,
+          MovieCollectionTypeChange
+        > {
+  /// 跨页合集类型（单体/合集）变更广播 —— 与 [MovieSubscriptionEvents] 同范式，
+  /// 每次广播携带单个 [MovieCollectionTypeChange]。
   MovieCollectionTypeEventsProvider._()
     : super(
         from: null,
@@ -269,15 +156,38 @@ final class MovieCollectionTypeEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<MovieCollectionTypeChange> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<MovieCollectionTypeChange> create(Ref ref) {
-    return movieCollectionTypeEvents(ref);
-  }
+  MovieCollectionTypeEvents create() => MovieCollectionTypeEvents();
 }
 
 String _$movieCollectionTypeEventsHash() =>
-    r'd57ec78682ed37bebc5e98ec4a755bbdd25f14bf';
+    r'659b05309cc1daf24c23268bbee51883bf4d8a70';
+
+/// 跨页合集类型（单体/合集）变更广播 —— 与 [MovieSubscriptionEvents] 同范式，
+/// 每次广播携带单个 [MovieCollectionTypeChange]。
+
+abstract class _$MovieCollectionTypeEvents
+    extends $StreamNotifier<MovieCollectionTypeChange> {
+  Stream<MovieCollectionTypeChange> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<MovieCollectionTypeChange>,
+              MovieCollectionTypeChange
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<MovieCollectionTypeChange>,
+                MovieCollectionTypeChange
+              >,
+              AsyncValue<MovieCollectionTypeChange>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

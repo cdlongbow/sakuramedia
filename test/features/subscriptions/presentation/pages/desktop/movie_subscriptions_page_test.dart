@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -8,7 +8,6 @@ import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
@@ -22,7 +21,6 @@ void main() {
   late SessionStore sessionStore;
   late ApiClient apiClient;
   late FakeHttpClientAdapter adapter;
-  late MovieSubscriptionChangeNotifier broadcaster;
 
   setUp(() async {
     sessionStore = SessionStore.inMemory();
@@ -31,16 +29,14 @@ void main() {
     adapter = FakeHttpClientAdapter();
     apiClient.rawDio.httpClientAdapter = adapter;
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
-    broadcaster = MovieSubscriptionChangeNotifier();
   });
 
   tearDown(() {
-    broadcaster.dispose();
     apiClient.dispose();
     sessionStore.dispose();
   });
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<ProviderContainer> pumpPage(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -61,7 +57,6 @@ void main() {
               ),
             ),
           ),
-          movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
         ],
         child: OKToast(
           child: MaterialApp(
@@ -72,6 +67,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    return ProviderScope.containerOf(
+      tester.element(find.byType(DesktopMovieSubscriptionsPage)),
+      listen: false,
+    );
   }
 
   void enqueueCounts({
@@ -313,12 +312,13 @@ void main() {
       path: '/movies/ABP-123/subscription',
       statusCode: 204,
     );
-    await pumpPage(tester);
+    final container = await pumpPage(tester);
 
     final changes = <MovieSubscriptionChange>[];
-    broadcaster.addListener(
-      () => broadcaster.consumePendingChanges(changes.addAll),
-    );
+    container.listen(movieSubscriptionEventsProvider, (_, next) {
+      final batch = next.value;
+      if (batch != null) changes.addAll(batch);
+    });
 
     await tester.tap(
       find.byKey(const Key('movie-subscription-row-unsubscribe-ABP-123')),

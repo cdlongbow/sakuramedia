@@ -10,8 +10,8 @@ part of 'riverpod_page_cache_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// 全局 [RiverpodPageCache] 的 Riverpod 入口。
 ///
-/// 原生装配：构造即 `bindSessionStore`（登出自动全清，与
-/// `appPageStateCacheProvider` 同一范式）。cache 本身 keepAlive 常驻——它
+/// 原生装配：构造即 `bindSessionStore`（登出自动全清）。cache 本身
+/// keepAlive 常驻——它
 /// 持有的只是「link 句柄」而非业务状态，业务 provider 的释放由 link close
 /// 触发，cache 常驻不会泄漏任何列表数据。
 
@@ -20,8 +20,8 @@ final riverpodPageCacheProvider = RiverpodPageCacheProvider._();
 
 /// 全局 [RiverpodPageCache] 的 Riverpod 入口。
 ///
-/// 原生装配：构造即 `bindSessionStore`（登出自动全清，与
-/// `appPageStateCacheProvider` 同一范式）。cache 本身 keepAlive 常驻——它
+/// 原生装配：构造即 `bindSessionStore`（登出自动全清）。cache 本身
+/// keepAlive 常驻——它
 /// 持有的只是「link 句柄」而非业务状态，业务 provider 的释放由 link close
 /// 触发，cache 常驻不会泄漏任何列表数据。
 
@@ -35,8 +35,8 @@ final class RiverpodPageCacheProvider
     with $Provider<RiverpodPageCache> {
   /// 全局 [RiverpodPageCache] 的 Riverpod 入口。
   ///
-  /// 原生装配：构造即 `bindSessionStore`（登出自动全清，与
-  /// `appPageStateCacheProvider` 同一范式）。cache 本身 keepAlive 常驻——它
+  /// 原生装配：构造即 `bindSessionStore`（登出自动全清）。cache 本身
+  /// keepAlive 常驻——它
   /// 持有的只是「link 句柄」而非业务状态，业务 provider 的释放由 link close
   /// 触发，cache 常驻不会泄漏任何列表数据。
   RiverpodPageCacheProvider._()

@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/providers/cli
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
@@ -434,8 +434,8 @@ class _DesktopClipCollectionDetailPageState
     return () => context.pushDesktopMovieDetail(movieNumber: movieNumber);
   }
 
-  ClipMutationChangeNotifier get _mutationBroadcaster =>
-      ref.read(clipMutationBroadcasterProvider);
+  ClipMutationEvents get _mutationBroadcaster =>
+      ref.read(clipMutationEventsProvider.notifier);
 
   Future<void> _onReorder(int oldIndex, int newIndex) async {
     final error = await ref
@@ -472,7 +472,7 @@ class _DesktopClipCollectionDetailPageState
   }
 
   /// 彻底删除切片本体（含文件，不可恢复，后端从所有合集级联移除）：先确认，再走
-  /// notifier 乐观删除并广播 [ClipMutationChangeNotifier.reportDeleted]，让「全部切片」
+  /// notifier 乐观删除并广播 [ClipMutationEvents.reportDeleted]，让「全部切片」
   /// 网格精准移除、上层合集列表刷新封面 / 计数。与「移出合集」不同。
   Future<void> _deleteClip(MediaClipDto clip) async {
     final title = clip.displayTitle.trim();

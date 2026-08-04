@@ -3,20 +3,105 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
+
+typedef _FetchMovieReviews = Future<List<MovieReviewDto>> Function({
+  required String movieNumber,
+  required int page,
+  required int pageSize,
+  required MovieReviewSort sort,
+});
+typedef _FetchMediaThumbnails = Future<List<MovieMediaThumbnailDto>> Function({
+  required int mediaId,
+});
+typedef _SearchCandidates = Future<List<DownloadCandidateDto>> Function({
+  required String movieNumber,
+  String? indexerKind,
+});
+typedef _CreateDownloadRequest = Future<DownloadRequestResponseDto> Function({
+  required String movieNumber,
+  required int clientId,
+  required DownloadCandidateDto candidate,
+});
+
+/// 只覆盖 inspector 需要的两个方法，其余交给 super（走 [ApiClient]，测试里
+/// 不会命中）；调用未 stub 的方法应当立即出错以暴露漏 override 的 case。
+class _FakeMoviesApi extends MoviesApi {
+  _FakeMoviesApi({
+    required ApiClient apiClient,
+    required this.reviewsHandler,
+    required this.thumbnailsHandler,
+  }) : super(apiClient: apiClient);
+
+  final _FetchMovieReviews reviewsHandler;
+  final _FetchMediaThumbnails thumbnailsHandler;
+
+  @override
+  Future<List<MovieReviewDto>> getMovieReviews({
+    required String movieNumber,
+    int page = 1,
+    int pageSize = 20,
+    MovieReviewSort sort = MovieReviewSort.recently,
+  }) => reviewsHandler(
+    movieNumber: movieNumber,
+    page: page,
+    pageSize: pageSize,
+    sort: sort,
+  );
+
+  @override
+  Future<List<MovieMediaThumbnailDto>> getMediaThumbnails({
+    required int mediaId,
+  }) => thumbnailsHandler(mediaId: mediaId);
+}
+
+class _FakeDownloadsApi extends DownloadsApi {
+  _FakeDownloadsApi({
+    required ApiClient apiClient,
+    required SseEventStreamClient streamClient,
+    required this.searchHandler,
+    required this.createHandler,
+  }) : super(apiClient: apiClient, streamClient: streamClient);
+
+  final _SearchCandidates searchHandler;
+  final _CreateDownloadRequest createHandler;
+
+  @override
+  Future<List<DownloadCandidateDto>> searchCandidates({
+    required String movieNumber,
+    String? indexerKind,
+  }) => searchHandler(movieNumber: movieNumber, indexerKind: indexerKind);
+
+  @override
+  Future<DownloadRequestResponseDto> createDownloadRequest({
+    required String movieNumber,
+    required int clientId,
+    required DownloadCandidateDto candidate,
+  }) => createHandler(
+    movieNumber: movieNumber,
+    clientId: clientId,
+    candidate: candidate,
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -532,29 +617,51 @@ Future<void> _pumpInspectorPanel(
   WidgetTester tester, {
   required double panelHeight,
   TargetPlatform? platform,
-  required Future<List<MovieReviewDto>> Function({
-    required String movieNumber,
-    required int page,
-    required int pageSize,
-    required MovieReviewSort sort,
-  })
-  fetchMovieReviews,
-  Future<List<DownloadCandidateDto>> Function({
-    required String movieNumber,
-    String? indexerKind,
-  })?
-  searchCandidates,
-  Future<DownloadRequestResponseDto> Function({
-    required String movieNumber,
-    required int clientId,
-    required DownloadCandidateDto candidate,
-  })?
-  createDownloadRequest,
+  required _FetchMovieReviews fetchMovieReviews,
+  _SearchCandidates? searchCandidates,
+  _CreateDownloadRequest? createDownloadRequest,
 }) async {
   final sessionStore = SessionStore.inMemory();
+  final apiClient = ApiClient(sessionStore: sessionStore);
+  addTearDown(apiClient.dispose);
+  final sseClient = createSseEventStreamClient(
+    apiClient: apiClient,
+    sessionStore: sessionStore,
+  );
+  addTearDown(sseClient.dispose);
+
+  final fakeMoviesApi = _FakeMoviesApi(
+    apiClient: apiClient,
+    reviewsHandler: fetchMovieReviews,
+    thumbnailsHandler:
+        ({required int mediaId}) async => const <MovieMediaThumbnailDto>[],
+  );
+  final fakeDownloadsApi = _FakeDownloadsApi(
+    apiClient: apiClient,
+    streamClient: sseClient,
+    searchHandler:
+        searchCandidates ??
+        ({required String movieNumber, String? indexerKind}) async =>
+            const <DownloadCandidateDto>[],
+    createHandler:
+        createDownloadRequest ??
+        ({
+          required String movieNumber,
+          required int clientId,
+          required DownloadCandidateDto candidate,
+        }) async => DownloadRequestResponseDto(
+          task: _emptyDownloadTask(clientId: clientId),
+          created: false,
+        ),
+  );
+
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(sessionStore),
+        moviesApiProvider.overrideWithValue(fakeMoviesApi),
+        downloadsApiProvider.overrideWithValue(fakeDownloadsApi),
+      ],
       child: OKToast(
         child: MaterialApp(
           theme:
@@ -569,28 +676,6 @@ Future<void> _pumpInspectorPanel(
                 child: MovieDetailInspectorPanel(
                   movieNumber: 'ABC-001',
                   selectedMedia: null,
-                  fetchMovieReviews: fetchMovieReviews,
-                  fetchMediaThumbnails: ({required int mediaId}) async {
-                    return const <MovieMediaThumbnailDto>[];
-                  },
-                  searchCandidates:
-                      searchCandidates ??
-                      ({
-                        required String movieNumber,
-                        String? indexerKind,
-                      }) async {
-                        return const <DownloadCandidateDto>[];
-                      },
-                  createDownloadRequest:
-                      createDownloadRequest ??
-                      ({
-                        required String movieNumber,
-                        required int clientId,
-                        required DownloadCandidateDto candidate,
-                      }) async => DownloadRequestResponseDto(
-                        task: _emptyDownloadTask(clientId: clientId),
-                        created: false,
-                      ),
                   onClose: () {},
                   showCloseButton: false,
                 ),

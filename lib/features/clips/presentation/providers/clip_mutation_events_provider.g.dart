@@ -8,98 +8,48 @@ part of 'clip_mutation_events_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
+/// 切片跨页变更广播 —— 与 `movieSubscriptionEventsProvider` 同范式：
+/// 单一 provider 同时承载事件流与发布 API。
 ///
-/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
-/// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
-/// 原生装配，组合根不再 override。
-
-@ProviderFor(clipMutationBroadcaster)
-final clipMutationBroadcasterProvider = ClipMutationBroadcasterProvider._();
-
-/// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
+/// **消费方**：`ref.listen(clipMutationEventsProvider, (prev, next) {
+/// final change = next.value; if (change != null) ...; })`；就地补丁，不整页重拉。
 ///
-/// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
-/// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
-/// 原生装配，组合根不再 override。
-
-final class ClipMutationBroadcasterProvider
-    extends
-        $FunctionalProvider<
-          ClipMutationChangeNotifier,
-          ClipMutationChangeNotifier,
-          ClipMutationChangeNotifier
-        >
-    with $Provider<ClipMutationChangeNotifier> {
-  /// 切片跨页变更广播源（legacy [ClipMutationChangeNotifier]）的桥。
-  ///
-  /// 与 `movieSubscriptionBroadcasterProvider` 同一范式：clips / clip_collections /
-  /// movies 三域的 report 方与 listen 方共用**同一个**实例，保持「单一广播源」。
-  /// 原生装配，组合根不再 override。
-  ClipMutationBroadcasterProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'clipMutationBroadcasterProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$clipMutationBroadcasterHash();
-
-  @$internal
-  @override
-  $ProviderElement<ClipMutationChangeNotifier> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  ClipMutationChangeNotifier create(Ref ref) {
-    return clipMutationBroadcaster(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ClipMutationChangeNotifier value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ClipMutationChangeNotifier>(value),
-    );
-  }
-}
-
-String _$clipMutationBroadcasterHash() =>
-    r'7558c20d61eac04ffc00d0f74b986a1f0464af9f';
-
-/// 切片变更事件流：把 `notifyListeners` 翻译成一条条 [ClipMutationChange]。
+/// **发起方**：`ref.read(clipMutationEventsProvider.notifier).reportDeleted(...)`
+/// 或 `reportCollectionMembershipChanged(...)`。
 ///
-/// 消费方 `ref.listen(clipMutationEventsProvider, ...)` 后做就地补丁
-/// （删除→移出网格；合集成员变化→重拉合集列表），不 invalidate 整页重拉。
+/// 与 videos 的 [videoMutationEventsProvider] 同构；由于切片合集详情还支持拖序与
+/// 改名，这些同样归入 [ClipMutationKind.collectionMembershipChanged]，由监听方
+/// 重拉合集列表校准。
 
-@ProviderFor(clipMutationEvents)
+@ProviderFor(ClipMutationEvents)
 final clipMutationEventsProvider = ClipMutationEventsProvider._();
 
-/// 切片变更事件流：把 `notifyListeners` 翻译成一条条 [ClipMutationChange]。
+/// 切片跨页变更广播 —— 与 `movieSubscriptionEventsProvider` 同范式：
+/// 单一 provider 同时承载事件流与发布 API。
 ///
-/// 消费方 `ref.listen(clipMutationEventsProvider, ...)` 后做就地补丁
-/// （删除→移出网格；合集成员变化→重拉合集列表），不 invalidate 整页重拉。
-
+/// **消费方**：`ref.listen(clipMutationEventsProvider, (prev, next) {
+/// final change = next.value; if (change != null) ...; })`；就地补丁，不整页重拉。
+///
+/// **发起方**：`ref.read(clipMutationEventsProvider.notifier).reportDeleted(...)`
+/// 或 `reportCollectionMembershipChanged(...)`。
+///
+/// 与 videos 的 [videoMutationEventsProvider] 同构；由于切片合集详情还支持拖序与
+/// 改名，这些同样归入 [ClipMutationKind.collectionMembershipChanged]，由监听方
+/// 重拉合集列表校准。
 final class ClipMutationEventsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<ClipMutationChange>,
-          ClipMutationChange,
-          Stream<ClipMutationChange>
-        >
-    with
-        $FutureModifier<ClipMutationChange>,
-        $StreamProvider<ClipMutationChange> {
-  /// 切片变更事件流：把 `notifyListeners` 翻译成一条条 [ClipMutationChange]。
+    extends $StreamNotifierProvider<ClipMutationEvents, ClipMutationChange> {
+  /// 切片跨页变更广播 —— 与 `movieSubscriptionEventsProvider` 同范式：
+  /// 单一 provider 同时承载事件流与发布 API。
   ///
-  /// 消费方 `ref.listen(clipMutationEventsProvider, ...)` 后做就地补丁
-  /// （删除→移出网格；合集成员变化→重拉合集列表），不 invalidate 整页重拉。
+  /// **消费方**：`ref.listen(clipMutationEventsProvider, (prev, next) {
+  /// final change = next.value; if (change != null) ...; })`；就地补丁，不整页重拉。
+  ///
+  /// **发起方**：`ref.read(clipMutationEventsProvider.notifier).reportDeleted(...)`
+  /// 或 `reportCollectionMembershipChanged(...)`。
+  ///
+  /// 与 videos 的 [videoMutationEventsProvider] 同构；由于切片合集详情还支持拖序与
+  /// 改名，这些同样归入 [ClipMutationKind.collectionMembershipChanged]，由监听方
+  /// 重拉合集列表校准。
   ClipMutationEventsProvider._()
     : super(
         from: null,
@@ -116,15 +66,41 @@ final class ClipMutationEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<ClipMutationChange> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
-
-  @override
-  Stream<ClipMutationChange> create(Ref ref) {
-    return clipMutationEvents(ref);
-  }
+  ClipMutationEvents create() => ClipMutationEvents();
 }
 
 String _$clipMutationEventsHash() =>
-    r'6e6b9201b7ba302bb8de5e6c9aeaa7cea9e51653';
+    r'75bec8f3b317cd26a74e7e685ea9fcc56bf48eef';
+
+/// 切片跨页变更广播 —— 与 `movieSubscriptionEventsProvider` 同范式：
+/// 单一 provider 同时承载事件流与发布 API。
+///
+/// **消费方**：`ref.listen(clipMutationEventsProvider, (prev, next) {
+/// final change = next.value; if (change != null) ...; })`；就地补丁，不整页重拉。
+///
+/// **发起方**：`ref.read(clipMutationEventsProvider.notifier).reportDeleted(...)`
+/// 或 `reportCollectionMembershipChanged(...)`。
+///
+/// 与 videos 的 [videoMutationEventsProvider] 同构；由于切片合集详情还支持拖序与
+/// 改名，这些同样归入 [ClipMutationKind.collectionMembershipChanged]，由监听方
+/// 重拉合集列表校准。
+
+abstract class _$ClipMutationEvents
+    extends $StreamNotifier<ClipMutationChange> {
+  Stream<ClipMutationChange> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<ClipMutationChange>, ClipMutationChange>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<ClipMutationChange>, ClipMutationChange>,
+              AsyncValue<ClipMutationChange>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

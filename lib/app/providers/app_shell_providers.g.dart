@@ -83,70 +83,105 @@ abstract class _$AppShellSidebarCollapsed extends $Notifier<bool> {
   }
 }
 
-/// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
-/// 与旧 MultiProvider 的 create 懒语义一致——真源由 `lib/app/app.dart` 的
-/// 组合根 `overrideWith` 工厂注入，这里 body 保持抛 [UnimplementedError]）。
-///
-/// 消费方（sidebar / 移动抽屉）在 try/catch 里取：未 override 的测试
-/// 得到 null、版本行隐藏，与旧 `ProviderNotFoundException` 降级一致。
+@ProviderFor(appPackageInfoLoader)
+final appPackageInfoLoaderProvider = AppPackageInfoLoaderProvider._();
 
-@ProviderFor(appVersionInfoController)
-final appVersionInfoControllerProvider = AppVersionInfoControllerProvider._();
-
-/// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
-/// 与旧 MultiProvider 的 create 懒语义一致——真源由 `lib/app/app.dart` 的
-/// 组合根 `overrideWith` 工厂注入，这里 body 保持抛 [UnimplementedError]）。
-///
-/// 消费方（sidebar / 移动抽屉）在 try/catch 里取：未 override 的测试
-/// 得到 null、版本行隐藏，与旧 `ProviderNotFoundException` 降级一致。
-
-final class AppVersionInfoControllerProvider
+final class AppPackageInfoLoaderProvider
     extends
         $FunctionalProvider<
-          AppVersionInfoController,
-          AppVersionInfoController,
-          AppVersionInfoController
+          AppPackageInfoLoader,
+          AppPackageInfoLoader,
+          AppPackageInfoLoader
         >
-    with $Provider<AppVersionInfoController> {
-  /// 前后端版本信息控制器的桥（懒加载：首次被 read/watch 才触发请求，
-  /// 与旧 MultiProvider 的 create 懒语义一致——真源由 `lib/app/app.dart` 的
-  /// 组合根 `overrideWith` 工厂注入，这里 body 保持抛 [UnimplementedError]）。
-  ///
-  /// 消费方（sidebar / 移动抽屉）在 try/catch 里取：未 override 的测试
-  /// 得到 null、版本行隐藏，与旧 `ProviderNotFoundException` 降级一致。
-  AppVersionInfoControllerProvider._()
+    with $Provider<AppPackageInfoLoader> {
+  AppPackageInfoLoaderProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'appVersionInfoControllerProvider',
+        name: r'appPackageInfoLoaderProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$appVersionInfoControllerHash();
+  String debugGetCreateSourceHash() => _$appPackageInfoLoaderHash();
 
   @$internal
   @override
-  $ProviderElement<AppVersionInfoController> $createElement(
+  $ProviderElement<AppPackageInfoLoader> $createElement(
     $ProviderPointer pointer,
   ) => $ProviderElement(pointer);
 
   @override
-  AppVersionInfoController create(Ref ref) {
-    return appVersionInfoController(ref);
+  AppPackageInfoLoader create(Ref ref) {
+    return appPackageInfoLoader(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AppVersionInfoController value) {
+  Override overrideWithValue(AppPackageInfoLoader value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AppVersionInfoController>(value),
+      providerOverride: $SyncValueProvider<AppPackageInfoLoader>(value),
     );
   }
 }
 
-String _$appVersionInfoControllerHash() =>
-    r'3b807fca512e94357696fcc360fc70f1a27a2f72';
+String _$appPackageInfoLoaderHash() =>
+    r'7cd06c31f5770373df163de2010ec55bba149bae';
+
+/// 前后端版本信息。provider 本身常驻，但 [load] 仍由版本 UI 首次出现时显式
+/// 触发，避免仅创建应用容器就请求 `/status`。
+
+@ProviderFor(AppVersionInfo)
+final appVersionInfoProvider = AppVersionInfoProvider._();
+
+/// 前后端版本信息。provider 本身常驻，但 [load] 仍由版本 UI 首次出现时显式
+/// 触发，避免仅创建应用容器就请求 `/status`。
+final class AppVersionInfoProvider
+    extends $AsyncNotifierProvider<AppVersionInfo, AppVersionInfoState> {
+  /// 前后端版本信息。provider 本身常驻，但 [load] 仍由版本 UI 首次出现时显式
+  /// 触发，避免仅创建应用容器就请求 `/status`。
+  AppVersionInfoProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: kNoAsyncNotifierRetry,
+        name: r'appVersionInfoProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appVersionInfoHash();
+
+  @$internal
+  @override
+  AppVersionInfo create() => AppVersionInfo();
+}
+
+String _$appVersionInfoHash() => r'1a52a37e0d8732c157d5ca5317f354de73b53c5a';
+
+/// 前后端版本信息。provider 本身常驻，但 [load] 仍由版本 UI 首次出现时显式
+/// 触发，避免仅创建应用容器就请求 `/status`。
+
+abstract class _$AppVersionInfo extends $AsyncNotifier<AppVersionInfoState> {
+  FutureOr<AppVersionInfoState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<AppVersionInfoState>, AppVersionInfoState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<AppVersionInfoState>, AppVersionInfoState>,
+              AsyncValue<AppVersionInfoState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

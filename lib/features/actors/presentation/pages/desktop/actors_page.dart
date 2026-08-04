@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
@@ -39,7 +39,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
-          key: desktopActorsPageStateKey(),
+          key: desktopActorsPageCacheKey(),
           resolveLinks: () {
             final link =
                 ref.read(actorSummaryProvider(_scope).notifier).cacheLink;

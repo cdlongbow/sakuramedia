@@ -4,7 +4,8 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_controller.dart';
+
+import 'movie_player_provider_harness.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -106,7 +107,7 @@ void main() {
   }
 
   test('load resolves selected media cloud115 storage descriptor', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -169,7 +170,7 @@ void main() {
   });
 
   test('load fetches thumbnails for selected media', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -210,7 +211,7 @@ void main() {
   test(
     'load falls back to first playable media when initial media is invalid',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         initialMediaId: 999,
@@ -267,7 +268,7 @@ void main() {
   );
 
   test('thumbnail load failure does not block resolved playback url', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -301,7 +302,7 @@ void main() {
   test(
     'load resolves subtitle options and keeps subtitle disabled by default',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -334,7 +335,7 @@ void main() {
   );
 
   test('subtitle load failure does not block resolved playback url', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -366,7 +367,7 @@ void main() {
   });
 
   test('setSelectedSubtitleId only accepts known subtitle ids', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -400,7 +401,7 @@ void main() {
   test(
     'thumbnail columns use auto value until user overrides manually',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -435,7 +436,7 @@ void main() {
   test(
     'thumbnail scroll lock is enabled by default and can be toggled',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -471,7 +472,7 @@ void main() {
   );
 
   test('handlePlaybackPosition updates active thumbnail index', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -501,7 +502,7 @@ void main() {
   test(
     'handlePlaybackPosition ignores duplicate seconds without notifying page listeners',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -537,7 +538,7 @@ void main() {
   test(
     'handlePlaybackPosition keeps page listeners silent when active index does not change',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -571,7 +572,7 @@ void main() {
   );
 
   test('active thumbnail notifier emits only when index changes', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -607,7 +608,7 @@ void main() {
   test(
     'stored progress becomes a resume prompt instead of a startup seek',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -638,7 +639,7 @@ void main() {
   );
 
   test('explicit entry position bypasses the resume prompt', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       initialPositionSeconds: 90,
@@ -665,7 +666,7 @@ void main() {
   test(
     'playing state starts periodic progress reporting and pauses stop it',
     () async {
-      final controller = MoviePlayerController(
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -704,7 +705,7 @@ void main() {
   );
 
   test('periodic progress reporting deduplicates unchanged seconds', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -740,7 +741,7 @@ void main() {
   });
 
   test('flushPlaybackProgress reports pending position once', () async {
-    final controller = MoviePlayerController(
+    final controller = MoviePlayerHarness(
       movieNumber: 'ABC-001',
       baseUrl: 'https://api.example.com',
       fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),
@@ -778,8 +779,8 @@ void main() {
   });
 
   group('clip selection', () {
-    Future<MoviePlayerController> buildLoadedController() async {
-      final controller = MoviePlayerController(
+    Future<MoviePlayerHarness> buildLoadedController() async {
+      final controller = MoviePlayerHarness(
         movieNumber: 'ABC-001',
         baseUrl: 'https://api.example.com',
         fetchMovieDetail: ({required movieNumber}) async => buildMovieDetail(),

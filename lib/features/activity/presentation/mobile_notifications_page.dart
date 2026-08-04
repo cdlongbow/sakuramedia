@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -17,8 +17,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
-/// 移动端「消息」中心页。消费全局 [NotificationCenterController]
-/// (列表/分页来自 controller、已读为「无感」自动处理);移动端在桌面行为之上,
+/// 移动端「消息」中心页。列表、分页与无感已读来自全局通知 provider；移动端在桌面行为之上,
 /// 按国内消息中心习惯增加「全部/未读」两段筛选与未读视觉(左侧红点 + 轻微高亮)。
 ///
 /// 未读 / 高亮由 [_unreadSnapshotIds] 驱动(进入页面/下拉刷新/切到未读段/全部已读
@@ -41,7 +40,6 @@ class _MobileNotificationsPageState
   static const double _loadMoreTriggerOffset = 300;
   static const int _skeletonCount = 6;
 
-  late final NotificationCenterController _controller;
   late final TabController _segmentController;
   final ScrollController _scrollController = ScrollController();
 
@@ -52,14 +50,11 @@ class _MobileNotificationsPageState
   @override
   void initState() {
     super.initState();
-    _controller = ref.read(notificationCenterControllerProvider);
     _segmentController = TabController(length: 2, vsync: this);
-    _controller.addListener(_handleControllerUpdate);
     _scrollController.addListener(_handleScroll);
-    // 若全局 controller 尚未初始化(首个消费者),幂等触发一次。
-    unawaited(_controller.initialize());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        unawaited(ref.read(notificationCenterProvider.notifier).initialize());
         _maybeAutoLoadMore();
       }
     });
@@ -67,19 +62,11 @@ class _MobileNotificationsPageState
 
   @override
   void dispose() {
-    _controller.removeListener(_handleControllerUpdate);
     _segmentController.dispose();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
     super.dispose();
-  }
-
-  void _handleControllerUpdate() {
-    _maybeAutoLoadMore();
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   void _handleScroll() => _maybeAutoLoadMore();
@@ -100,20 +87,23 @@ class _MobileNotificationsPageState
     if (!reachedEnd) {
       return;
     }
-    if (_controller.hasMore &&
-        !_controller.isLoadingMore &&
-        _controller.loadMoreErrorMessage == null) {
-      unawaited(_controller.loadMoreNotifications());
+    final state = ref.read(notificationCenterProvider);
+    if (state.hasMore &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null) {
+      unawaited(
+        ref.read(notificationCenterProvider.notifier).loadMoreNotifications(),
+      );
     }
   }
 
   /// 仅在快照「脏」且数据就绪时重拍未读快照;期间冻结,保证浏览稳定。
-  void _ensureSnapshot() {
-    if (!_snapshotDirty || _controller.isInitialLoading) {
+  void _ensureSnapshot(NotificationCenterState state) {
+    if (!_snapshotDirty || state.isInitialLoading) {
       return;
     }
     _unreadSnapshotIds =
-        _controller.notifications
+        state.notifications
             .where((item) => !item.isRead)
             .map((item) => item.id)
             .toSet();
@@ -137,7 +127,9 @@ class _MobileNotificationsPageState
 
   Future<void> _handleRefresh() async {
     try {
-      await _controller.refreshNotifications();
+      await ref
+          .read(notificationCenterProvider.notifier)
+          .refreshNotifications();
     } catch (error) {
       if (mounted) {
         showToast(apiErrorMessage(error, fallback: '刷新失败，请稍后重试'));
@@ -149,7 +141,7 @@ class _MobileNotificationsPageState
   }
 
   Future<void> _handleMarkAllRead() async {
-    await _controller.markAllRead();
+    await ref.read(notificationCenterProvider.notifier).markAllRead();
     if (mounted) {
       setState(() => _snapshotDirty = true);
     }
@@ -157,14 +149,20 @@ class _MobileNotificationsPageState
 
   @override
   Widget build(BuildContext context) {
-    _ensureSnapshot();
+    final state = ref.watch(notificationCenterProvider);
+    _ensureSnapshot(state);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _maybeAutoLoadMore();
+      }
+    });
     final spacing = context.appSpacing;
 
     return Column(
       key: const Key('mobile-notifications-page'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader(context),
+        _buildHeader(context, state),
         SizedBox(height: spacing.sm),
         Expanded(
           child: AppAdaptiveRefreshScrollView(
@@ -172,14 +170,14 @@ class _MobileNotificationsPageState
             onRefresh: _handleRefresh,
             // 收敛视口外预构建,避免「无感已读」把未展示的卡片提前标已读。
             cacheExtent: 0,
-            slivers: _buildSlivers(context),
+            slivers: _buildSlivers(context, state),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, NotificationCenterState state) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -198,9 +196,9 @@ class _MobileNotificationsPageState
           label: '全部已读',
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
-          isLoading: _controller.isMarkingAllRead,
+          isLoading: state.isMarkingAllRead,
           onPressed:
-              _controller.unreadCount > 0 && !_controller.isMarkingAllRead
+              state.unreadCount > 0 && !state.isMarkingAllRead
                   ? _handleMarkAllRead
                   : null,
         ),
@@ -208,25 +206,28 @@ class _MobileNotificationsPageState
     );
   }
 
-  List<Widget> _buildSlivers(BuildContext context) {
-    if (_controller.isInitialLoading && _controller.notifications.isEmpty) {
+  List<Widget> _buildSlivers(
+    BuildContext context,
+    NotificationCenterState state,
+  ) {
+    final notifier = ref.read(notificationCenterProvider.notifier);
+    if (state.isInitialLoading && state.notifications.isEmpty) {
       return <Widget>[_buildSkeletonSliver(context)];
     }
-    if (_controller.initialErrorMessage != null &&
-        _controller.notifications.isEmpty) {
+    if (state.initialErrorMessage != null && state.notifications.isEmpty) {
       return <Widget>[
         SliverFillRemaining(
           hasScrollBody: false,
           child: AppEmptyState(
             key: const Key('mobile-notifications-error'),
-            message: _controller.initialErrorMessage!,
-            onRetry: () => _controller.reloadAll(),
+            message: state.initialErrorMessage!,
+            onRetry: notifier.reloadAll,
           ),
         ),
       ];
     }
 
-    final visible = _visibleNotifications();
+    final visible = _visibleNotifications(state);
     if (visible.isEmpty) {
       return <Widget>[
         SliverFillRemaining(
@@ -248,7 +249,7 @@ class _MobileNotificationsPageState
           // 卡片被构建(展示)即视为已读,帧后上报避免在 build 中改状态。
           if (!item.isRead) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _controller.onNotificationDisplayed(item.id);
+              notifier.onNotificationDisplayed(item.id);
             });
           }
           return Padding(
@@ -269,9 +270,9 @@ class _MobileNotificationsPageState
           children: [
             SizedBox(height: context.appSpacing.md),
             AppPagedLoadMoreFooter(
-              isLoading: _controller.isLoadingMore,
-              errorMessage: _controller.loadMoreErrorMessage,
-              onRetry: _controller.loadMoreNotifications,
+              isLoading: state.isLoadingMore,
+              errorMessage: state.loadMoreErrorMessage,
+              onRetry: notifier.loadMoreNotifications,
             ),
             SizedBox(height: context.appSpacing.xl),
           ],
@@ -280,8 +281,10 @@ class _MobileNotificationsPageState
     ];
   }
 
-  List<ActivityNotificationDto> _visibleNotifications() {
-    final all = _controller.notifications;
+  List<ActivityNotificationDto> _visibleNotifications(
+    NotificationCenterState state,
+  ) {
+    final all = state.notifications;
     if (_segment == _NotificationSegment.all) {
       return all;
     }

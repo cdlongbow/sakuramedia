@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
+import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -93,11 +94,16 @@ class NotificationCard extends StatelessWidget {
   }
 }
 
-/// 通知分类筛选条（接 [NotificationCenterController]）。
+/// 通知分类筛选条：纯状态输入与动作回调，不持有业务控制器。
 class NotificationFilterBar extends StatelessWidget {
-  const NotificationFilterBar({super.key, required this.controller});
+  const NotificationFilterBar({
+    super.key,
+    required this.state,
+    required this.onFilterChanged,
+  });
 
-  final NotificationCenterController controller;
+  final NotificationCenterState state;
+  final ValueChanged<ActivityNotificationFilterState> onFilterChanged;
 
   static const List<String> _categories = <String>[
     'info',
@@ -124,7 +130,7 @@ class NotificationFilterBar extends StatelessWidget {
           width: layoutTokens.filterFieldWidthMd,
           child: AppSelectField<String?>(
             key: const Key('notification-category-filter'),
-            value: controller.filter.category,
+            value: state.filter.category,
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: <DropdownMenuItem<String?>>[
@@ -137,16 +143,15 @@ class NotificationFilterBar extends StatelessWidget {
               ),
             ],
             onChanged:
-                controller.isRefreshing
+                state.isRefreshing
                     ? null
-                    : (value) => controller.applyNotificationFilter(
-                      controller.filter.copyWith(category: value),
-                    ),
+                    : (value) =>
+                        onFilterChanged(state.filter.copyWith(category: value)),
           ),
         ),
         _FilterRefreshIndicator(
           indicatorKey: const Key('notification-filter-loading'),
-          isVisible: controller.isRefreshing,
+          isVisible: state.isRefreshing,
         ),
       ],
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/listing/paged_video_summary_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -17,9 +17,12 @@ import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_s
 class VideoListContent extends StatelessWidget {
   const VideoListContent({
     super.key,
-    required this.controller,
+    required this.paged,
+    required this.isInitialLoading,
+    required this.initialErrorMessage,
     required this.filterState,
     required this.onFilterChanged,
+    required this.onLoadMore,
     required this.onVideoTap,
     this.selectionMode = false,
     this.selectedIds = const <int>{},
@@ -32,9 +35,12 @@ class VideoListContent extends StatelessWidget {
     this.emptyMessage = '暂无视频数据',
   });
 
-  final PagedVideoSummaryController controller;
+  final PagedListState<VideoItemListItemDto> paged;
+  final bool isInitialLoading;
+  final String? initialErrorMessage;
   final VideoFilterState filterState;
   final ValueChanged<VideoFilterState> onFilterChanged;
+  final VoidCallback onLoadMore;
   final ValueChanged<VideoItemListItemDto> onVideoTap;
 
   /// 选择模式：网格切换为多选交互。
@@ -51,12 +57,12 @@ class VideoListContent extends StatelessWidget {
   /// 多选是原地改写这一行，不在筛选行下面另起一行——另起一行会让整页内容上下
   /// 跳动。返回 `null` 时退回常规顶栏。
   ///
-  /// 用 builder 而非现成 widget，使其在列表分页加载（controller 变化）后能拿到
-  /// 最新的 `controller.items`（决定「全选」状态）。
+  /// 用 builder 而非现成 widget，使其在列表分页加载后能拿到最新 items
+  /// （决定「全选」状态）。
   final Widget? Function(BuildContext context)? selectionHeaderBuilder;
 
   /// 常规态顶栏右侧操作槽（如「选择」入口）。返回 `null` 不渲染。
-  /// 用 builder 让 controller 变化时拿到最新 `controller.items`。
+  /// 用 builder 让分页状态变化时拿到最新 items。
   final Widget? Function(BuildContext context)? headerActionsBuilder;
 
   final double sectionSpacing;
@@ -66,77 +72,70 @@ class VideoListContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final showFooter =
-            controller.items.isNotEmpty &&
-            (controller.isLoadingMore ||
-                controller.loadMoreErrorMessage != null);
-        final selectionHeader =
-            selectionMode ? selectionHeaderBuilder?.call(context) : null;
-        final actions = headerActionsBuilder?.call(context);
-        return SliverMainAxisGroup(
-          key: contentKey,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 桌面与移动共用同一条顶栏：筛选入口 + 只读信息 + 操作。
-                  // 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
-                  selectionHeader ??
-                      AppListHeader(
-                        filterButtonKey: const Key('videos-filter-trigger'),
-                        filterLabel: filterState.sortField.label,
-                        filterPanelKey: const Key('videos-filter-panel'),
-                        filterPanelExtraWidth: 180,
-                        filterPanelBuilder:
-                            (_) => VideoFilterSectionGroup(
-                              filterState: filterState,
-                              onChanged: onFilterChanged,
-                            ),
-                        filterPanelFooter: AppFilterPanelFooter(
-                          isDefault: filterState.isDefault,
-                          onReset:
-                              () => onFilterChanged(VideoFilterState.initial),
+    final showFooter =
+        paged.items.isNotEmpty &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
+    final selectionHeader =
+        selectionMode ? selectionHeaderBuilder?.call(context) : null;
+    final actions = headerActionsBuilder?.call(context);
+    return SliverMainAxisGroup(
+      key: contentKey,
+      slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 桌面与移动共用同一条顶栏：筛选入口 + 只读信息 + 操作。
+              // 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
+              selectionHeader ??
+                  AppListHeader(
+                    filterButtonKey: const Key('videos-filter-trigger'),
+                    filterLabel: filterState.sortField.label,
+                    filterPanelKey: const Key('videos-filter-panel'),
+                    filterPanelExtraWidth: 180,
+                    filterPanelBuilder:
+                        (_) => VideoFilterSectionGroup(
+                          filterState: filterState,
+                          onChanged: onFilterChanged,
                         ),
-                        informationSlots: [
-                          AppListHeaderInfo(
-                            key: totalKey ?? const Key('videos-page-total'),
-                            label: '${controller.total} 个',
-                          ),
-                        ],
-                        actionSlots: [if (actions != null) actions],
+                    filterPanelFooter: AppFilterPanelFooter(
+                      isDefault: filterState.isDefault,
+                      onReset: () => onFilterChanged(VideoFilterState.initial),
+                    ),
+                    informationSlots: [
+                      AppListHeaderInfo(
+                        key: totalKey ?? const Key('videos-page-total'),
+                        label: '${paged.total} 个',
                       ),
-                  SizedBox(height: sectionSpacing),
-                ],
-              ),
-            ),
-            VideoSummarySliver(
-              items: controller.items,
-              isLoading: controller.isInitialLoading,
-              errorMessage: controller.initialErrorMessage,
-              onVideoTap: onVideoTap,
-              selectionMode: selectionMode,
-              selectedIds: selectedIds,
-              onVideoToggleSelect: onVideoToggleSelect,
-              emptyMessage: emptyMessage,
-            ),
-            if (showFooter)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: context.appSpacing.md),
-                  child: AppPagedLoadMoreFooter(
-                    isLoading: controller.isLoadingMore,
-                    errorMessage: controller.loadMoreErrorMessage,
-                    onRetry: controller.loadMore,
+                    ],
+                    actionSlots: [if (actions != null) actions],
                   ),
-                ),
+              SizedBox(height: sectionSpacing),
+            ],
+          ),
+        ),
+        VideoSummarySliver(
+          items: paged.items,
+          isLoading: isInitialLoading,
+          errorMessage: initialErrorMessage,
+          onVideoTap: onVideoTap,
+          selectionMode: selectionMode,
+          selectedIds: selectedIds,
+          onVideoToggleSelect: onVideoToggleSelect,
+          emptyMessage: emptyMessage,
+        ),
+        if (showFooter)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: context.appSpacing.md),
+              child: AppPagedLoadMoreFooter(
+                isLoading: paged.isLoadingMore,
+                errorMessage: paged.loadMoreErrorMessage,
+                onRetry: onLoadMore,
               ),
-          ],
-        );
-      },
+            ),
+          ),
+      ],
     );
   }
 }

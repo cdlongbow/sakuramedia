@@ -6,8 +6,8 @@ import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_subscribable_list_mixin.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
@@ -23,7 +23,9 @@ void main() {
   late ApiClient apiClient;
   late FakeHttpClientAdapter adapter;
   late ProviderContainer container;
-  late MovieSubscriptionChangeNotifier broadcaster;
+
+  MovieSubscriptionEvents broadcaster() =>
+      container.read(movieSubscriptionEventsProvider.notifier);
 
   setUp(() async {
     sessionStore = SessionStore.inMemory();
@@ -37,7 +39,6 @@ void main() {
     adapter = FakeHttpClientAdapter();
     apiClient.rawDio.httpClientAdapter = adapter;
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
-    broadcaster = MovieSubscriptionChangeNotifier();
 
     // status-counts 在每次 mutation 后都会被刷一次，给它一个常驻兜底响应，
     // 免得每个用例都要按次数排队。
@@ -62,7 +63,6 @@ void main() {
             ),
           ),
         ),
-        movieSubscriptionBroadcasterProvider.overrideWithValue(broadcaster),
       ],
       retry: (_, __) => null,
     );
@@ -70,7 +70,6 @@ void main() {
 
   tearDown(() {
     container.dispose();
-    broadcaster.dispose();
     apiClient.dispose();
     sessionStore.dispose();
   });
@@ -319,9 +318,10 @@ void main() {
   test('取消订阅移除行并广播给其它页面', () async {
     await primeFirstPage();
     final changes = <MovieSubscriptionChange>[];
-    broadcaster.addListener(
-      () => broadcaster.consumePendingChanges(changes.addAll),
-    );
+    container.listen(movieSubscriptionEventsProvider, (_, next) {
+      final batch = next.value;
+      if (batch != null) changes.addAll(batch);
+    });
 
     adapter.enqueueJson(
       method: 'DELETE',
@@ -398,7 +398,7 @@ void main() {
     // 真实页面会一直 watch 本 provider；测试里补一个订阅者，否则 Riverpod 会把
     // 无人监听的 provider 的入站订阅挂起，广播根本流不进来。
     container.listen(movieSubscriptionManagerProvider, (_, __) {});
-    broadcaster.reportChange(movieNumber: 'A-2', isSubscribed: false);
+    broadcaster().reportChange(movieNumber: 'A-2', isSubscribed: false);
     // 广播要经过 StreamController → StreamProvider → ref.listen 三跳异步投递，
     // 单个 microtask 不够，给它几毫秒。
     await Future<void>.delayed(const Duration(milliseconds: 20));

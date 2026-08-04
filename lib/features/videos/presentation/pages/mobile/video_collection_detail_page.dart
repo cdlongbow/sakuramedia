@@ -10,12 +10,12 @@ import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confir
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_state.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_filter_sections.dart';
@@ -66,8 +66,8 @@ class _MobileVideoCollectionDetailPageState
   VideoCollectionDetailProvider get _providerRef =>
       videoCollectionDetailProvider(widget.collectionId);
 
-  VideoMutationChangeNotifier get _mutationBroadcaster =>
-      ref.read(videoMutationBroadcasterProvider);
+  VideoMutationEvents get _mutationBroadcaster =>
+      ref.read(videoMutationEventsProvider.notifier);
 
   void _toggleLayout() {
     setState(() {
@@ -452,7 +452,7 @@ class _MobileVideoCollectionDetailPageState
   }
 
   /// 彻底删除视频本体（含文件，不可恢复）：先弹底部确认抽屉，再走 notifier 乐观删除并广播
-  /// [VideoMutationChangeNotifier.reportDeleted]，与「全部视频」页的删除一致。
+  /// [VideoMutationEvents.reportDeleted]，与「全部视频」页的删除一致。
   Future<void> _deleteVideo(int itemId, VideoItemListItemDto video) async {
     final title = video.preferredTitle.trim();
     final label = title.isEmpty ? '该视频' : '“$title”';

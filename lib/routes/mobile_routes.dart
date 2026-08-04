@@ -10,12 +10,11 @@ import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
+import 'package:sakuramedia/app/app_version_info_state.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_password_page.dart';
 import 'package:sakuramedia/features/account/presentation/mobile_change_username_page.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/mobile_notifications_page.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
@@ -973,16 +972,10 @@ class _MobileOverviewDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final center = _readNotificationCenter(ref);
-    if (center == null) {
-      return _buildDrawer(context, unreadCount: 0);
-    }
-    return ListenableBuilder(
-      listenable: center,
-      builder:
-          (context, _) =>
-              _buildDrawer(context, unreadCount: center.unreadCount),
+    final unreadCount = ref.watch(
+      notificationCenterProvider.select((value) => value.unreadCount),
     );
+    return _buildDrawer(context, unreadCount: unreadCount);
   }
 
   Widget _buildDrawer(BuildContext context, {required int unreadCount}) {
@@ -1220,36 +1213,22 @@ class _MobileDrawerVersionCard extends ConsumerStatefulWidget {
 
 class _MobileDrawerVersionCardState
     extends ConsumerState<_MobileDrawerVersionCard> {
-  AppVersionInfoController? _loadedController;
-
   @override
   void initState() {
     super.initState();
-    final controller = _readVersionInfoController(ref);
-    if (controller == null) {
-      return;
-    }
-    _loadedController = controller..addListener(_onVersionChanged);
-    unawaited(controller.load());
-  }
-
-  @override
-  void dispose() {
-    _loadedController?.removeListener(_onVersionChanged);
-    super.dispose();
-  }
-
-  void _onVersionChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(ref.read(appVersionInfoProvider.notifier).load());
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = _loadedController;
-    final frontendVersion = controller?.frontendVersionLabel ?? '--';
-    final backendVersion = controller?.backendVersionLabel ?? '--';
+    final versionInfo =
+        ref.watch(appVersionInfoProvider).value ?? AppVersionInfoState.initial;
+    final frontendVersion = versionInfo.frontendVersionLabel;
+    final backendVersion = versionInfo.backendVersionLabel;
     final spacing = context.appSpacing;
 
     return Container(
@@ -1329,25 +1308,6 @@ class _MobileDrawerVersionRow extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-/// 防御式读取通知中心：桥未 override（部分 widget 测试）时抛
-/// [UnimplementedError]，捕获后返回 null、角标隐藏——与旧
-/// `ProviderNotFoundException` 降级语义一致。
-NotificationCenterController? _readNotificationCenter(WidgetRef ref) {
-  try {
-    return ref.read(notificationCenterControllerProvider);
-  } on Object {
-    return null;
-  }
-}
-
-AppVersionInfoController? _readVersionInfoController(WidgetRef ref) {
-  try {
-    return ref.read(appVersionInfoControllerProvider);
-  } on Object {
-    return null;
   }
 }
 

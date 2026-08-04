@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
-import 'package:sakuramedia/features/activity/presentation/activity_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
-import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_center_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/resource_task_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_pane.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_pane.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
@@ -41,44 +41,30 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     with SingleTickerProviderStateMixin {
   static const double _loadMoreTriggerOffset = 300;
 
-  late final ActivityCenterController _controller;
-  late final ResourceTaskCenterController _resourceTaskController;
   late final TabController _tabController;
   late final ScrollController _pageScrollController;
   bool _isViewportWorkScheduled = false;
-  ActivityTab? _lastActiveTab;
+  ActivityTab? _lastActiveTab = ActivityTab.tasks;
+  bool _hasOpenedResourceTasks = false;
+  bool _hasOpenedDownloadTasks = false;
 
-  /// 订阅下载中心 provider，其状态变化触发 viewport 自动加载检查（等效原
-  /// `_downloadTaskController.addListener(_handleControllerChanged)`）。
-  ProviderSubscription<AsyncValue<DownloadTaskCenterState>>? _downloadCenterSub;
+  ActivityCenter get _controller => ref.read(activityCenterProvider.notifier);
+  ResourceTaskCenter get _resourceTaskController =>
+      ref.read(resourceTaskCenterProvider.notifier);
 
   @override
   void initState() {
     super.initState();
-    final activityApi = ref.read(activityApiProvider);
-    _controller =
-        ActivityCenterController(activityApi: activityApi)
-          ..addListener(_syncTabSelection)
-          ..addListener(_handleControllerChanged);
-    _resourceTaskController = ResourceTaskCenterController(
-      activityApi: activityApi,
-    )..addListener(_handleControllerChanged);
     _tabController = TabController(length: 3, vsync: this)
       ..addListener(_handleTabChanged);
     _pageScrollController = ScrollController()..addListener(_handlePageScroll);
-    _lastActiveTab = _controller.activeTab;
-    _downloadCenterSub = ref.listenManual<AsyncValue<DownloadTaskCenterState>>(
-      downloadTaskCenterProvider,
-      (_, __) => _handleControllerChanged(),
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _scheduleViewportWork();
       }
     });
-    _controller.initialize();
     // 订阅卡片跳转进来的下载意图：等首帧后统一走同一路径（切 tab + 应用筛选），
-    // 避免与 _controller.initialize() 的初始化互相踩。
+    // 避免与 activity provider 的 bootstrap 初始化互相踩。
     if (widget.initialDownloadMovieNumber != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -113,14 +99,6 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
 
   @override
   void dispose() {
-    _downloadCenterSub?.close();
-    _controller
-      ..removeListener(_syncTabSelection)
-      ..removeListener(_handleControllerChanged)
-      ..dispose();
-    _resourceTaskController
-      ..removeListener(_handleControllerChanged)
-      ..dispose();
     _tabController
       ..removeListener(_handleTabChanged)
       ..dispose();
@@ -137,29 +115,33 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     }
   }
 
-  void _syncTabSelection() {
-    if (_tabController.index != _controller.activeTab.index) {
-      _tabController.animateTo(_controller.activeTab.index);
+  void _syncTabSelection(ActivityTab activeTab) {
+    if (_tabController.index != activeTab.index) {
+      _tabController.animateTo(activeTab.index);
     }
-    _handleActiveTabDiff();
+    _handleActiveTabDiff(activeTab);
   }
 
   /// 收敛 tab 切换的副作用：手势切 tab、程序化 setActiveTab（如 triggerJob）
   /// 都过这条路径。切进 → initialize/connect；切走下载 → disconnect。
-  void _handleActiveTabDiff() {
-    final nextTab = _controller.activeTab;
+  void _handleActiveTabDiff(ActivityTab nextTab) {
     if (nextTab == _lastActiveTab) {
       return;
     }
     final previousTab = _lastActiveTab;
     _lastActiveTab = nextTab;
 
-    if (nextTab == ActivityTab.resourceTasks &&
-        !_resourceTaskController.initialized &&
-        !_resourceTaskController.isInitialLoading) {
-      unawaited(_resourceTaskController.initialize());
+    if (nextTab == ActivityTab.resourceTasks && !_hasOpenedResourceTasks) {
+      setState(() {
+        _hasOpenedResourceTasks = true;
+      });
     }
     if (nextTab == ActivityTab.downloadTasks) {
+      if (!_hasOpenedDownloadTasks) {
+        setState(() {
+          _hasOpenedDownloadTasks = true;
+        });
+      }
       // AsyncNotifier 的 build() 在首次 watch 时自动跑（`ref.read(...notifier)`
       // 也会触发 build）；这里只需要打开 SSE。
       unawaited(ref.read(downloadTaskCenterProvider.notifier).connectStream());
@@ -191,27 +173,31 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   }
 
   void _maybeAutoLoadMore() {
+    final activity = ref.read(activityCenterProvider).value;
     if (!_pageScrollController.hasClients ||
-        _controller.isInitialLoading ||
-        _controller.initialErrorMessage != null) {
+        activity == null ||
+        activity.isInitialLoading ||
+        activity.initialErrorMessage != null) {
       return;
     }
     if (!_shouldAutoLoadMoreForViewport()) {
       return;
     }
 
-    switch (_controller.activeTab) {
+    switch (activity.activeTab) {
       case ActivityTab.tasks:
-        if (_controller.hasMoreTasks &&
-            !_controller.isLoadingMoreTasks &&
-            _controller.taskLoadMoreErrorMessage == null) {
+        if (activity.hasMoreTasks &&
+            !activity.isLoadingMoreTasks &&
+            activity.taskLoadMoreErrorMessage == null) {
           unawaited(_controller.loadMoreTasks());
         }
         break;
       case ActivityTab.resourceTasks:
-        if (_resourceTaskController.hasMoreRecords &&
-            !_resourceTaskController.isLoadingMoreRecords &&
-            _resourceTaskController.recordsLoadMoreErrorMessage == null) {
+        final resource = ref.read(resourceTaskCenterProvider).value;
+        if (resource != null &&
+            resource.hasMoreRecords &&
+            !resource.isLoadingMoreRecords &&
+            resource.recordsLoadMoreErrorMessage == null) {
           unawaited(_resourceTaskController.loadMoreRecords());
         }
         break;
@@ -408,69 +394,91 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
 
   @override
   Widget build(BuildContext context) {
+    final activityAsync = ref.watch(activityCenterProvider);
+    final activeTab = activityAsync.value?.activeTab ?? ActivityTab.tasks;
+    if (_hasOpenedResourceTasks || activeTab == ActivityTab.resourceTasks) {
+      ref.watch(resourceTaskCenterProvider);
+    }
+    if (_hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks) {
+      ref.watch(downloadTaskCenterProvider);
+    }
+    ref.listen<ActivityTab>(
+      activityCenterProvider.select(
+        (value) => value.value?.activeTab ?? ActivityTab.tasks,
+      ),
+      (_, next) => _syncTabSelection(next),
+    );
+    ref.listen<AsyncValue<ActivityCenterState>>(
+      activityCenterProvider,
+      (_, __) => _handleControllerChanged(),
+    );
+    if (_hasOpenedResourceTasks || activeTab == ActivityTab.resourceTasks) {
+      ref.listen(
+        resourceTaskCenterProvider,
+        (_, __) => _handleControllerChanged(),
+      );
+    }
+    if (_hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks) {
+      ref.listen<AsyncValue<DownloadTaskCenterState>>(
+        downloadTaskCenterProvider,
+        (_, __) => _handleControllerChanged(),
+      );
+    }
     return AppPageRefreshScope(
       onRefresh: _refreshActiveTab,
-      child: AnimatedBuilder(
-        animation: Listenable.merge(<Listenable>[
-          _controller,
-          _resourceTaskController,
-        ]),
-        builder: (context, _) {
-          return Stack(
-            children: [
-              CustomScrollView(
-                controller: _pageScrollController,
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      key: const Key('desktop-activity-page'),
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppTabBar(
-                          controller: _tabController,
-                          tabs: const [
-                            Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
-                            Tab(
-                              key: Key('activity-tab-resource-tasks'),
-                              text: '元数据任务',
-                            ),
-                            Tab(
-                              key: Key('activity-tab-download-tasks'),
-                              text: '下载任务',
-                            ),
-                          ],
+      child: Stack(
+        children: [
+          CustomScrollView(
+            controller: _pageScrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  key: const Key('desktop-activity-page'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppTabBar(
+                      controller: _tabController,
+                      tabs: const [
+                        Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
+                        Tab(
+                          key: Key('activity-tab-resource-tasks'),
+                          text: '元数据任务',
                         ),
-                        SizedBox(height: context.appSpacing.lg),
-                        _ConnectionBanner(
-                          state: _controller.connectionState,
-                          message: _controller.connectionMessage,
+                        Tab(
+                          key: Key('activity-tab-download-tasks'),
+                          text: '下载任务',
                         ),
-                        SizedBox(height: context.appSpacing.xl),
                       ],
                     ),
-                  ),
-                  ..._buildTabSlivers(context),
-                ],
-              ),
-              if (_controller.activeTab == ActivityTab.resourceTasks)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    ignoring: !_resourceTaskController.isDetailOpen,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      child:
-                          _resourceTaskController.isDetailOpen
-                              ? buildResourceTaskDetailOverlay(
-                                context: context,
-                                controller: _resourceTaskController,
-                              )
-                              : const SizedBox.shrink(),
+                    SizedBox(height: context.appSpacing.lg),
+                    _ConnectionBanner(
+                      state: _controller.connectionState,
+                      message: _controller.connectionMessage,
                     ),
-                  ),
+                    SizedBox(height: context.appSpacing.xl),
+                  ],
                 ),
+              ),
+              ..._buildTabSlivers(context),
             ],
-          );
-        },
+          ),
+          if (_controller.activeTab == ActivityTab.resourceTasks)
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: !_resourceTaskController.isDetailOpen,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child:
+                      _resourceTaskController.isDetailOpen
+                          ? buildResourceTaskDetailOverlay(
+                            context: context,
+                            controller: _resourceTaskController,
+                          )
+                          : const SizedBox.shrink(),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -625,7 +633,7 @@ class _ExecutableJobsSection extends StatefulWidget {
     required this.onTriggerJob,
   });
 
-  final ActivityCenterController controller;
+  final ActivityCenter controller;
   final ValueChanged<JobMetadataDto> onTriggerJob;
 
   @override
@@ -635,7 +643,7 @@ class _ExecutableJobsSection extends StatefulWidget {
 class _ExecutableJobsSectionState extends State<_ExecutableJobsSection> {
   bool _isExpanded = false;
 
-  ActivityCenterController get controller => widget.controller;
+  ActivityCenter get controller => widget.controller;
 
   @override
   Widget build(BuildContext context) {
@@ -896,7 +904,7 @@ class _ExecutableJobCard extends StatelessWidget {
 class _TaskFilterBar extends StatelessWidget {
   const _TaskFilterBar({required this.controller});
 
-  final ActivityCenterController controller;
+  final ActivityCenter controller;
 
   static const List<String> _states = <String>[
     'running',

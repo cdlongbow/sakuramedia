@@ -6,8 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
+import 'package:sakuramedia/app/app_version_info_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
@@ -336,36 +335,22 @@ class _SidebarVersionInfo extends ConsumerStatefulWidget {
 }
 
 class _SidebarVersionInfoState extends ConsumerState<_SidebarVersionInfo> {
-  AppVersionInfoController? _loadedController;
-
   @override
   void initState() {
     super.initState();
-    final controller = _readVersionInfoController(ref);
-    if (controller == null) {
-      return;
-    }
-    _loadedController = controller..addListener(_onVersionChanged);
-    unawaited(controller.load());
-  }
-
-  @override
-  void dispose() {
-    _loadedController?.removeListener(_onVersionChanged);
-    super.dispose();
-  }
-
-  void _onVersionChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(ref.read(appVersionInfoProvider.notifier).load());
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = _loadedController;
-    final frontendVersion = controller?.frontendVersionLabel ?? '--';
-    final backendVersion = controller?.backendVersionLabel ?? '--';
+    final versionInfo =
+        ref.watch(appVersionInfoProvider).value ?? AppVersionInfoState.initial;
+    final frontendVersion = versionInfo.frontendVersionLabel;
+    final backendVersion = versionInfo.backendVersionLabel;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -373,9 +358,7 @@ class _SidebarVersionInfoState extends ConsumerState<_SidebarVersionInfo> {
             widget.isCompact || constraints.maxWidth < sidebarVersionMinWidth;
         if (shouldUseCompact) {
           return Tooltip(
-            message:
-                controller?.tooltipLabel ??
-                '客户端 $frontendVersion · 服务端 $backendVersion',
+            message: versionInfo.tooltipLabel,
             waitDuration: const Duration(milliseconds: 300),
             child: Center(
               child: Container(
@@ -462,17 +445,6 @@ class _SidebarVersionRow extends StatelessWidget {
   }
 }
 
-/// 防御式读取版本控制器：桥未 override（部分 widget 测试）时抛
-/// [UnimplementedError]，捕获后返回 null、版本行显示 '--'——与旧
-/// `ProviderNotFoundException` 降级语义一致。
-AppVersionInfoController? _readVersionInfoController(WidgetRef ref) {
-  try {
-    return ref.read(appVersionInfoControllerProvider);
-  } on Object {
-    return null;
-  }
-}
-
 class AppSidebarGroup extends ConsumerWidget {
   const AppSidebarGroup({
     super.key,
@@ -502,24 +474,13 @@ class AppSidebarGroup extends ConsumerWidget {
     }
 
     // 仅「通知」组订阅全局未读数，其它组不监听、避免无谓重建。
-    // 桥未 override（部分 widget 测试）时降级为无角标。
-    final center =
-        group.id == 'notifications' ? _readNotificationCenter(ref) : null;
-    if (center == null) {
+    if (group.id != 'notifications') {
       return buildItem(null);
     }
-    return ListenableBuilder(
-      listenable: center,
-      builder: (context, _) => buildItem(center.unreadCount),
+    final unreadCount = ref.watch(
+      notificationCenterProvider.select((value) => value.unreadCount),
     );
-  }
-}
-
-NotificationCenterController? _readNotificationCenter(WidgetRef ref) {
-  try {
-    return ref.read(notificationCenterControllerProvider);
-  } on Object {
-    return null;
+    return buildItem(unreadCount);
   }
 }
 

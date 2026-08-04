@@ -5,20 +5,20 @@ import 'package:go_router/go_router.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
-import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_player_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_player_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_player_state.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -79,9 +79,12 @@ class DesktopMoviePlayerPage extends ConsumerStatefulWidget {
 
 class _DesktopMoviePlayerPageState
     extends ConsumerState<DesktopMoviePlayerPage> {
-  late final MoviePlayerController _controller;
+  late final MoviePlayerScope _scope;
+  late final MoviePlayer _controller;
   late final MultiSplitViewController _splitController;
   late final MoviePlayerSurfaceController _surfaceController;
+
+  MoviePlayerState get _playerState => ref.read(moviePlayerProvider(_scope));
 
   @override
   void initState() {
@@ -89,30 +92,22 @@ class _DesktopMoviePlayerPageState
     debugPrint(
       '[player-debug] desktop_player_page_init movie=${widget.movieNumber} initialMediaId=${widget.initialMediaId} initialPositionSeconds=${widget.initialPositionSeconds} fallbackPath=${widget.fallbackPath}',
     );
-    _controller = MoviePlayerController(
+    _scope = MoviePlayerScope(
       movieNumber: widget.movieNumber,
       initialMediaId: widget.initialMediaId,
       initialPositionSeconds: widget.initialPositionSeconds,
       baseUrl: ref.read(sessionStoreProvider).baseUrl,
-      fetchMovieDetail: ref.read(moviesApiProvider).getMovieDetail,
-      fetchMediaThumbnails: ref.read(moviesApiProvider).getMediaThumbnails,
-      fetchMovieSubtitles: ref.read(moviesApiProvider).getMovieSubtitles,
-      updateMediaProgress: ref.read(moviesApiProvider).updateMediaProgress,
-      fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
-    )..load();
+    );
+    _controller = ref.read(moviePlayerProvider(_scope).notifier);
     _splitController = MultiSplitViewController(
       areas: [Area(flex: 0.72), Area(flex: 0.28)],
     );
     _surfaceController = MoviePlayerSurfaceController();
-  }
-
-  MediaLibrariesApi? _readMediaLibrariesApi() {
-    try {
-      return ref.read(mediaLibrariesApiProvider);
-    } on Object {
-      // 无 scope / 桥未 override 时降级为 null（隐藏相关入口），语义同旧。
-      return null;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_controller.load());
+      }
+    });
   }
 
   @override
@@ -120,13 +115,55 @@ class _DesktopMoviePlayerPageState
     unawaited(_controller.flushPlaybackProgress());
     _surfaceController.dispose();
     _splitController.dispose();
-    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final playerState = ref.watch(moviePlayerProvider(_scope));
+
+    final Widget content;
+    if (playerState.isLoading) {
+      content = wrapWithMoviePlayerBackButton(
+        onBackPressed: _handleBack,
+        child: const _MoviePlayerLoadingState(),
+      );
+    } else if (playerState.errorMessage != null) {
+      content = wrapWithMoviePlayerBackButton(
+        onBackPressed: _handleBack,
+        child: _MoviePlayerErrorState(
+          message: playerState.errorMessage!,
+          onRetry: _controller.load,
+        ),
+      );
+    } else {
+      final resolvedUrl = playerState.resolvedPlayUrl(_scope.baseUrl);
+      if (resolvedUrl == null) {
+        content = wrapWithMoviePlayerBackButton(
+          onBackPressed: _handleBack,
+          child: _MoviePlayerSplitLayout(
+            controller: _splitController,
+            dividerHandleBuffer: widget.dividerHandleBuffer,
+            leftChild: const _MoviePlayerEmptyState(),
+            rightChild:
+                playerState.selectedMedia == null
+                    ? const SizedBox.expand()
+                    : _buildThumbnailPanel(),
+          ),
+        );
+      } else {
+        content = _MoviePlayerSplitLayout(
+          controller: _splitController,
+          dividerHandleBuffer: widget.dividerHandleBuffer,
+          leftChild: _buildPlayerSurface(context, resolvedUrl),
+          rightChild:
+              playerState.selectedMedia == null
+                  ? const SizedBox.expand()
+                  : _buildThumbnailPanel(),
+        );
+      }
+    }
 
     return Scaffold(
       backgroundColor: colors.movieDetailHeroBackgroundStart,
@@ -136,52 +173,7 @@ class _DesktopMoviePlayerPageState
           color: colors.movieDetailHeroBackgroundStart.withValues(alpha: 0.92),
           borderRadius: context.appRadius.lgBorder,
         ),
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            if (_controller.isLoading) {
-              return wrapWithMoviePlayerBackButton(
-                onBackPressed: _handleBack,
-                child: const _MoviePlayerLoadingState(),
-              );
-            }
-
-            if (_controller.errorMessage != null) {
-              return wrapWithMoviePlayerBackButton(
-                onBackPressed: _handleBack,
-                child: _MoviePlayerErrorState(
-                  message: _controller.errorMessage!,
-                  onRetry: _controller.load,
-                ),
-              );
-            }
-
-            final resolvedUrl = _controller.resolvedPlayUrl;
-            if (resolvedUrl == null) {
-              return wrapWithMoviePlayerBackButton(
-                onBackPressed: _handleBack,
-                child: _MoviePlayerSplitLayout(
-                  controller: _splitController,
-                  dividerHandleBuffer: widget.dividerHandleBuffer,
-                  leftChild: const _MoviePlayerEmptyState(),
-                  rightChild:
-                      _controller.selectedMedia == null
-                          ? const SizedBox.expand()
-                          : _buildThumbnailPanel(),
-                ),
-              );
-            }
-            return _MoviePlayerSplitLayout(
-              controller: _splitController,
-              dividerHandleBuffer: widget.dividerHandleBuffer,
-              leftChild: _buildPlayerSurface(context, resolvedUrl),
-              rightChild:
-                  _controller.selectedMedia == null
-                      ? const SizedBox.expand()
-                      : _buildThumbnailPanel(),
-            );
-          },
-        ),
+        child: content,
       ),
     );
   }
@@ -192,12 +184,12 @@ class _DesktopMoviePlayerPageState
         context,
         resolvedUrl,
         _surfaceController,
-        _controller.initialPlaybackPosition,
-        _controller.resumePlaybackPosition,
+        _playerState.startupPlaybackPosition,
+        _playerState.resumePlaybackPosition,
         _controller.resolveResumePrompt,
         _controller.handlePlaybackPosition,
         _controller.handlePlaybackPlayingChanged,
-        _controller.subtitleState,
+        _playerState.subtitleState,
         _controller.setSelectedSubtitleId,
         _controller.loadSubtitles,
         _handleBack,
@@ -208,20 +200,20 @@ class _DesktopMoviePlayerPageState
       movieNumber: widget.movieNumber,
       resolvedUrl: resolvedUrl,
       surfaceController: _surfaceController,
-      initialPosition: _controller.initialPlaybackPosition,
-      resumePosition: _controller.resumePlaybackPosition,
+      initialPosition: _playerState.startupPlaybackPosition,
+      resumePosition: _playerState.resumePlaybackPosition,
       onResumePromptResolved: _controller.resolveResumePrompt,
       onPositionChanged: _controller.handlePlaybackPosition,
       onPlayingChanged: _controller.handlePlaybackPlayingChanged,
-      subtitleState: _controller.subtitleState,
+      subtitleState: _playerState.subtitleState,
       onSubtitleSelectionChanged: _controller.setSelectedSubtitleId,
       onSubtitleReloadRequested: _controller.loadSubtitles,
       onBackPressed: _handleBack,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       mediaSourceKind:
-          _controller.selectedMediaStorage.isCloud115
+          _playerState.selectedMediaStorage.isCloud115
               ? MoviePlayerMediaSourceKind.cloud115
-              : _controller.selectedMediaStorage.isLocal
+              : _playerState.selectedMediaStorage.isLocal
               ? MoviePlayerMediaSourceKind.local
               : MoviePlayerMediaSourceKind.unknown,
       mediaInfo: _buildMediaInfo(),
@@ -229,11 +221,11 @@ class _DesktopMoviePlayerPageState
   }
 
   MoviePlayerMediaInfo? _buildMediaInfo() {
-    final media = _controller.selectedMedia;
+    final media = _playerState.selectedMedia;
     if (media == null) {
       return null;
     }
-    final storage = _controller.selectedMediaStorage;
+    final storage = _playerState.selectedMediaStorage;
     return MoviePlayerMediaInfo(
       sourceLabel: storage.sourceLabel,
       libraryLabel:
@@ -254,36 +246,37 @@ class _DesktopMoviePlayerPageState
     return ValueListenableBuilder<int?>(
       valueListenable: _controller.activeThumbnailIndexListenable,
       builder: (context, activeIndex, child) {
+        final playerState = _playerState;
         return MoviePlayerThumbnailPanel(
-          thumbnails: _controller.thumbnails,
-          isLoading: _controller.isThumbnailLoading,
-          errorMessage: _controller.thumbnailErrorMessage,
-          columns: _controller.thumbnailColumns,
+          thumbnails: playerState.thumbnails,
+          isLoading: playerState.isThumbnailLoading,
+          errorMessage: playerState.thumbnailErrorMessage,
+          columns: playerState.thumbnailColumns,
           activeIndex: activeIndex,
-          isScrollLocked: _controller.isThumbnailScrollLocked,
-          usesAutoColumns: _controller.usesAutoThumbnailColumns,
+          isScrollLocked: playerState.isThumbnailScrollLocked,
+          usesAutoColumns: playerState.usesAutoThumbnailColumns,
           onAutoColumnsResolved: _controller.applyAutoThumbnailColumns,
           onColumnsChanged: _controller.setThumbnailColumns,
           onToggleScrollLock: _controller.toggleThumbnailScrollLock,
           onThumbnailTap: (index) {
-            if (_controller.clipSelectionMode) {
+            if (_playerState.clipSelectionMode) {
               _controller.handleClipSelectionTap(index);
               return;
             }
             _controller.handleThumbnailTap(index);
-            final item = _controller.thumbnails[index];
+            final item = _playerState.thumbnails[index];
             _surfaceController.seekTo(Duration(seconds: item.offsetSeconds));
           },
           onThumbnailMenuRequested:
               widget.enableThumbnailActionMenu ? _showThumbnailActions : null,
           onRetry: _controller.loadThumbnails,
-          clipSelectionMode: _controller.clipSelectionMode,
-          clipStartIndex: _controller.clipStartIndex,
-          clipEndIndex: _controller.clipEndIndex,
-          clipStartSeconds: _controller.clipStartThumbnail?.offsetSeconds,
-          clipEndSeconds: _controller.clipEndThumbnail?.offsetSeconds,
-          clipDurationSeconds: _controller.clipSelectionDurationSeconds,
-          canCreateClip: _controller.canCreateClip,
+          clipSelectionMode: playerState.clipSelectionMode,
+          clipStartIndex: playerState.clipStartIndex,
+          clipEndIndex: playerState.clipEndIndex,
+          clipStartSeconds: playerState.clipStartThumbnail?.offsetSeconds,
+          clipEndSeconds: playerState.clipEndThumbnail?.offsetSeconds,
+          clipDurationSeconds: playerState.clipSelectionDurationSeconds,
+          canCreateClip: playerState.canCreateClip,
           onToggleClipSelectionMode: _controller.toggleClipSelectionMode,
           onCreateClip: _handleCreateClip,
           onClearClipSelection: _controller.clearClipSelection,
@@ -293,9 +286,9 @@ class _DesktopMoviePlayerPageState
   }
 
   Future<void> _handleCreateClip() async {
-    final media = _controller.selectedMedia;
-    final start = _controller.clipStartThumbnail;
-    final end = _controller.clipEndThumbnail;
+    final media = _playerState.selectedMedia;
+    final start = _playerState.clipStartThumbnail;
+    final end = _playerState.clipEndThumbnail;
     if (media == null || start == null || end == null) {
       return;
     }
@@ -328,10 +321,10 @@ class _DesktopMoviePlayerPageState
   }
 
   Future<void> _showThumbnailActions(int index, Offset globalPosition) async {
-    if (index < 0 || index >= _controller.thumbnails.length) {
+    if (index < 0 || index >= _playerState.thumbnails.length) {
       return;
     }
-    final thumbnail = _controller.thumbnails[index];
+    final thumbnail = _playerState.thumbnails[index];
     final point = await _loadMatchingPoint(thumbnail);
     if (!mounted) {
       return;
@@ -416,7 +409,7 @@ class _DesktopMoviePlayerPageState
           routePath: widget.imageSearchRoutePath,
           fallbackPath: buildDesktopMoviePlayerRoutePath(
             widget.movieNumber,
-            mediaId: _controller.selectedMedia?.mediaId,
+            mediaId: _playerState.selectedMedia?.mediaId,
             positionSeconds: _controller.currentPlaybackSeconds,
           ),
           fileName: fileName,

@@ -3,19 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/app/cached_page_state_handle.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
-import 'package:sakuramedia/features/search/presentation/catalog_search_page_state.dart';
+import 'package:sakuramedia/features/search/presentation/providers/catalog_search_provider.dart';
+import 'package:sakuramedia/features/search/presentation/providers/catalog_search_scope.dart';
+import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_content.dart';
-
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 
 class MobileCatalogSearchPage extends ConsumerStatefulWidget {
   const MobileCatalogSearchPage({
@@ -35,41 +33,45 @@ class MobileCatalogSearchPage extends ConsumerStatefulWidget {
 class _MobileCatalogSearchPageState
     extends ConsumerState<MobileCatalogSearchPage>
     with SingleTickerProviderStateMixin {
-  late final CachedPageStateHandle<CatalogSearchPageStateEntry>
-  _pageStateHandle;
+  late final CatalogSearchScope _scope;
+  late final RiverpodPageHandle _pageCacheHandle;
   late final TextEditingController _textController;
   late final TabController _tabController;
-
-  CatalogSearchPageStateEntry get _pageState => _pageStateHandle.value;
-  CatalogSearchController get _controller => _pageState.controller;
 
   @override
   void initState() {
     super.initState();
-    _pageStateHandle = obtainCachedPageState<CatalogSearchPageStateEntry>(
-      context,
-      key: mobileSearchPageStateKey(_resolveCachePath()),
-      create:
-          () => CatalogSearchPageStateEntry(
-            moviesApi: ref.read(moviesApiProvider),
-            actorsApi: ref.read(actorsApiProvider),
-            subscriptionChangeNotifier: ref.read(
-              movieSubscriptionBroadcasterProvider,
-            ),
-          ),
-    );
-
-    _pageState.bootstrap(
-      initialQuery: widget.initialQuery,
-      initialUseOnlineSearch: widget.initialUseOnlineSearch,
-    );
-    _controller.addListener(_handleControllerChanged);
-    _textController = TextEditingController(text: _pageState.queryText)
-      ..addListener(_handleTextChanged);
+    _scope = CatalogSearchScope(_resolveCachePath());
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: mobileSearchPageCacheKey(_scope.cacheKey),
+          resolveLinks: () {
+            final link =
+                ref.read(catalogSearchProvider(_scope).notifier).cacheLink;
+            return link == null ? const [] : [link];
+          },
+        );
+    // 见桌面版同名处理：延到 post-frame，避免路由跳转触发 Riverpod
+    // 「build 中修改 provider」断言。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(catalogSearchProvider(_scope).notifier)
+          .bootstrap(
+            initialQuery: widget.initialQuery,
+            initialUseOnlineSearch: widget.initialUseOnlineSearch,
+          );
+    });
+    _textController = TextEditingController(text: widget.initialQuery);
     _tabController = TabController(
       length: 2,
       vsync: this,
-      initialIndex: _controller.activeKind == CatalogSearchKind.movies ? 0 : 1,
+      initialIndex:
+          ref.read(catalogSearchProvider(_scope)).activeKind ==
+                  CatalogSearchKind.movies
+              ? 0
+              : 1,
     );
   }
 
@@ -79,28 +81,32 @@ class _MobileCatalogSearchPageState
     final useOnlineSearchChanged =
         oldWidget.initialUseOnlineSearch != widget.initialUseOnlineSearch;
     if (useOnlineSearchChanged) {
-      _pageState.useOnlineSearch = widget.initialUseOnlineSearch;
+      ref
+          .read(catalogSearchProvider(_scope).notifier)
+          .setUseOnlineSearch(widget.initialUseOnlineSearch);
     }
     if (!useOnlineSearchChanged &&
         oldWidget.initialQuery == widget.initialQuery) {
       return;
     }
-    _pageState.queryText = widget.initialQuery;
     _textController.text = widget.initialQuery;
     if (widget.initialQuery.trim().isEmpty) {
       return;
     }
-    _controller.submit(
-      widget.initialQuery,
-      useOnlineSearch: _pageState.useOnlineSearch,
+    unawaited(
+      ref
+          .read(catalogSearchProvider(_scope).notifier)
+          .submit(
+            widget.initialQuery,
+            useOnlineSearch:
+                ref.read(catalogSearchProvider(_scope)).useOnlineSearch,
+          ),
     );
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_handleControllerChanged);
-    _pageStateHandle.dispose();
-    _textController.removeListener(_handleTextChanged);
+    _pageCacheHandle.release();
     _textController.dispose();
     _tabController.dispose();
     super.dispose();
@@ -108,43 +114,53 @@ class _MobileCatalogSearchPageState
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return CatalogSearchContent(
-          controller: _controller,
-          textController: _textController,
-          tabController: _tabController,
-          useOnlineSearch: _pageState.useOnlineSearch,
-          onOnlineSearchToggle:
-              (value) => setState(() => _pageState.useOnlineSearch = value),
-          onSubmitSearch: _submitSearch,
-          onTabSelected: (index) {
-            _controller.setActiveKind(_kindForIndex(index));
-          },
-          onMovieTap: (movie) {
-            MobileMovieDetailRouteData(
-              movieNumber: movie.movieNumber,
-            ).push(context);
-          },
-          onMovieMenuRequest:
-              (movie, globalPosition) => requestMovieCollectionMenu(
-                context,
-                movie.movieNumber,
-                globalPosition,
-                isSubscribed: movie.isSubscribed,
-              ),
-          onActorTap: (actor) {
-            MobileActorDetailRouteData(actorId: actor.id).push(context);
-          },
-          onMovieSubscriptionTap:
-              (movie) => _toggleMovieSubscription(movie.movieNumber),
-          onActorSubscriptionTap: (actor) => _toggleActorSubscription(actor.id),
-          onFallbackToOnlineSearch: () {
-            setState(() => _pageState.useOnlineSearch = true);
-            _submitSearch();
-          },
-        );
+    final searchState = ref.watch(catalogSearchProvider(_scope));
+    ref.listen(
+      catalogSearchProvider(_scope).select((value) => value.activeKind),
+      (_, nextKind) {
+        final nextIndex = nextKind == CatalogSearchKind.movies ? 0 : 1;
+        if (_tabController.index != nextIndex) {
+          _tabController.animateTo(nextIndex);
+        }
+      },
+    );
+    return CatalogSearchContent(
+      state: searchState,
+      textController: _textController,
+      tabController: _tabController,
+      useOnlineSearch: searchState.useOnlineSearch,
+      onOnlineSearchToggle:
+          (value) => ref
+              .read(catalogSearchProvider(_scope).notifier)
+              .setUseOnlineSearch(value),
+      onSubmitSearch: _submitSearch,
+      onTabSelected:
+          (index) => ref
+              .read(catalogSearchProvider(_scope).notifier)
+              .setActiveKind(_kindForIndex(index)),
+      onMovieTap: (movie) {
+        MobileMovieDetailRouteData(
+          movieNumber: movie.movieNumber,
+        ).push(context);
+      },
+      onMovieMenuRequest:
+          (movie, globalPosition) => requestMovieCollectionMenu(
+            context,
+            movie.movieNumber,
+            globalPosition,
+            isSubscribed: movie.isSubscribed,
+          ),
+      onActorTap:
+          (actor) =>
+              MobileActorDetailRouteData(actorId: actor.id).push(context),
+      onMovieSubscriptionTap:
+          (movie) => _toggleMovieSubscription(movie.movieNumber),
+      onActorSubscriptionTap: (actor) => _toggleActorSubscription(actor.id),
+      onFallbackToOnlineSearch: () {
+        ref
+            .read(catalogSearchProvider(_scope).notifier)
+            .setUseOnlineSearch(true);
+        _submitSearch();
       },
     );
   }
@@ -153,24 +169,12 @@ class _MobileCatalogSearchPageState
     return index == 0 ? CatalogSearchKind.movies : CatalogSearchKind.actors;
   }
 
-  void _handleTextChanged() {
-    _pageState.queryText = _textController.text;
-  }
-
-  void _handleControllerChanged() {
-    final nextIndex =
-        _controller.activeKind == CatalogSearchKind.movies ? 0 : 1;
-    if (_tabController.index != nextIndex) {
-      _tabController.animateTo(nextIndex);
-    }
-  }
-
   void _submitSearch() {
     final submittedQuery = _textController.text;
     final trimmedQuery = submittedQuery.trim();
     final routeLocation = _routeLocationFor(
       query: submittedQuery,
-      useOnlineSearch: _pageState.useOnlineSearch,
+      useOnlineSearch: ref.read(catalogSearchProvider(_scope)).useOnlineSearch,
     );
     final currentLocation = _currentRouteLocationOr(routeLocation);
 
@@ -179,32 +183,37 @@ class _MobileCatalogSearchPageState
     }
 
     if (routeLocation == currentLocation &&
-        widget.initialUseOnlineSearch == _pageState.useOnlineSearch) {
+        widget.initialUseOnlineSearch ==
+            ref.read(catalogSearchProvider(_scope)).useOnlineSearch) {
       unawaited(
-        _controller.submit(
-          submittedQuery,
-          useOnlineSearch: _pageState.useOnlineSearch,
-        ),
+        ref
+            .read(catalogSearchProvider(_scope).notifier)
+            .submit(
+              submittedQuery,
+              useOnlineSearch:
+                  ref.read(catalogSearchProvider(_scope)).useOnlineSearch,
+            ),
       );
       return;
     }
 
     if (trimmedQuery.isEmpty) {
       MobileSearchRouteData(
-        useOnlineSearch: _pageState.useOnlineSearch,
+        useOnlineSearch:
+            ref.read(catalogSearchProvider(_scope)).useOnlineSearch,
       ).push(context);
       return;
     }
     MobileSearchQueryRouteData(
       query: trimmedQuery,
-      useOnlineSearch: _pageState.useOnlineSearch,
+      useOnlineSearch: ref.read(catalogSearchProvider(_scope)).useOnlineSearch,
     ).push(context);
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
-    final result = await _controller.toggleMovieSubscription(
-      movieNumber: movieNumber,
-    );
+    final result = await ref
+        .read(catalogSearchProvider(_scope).notifier)
+        .toggleMovieSubscription(movieNumber);
     if (!mounted) {
       return;
     }
@@ -212,7 +221,9 @@ class _MobileCatalogSearchPageState
   }
 
   Future<void> _toggleActorSubscription(int actorId) async {
-    final result = await _controller.toggleActorSubscription(actorId: actorId);
+    final result = await ref
+        .read(catalogSearchProvider(_scope).notifier)
+        .toggleActorSubscription(actorId);
     if (!mounted) {
       return;
     }

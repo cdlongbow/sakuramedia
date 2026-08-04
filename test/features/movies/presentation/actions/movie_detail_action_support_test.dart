@@ -1,17 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_copy.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -131,18 +131,13 @@ void main() {
     );
   });
 
-  test(
+  testWidgets(
     'applyReturnedMovieDetail keeps selected media when still present',
-    () async {
-      final controller = _buildController();
-      addTearDown(controller.dispose);
-      await controller.load();
-
-      final result = applyReturnedMovieDetail(
-        controller: controller,
+    (WidgetTester tester) async {
+      final result = await _runApplyReturnedMovieDetail(
+        tester,
         movie: _movieDetail(mediaIds: const <int>[10, 20]),
         selectedMediaId: 20,
-        resetPreview: false,
       );
 
       expect(result.selectedMediaId, 20);
@@ -151,86 +146,57 @@ void main() {
     },
   );
 
-  test(
+  testWidgets(
     'applyReturnedMovieDetail falls back to first media when selection disappears',
-    () async {
-      final controller = _buildController();
-      addTearDown(controller.dispose);
-      await controller.load();
-
-      final result = applyReturnedMovieDetail(
-        controller: controller,
+    (WidgetTester tester) async {
+      final result = await _runApplyReturnedMovieDetail(
+        tester,
         movie: _movieDetail(mediaIds: const <int>[30, 40]),
         selectedMediaId: 20,
-        resetPreview: false,
       );
 
       expect(result.selectedMediaId, 30);
     },
   );
 
-  test(
+  testWidgets(
     'applyReturnedMovieDetail clears selection when no media remain',
-    () async {
-      final controller = _buildController();
-      addTearDown(controller.dispose);
-      await controller.load();
-
-      final result = applyReturnedMovieDetail(
-        controller: controller,
+    (WidgetTester tester) async {
+      final result = await _runApplyReturnedMovieDetail(
+        tester,
         movie: _movieDetail(mediaIds: const <int>[]),
         selectedMediaId: 20,
-        resetPreview: false,
       );
 
       expect(result.selectedMediaId, isNull);
     },
   );
 
-  testWidgets('resolveMovieSubscriptionNotifier reuses provider value', (
-    WidgetTester tester,
-  ) async {
-    final notifier = MovieSubscriptionChangeNotifier();
-    late MovieSubscriptionNotifierBinding binding;
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          movieSubscriptionBroadcasterProvider.overrideWithValue(notifier),
-        ],
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) {
-              binding = resolveMovieSubscriptionNotifier(context);
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      ),
-    );
-
-    expect(binding.notifier, same(notifier));
-    expect(binding.ownsNotifier, isFalse);
-  });
-
   testWidgets(
-    'resolveMovieSubscriptionNotifier creates fallback when provider is missing',
+    'resolveMovieSubscriptionNotifier returns the same events notifier '
+    'that publishers use',
     (WidgetTester tester) async {
-      late MovieSubscriptionNotifierBinding binding;
+      late MovieSubscriptionEvents resolved;
+      late ProviderContainer container;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              binding = resolveMovieSubscriptionNotifier(context);
-              return const SizedBox.shrink();
-            },
+        ProviderScope(
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) {
+                container = ProviderScope.containerOf(context, listen: false);
+                resolved = resolveMovieSubscriptionNotifier(context);
+                return const SizedBox.shrink();
+              },
+            ),
           ),
         ),
       );
 
-      expect(binding.notifier, isA<MovieSubscriptionChangeNotifier>());
-      expect(binding.ownsNotifier, isTrue);
+      expect(
+        resolved,
+        same(container.read(movieSubscriptionEventsProvider.notifier)),
+      );
     },
   );
 
@@ -316,15 +282,42 @@ Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
   return spec;
 }
 
-MovieDetailController _buildController() {
-  return MovieDetailController(
-    movieNumber: 'ABC-001',
-    fetchMovieDetail: ({required movieNumber}) async => _movieDetail(),
-    fetchSimilarMovies:
-        ({required movieNumber, int limit = 15}) async => <MovieListItemDto>[
-          _similarMovie(),
-        ],
+/// applyReturnedMovieDetail 需要 [WidgetRef]，用最小 widget test 抓一个 ref。
+/// 在 post-frame 里跑，避免 Consumer build 中修改 provider 触发的
+/// 「build 中不得修改 provider」断言。
+Future<MovieDetailApplyResult> _runApplyReturnedMovieDetail(
+  WidgetTester tester, {
+  required MovieDetailDto movie,
+  required int? selectedMediaId,
+  bool resetPreview = false,
+  String movieNumber = 'ABC-001',
+}) async {
+  final completer = Completer<MovieDetailApplyResult>();
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp(
+        home: Consumer(
+          builder: (context, ref, _) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (completer.isCompleted) return;
+              completer.complete(
+                applyReturnedMovieDetail(
+                  ref: ref,
+                  movieNumber: movieNumber,
+                  movie: movie,
+                  selectedMediaId: selectedMediaId,
+                  resetPreview: resetPreview,
+                ),
+              );
+            });
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    ),
   );
+  await tester.pump();
+  return completer.future;
 }
 
 MovieDetailDto _movieDetail({
@@ -387,17 +380,3 @@ MovieDetailDto _movieDetail({
   );
 }
 
-MovieListItemDto _similarMovie() {
-  return const MovieListItemDto(
-    javdbId: 'similar-1',
-    movieNumber: 'SIM-001',
-    title: 'Similar',
-    titleZh: '',
-    coverImage: null,
-    releaseDate: null,
-    durationMinutes: 0,
-    heat: 0,
-    isSubscribed: false,
-    canPlay: false,
-  );
-}

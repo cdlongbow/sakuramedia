@@ -62,7 +62,7 @@ final class DownloadClientProbeProvider
 }
 
 String _$downloadClientProbeHash() =>
-    r'e8446fee405e9dc2b4033f5ff6eaefa6086f2a89';
+    r'80e14fad10760473c48a62e334f5fad29465e106';
 
 /// 按调用组件 identity 隔离的本地探针状态；请求闭包由 UI 注入，避免新增 API bridge。
 

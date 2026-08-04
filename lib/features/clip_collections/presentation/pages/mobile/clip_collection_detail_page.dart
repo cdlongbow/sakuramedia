@@ -11,7 +11,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_c
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
@@ -71,8 +71,8 @@ class _MobileClipCollectionDetailPageState
   ClipCollectionDetailProvider get _providerRef =>
       clipCollectionDetailProvider(widget.collectionId);
 
-  ClipMutationChangeNotifier get _mutationBroadcaster =>
-      ref.read(clipMutationBroadcasterProvider);
+  ClipMutationEvents get _mutationBroadcaster =>
+      ref.read(clipMutationEventsProvider.notifier);
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +415,7 @@ class _MobileClipCollectionDetailPageState
   }
 
   /// 彻底删除切片本体（含文件，不可恢复）：先弹底部确认抽屉，再走 notifier 乐观删除并广播
-  /// [ClipMutationChangeNotifier.reportDeleted]，与「全部切片」页的删除一致。
+  /// [ClipMutationEvents.reportDeleted]，与「全部切片」页的删除一致。
   Future<void> _deleteClip(MediaClipDto clip) async {
     final title = clip.displayTitle.trim();
     final label = title.isEmpty ? '该切片' : '“$title”';

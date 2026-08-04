@@ -36,7 +36,7 @@ final class DownloadClientsProvider
   DownloadClients create() => DownloadClients();
 }
 
-String _$downloadClientsHash() => r'c2d01bffce7a422cbf6d773692105e6c52b0d6d4';
+String _$downloadClientsHash() => r'30441b05d0023c03afa282b969a06570da98552a';
 
 /// 跨桌面 configuration tab 与移动设置页共享的下载器列表。
 

@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -536,6 +535,11 @@ void main() {
     final sessionStore = await _buildLoggedInSessionStore();
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
+    // overview 页 sliver 化后靠视口惰性 build；默认 800×600 装不下
+    // SystemDiagnosticsStrip + stats + xxl 间距，'最近添加' sliver 会落在
+    // 视口外不构建。撑高视口让所有 sliver 同时进 cacheExtent。
+    await tester.binding.setSurfaceSize(const Size(1200, 2400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     _enqueueOverviewResponses(bundle);
     await _pumpDesktopApp(
       tester,
@@ -606,12 +610,9 @@ Future<void> _pumpDesktopApp(
   required MoviesApi moviesApi,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
-  final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: bundle.riverpodOverrides(
-        versionInfoController: versionInfoController,
-      ),
+      overrides: bundle.riverpodOverrides(),
       child: OKToast(
         child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
@@ -628,12 +629,9 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
   required ActorsApi actorsApi,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
-  final versionInfoController = AppVersionInfoController(statusApi: statusApi);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: bundle.riverpodOverrides(
-        versionInfoController: versionInfoController,
-      ),
+      overrides: bundle.riverpodOverrides(),
       child: OKToast(
         child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
@@ -643,7 +641,9 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {
-  bundle.adapter.enqueueJson(
+  // Riverpod 迁移后：/status 至少被两个消费方触发（概览统计条 +
+  // 侧边栏版本行的 appVersionInfoProvider.load），用 fallback 兜住多次调用。
+  bundle.adapter.setFallbackJson(
     method: 'GET',
     path: '/status',
     body: <String, dynamic>{

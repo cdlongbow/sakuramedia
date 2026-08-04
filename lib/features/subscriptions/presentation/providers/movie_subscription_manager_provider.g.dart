@@ -18,7 +18,7 @@ part of 'movie_subscription_manager_provider.dart';
 ///   端点，这里也不绕过它。
 ///
 /// 跨页一致性：本页取消订阅后 `reportChange` / `reportBatch` 到全局
-/// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
+/// [MovieSubscriptionEvents]；反过来别的页面改订阅时，本页通过
 /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
 /// 不整页重拉。
 
@@ -35,7 +35,7 @@ final movieSubscriptionManagerProvider = MovieSubscriptionManagerProvider._();
 ///   端点，这里也不绕过它。
 ///
 /// 跨页一致性：本页取消订阅后 `reportChange` / `reportBatch` 到全局
-/// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
+/// [MovieSubscriptionEvents]；反过来别的页面改订阅时，本页通过
 /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
 /// 不整页重拉。
 final class MovieSubscriptionManagerProvider
@@ -54,7 +54,7 @@ final class MovieSubscriptionManagerProvider
   ///   端点，这里也不绕过它。
   ///
   /// 跨页一致性：本页取消订阅后 `reportChange` / `reportBatch` 到全局
-  /// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
+  /// [MovieSubscriptionEvents]；反过来别的页面改订阅时，本页通过
   /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
   /// 不整页重拉。
   MovieSubscriptionManagerProvider._()
@@ -77,7 +77,7 @@ final class MovieSubscriptionManagerProvider
 }
 
 String _$movieSubscriptionManagerHash() =>
-    r'907537bffea21a1be015ab9bd4083398a407da65';
+    r'cfe9a0eede06d9cf3e0d01a2bb5c1014c028c781';
 
 /// 「订阅管理」页的列表控制器。
 ///
@@ -89,7 +89,7 @@ String _$movieSubscriptionManagerHash() =>
 ///   端点，这里也不绕过它。
 ///
 /// 跨页一致性：本页取消订阅后 `reportChange` / `reportBatch` 到全局
-/// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
+/// [MovieSubscriptionEvents]；反过来别的页面改订阅时，本页通过
 /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
 /// 不整页重拉。
 

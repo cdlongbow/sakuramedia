@@ -9,7 +9,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/paged_movie_summary_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -163,7 +163,7 @@ Future<void> _handleToggleSubscriptionAction({
   if (result.status == MovieSubscriptionToggleStatus.subscribed ||
       result.status == MovieSubscriptionToggleStatus.unsubscribed) {
     ProviderScope.containerOf(context, listen: false)
-        .read(movieSubscriptionBroadcasterProvider)
+        .read(movieSubscriptionEventsProvider.notifier)
         .reportChange(
           movieNumber: movieNumber,
           isSubscribed:
@@ -209,7 +209,7 @@ Future<void> _handleCollectionTypeToggleAction({
       return;
     }
     ProviderScope.containerOf(context, listen: false)
-        .read(collectionTypeBroadcasterProvider)
+        .read(movieCollectionTypeEventsProvider.notifier)
         .reportChange(
           movieNumber: displayMovieNumber,
           targetType: targetCollectionType,

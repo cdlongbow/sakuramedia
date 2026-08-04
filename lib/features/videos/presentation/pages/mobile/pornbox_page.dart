@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/app/cached_page_state_handle.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
@@ -20,8 +21,10 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_sort
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -51,37 +54,39 @@ class MobilePornboxPage extends ConsumerStatefulWidget {
 
 class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     with MultiSelectStateMixin<MobilePornboxPage, int> {
-  late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
-  late final VideoMutationChangeNotifier _mutationNotifier;
-  bool _railRefreshScheduled = false;
+  static const _scope = VideoSummaryScope.mobile();
 
-  VideoListPageStateEntry get _pageState => _pageStateHandle.value;
+  late final RiverpodPageHandle _pageCacheHandle;
+  late final ScrollController _scrollController;
+  bool _railRefreshScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
-    _pageStateHandle = obtainCachedPageState<VideoListPageStateEntry>(
-      context,
-      key: mobilePornboxPageStateKey(),
-      create:
-          () => VideoListPageStateEntry(
-            videosApi: ref.read(videosApiProvider),
-            mutationNotifier: _mutationNotifier,
-          ),
-    );
-    _mutationNotifier.addListener(_onMutation);
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: mobilePornboxPageCacheKey(),
+          resolveLinks: () {
+            final link =
+                ref.read(videoSummaryProvider(_scope).notifier).cacheLink;
+            return link == null ? const [] : [link];
+          },
+        );
   }
 
   @override
   void dispose() {
-    _mutationNotifier.removeListener(_onMutation);
-    _pageStateHandle.dispose();
+    _pageCacheHandle.release();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
   /// 删除 / 合集成员变化都可能改变合集横滑区封面与计数；用微任务合并一轮内多次信号成
-  /// 一次刷新。视频网格本身的删除由缓存 entry 监听同一信号就地移除（见 [VideoListPageStateEntry]）。
+  /// 一次刷新。视频网格本身的删除由列表 provider 做就地移除。
   void _onMutation() {
     if (_railRefreshScheduled) {
       return;
@@ -92,30 +97,48 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       if (!mounted) {
         return;
       }
-      unawaited(
-        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     });
   }
 
   Future<void> _refresh() async {
     await Future.wait<void>(<Future<void>>[
-      _pageState.controller.refresh(),
+      ref.read(videoSummaryProvider(_scope).notifier).refresh(),
       ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
     ]);
   }
 
   void _applySort(VideoFilterState next) {
-    if (next.matches(_pageState.filterState)) {
+    final current =
+        ref.read(videoSummaryProvider(_scope)).value?.filter ??
+        VideoFilterState.initial;
+    if (next.matches(current)) {
       return;
     }
-    setState(() {
-      _pageState.filterState = next;
-    });
-    _pageState.reloadVideos();
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    unawaited(
+      ref.read(videoSummaryProvider(_scope).notifier).applyFilter(next),
+    );
   }
 
-  List<VideoItemListItemDto> get _loadedVideos => _pageState.controller.items;
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final summary = ref.read(videoSummaryProvider(_scope)).value;
+    final position = _scrollController.position;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
+    }
+    unawaited(ref.read(videoSummaryProvider(_scope).notifier).loadMore());
+  }
+
+  List<VideoItemListItemDto> get _loadedVideos =>
+      ref.read(videoSummaryProvider(_scope)).value?.paged.items ?? const [];
 
   List<VideoItemListItemDto> _selectedVideos() =>
       _loadedVideos.where((v) => isSelected(v.id)).toList(growable: false);
@@ -160,7 +183,9 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       return;
     }
     if (added == true) {
-      _mutationNotifier.reportCollectionMembershipChanged(videoId: video.id);
+      ref
+          .read(videoMutationEventsProvider.notifier)
+          .reportCollectionMembershipChanged(videoId: video.id);
     }
   }
 
@@ -180,7 +205,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     }
     try {
       await ref.read(videosApiProvider).deleteVideo(video.id);
-      _mutationNotifier.reportDeleted(video.id);
+      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
       if (mounted) {
         showToast('已删除视频');
       }
@@ -228,10 +253,12 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       return;
     }
     for (final video in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
-        videoId: video.id,
-        collectionId: target.id,
-      );
+      ref
+          .read(videoMutationEventsProvider.notifier)
+          .reportCollectionMembershipChanged(
+            videoId: video.id,
+            collectionId: target.id,
+          );
     }
     _showBatchToast('加入合集', result);
     exitSelection();
@@ -264,7 +291,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       return;
     }
     for (final video in result.succeeded) {
-      _mutationNotifier.reportDeleted(video.id);
+      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
     }
     _showBatchToast('删除', result);
     exitSelection();
@@ -298,33 +325,53 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
   @override
   Widget build(BuildContext context) {
+    final videosAsync = ref.watch(videoSummaryProvider(_scope));
+    final summary = videosAsync.value;
+    final paged =
+        summary?.paged ?? const PagedListState<VideoItemListItemDto>();
+    final filter = summary?.filter ?? VideoFilterState.initial;
+
+    ref.listen(videoMutationEventsProvider, (_, next) {
+      if (next.value != null) {
+        _onMutation();
+      }
+    });
+
     return ColoredBox(
       color: context.appColors.surfaceCard,
-      child: AnimatedBuilder(
-        animation: _pageState.controller,
-        builder: (context, _) {
-          return Column(
-            children: [
-              Expanded(
-                child: AppAdaptiveRefreshScrollView(
-                  key: const Key('mobile-pornbox-scroll'),
-                  controller: _pageState.controller.scrollController,
-                  onRefresh: _refresh,
-                  slivers: <Widget>[
-                    if (!selectionMode)
-                      SliverToBoxAdapter(
-                        child: _buildCollectionsSection(context),
-                      ),
-                    SliverToBoxAdapter(child: _buildVideosHeader(context)),
-                    _buildVideosSliver(context),
-                    SliverToBoxAdapter(child: _buildFooter(context)),
-                  ],
+      child: Column(
+        children: [
+          Expanded(
+            child: AppAdaptiveRefreshScrollView(
+              key: const PageStorageKey<String>('mobile:pornbox:list'),
+              controller: _scrollController,
+              onRefresh: _refresh,
+              slivers: <Widget>[
+                if (!selectionMode)
+                  SliverToBoxAdapter(child: _buildCollectionsSection(context)),
+                SliverToBoxAdapter(
+                  child: _buildVideosHeader(
+                    context,
+                    videos: paged.items,
+                    filter: filter,
+                    total: paged.total,
+                  ),
                 ),
-              ),
-              if (selectionMode) _buildBatchBar(context),
-            ],
-          );
-        },
+                _buildVideosSliver(
+                  context,
+                  paged: paged,
+                  isInitialLoading: videosAsync.isLoading && summary == null,
+                  initialErrorMessage:
+                      videosAsync.hasError && summary == null
+                          ? '视频列表加载失败，请稍后重试'
+                          : null,
+                ),
+                SliverToBoxAdapter(child: _buildFooter(context, paged)),
+              ],
+            ),
+          ),
+          if (selectionMode) _buildBatchBar(context),
+        ],
       ),
     );
   }
@@ -399,10 +446,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     final spacing = context.appSpacing;
     if (async.hasError && collections.isEmpty) {
       return _HintBox(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '合集加载失败，请稍后重试',
-        ),
+        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
     if (async.isLoading && collections.isEmpty) {
@@ -444,8 +488,12 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
   // --------------------------------------------------------- 视频区
 
-  Widget _buildVideosHeader(BuildContext context) {
-    final videos = _loadedVideos;
+  Widget _buildVideosHeader(
+    BuildContext context, {
+    required List<VideoItemListItemDto> videos,
+    required VideoFilterState filter,
+    required int total,
+  }) {
     if (selectionMode) {
       final videoIds = videos.map((video) => video.id);
       final allSelected = isAllSelected(videoIds);
@@ -468,7 +516,6 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       );
     }
 
-    final filter = _pageState.filterState;
     return AppListHeader(
       filterButtonKey: const Key('mobile-pornbox-filter-button'),
       filterTooltip: '排序筛选',
@@ -477,7 +524,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       informationSlots: [
         AppListHeaderInfo(
           key: const Key('mobile-pornbox-total'),
-          label: '${_pageState.controller.total} 个',
+          label: '$total 个',
         ),
       ],
     );
@@ -486,27 +533,33 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   Future<void> _openSortDrawer() async {
     await showMobileVideoSortDrawer(
       context,
-      current: _pageState.filterState,
+      current:
+          ref.read(videoSummaryProvider(_scope)).value?.filter ??
+          VideoFilterState.initial,
       onChanged: _applySort,
     );
   }
 
-  Widget _buildVideosSliver(BuildContext context) {
-    final controller = _pageState.controller;
-    if (controller.isInitialLoading && controller.items.isEmpty) {
+  Widget _buildVideosSliver(
+    BuildContext context, {
+    required PagedListState<VideoItemListItemDto> paged,
+    required bool isInitialLoading,
+    required String? initialErrorMessage,
+  }) {
+    if (isInitialLoading && paged.items.isEmpty) {
       return const SliverToBoxAdapter(
         child: AppMobileSkeletonList(key: Key('mobile-pornbox-loading')),
       );
     }
-    if (controller.initialErrorMessage != null && controller.items.isEmpty) {
+    if (initialErrorMessage != null && paged.items.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
-          child: AppEmptyState(message: controller.initialErrorMessage!),
+          child: AppEmptyState(message: initialErrorMessage),
         ),
       );
     }
-    final videos = controller.items;
+    final videos = paged.items;
     if (videos.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(height: 200, child: AppEmptyState(message: '暂无视频数据')),
@@ -636,20 +689,23 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     return 16 / 9;
   }
 
-  Widget _buildFooter(BuildContext context) {
-    final controller = _pageState.controller;
+  Widget _buildFooter(
+    BuildContext context,
+    PagedListState<VideoItemListItemDto> paged,
+  ) {
     final showFooter =
-        controller.items.isNotEmpty &&
-        (controller.isLoadingMore || controller.loadMoreErrorMessage != null);
+        paged.items.isNotEmpty &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     if (!showFooter) {
       return SizedBox(height: context.appSpacing.lg);
     }
     return Padding(
       padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
       child: AppPagedLoadMoreFooter(
-        isLoading: controller.isLoadingMore,
-        errorMessage: controller.loadMoreErrorMessage,
-        onRetry: controller.loadMore,
+        isLoading: paged.isLoadingMore,
+        errorMessage: paged.loadMoreErrorMessage,
+        onRetry:
+            () => ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
       ),
     );
   }

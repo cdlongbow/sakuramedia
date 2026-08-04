@@ -3,14 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
-import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/media_import/presentation/directory_picker_dialog.dart';
 import 'package:sakuramedia/features/media_import/presentation/import_job_card.dart';
 import 'package:sakuramedia/features/media_import/presentation/import_jobs_view_controller.dart';
-import 'package:sakuramedia/features/media_import/presentation/media_import_controller.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/imports/video_import_controller.dart';
+import 'package:sakuramedia/features/media_import/presentation/providers/media_import_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_import_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/imports/video_import_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -32,10 +29,7 @@ class DesktopMediaImportPage extends ConsumerStatefulWidget {
 
 class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     with SingleTickerProviderStateMixin {
-  late final MediaImportController _javController;
-  late final VideoImportController _pornController;
   late final TabController _tabController;
-  late final Listenable _mergedListenable;
 
   final ScrollController _scrollController = ScrollController();
   final Set<int> _expandedJav = <int>{};
@@ -48,24 +42,9 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
   @override
   void initState() {
     super.initState();
-    _javController = MediaImportController(
-      mediaImportApi: ref.read(mediaImportApiProvider),
-      activityApi: ref.read(activityApiProvider),
-    );
-    _pornController = VideoImportController(
-      videoImportsApi: ref.read(videoImportsApiProvider),
-      activityApi: ref.read(activityApiProvider),
-    );
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(_handleTabChanged);
-    _mergedListenable = Listenable.merge(<Listenable>[
-      _javController,
-      _pornController,
-      _tabController,
-    ]);
     _scrollController.addListener(_handleScroll);
-    unawaited(_javController.initialize());
-    unawaited(_pornController.initialize());
   }
 
   @override
@@ -76,14 +55,19 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     _tabController
       ..removeListener(_handleTabChanged)
       ..dispose();
-    _javController.dispose();
-    _pornController.dispose();
     super.dispose();
   }
 
   bool get _isPornTab => _tabController.index == 1;
   ImportJobsViewController get _activeController =>
-      _isPornTab ? _pornController : _javController;
+      _isPornTab
+          ? ref.read(videoImportProvider.notifier)
+          : ref.read(mediaImportProvider.notifier);
+
+  ImportJobsViewData? get _activeData =>
+      _isPornTab
+          ? ref.read(videoImportProvider).value
+          : ref.read(mediaImportProvider).value;
 
   void _handleTabChanged() {
     if (_tabController.indexIsChanging) {
@@ -102,7 +86,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     }
     // loadMore 失败时不再自动重试，避免用户上下滑动就把失败请求反复打出去；
     // 由 footer 的「重试」按钮承担唯一重试入口。对齐 PagedLoadController 的约定。
-    if (_activeController.loadMoreError != null) {
+    if (_activeData?.loadMoreError != null) {
       return;
     }
     final position = _scrollController.position;
@@ -116,11 +100,13 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     if (request == null || !mounted) {
       return;
     }
-    final error = await _javController.triggerImport(
-      libraryId: request.libraryId,
-      source: request.source,
-      transferMode: request.transferMode,
-    );
+    final error = await ref
+        .read(mediaImportProvider.notifier)
+        .triggerImport(
+          libraryId: request.libraryId,
+          source: request.source,
+          transferMode: request.transferMode,
+        );
     if (!mounted) {
       return;
     }
@@ -132,21 +118,26 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
     if (request == null || !mounted) {
       return;
     }
-    final error = await _pornController.triggerImport(
-      libraryId: request.libraryId,
-      source: request.source,
-      transferMode: request.transferMode,
-      collectionId: request.collectionId,
-    );
+    final error = await ref
+        .read(videoImportProvider.notifier)
+        .triggerImport(
+          libraryId: request.libraryId,
+          source: request.source,
+          transferMode: request.transferMode,
+          collectionId: request.collectionId,
+        );
     if (!mounted) {
       return;
     }
     showToast(error ?? '导入任务已提交，可在下方查看进度');
   }
 
-  void _toggleExpanded(ImportJobsViewController controller, int jobId) {
-    final expanded =
-        controller == _pornController ? _expandedPorn : _expandedJav;
+  void _toggleExpanded(
+    ImportJobsViewController controller,
+    int jobId, {
+    required bool isPorn,
+  }) {
+    final expanded = isPorn ? _expandedPorn : _expandedJav;
     setState(() {
       if (expanded.contains(jobId)) {
         expanded.remove(jobId);
@@ -159,74 +150,80 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
 
   @override
   Widget build(BuildContext context) {
+    // 两个 provider 与页面同生命周期；只 watch 激活标签的完整状态，另一标签仅
+    // 保持订阅，因此实时流与分页快照仍保留，但不会引发当前页面重建。
+    ref.watch(mediaImportProvider.select((_) => null));
+    ref.watch(videoImportProvider.select((_) => null));
+    final ImportJobsViewData activeData;
+    final ImportJobsViewController activeController;
+    if (_isPornTab) {
+      activeData =
+          ref.watch(videoImportProvider).value ??
+          VideoImportState(isInitialLoading: true);
+      activeController = ref.read(videoImportProvider.notifier);
+    } else {
+      activeData =
+          ref.watch(mediaImportProvider).value ??
+          MediaImportState(isInitialLoading: true);
+      activeController = ref.read(mediaImportProvider.notifier);
+    }
+
     // 顶栏刷新按钮 / Cmd+R 刷新当前 tab 的导入历史；跨 tab 时也只刷激活的那个，
     // 避免误触发另一 tab 的 SSE 重放。
     return AppPageRefreshScope(
-      onRefresh: () => _activeController.refresh(),
-      child: AnimatedBuilder(
-        animation: _mergedListenable,
-        builder: (context, _) {
-          final tabSlivers =
-              _isPornTab
-                  ? _buildTabSlivers(
-                    context,
-                    controller: _pornController,
-                    expanded: _expandedPorn,
-                    description:
-                        '从后端白名单目录中选择 PornBox 视频导入到媒体库，必须归入一个合集。导入在后台运行，可在此查看实时进度与失败文件处理。',
-                    onCreate: () => unawaited(_openPornCreateDialog()),
-                  )
-                  : _buildTabSlivers(
-                    context,
-                    controller: _javController,
-                    expanded: _expandedJav,
-                    description:
-                        '从后端本地目录或 115 网盘目录中选择 JAV 媒体导入到对应媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
-                    onCreate: () => unawaited(_openJavCreateDialog()),
-                  );
-          return CustomScrollView(
-            key: const Key('media-import-page'),
-            controller: _scrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: AppTabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(key: Key('media-import-tab-jav'), text: 'JAV 影片'),
-                    Tab(
-                      key: Key('media-import-tab-pornbox'),
-                      text: 'PornBox 影片',
-                    ),
-                  ],
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: SizedBox(height: context.appSpacing.lg),
-              ),
-              ...tabSlivers,
-            ],
-          );
-        },
+      onRefresh: () => activeController.refresh(),
+      child: CustomScrollView(
+        key: const Key('media-import-page'),
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: AppTabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(key: Key('media-import-tab-jav'), text: 'JAV 影片'),
+                Tab(key: Key('media-import-tab-pornbox'), text: 'PornBox 影片'),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
+          ..._buildTabSlivers(
+            context,
+            data: activeData,
+            controller: activeController,
+            expanded: _isPornTab ? _expandedPorn : _expandedJav,
+            isPorn: _isPornTab,
+            description:
+                _isPornTab
+                    ? '从后端白名单目录中选择 PornBox 视频导入到媒体库，必须归入一个合集。导入在后台运行，可在此查看实时进度与失败文件处理。'
+                    : '从后端本地目录或 115 网盘目录中选择 JAV 媒体导入到对应媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
+            onCreate:
+                _isPornTab
+                    ? () => unawaited(_openPornCreateDialog())
+                    : () => unawaited(_openJavCreateDialog()),
+          ),
+        ],
       ),
     );
   }
 
   List<Widget> _buildTabSlivers(
     BuildContext context, {
+    required ImportJobsViewData data,
     required ImportJobsViewController controller,
     required Set<int> expanded,
+    required bool isPorn,
     required String description,
     required VoidCallback onCreate,
   }) {
     final hasHistory =
-        !controller.isInitialLoading &&
-        controller.initialError == null &&
-        controller.jobs.isNotEmpty;
+        !data.isInitialLoading &&
+        data.initialError == null &&
+        data.jobs.isNotEmpty;
     return [
       SliverToBoxAdapter(
         child: _Header(
           description: description,
-          isLoading: controller.isInitialLoading,
+          isLoading: data.isInitialLoading,
           onCreate: onCreate,
           onRefresh: () => unawaited(controller.refresh()),
         ),
@@ -236,15 +233,15 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
         const SliverToBoxAdapter(child: _HistorySectionTitle()),
         SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.md)),
       ],
-      _buildBodySliver(context, controller, expanded),
-      if (controller.jobs.isNotEmpty &&
-          (controller.isLoadingMore || controller.loadMoreError != null))
+      _buildBodySliver(context, data, controller, expanded, isPorn: isPorn),
+      if (data.jobs.isNotEmpty &&
+          (data.isLoadingMore || data.loadMoreError != null))
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.only(top: context.appSpacing.lg),
             child: AppPagedLoadMoreFooter(
-              isLoading: controller.isLoadingMore,
-              errorMessage: controller.loadMoreError,
+              isLoading: data.isLoadingMore,
+              errorMessage: data.loadMoreError,
               onRetry: () => unawaited(controller.loadMore()),
             ),
           ),
@@ -254,10 +251,12 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
 
   Widget _buildBodySliver(
     BuildContext context,
+    ImportJobsViewData data,
     ImportJobsViewController controller,
-    Set<int> expanded,
-  ) {
-    if (controller.isInitialLoading) {
+    Set<int> expanded, {
+    required bool isPorn,
+  }) {
+    if (data.isInitialLoading) {
       return SliverToBoxAdapter(
         child: AppContentCard(
           title: '正在加载',
@@ -276,14 +275,14 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
       );
     }
 
-    if (controller.initialError != null) {
+    if (data.initialError != null) {
       return SliverToBoxAdapter(
         child: AppContentCard(
           title: '加载失败',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppEmptyState(message: controller.initialError!),
+              AppEmptyState(message: data.initialError!),
               SizedBox(height: context.appSpacing.lg),
               Center(
                 child: AppButton(
@@ -299,7 +298,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
       );
     }
 
-    if (controller.jobs.isEmpty) {
+    if (data.jobs.isEmpty) {
       return const SliverToBoxAdapter(
         child: AppEmptyState(message: '还没有导入作业。点击「新建导入」从后端目录选择媒体导入。'),
       );
@@ -307,22 +306,21 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
 
     // 失败源文件的删除/重命名是 JAV 专属能力；PornBox 作业只保留「重导」。
     final javController =
-        controller is MediaImportController ? controller : null;
-    final reimporting =
-        controller == _pornController ? _reimportingPorn : _reimportingJav;
+        isPorn ? null : ref.read(mediaImportProvider.notifier);
+    final reimporting = isPorn ? _reimportingPorn : _reimportingJav;
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        final job = controller.jobs[index];
+        final job = data.jobs[index];
         return Padding(
           padding: EdgeInsets.only(bottom: context.appSpacing.md),
           child: ImportJobCard(
             job: job,
-            taskRun: controller.taskRunFor(job.taskRunId),
+            taskRun: data.taskRunFor(job.taskRunId),
             expanded: expanded.contains(job.id),
-            detail: controller.detailFor(job.id),
-            isDetailLoading: controller.isDetailLoading(job.id),
-            detailError: controller.detailError(job.id),
-            onToggle: () => _toggleExpanded(controller, job.id),
+            detail: data.detailFor(job.id),
+            isDetailLoading: data.isDetailLoading(job.id),
+            detailError: data.detailError(job.id),
+            onToggle: () => _toggleExpanded(controller, job.id, isPorn: isPorn),
             onRetryAll: () => _retryAll(controller, job.id),
             onRetryFile:
                 (path) => _retryFiles(controller, job.id, <String>[path]),
@@ -344,7 +342,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
                 () => unawaited(controller.ensureDetail(job.id, force: true)),
           ),
         );
-      }, childCount: controller.jobs.length),
+      }, childCount: data.jobs.length),
     );
   }
 
@@ -371,7 +369,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
   /// 任务级失败作业的整体重跑：按原参数新建一个导入作业。
   Future<void> _reimport(ImportJobsViewController controller, int jobId) async {
     final reimporting =
-        controller == _pornController ? _reimportingPorn : _reimportingJav;
+        controller is VideoImport ? _reimportingPorn : _reimportingJav;
     if (reimporting.contains(jobId)) {
       return;
     }
@@ -385,7 +383,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
   }
 
   Future<void> _deleteFile(
-    MediaImportController controller,
+    MediaImport controller,
     int jobId,
     String path,
   ) async {
@@ -401,7 +399,7 @@ class _DesktopMediaImportPageState extends ConsumerState<DesktopMediaImportPage>
   }
 
   Future<void> _renameFile(
-    MediaImportController controller,
+    MediaImport controller,
     int jobId,
     String path,
     String currentName,

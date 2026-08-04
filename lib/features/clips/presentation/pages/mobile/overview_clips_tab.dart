@@ -12,7 +12,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_t
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
@@ -601,7 +601,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     }
     try {
       await ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId);
-      ref.read(clipMutationBroadcasterProvider).reportDeleted(clip.clipId);
+      ref.read(clipMutationEventsProvider.notifier).reportDeleted(clip.clipId);
       if (mounted) {
         showToast('已删除切片');
       }
@@ -620,7 +620,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       return;
     }
     ref
-        .read(clipMutationBroadcasterProvider)
+        .read(clipMutationEventsProvider.notifier)
         .reportCollectionMembershipChanged(clipId: clip.clipId);
   }
 
@@ -678,7 +678,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted) {
       return;
     }
-    final broadcaster = ref.read(clipMutationBroadcasterProvider);
+    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
     for (final clip in result.succeeded) {
       broadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
@@ -715,7 +715,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted) {
       return;
     }
-    final broadcaster = ref.read(clipMutationBroadcasterProvider);
+    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
     for (final clip in result.succeeded) {
       broadcaster.reportDeleted(clip.clipId);
     }

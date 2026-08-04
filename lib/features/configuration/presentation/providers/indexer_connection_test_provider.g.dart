@@ -63,7 +63,7 @@ final class IndexerConnectionTestProvider
 }
 
 String _$indexerConnectionTestHash() =>
-    r'b13ae0439b91a983852256974300c60c1c875aae';
+    r'd1522631294ce3040d43d14fa54e9b0badcb7f18';
 
 /// 以组件 identity 隔离的 Jackett 测试状态，请求由调用方传入以支持草稿测试。
 

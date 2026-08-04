@@ -4,15 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
-import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/web_platform_notice.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
@@ -94,34 +88,14 @@ class _MyAppState extends State<MyApp> {
     //
     // 各 API / Store / 广播源都在各自 provider 里原生构造（见
     // `presentation/providers/` 与 `core/*/providers/`），这里只注入
-    // 两类东西：
-    // 1. `sessionStoreProvider`——会话是应用输入（main 传入持久化实例、
-    //    测试传 inMemory），用 value override 接进容器；
-    // 2. 两个常驻控制器的工厂 override——它们的 provider body 保持抛
-    //    [UnimplementedError]，让未注入的 widget 测试沿用「角标 / 版本行
-    //    降级隐藏」语义，也避免测试隐式触发 SSE / bootstrap 请求。
+    // `sessionStoreProvider` 是唯一组合根 override：会话是应用输入（main 传入
+    // 持久化实例、测试传 inMemory），用 value override 接进容器。
     //
     // key 绑定会话实例：`didUpdateWidget` 换 sessionStore 时整个容器随之
     // 重建，等价于旧 MultiProvider 时代的全量重挂。
     return ProviderScope(
       key: ObjectKey(_activeSessionStore),
-      overrides: [
-        sessionStoreProvider.overrideWithValue(_activeSessionStore),
-        appVersionInfoControllerProvider.overrideWith((ref) {
-          final controller = AppVersionInfoController(
-            statusApi: ref.watch(statusApiProvider),
-          );
-          ref.onDispose(controller.dispose);
-          return controller;
-        }),
-        notificationCenterControllerProvider.overrideWith((ref) {
-          final controller = NotificationCenterController(
-            activityApi: ref.watch(activityApiProvider),
-          )..bindSessionStore(ref.watch(sessionStoreProvider));
-          ref.onDispose(controller.dispose);
-          return controller;
-        }),
-      ],
+      overrides: [sessionStoreProvider.overrideWithValue(_activeSessionStore)],
       child: AppPlatformScope(
         platform: _platform,
         child: OKToast(

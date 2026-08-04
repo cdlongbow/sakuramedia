@@ -3,17 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
-/// 独立的「通知」消息中心页。消费全局 [NotificationCenterController]：
-/// 列表/分页/筛选来自 controller；已读为「无感」自动处理——卡片被渲染（展示）时
-/// 即上报已读，未读角标在侧边栏菜单项上常驻显示。
+/// 独立的「通知」消息中心页。列表、分页、筛选和无感已读由全局通知 provider
+/// 驱动，卡片被渲染时即上报已读。
 class DesktopNotificationsPage extends ConsumerStatefulWidget {
   const DesktopNotificationsPage({super.key});
 
@@ -26,18 +25,15 @@ class _DesktopNotificationsPageState
     extends ConsumerState<DesktopNotificationsPage> {
   static const double _loadMoreTriggerOffset = 300;
 
-  late final NotificationCenterController _controller;
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _controller = ref.read(notificationCenterControllerProvider);
     _scrollController.addListener(_handleScroll);
-    // 若全局 controller 尚未初始化（首个消费者），幂等触发一次。
-    unawaited(_controller.initialize());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        unawaited(ref.read(notificationCenterProvider.notifier).initialize());
         _maybeAutoLoadMore();
       }
     });
@@ -62,10 +58,13 @@ class _DesktopNotificationsPageState
     if (!_shouldAutoLoadMoreForViewport()) {
       return;
     }
-    if (_controller.hasMore &&
-        !_controller.isLoadingMore &&
-        _controller.loadMoreErrorMessage == null) {
-      unawaited(_controller.loadMoreNotifications());
+    final state = ref.read(notificationCenterProvider);
+    if (state.hasMore &&
+        !state.isLoadingMore &&
+        state.loadMoreErrorMessage == null) {
+      unawaited(
+        ref.read(notificationCenterProvider.notifier).loadMoreNotifications(),
+      );
     }
   }
 
@@ -79,41 +78,38 @@ class _DesktopNotificationsPageState
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(notificationCenterProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _maybeAutoLoadMore();
+      }
+    });
     return AppPageRefreshScope(
-      onRefresh: _controller.refreshNotifications,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _maybeAutoLoadMore();
-            }
-          });
-
-          if (_controller.isInitialLoading &&
-              _controller.notifications.isEmpty) {
-            return const _NotificationsLoadingState();
-          }
-          if (_controller.initialErrorMessage != null &&
-              _controller.notifications.isEmpty) {
-            return _NotificationsErrorState(
-              message: _controller.initialErrorMessage!,
-              onRetry: _controller.reloadAll,
-            );
-          }
-
-          return CustomScrollView(
-            controller: _scrollController,
-            // 收敛视口外预构建，避免卡片「提前已读」。
-            cacheExtent: 0,
-            slivers: _buildSlivers(context),
-          );
-        },
-      ),
+      onRefresh:
+          ref.read(notificationCenterProvider.notifier).refreshNotifications,
+      child:
+          state.isInitialLoading && state.notifications.isEmpty
+              ? const _NotificationsLoadingState()
+              : state.initialErrorMessage != null && state.notifications.isEmpty
+              ? _NotificationsErrorState(
+                message: state.initialErrorMessage!,
+                onRetry:
+                    ref.read(notificationCenterProvider.notifier).reloadAll,
+              )
+              : CustomScrollView(
+                controller: _scrollController,
+                // 收敛视口外预构建，避免卡片「提前已读」。
+                cacheExtent: 0,
+                slivers: _buildSlivers(context, state),
+              ),
     );
   }
 
-  List<Widget> _buildSlivers(BuildContext context) {
+  List<Widget> _buildSlivers(
+    BuildContext context,
+    NotificationCenterState state,
+  ) {
+    final notifier = ref.read(notificationCenterProvider.notifier);
     final slivers = <Widget>[
       SliverToBoxAdapter(
         child: Padding(
@@ -126,7 +122,10 @@ class _DesktopNotificationsPageState
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: NotificationFilterBar(controller: _controller),
+                    child: NotificationFilterBar(
+                      state: state,
+                      onFilterChanged: notifier.applyNotificationFilter,
+                    ),
                   ),
                   SizedBox(width: context.appSpacing.md),
                   AppButton(
@@ -134,21 +133,20 @@ class _DesktopNotificationsPageState
                     label: '全部已读',
                     size: AppButtonSize.small,
                     variant: AppButtonVariant.secondary,
-                    isLoading: _controller.isMarkingAllRead,
+                    isLoading: state.isMarkingAllRead,
                     onPressed:
-                        _controller.unreadCount > 0 &&
-                                !_controller.isMarkingAllRead
-                            ? () => _controller.markAllRead()
+                        state.unreadCount > 0 && !state.isMarkingAllRead
+                            ? notifier.markAllRead
                             : null,
                   ),
                 ],
               ),
-              if (_controller.refreshErrorMessage != null) ...[
+              if (state.refreshErrorMessage != null) ...[
                 SizedBox(height: context.appSpacing.md),
                 AppPagedLoadMoreFooter(
                   isLoading: false,
-                  errorMessage: _controller.refreshErrorMessage,
-                  onRetry: _controller.refreshNotifications,
+                  errorMessage: state.refreshErrorMessage,
+                  onRetry: notifier.refreshNotifications,
                 ),
               ],
             ],
@@ -157,7 +155,7 @@ class _DesktopNotificationsPageState
       ),
     ];
 
-    if (_controller.notifications.isEmpty) {
+    if (state.notifications.isEmpty) {
       slivers.add(
         const SliverToBoxAdapter(child: AppEmptyState(message: '当前筛选下暂无通知')),
       );
@@ -167,12 +165,12 @@ class _DesktopNotificationsPageState
     slivers.add(
       SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
-          final item = _controller.notifications[index];
-          final isLast = index == _controller.notifications.length - 1;
+          final item = state.notifications[index];
+          final isLast = index == state.notifications.length - 1;
           // 卡片被构建（展示）即视为已读，帧后上报避免在 build 中改状态。
           if (!item.isRead) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _controller.onNotificationDisplayed(item.id);
+              notifier.onNotificationDisplayed(item.id);
             });
           }
           return Padding(
@@ -181,7 +179,7 @@ class _DesktopNotificationsPageState
             ),
             child: RepaintBoundary(child: NotificationCard(notification: item)),
           );
-        }, childCount: _controller.notifications.length),
+        }, childCount: state.notifications.length),
       ),
     );
     slivers.add(
@@ -190,9 +188,9 @@ class _DesktopNotificationsPageState
           children: [
             SizedBox(height: context.appSpacing.lg),
             AppPagedLoadMoreFooter(
-              isLoading: _controller.isLoadingMore,
-              errorMessage: _controller.loadMoreErrorMessage,
-              onRetry: _controller.loadMoreNotifications,
+              isLoading: state.isLoadingMore,
+              errorMessage: state.loadMoreErrorMessage,
+              onRetry: notifier.loadMoreNotifications,
             ),
             SizedBox(height: context.appSpacing.xl),
           ],

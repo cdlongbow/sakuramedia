@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sakuramedia/app/app_page_state_cache.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_activity_page.dart';
@@ -3491,7 +3491,7 @@ Future<void> _pumpRouterApp(
   ImageSearchDraftStore? imageSearchDraftStore,
 }) {
   final draftStore = imageSearchDraftStore ?? ImageSearchDraftStore();
-  final pageStateCache = AppPageStateCache()..bindSessionStore(sessionStore);
+  final pageStateCache = RiverpodPageCache()..bindSessionStore(sessionStore);
 
   return tester.pumpWidget(
     ProviderScope(
@@ -3648,7 +3648,9 @@ void _enqueueDesktopOverviewResponses(TestApiBundle bundle) {
 }
 
 void _enqueueMobileSystemOverviewResponses(TestApiBundle bundle) {
-  bundle.adapter.enqueueJson(
+  // Riverpod 迁移后：/status 至少被两个消费方触发（概览统计条 +
+  // 侧边栏版本行的 appVersionInfoProvider.load），用 fallback 兜住多次调用。
+  bundle.adapter.setFallbackJson(
     method: 'GET',
     path: '/status',
     body: <String, dynamic>{

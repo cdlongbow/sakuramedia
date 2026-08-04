@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/series_import/series_import_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/series_import_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/series_import_state.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -19,69 +18,46 @@ Future<bool> showSeriesImportDialog(BuildContext context, int seriesId) async {
       enableDrag: false,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (ctx) => _SeriesImportSheet(
-            seriesId: seriesId,
-            moviesApi: ProviderScope.containerOf(
-              context,
-              listen: false,
-            ).read(moviesApiProvider),
-          ),
+      builder: (ctx) => _SeriesImportSheet(seriesId: seriesId),
     );
     return result ?? false;
   } else {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder:
-          (ctx) => _SeriesImportDesktopDialog(
-            seriesId: seriesId,
-            moviesApi: ProviderScope.containerOf(
-              context,
-              listen: false,
-            ).read(moviesApiProvider),
-          ),
+      builder: (ctx) => _SeriesImportDesktopDialog(seriesId: seriesId),
     );
     return result ?? false;
   }
 }
 
-// ─── 共用 controller 生命周期管理 ────────────────────────────────────────────
+// ─── 共用 provider 生命周期管理 ──────────────────────────────────────────────
 
-class _SeriesImportHost extends StatefulWidget {
-  const _SeriesImportHost({
-    required this.seriesId,
-    required this.moviesApi,
-    required this.builder,
-  });
+class _SeriesImportHost extends ConsumerStatefulWidget {
+  const _SeriesImportHost({required this.seriesId, required this.builder});
 
   final int seriesId;
-  final MoviesApi moviesApi;
   final Widget Function(
     BuildContext context,
-    SeriesImportController controller,
+    SeriesImportState state,
+    SeriesImport notifier,
     void Function(bool) dismiss,
   )
   builder;
 
   @override
-  State<_SeriesImportHost> createState() => _SeriesImportHostState();
+  ConsumerState<_SeriesImportHost> createState() => _SeriesImportHostState();
 }
 
-class _SeriesImportHostState extends State<_SeriesImportHost> {
-  late final SeriesImportController _controller;
-
+class _SeriesImportHostState extends ConsumerState<_SeriesImportHost> {
   @override
   void initState() {
     super.initState();
-    _controller = SeriesImportController(moviesApi: widget.moviesApi);
-    _controller.startImport(widget.seriesId);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(seriesImportProvider(widget.seriesId).notifier).startImport();
+      }
+    });
   }
 
   void _dismiss(bool hasNewMovies) {
@@ -90,34 +66,31 @@ class _SeriesImportHostState extends State<_SeriesImportHost> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (ctx, _) => widget.builder(ctx, _controller, _dismiss),
-    );
+    final state = ref.watch(seriesImportProvider(widget.seriesId));
+    final notifier = ref.read(seriesImportProvider(widget.seriesId).notifier);
+    return widget.builder(context, state, notifier, _dismiss);
   }
 }
 
 // ─── 移动端底部弹出 ───────────────────────────────────────────────────────────
 
 class _SeriesImportSheet extends StatelessWidget {
-  const _SeriesImportSheet({required this.seriesId, required this.moviesApi});
+  const _SeriesImportSheet({required this.seriesId});
 
   final int seriesId;
-  final MoviesApi moviesApi;
 
   @override
   Widget build(BuildContext context) {
     return _SeriesImportHost(
       seriesId: seriesId,
-      moviesApi: moviesApi,
-      builder: (context, controller, dismiss) {
+      builder: (context, state, notifier, dismiss) {
         final spacing = context.appSpacing;
         final radius = context.appRadius;
 
         return PopScope(
-          canPop: controller.canDismiss,
+          canPop: state.canDismiss,
           onPopInvokedWithResult: (didPop, _) {
-            if (didPop) dismiss(controller.hasNewMovies);
+            if (didPop) dismiss(state.hasNewMovies);
           },
           child: Container(
             decoration: BoxDecoration(
@@ -139,9 +112,9 @@ class _SeriesImportSheet extends StatelessWidget {
                 _DragHandle(),
                 SizedBox(height: spacing.md),
                 _SeriesImportContent(
-                  controller: controller,
-                  onDone: () => dismiss(controller.hasNewMovies),
-                  onRetry: () => controller.startImport(seriesId),
+                  state: state,
+                  onDone: () => dismiss(state.hasNewMovies),
+                  onRetry: notifier.startImport,
                 ),
               ],
             ),
@@ -155,28 +128,23 @@ class _SeriesImportSheet extends StatelessWidget {
 // ─── 桌面端对话框 ─────────────────────────────────────────────────────────────
 
 class _SeriesImportDesktopDialog extends StatelessWidget {
-  const _SeriesImportDesktopDialog({
-    required this.seriesId,
-    required this.moviesApi,
-  });
+  const _SeriesImportDesktopDialog({required this.seriesId});
 
   final int seriesId;
-  final MoviesApi moviesApi;
 
   @override
   Widget build(BuildContext context) {
     return _SeriesImportHost(
       seriesId: seriesId,
-      moviesApi: moviesApi,
-      builder: (context, controller, dismiss) {
+      builder: (context, state, notifier, dismiss) {
         final spacing = context.appSpacing;
 
         return PopScope(
-          canPop: controller.canDismiss,
+          canPop: state.canDismiss,
           child: AppDesktopDialog(
             width: 460,
-            showCloseButton: controller.canDismiss,
-            onClose: () => dismiss(controller.hasNewMovies),
+            showCloseButton: state.canDismiss,
+            onClose: () => dismiss(state.hasNewMovies),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,9 +160,9 @@ class _SeriesImportDesktopDialog extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.lg),
                 _SeriesImportContent(
-                  controller: controller,
-                  onDone: () => dismiss(controller.hasNewMovies),
-                  onRetry: () => controller.startImport(seriesId),
+                  state: state,
+                  onDone: () => dismiss(state.hasNewMovies),
+                  onRetry: notifier.startImport,
                 ),
               ],
             ),
@@ -209,12 +177,12 @@ class _SeriesImportDesktopDialog extends StatelessWidget {
 
 class _SeriesImportContent extends StatelessWidget {
   const _SeriesImportContent({
-    required this.controller,
+    required this.state,
     required this.onDone,
     required this.onRetry,
   });
 
-  final SeriesImportController controller;
+  final SeriesImportState state;
   final VoidCallback onDone;
   final VoidCallback onRetry;
 
@@ -222,9 +190,9 @@ class _SeriesImportContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
 
-    if (controller.hasFailed) {
+    if (state.hasFailed) {
       return _FailureView(
-        errorMessage: controller.errorMessage ?? '导入失败，请稍后重试',
+        errorMessage: state.errorMessage ?? '导入失败，请稍后重试',
         onRetry: onRetry,
         onClose: onDone,
       );
@@ -234,15 +202,15 @@ class _SeriesImportContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StatusRow(controller: controller),
+        _StatusRow(state: state),
         SizedBox(height: spacing.md),
-        _ProgressBar(controller: controller),
-        if (controller.isCompleted && controller.stats != null) ...[
+        _ProgressBar(state: state),
+        if (state.isCompleted && state.stats != null) ...[
           SizedBox(height: spacing.lg),
-          _StatsCard(stats: controller.stats!),
+          _StatsCard(stats: state.stats!),
         ],
         SizedBox(height: spacing.xl),
-        _ActionRow(controller: controller, onDone: onDone),
+        _ActionRow(state: state, onDone: onDone),
       ],
     );
   }
@@ -251,22 +219,22 @@ class _SeriesImportContent extends StatelessWidget {
 // ─── 状态行（图标 + 文字 + 进度数字） ────────────────────────────────────────
 
 class _StatusRow extends StatelessWidget {
-  const _StatusRow({required this.controller});
+  const _StatusRow({required this.state});
 
-  final SeriesImportController controller;
+  final SeriesImportState state;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
 
     Widget icon;
-    if (controller.isCompleted && !controller.hasFailed) {
+    if (state.isCompleted && !state.hasFailed) {
       icon = Icon(
         Icons.check_circle_rounded,
         color: _successColor(context),
         size: 22,
       );
-    } else if (controller.hasFailed) {
+    } else if (state.hasFailed) {
       icon = Icon(Icons.error_rounded, color: _errorColor(context), size: 22);
     } else {
       icon = SizedBox(
@@ -285,7 +253,7 @@ class _StatusRow extends StatelessWidget {
         SizedBox(width: spacing.sm),
         Expanded(
           child: Text(
-            controller.statusMessage,
+            state.statusMessage,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -294,9 +262,9 @@ class _StatusRow extends StatelessWidget {
             ),
           ),
         ),
-        if (controller.current != null && controller.total != null)
+        if (state.current != null && state.total != null)
           Text(
-            '${controller.current} / ${controller.total}',
+            '${state.current} / ${state.total}',
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -312,13 +280,13 @@ class _StatusRow extends StatelessWidget {
 // ─── 进度条 ───────────────────────────────────────────────────────────────────
 
 class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({required this.controller});
+  const _ProgressBar({required this.state});
 
-  final SeriesImportController controller;
+  final SeriesImportState state;
 
   @override
   Widget build(BuildContext context) {
-    final progress = controller.progress;
+    final progress = state.progress;
 
     return ClipRRect(
       borderRadius: context.appRadius.xsBorder,
@@ -327,9 +295,9 @@ class _ProgressBar extends StatelessWidget {
         minHeight: 5,
         backgroundColor: context.appColors.borderSubtle,
         color:
-            controller.hasFailed
+            state.hasFailed
                 ? _errorColor(context)
-                : controller.isCompleted
+                : state.isCompleted
                 ? _successColor(context)
                 : _accentColor(context),
       ),
@@ -429,9 +397,9 @@ class _StatDivider extends StatelessWidget {
 // ─── 操作按钮行 ───────────────────────────────────────────────────────────────
 
 class _ActionRow extends StatelessWidget {
-  const _ActionRow({required this.controller, required this.onDone});
+  const _ActionRow({required this.state, required this.onDone});
 
-  final SeriesImportController controller;
+  final SeriesImportState state;
   final VoidCallback onDone;
 
   @override
@@ -439,8 +407,8 @@ class _ActionRow extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
-        onPressed: controller.canDismiss ? onDone : null,
-        child: Text(controller.hasNewMovies ? '完成（刷新列表）' : '完成'),
+        onPressed: state.canDismiss ? onDone : null,
+        child: Text(state.hasNewMovies ? '完成（刷新列表）' : '完成'),
       ),
     );
   }

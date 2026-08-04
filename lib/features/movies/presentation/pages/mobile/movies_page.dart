@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_filter_drawer.dart';
@@ -33,7 +33,7 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
-          key: mobileMoviesPageStateKey(),
+          key: mobileMoviesPageCacheKey(),
           resolveLinks: () {
             final link =
                 ref.read(movieSummaryProvider(_scope).notifier).cacheLink;

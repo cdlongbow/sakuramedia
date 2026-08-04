@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
@@ -30,7 +30,7 @@ class _DesktopMoviesPageState extends ConsumerState<DesktopMoviesPage> {
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
-          key: desktopMoviesPageStateKey(),
+          key: desktopMoviesPageCacheKey(),
           resolveLinks: () {
             final link =
                 ref.read(movieSummaryProvider(_scope).notifier).cacheLink;

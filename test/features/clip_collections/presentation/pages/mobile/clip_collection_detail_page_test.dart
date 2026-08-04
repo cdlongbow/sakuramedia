@@ -11,7 +11,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -104,9 +104,6 @@ void main() {
             ClipCollectionsApi(apiClient: apiClient),
           ),
           clipsApiProvider.overrideWithValue(ClipsApi(apiClient: apiClient)),
-          clipMutationBroadcasterProvider.overrideWithValue(
-            ClipMutationChangeNotifier(),
-          ),
         ],
         child: OKToast(
           child: MaterialApp(

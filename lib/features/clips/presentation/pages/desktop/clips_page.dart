@@ -12,7 +12,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_t
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
@@ -536,7 +536,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     try {
       await ref.read(clipsApiProvider).deleteClip(clipId: clip.clipId);
       // 广播删除信号：本页监听后从网格精准移除，并刷新合集横滑区（封面 / 计数可能变化）。
-      ref.read(clipMutationBroadcasterProvider).reportDeleted(clip.clipId);
+      ref.read(clipMutationEventsProvider.notifier).reportDeleted(clip.clipId);
       if (mounted) {
         showToast('已删除切片');
       }
@@ -552,7 +552,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     }
     // 合集归属可能变化（含新建）：广播信号，由本页监听统一刷新合集横滑区。
     ref
-        .read(clipMutationBroadcasterProvider)
+        .read(clipMutationEventsProvider.notifier)
         .reportCollectionMembershipChanged(clipId: clip.clipId);
   }
 
@@ -617,7 +617,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       return;
     }
     // 合集成员/封面变化：逐条广播，由页面监听合并刷新合集横滑区。
-    final broadcaster = ref.read(clipMutationBroadcasterProvider);
+    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
     for (final clip in result.succeeded) {
       broadcaster.reportCollectionMembershipChanged(
         clipId: clip.clipId,
@@ -655,7 +655,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       return;
     }
     // 逐条广播删除信号：本页监听从网格精准移除，并合并刷新合集横滑区。
-    final broadcaster = ref.read(clipMutationBroadcasterProvider);
+    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
     for (final clip in result.succeeded) {
       broadcaster.reportDeleted(clip.clipId);
     }

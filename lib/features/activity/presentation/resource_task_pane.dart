@@ -5,7 +5,7 @@ import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
-import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/resource_task_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -26,7 +26,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_b
 /// 详情抽屉由外层 [buildResourceTaskDetailOverlay] 叠加到 Stack 上。
 List<Widget> buildResourceTaskSlivers({
   required BuildContext context,
-  required ResourceTaskCenterController controller,
+  required ResourceTaskCenter controller,
 }) {
   if (controller.isInitialLoading) {
     return const <Widget>[
@@ -158,7 +158,7 @@ List<Widget> buildResourceTaskSlivers({
                   );
                   if (!ok) {
                     showToast(
-                      '最多可选 ${ResourceTaskCenterController.maxBatchResetCount} 项',
+                      '最多可选 ${ResourceTaskCenter.maxBatchResetCount} 项',
                     );
                   }
                   return;
@@ -195,7 +195,7 @@ List<Widget> buildResourceTaskSlivers({
 /// 当没有选中记录时返回 `SizedBox.shrink()`，调用方可以无条件插入 Stack。
 Widget buildResourceTaskDetailOverlay({
   required BuildContext context,
-  required ResourceTaskCenterController controller,
+  required ResourceTaskCenter controller,
 }) {
   final record = controller.selectedRecord;
   if (record == null) {
@@ -250,7 +250,7 @@ class _ResourceTaskListLoading extends StatelessWidget {
 class _ResourceTaskSubTabBar extends StatelessWidget {
   const _ResourceTaskSubTabBar({required this.controller});
 
-  final ResourceTaskCenterController controller;
+  final ResourceTaskCenter controller;
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +354,7 @@ class _ResourceTaskSubTab extends StatelessWidget {
 class _ResourceTaskFilterBar extends StatefulWidget {
   const _ResourceTaskFilterBar({required this.controller});
 
-  final ResourceTaskCenterController controller;
+  final ResourceTaskCenter controller;
 
   @override
   State<_ResourceTaskFilterBar> createState() => _ResourceTaskFilterBarState();
@@ -508,7 +508,7 @@ class _FilterLoadingDot extends StatelessWidget {
 class _ResourceTaskSelectionBar extends StatelessWidget {
   const _ResourceTaskSelectionBar({required this.controller});
 
-  final ResourceTaskCenterController controller;
+  final ResourceTaskCenter controller;
 
   Future<void> _handleConfirmReset(BuildContext context) async {
     final selectedCount = controller.selectedCount;
@@ -603,7 +603,7 @@ class _ResourceTaskSelectionBar extends StatelessWidget {
 class _ResourceTaskSelectionEntryRow extends StatelessWidget {
   const _ResourceTaskSelectionEntryRow({required this.controller});
 
-  final ResourceTaskCenterController controller;
+  final ResourceTaskCenter controller;
 
   @override
   Widget build(BuildContext context) {

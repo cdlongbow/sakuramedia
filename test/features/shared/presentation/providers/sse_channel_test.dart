@@ -93,13 +93,19 @@ void main() {
 
   test('unsupported + giveUpOnUnsupported=true → 停订阅不重连', () {
     fakeAsync((async) {
+      final received = <String>[];
       final channel = FakeSseChannel<String>(giveUpOnUnsupported: true);
-      channel.start(onEvent: (_) {});
+      channel.start(onEvent: received.add);
       async.flushMicrotasks();
 
       channel.emitUnsupported();
       async.flushMicrotasks();
       expect(channel.state, SseChannelState.unsupportedAbandoned);
+
+      // unsupported 后必须与旧双子星一致真正取消订阅，而非只停重连 timer。
+      channel.emit('late-event');
+      async.flushMicrotasks();
+      expect(received, isEmpty);
 
       async.elapse(const Duration(minutes: 5));
       expect(channel.state, SseChannelState.unsupportedAbandoned);

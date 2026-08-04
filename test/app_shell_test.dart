@@ -67,7 +67,9 @@ Future<void> _pumpDesktopApp(
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {
-  bundle.adapter.enqueueJson(
+  // Riverpod 迁移后：/status 至少被两个消费方触发（概览统计条 +
+  // 侧边栏版本行的 appVersionInfoProvider.load），用 fallback 兜住多次调用。
+  bundle.adapter.setFallbackJson(
     method: 'GET',
     path: '/status',
     body: <String, dynamic>{

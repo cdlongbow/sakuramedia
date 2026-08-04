@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
@@ -19,9 +20,9 @@ import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_magnet_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_review_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_thumbnail_controller.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_review_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_thumbnail_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -40,10 +41,6 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
     super.key,
     required this.movieNumber,
     required this.selectedMedia,
-    required this.fetchMovieReviews,
-    required this.fetchMediaThumbnails,
-    required this.searchCandidates,
-    required this.createDownloadRequest,
     required this.onClose,
     this.showCloseButton = true,
     this.thumbnailPreviewPresentation = MoviePlotPreviewPresentation.dialog,
@@ -53,26 +50,6 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
 
   final String movieNumber;
   final MovieMediaItemDto? selectedMedia;
-  final Future<List<MovieReviewDto>> Function({
-    required String movieNumber,
-    required int page,
-    required int pageSize,
-    required MovieReviewSort sort,
-  })
-  fetchMovieReviews;
-  final Future<List<MovieMediaThumbnailDto>> Function({required int mediaId})
-  fetchMediaThumbnails;
-  final Future<List<DownloadCandidateDto>> Function({
-    required String movieNumber,
-    String? indexerKind,
-  })
-  searchCandidates;
-  final Future<DownloadRequestResponseDto> Function({
-    required String movieNumber,
-    required int clientId,
-    required DownloadCandidateDto candidate,
-  })
-  createDownloadRequest;
   final VoidCallback onClose;
   final bool showCloseButton;
   final MoviePlotPreviewPresentation thumbnailPreviewPresentation;
@@ -93,46 +70,42 @@ class _MovieDetailInspectorPanelState
     extends ConsumerState<MovieDetailInspectorPanel>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  late final MovieDetailReviewController _reviewController;
-  late final MovieDetailThumbnailController _thumbnailController;
-  late final MovieDetailMagnetController _magnetController;
+
+  MovieDetailReview get _reviewController =>
+      ref.read(movieDetailReviewProvider(widget.movieNumber).notifier);
+  MovieDetailMagnet get _magnetController =>
+      ref.read(movieDetailMagnetProvider(widget.movieNumber).notifier);
+  MovieDetailThumbnail get _thumbnailController => ref.read(
+    movieDetailThumbnailProvider(mediaId: widget.selectedMedia?.mediaId)
+        .notifier,
+  );
+  MovieDetailThumbnailState get _thumbnailState => ref.read(
+    movieDetailThumbnailProvider(mediaId: widget.selectedMedia?.mediaId),
+  );
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
-    _reviewController = MovieDetailReviewController(
-      movieNumber: widget.movieNumber,
-      fetchMovieReviews: widget.fetchMovieReviews,
-      initialSort: MovieReviewSort.hotly,
-    );
-    _thumbnailController = MovieDetailThumbnailController(
-      mediaId: widget.selectedMedia?.mediaId,
-      fetchMediaThumbnails: widget.fetchMediaThumbnails,
-    );
-    _magnetController = MovieDetailMagnetController(
-      movieNumber: widget.movieNumber,
-      searchCandidates: widget.searchCandidates,
-      createDownloadRequest: widget.createDownloadRequest,
-    );
-    _reviewController.loadInitial();
-    _thumbnailController.loadIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_reviewController.loadInitial());
+      unawaited(_thumbnailController.loadIfNeeded());
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _reviewController.dispose();
-    _thumbnailController.dispose();
-    _magnetController.dispose();
     super.dispose();
   }
 
   Future<void> _showThumbnailActions(int index, Offset globalPosition) async {
-    if (index < 0 || index >= _thumbnailController.thumbnails.length) {
+    final thumbnails = _thumbnailState.thumbnails;
+    if (index < 0 || index >= thumbnails.length) {
       return;
     }
-    final thumbnail = _thumbnailController.thumbnails[index];
+    final thumbnail = thumbnails[index];
     final point = await _loadMatchingPoint(thumbnail);
     if (!mounted) {
       return;
@@ -149,8 +122,8 @@ class _MovieDetailInspectorPanelState
   }
 
   Future<void> _handleCreateClip() async {
-    final start = _thumbnailController.clipStartThumbnail;
-    final end = _thumbnailController.clipEndThumbnail;
+    final start = _thumbnailState.clipStartThumbnail;
+    final end = _thumbnailState.clipEndThumbnail;
     if (start == null || end == null || start.mediaId <= 0) {
       return;
     }
@@ -336,32 +309,14 @@ class _MovieDetailInspectorPanelState
           child: TabBarView(
             controller: _tabController,
             children: [
-              AnimatedBuilder(
-                animation: _reviewController,
-                builder: (context, child) {
-                  return _MovieDetailReviewTab(controller: _reviewController);
-                },
-              ),
-              AnimatedBuilder(
-                animation: _magnetController,
-                builder: (context, child) {
-                  return _MovieDetailMagnetTab(
-                    movieNumber: widget.movieNumber,
-                    controller: _magnetController,
-                  );
-                },
-              ),
-              AnimatedBuilder(
-                animation: _thumbnailController,
-                builder: (context, child) {
-                  return _MovieDetailThumbnailTab(
-                    controller: _thumbnailController,
-                    thumbnailPreviewPresentation:
-                        widget.thumbnailPreviewPresentation,
-                    onThumbnailMenuRequested: _showThumbnailActions,
-                    onCreateClip: _handleCreateClip,
-                  );
-                },
+              _MovieDetailReviewTab(movieNumber: widget.movieNumber),
+              _MovieDetailMagnetTab(movieNumber: widget.movieNumber),
+              _MovieDetailThumbnailTab(
+                mediaId: widget.selectedMedia?.mediaId,
+                thumbnailPreviewPresentation:
+                    widget.thumbnailPreviewPresentation,
+                onThumbnailMenuRequested: _showThumbnailActions,
+                onCreateClip: _handleCreateClip,
               ),
             ],
           ),
@@ -371,16 +326,22 @@ class _MovieDetailInspectorPanelState
   }
 }
 
-class _MovieDetailReviewTab extends StatefulWidget {
-  const _MovieDetailReviewTab({required this.controller});
+class _MovieDetailReviewTab extends ConsumerStatefulWidget {
+  const _MovieDetailReviewTab({required this.movieNumber});
 
-  final MovieDetailReviewController controller;
+  final String movieNumber;
 
   @override
-  State<_MovieDetailReviewTab> createState() => _MovieDetailReviewTabState();
+  ConsumerState<_MovieDetailReviewTab> createState() =>
+      _MovieDetailReviewTabState();
 }
 
-class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
+class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
+  MovieDetailReview get _controller =>
+      ref.read(movieDetailReviewProvider(widget.movieNumber).notifier);
+  MovieDetailReviewState get _state =>
+      ref.read(movieDetailReviewProvider(widget.movieNumber));
+
   static const double _loadMoreExtentAfterThreshold = 200;
   late final ScrollController _scrollController;
   int _lastAutoLoadTriggerItemCount = -1;
@@ -409,17 +370,17 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
       _lastAutoLoadTriggerItemCount = -1;
       return;
     }
-    if (widget.controller.items.length == _lastAutoLoadTriggerItemCount) {
+    if (_state.items.length == _lastAutoLoadTriggerItemCount) {
       return;
     }
-    _lastAutoLoadTriggerItemCount = widget.controller.items.length;
-    widget.controller.loadMore();
+    _lastAutoLoadTriggerItemCount = _state.items.length;
+    _controller.loadMore();
   }
 
   Future<void> _handleSortChange(MovieReviewSort sort) async {
     if (_isSortSwitchLoading ||
-        widget.controller.isInitialLoading ||
-        widget.controller.sort == sort) {
+        _state.isInitialLoading ||
+        _state.sort == sort) {
       return;
     }
     if (_scrollController.hasClients) {
@@ -430,7 +391,7 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
       _isSortSwitchLoading = true;
     });
     try {
-      await widget.controller.setSort(sort);
+      await _controller.setSort(sort);
     } finally {
       if (mounted) {
         setState(() {
@@ -442,7 +403,7 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
+    final state = ref.watch(movieDetailReviewProvider(widget.movieNumber));
     return Padding(
       padding: EdgeInsets.only(
         top: context.appSpacing.sm,
@@ -460,7 +421,7 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
                   key: Key('movie-detail-review-sort-${sort.apiValue}'),
                   label: sort.label,
                   size: AppTextButtonSize.xSmall,
-                  isSelected: controller.sort == sort,
+                  isSelected: state.sort == sort,
                   onPressed:
                       _isSortSwitchLoading
                           ? null
@@ -469,29 +430,28 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
             ],
           ),
           SizedBox(height: context.appSpacing.sm),
-          Expanded(child: _buildContent(context)),
+          Expanded(child: _buildContent(context, state)),
         ],
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(BuildContext context, MovieDetailReviewState state) {
     if (_isSortSwitchLoading) {
       return const Center(child: _ReviewSortSwitchLoadingIndicator());
     }
 
-    final controller = widget.controller;
-    if (controller.isInitialLoading && controller.items.isEmpty) {
+    if (state.isInitialLoading && state.items.isEmpty) {
       return const _MovieDetailReviewLoadingList();
     }
 
-    if (controller.initialErrorMessage != null && controller.items.isEmpty) {
+    if (state.initialErrorMessage != null && state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              controller.initialErrorMessage!,
+              state.initialErrorMessage!,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -504,28 +464,31 @@ class _MovieDetailReviewTabState extends State<_MovieDetailReviewTab> {
               key: const Key('movie-detail-review-retry-button'),
               label: '重试',
               variant: AppButtonVariant.secondary,
-              onPressed: controller.loadInitial,
+              onPressed: _controller.loadInitial,
             ),
           ],
         ),
       );
     }
 
-    if (controller.items.isEmpty) {
+    if (state.items.isEmpty) {
       return const Center(child: AppEmptyState(message: '暂无评论'));
     }
 
     return ListView.separated(
       controller: _scrollController,
       key: const Key('movie-detail-review-list'),
-      itemCount: controller.items.length + 1,
+      itemCount: state.items.length + 1,
       separatorBuilder:
           (context, index) => SizedBox(height: context.appSpacing.sm),
       itemBuilder: (context, index) {
-        if (index < controller.items.length) {
-          return _MovieDetailReviewCard(review: controller.items[index]);
+        if (index < state.items.length) {
+          return _MovieDetailReviewCard(review: state.items[index]);
         }
-        return _MovieDetailReviewFooter(controller: controller);
+        return _MovieDetailReviewFooter(
+          state: state,
+          onRetryLoadMore: _controller.loadMore,
+        );
       },
     );
   }
@@ -660,13 +623,17 @@ class _MovieDetailReviewCard extends StatelessWidget {
 }
 
 class _MovieDetailReviewFooter extends StatelessWidget {
-  const _MovieDetailReviewFooter({required this.controller});
+  const _MovieDetailReviewFooter({
+    required this.state,
+    required this.onRetryLoadMore,
+  });
 
-  final MovieDetailReviewController controller;
+  final MovieDetailReviewState state;
+  final VoidCallback onRetryLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    if (controller.isLoadingMore) {
+    if (state.isLoadingMore) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: context.appSpacing.sm),
         child: Center(
@@ -677,12 +644,12 @@ class _MovieDetailReviewFooter extends StatelessWidget {
       );
     }
 
-    if (controller.loadMoreErrorMessage != null) {
+    if (state.loadMoreErrorMessage != null) {
       return Column(
         key: const Key('movie-detail-review-load-more-error'),
         children: [
           Text(
-            controller.loadMoreErrorMessage!,
+            state.loadMoreErrorMessage!,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -696,7 +663,7 @@ class _MovieDetailReviewFooter extends StatelessWidget {
             label: '重试加载更多',
             size: AppButtonSize.xSmall,
             variant: AppButtonVariant.secondary,
-            onPressed: controller.loadMore,
+            onPressed: onRetryLoadMore,
           ),
         ],
       );
@@ -785,19 +752,19 @@ class _ReviewSkeletonLine extends StatelessWidget {
   }
 }
 
-class _MovieDetailMagnetTab extends StatelessWidget {
+class _MovieDetailMagnetTab extends ConsumerWidget {
   static const double _sortToolbarBreakpoint = 320;
 
-  const _MovieDetailMagnetTab({
-    required this.movieNumber,
-    required this.controller,
-  });
+  const _MovieDetailMagnetTab({required this.movieNumber});
 
   final String movieNumber;
-  final MovieDetailMagnetController controller;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(movieDetailMagnetProvider(movieNumber));
+    final controller = ref.read(
+      movieDetailMagnetProvider(movieNumber).notifier,
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompactToolbar = constraints.maxWidth < _sortToolbarBreakpoint;
@@ -815,11 +782,13 @@ class _MovieDetailMagnetTab extends StatelessWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: _buildSortActions(context, compact: true),
+                      child: _buildSortActions(context, state, controller, compact: true),
                     ),
                     SizedBox(height: context.appSpacing.sm),
                     _buildSearchAction(
                       context,
+                      state,
+                      controller,
                       alignment: Alignment.centerRight,
                     ),
                   ],
@@ -828,18 +797,20 @@ class _MovieDetailMagnetTab extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSortActions(context),
+                    _buildSortActions(context, state, controller),
                     SizedBox(width: context.appSpacing.md),
                     Expanded(
                       child: _buildSearchAction(
                         context,
+                        state,
+                        controller,
                         alignment: Alignment.centerRight,
                       ),
                     ),
                   ],
                 ),
               SizedBox(height: context.appSpacing.md),
-              Expanded(child: _buildContent(context)),
+              Expanded(child: _buildContent(context, state, controller)),
             ],
           ),
         );
@@ -848,7 +819,9 @@ class _MovieDetailMagnetTab extends StatelessWidget {
   }
 
   Widget _buildSearchAction(
-    BuildContext context, {
+    BuildContext context,
+    MovieDetailMagnetState state,
+    MovieDetailMagnet controller, {
     Alignment alignment = Alignment.centerLeft,
   }) {
     return Align(
@@ -856,17 +829,22 @@ class _MovieDetailMagnetTab extends StatelessWidget {
       child: AppButton(
         size: AppButtonSize.xSmall,
         key: const Key('movie-detail-magnet-search-button'),
-        label: controller.isLoading ? '搜索中' : '搜索资源',
-        isLoading: controller.isLoading,
+        label: state.isLoading ? '搜索中' : '搜索资源',
+        isLoading: state.isLoading,
         variant: AppButtonVariant.primary,
-        onPressed: controller.isLoading ? null : controller.search,
+        onPressed: state.isLoading ? null : controller.search,
       ),
     );
   }
 
-  Widget _buildSortActions(BuildContext context, {bool compact = false}) {
+  Widget _buildSortActions(
+    BuildContext context,
+    MovieDetailMagnetState state,
+    MovieDetailMagnet controller, {
+    bool compact = false,
+  }) {
     final nextDirectionLabel =
-        controller.selectedSortDirection == MovieDetailMagnetSortDirection.desc
+        state.selectedSortDirection == MovieDetailMagnetSortDirection.desc
             ? '当前降序，点击切换为升序'
             : '当前升序，点击切换为降序';
     final selectWidth =
@@ -881,7 +859,7 @@ class _MovieDetailMagnetTab extends StatelessWidget {
           width: selectWidth,
           child: AppSelectField<MovieDetailMagnetSortField>(
             key: const Key('movie-detail-magnet-sort-field'),
-            value: controller.selectedSortField,
+            value: state.selectedSortField,
             size: AppSelectFieldSize.mini,
             textStyle: resolveAppTextStyle(
               context,
@@ -913,7 +891,7 @@ class _MovieDetailMagnetTab extends StatelessWidget {
           isSelected: true,
           size: AppIconButtonSize.mini,
           icon:
-              controller.selectedSortDirection.isAscending
+              state.selectedSortDirection.isAscending
                   ? const Icon(Icons.arrow_upward_rounded)
                   : const Icon(Icons.arrow_downward_rounded),
           onPressed: controller.toggleSortDirection,
@@ -922,10 +900,14 @@ class _MovieDetailMagnetTab extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    final items = controller.sortedItems;
+  Widget _buildContent(
+    BuildContext context,
+    MovieDetailMagnetState state,
+    MovieDetailMagnet controller,
+  ) {
+    final items = state.sortedItems;
 
-    if (controller.isLoading && items.isEmpty) {
+    if (state.isLoading && items.isEmpty) {
       return const Center(
         child: CircularProgressIndicator.adaptive(
           key: Key('movie-detail-magnet-loading-indicator'),
@@ -933,13 +915,13 @@ class _MovieDetailMagnetTab extends StatelessWidget {
       );
     }
 
-    if (controller.errorMessage != null) {
+    if (state.errorMessage != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              controller.errorMessage!,
+              state.errorMessage!,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -959,7 +941,7 @@ class _MovieDetailMagnetTab extends StatelessWidget {
       );
     }
 
-    if (!controller.hasSearched) {
+    if (!state.hasSearched) {
       return const Center(child: AppEmptyState(message: '搜索依赖系统设置中的下载器与索引器。'));
     }
 
@@ -976,7 +958,7 @@ class _MovieDetailMagnetTab extends StatelessWidget {
         return _MovieDetailMagnetCandidateCard(
           key: Key('movie-detail-magnet-candidate-$index'),
           candidate: item,
-          isSubmitting: controller.submittingCandidateKey == item.submitKey,
+          isSubmitting: state.submittingCandidateKey == item.submitKey,
           copyButtonKey: Key('movie-detail-magnet-copy-$index'),
           submitButtonKey: Key('movie-detail-magnet-submit-$index'),
           onSubmit:
@@ -1232,26 +1214,30 @@ class _MagnetMetaText extends StatelessWidget {
   }
 }
 
-class _MovieDetailThumbnailTab extends StatelessWidget {
+class _MovieDetailThumbnailTab extends ConsumerWidget {
   static const List<int> _intervalOptions = <int>[10, 20, 30, 60];
   static const List<int> _columnOptions = <int>[2, 3, 4, 5];
 
   const _MovieDetailThumbnailTab({
-    required this.controller,
+    required this.mediaId,
     required this.thumbnailPreviewPresentation,
     this.onThumbnailMenuRequested,
     this.onCreateClip,
   });
 
-  final MovieDetailThumbnailController controller;
+  final int? mediaId;
   final MoviePlotPreviewPresentation thumbnailPreviewPresentation;
   final void Function(int index, Offset globalPosition)?
   onThumbnailMenuRequested;
   final VoidCallback? onCreateClip;
 
   @override
-  Widget build(BuildContext context) {
-    final thumbnails = controller.thumbnails;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(movieDetailThumbnailProvider(mediaId: mediaId));
+    final controller = ref.read(
+      movieDetailThumbnailProvider(mediaId: mediaId).notifier,
+    );
+    final thumbnails = state.thumbnails;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1261,10 +1247,10 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
           targetWidth: context.appComponentTokens.movieThumbnailTargetWidth,
         );
         final resolvedColumns =
-            controller.usesAutoColumns
+            state.usesAutoColumns
                 ? autoColumns
-                : (controller.columns ?? autoColumns);
-        if (controller.usesAutoColumns && controller.columns != autoColumns) {
+                : (state.columns ?? autoColumns);
+        if (state.usesAutoColumns && state.columns != autoColumns) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               controller.applyAutoColumns(autoColumns);
@@ -1289,7 +1275,7 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
                   _MovieDetailThumbnailIntervalSelector(
                     keyPrefix: 'movie-detail-thumbnail',
                     options: _intervalOptions,
-                    selectedIntervalSeconds: controller.selectedIntervalSeconds,
+                    selectedIntervalSeconds: state.selectedIntervalSeconds,
                     onSelect: controller.setIntervalSeconds,
                   ),
                   _MovieDetailThumbnailColumnsSelector(
@@ -1301,8 +1287,8 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
                   if (onCreateClip != null)
                     AppIconButton(
                       key: const Key('movie-detail-thumbnail-clip-toggle'),
-                      tooltip: controller.clipSelectionMode ? '退出切片圈选' : '圈选切片',
-                      isSelected: controller.clipSelectionMode,
+                      tooltip: state.clipSelectionMode ? '退出切片圈选' : '圈选切片',
+                      isSelected: state.clipSelectionMode,
                       size: AppIconButtonSize.mini,
                       selectedIconColor: Theme.of(context).colorScheme.primary,
                       onPressed: controller.toggleClipSelectionMode,
@@ -1310,14 +1296,14 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
                     ),
                 ],
               ),
-              if (controller.clipSelectionMode) ...[
+              if (state.clipSelectionMode) ...[
                 SizedBox(height: context.appSpacing.sm),
                 ClipSelectionStatusBar(
                   keyPrefix: 'movie-detail-thumbnail',
-                  startSeconds: controller.clipStartThumbnail?.offsetSeconds,
-                  endSeconds: controller.clipEndThumbnail?.offsetSeconds,
-                  durationSeconds: controller.clipSelectionDurationSeconds,
-                  canCreate: controller.canCreateClip,
+                  startSeconds: state.clipStartThumbnail?.offsetSeconds,
+                  endSeconds: state.clipEndThumbnail?.offsetSeconds,
+                  durationSeconds: state.clipSelectionDurationSeconds,
+                  canCreate: state.canCreateClip,
                   onCreate: onCreateClip,
                   onClear: controller.clearClipSelection,
                 ),
@@ -1326,17 +1312,17 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
               Expanded(
                 child: MovieMediaThumbnailGrid(
                   thumbnails: thumbnails,
-                  isLoading: controller.isLoading,
-                  errorMessage: controller.errorMessage,
+                  isLoading: state.isLoading,
+                  errorMessage: state.errorMessage,
                   columns: resolvedColumns,
-                  activeIndex: controller.activeIndex,
+                  activeIndex: state.activeIndex,
                   isScrollLocked: false,
                   onRetry: controller.retry,
                   onThumbnailMenuRequested: onThumbnailMenuRequested,
-                  clipStartIndex: controller.clipStartIndex,
-                  clipEndIndex: controller.clipEndIndex,
+                  clipStartIndex: state.clipStartIndex,
+                  clipEndIndex: state.clipEndIndex,
                   onThumbnailTap: (index) {
-                    if (controller.clipSelectionMode) {
+                    if (state.clipSelectionMode) {
                       controller.handleClipSelectionTap(index);
                       return;
                     }

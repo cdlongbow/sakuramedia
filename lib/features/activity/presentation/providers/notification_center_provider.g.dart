@@ -8,80 +8,62 @@ part of 'notification_center_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 常驻通知中心控制器的桥。
-///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-/// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
-/// `ref.onDispose` 配对销毁，见 app.dart）。
-///
-/// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
-/// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`
-/// 降级语义一致，也避免测试里隐式触发 SSE/bootstrap 请求。
+/// 全局常驻通知中心。会话登录后自动 bootstrap 并连接 SSE，登出时断流清空。
 
-@ProviderFor(notificationCenterController)
-final notificationCenterControllerProvider =
-    NotificationCenterControllerProvider._();
+@ProviderFor(NotificationCenter)
+final notificationCenterProvider = NotificationCenterProvider._();
 
-/// 常驻通知中心控制器的桥。
-///
-/// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-/// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
-/// `ref.onDispose` 配对销毁，见 app.dart）。
-///
-/// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
-/// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`
-/// 降级语义一致，也避免测试里隐式触发 SSE/bootstrap 请求。
-
-final class NotificationCenterControllerProvider
-    extends
-        $FunctionalProvider<
-          NotificationCenterController,
-          NotificationCenterController,
-          NotificationCenterController
-        >
-    with $Provider<NotificationCenterController> {
-  /// 常驻通知中心控制器的桥。
-  ///
-  /// body 抛 [UnimplementedError]，实例由 `lib/app/app.dart` 组合根
-  /// `overrideWith` 工厂注入（工厂内 `bindSessionStore` 会话生命周期 +
-  /// `ref.onDispose` 配对销毁，见 app.dart）。
-  ///
-  /// 消费方（角标）在 try/catch 里 `ref.watch`：未 override（部分测试）时抛
-  /// [UnimplementedError] 被捕获、角标隐藏——与旧 `ProviderNotFoundException`
-  /// 降级语义一致，也避免测试里隐式触发 SSE/bootstrap 请求。
-  NotificationCenterControllerProvider._()
+/// 全局常驻通知中心。会话登录后自动 bootstrap 并连接 SSE，登出时断流清空。
+final class NotificationCenterProvider
+    extends $NotifierProvider<NotificationCenter, NotificationCenterState> {
+  /// 全局常驻通知中心。会话登录后自动 bootstrap 并连接 SSE，登出时断流清空。
+  NotificationCenterProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'notificationCenterControllerProvider',
+        name: r'notificationCenterProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$notificationCenterControllerHash();
+  String debugGetCreateSourceHash() => _$notificationCenterHash();
 
   @$internal
   @override
-  $ProviderElement<NotificationCenterController> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  NotificationCenterController create(Ref ref) {
-    return notificationCenterController(ref);
-  }
+  NotificationCenter create() => NotificationCenter();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NotificationCenterController value) {
+  Override overrideWithValue(NotificationCenterState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<NotificationCenterController>(value),
+      providerOverride: $SyncValueProvider<NotificationCenterState>(value),
     );
   }
 }
 
-String _$notificationCenterControllerHash() =>
-    r'd17263fabf67f697efb28fe6b2ae23a38a073793';
+String _$notificationCenterHash() =>
+    r'666e1cd3aab069d6e314488ecf4532ead77e73f8';
+
+/// 全局常驻通知中心。会话登录后自动 bootstrap 并连接 SSE，登出时断流清空。
+
+abstract class _$NotificationCenter extends $Notifier<NotificationCenterState> {
+  NotificationCenterState build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<NotificationCenterState, NotificationCenterState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<NotificationCenterState, NotificationCenterState>,
+              NotificationCenterState,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

@@ -5,8 +5,8 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
@@ -21,9 +21,12 @@ void main() {
   late SessionStore sessionStore;
   late ApiClient apiClient;
   late FakeHttpClientAdapter adapter;
-  late MovieSubscriptionChangeNotifier subscriptionBroadcaster;
-  late MovieCollectionTypeChangeNotifier collectionBroadcaster;
   late ProviderContainer container;
+
+  MovieSubscriptionEvents subscriptionBroadcaster() =>
+      container.read(movieSubscriptionEventsProvider.notifier);
+  MovieCollectionTypeEvents collectionBroadcaster() =>
+      container.read(movieCollectionTypeEventsProvider.notifier);
 
   setUp(() async {
     sessionStore = SessionStore.inMemory();
@@ -37,19 +40,11 @@ void main() {
     adapter = FakeHttpClientAdapter();
     apiClient.rawDio.httpClientAdapter = adapter;
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
-    subscriptionBroadcaster = MovieSubscriptionChangeNotifier();
-    collectionBroadcaster = MovieCollectionTypeChangeNotifier();
     container = ProviderContainer(
       overrides: [
         moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
         playlistsApiProvider.overrideWithValue(
           PlaylistsApi(apiClient: apiClient),
-        ),
-        movieSubscriptionBroadcasterProvider.overrideWithValue(
-          subscriptionBroadcaster,
-        ),
-        collectionTypeBroadcasterProvider.overrideWithValue(
-          collectionBroadcaster,
         ),
       ],
       retry: (_, __) => null,
@@ -60,8 +55,6 @@ void main() {
 
   tearDown(() {
     container.dispose();
-    subscriptionBroadcaster.dispose();
-    collectionBroadcaster.dispose();
     apiClient.dispose();
     sessionStore.dispose();
   });
@@ -132,7 +125,7 @@ void main() {
     expect(request.path, '/movies');
     expect(request.uri.queryParameters['collection_type'], 'single');
 
-    collectionBroadcaster.reportChange(
+    collectionBroadcaster().reportChange(
       movieNumber: 'ABC-002',
       targetType: MovieCollectionType.collection,
     );
@@ -183,7 +176,7 @@ void main() {
       _movie('ABC-002', isSubscribed: true),
     ]);
 
-    subscriptionBroadcaster.reportChange(
+    subscriptionBroadcaster().reportChange(
       movieNumber: 'ABC-001',
       isSubscribed: true,
     );
@@ -199,7 +192,7 @@ void main() {
       isTrue,
     );
 
-    collectionBroadcaster.reportChange(
+    collectionBroadcaster().reportChange(
       movieNumber: 'ABC-002',
       targetType: MovieCollectionType.collection,
     );

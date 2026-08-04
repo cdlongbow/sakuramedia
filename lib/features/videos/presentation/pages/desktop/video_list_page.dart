@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
-import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/app/cached_page_state_handle.dart';
+import 'package:sakuramedia/app/page_cache_keys.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
@@ -16,8 +17,10 @@ import 'package:sakuramedia/features/videos/presentation/widgets/collections/pic
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list_content.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -44,38 +47,40 @@ class DesktopVideoListPage extends ConsumerStatefulWidget {
 
 class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     with MultiSelectStateMixin<DesktopVideoListPage, int> {
-  late final CachedPageStateHandle<VideoListPageStateEntry> _pageStateHandle;
-  late final VideoMutationChangeNotifier _mutationNotifier;
-  bool _railRefreshScheduled = false;
+  static const _scope = VideoSummaryScope.desktop();
 
-  VideoListPageStateEntry get _pageState => _pageStateHandle.value;
+  late final RiverpodPageHandle _pageCacheHandle;
+  late final ScrollController _scrollController;
+  bool _railRefreshScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    _mutationNotifier = ref.read(videoMutationBroadcasterProvider);
-    _pageStateHandle = obtainCachedPageState<VideoListPageStateEntry>(
-      context,
-      key: desktopVideosPageStateKey(),
-      create:
-          () => VideoListPageStateEntry(
-            videosApi: ref.read(videosApiProvider),
-            mutationNotifier: _mutationNotifier,
-          ),
-    );
-    _mutationNotifier.addListener(_onMutation);
+    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _pageCacheHandle = ref
+        .read(riverpodPageCacheProvider)
+        .obtain(
+          key: desktopVideosPageCacheKey(),
+          resolveLinks: () {
+            final link =
+                ref.read(videoSummaryProvider(_scope).notifier).cacheLink;
+            return link == null ? const [] : [link];
+          },
+        );
   }
 
   @override
   void dispose() {
-    _mutationNotifier.removeListener(_onMutation);
-    _pageStateHandle.dispose();
+    _pageCacheHandle.release();
+    _scrollController
+      ..removeListener(_loadMoreIfNeeded)
+      ..dispose();
     super.dispose();
   }
 
   /// 删除 / 合集成员变化都可能改变合集横滑区的封面与计数；用微任务把一轮内的
   /// 多次信号（如批量操作）合并成一次刷新，避免 N 次请求。视频网格本身的删除
-  /// 由缓存 entry 监听同一信号就地移除（见 [VideoListPageStateEntry]）。
+  /// 由列表 provider 监听同一信号就地移除。
   void _onMutation() {
     if (_railRefreshScheduled) {
       return;
@@ -86,20 +91,37 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       if (!mounted) {
         return;
       }
-      unawaited(
-        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     });
   }
 
-  void _applySort(VideoFilterState next) {
-    if (next.matches(_pageState.filterState)) {
+  void _loadMoreIfNeeded() {
+    if (!_scrollController.hasClients) {
       return;
     }
-    setState(() {
-      _pageState.filterState = next;
-    });
-    _pageState.reloadVideos();
+    final summary = ref.read(videoSummaryProvider(_scope)).value;
+    final position = _scrollController.position;
+    if (summary == null ||
+        summary.paged.loadMoreErrorMessage != null ||
+        position.pixels < position.maxScrollExtent - 300) {
+      return;
+    }
+    unawaited(ref.read(videoSummaryProvider(_scope).notifier).loadMore());
+  }
+
+  void _applySort(VideoFilterState next) {
+    final current =
+        ref.read(videoSummaryProvider(_scope)).value?.filter ??
+        VideoFilterState.initial;
+    if (next.matches(current)) {
+      return;
+    }
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    unawaited(
+      ref.read(videoSummaryProvider(_scope).notifier).applyFilter(next),
+    );
   }
 
   Future<void> _createCollection() async {
@@ -128,7 +150,9 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     }
     if (added == true) {
       // 合集成员/封面可能变化：广播信号，由页面监听统一刷新合集横滑区。
-      _mutationNotifier.reportCollectionMembershipChanged(videoId: video.id);
+      ref
+          .read(videoMutationEventsProvider.notifier)
+          .reportCollectionMembershipChanged(videoId: video.id);
     }
   }
 
@@ -169,8 +193,8 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     }
     try {
       await ref.read(videosApiProvider).deleteVideo(video.id);
-      // 广播删除信号：缓存 entry 监听后从网格精准移除，页面监听后刷新合集横滑区。
-      _mutationNotifier.reportDeleted(video.id);
+      // 广播删除信号：列表 provider 精准移除，页面刷新合集横滑区。
+      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
       if (mounted) {
         showToast('已删除视频');
       }
@@ -179,7 +203,8 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     }
   }
 
-  List<VideoItemListItemDto> get _loadedVideos => _pageState.controller.items;
+  List<VideoItemListItemDto> get _loadedVideos =>
+      ref.read(videoSummaryProvider(_scope)).value?.paged.items ?? const [];
 
   List<VideoItemListItemDto> _selectedVideos() =>
       _loadedVideos.where((v) => isSelected(v.id)).toList(growable: false);
@@ -220,10 +245,10 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     if (!mounted) {
       return;
     }
-    // 逐条广播删除信号（同步连发）：缓存 entry 监听后从网格精准移除，
+    // 逐条广播删除信号（同步连发）：列表 provider 精准移除，
     // 页面监听用微任务合并成一次合集横滑区刷新。
     for (final video in result.succeeded) {
-      _mutationNotifier.reportDeleted(video.id);
+      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
     }
     _showBatchToast('删除', result);
     exitSelection();
@@ -254,10 +279,12 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     }
     // 合集成员/封面变化：逐条广播，由页面监听合并刷新合集横滑区。
     for (final video in result.succeeded) {
-      _mutationNotifier.reportCollectionMembershipChanged(
-        videoId: video.id,
-        collectionId: target.id,
-      );
+      ref
+          .read(videoMutationEventsProvider.notifier)
+          .reportCollectionMembershipChanged(
+            videoId: video.id,
+            collectionId: target.id,
+          );
     }
     _showBatchToast('加入合集', result);
     exitSelection();
@@ -265,21 +292,31 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
 
   Future<void> _handlePageRefresh() async {
     await Future.wait<void>([
-      _pageState.controller.refresh(),
+      ref.read(videoSummaryProvider(_scope).notifier).refresh(),
       ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final pageState = _pageState;
+    final videosAsync = ref.watch(videoSummaryProvider(_scope));
+    final summary = videosAsync.value;
+    final paged = summary?.paged;
+    final filter = summary?.filter ?? VideoFilterState.initial;
+
+    ref.listen(videoMutationEventsProvider, (_, next) {
+      if (next.value != null) {
+        _onMutation();
+      }
+    });
 
     return AppPageRefreshScope(
       onRefresh: _handlePageRefresh,
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: CustomScrollView(
-          controller: pageState.controller.scrollController,
+          key: const PageStorageKey<String>('desktop:videos:list'),
+          controller: _scrollController,
           slivers: [
             SliverToBoxAdapter(
               child: Column(
@@ -292,9 +329,19 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
               ),
             ),
             VideoListContent(
-              controller: pageState.controller,
-              filterState: pageState.filterState,
+              paged: paged ?? const PagedListState<VideoItemListItemDto>(),
+              isInitialLoading: videosAsync.isLoading && summary == null,
+              initialErrorMessage:
+                  videosAsync.hasError && summary == null
+                      ? '视频列表加载失败，请稍后重试'
+                      : null,
+              filterState: filter,
               onFilterChanged: _applySort,
+              onLoadMore:
+                  () =>
+                      ref
+                          .read(videoSummaryProvider(_scope).notifier)
+                          .loadMore(),
               contentKey: const Key('videos-page-list'),
               totalKey: const Key('videos-page-total'),
               sectionSpacing: context.appSpacing.lg,
@@ -408,10 +455,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   ) {
     if (async.hasError && collections.isEmpty) {
       return _HintBox(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '合集加载失败，请稍后重试',
-        ),
+        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
     if (async.isLoading && collections.isEmpty) {

@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
-import 'package:sakuramedia/app/app_page_state_cache.dart';
-import 'package:sakuramedia/app/app_version_info_controller.dart';
-import 'package:sakuramedia/app/providers/app_shell_providers.dart';
-import 'package:sakuramedia/app/providers/app_page_state_cache_provider.dart';
+import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
+import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/providers/sse_event_stream_client_provider.dart';
@@ -17,8 +15,6 @@ import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_stream_client_provider.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
@@ -49,13 +45,8 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
@@ -71,8 +62,6 @@ import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provid
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/video_imports_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
-import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_broadcaster_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 
 import 'fake_http_client_adapter.dart';
@@ -147,19 +136,6 @@ class TestApiBundle {
   final ImageSearchApi imageSearchApi;
   final FakeHttpClientAdapter adapter;
 
-  /// 三个跨页 mutation 广播源的「单一实例」——与组合根一致:测试里 legacy
-  /// Provider 侧与 Riverpod 侧都必须用同一个实例(Provider 树挂
-  /// `.value(bundle.movieSubscriptionBroadcaster)`,Riverpod 侧由
-  /// [riverpodOverrides] 自动注入),否则跨页广播静默丢事件。
-  final MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster =
-      MovieSubscriptionChangeNotifier();
-
-  /// videos 域跨页变更广播源的默认实例——与组合根一致,videos 域各页/控制器
-  /// 都经 [videoMutationBroadcasterProvider] 拿它。需要预置事件/断言广播的
-  /// 测试仍可传参覆盖。
-  final VideoMutationChangeNotifier videoMutationBroadcaster =
-      VideoMutationChangeNotifier();
-
   /// 合集详情 → 连播页交接信箱的默认实例——连播页 `ref.read` 取交接数据时
   /// 测试树里必须有 override 才能落笔;无副作用,恒定注入。
   final CollectionPlaybackHandoff collectionPlaybackHandoff =
@@ -177,46 +153,33 @@ class TestApiBundle {
   /// override 才能落笔。需要自持实例（预置草稿）的测试仍可传参覆盖。
   final ImageSearchDraftStore defaultImageSearchDraftStore =
       ImageSearchDraftStore();
-  final MovieCollectionTypeChangeNotifier collectionTypeBroadcaster =
-      MovieCollectionTypeChangeNotifier();
-  final ClipMutationChangeNotifier clipMutationBroadcaster =
-      ClipMutationChangeNotifier();
+
+  // 四个跨页 mutation 广播（movie subscription / movie collection type / clip
+  // mutation / video mutation）已在批 8 收敛为 Riverpod class Notifier
+  // (`xxxEventsProvider`)；本身 keepAlive 常驻、自持 StreamController，
+  // **不再需要 bundle 注入实例**。测试里要发广播直接
+  // `container.read(xxxEventsProvider.notifier).reportXxx(...)`；要听广播
+  // 直接 `container.listen(xxxEventsProvider, ...)`。
 
   /// 一次性产出全部 Riverpod 桥 provider 的 overrides——widget 测试给
   /// `ProviderScope(overrides: bundle.riverpodOverrides(...))` 用，
   /// 与 `lib/app/app.dart` 组合根的 override 清单同构。
   ///
-  /// 非 API 的全局对象（页面缓存 / 图搜草稿仓 / 订阅广播源）按需传入；
-  /// 不传则不 override，对应桥保持 UnimplementedError（用不到就不会触发）。
+  /// 非 API 的全局对象（页面缓存 / 图搜草稿仓）按需传入；不传则不 override，
+  /// 对应桥保持 UnimplementedError（用不到就不会触发）。
   List<Override> riverpodOverrides({
-    AppPageStateCache? pageStateCache,
+    RiverpodPageCache? pageStateCache,
     ImageSearchDraftStore? imageSearchDraftStore,
-    MovieSubscriptionChangeNotifier? movieSubscriptionBroadcaster,
-    MovieCollectionTypeChangeNotifier? collectionTypeBroadcaster,
-    ClipMutationChangeNotifier? clipMutationBroadcaster,
-    VideoMutationChangeNotifier? videoMutationBroadcaster,
     CollectionPlaybackHandoff? collectionPlaybackHandoff,
     // 允许单测换成 fake 子类（如刷新必败的 API），默认用 bundle 实例。
     MediaLibrariesApi? mediaLibrariesApi,
     DownloadClientsApi? downloadClientsApi,
     IndexerSettingsApi? indexerSettingsApi,
-    // 常驻控制器桥：默认不 override（角标/版本行降级隐藏、构造不发请求）；
-    // 断言通知/版本 UI 的测试自行传实例。
-    NotificationCenterController? notificationCenter,
-    AppVersionInfoController? versionInfoController,
     // SSE 流客户端：默认用 bundle 实例（静默不推事件）；要打事件的测试传
     // FakeSseEventStreamClient / 自定义实例。
     SseEventStreamClient? sseEventStreamClient,
     ActivityEventStreamClient? activityEventStreamClient,
   }) {
-    final subscriptionBroadcaster =
-        movieSubscriptionBroadcaster ?? this.movieSubscriptionBroadcaster;
-    final typeBroadcaster =
-        collectionTypeBroadcaster ?? this.collectionTypeBroadcaster;
-    final clipBroadcaster =
-        clipMutationBroadcaster ?? this.clipMutationBroadcaster;
-    final videoBroadcaster =
-        videoMutationBroadcaster ?? this.videoMutationBroadcaster;
     return <Override>[
       apiClientProvider.overrideWithValue(apiClient),
       sessionStoreProvider.overrideWithValue(sessionStore),
@@ -254,17 +217,9 @@ class TestApiBundle {
       videoCollectionsApiProvider.overrideWithValue(videoCollectionsApi),
       videoImportsApiProvider.overrideWithValue(videoImportsApi),
       if (pageStateCache != null)
-        appPageStateCacheProvider.overrideWithValue(pageStateCache),
+        riverpodPageCacheProvider.overrideWithValue(pageStateCache),
       imageSearchDraftStoreProvider.overrideWithValue(
         imageSearchDraftStore ?? defaultImageSearchDraftStore,
-      ),
-      movieSubscriptionBroadcasterProvider.overrideWithValue(
-        subscriptionBroadcaster,
-      ),
-      collectionTypeBroadcasterProvider.overrideWithValue(typeBroadcaster),
-      clipMutationBroadcasterProvider.overrideWithValue(clipBroadcaster),
-      videoMutationBroadcasterProvider.overrideWith(
-        (ref) => videoBroadcaster,
       ),
       collectionPlaybackHandoffProvider.overrideWithValue(
         collectionPlaybackHandoff ?? this.collectionPlaybackHandoff,
@@ -275,14 +230,6 @@ class TestApiBundle {
       activityEventStreamClientProvider.overrideWithValue(
         activityEventStreamClient ?? this.activityEventStreamClient,
       ),
-      if (notificationCenter != null)
-        notificationCenterControllerProvider.overrideWithValue(
-          notificationCenter,
-        ),
-      if (versionInfoController != null)
-        appVersionInfoControllerProvider.overrideWithValue(
-          versionInfoController,
-        ),
     ];
   }
 

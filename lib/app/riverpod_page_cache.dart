@@ -1,6 +1,5 @@
 import 'dart:collection';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:sakuramedia/core/session/session_store.dart';
 
@@ -20,8 +19,7 @@ class RiverpodPageHandle {
   ///
   /// **目前仅供窥视，不参与驱逐决策**——LRU 驱逐只按
   /// [RiverpodPageCache.maxEntries] 踢最旧条目，不看 refCount；活页面
-  /// （引用计数 > 0）在 25 个之外被驱逐是已知语义局限（继承自
-  /// [AppPageStateCache]），波 B 再决策是否加引用保护。
+  /// （引用计数 > 0）在 25 个之外被驱逐是已知语义局限。
   int get refCount => _refCount;
 
   /// 页面 dispose 时调用：减引用计数。不减到 0 也**不** close link——
@@ -35,8 +33,8 @@ class RiverpodPageHandle {
 
 /// Riverpod-aware 页面保活 LRU 缓存。
 ///
-/// 与 [AppPageStateCache]（缓存的条目是对象本身）不同，本缓存保活的是
-/// **provider 状态**：业务 provider 全部走默认 autoDispose，页面 mount 时经
+/// 本缓存保活的是 **provider 状态**：业务 provider 全部走默认 autoDispose，
+/// 页面 mount 时经
 /// [obtain] 收集一组 [KeepAliveLink] 挂进 LRU 表——link 未关闭期间对应
 /// provider 不会被 autoDispose 释放（跨导航保留列表数据 / 滚动位置）。
 ///
@@ -97,7 +95,7 @@ class RiverpodPageHandle {
 /// ```
 ///
 /// 本批只提供基建 + 单测，不接业务页。
-class RiverpodPageCache extends ChangeNotifier {
+class RiverpodPageCache {
   RiverpodPageCache({this.maxEntries = 24});
 
   final int maxEntries;
@@ -195,10 +193,8 @@ class RiverpodPageCache extends ChangeNotifier {
     }
   }
 
-  @override
   void dispose() {
     _boundSessionStore?.removeListener(_handleSessionChanged);
     clearAll();
-    super.dispose();
   }
 }

@@ -1,6 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
+import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -37,9 +40,7 @@ void main() {
       );
       _enqueueStream(bundle);
 
-      final controller = NotificationCenterController(
-        activityApi: bundle.activityApi,
-      );
+      final controller = _NotificationCenterHarness(bundle);
       addTearDown(controller.dispose);
 
       await controller.initialize();
@@ -59,6 +60,27 @@ void main() {
     },
   );
 
+  test('logout tears down stream and clears all notification state', () async {
+    _enqueueBootstrap(
+      bundle,
+      notifications: <Map<String, dynamic>>[_notificationJson(id: 101)],
+      unreadCount: 1,
+    );
+    _enqueueStream(bundle);
+    final controller = _NotificationCenterHarness(bundle);
+    addTearDown(controller.dispose);
+
+    await controller.initialize();
+    expect(controller.notifications, isNotEmpty);
+
+    await sessionStore.clearSession();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.notifications, isEmpty);
+    expect(controller.unreadCount, 0);
+    expect(controller.initialized, isFalse);
+  });
+
   test(
     'onNotificationDisplayed debounces and batch-marks displayed ids read',
     () async {
@@ -77,9 +99,7 @@ void main() {
         body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
       );
 
-      final controller = NotificationCenterController(
-        activityApi: bundle.activityApi,
-      );
+      final controller = _NotificationCenterHarness(bundle);
       addTearDown(controller.dispose);
 
       await controller.initialize();
@@ -114,9 +134,7 @@ void main() {
     );
     _enqueueStream(bundle);
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
+    final controller = _NotificationCenterHarness(bundle);
     addTearDown(controller.dispose);
 
     await controller.initialize();
@@ -144,9 +162,7 @@ void main() {
         body: <String, dynamic>{'updated_count': 2, 'unread_count': 0},
       );
 
-      final controller = NotificationCenterController(
-        activityApi: bundle.activityApi,
-      );
+      final controller = _NotificationCenterHarness(bundle);
       addTearDown(controller.dispose);
 
       await controller.initialize();
@@ -177,9 +193,7 @@ void main() {
       },
     );
 
-    final controller = NotificationCenterController(
-      activityApi: bundle.activityApi,
-    );
+    final controller = _NotificationCenterHarness(bundle);
     addTearDown(controller.dispose);
 
     await controller.initialize();
@@ -212,9 +226,7 @@ void main() {
         keepOpen: true,
       );
 
-      final controller = NotificationCenterController(
-        activityApi: bundle.activityApi,
-      );
+      final controller = _NotificationCenterHarness(bundle);
       addTearDown(controller.dispose);
 
       await controller.initialize();
@@ -254,9 +266,7 @@ void main() {
         keepOpen: true,
       );
 
-      final controller = NotificationCenterController(
-        activityApi: bundle.activityApi,
-      );
+      final controller = _NotificationCenterHarness(bundle);
       addTearDown(controller.dispose);
 
       await controller.initialize();
@@ -266,6 +276,42 @@ void main() {
       expect(controller.unreadCount, 0);
     },
   );
+}
+
+class _NotificationCenterHarness {
+  _NotificationCenterHarness(TestApiBundle bundle)
+    : container = ProviderContainer(
+        overrides: bundle.riverpodOverrides(),
+        retry: null,
+      ) {
+    _subscription = container.listen(
+      notificationCenterProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+  }
+
+  final ProviderContainer container;
+  late final ProviderSubscription<NotificationCenterState> _subscription;
+
+  NotificationCenter get _notifier =>
+      container.read(notificationCenterProvider.notifier);
+  NotificationCenterState get _state =>
+      container.read(notificationCenterProvider);
+
+  List<ActivityNotificationDto> get notifications => _state.notifications;
+  int get unreadCount => _state.unreadCount;
+  bool get initialized => _state.initialized;
+  NotificationConnectionState get connectionState => _state.connectionState;
+
+  Future<void> initialize() => _notifier.initialize();
+  void onNotificationDisplayed(int id) => _notifier.onNotificationDisplayed(id);
+  Future<void> markAllRead() => _notifier.markAllRead();
+
+  void dispose() {
+    _subscription.close();
+    container.dispose();
+  }
 }
 
 void _enqueueStream(TestApiBundle bundle) {

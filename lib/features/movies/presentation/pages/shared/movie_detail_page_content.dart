@@ -9,7 +9,6 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_playback_options_bar.dart';
 import 'package:sakuramedia/theme.dart';
@@ -502,9 +501,7 @@ class _MovieInlineMetaRow extends StatelessWidget {
 }
 
 class MovieDetailLoadingSkeleton extends StatelessWidget {
-  const MovieDetailLoadingSkeleton({super.key, required this.controller});
-
-  final MovieDetailController controller;
+  const MovieDetailLoadingSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

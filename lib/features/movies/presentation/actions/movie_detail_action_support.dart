@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
-import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 
 class MovieDetailRemoteActionSpec {
   const MovieDetailRemoteActionSpec({
@@ -38,35 +37,13 @@ class MovieDetailApplyResult {
   final bool? isCollectionOverride;
 }
 
-class MovieSubscriptionNotifierBinding {
-  const MovieSubscriptionNotifierBinding({
-    required this.notifier,
-    required this.ownsNotifier,
-  });
-
-  final MovieSubscriptionChangeNotifier notifier;
-  final bool ownsNotifier;
-}
-
-MovieSubscriptionNotifierBinding resolveMovieSubscriptionNotifier(
-  BuildContext context,
-) {
-  try {
-    return MovieSubscriptionNotifierBinding(
-      notifier: ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).read(movieSubscriptionBroadcasterProvider),
-      ownsNotifier: false,
-    );
-  } on Object {
-    // 无 ProviderScope / 桥未 override（部分 widget 测试）→ 自持一份,
-    // 与旧 ProviderNotFoundException 降级一致。
-    return MovieSubscriptionNotifierBinding(
-      notifier: MovieSubscriptionChangeNotifier(),
-      ownsNotifier: true,
-    );
-  }
+/// 详情页取跨页订阅广播的入口——批 8 起 `movieSubscriptionEventsProvider` 是
+/// keepAlive 常驻的 Riverpod class Notifier，直接由容器读出。
+MovieSubscriptionEvents resolveMovieSubscriptionNotifier(BuildContext context) {
+  return ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(movieSubscriptionEventsProvider.notifier);
 }
 
 /// 翻译 / 互动同步走统一 action（整数 movie id 寻址）；[movieId] 缺省 0 表示
@@ -127,20 +104,24 @@ int _requireMovieId(int movieId) {
   return movieId;
 }
 
+/// 详情页远程动作的统一入口。批 8 前 `controller: MovieDetailController` 参数
+/// 已改成 `ref + movieNumber`：内部经 `ref.read(movieDetailProvider(movieNumber))`
+/// 拿当前 movie / `.notifier.applyMovie(...)` 回写。**测试必须包 ProviderScope**。
 Future<bool> executeMovieDetailRemoteAction({
   required BuildContext context,
+  required WidgetRef ref,
   required MovieDetailActionType action,
   required String movieNumber,
   required bool isLocked,
-  required MovieDetailController controller,
   required int? selectedMediaId,
   required void Function(MovieDetailActionType? action) onActiveActionChanged,
   required void Function(MovieDetailApplyResult result) onMovieApplied,
 }) async {
+  final currentMovie = ref.read(movieDetailProvider(movieNumber)).movie;
   final spec = movieDetailRemoteActionSpecFor(
     action: action,
     movieNumber: movieNumber,
-    movieId: controller.movie?.id ?? 0,
+    movieId: currentMovie?.id ?? 0,
   );
   if (spec == null || isLocked) {
     return false;
@@ -148,15 +129,14 @@ Future<bool> executeMovieDetailRemoteAction({
 
   onActiveActionChanged(action);
   try {
-    final movie = await spec.request(
-      ProviderScope.containerOf(context, listen: false).read(moviesApiProvider),
-    );
+    final movie = await spec.request(ref.read(moviesApiProvider));
     if (!context.mounted) {
       return false;
     }
     if (movie != null) {
       final applyResult = applyReturnedMovieDetail(
-        controller: controller,
+        ref: ref,
+        movieNumber: movieNumber,
         movie: movie,
         selectedMediaId: selectedMediaId,
         resetPreview: spec.resetPreview,
@@ -180,7 +160,8 @@ Future<bool> executeMovieDetailRemoteAction({
 }
 
 MovieDetailApplyResult applyReturnedMovieDetail({
-  required MovieDetailController controller,
+  required WidgetRef ref,
+  required String movieNumber,
   required MovieDetailDto movie,
   required int? selectedMediaId,
   required bool resetPreview,
@@ -192,7 +173,9 @@ MovieDetailApplyResult applyReturnedMovieDetail({
           : (movie.mediaItems.isNotEmpty
               ? movie.mediaItems.first.mediaId
               : null);
-  controller.applyMovie(movie, resetPreview: resetPreview);
+  ref
+      .read(movieDetailProvider(movieNumber).notifier)
+      .applyMovie(movie, resetPreview: resetPreview);
   return MovieDetailApplyResult(
     selectedMediaId: resolvedSelectedMediaId,
     isSubscribedOverride: null,

@@ -6,8 +6,8 @@ import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_action_result_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_subscribable_list_mixin.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
@@ -31,7 +31,7 @@ part 'movie_subscription_manager_provider.g.dart';
 ///   端点，这里也不绕过它。
 ///
 /// 跨页一致性：本页取消订阅后 `reportChange` / `reportBatch` 到全局
-/// [MovieSubscriptionChangeNotifier]；反过来别的页面改订阅时，本页通过
+/// [MovieSubscriptionEvents]；反过来别的页面改订阅时，本页通过
 /// [movieSubscriptionEventsProvider] 收到广播并**就地打补丁**（移除行 + 刷计数），
 /// 不整页重拉。
 @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
@@ -421,7 +421,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   /// 这条广播绕一圈也会回到本页的 [movieSubscriptionEventsProvider] 监听（届时
   /// 行已移除，补丁是空操作），并在那里统一触发计数刷新——所以本方法不自己刷计数。
   void _broadcastUnsubscribed(List<String> movieNumbers) {
-    final notifier = ref.read(movieSubscriptionBroadcasterProvider);
+    final notifier = ref.read(movieSubscriptionEventsProvider.notifier);
     if (movieNumbers.length == 1) {
       notifier.reportChange(
         movieNumber: movieNumbers.single,

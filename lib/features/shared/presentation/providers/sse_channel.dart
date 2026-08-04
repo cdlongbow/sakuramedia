@@ -395,6 +395,11 @@ class SseChannel<E> {
   }
 
   void _handleUnsupported() {
+    // 流内抛 unsupported 时订阅对象仍然存在；旧 import 双子星会立即 cancel，
+    // polling 消费方也不应继续接收旧流事件。先统一断开，再进入各自兜底态。
+    final sub = _subscription;
+    _subscription = null;
+    unawaited(sub?.cancel());
     if (giveUpOnUnsupported) {
       _cancelReconnectTimer();
       _cancelPollingTimer();

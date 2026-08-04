@@ -1,68 +1,84 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change_notifier.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
-import 'package:sakuramedia/features/shared/presentation/providers/broadcast_events_factory.dart';
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
+
+export 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_collection_type_change.dart';
+export 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change.dart';
 
 part 'mutation_events_provider.g.dart';
 
-/// 跨页订阅变更广播源（legacy `ChangeNotifier`）的桥。
+/// 跨页订阅变更广播 —— 单一 provider 兼「事件流 + 发布 API」。
 ///
-/// 过渡期方案 B：Provider 侧与 Riverpod 侧共用**同一个**
-/// [MovieSubscriptionChangeNotifier] 实例，保持「单一广播源」。发起方无论在哪一
-/// 侧，都 `reportChange` / `reportBatch` 到它；消费方在 Riverpod 侧走
-/// [movieSubscriptionEventsProvider]，**不 `context.read`**。
+/// **消费方**：`ref.listen(movieSubscriptionEventsProvider, (prev, next) {
+/// final changes = next.value; if (changes != null) applyChanges(changes); })`
+/// 收到后做**就地补丁**（移除 / 改字段），不 invalidate 整页重拉。
 ///
-/// 原生装配：body 直接构造 + `ref.onDispose` 配对销毁，组合根不再 override。
+/// **发起方**：`ref.read(movieSubscriptionEventsProvider.notifier).reportChange(...)`
+/// 或 `reportBatch(...)`。单条 / 批量都统一成列表广播一次。
 ///
-/// 命名注意：函数名不要以 `Notifier` 结尾——riverpod_generator 会把它从生成的
-/// provider 变量名里剥掉，导致 `xxxNotifier` 生成出 `xxxProvider`。
+/// 迁移前形态：`MovieSubscriptionChangeNotifier extends ChangeNotifier` +
+/// broadcaster 桥 provider + Stream 派生 provider 三件套；
+/// 现在合成单一 `@Riverpod` class Notifier，`StreamController.broadcast(sync: true)`
+/// 承载事件流，`reportXxx` 直接推入。**离屏挂起**：没有监听者时 riverpod 会挂起
+/// 派生 Stream，事件缓冲、恢复监听时补投（写测试须挂监听者）。
 @Riverpod(keepAlive: true)
-MovieSubscriptionChangeNotifier movieSubscriptionBroadcaster(Ref ref) {
-  final notifier = MovieSubscriptionChangeNotifier();
-  ref.onDispose(notifier.dispose);
-  return notifier;
+class MovieSubscriptionEvents extends _$MovieSubscriptionEvents {
+  final StreamController<List<MovieSubscriptionChange>> _controller =
+      StreamController<List<MovieSubscriptionChange>>.broadcast(sync: true);
+
+  @override
+  Stream<List<MovieSubscriptionChange>> build() {
+    ref.onDispose(_controller.close);
+    return _controller.stream;
+  }
+
+  /// 单条变更：等价原 `reportChange` + `notifyListeners`。
+  void reportChange({
+    required String movieNumber,
+    required bool isSubscribed,
+  }) {
+    if (_controller.isClosed) return;
+    _controller.add(<MovieSubscriptionChange>[
+      MovieSubscriptionChange(
+        movieNumber: movieNumber,
+        isSubscribed: isSubscribed,
+      ),
+    ]);
+  }
+
+  /// 批量变更一次广播；空列表 no-op。
+  void reportBatch(List<MovieSubscriptionChange> changes) {
+    if (_controller.isClosed || changes.isEmpty) return;
+    _controller.add(List<MovieSubscriptionChange>.unmodifiable(changes));
+  }
 }
 
-/// 订阅变更事件流：把 [MovieSubscriptionChangeNotifier] 的 `notifyListeners`
-/// 翻译成一条条「本次广播的变更列表」。
-///
-/// 消费方 `ref.listen(movieSubscriptionEventsProvider, ...)` 后对自己的列表做
-/// **就地补丁**（移除 / 改字段），语义与 Provider 侧监听方一致——不要
-/// `invalidate` 触发整页重拉。
-///
-/// 单条 `reportChange` 与批量 `reportBatch` 在这里被统一成列表形式（复用
-/// notifier 自己的 `consumePendingChanges` 分派），下游不必再区分两条路径。
+/// 跨页合集类型（单体/合集）变更广播 —— 与 [MovieSubscriptionEvents] 同范式，
+/// 每次广播携带单个 [MovieCollectionTypeChange]。
 @Riverpod(keepAlive: true)
-Stream<List<MovieSubscriptionChange>> movieSubscriptionEvents(Ref ref) =>
-    createBroadcastEventStream(
-      ref: ref,
-      resolveNotifier: (r) => r.watch(movieSubscriptionBroadcasterProvider),
-      drain: (n, emit) => n.consumePendingChanges(emit),
-    );
+class MovieCollectionTypeEvents extends _$MovieCollectionTypeEvents {
+  final StreamController<MovieCollectionTypeChange> _controller =
+      StreamController<MovieCollectionTypeChange>.broadcast(sync: true);
 
-/// 跨页合集类型（单体/合集）变更广播源的桥——与
-/// [movieSubscriptionBroadcasterProvider] 同一范式：两侧共用同一实例，
-/// 保持「单一广播源」。原生装配，组合根不再 override。
-@Riverpod(keepAlive: true)
-MovieCollectionTypeChangeNotifier collectionTypeBroadcaster(Ref ref) {
-  final notifier = MovieCollectionTypeChangeNotifier();
-  ref.onDispose(notifier.dispose);
-  return notifier;
+  @override
+  Stream<MovieCollectionTypeChange> build() {
+    ref.onDispose(_controller.close);
+    return _controller.stream;
+  }
+
+  void reportChange({
+    required String movieNumber,
+    required MovieCollectionType targetType,
+  }) {
+    if (_controller.isClosed) return;
+    _controller.add(
+      MovieCollectionTypeChange(
+        movieNumber: movieNumber,
+        targetType: targetType,
+      ),
+    );
+  }
 }
-
-/// 合集类型变更事件流：把 `notifyListeners` 翻译成一条条 [MovieCollectionTypeChange]。
-///
-/// 消费方 `ref.listen(movieCollectionTypeEventsProvider, ...)` 后做就地补丁，
-/// 语义与 Provider 侧监听方一致，不 invalidate 整页重拉。
-@Riverpod(keepAlive: true)
-Stream<MovieCollectionTypeChange> movieCollectionTypeEvents(Ref ref) =>
-    createBroadcastEventStream(
-      ref: ref,
-      resolveNotifier: (r) => r.watch(collectionTypeBroadcasterProvider),
-      drain: (n, emit) {
-        final c = n.lastChange;
-        if (c != null) {
-          emit(c);
-        }
-      },
-    );

@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
-import 'package:sakuramedia/features/actors/presentation/controllers/detail/actor_detail_controller.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_detail_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
@@ -105,7 +105,6 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     with
         MultiSelectStateMixin<ActorDetailContent, String>,
         MovieBatchSelectionMixin<ActorDetailContent> {
-  late final ActorDetailController _actorController;
   late final ScrollController _scrollController;
 
   List<MovieFilterYearOption> _movieYearOptions =
@@ -144,16 +143,11 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   @override
   void initState() {
     super.initState();
-    _actorController = ActorDetailController(
-      actorId: widget.actorId,
-      fetchActorDetail: ref.read(actorsApiProvider).getActorDetail,
-    )..load();
     _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
   }
 
   @override
   void dispose() {
-    _actorController.dispose();
     _scrollController
       ..removeListener(_loadMoreIfNeeded)
       ..dispose();
@@ -356,7 +350,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   Future<void> _handleRefresh() async {
     try {
       await Future.wait<void>([
-        _actorController.refresh(),
+        ref.read(actorDetailProvider(widget.actorId).notifier).refresh(),
         ref.read(movieSummaryProvider(_scope).notifier).refresh(),
         if (_hasLoadedMovieYears) _loadMovieYears(force: true),
       ]);
@@ -379,6 +373,8 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
 
   @override
   Widget build(BuildContext context) {
+    final actorAsync = ref.watch(actorDetailProvider(widget.actorId));
+    final actorState = actorAsync.value;
     final moviesAsync = ref.watch(movieSummaryProvider(_scope));
     final movies = moviesAsync.value;
     ref.listen(movieCollectionTypeEventsProvider, (_, next) {
@@ -393,28 +389,29 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       setState(() => selectedIds.remove(change.movieNumber));
     });
 
-    // Actor detail 仍是页面私有 controller；影片列表已由 family provider 驱动。
     final body = AppPageRefreshScope(
       onRefresh: _handleRefresh,
       child: ColoredBox(
         color: widget.surfaceColor,
-        child: AnimatedBuilder(
-          animation: _actorController,
-          builder: (context, _) {
-            if (_actorController.isLoading && _actorController.actor == null) {
+        child: Builder(
+          builder: (context) {
+            if (actorAsync.isLoading && actorState?.actor == null) {
               return widget.loadingBuilder(context);
             }
 
-            if (_actorController.errorMessage != null ||
-                _actorController.actor == null) {
+            if (actorState?.errorMessage != null || actorState?.actor == null) {
               return widget.errorBuilder(
                 context,
-                _actorController.errorMessage ?? '女优详情暂时无法加载，请稍后重试',
-                _actorController.load,
+                actorState?.errorMessage ?? '女优详情暂时无法加载，请稍后重试',
+                () => unawaited(
+                  ref
+                      .read(actorDetailProvider(widget.actorId).notifier)
+                      .reload(),
+                ),
               );
             }
 
-            final actor = _actorController.actor!;
+            final actor = actorState!.actor!;
             final isActorSubscribed =
                 _isActorSubscribedOverride ?? actor.isSubscribed;
             final footer =

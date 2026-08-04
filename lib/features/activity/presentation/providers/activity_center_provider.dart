@@ -5,13 +5,13 @@ import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_bootstrap_dto.dart';
-import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/data/activity_stream_event.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/sse_channel.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 
 part 'activity_center_provider.g.dart';
@@ -22,41 +22,27 @@ class ActivityCenter extends _$ActivityCenter
   static const int _pageSize = 20;
   static const Duration _longDisconnectThreshold = Duration(minutes: 2);
   static const Duration _pollingInterval = Duration(seconds: 30);
-  static const List<Duration> _reconnectDelays = <Duration>[
-    Duration(seconds: 1),
-    Duration(seconds: 2),
-    Duration(seconds: 4),
-    Duration(seconds: 8),
-    Duration(seconds: 16),
-    Duration(seconds: 30),
-  ];
 
-  Timer? _reconnectTimer;
-  Timer? _pollingTimer;
-  StreamSubscription<ActivityStreamEvent>? _eventSubscription;
-  DateTime? _disconnectStartedAt;
-  int _reconnectAttempt = 0;
+  /// SSE 连接状态机：重连退避 / unsupported 轮询兜底 / 长断线补拉 / 微任务
+  /// 合批全部由它承担，本 provider 只负责「事件怎么改状态」。
+  SseChannel<ActivityStreamEvent>? _channel;
+
+  /// channel 的最近状态。首次 `_loadInitialState` 里连流时 `state.value` 还是
+  /// null，写不进 state；把它记下来，由 `_loadInitialState` 的返回值带上——否则
+  /// 「首连就 unsupported / 立刻断线」会被无条件的 live 覆盖掉。
+  SseChannelState _channelState = SseChannelState.idle;
   int _taskRefreshRequestId = 0;
   int _lastEventId = 0;
   ActivityTab? _pendingActiveTab;
   int? _pendingHighlightedTaskRunId;
   bool _hasPendingHighlight = false;
-  final List<ActivityStreamEvent> _pendingStreamEvents =
-      <ActivityStreamEvent>[];
-  bool _isStreamFlushScheduled = false;
 
   ActivityCenterState get current => state.value ?? ActivityCenterState.initial;
 
   @override
   Future<ActivityCenterState> build() async {
     attachDisposeGuard();
-    ref.onDispose(() {
-      _cancelReconnectTimer();
-      _cancelPollingTimer();
-      unawaited(_eventSubscription?.cancel());
-      _eventSubscription = null;
-      _resetPendingStreamEvents();
-    });
+    ref.onDispose(() => unawaited(_shutdownChannel()));
     return _loadInitialState();
   }
 
@@ -84,20 +70,8 @@ class ActivityCenter extends _$ActivityCenter
         _pendingHighlightedTaskRunId = null;
         _hasPendingHighlight = false;
       }
-      final stream = ref
-          .read(activityApiProvider)
-          .streamEvents(afterEventId: _lastEventId);
-      _eventSubscription = stream.listen(
-        _handleStreamEvent,
-        onError: _handleStreamError,
-        onDone: _handleStreamDone,
-        cancelOnError: false,
-      );
-      next = next.copyWith(
-        connectionState: ActivityConnectionState.live,
-        connectionMessage: '实时连接中',
-      );
-      return next;
+      await _startChannel();
+      return _withChannelState(next, _channelState);
     } catch (error) {
       return ActivityCenterState.initial.copyWith(
         initialErrorMessage: apiErrorMessage(error, fallback: '任务中心加载失败，请稍后重试'),
@@ -109,11 +83,7 @@ class ActivityCenter extends _$ActivityCenter
 
   Future<void> reloadAll() async {
     _taskRefreshRequestId += 1;
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
-    await _eventSubscription?.cancel();
-    _eventSubscription = null;
-    _resetPendingStreamEvents();
+    await _shutdownChannel();
 
     state = AsyncData(
       current.copyWith(
@@ -143,7 +113,7 @@ class ActivityCenter extends _$ActivityCenter
           jobErrorMessage: jobsResult.errorMessage,
         ),
       );
-      await _connectStream();
+      await _startChannel();
     } catch (error) {
       if (isDisposed) return;
       state = AsyncData(
@@ -398,125 +368,101 @@ class ActivityCenter extends _$ActivityCenter
     );
   }
 
-  Future<void> _connectStream() async {
+  Future<void> _shutdownChannel() async {
+    final channel = _channel;
+    _channel = null;
+    await channel?.shutdown();
+  }
+
+  /// 建连。重连退避（[kActivityBackoff]）、unsupported→30s 轮询兜底、断线超过
+  /// 2 分钟先补拉、微任务合批——全部是 [SseChannel] 的既有行为，这里只提供
+  /// 「怎么连」「状态怎么映射到 UI 文案」「事件怎么改 state」三个回调。
+  Future<void> _startChannel() async {
+    await _shutdownChannel();
     if (isDisposed) return;
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
-    state = AsyncData(
-      current.copyWith(
-        connectionState: ActivityConnectionState.connecting,
-        connectionMessage: '正在连接实时活动流',
-      ),
+    final channel = SseChannel<ActivityStreamEvent>(
+      // afterEventId 由本 provider 自持的 _lastEventId 决定（连流那一刻才读，
+      // 重连时自然带上断线期间已消费到的最大事件 id）。
+      connect:
+          ({String? afterEventId}) => ref
+              .read(activityApiProvider)
+              .streamEvents(afterEventId: _lastEventId),
+      mergeMode: SseMergeMode.microtask,
+      pollingInterval: _pollingInterval,
+      longDisconnectThreshold: _longDisconnectThreshold,
+      onStateChanged: _applyChannelState,
+      onPollingTick: () => unawaited(_refreshFromBootstrap()),
+      onLongDisconnectRecover: _refreshFromBootstrap,
     );
-    if (_disconnectStartedAt != null &&
-        DateTime.now().difference(_disconnectStartedAt!) >
-            _longDisconnectThreshold) {
-      try {
-        final bootstrap = await _fetchBootstrap(current.taskFilter);
-        if (!isDisposed) state = AsyncData(_applyBootstrap(current, bootstrap));
-      } catch (_) {}
+    _channel = channel;
+    await channel.start(
+      // microtask 合批模式下事件走 onBatch；onEvent 只是模式改变时的等价兜底。
+      onEvent:
+          (event) => _applyStreamEvents(<ActivityStreamEvent>[event]),
+      onBatch: _applyStreamEvents,
+    );
+  }
+
+  void _applyChannelState(SseChannelState next) {
+    _channelState = next;
+    // build 首次跑 _loadInitialState 时 state.value 还是 null，写不进去——改由
+    // 上面记的 _channelState 经返回值带出去。
+    if (isDisposed || state.value == null) return;
+    state = AsyncData(_withChannelState(current, next));
+  }
+
+  ActivityCenterState _withChannelState(
+    ActivityCenterState base,
+    SseChannelState channelState,
+  ) {
+    switch (channelState) {
+      // idle 只在 shutdown 时出现，连接文案由 reloadAll 自己写。
+      case SseChannelState.idle:
+        return base;
+      case SseChannelState.connecting:
+        return base.copyWith(
+          connectionState: ActivityConnectionState.connecting,
+          connectionMessage: '正在连接实时活动流',
+        );
+      case SseChannelState.live:
+        return base.copyWith(
+          connectionState: ActivityConnectionState.live,
+          connectionMessage: '实时连接中',
+        );
+      case SseChannelState.reconnecting:
+        return base.copyWith(
+          connectionState: ActivityConnectionState.reconnecting,
+          connectionMessage: '实时连接已断开，正在重连',
+        );
+      case SseChannelState.polling:
+        return base.copyWith(
+          connectionState: ActivityConnectionState.polling,
+          connectionMessage: '当前浏览器不支持实时连接，已切换为 30 秒轮询',
+        );
+      // 任务中心配了 pollingInterval，不会走「放弃订阅」这一支。
+      case SseChannelState.unsupportedAbandoned:
+        return base.copyWith(
+          connectionState: ActivityConnectionState.reconnecting,
+          connectionMessage: null,
+        );
     }
-    if (isDisposed) return;
-    final stream = ref
-        .read(activityApiProvider)
-        .streamEvents(afterEventId: _lastEventId);
-    _eventSubscription = stream.listen(
-      _handleStreamEvent,
-      onError: _handleStreamError,
-      onDone: _handleStreamDone,
-      cancelOnError: false,
-    );
-    _reconnectAttempt = 0;
-    _disconnectStartedAt = null;
-    state = AsyncData(
-      current.copyWith(
-        connectionState: ActivityConnectionState.live,
-        connectionMessage: '实时连接中',
-      ),
-    );
   }
 
-  void _handleStreamEvent(ActivityStreamEvent event) {
-    if (isDisposed) return;
-    if (event.id != null && event.id! > _lastEventId) {
-      _lastEventId = event.id!;
-    }
-    _pendingStreamEvents.add(event);
-    if (_isStreamFlushScheduled) return;
-    _isStreamFlushScheduled = true;
-    scheduleMicrotask(_flushPendingStreamEvents);
+  /// 轮询 tick 与长断线补拉共用：重新 bootstrap 一次覆盖本地快照。
+  Future<void> _refreshFromBootstrap() async {
+    try {
+      final bootstrap = await _fetchBootstrap(current.taskFilter);
+      if (!isDisposed) state = AsyncData(_applyBootstrap(current, bootstrap));
+    } catch (_) {}
   }
 
-  void _handleStreamError(Object error, StackTrace stackTrace) {
-    if (isDisposed) return;
-    if (error is ActivityEventStreamUnsupportedException) {
-      _startPollingFallback();
-      return;
-    }
-    _scheduleReconnect();
-  }
-
-  void _handleStreamDone() {
-    if (isDisposed || current.isPollingFallback) return;
-    _scheduleReconnect();
-  }
-
-  void _scheduleReconnect() {
-    if (isDisposed || current.isPollingFallback) return;
-    _disconnectStartedAt ??= DateTime.now();
-    state = AsyncData(
-      current.copyWith(
-        connectionState: ActivityConnectionState.reconnecting,
-        connectionMessage: '实时连接已断开，正在重连',
-      ),
-    );
-    final delay =
-        _reconnectDelays[_reconnectAttempt.clamp(
-          0,
-          _reconnectDelays.length - 1,
-        )];
-    _reconnectAttempt += 1;
-    _cancelReconnectTimer();
-    _reconnectTimer = Timer(delay, () async {
-      if (isDisposed) return;
-      try {
-        await _eventSubscription?.cancel();
-        await _connectStream();
-      } catch (error) {
-        if (error is ActivityEventStreamUnsupportedException) {
-          _startPollingFallback();
-          return;
-        }
-        _scheduleReconnect();
+  void _applyStreamEvents(List<ActivityStreamEvent> events) {
+    if (isDisposed || events.isEmpty) return;
+    for (final event in events) {
+      if (event.id != null && event.id! > _lastEventId) {
+        _lastEventId = event.id!;
       }
-    });
-  }
-
-  void _startPollingFallback() {
-    if (isDisposed) return;
-    _resetPendingStreamEvents();
-    _cancelReconnectTimer();
-    state = AsyncData(
-      current.copyWith(
-        connectionState: ActivityConnectionState.polling,
-        connectionMessage: '当前浏览器不支持实时连接，已切换为 30 秒轮询',
-      ),
-    );
-    _cancelPollingTimer();
-    _pollingTimer = Timer.periodic(_pollingInterval, (_) async {
-      if (isDisposed) return;
-      try {
-        final bootstrap = await _fetchBootstrap(current.taskFilter);
-        if (!isDisposed) state = AsyncData(_applyBootstrap(current, bootstrap));
-      } catch (_) {}
-    });
-  }
-
-  void _flushPendingStreamEvents() {
-    _isStreamFlushScheduled = false;
-    if (isDisposed || _pendingStreamEvents.isEmpty) return;
-    final events = List<ActivityStreamEvent>.from(_pendingStreamEvents);
-    _pendingStreamEvents.clear();
+    }
     var next = current;
     var hasChanges = false;
     for (final event in events) {
@@ -651,21 +597,6 @@ class ActivityCenter extends _$ActivityCenter
       next.add(item);
     }
     return _sortHistoryTasks(next, filter);
-  }
-
-  void _cancelReconnectTimer() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-  }
-
-  void _cancelPollingTimer() {
-    _pollingTimer?.cancel();
-    _pollingTimer = null;
-  }
-
-  void _resetPendingStreamEvents() {
-    _pendingStreamEvents.clear();
-    _isStreamFlushScheduled = false;
   }
 
   bool get initialized => current.initialized;

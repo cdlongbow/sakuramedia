@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
-import 'package:sakuramedia/features/moments/presentation/mobile_overview_moments_tab.dart';
+import 'package:sakuramedia/features/moments/presentation/pages/mobile/overview_moments_tab.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
@@ -220,9 +221,12 @@ Future<void> _pumpMomentsApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(body: MobileOverviewMomentsTab()),
+      child: AppPlatformScope(
+        platform: AppPlatform.mobile,
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(body: MobileOverviewMomentsTab()),
+        ),
       ),
     ),
   );
@@ -238,8 +242,14 @@ Future<void> _pumpMomentsRouterApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(imageSearchDraftStore: draftStore),
-      child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      child: AppPlatformScope(
+        platform: AppPlatform.mobile,
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraThemeData,
+            routerConfig: router,
+          ),
+        ),
       ),
     ),
   );

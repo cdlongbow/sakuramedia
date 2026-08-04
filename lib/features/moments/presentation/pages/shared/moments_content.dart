@@ -3,18 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_filter_sections.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_provider.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_state.dart';
-import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
-import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
-import 'package:sakuramedia/routes/app_navigation.dart';
-import 'package:sakuramedia/routes/app_navigation_actions.dart';
-import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
@@ -23,21 +17,61 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/domain/media/quick_play_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 
-enum MomentsPagePlatform { desktop, mobile }
+/// 时刻列表共享实现（桌面 / 移动双端壳收敛的 content 层）。
+///
+/// 平台差异全部收在壳注入的参数与回调里：
+/// - Key 三件套（keyPrefix / rootKey / previewDrawerKey）由壳传参、本层产出；
+/// - 图搜 / 视频播放 / 影片播放 / 影片详情四个导航分支收为壳注入的回调组；
+/// - 预览弹层统一走 [MediaPreviewPresentation.auto]（读 `AppPlatformScope` 分派）；
+/// - 滚动容器（下拉刷新 vs 裸 CustomScrollView）与筛选面板容器（底部抽屉 vs 就地浮层）
+///   由 `enablePullToRefresh` / `useMobileFilterDrawer` 两个壳参数表达。
+class MomentsContent extends HookConsumerWidget {
+  const MomentsContent({
+    super.key,
+    required this.keyPrefix,
+    required this.rootKey,
+    this.previewDrawerKey,
+    this.enablePullToRefresh = false,
+    this.useMobileFilterDrawer = false,
+    this.onSearchSimilar,
+    this.onOpenVideo,
+    this.onOpenPlayer,
+    this.onOpenMovieDetail,
+  });
 
-class MomentsPage extends HookConsumerWidget {
-  const MomentsPage({super.key, required this.platform});
+  /// 网格/筛选 Key 前缀：桌面 `moments`，移动 `mobile-moments`。
+  final String keyPrefix;
 
-  final MomentsPagePlatform platform;
+  /// 列表根 Key：桌面 `moments-page`，移动 `mobile-overview-moments-tab`。
+  final Key rootKey;
 
-  bool get _isMobile => platform == MomentsPagePlatform.mobile;
+  /// 预览弹层落底部抽屉时的 drawerKey（移动端）；桌面不传。
+  final Key? previewDrawerKey;
 
-  String get _keyPrefix => _isMobile ? 'mobile-moments' : 'moments';
+  /// 下拉刷新容器开关：`true`（移动）→ `AppAdaptiveRefreshScrollView`，
+  /// `false`（桌面）→ 裸 `CustomScrollView`。
+  final bool enablePullToRefresh;
+
+  /// 顶栏筛选入口点开什么：`true` 弹底部抽屉（移动端），`false` 就地展开浮层（桌面端）。
+  final bool useMobileFilterDrawer;
+
+  /// 图搜导航回调（壳注入：桌面走 launcher / 移动走 draft store 中转）。
+  final Future<void> Function(BuildContext context, MomentListItem item)?
+  onSearchSimilar;
+
+  /// 视频时刻播放回调（壳注入：桌面快播弹窗 / 移动 push 全屏页）。
+  final void Function(BuildContext context, MomentListItem item)? onOpenVideo;
+
+  /// 影片时刻播放回调（壳注入：桌面 push 播放器 / 移动 launchMoviePlayback）。
+  final void Function(BuildContext context, MomentListItem item)? onOpenPlayer;
+
+  /// 影片详情导航回调（壳注入：桌面 push 详情 / 移动 push 移动详情）。
+  final void Function(BuildContext context, MomentListItem item)?
+  onOpenMovieDetail;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +95,7 @@ class MomentsPage extends HookConsumerWidget {
         paged.isNotEmpty &&
         (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final sliver = SliverMainAxisGroup(
-      key: Key(_isMobile ? 'mobile-overview-moments-tab' : 'moments-page'),
+      key: rootKey,
       slivers: [
         SliverToBoxAdapter(
           child: Column(
@@ -95,7 +129,7 @@ class MomentsPage extends HookConsumerWidget {
       child: ColoredBox(
         color: context.appColors.surfaceCard,
         child:
-            _isMobile
+            enablePullToRefresh
                 ? AppAdaptiveRefreshScrollView(
                   onRefresh: () => _handleRefresh(context, ref),
                   controller: scrollController,
@@ -127,24 +161,24 @@ class MomentsPage extends HookConsumerWidget {
     MomentsFilter filter,
   ) {
     return AppListHeader(
-      filterButtonKey: Key('$_keyPrefix-filter-trigger'),
+      filterButtonKey: Key('$keyPrefix-filter-trigger'),
       // 摘要只报「内容类型」这一主维度，排序有独立分节，不堆在入口上。
       filterLabel: filter.kindFilter.label,
-      filterPanelKey: Key('$_keyPrefix-filter-panel'),
+      filterPanelKey: Key('$keyPrefix-filter-panel'),
       filterPanelExtraWidth: 180,
       onFilterTap:
-          _isMobile
+          useMobileFilterDrawer
               ? () => unawaited(
                 _openFilterDrawer(context, ref, scrollController, filter),
               )
               : null,
       filterPanelBuilder:
-          _isMobile
+          useMobileFilterDrawer
               ? null
               : (_) => MomentFilterSectionGroup(
                 kindFilter: filter.kindFilter,
                 sortOrder: filter.sortOrder,
-                keyPrefix: _keyPrefix,
+                keyPrefix: keyPrefix,
                 onKindChanged:
                     (next) => _applyFilter(
                       ref,
@@ -160,7 +194,7 @@ class MomentsPage extends HookConsumerWidget {
               ),
       informationSlots: [
         AppListHeaderInfo(
-          key: Key('$_keyPrefix-page-total'),
+          key: Key('$keyPrefix-page-total'),
           label: '${paged.total} 个时刻',
         ),
       ],
@@ -177,7 +211,7 @@ class MomentsPage extends HookConsumerWidget {
       context,
       kindFilter: filter.kindFilter,
       sortOrder: filter.sortOrder,
-      keyPrefix: _keyPrefix,
+      keyPrefix: keyPrefix,
       onKindChanged:
           (next) => _applyFilter(
             ref,
@@ -238,16 +272,11 @@ class MomentsPage extends HookConsumerWidget {
     WidgetRef ref,
     MomentListItem item,
   ) async {
-    final presentation =
-        _isMobile
-            ? MediaPreviewPresentation.bottomDrawer
-            : MediaPreviewPresentation.dialog;
     final action = await showMomentPreviewOverlay(
       context: context,
       item: item,
-      presentation: presentation,
-      drawerKey:
-          _isMobile ? const Key('mobile-moments-preview-bottom-sheet') : null,
+      presentation: MediaPreviewPresentation.auto,
+      drawerKey: previewDrawerKey,
       onPointRemoved:
           () => unawaited(ref.read(momentsProvider.notifier).reload()),
       closeOnPointRemoved: true,
@@ -273,23 +302,12 @@ class MomentsPage extends HookConsumerWidget {
     if (imageUrl.isEmpty) {
       return;
     }
+    final handler = onSearchSimilar;
+    if (handler == null) {
+      return;
+    }
     try {
-      if (_isMobile) {
-        await launchImageSearchFromUrl(
-          context,
-          imageUrl: imageUrl,
-          routePath: mobileImageSearchPath,
-          fallbackPath: mobileOverviewPath,
-          fileName: buildMomentImageFileName(item, imageUrl),
-        );
-      } else {
-        await launchDesktopImageSearchFromUrl(
-          context,
-          imageUrl: imageUrl,
-          fallbackPath: desktopMomentsPath,
-          fileName: buildMomentImageFileName(item, imageUrl),
-        );
-      }
+      await handler(context, item);
     } catch (_) {
       if (context.mounted) {
         showToast('读取结果图片失败，请稍后重试');
@@ -299,59 +317,16 @@ class MomentsPage extends HookConsumerWidget {
 
   void _openPlayerForMoment(BuildContext context, MomentListItem item) {
     if (item.isVideo) {
-      if (_isMobile) {
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder:
-                (_) => MobileVideoPlayerPage(
-                  videoId: item.videoItemId!,
-                  title: item.displayLabel,
-                ),
-          ),
-        );
-      } else {
-        unawaited(
-          showVideoQuickPlayDialog(
-            context,
-            videoId: item.videoItemId!,
-            title: item.displayLabel,
-          ),
-        );
-      }
+      onOpenVideo?.call(context, item);
       return;
     }
-
-    if (_isMobile) {
-      unawaited(
-        launchMoviePlayback(
-          context,
-          movieNumber: item.movieNumber!,
-          mediaId: item.mediaId > 0 ? item.mediaId : null,
-          positionSeconds: item.offsetSeconds,
-        ),
-      );
-      return;
-    }
-
-    context.pushDesktopMoviePlayer(
-      movieNumber: item.movieNumber!,
-      fallbackPath: desktopMomentsPath,
-      mediaId: item.mediaId > 0 ? item.mediaId : null,
-      positionSeconds: item.offsetSeconds,
-    );
+    onOpenPlayer?.call(context, item);
   }
 
   void _openMovieDetailForMoment(BuildContext context, MomentListItem item) {
     if (item.isVideo) {
       return;
     }
-    if (_isMobile) {
-      MobileMovieDetailRouteData(movieNumber: item.movieNumber!).push(context);
-      return;
-    }
-    context.pushDesktopMovieDetail(
-      movieNumber: item.movieNumber!,
-      fallbackPath: desktopMomentsPath,
-    );
+    onOpenMovieDetail?.call(context, item);
   }
 }

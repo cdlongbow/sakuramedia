@@ -12,7 +12,7 @@ import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_cl
 import 'package:sakuramedia/features/hot_reviews/presentation/pages/mobile/overview_hot_reviews_tab.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_overview_follow_tab.dart';
-import 'package:sakuramedia/features/moments/presentation/mobile_overview_moments_tab.dart';
+import 'package:sakuramedia/features/moments/presentation/pages/mobile/overview_moments_tab.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';

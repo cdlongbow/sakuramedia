@@ -9,7 +9,7 @@ import 'package:sakuramedia/features/hot_reviews/presentation/pages/desktop/hot_
 import 'package:sakuramedia/features/media/presentation/desktop_media_management_page.dart';
 import 'package:sakuramedia/features/media_import/presentation/desktop_media_import_page.dart';
 import 'package:sakuramedia/features/activity/presentation/desktop_notifications_page.dart';
-import 'package:sakuramedia/features/moments/presentation/desktop_moments_page.dart';
+import 'package:sakuramedia/features/moments/presentation/pages/desktop/moments_page.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movies_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_page.dart';

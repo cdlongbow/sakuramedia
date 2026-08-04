@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
@@ -30,6 +31,8 @@ void main() {
     bundle = await createTestApiBundle(sessionStore);
     container = ProviderContainer(
       overrides: [
+        // invalidateOnSignOut 会 watch sessionStoreProvider，必须 override。
+        sessionStoreProvider.overrideWithValue(sessionStore),
         accountApiProvider.overrideWithValue(bundle.accountApi),
       ],
       retry: (_, __) => null,
@@ -177,6 +180,32 @@ void main() {
     expect(
       container.read(accountProfileProvider).account?.username,
       'renamed',
+    );
+  });
+
+  test('登出失效：换账号后重新拉取新账号资料', () async {
+    _enqueueAccount(bundle, username: 'first-account');
+    await _pumpUntilAccountLoaded();
+    expect(
+      container.read(accountProfileProvider).account?.username,
+      'first-account',
+    );
+
+    // keepAlive 状态不随页面卸载释放；组合根 ObjectKey 绑 SessionStore 实例，
+    // 同一次运行内换账号不重建容器——必须靠 invalidateOnSignOut 失效，
+    // 否则新账号读到上一账号的资料。
+    _enqueueAccount(bundle, username: 'second-account');
+    await sessionStore.clearSession();
+    await sessionStore.saveTokens(
+      accessToken: 'access-token-2',
+      refreshToken: 'refresh-token-2',
+      expiresAt: DateTime.parse('2026-03-11T12:00:00Z'),
+    );
+
+    await _pumpUntilAccountLoaded();
+    expect(
+      container.read(accountProfileProvider).account?.username,
+      'second-account',
     );
   });
 }

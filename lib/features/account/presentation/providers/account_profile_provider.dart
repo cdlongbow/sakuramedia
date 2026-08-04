@@ -5,13 +5,16 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
 
 part 'account_profile_provider.g.dart';
 
 /// 账号资料（用户名/创建时间/上次登录）+ 修改用户名。
 ///
 /// keepAlive：账号资料是全局共享数据（configuration 桌面段 + mobile 改用户名页
-/// 都消费）；首次加载后跨页保留，切换 tab 不重拉。登出时随 ProviderScope 拆掉。
+/// 都消费）；首次加载后跨页保留，切换 tab 不重拉。登出走 [invalidateOnSignOut]
+/// 失效——组合根的 ObjectKey 绑的是 SessionStore 实例，同一次运行内登出换账号
+/// **不会**重建 ProviderScope，keepAlive 状态必须自行处理登出边沿。
 ///
 /// 迁移前对应：`AccountProfileController`（configuration section + mobile
 /// change_username page 两处各自 late final 构造）。四态复合（account /
@@ -21,6 +24,7 @@ part 'account_profile_provider.g.dart';
 class AccountProfile extends _$AccountProfile {
   @override
   AccountProfileState build() {
+    invalidateOnSignOut(ref);
     // build 完立即触发首次加载；同步返回带 isLoading=true 的初始 state 让 UI 显骨架。
     Future.microtask(load);
     return const AccountProfileState(isLoading: true);

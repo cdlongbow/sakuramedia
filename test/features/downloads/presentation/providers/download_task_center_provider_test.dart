@@ -272,7 +272,7 @@ void main() {
     expect(state.paged.hasMore, isTrue); // 1/4
   });
 
-  test('重连退避期间再次 connectStream 不留下第二条 SSE', () async {
+  test('重连退避期间再次 connectStream 不另开一条 SSE', () async {
     final streamingApi = _StreamingDownloadsApi(
       apiClient: bundle.apiClient,
       streamClient: bundle.sseEventStreamClient,
@@ -307,9 +307,14 @@ void main() {
       DownloadTaskStreamState.reconnecting,
     );
 
-    // 退避计时器还没到点时页面重新挂载并 connect：必须先关旧连接再开新的。
+    // 退避计时器还没到点时页面重新挂载并 connect：不许另开一条流，交给
+    // SseChannel 按退避表续。（旧实现的守卫放行 reconnecting，会覆盖掉还没
+    // cancel 的旧订阅，留下第二条无人持有却仍在推事件的连接。）
     await notifier.connectStream();
-    expect(streamingApi.controllers, hasLength(2));
-    expect(streamingApi.cancelCount, 1);
+    expect(streamingApi.controllers, hasLength(1));
+    expect(
+      streamContainer.read(downloadTaskCenterProvider).requireValue.streamState,
+      DownloadTaskStreamState.reconnecting,
+    );
   });
 }

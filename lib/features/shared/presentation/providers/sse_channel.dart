@@ -47,14 +47,14 @@ enum SseChannelState {
 enum SseMergeMode { none, microtask, timerDebounce }
 
 /// SSE 连接状态机封装，收敛 download / notification / activity / media_import /
-/// video_import 五家的重复管理代码。差异全部走构造参数：
+/// video_import 五家的重复管理代码（**五家均已接入**）。差异全部走构造参数：
 ///
 /// | 参数 | download | notification/activity | import 双子星 |
 /// |---|---|---|---|
 /// | 退避表 | 默认 [kActivityBackoff] | 默认 | `importBackoff: true`（[kImportBackoff]） |
 /// | unsupported 后 | 30s 轮询 | 30s 轮询 | 放弃订阅不重连 |
 /// | bootstrap 前置 | 无 | 需要（拿 afterEventId，只跑首次） | 需要（只跑首次；失败不订阅但走 backoff 自动重试） |
-/// | 合批 | microtask + 拉页 15s 硬闸 | microtask | none（逐条 sink） |
+/// | 合批 | microtask | microtask | none（逐条 sink） |
 /// | 长断线补拉 | 2min（消费方 [onLongDisconnectRecover] 里 await 拉页） | 2min（同左） | 无 |
 ///
 /// 生命周期：`start(onEvent:)` → [SseChannelState.live]；断线按退避表

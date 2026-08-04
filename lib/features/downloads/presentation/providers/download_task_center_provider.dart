@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_task_stream_event_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
@@ -11,6 +10,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/downloads_
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/sse_channel.dart';
 
 part 'download_task_center_provider.g.dart';
 
@@ -38,28 +38,19 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   /// 两次「SSE 触发的第一页 merge」之间的最小时间间隔——防止死循环。
   /// 用户主动 refresh / applyFilter 走独立入口，不受影响。
   static const Duration _minMergeInterval = Duration(seconds: 15);
-  static const List<Duration> _reconnectDelays = <Duration>[
-    Duration(seconds: 1),
-    Duration(seconds: 2),
-    Duration(seconds: 4),
-    Duration(seconds: 8),
-    Duration(seconds: 16),
-    Duration(seconds: 30),
-  ];
 
   DownloadTaskFilterState _activeFilter = DownloadTaskFilterState.initial;
 
-  StreamSubscription<DownloadTaskStreamEvent>? _streamSubscription;
-  Timer? _reconnectTimer;
-  Timer? _pollingTimer;
+  /// SSE 连接状态机：重连退避 / unsupported 轮询兜底 / 长断线补拉 / 微任务
+  /// 合批全部由它承担，本 provider 只负责「事件怎么改状态」。
+  ///
+  /// 「拉第一页」的 800ms 去抖与 15s 硬闸**不在** channel 里:channel 的
+  /// `mergeDebounce` / `minMergeInterval` 管的是事件批次的下发节奏，这里要限的
+  /// 是被事件触发的**网络请求**（防死循环打爆第一页接口），两者不是一回事——
+  /// 拿 channel 的闸来限会把实时进度也一并压到 15s 才更新。
+  SseChannel<DownloadTaskStreamEvent>? _channel;
   Timer? _mergeDebounceTimer;
-  int _reconnectAttempt = 0;
-  DateTime? _disconnectStartedAt;
   DateTime? _lastFirstPageMergeAt;
-
-  final List<DownloadTaskStreamEvent> _pendingStreamEvents =
-      <DownloadTaskStreamEvent>[];
-  bool _isStreamFlushScheduled = false;
 
   @override
   int get pageSize => _pageSize;
@@ -117,11 +108,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     invalidateOnSignOut(ref);
     attachDisposeGuard();
     ref.onDispose(() {
-      _cancelStream();
-      _cancelReconnectTimer();
-      _cancelPollingTimer();
+      unawaited(_shutdownChannel());
       _cancelMergeDebounce();
-      _resetPendingStreamEvents();
     });
     unawaited(_loadClientOptionsInBackground());
     final paged = await loadInitialPage();
@@ -150,11 +138,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         state.value?.streamState == DownloadTaskStreamState.reconnecting ||
         state.value?.streamState == DownloadTaskStreamState.polling;
     if (wasStreamOn) {
-      _cancelStream();
-      _cancelReconnectTimer();
-      _cancelPollingTimer();
+      await _shutdownChannel();
       _cancelMergeDebounce();
-      _resetPendingStreamEvents();
       final current = state.value;
       if (current != null) {
         state = AsyncData(
@@ -195,31 +180,24 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     }
   }
 
+  /// 建连（幂等）。连接中 / 已连接 / 退避重连中 / 轮询中都直接返回——**退避期间
+  /// 重复 connect 不再另开一条流**，交给 channel 按退避表续（旧实现放行
+  /// `reconnecting`，会覆盖掉尚未 cancel 的旧订阅、留下第二条连接）。
   Future<void> connectStream() async {
     if (isDisposed) return;
-    final now = state.value;
-    if (now == null) return;
-    final s = now.streamState;
-    if (s == DownloadTaskStreamState.connecting ||
-        s == DownloadTaskStreamState.live ||
-        s == DownloadTaskStreamState.polling) {
-      return;
-    }
-    await _openStream();
+    if (state.value == null) return;
+    final channel = _channel;
+    if (channel != null && channel.state != SseChannelState.idle) return;
+    await _startChannel();
   }
 
-  void disconnectStream() {
+  Future<void> disconnectStream() async {
     final now = state.value;
     if (now == null) return;
     if (now.streamState == DownloadTaskStreamState.idle) return;
-    _cancelStream();
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
+    await _shutdownChannel();
     _cancelMergeDebounce();
-    _resetPendingStreamEvents();
-    _disconnectStartedAt = null;
-    _reconnectAttempt = 0;
-    state = AsyncData(now.copyWith(streamState: DownloadTaskStreamState.idle));
+    _updateStreamState(DownloadTaskStreamState.idle);
   }
 
   Future<void> pauseTask(int taskId) async {
@@ -308,68 +286,78 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     }
   }
 
-  Future<void> _openStream() async {
-    // 开新流前必须 cancel 旧订阅：listen 用的是 `cancelOnError: false`，出错的流
-    // 不会自动关闭，而 [connectStream] 的守卫放行 `reconnecting`——退避期间外部
-    // 再次 connect（任务面板重新挂载）会直接覆盖 `_streamSubscription`，留下一条
-    // 无人持有却仍在推事件的连接。
-    _cancelStream();
-    _cancelReconnectTimer();
-    _cancelPollingTimer();
-    _updateStreamState(DownloadTaskStreamState.connecting);
-
-    if (_disconnectStartedAt != null &&
-        DateTime.now().difference(_disconnectStartedAt!) >
-            _longDisconnectThreshold) {
-      try {
-        final paged = await loadInitialPage();
-        if (isDisposed) return;
-        final current = state.value;
-        if (current != null) {
-          state = AsyncData(current.copyWith(paged: paged));
-        }
-      } catch (_) {}
-    }
-
-    try {
-      final stream = ref
-          .read(downloadsApiProvider)
-          .streamDownloadTasks(
-            clientId: _activeFilter.clientId,
-            movieNumber:
-                _activeFilter.normalizedSearch.isEmpty
-                    ? null
-                    : _activeFilter.normalizedSearch,
-          );
-      _streamSubscription = stream.listen(
-        _handleStreamEvent,
-        onError: _handleStreamError,
-        onDone: _handleStreamDone,
-        cancelOnError: false,
-      );
-      _reconnectAttempt = 0;
-      _disconnectStartedAt = null;
-      _updateStreamState(DownloadTaskStreamState.live);
-    } on SseEventStreamUnsupportedException {
-      _startPollingFallback();
-    } catch (_) {
-      _scheduleReconnect();
-    }
+  Future<void> _shutdownChannel() async {
+    final channel = _channel;
+    _channel = null;
+    await channel?.shutdown();
   }
 
-  void _handleStreamEvent(DownloadTaskStreamEvent event) {
+  /// 建连。重连退避（[kActivityBackoff]）、unsupported→30s 轮询兜底、断线超过
+  /// 2 分钟先补拉第一页、微任务合批——全部是 [SseChannel] 的既有行为。
+  Future<void> _startChannel() async {
+    await _shutdownChannel();
     if (isDisposed) return;
-    _pendingStreamEvents.add(event);
-    if (_isStreamFlushScheduled) return;
-    _isStreamFlushScheduled = true;
-    scheduleMicrotask(_flushPendingStreamEvents);
+    final channel = SseChannel<DownloadTaskStreamEvent>(
+      // 筛选条件在连流那一刻才读，applyFilter 重连自然带上新参数。
+      connect:
+          ({String? afterEventId}) => ref
+              .read(downloadsApiProvider)
+              .streamDownloadTasks(
+                clientId: _activeFilter.clientId,
+                movieNumber:
+                    _activeFilter.normalizedSearch.isEmpty
+                        ? null
+                        : _activeFilter.normalizedSearch,
+              ),
+      mergeMode: SseMergeMode.microtask,
+      pollingInterval: _pollingInterval,
+      longDisconnectThreshold: _longDisconnectThreshold,
+      onStateChanged: _applyChannelState,
+      onPollingTick: () => unawaited(_reloadFirstPage()),
+      onLongDisconnectRecover: _reloadFirstPage,
+    );
+    _channel = channel;
+    await channel.start(
+      // microtask 合批模式下事件走 onBatch；onEvent 只是模式改变时的等价兜底。
+      onEvent: (event) => _applyStreamEvents(<DownloadTaskStreamEvent>[event]),
+      onBatch: _applyStreamEvents,
+    );
   }
 
-  void _flushPendingStreamEvents() {
-    _isStreamFlushScheduled = false;
-    if (isDisposed || _pendingStreamEvents.isEmpty) return;
-    final events = List<DownloadTaskStreamEvent>.from(_pendingStreamEvents);
-    _pendingStreamEvents.clear();
+  void _applyChannelState(SseChannelState next) {
+    switch (next) {
+      case SseChannelState.idle:
+        _updateStreamState(DownloadTaskStreamState.idle);
+      case SseChannelState.connecting:
+        _updateStreamState(DownloadTaskStreamState.connecting);
+      case SseChannelState.live:
+        _updateStreamState(DownloadTaskStreamState.live);
+      case SseChannelState.reconnecting:
+        _updateStreamState(DownloadTaskStreamState.reconnecting);
+      case SseChannelState.polling:
+        _updateStreamState(DownloadTaskStreamState.polling);
+      // 本域配了 pollingInterval，不会走「放弃订阅」这一支。
+      case SseChannelState.unsupportedAbandoned:
+        _updateStreamState(DownloadTaskStreamState.idle);
+    }
+  }
+
+  /// 轮询 tick 与长断线补拉共用：整段替换第一页。这两条路径本来就是「本地可能
+  /// 已经落后很多」的场景，以服务端为准，不做 upsert 合并。
+  Future<void> _reloadFirstPage() async {
+    try {
+      final firstPage = await loadInitialPage();
+      if (isDisposed) return;
+      final current = state.value;
+      if (current == null) return;
+      state = AsyncData(current.copyWith(paged: firstPage));
+    } catch (_) {
+      // 保留最后一次成功状态。
+    }
+  }
+
+  void _applyStreamEvents(List<DownloadTaskStreamEvent> events) {
+    if (isDisposed || events.isEmpty) return;
 
     final initial = state.value;
     if (initial == null) return;
@@ -654,85 +642,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     });
   }
 
-  void _handleStreamError(Object error, StackTrace stackTrace) {
-    if (isDisposed) return;
-    if (error is SseEventStreamUnsupportedException) {
-      _startPollingFallback();
-      return;
-    }
-    _scheduleReconnect();
-  }
-
-  void _handleStreamDone() {
-    if (isDisposed) return;
-    final current = state.value;
-    if (current == null) return;
-    if (current.streamState == DownloadTaskStreamState.polling) return;
-    _scheduleReconnect();
-  }
-
-  void _scheduleReconnect() {
-    if (isDisposed) return;
-    _disconnectStartedAt ??= DateTime.now();
-    _updateStreamState(DownloadTaskStreamState.reconnecting);
-
-    final delay =
-        _reconnectDelays[_reconnectAttempt.clamp(
-          0,
-          _reconnectDelays.length - 1,
-        )];
-    _reconnectAttempt += 1;
-    _cancelReconnectTimer();
-    _reconnectTimer = Timer(delay, () async {
-      if (isDisposed) return;
-      await _streamSubscription?.cancel();
-      _streamSubscription = null;
-      await _openStream();
-    });
-  }
-
-  void _startPollingFallback() {
-    _cancelReconnectTimer();
-    _resetPendingStreamEvents();
-    _updateStreamState(DownloadTaskStreamState.polling);
-    _cancelPollingTimer();
-    _pollingTimer = Timer.periodic(_pollingInterval, (_) async {
-      if (isDisposed) return;
-      try {
-        final firstPage = await loadInitialPage();
-        if (isDisposed) return;
-        final current = state.value;
-        if (current == null) return;
-        state = AsyncData(current.copyWith(paged: firstPage));
-      } catch (_) {
-        // 保留最后一次成功状态。
-      }
-    });
-  }
-
-  void _cancelStream() {
-    _streamSubscription?.cancel();
-    _streamSubscription = null;
-  }
-
-  void _cancelReconnectTimer() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = null;
-  }
-
-  void _cancelPollingTimer() {
-    _pollingTimer?.cancel();
-    _pollingTimer = null;
-  }
-
   void _cancelMergeDebounce() {
     _mergeDebounceTimer?.cancel();
     _mergeDebounceTimer = null;
-  }
-
-  void _resetPendingStreamEvents() {
-    _pendingStreamEvents.clear();
-    _isStreamFlushScheduled = false;
   }
 
   List<DownloadTaskRowState> _mergeUpsertFirstPage(

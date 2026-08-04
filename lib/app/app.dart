@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderObserver, ProviderScope;
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
@@ -28,10 +29,22 @@ const Set<PointerDeviceKind> kAppScrollDragDevices = <PointerDeviceKind>{
 };
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key, this.platformOverride, this.sessionStore});
+  const MyApp({
+    super.key,
+    this.platformOverride,
+    this.sessionStore,
+    this.observers,
+  });
 
   final AppPlatform? platformOverride;
   final SessionStore? sessionStore;
+
+  /// 挂到组合根 [ProviderScope] 上的观察者。
+  ///
+  /// 生产不传。给 `test/app_test.dart` 的路由冒烟用：provider 在 build 里抛的
+  /// 异常会被 Riverpod 收进 `AsyncError`、由页面渲染成普通错误态，从外面看不出
+  /// 是「接线错了」还是「后端没连上」；挂 `providerDidFail` 才分得清。
+  final List<ProviderObserver>? observers;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -96,6 +109,7 @@ class _MyAppState extends State<MyApp> {
     return ProviderScope(
       key: ObjectKey(_activeSessionStore),
       overrides: [sessionStoreProvider.overrideWithValue(_activeSessionStore)],
+      observers: widget.observers,
       child: AppPlatformScope(
         platform: _platform,
         child: OKToast(

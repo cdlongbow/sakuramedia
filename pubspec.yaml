@@ -89,6 +89,18 @@ dependency_overrides:
       path: packages/media_kit_libs_android_video
       ref: main
 
+  media_kit_libs_ios_video:
+    git:
+      url: https://github.com/tinypinglite/sakuramedia-media-kit.git
+      path: packages/media_kit_libs_ios_video
+      ref: main
+  media_kit_libs_macos_video:
+    git:
+      url: https://github.com/tinypinglite/sakuramedia-media-kit.git
+      path: packages/media_kit_libs_macos_video
+      ref: main
+
+
   volume_controller: 3.4.0
   # screen_brightness_ios 2.1.4 引入 FlutterSceneLifeCycleDelegate / addSceneDelegate
   # (Flutter 3.32+ 才有的 Scene API)，CI 用的是 3.29.3 会编译失败；

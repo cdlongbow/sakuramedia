@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
@@ -11,7 +12,26 @@ enum AppImageActionType {
   movieDetail,
 }
 
-enum AppImageActionMenuPresentation { popup, bottomDrawer }
+enum AppImageActionMenuPresentation {
+  /// 读 `AppPlatformScope.maybeOf`：`mobile` → 底部抽屉，其余（`desktop` /
+  /// `web` / null）→ 定位弹出菜单。与 `AppConfirmVariant.auto` 同范式。
+  auto,
+  popup,
+  bottomDrawer,
+}
+
+/// 把 [AppImageActionMenuPresentation.auto] 解析为具体形态；非 auto 原样返回。
+AppImageActionMenuPresentation resolveAppImageActionMenuPresentation(
+  BuildContext context,
+  AppImageActionMenuPresentation presentation,
+) {
+  if (presentation != AppImageActionMenuPresentation.auto) {
+    return presentation;
+  }
+  return AppPlatformScope.maybeOf(context) == AppPlatform.mobile
+      ? AppImageActionMenuPresentation.bottomDrawer
+      : AppImageActionMenuPresentation.popup;
+}
 
 class AppImageActionDescriptor {
   const AppImageActionDescriptor({
@@ -47,17 +67,15 @@ Future<AppImageActionType?> showAppImageActionMenu({
     return Future<AppImageActionType?>.value(null);
   }
 
-  return switch (presentation) {
-    AppImageActionMenuPresentation.popup => _showPopupImageActionMenu(
-      context: context,
-      actions: visibleActions,
-      globalPosition: globalPosition,
-    ),
-    AppImageActionMenuPresentation.bottomDrawer => _showBottomImageActionMenu(
-      context: context,
-      actions: visibleActions,
-    ),
-  };
+  final resolved = resolveAppImageActionMenuPresentation(context, presentation);
+  if (resolved == AppImageActionMenuPresentation.bottomDrawer) {
+    return _showBottomImageActionMenu(context: context, actions: visibleActions);
+  }
+  return _showPopupImageActionMenu(
+    context: context,
+    actions: visibleActions,
+    globalPosition: globalPosition,
+  );
 }
 
 Future<AppImageActionType?> _showPopupImageActionMenu({

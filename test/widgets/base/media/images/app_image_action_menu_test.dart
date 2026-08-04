@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 
@@ -176,6 +177,43 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('auto presentation resolves to bottom drawer on mobile scope', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      AppPlatformScope(
+        platform: AppPlatform.mobile,
+        child: MaterialApp(home: Scaffold(body: _AutoMenuTestButton())),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('app-image-action-bottom-drawer')),
+      findsOneWidget,
+    );
+    expect(_popupMenuFinder(), findsNothing);
+  });
+
+  testWidgets('auto presentation falls back to popup without platform scope', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: _AutoMenuTestButton())),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(_popupMenuFinder(), findsOneWidget);
+    expect(
+      find.byKey(const Key('app-image-action-bottom-drawer')),
+      findsNothing,
+    );
+  });
 }
 
 Finder _popupMenuFinder() {
@@ -208,6 +246,44 @@ class _OffsetNavigatorHost extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _AutoMenuTestButton extends StatelessWidget {
+  const _AutoMenuTestButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Builder(
+        builder:
+            (context) => TextButton(
+              onPressed: () {
+                showAppImageActionMenu(
+                  context: context,
+                  globalPosition: tapPositionOf(context),
+                  presentation: AppImageActionMenuPresentation.auto,
+                  actions: const [
+                    AppImageActionDescriptor(
+                      type: AppImageActionType.searchSimilar,
+                      label: '相似图片',
+                      icon: Icons.image_search_outlined,
+                    ),
+                  ],
+                );
+              },
+              child: const Text('open'),
+            ),
+      ),
+    );
+  }
+
+  static Offset tapPositionOf(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) {
+      return const Offset(200, 200);
+    }
+    return box.localToGlobal(box.size.center(Offset.zero));
   }
 }
 

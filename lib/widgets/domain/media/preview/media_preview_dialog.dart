@@ -46,7 +46,26 @@ class MediaPreviewItem {
   bool get isVideo => videoItemId != null && videoItemId! > 0;
 }
 
-enum MediaPreviewPresentation { dialog, bottomDrawer }
+enum MediaPreviewPresentation {
+  /// 读 `AppPlatformScope.maybeOf`：`mobile` → 底部抽屉，其余（`desktop` /
+  /// `web` / null）→ 桌面对话框。与 `AppConfirmVariant.auto` 同范式。
+  auto,
+  dialog,
+  bottomDrawer,
+}
+
+/// 把 [MediaPreviewPresentation.auto] 解析为具体形态；非 auto 原样返回。
+MediaPreviewPresentation resolveMediaPreviewPresentation(
+  BuildContext context,
+  MediaPreviewPresentation presentation,
+) {
+  if (presentation != MediaPreviewPresentation.auto) {
+    return presentation;
+  }
+  return AppPlatformScope.maybeOf(context) == AppPlatform.mobile
+      ? MediaPreviewPresentation.bottomDrawer
+      : MediaPreviewPresentation.dialog;
+}
 
 /// 预览层关闭后，由调用页面执行的外部跳转动作。
 ///
@@ -60,18 +79,17 @@ Future<MediaPreviewAction?> showMediaPreviewOverlay({
   required WidgetBuilder builder,
   Key? drawerKey,
 }) {
-  switch (presentation) {
-    case MediaPreviewPresentation.dialog:
-      return showDialog<MediaPreviewAction>(context: context, builder: builder);
-    case MediaPreviewPresentation.bottomDrawer:
-      return showAppBottomDrawer<MediaPreviewAction>(
-        context: context,
-        maxHeightFactor: 0.7,
-        drawerKey: drawerKey,
-        ignoreTopSafeArea: true,
-        builder: builder,
-      );
+  final resolved = resolveMediaPreviewPresentation(context, presentation);
+  if (resolved == MediaPreviewPresentation.bottomDrawer) {
+    return showAppBottomDrawer<MediaPreviewAction>(
+      context: context,
+      maxHeightFactor: 0.7,
+      drawerKey: drawerKey,
+      ignoreTopSafeArea: true,
+      builder: builder,
+    );
   }
+  return showDialog<MediaPreviewAction>(context: context, builder: builder);
 }
 
 class MediaPreviewDialog extends ConsumerStatefulWidget {
@@ -226,9 +244,13 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
       !widget.item.isVideo &&
       widget.availableActions.contains(MediaPreviewAction.openMovieDetail);
 
+  bool _isBottomDrawer(BuildContext context) =>
+      resolveMediaPreviewPresentation(context, widget.presentation) ==
+      MediaPreviewPresentation.bottomDrawer;
+
   @override
   Widget build(BuildContext context) {
-    if (widget.presentation == MediaPreviewPresentation.bottomDrawer) {
+    if (_isBottomDrawer(context)) {
       final screenHeight = MediaQuery.sizeOf(context).height;
       final previewHeight = math.min(
         320.0,
@@ -305,7 +327,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
       ],
     );
 
-    if (widget.presentation == MediaPreviewPresentation.bottomDrawer) {
+    if (_isBottomDrawer(context)) {
       return LayoutBuilder(
         builder: (context, constraints) {
           final maxPreviewHeight = math.max(

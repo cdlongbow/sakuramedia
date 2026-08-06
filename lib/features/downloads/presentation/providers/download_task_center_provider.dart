@@ -85,7 +85,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
           clientId: filter.clientId,
           movieNumber:
               filter.normalizedSearch.isEmpty ? null : filter.normalizedSearch,
-          downloadState: filter.stateFilter.apiValue,
+          downloadStates: filter.stateFilter.apiValues,
           sort: 'created_at:desc',
         );
     final liveById = _liveOverlayById();
@@ -599,8 +599,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       final movie = progress.movieNumber?.trim().toUpperCase() ?? '';
       if (movie != search.toUpperCase()) return false;
     }
-    final expectedState = _activeFilter.stateFilter.apiValue;
-    if (expectedState != null && progress.downloadState != expectedState) {
+    final expectedStates = _activeFilter.stateFilter.apiValues;
+    if (expectedStates != null &&
+        !expectedStates.contains(progress.downloadState)) {
       return false;
     }
     return true;
@@ -616,8 +617,8 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       final movie = row.task.movieNumber?.trim().toUpperCase() ?? '';
       if (movie != search.toUpperCase()) return false;
     }
-    final expectedState = _activeFilter.stateFilter.apiValue;
-    if (expectedState != null && row.downloadState != expectedState) {
+    final expectedStates = _activeFilter.stateFilter.apiValues;
+    if (expectedStates != null && !expectedStates.contains(row.downloadState)) {
       return false;
     }
     return true;

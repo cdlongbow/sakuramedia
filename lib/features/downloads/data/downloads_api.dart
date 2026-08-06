@@ -55,7 +55,7 @@ class DownloadsApi {
     int pageSize = 20,
     int? clientId,
     String? movieNumber,
-    String? downloadState,
+    List<String>? downloadStates,
     String? sort,
   }) async {
     final response = await _apiClient.get(
@@ -66,8 +66,8 @@ class DownloadsApi {
         if (clientId != null) 'client_id': clientId,
         if (movieNumber != null && movieNumber.trim().isNotEmpty)
           'movie_number': movieNumber,
-        if (downloadState != null && downloadState.trim().isNotEmpty)
-          'download_state': downloadState,
+        if (downloadStates != null && downloadStates.isNotEmpty)
+          'download_state': downloadStates,
         if (sort != null && sort.trim().isNotEmpty) 'sort': sort,
       },
     );

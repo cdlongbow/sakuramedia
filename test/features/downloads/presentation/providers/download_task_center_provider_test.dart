@@ -152,8 +152,8 @@ void main() {
       (r) => r.uri.path.endsWith('/download-tasks'),
     );
     expect(
-      taskRequest.uri.queryParameters,
-      containsPair('download_state', 'downloading'),
+      taskRequest.uri.queryParametersAll['download_state'],
+      ['downloading', 'stalled'],
     );
   });
 

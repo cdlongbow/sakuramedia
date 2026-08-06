@@ -239,7 +239,7 @@ void main() {
 
         await bundle.downloadsApi.getDownloadTasks(
           movieNumber: 'SSIS-001',
-          downloadState: 'paused',
+          downloadStates: ['paused'],
           clientId: 3,
           sort: 'created_at:desc',
         );
@@ -248,6 +248,36 @@ void main() {
         expect(request.uri.queryParameters['movie_number'], 'SSIS-001');
         expect(request.uri.queryParameters['download_state'], 'paused');
         expect(request.uri.queryParameters['client_id'], '3');
+      },
+    );
+
+    test(
+      'getDownloadTasks sends multiple download_state as repeated params',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/download-tasks',
+          body: {
+            'items': const <Map<String, dynamic>>[],
+            'page': 1,
+            'page_size': 20,
+            'total': 0,
+          },
+        );
+
+        await bundle.downloadsApi.getDownloadTasks(
+          downloadStates: ['downloading', 'stalled'],
+        );
+
+        final request = bundle.adapter.requests.single;
+        expect(request.uri.queryParametersAll['download_state'], [
+          'downloading',
+          'stalled',
+        ]);
       },
     );
 

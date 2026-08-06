@@ -741,6 +741,7 @@ String _labelForDownloadState(String state) {
     'paused' => '已暂停',
     'failed' => '失败',
     'stalled' => '等待资源',
+    'stalled_dead' => '死种',
     'checking' => '校验中',
     'queued' => '排队中',
     'abandoned' => '已放弃跟踪',
@@ -757,6 +758,8 @@ AppBadgeTone _toneForDownloadState(String state) {
     'paused' => AppBadgeTone.neutral,
     'failed' => AppBadgeTone.error,
     'stalled' => AppBadgeTone.warning,
+    // 死种：qB 侧 stalledDL 躺太久被本地判死，比"等待资源"更严重，用 error 提示。
+    'stalled_dead' => AppBadgeTone.error,
     'checking' => AppBadgeTone.info,
     'queued' => AppBadgeTone.neutral,
     'abandoned' => AppBadgeTone.warning,

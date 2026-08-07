@@ -21,7 +21,7 @@
 当前状态：
 
 - 桌面端：已实现登录、工作台壳层、概览、发现（含顶部“女优上新”预览区块）、女优上新（发现页“更多”进入的子页面）、影片、女优、标签、时刻、播放列表、排行榜、热评、活动中心、媒体导入、搜索、详情、系统设置（失效媒体维护已并入为其中一个 Tab）
-- 移动端：已接入底部四导航（概览/影片/女优/榜单）与首页顶部 Tab（我的/关注/发现/时刻/热评）；首页左上角已接入抽屉菜单入口（数据源 / 媒体库 / 下载器 / 索引器 / LLM 配置 / 播放列表 / 修改用户名 / 修改密码 / 退出登录）；“我的”已实现搜索栏、最近添加和播放列表，“发现”已接入每日推荐影片与推荐时刻，且已接入影片详情页、播放列表详情页与搜索子页；`/mobile/library/movies`、`/mobile/library/movies/:movieNumber`、`/mobile/library/actors`、`/mobile/library/actors/:actorId`、`/mobile/rankings`、`/mobile/settings/data-sources`、`/mobile/settings/media-libraries`、`/mobile/settings/downloaders`、`/mobile/settings/indexers`、`/mobile/settings/llm`、`/mobile/settings/playlists`、`/mobile/settings/username` 与 `/mobile/settings/password` 为真实页面，其余 `/mobile/settings/*` 仍以移动端专属占位子页为主
+- 移动端：已接入底部四导航（概览/影片/女优/榜单）与首页顶部 Tab（我的/关注/发现/时刻/热评）；首页左上角已接入抽屉菜单入口（数据源 / 媒体库 / 下载器 / 索引器 / LLM 配置 / 播放列表 / 修改用户名 / 修改密码 / 退出登录，以及「管理」分区的媒体管理）；“我的”已实现搜索栏、最近添加和播放列表，“发现”已接入每日推荐影片与推荐时刻，且已接入影片详情页、播放列表详情页与搜索子页；媒体管理移动端为三 tab 页（媒体列表 / 失效巡检 / 115秒传记录），媒体列表支持底部抽屉筛选与长按多选（批量删除 / 秒传到 115）；`/mobile/library/movies`、`/mobile/library/movies/:movieNumber`、`/mobile/library/actors`、`/mobile/library/actors/:actorId`、`/mobile/rankings`、`/mobile/system/media`、`/mobile/settings/data-sources`、`/mobile/settings/media-libraries`、`/mobile/settings/downloaders`、`/mobile/settings/indexers`、`/mobile/settings/llm`、`/mobile/settings/playlists`、`/mobile/settings/username` 与 `/mobile/settings/password` 为真实页面，其余 `/mobile/settings/*` 仍以移动端专属占位子页为主
 - Web 端：复用桌面端路由与壳层（`/desktop/*`），页面能力与桌面端保持一致，活动中心同样复用桌面实现
 
 因此，本规范默认以桌面端为主进行描述。移动端当前已接入影片列表/详情、女优列表/详情、排行榜与播放器主链路；Web 端复用桌面实现，但桌面窗口拖拽、窗口初始化等系统级能力在浏览器端降级为无效果。

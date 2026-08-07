@@ -97,25 +97,33 @@ class MediaBrowse extends _$MediaBrowse
     }
   }
 
-  /// 选中当前已加载页面里的全部（非叠加所有页）。
+  /// 全选 / 取消全选**当前已加载**的条目（非叠加所有页）。
   ///
   /// 通过 [isBulkSelectableRapidUploadStatus] 白名单过滤：`in_progress` 与未识别
   /// 的 `unknown` 状态都不批量选，避免后端 `active_media_id` 唯一约束 422 或后端
   /// 未来新增"不可批量"语义时前端静默混入。单点 tap 不受此限（用户主动操作）。
-  void selectAllLoaded() {
+  /// 已全选时再点即清空当前页，对应工具条「全选本页 ↔ 取消全选本页」同一按钮。
+  void toggleSelectAllLoaded() {
     final current = state.value;
     if (current == null) return;
+    final loadedIds = current.paged.items
+        .where(
+          (item) =>
+              isBulkSelectableRapidUploadStatus(item.lastRapidUploadStatus),
+        )
+        .map((item) => item.id)
+        .toList(growable: false);
+    if (loadedIds.isEmpty) {
+      return;
+    }
+    final allSelected = current.allLoadedSelected;
     final next = Set<int>.of(current.selectedIds);
-    var changed = false;
-    for (final item in current.paged.items) {
-      if (!isBulkSelectableRapidUploadStatus(item.lastRapidUploadStatus)) {
-        continue;
-      }
-      if (next.add(item.id)) changed = true;
+    if (allSelected) {
+      next.removeAll(loadedIds);
+    } else {
+      next.addAll(loadedIds);
     }
-    if (changed) {
-      state = AsyncData(current.copyWith(selectedIds: next));
-    }
+    state = AsyncData(current.copyWith(selectedIds: next));
   }
 
   void clearSelection() {

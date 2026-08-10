@@ -11,7 +11,7 @@ jobs:
   build-and-release:
     name: Build Windows zip and publish release
     # 固定到 windows-2022：windows-latest 已升级到 VS2026(v18),
-    # 而 Flutter 3.29.3 不认识该版本会回退到 "Visual Studio 16 2019" 生成器导致构建失败。
+    # Flutter 3.38.10 尚未纳入 VS2026(v18) 支持，固定 runner 避免 CMake 生成器不兼容。
     runs-on: windows-2022
 
     env:
@@ -25,7 +25,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.29.3
+          flutter-version: 3.38.10
           cache: true
 
       - name: Enable Windows desktop

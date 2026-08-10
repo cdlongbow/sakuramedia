@@ -175,18 +175,24 @@ class _LibraryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    return Column(
-      children: [
-        for (final library in libraries)
-          Padding(
-            padding: EdgeInsets.only(bottom: spacing.sm),
-            child: _LibraryTile(
-              library: library,
-              selected: library.id == selectedId,
-              onTap: () => onSelected(library.id),
+    return RadioGroup<int>(
+      groupValue: selectedId,
+      onChanged: (id) {
+        if (id != null) onSelected(id);
+      },
+      child: Column(
+        children: [
+          for (final library in libraries)
+            Padding(
+              padding: EdgeInsets.only(bottom: spacing.sm),
+              child: _LibraryTile(
+                library: library,
+                selected: library.id == selectedId,
+                onTap: () => onSelected(library.id),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -213,8 +219,6 @@ class _LibraryTile extends StatelessWidget {
           Radio<int>(
             key: Key('rapid-upload-target-radio-${library.id}'),
             value: library.id,
-            groupValue: selected ? library.id : null,
-            onChanged: (_) => onTap(),
           ),
           SizedBox(width: spacing.sm),
           Expanded(

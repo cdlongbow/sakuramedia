@@ -13,17 +13,21 @@ part 'media_browse_provider.g.dart';
 /// 「媒体管理」列表控制器（Riverpod）：分页拉取全局 `/media`，持有筛选与多选。
 ///
 /// 筛选状态遵循项目主流约定：值对象 [MediaBrowseFilterState] 由 State 持有，
-/// `fetchPage` 通过内部 [_activeFilter] 字段读取拼参数。UI 改完调 [applyFilterState]
-/// 才 reload。多选独立于 filter，reload 会清空。
+/// `fetchPage` 从共享筛选 mixin 的 [activeFilter] 读取参数；UI 改筛选时先同步
+/// 写入 State 并清多选，再防抖刷新第一页。
 ///
 /// 迁移前对应：`MediaBrowseController extends PagedLoadController<MediaListItemDto>`。
 @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class MediaBrowse extends _$MediaBrowse
-    with PagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto> {
-  /// fetchPage 读取的筛选源。放在 Notifier 字段而不是 `state.value.filter`，
-  /// 原因：`reload` 会先把 state 切成 `AsyncLoading`（state.value == null），
-  /// 此时 fetchPage 若从 state 读会拿到 null → 默认筛选。用字段避免这个竞争。
-  MediaBrowseFilterState _activeFilter = MediaBrowseFilterState.initial;
+    with
+        PagedAsyncNotifierMixin<MediaBrowseState, MediaListItemDto>,
+        FilterablePagedAsyncNotifierMixin<
+          MediaBrowseState,
+          MediaListItemDto,
+          MediaBrowseFilterState
+        > {
+  @override
+  MediaBrowseFilterState get initialFilter => MediaBrowseFilterState.initial;
 
   @override
   int get pageSize => 30;
@@ -48,7 +52,7 @@ class MediaBrowse extends _$MediaBrowse
     int page,
     int pageSize,
   ) {
-    final filter = _activeFilter;
+    final filter = activeFilter;
     return ref
         .read(mediaApiProvider)
         .getMediaList(
@@ -66,18 +70,14 @@ class MediaBrowse extends _$MediaBrowse
     invalidateOnSignOut(ref);
     attachDisposeGuard();
     final paged = await loadInitialPage();
-    return MediaBrowseState(paged: paged, filter: _activeFilter);
+    return MediaBrowseState(paged: paged, filter: activeFilter);
   }
 
-  /// 应用新筛选状态；未变则短路。变化则清多选并强制 reload。
-  Future<void> applyFilterState(MediaBrowseFilterState next) async {
-    if (_activeFilter == next) return;
-    _activeFilter = next;
-    await reload(
-      updateBaseState:
-          (s) => s.copyWith(filter: next, selectedIds: const <int>{}),
-    );
-  }
+  @override
+  MediaBrowseState applyFilterToState(
+    MediaBrowseState state,
+    MediaBrowseFilterState filter,
+  ) => state.copyWith(filter: filter, selectedIds: const <int>{});
 
   void toggleSelection(int id) {
     final current = state.value;

@@ -23,6 +23,7 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
@@ -320,14 +321,11 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TaskFilterBar(controller: _controller),
-                  if (_controller.taskRefreshErrorMessage != null) ...[
-                    SizedBox(height: context.appSpacing.md),
-                    AppPagedLoadMoreFooter(
-                      isLoading: false,
-                      errorMessage: _controller.taskRefreshErrorMessage,
-                      onRetry: _controller.refreshTaskHistory,
-                    ),
-                  ],
+                  AppFilterUpdateBar(
+                    state: _controller.taskFilterUpdate,
+                    hasPreviousItems: _controller.taskRuns.isNotEmpty,
+                    onRetry: _controller.refreshTaskHistory,
+                  ),
                 ],
               ),
             ),
@@ -337,6 +335,10 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       ),
     ];
 
+    if (_controller.taskRuns.isEmpty &&
+        _controller.taskFilterUpdate.hasFailed) {
+      return slivers;
+    }
     if (_controller.taskRuns.isEmpty) {
       slivers.add(
         const SliverToBoxAdapter(child: AppEmptyState(message: '当前筛选下暂无任务记录')),
@@ -408,6 +410,48 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       ),
       (_, next) => _syncTabSelection(next),
     );
+    ref.listen(
+      activityCenterProvider.select((value) => value.value?.taskFilter),
+      (previous, next) {
+        if (previous != null &&
+            next != null &&
+            previous != next &&
+            activeTab == ActivityTab.tasks &&
+            _pageScrollController.hasClients) {
+          _pageScrollController.jumpTo(0);
+        }
+      },
+    );
+    if (_hasOpenedResourceTasks || activeTab == ActivityTab.resourceTasks) {
+      ref.listen(
+        resourceTaskCenterProvider.select(
+          (value) => value.value?.activeBucket?.filter,
+        ),
+        (previous, next) {
+          if (previous != null &&
+              next != null &&
+              previous != next &&
+              activeTab == ActivityTab.resourceTasks &&
+              _pageScrollController.hasClients) {
+            _pageScrollController.jumpTo(0);
+          }
+        },
+      );
+    }
+    if (_hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks) {
+      ref.listen(
+        downloadTaskCenterProvider.select((value) => value.value?.filter),
+        (previous, next) {
+          if (previous != null &&
+              next != null &&
+              previous != next &&
+              activeTab == ActivityTab.downloadTasks &&
+              _pageScrollController.hasClients) {
+            _pageScrollController.jumpTo(0);
+          }
+        },
+      );
+    }
     ref.listen<AsyncValue<ActivityCenterState>>(
       activityCenterProvider,
       (_, __) => _handleControllerChanged(),
@@ -468,13 +512,12 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
                 ignoring: !_resourceTaskController.isDetailOpen,
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 180),
-                  child:
-                      _resourceTaskController.isDetailOpen
-                          ? buildResourceTaskDetailOverlay(
-                            context: context,
-                            controller: _resourceTaskController,
-                          )
-                          : const SizedBox.shrink(),
+                  child: _resourceTaskController.isDetailOpen
+                      ? buildResourceTaskDetailOverlay(
+                          context: context,
+                          controller: _resourceTaskController,
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -886,10 +929,9 @@ class _ExecutableJobCard extends StatelessWidget {
           SizedBox(width: context.appSpacing.lg),
           AppButton(
             key: Key('activity-job-trigger-${job.taskKey}'),
-            label:
-                job.manualTriggerAllowed
-                    ? (isTriggering ? '提交中' : '立即执行')
-                    : '不可手动执行',
+            label: job.manualTriggerAllowed
+                ? (isTriggering ? '提交中' : '立即执行')
+                : '不可手动执行',
             size: AppButtonSize.small,
             variant: AppButtonVariant.primary,
             isLoading: isTriggering,
@@ -948,12 +990,9 @@ class _TaskFilterBar extends StatelessWidget {
                 ),
               ),
             ],
-            onChanged:
-                controller.isRefreshingTaskHistory
-                    ? null
-                    : (value) => controller.applyTaskFilter(
-                      controller.taskFilter.copyWith(state: value),
-                    ),
+            onChanged: (value) => controller.applyTaskFilter(
+              controller.taskFilter.copyWith(state: value),
+            ),
           ),
         ),
         SizedBox(
@@ -973,12 +1012,9 @@ class _TaskFilterBar extends StatelessWidget {
                     DropdownMenuItem<String?>(value: value, child: Text(value)),
               ),
             ],
-            onChanged:
-                controller.isRefreshingTaskHistory
-                    ? null
-                    : (value) => controller.applyTaskFilter(
-                      controller.taskFilter.copyWith(taskKey: value),
-                    ),
+            onChanged: (value) => controller.applyTaskFilter(
+              controller.taskFilter.copyWith(taskKey: value),
+            ),
           ),
         ),
         SizedBox(
@@ -1000,12 +1036,9 @@ class _TaskFilterBar extends StatelessWidget {
                 ),
               ),
             ],
-            onChanged:
-                controller.isRefreshingTaskHistory
-                    ? null
-                    : (value) => controller.applyTaskFilter(
-                      controller.taskFilter.copyWith(triggerType: value),
-                    ),
+            onChanged: (value) => controller.applyTaskFilter(
+              controller.taskFilter.copyWith(triggerType: value),
+            ),
           ),
         ),
         SizedBox(
@@ -1023,52 +1056,14 @@ class _TaskFilterBar extends StatelessWidget {
                   ),
                 )
                 .toList(growable: false),
-            onChanged:
-                controller.isRefreshingTaskHistory
-                    ? null
-                    : (value) => controller.applyTaskFilter(
-                      controller.taskFilter.copyWith(
-                        sort: value ?? ActivityTaskSort.startedAtDesc,
-                      ),
-                    ),
+            onChanged: (value) => controller.applyTaskFilter(
+              controller.taskFilter.copyWith(
+                sort: value ?? ActivityTaskSort.startedAtDesc,
+              ),
+            ),
           ),
         ),
-        _FilterRefreshIndicator(
-          indicatorKey: const Key('activity-task-filter-loading'),
-          isVisible: controller.isRefreshingTaskHistory,
-        ),
       ],
-    );
-  }
-}
-
-class _FilterRefreshIndicator extends StatelessWidget {
-  const _FilterRefreshIndicator({
-    required this.indicatorKey,
-    required this.isVisible,
-  });
-
-  final Key indicatorKey;
-  final bool isVisible;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 36,
-      height: 36,
-      child: Center(
-        child:
-            isVisible
-                ? SizedBox(
-                  key: indicatorKey,
-                  width: 18,
-                  height: 18,
-                  child: const CircularProgressIndicator.adaptive(
-                    strokeWidth: 2.2,
-                  ),
-                )
-                : null,
-      ),
     );
   }
 }
@@ -1092,10 +1087,9 @@ class _TaskRunCard extends StatelessWidget {
         color: colors.surfaceCard,
         borderRadius: context.appRadius.mdBorder,
         border: Border.all(
-          color:
-              highlighted
-                  ? Theme.of(context).colorScheme.primary
-                  : colors.borderSubtle,
+          color: highlighted
+              ? Theme.of(context).colorScheme.primary
+              : colors.borderSubtle,
         ),
       ),
       child: Column(

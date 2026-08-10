@@ -89,6 +89,18 @@ class MediaManagementContent extends HookConsumerWidget {
       // 但把 tab 加入 keys 更贴合 hook 心智模型）。
       keys: [currentTab],
     );
+    ref.listen(mediaBrowseProvider.select((value) => value.value?.filter), (
+      previous,
+      next,
+    ) {
+      if (previous != null &&
+          next != null &&
+          previous != next &&
+          currentTab == 0 &&
+          scrollController.hasClients) {
+        scrollController.jumpTo(0);
+      }
+    });
 
     // 切 tab 时回到顶部，避免新 tab 沿用上一个的滚动位置误触发 loadMore。
     useEffect(() {
@@ -106,7 +118,11 @@ class MediaManagementContent extends HookConsumerWidget {
     // 秒传批次运行态轮询：Timer 完全归页面（不入 Notifier）。
     // 用 ref.listen 观察批次数据变化，动态启停 Timer。
     final batchPollTimer = useRef<Timer?>(null);
-    useEffect(() => () => batchPollTimer.value?.cancel(), const <Object?>[]);
+    useEffect(
+      () =>
+          () => batchPollTimer.value?.cancel(),
+      const <Object?>[],
+    );
     ref.listen(mediaRapidUploadHistoryProvider, (previous, next) {
       final items = next.value?.items ?? const [];
       final hasRunning = items.any((batch) => batch.state.isRunning);
@@ -157,9 +173,8 @@ class MediaManagementContent extends HookConsumerWidget {
               _batchTabIndex => RapidUploadHistorySection(
                 scrollController: scrollController,
                 retryingBatchId: retryingBatchId.value,
-                onRetry:
-                    (batch) =>
-                        _retryBatch(context, ref, batch, retryingBatchId),
+                onRetry: (batch) =>
+                    _retryBatch(context, ref, batch, retryingBatchId),
               ),
               _maintenanceTabIndex => InvalidMediaSection(
                 key: Key('$keyPrefix-invalid-media-section'),
@@ -169,20 +184,18 @@ class MediaManagementContent extends HookConsumerWidget {
                 scrollController: scrollController,
                 isTriggering: isTriggeringUpload.value,
                 isDeleting: isBatchDeleting.value,
-                onRapidUpload:
-                    () => _openRapidUploadDialog(
-                      context,
-                      ref,
-                      isTriggeringUpload,
-                      selectionMode,
-                    ),
-                onBatchDelete:
-                    () => _openBatchDeleteDialog(
-                      context,
-                      ref,
-                      isBatchDeleting,
-                      selectionMode,
-                    ),
+                onRapidUpload: () => _openRapidUploadDialog(
+                  context,
+                  ref,
+                  isTriggeringUpload,
+                  selectionMode,
+                ),
+                onBatchDelete: () => _openBatchDeleteDialog(
+                  context,
+                  ref,
+                  isBatchDeleting,
+                  selectionMode,
+                ),
                 // 复合刷新：媒体列表 + 失效巡检 + 秒传批次 + 媒体库。
                 onRefresh: () => _refreshAll(ref),
                 onOpenMovieDetail: onOpenMovieDetail,
@@ -337,10 +350,9 @@ class MediaManagementContent extends HookConsumerWidget {
     if (failedIds.isEmpty) {
       showToast('已删除 ${okIds.length} 项媒体');
     } else {
-      final errorMessage =
-          firstError == null
-              ? '未知错误'
-              : apiErrorMessage(firstError, fallback: '批量删除失败');
+      final errorMessage = firstError == null
+          ? '未知错误'
+          : apiErrorMessage(firstError, fallback: '批量删除失败');
       showToast('已删除 ${okIds.length} 项，${failedIds.length} 项失败：$errorMessage');
       // 半失败：拉服务端真实态兜底，避免前端与后端偏差。
       unawaited(ref.read(mediaBrowseProvider.notifier).refresh());

@@ -45,7 +45,7 @@ final class NotificationCenterProvider
 }
 
 String _$notificationCenterHash() =>
-    r'94d7807279bd945791f1a3e8010e9d2c2db589e4';
+    r'4bd4d1cda218e3cd2de104d2f40b9b053b5d2066';
 
 /// 全局常驻通知中心。会话登录后自动 bootstrap 并连接 SSE，登出时断流清空。
 

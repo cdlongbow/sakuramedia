@@ -70,10 +70,9 @@ void main() {
       1,
     );
     expect(bundle.adapter.hitCount('GET', '/system/resource-task-states'), 1);
-    final recordRequest =
-        bundle.adapter.requests
-            .where((req) => req.path == '/system/resource-task-states')
-            .single;
+    final recordRequest = bundle.adapter.requests
+        .where((req) => req.path == '/system/resource-task-states')
+        .single;
     expect(recordRequest.uri.queryParameters['task_key'], 'movie_desc_sync');
     expect(recordRequest.uri.queryParameters['page'], '1');
     expect(recordRequest.uri.queryParameters['page_size'], '20');
@@ -148,21 +147,26 @@ void main() {
       items: <Map<String, dynamic>>[_recordJson(id: 1002, state: 'failed')],
     );
 
-    await controller.applyFilter(
-      const ResourceTaskRecordFilterState(
-        stateFilter: ResourceTaskRecordStateFilter.failed,
-        search: ' SSIS ',
-        sort: ResourceTaskRecordSort.lastErrorAtDesc,
-      ),
+    const nextFilter = ResourceTaskRecordFilterState(
+      stateFilter: ResourceTaskRecordStateFilter.failed,
+      search: ' SSIS ',
+      sort: ResourceTaskRecordSort.lastErrorAtDesc,
     );
+    final update = controller.applyFilter(nextFilter);
+
+    expect(controller.activeFilter, nextFilter);
+    expect(controller.filterUpdateLoading, isTrue);
+    expect(controller.activeRecords.single.resourceId, 1001);
+    expect(bundle.adapter.hitCount('GET', '/system/resource-task-states'), 1);
+
+    await update;
 
     expect(controller.activeRecords, hasLength(1));
     expect(controller.activeRecords.single.resourceId, 1002);
 
-    final requests =
-        bundle.adapter.requests
-            .where((req) => req.path == '/system/resource-task-states')
-            .toList();
+    final requests = bundle.adapter.requests
+        .where((req) => req.path == '/system/resource-task-states')
+        .toList();
     expect(requests, hasLength(2));
     final filtered = requests.last;
     expect(filtered.uri.queryParameters['state'], 'failed');
@@ -212,10 +216,9 @@ void main() {
     ]);
     expect(controller.hasMoreRecords, isFalse);
     expect(controller.recordsLoadMoreErrorMessage, isNull);
-    final pageRequest =
-        bundle.adapter.requests
-            .where((req) => req.path == '/system/resource-task-states')
-            .last;
+    final pageRequest = bundle.adapter.requests
+        .where((req) => req.path == '/system/resource-task-states')
+        .last;
     expect(pageRequest.uri.queryParameters['page'], '2');
   });
 
@@ -251,10 +254,9 @@ void main() {
 
     expect(controller.activeRecords.map((r) => r.resourceId), <int>[1003]);
     expect(controller.hasMoreRecords, isFalse);
-    final requests =
-        bundle.adapter.requests
-            .where((req) => req.path == '/system/resource-task-states')
-            .toList();
+    final requests = bundle.adapter.requests
+        .where((req) => req.path == '/system/resource-task-states')
+        .toList();
     expect(requests, hasLength(2));
     expect(requests.last.uri.queryParameters['page'], '1');
   });
@@ -821,6 +823,10 @@ class _ResourceTaskCenterHarness {
   bool get hasLoadedActiveRecords => _state.hasLoadedActiveRecords;
   bool get isLoadingRecords => _state.isLoadingRecords;
   bool get hasMoreRecords => _state.hasMoreRecords;
+  ResourceTaskRecordFilterState get activeFilter =>
+      _state.activeBucket?.filter ?? ResourceTaskRecordFilterState.initial;
+  bool get filterUpdateLoading =>
+      _state.activeBucket?.filterUpdate.isLoading ?? false;
   String? get recordsLoadErrorMessage => _state.recordsLoadErrorMessage;
   String? get recordsLoadMoreErrorMessage => _state.recordsLoadMoreErrorMessage;
   bool get isDetailOpen => _state.isDetailOpen;
@@ -929,14 +935,13 @@ Map<String, dynamic> _recordJson({
     'last_trigger_type': 'scheduled',
     'created_at': '2026-04-01T00:00:00Z',
     'updated_at': '2026-04-18T10:00:00Z',
-    'resource':
-        hasResource
-            ? <String, dynamic>{
-              'resource_id': id,
-              'movie_number': 'SSIS-$id',
-              'title': '示例-$id',
-              if (valid != null) 'valid': valid,
-            }
-            : null,
+    'resource': hasResource
+        ? <String, dynamic>{
+            'resource_id': id,
+            'movie_number': 'SSIS-$id',
+            'title': '示例-$id',
+            if (valid != null) 'valid': valid,
+          }
+        : null,
   };
 }

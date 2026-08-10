@@ -143,7 +143,7 @@ void main() {
     expect(state.paged.items.single.movieNumber, 'ABC-002');
   });
 
-  test('切换周期和排序立即重拉，并写入请求参数', () async {
+  test('切换周期和排序同步更新控件，防抖后写入请求参数', () async {
     const scope = RankingSummaryScope.desktop();
     await prime(scope);
     adapter.enqueueJson(
@@ -151,9 +151,21 @@ void main() {
       path: '/ranking-sources/javdb/boards/censored/items',
       body: _page(items: <Map<String, dynamic>>[_rankedMovie(2)], total: 1),
     );
-    await container
+    final periodUpdate = container
         .read(rankingSummaryProvider(scope).notifier)
         .selectPeriod('weekly');
+    final pendingPeriod = container
+        .read(rankingSummaryProvider(scope))
+        .requireValue;
+    expect(pendingPeriod.filters.selectedPeriod, 'weekly');
+    expect(pendingPeriod.paged.filterUpdate.isLoading, isTrue);
+    expect(pendingPeriod.paged.items.single.movieNumber, 'ABC-001');
+    expect(
+      adapter.hitCount('GET', '/ranking-sources/javdb/boards/censored/items'),
+      1,
+    );
+
+    await periodUpdate;
     expect(adapter.requests.last.uri.queryParameters['period'], 'weekly');
 
     adapter.enqueueJson(
@@ -161,9 +173,17 @@ void main() {
       path: '/ranking-sources/javdb/boards/censored/items',
       body: _page(items: <Map<String, dynamic>>[_rankedMovie(3)], total: 1),
     );
-    await container
+    final sortUpdate = container
         .read(rankingSummaryProvider(scope).notifier)
         .selectSort(RankingSortField.heat, SortDirection.asc);
+    final pendingSort = container
+        .read(rankingSummaryProvider(scope))
+        .requireValue;
+    expect(pendingSort.filters.selectedSortField, RankingSortField.heat);
+    expect(pendingSort.paged.filterUpdate.isLoading, isTrue);
+    expect(pendingSort.paged.items.single.movieNumber, 'ABC-002');
+
+    await sortUpdate;
     expect(adapter.requests.last.uri.queryParameters['sort'], 'heat:asc');
   });
 
@@ -283,8 +303,9 @@ void main() {
 
     final cache = RiverpodPageCache();
     addTearDown(cache.dispose);
-    final link =
-        container.read(rankingSummaryProvider(desktop).notifier).cacheLink;
+    final link = container
+        .read(rankingSummaryProvider(desktop).notifier)
+        .cacheLink;
     expect(link, isNotNull);
     cache.obtain(key: desktop.cacheKey, resolveLinks: () => [link!]);
   });

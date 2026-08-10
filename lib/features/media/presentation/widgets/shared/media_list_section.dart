@@ -206,13 +206,12 @@ class _MediaListHeader extends ConsumerWidget {
       context: context,
       drawerKey: Key('$keyPrefix-filter-drawer'),
       heightFactor: 0.8,
-      builder:
-          (_) => _MediaListMobileFilterDrawerContent(
-            initial: filter,
-            libraries: libraries,
-            onChanged: (next) => _applyFilter(ref, next),
-            scrollViewKey: Key('$keyPrefix-filter-scroll-view'),
-          ),
+      builder: (_) => _MediaListMobileFilterDrawerContent(
+        initial: filter,
+        libraries: libraries,
+        onChanged: (next) => _applyFilter(ref, next),
+        scrollViewKey: Key('$keyPrefix-filter-scroll-view'),
+      ),
     );
   }
 
@@ -249,13 +248,11 @@ class _MediaListHeader extends ConsumerWidget {
             key: Key('$keyPrefix-select-all-button'),
             label: allLoadedSelected ? '取消全选本页' : '全选本页',
             size: AppTextButtonSize.small,
-            onPressed:
-                !hasItems || busy
-                    ? null
-                    : () =>
-                        ref
-                            .read(mediaBrowseProvider.notifier)
-                            .toggleSelectAllLoaded(),
+            onPressed: !hasItems || busy
+                ? null
+                : () => ref
+                      .read(mediaBrowseProvider.notifier)
+                      .toggleSelectAllLoaded(),
           ),
         ],
       );
@@ -266,16 +263,20 @@ class _MediaListHeader extends ConsumerWidget {
     if (mobile) {
       return AppListHeader(
         key: Key('$keyPrefix-header'),
-        onFilterTap:
-            () => _openMobileFilterDrawer(
-              context,
-              filter: filter,
-              libraries: librariesState.libraries,
-              ref: ref,
-            ),
+        onFilterTap: () => _openMobileFilterDrawer(
+          context,
+          filter: filter,
+          libraries: librariesState.libraries,
+          ref: ref,
+        ),
         filterLabel: filter.triggerLabel,
         filterButtonKey: Key('$keyPrefix-filter-trigger'),
         filterTooltip: '筛选',
+        filterUpdate:
+            currentState?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+        hasPreviousFilterItems: hasItems,
+        onRetryFilter: () =>
+            unawaited(ref.read(mediaBrowseProvider.notifier).retryFilter()),
         informationSlots: [
           AppListHeaderInfo(
             key: Key('$keyPrefix-total-text'),
@@ -287,12 +288,11 @@ class _MediaListHeader extends ConsumerWidget {
             key: Key('$keyPrefix-refresh-button'),
             tooltip: isInitialLoading ? '刷新中' : '刷新',
             icon: const Icon(Icons.refresh_rounded),
-            onPressed:
-                isInitialLoading
-                    ? null
-                    : () {
-                      unawaited((onRefresh ?? () => _defaultRefresh(ref))());
-                    },
+            onPressed: isInitialLoading
+                ? null
+                : () {
+                    unawaited((onRefresh ?? () => _defaultRefresh(ref))());
+                  },
           ),
         ],
       );
@@ -305,9 +305,15 @@ class _MediaListHeader extends ConsumerWidget {
         onChanged: (next) => _applyFilter(ref, next),
         onReset: () => _resetFilter(ref),
       ),
-      totalText:
-          hasSelection ? '共 $total 条 · 已选 $selectionCount 项' : '共 $total 条',
+      totalText: hasSelection
+          ? '共 $total 条 · 已选 $selectionCount 项'
+          : '共 $total 条',
       totalKey: const Key('media-management-total-text'),
+      filterUpdate:
+          currentState?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+      hasPreviousFilterItems: hasItems,
+      onRetryFilter: () =>
+          unawaited(ref.read(mediaBrowseProvider.notifier).retryFilter()),
       trailing: _MediaListActionBar(
         hasItems: hasItems,
         hasSelection: hasSelection,
@@ -327,7 +333,7 @@ class _MediaListHeader extends ConsumerWidget {
 
 /// 移动端筛选抽屉内容：沿用 `movie_filter_drawer` 的「本地 `_local` + 即时外发」模式
 /// （就地反映选中态，打开期间点选 chip 立即点亮），壳用共享
-/// [AppMobileFilterDrawerScaffold]（与其余 8 个筛选抽屉一致，无标题、即时生效）。
+/// [AppMobileFilterDrawerScaffold]（与其余筛选抽屉一致，无标题、条件即时更新）。
 class _MediaListMobileFilterDrawerContent extends StatefulWidget {
   const _MediaListMobileFilterDrawerContent({
     required this.initial,
@@ -411,29 +417,25 @@ class _MediaListBodySliver extends ConsumerWidget {
       asyncState: asyncPaged,
       pagedOf: (state) => state,
       itemSpacing: context.appSpacing.sm,
-      fixedItemExtent:
-          mobile ? null : context.appComponentTokens.mediaManagementRowHeight,
+      fixedItemExtent: mobile
+          ? null
+          : context.appComponentTokens.mediaManagementRowHeight,
       initialErrorMessage: '媒体列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有媒体记录。调整筛选条件或稍后再试。',
       initialRetryKey: Key('$keyPrefix-initial-retry-button'),
-      onReload:
-          () => unawaited(ref.read(mediaBrowseProvider.notifier).reload()),
-      onLoadMore:
-          () => unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
-      itemBuilder:
-          (context, item, _) =>
-              mobile
-                  ? _MediaMobileRowConsumer(
-                    keyPrefix: keyPrefix,
-                    item: item,
-                    selectionMode: selectionMode,
-                    onEnterSelection: onEnterSelection,
-                    onOpenMovieDetail: onOpenMovieDetail,
-                  )
-                  : _MediaRowConsumer(
-                    item: item,
-                    onOpenMovieDetail: onOpenMovieDetail,
-                  ),
+      onReload: () =>
+          unawaited(ref.read(mediaBrowseProvider.notifier).reload()),
+      onLoadMore: () =>
+          unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
+      itemBuilder: (context, item, _) => mobile
+          ? _MediaMobileRowConsumer(
+              keyPrefix: keyPrefix,
+              item: item,
+              selectionMode: selectionMode,
+              onEnterSelection: onEnterSelection,
+              onOpenMovieDetail: onOpenMovieDetail,
+            )
+          : _MediaRowConsumer(item: item, onOpenMovieDetail: onOpenMovieDetail),
     );
   }
 }
@@ -481,19 +483,16 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
       isSelected: isSelected,
       selectionMode: selectionMode,
       disabledReason: disabledReason,
-      onLongPress:
-          disabledReason != null
-              ? null
-              : () {
-                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
-                onEnterSelection?.call();
-              },
-      onToggleSelect:
-          disabledReason != null
-              ? null
-              : () => ref
-                  .read(mediaBrowseProvider.notifier)
-                  .toggleSelection(item.id),
+      onLongPress: disabledReason != null
+          ? null
+          : () {
+              ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
+              onEnterSelection?.call();
+            },
+      onToggleSelect: disabledReason != null
+          ? null
+          : () =>
+                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
       onOpenMovieDetail: onOpenMovieDetail,
     );
   }
@@ -589,12 +588,10 @@ class _MediaRowConsumer extends ConsumerWidget {
       // 有禁选原因的行不响应 tap（且 _MediaRow 会挂 Tooltip 告诉用户原因）；
       // 后端 active_media_id 唯一约束会拒绝新批次，前端提前拦截更友好。
       disabledReason: disabledReason,
-      onToggle:
-          disabledReason != null
-              ? null
-              : () => ref
-                  .read(mediaBrowseProvider.notifier)
-                  .toggleSelection(item.id),
+      onToggle: disabledReason != null
+          ? null
+          : () =>
+                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
       onOpenMovieDetail: onOpenMovieDetail,
     );
   }
@@ -644,13 +641,11 @@ class _MediaListActionBar extends ConsumerWidget {
           label: allLoadedSelected ? '取消全选本页' : '全选本页',
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
-          onPressed:
-              !hasItems || busy
-                  ? null
-                  : () =>
-                      ref
-                          .read(mediaBrowseProvider.notifier)
-                          .toggleSelectAllLoaded(),
+          onPressed: !hasItems || busy
+              ? null
+              : () => ref
+                    .read(mediaBrowseProvider.notifier)
+                    .toggleSelectAllLoaded(),
         ),
         if (hasSelection)
           AppButton(
@@ -658,11 +653,9 @@ class _MediaListActionBar extends ConsumerWidget {
             label: '清空选择',
             size: AppButtonSize.small,
             variant: AppButtonVariant.secondary,
-            onPressed:
-                busy
-                    ? null
-                    : () =>
-                        ref.read(mediaBrowseProvider.notifier).clearSelection(),
+            onPressed: busy
+                ? null
+                : () => ref.read(mediaBrowseProvider.notifier).clearSelection(),
           ),
         if (hasSelection)
           AppButton(

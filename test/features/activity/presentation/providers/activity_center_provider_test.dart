@@ -143,9 +143,16 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.initialize();
-      await controller.applyTaskFilter(
+      final update = controller.applyTaskFilter(
         controller.taskFilter.copyWith(state: 'failed'),
       );
+
+      expect(controller.taskFilter.state, 'failed');
+      expect(controller.taskFilterUpdateLoading, isTrue);
+      expect(controller.taskRuns.single.id, 201);
+      expect(bundle.adapter.hitCount('GET', '/system/task-runs'), 0);
+
+      await update;
 
       expect(controller.isRefreshingTaskHistory, isFalse);
       expect(controller.activeTaskRuns.single.id, 88);
@@ -424,7 +431,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(controller.connectionState, ActivityConnectionState.reconnecting);
 
-    await Future<void>.delayed(const Duration(milliseconds: 2200));
+      await Future<void>.delayed(const Duration(milliseconds: 2200));
       expect(streamClient.connectCount, 2);
       expect(controller.connectionState, ActivityConnectionState.live);
     },
@@ -523,6 +530,7 @@ class _ActivityCenterHarness {
   String? get jobErrorMessage => _state.jobErrorMessage;
   String? get initialErrorMessage => _state.initialErrorMessage;
   bool get isRefreshingTaskHistory => _state.isRefreshingTaskHistory;
+  bool get taskFilterUpdateLoading => _state.taskFilterUpdate.isLoading;
   bool get hasMoreTasks => _state.hasMoreTasks;
   String? get taskRefreshErrorMessage => _state.taskRefreshErrorMessage;
   ActivityTaskFilterState get taskFilter => _state.taskFilter;

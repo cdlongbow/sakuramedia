@@ -53,6 +53,27 @@ void main() {
       find.byKey(const Key('desktop-discover-load-more-moments')),
       findsOneWidget,
     );
+    final requestsByPath = {
+      for (final request in bundle.adapter.requests) request.path: request,
+    };
+    expect(
+      requestsByPath['/movies/subscribed-actors/latest']!
+          .uri
+          .queryParameters['page_size'],
+      '24',
+    );
+    expect(
+      requestsByPath['/daily-recommendations']!
+          .uri
+          .queryParameters['page_size'],
+      '24',
+    );
+    expect(
+      requestsByPath['/moment-recommendations']!
+          .uri
+          .queryParameters['page_size'],
+      '24',
+    );
     expect(find.text('近期热度较高'), findsNothing);
     expect(find.text('与你收藏的时刻画面相似'), findsNothing);
   });
@@ -178,11 +199,10 @@ Future<void> _pumpDiscoveryWidget(
       child: OKToast(
         child: MaterialApp(
           theme: sakuraThemeData,
-          onGenerateRoute:
-              (settings) => MaterialPageRoute<void>(
-                settings: settings,
-                builder: (_) => child,
-              ),
+          onGenerateRoute: (settings) => MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => child,
+          ),
           home: child,
         ),
       ),
@@ -203,7 +223,7 @@ void _enqueueFollowPage(TestApiBundle bundle, {int page = 1, int total = 1}) {
     body: <String, dynamic>{
       'items': <Map<String, dynamic>>[_followMovieJson()],
       'page': page,
-      'page_size': 6,
+      'page_size': 24,
       'total': total,
     },
   );

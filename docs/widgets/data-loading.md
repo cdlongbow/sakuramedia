@@ -74,7 +74,7 @@
 - **路径**: `lib/widgets/base/layout/grids/app_adaptive_card_grid.dart`
 - **用途**: **四态卡片网格的唯一入口**——按 `((width+spacing)/(target+spacing)).floor()` 算列 + 「骨架 → 错误 → 空 → 内容」四态壳一次封死。消除 movies / actors / rankings / videos 四份网格的 copy-paste,新网格**别再手写 `LayoutBuilder + GridView.builder`**。
 - **required**: `items: List<T>` · `isLoading` · `itemBuilder: (context, item, index) => Widget` · `skeletonBuilder: (context, index) => Widget`(骨架卡各域视觉不同,由 caller 提供,含 Key)
-- **可选**: `gridKey`(测试锚点,通常传 `Key('xxx-summary-grid')`) · `errorMessage` · `emptyMessage` · `placeholderCount`(默认 8) · `targetColumnWidth`(默认 `movieCardTargetWidth` token) · `minColumns` / `maxColumns`(默认 2 / 6) · `childAspectRatio`(fixedAspect 用,默认 `movieCardAspectRatio` token)
+- **可选**: `gridKey`(测试锚点,通常传 `Key('xxx-summary-grid')`) · `errorMessage` · `emptyMessage` · `placeholderCount`(默认 8) · `targetColumnWidth`(默认 `movieCardTargetWidth` token) · `minColumns` / `maxColumns`(默认 2 / 6) · `childAspectRatio`(fixedAspect 用,默认 `movieCardAspectRatio` token) · `maxRows`（首页等摘要区限制可见行数，窗口变宽时自动补足当前行）
 - **layout 分支**:
   - `AppAdaptiveCardGridLayout.fixedAspect`(默认):走 `GridView.builder` + 固定 `childAspectRatio`,所有 tile 等宽等高——movies / actors / rankings 的标准形态。
   - `AppAdaptiveCardGridLayout.masonry`:走 `MasonryGridView.count` + 逐 tile `tileAspect(index)`,横竖封面混排不留底色——videos 的形态,`tileAspect` **必填**。

@@ -12,7 +12,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
     super.key,
     required this.filterState,
     required this.onChanged,
-    this.yearOptions = const <MovieFilterYearOption>[],
+    this.yearOptions,
     this.isYearOptionsLoading = false,
     this.yearOptionsErrorMessage,
     this.onYearOptionsRetry,
@@ -20,19 +20,25 @@ class MovieFilterSectionGroup extends StatelessWidget {
 
   final MovieFilterState filterState;
   final ValueChanged<MovieFilterState> onChanged;
-  final List<MovieFilterYearOption> yearOptions;
+
+  /// `null` 表示普通影片库，使用前端生成的 2008 年至当前年的固定范围；
+  /// 女优详情传入非空列表，以展示接口返回的影片数量。
+  final List<MovieFilterYearOption>? yearOptions;
   final bool isYearOptionsLoading;
   final String? yearOptionsErrorMessage;
   final VoidCallback? onYearOptionsRetry;
 
   bool get _shouldShowYearSection =>
-      yearOptions.isNotEmpty ||
+      yearOptions == null ||
+      yearOptions!.isNotEmpty ||
       isYearOptionsLoading ||
       yearOptionsErrorMessage != null ||
       filterState.year != null;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedYearOptions =
+        yearOptions ?? buildDefaultMovieFilterYearOptions();
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,8 +56,8 @@ class MovieFilterSectionGroup extends StatelessWidget {
           options: MovieCollectionTypeFilter.values,
           selectedValue: filterState.collectionType,
           labelBuilder: (value) => value.label,
-          onSelected:
-              (value) => onChanged(filterState.copyWith(collectionType: value)),
+          onSelected: (value) =>
+              onChanged(filterState.copyWith(collectionType: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<MovieNumberSourceFilter>(
@@ -59,13 +65,13 @@ class MovieFilterSectionGroup extends StatelessWidget {
           options: MovieNumberSourceFilter.values,
           selectedValue: filterState.numberSource,
           labelBuilder: (value) => value.label,
-          onSelected:
-              (value) => onChanged(filterState.copyWith(numberSource: value)),
+          onSelected: (value) =>
+              onChanged(filterState.copyWith(numberSource: value)),
         ),
         if (_shouldShowYearSection) ...[
           SizedBox(height: context.appSpacing.lg),
           MovieYearFilterSection(
-            options: yearOptions,
+            options: resolvedYearOptions,
             selectedYear: filterState.year,
             isLoading: isYearOptionsLoading,
             errorMessage: yearOptionsErrorMessage,
@@ -76,10 +82,10 @@ class MovieFilterSectionGroup extends StatelessWidget {
         SizedBox(height: context.appSpacing.lg),
         MovieSortSection(
           filterState: filterState,
-          onSortFieldChanged:
-              (value) => onChanged(filterState.copyWith(sortField: value)),
-          onSortDirectionChanged:
-              (value) => onChanged(filterState.copyWith(sortDirection: value)),
+          onSortFieldChanged: (value) =>
+              onChanged(filterState.copyWith(sortField: value)),
+          onSortDirectionChanged: (value) =>
+              onChanged(filterState.copyWith(sortDirection: value)),
         ),
       ],
     );
@@ -142,7 +148,7 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
   }
 }
 
-class MovieYearFilterSection extends StatelessWidget {
+class MovieYearFilterSection extends StatefulWidget {
   const MovieYearFilterSection({
     super.key,
     required this.options,
@@ -161,6 +167,87 @@ class MovieYearFilterSection extends StatelessWidget {
   final ValueChanged<int?> onSelected;
 
   @override
+  State<MovieYearFilterSection> createState() => _MovieYearFilterSectionState();
+}
+
+class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
+  static const int _collapsedRowCount = 2;
+
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    // 当前已选年份可能在两行之外；首次打开时直接展开，避免筛选条件不可见。
+    _isExpanded = widget.selectedYear != null;
+  }
+
+  @override
+  void didUpdateWidget(covariant MovieYearFilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedYear != oldWidget.selectedYear &&
+        widget.selectedYear != null) {
+      _isExpanded = true;
+    }
+  }
+
+  List<_MovieYearChoice> get _choices => <_MovieYearChoice>[
+    const _MovieYearChoice(value: null, label: '全部年份'),
+    for (final option in widget.options)
+      _MovieYearChoice(value: option.year, label: option.label),
+  ];
+
+  int _collapsedChoiceCount(
+    BuildContext context,
+    List<_MovieYearChoice> choices,
+    double maxWidth,
+  ) {
+    if (!maxWidth.isFinite || maxWidth <= 0) {
+      return choices.length;
+    }
+
+    final componentTokens = context.appComponentTokens;
+    final gap = context.appSpacing.sm;
+    final labelStyle = resolveAppTextStyle(
+      context,
+      size: AppTextSize.s12,
+      tone: AppTextTone.muted,
+    );
+    final textScaler = MediaQuery.textScalerOf(context);
+    final textDirection = Directionality.of(context);
+    var visibleCount = 0;
+    var row = 1;
+    var rowWidth = 0.0;
+
+    for (final choice in choices) {
+      final painter = TextPainter(
+        text: TextSpan(text: choice.label, style: labelStyle),
+        textDirection: textDirection,
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout();
+      final choiceWidth =
+          (painter.width + componentTokens.buttonHorizontalPaddingXs * 2)
+              .clamp(0.0, maxWidth)
+              .toDouble();
+      final nextWidth = rowWidth == 0
+          ? choiceWidth
+          : rowWidth + gap + choiceWidth;
+      if (rowWidth > 0 && nextWidth > maxWidth) {
+        row += 1;
+        if (row > _collapsedRowCount) {
+          break;
+        }
+        rowWidth = choiceWidth;
+      } else {
+        rowWidth = nextWidth;
+      }
+      visibleCount += 1;
+    }
+    return visibleCount;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +262,7 @@ class MovieYearFilterSection extends StatelessWidget {
           ),
         ),
         SizedBox(height: context.appSpacing.sm),
-        if (isLoading)
+        if (widget.isLoading)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -199,12 +286,12 @@ class MovieYearFilterSection extends StatelessWidget {
               ),
             ],
           )
-        else if (errorMessage != null)
+        else if (widget.errorMessage != null)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                errorMessage!,
+                widget.errorMessage!,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -216,33 +303,75 @@ class MovieYearFilterSection extends StatelessWidget {
               AppTextButton(
                 label: '重试',
                 size: AppTextButtonSize.xSmall,
-                onPressed: onRetry,
+                onPressed: widget.onRetry,
               ),
             ],
           )
         else
-          Wrap(
-            spacing: context.appSpacing.sm,
-            runSpacing: context.appSpacing.sm,
-            children: [
-              AppTextButton(
-                label: '全部年份',
-                size: AppTextButtonSize.xSmall,
-                isSelected: selectedYear == null,
-                onPressed: () => onSelected(null),
-              ),
-              for (final option in options)
-                AppTextButton(
-                  label: option.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: option.year == selectedYear,
-                  onPressed: () => onSelected(option.year),
-                ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final choices = _choices;
+              final collapsedCount = _collapsedChoiceCount(
+                context,
+                choices,
+                constraints.maxWidth,
+              );
+              final hasHiddenChoices = choices.length > collapsedCount;
+              final visibleChoices = _isExpanded || !hasHiddenChoices
+                  ? choices
+                  : choices.take(collapsedCount);
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: context.appSpacing.sm,
+                    runSpacing: context.appSpacing.sm,
+                    children: [
+                      for (final choice in visibleChoices)
+                        AppTextButton(
+                          key: Key(
+                            choice.value == null
+                                ? 'movie-filter-year-all'
+                                : 'movie-filter-year-${choice.value}',
+                          ),
+                          label: choice.label,
+                          size: AppTextButtonSize.xSmall,
+                          isSelected: choice.value == widget.selectedYear,
+                          onPressed: () => widget.onSelected(choice.value),
+                        ),
+                    ],
+                  ),
+                  if (hasHiddenChoices) ...[
+                    SizedBox(height: context.appSpacing.sm),
+                    AppTextButton(
+                      key: const Key('movie-filter-year-expand-toggle'),
+                      label: _isExpanded ? '收起年份' : '展开全部年份',
+                      size: AppTextButtonSize.xSmall,
+                      trailingIcon: Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                      ),
+                      onPressed: () => setState(() {
+                        _isExpanded = !_isExpanded;
+                      }),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
       ],
     );
   }
+}
+
+class _MovieYearChoice {
+  const _MovieYearChoice({required this.value, required this.label});
+
+  final int? value;
+  final String label;
 }
 
 class MovieSortSection extends StatelessWidget {

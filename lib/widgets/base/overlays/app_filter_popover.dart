@@ -63,7 +63,7 @@ class AppFilterPopover extends StatefulWidget {
   /// 用于测试)。
   final Key? scrollViewKey;
 
-  /// 打开面板前的回调(movie 用来预取年份选项)。
+  /// 打开面板前的回调（如女优详情预取年份选项）。
   final VoidCallback? onOpened;
 
   final Size initialTriggerSize;

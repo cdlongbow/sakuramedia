@@ -54,7 +54,8 @@
 
 ### MovieFilterSectionGroup / MovieFilterChoiceSection&lt;T&gt; / MovieYearFilterSection / MovieSortSection
 - **路径**: `lib/widgets/domain/movies/movie_filter_sections.dart`
-- **用途**: 影片筛选分节组(状态 / 合集类型 / 番号来源 / 年份 / 排序),**双端共用同一份**:桌面塞进 `AppListHeader.filterPanelBuilder` 的就地浮层,移动塞进 `showMobileMovieFilterDrawer` 的底部抽屉。年份 section 独立(有年份选项 loading / error / retry 三态)。
+- **用途**: 影片筛选分节组(状态 / 合集类型 / 番号来源 / 年份 / 排序),**双端共用同一份**:桌面塞进 `AppListHeader.filterPanelBuilder` 的就地浮层,移动塞进 `showMobileMovieFilterDrawer` 的底部抽屉。年份 section 独立，收起时按实际面板宽度最多展示两行，支持展开/收起。
+- **年份来源**: `yearOptions` 不传时自动生成从当前年到 2008 年的纯年份 chip（普通影片库 / 标签影片）；女优详情显式传入 `GET /actors/{actor_id}/years` 的选项，以显示 `年份(数量)`，并保留 loading / error / retry 三态。
 - **required**: `filterState` · `onChanged`;可选 `yearOptions` · `isYearOptionsLoading` · `yearOptionsErrorMessage` · `onYearOptionsRetry`
 - **`MovieFilterChoiceSection` 可选 `optionKeyBuilder`**: 给每个 chip 挂稳定 Key(videos / moments / hot_reviews 侧都用它生成测试锚点)。
 - **注意**: 已无 `MovieFilterToolbar`——桌面筛选入口统一由 `AppListHeader` 提供,重置走 `AppFilterPanelFooter`。**移动抽屉的内容是打开瞬间的快照**(不像桌面浮层会随 `didUpdateWidget` 重建),所以懒加载的年份必须在弹抽屉**之前** await 回来,否则分节会永远停在转圈态(女优详情页踩过)。

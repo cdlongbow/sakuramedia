@@ -11,19 +11,18 @@ void main() {
       MaterialApp(
         theme: sakuraThemeData,
         home: Builder(
-          builder:
-              (context) => Scaffold(
-                body: TextButton(
-                  onPressed: () async {
-                    await showMobileMovieFilterDrawer(
-                      context,
-                      current: MovieFilterState.initial,
-                      onChanged: applied.add,
-                    );
-                  },
-                  child: const Text('打开筛选'),
-                ),
-              ),
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                await showMobileMovieFilterDrawer(
+                  context,
+                  current: MovieFilterState.initial,
+                  onChanged: applied.add,
+                );
+              },
+              child: const Text('打开筛选'),
+            ),
+          ),
         ),
       ),
     );
@@ -35,6 +34,7 @@ void main() {
     // 没有快捷筛选、没有确定按钮。
     expect(find.text('状态筛选'), findsOneWidget);
     expect(find.text('合集类型'), findsOneWidget);
+    expect(find.text('${DateTime.now().year}'), findsOneWidget);
     expect(find.text('筛选'), findsNothing);
     expect(find.text('确定'), findsNothing);
     expect(find.text('完成'), findsNothing);

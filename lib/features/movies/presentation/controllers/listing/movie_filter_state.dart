@@ -99,13 +99,32 @@ extension MovieSortFieldX on MovieSortField {
 
 const Object _movieFilterUnset = Object();
 
+/// 普通影片库的年份筛选不依赖后端聚合：范围固定为 2008 年至当前年。
+///
+/// 女优详情会显式传入服务端返回的年份和数量，因此仍可保持「年份(影片数)」
+/// 的精确展示。
+const int movieFilterEarliestYear = 2008;
+
+List<MovieFilterYearOption> buildDefaultMovieFilterYearOptions({
+  int? currentYear,
+}) {
+  final latestYear = currentYear ?? DateTime.now().year;
+  if (latestYear < movieFilterEarliestYear) {
+    return const <MovieFilterYearOption>[];
+  }
+  return <MovieFilterYearOption>[
+    for (var year = latestYear; year >= movieFilterEarliestYear; year--)
+      MovieFilterYearOption(year: year),
+  ];
+}
+
 class MovieFilterYearOption {
-  const MovieFilterYearOption({required this.year, required this.movieCount});
+  const MovieFilterYearOption({required this.year, this.movieCount});
 
   final int year;
-  final int movieCount;
+  final int? movieCount;
 
-  String get label => '$year($movieCount)';
+  String get label => movieCount == null ? '$year' : '$year($movieCount)';
 }
 
 class MovieFilterState {

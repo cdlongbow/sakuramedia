@@ -20,7 +20,7 @@
 
 当前状态：
 
-- 桌面端：已实现登录、工作台壳层、概览、发现（含顶部“女优上新”预览区块）、女优上新（发现页“更多”进入的子页面）、影片、女优、标签、时刻、播放列表、排行榜、热评、活动中心、媒体导入、搜索、详情、系统设置（失效媒体维护已并入为其中一个 Tab）
+- 桌面端：已实现登录、工作台壳层、概览、发现（含顶部“女优上新”预览区块）、女优上新（发现页“更多”进入的子页面）、影片、女优、标签、时刻、播放列表、排行榜、热评、活动中心、资源导入、搜索、详情、系统设置（失效媒体维护已并入为其中一个 Tab）
 - 移动端：已接入底部四导航（概览/影片/女优/榜单）与首页顶部 Tab（我的/关注/发现/时刻/热评）；首页左上角已接入抽屉菜单入口（数据源 / 媒体库 / 下载器 / 索引器 / LLM 配置 / 播放列表 / 修改用户名 / 修改密码 / 退出登录，以及「管理」分区的媒体管理）；“我的”已实现搜索栏、最近添加和播放列表，“发现”已接入每日推荐影片与推荐时刻，且已接入影片详情页、播放列表详情页与搜索子页；媒体管理移动端为三 tab 页（媒体列表 / 失效巡检 / 115秒传记录），媒体列表支持底部抽屉筛选与长按多选（批量删除 / 秒传到 115）；`/mobile/library/movies`、`/mobile/library/movies/:movieNumber`、`/mobile/library/actors`、`/mobile/library/actors/:actorId`、`/mobile/rankings`、`/mobile/system/media`、`/mobile/settings/data-sources`、`/mobile/settings/media-libraries`、`/mobile/settings/downloaders`、`/mobile/settings/indexers`、`/mobile/settings/llm`、`/mobile/settings/playlists`、`/mobile/settings/username` 与 `/mobile/settings/password` 为真实页面，其余 `/mobile/settings/*` 仍以移动端专属占位子页为主
 - Web 端：复用桌面端路由与壳层（`/desktop/*`），页面能力与桌面端保持一致，活动中心同样复用桌面实现
 
@@ -430,7 +430,7 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 
 - 概览（置顶，无分组标题）
 - 浏览：发现、影片、女优、标签、时刻、切片、播放列表、非 JAV 视频、人物、视频合集、排行榜、热评
-- 管理：系统设置、媒体导入、活动中心（失效媒体维护已并入「系统设置」页的「媒体维护」Tab）
+- 管理：系统设置、资源导入、活动中心（失效媒体维护已并入「系统设置」页的「媒体维护」Tab）
 
 折叠态下分组标题文字隐藏，改以一条分隔线作为分区视觉分隔。分组标题仅是组织性标记，不可点击、不参与导航。
 
@@ -1017,19 +1017,20 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 - 移动端进入选择态后，整条 `AppListHeader` 原地改写为批量选择栏
 - 点击榜单影片卡片入栈到影片详情页；若由榜单页进入则返回回到榜单页，若深链直达详情则按详情页默认入口回退
 
-### 6.14 媒体导入页
+### 6.14 资源导入页
 
-媒体导入页是桌面端「管理」分区下的一级导航页，路由为 `/desktop/system/media-import`（Web 端复用桌面实现），用于把后端文件系统中已有的媒体导入到媒体库。页面内置 **`JAV 影片` / `PornBox 影片` 两个标签页**（`AppTabBar`），两类导入各走独立后端接口与后台作业，但共用同一套页面结构与作业卡片：
+资源导入页是桌面端与 Web 端「管理」分区下的一级导航页，路由为 `/desktop/system/media-import`，用于导入后端已可访问的影片或 JAV 字幕。页面内置 **`JAV 影片` / `PornBox 影片` / `JAV 字幕` 三个标签页**（`AppTabBar`），各类导入各走独立后端接口与后台作业，但共用同一套页面结构与作业卡片：
 
 - JAV 影片：`media-import` 标签端点（`/import-jobs`），`task_key = media_directory_import`
-- PornBox 影片：`video-imports` 标签端点（`/video-imports`），`task_key = video_directory_import`；两类导入端点同构（列表分页、详情、失败文件重导），PornBox 额外支持导入时归入合集；失败源文件的删除/重命名是 JAV 本地作业专属，PornBox 前端不提供入口
+- PornBox 影片：`video-imports` 标签端点（`/video-imports`），`task_key = video_directory_import`；额外支持导入时归入合集，失败源文件只提供重导
+- JAV 字幕：`subtitle-import` 标签端点（`/subtitle-imports`），`task_key = subtitle_directory_import`；从本地白名单目录递归扫描 `.srt`，按文件名番号匹配已入库影片，源文件始终保留，不选择媒体库或导入方式
 
 页面结构（每个标签内）：
 
 - 顶部说明卡：左侧文案 + 右侧「刷新」「新建导入」按钮（`AppContentCard` + `AppButton`）
 - 下方为导入作业卡片列表（按作业 id 倒序），使用与页面头部共用滚动容器的 `SliverList` 按视口懒构建；滚动触底自动加载更多（转发给当前激活标签的 controller），底部复用 `AppPagedLoadMoreFooter`；无作业时用 `AppEmptyState`，初次加载用 `CircularProgressIndicator`
-- 每个作业卡为共享组件 `ImportJobCard`（`lib/features/media_import/presentation/import_job_card.dart`），通过 `ImportJobCardData` / `ImportJobCardDetailData` 抽象承载两类作业，展示：源目录名/完整路径、状态徽标、导入方式、`导入/跳过/失败` 计数、创建/完成时间
-- 两个标签各持有独立控制器（JAV `MediaImportController` / PornBox `VideoImportController`，均实现 `ImportJobsViewController` 接口），各自订阅 SSE
+- 每个作业卡为共享组件 `ImportJobCard`（`lib/features/media_import/presentation/import_job_card.dart`），通过 `ImportJobCardData` / `ImportJobCardDetailData` 抽象承载三类作业，展示：源目录名/完整路径、状态徽标、可用时的导入方式、`导入/跳过/失败` 计数、创建/完成时间
+- 三个标签各持有独立控制器（JAV `MediaImportController` / PornBox `VideoImportController` / 字幕 `SubtitleImportController`，均实现 `ImportJobsViewController` 接口），各自订阅 SSE
 
 实时进度规则：
 
@@ -1041,20 +1042,21 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 
 - JAV 走 `showDirectoryPickerDialog`：目录浏览器 + 「导入到媒体库」（`AppSelectField<int>`）+ 「导入方式」（`auto` 硬链接优先 / `cleanup-source` 复制后删除源文件）
 - PornBox 走 `showVideoImportDialog`：目录浏览器 + 「导入到媒体库」+ 「加入合集」（**必选**，可现场「新建合集」）+ 「导入方式」
+- JAV 字幕走 `showSubtitleImportDialog`：仅本地白名单目录浏览器；说明仅支持 `.srt`，文件名须包含番号（如 `ABP-123.cht.srt`），点击「开始导入」只提交 `source_path`
 - 仅当选齐必填项才可「开始导入」；确认后触发对应作业并刷新该标签列表，失败（含同库同源 `409` 冲突）以 toast 提示
 
-失败文件处理（两类标签共用同一张卡片）：
+失败文件处理（三类标签共用同一张卡片）：
 
 - 作业 `failed_count > 0` 时卡片提供「查看失败文件」展开，按需懒加载作业详情；少量条目直接展开，超过 8 条后放入有界 `ListView.separated`，避免一次构建大量失败文件行
 - 失败条目按 `kind` 区分：仅 `file` 在作业终态下提供行内操作，并在顶部提供「重导全部失败（N）」；`skipped` / `warning` 仅展示原因，不提供操作
-- 失败清单含 `job`（任务级失败，作业整体中断、没有可逐个重导的文件）且来源可还原时，顶部额外提供「重新导入」——按原参数（`library_id` + 来源 + `transfer_mode`，PornBox 另带 `collection_id`）**新建**一个导入作业；115 作业按 `source_cid` 还原来源（`source_path` 是后端改写的展示面包屑），115 单文件（`source_fid`）来源无法还原、不提供该入口
+- 失败清单含 `job`（任务级失败，作业整体中断、没有可逐个重导的文件）且来源可还原时，顶部额外提供「重新导入」——JAV / PornBox 按原参数**新建**作业，JAV 字幕按原 `source_path` 创建新作业；115 作业按 `source_cid` 还原来源（`source_path` 是后端改写的展示面包屑），115 单文件（`source_fid`）来源无法还原、不提供该入口
 - 两个顶部按钮同时出现时（作业先记了文件级失败又整体中断）「重导全部失败」占主按钮（primary），「重新导入」降为 secondary；「重新导入」提交期间置 `isLoading` 防连点（115 来源后端不建 mutex，重复提交会造出重复作业）
-- 行内操作按作业来源分档：JAV 本地作业提供「重导 / 重命名 / 删除」（条目标注「可处理」）；JAV 115 作业与 PornBox 作业仅提供「重导」（条目标注「可重导」）
+- 行内操作按作业来源分档：JAV 本地作业和 JAV 字幕作业提供「重导 / 重命名 / 删除」（条目标注「可处理」）；JAV 115 作业与 PornBox 作业仅提供「重导」（条目标注「可重导」）
 - 删除/重命名前弹确认或输入弹窗，操作结果以 toast 反馈，成功后就地刷新该作业失败文件列表
 
 ### 6.15 非 JAV 视频域（videos）
 
-非 JAV 视频域是与影片（catalog）平行的「仅播放 + 整理」体系，管理无番号、无外部元数据的视频。后端复用同一套播放底座（缩略图 / 播放进度 / 时刻 / 签名播放地址），前端因此**最大化复用影片侧组件**。PornBox 的导入入口不在本域页面内，而是统一收口到「管理」分区的 `媒体导入` 页 `PornBox 影片` 标签（走 `/video-imports` 异步搬库作业，与 JAV `/import-jobs` 同构，详见 §6.14）。
+非 JAV 视频域是与影片（catalog）平行的「仅播放 + 整理」体系，管理无番号、无外部元数据的视频。后端复用同一套播放底座（缩略图 / 播放进度 / 时刻 / 签名播放地址），前端因此**最大化复用影片侧组件**。PornBox 的导入入口不在本域页面内，而是统一收口到「管理」分区的 `资源导入` 页 `PornBox 影片` 标签（走 `/video-imports` 异步搬库作业，与 JAV `/import-jobs` 同构，详见 §6.14）。
 
 - **视频列表页**（`/desktop/library/videos`）：顶部为「搜索标题 + 新建视频 + 导入」行；下方依次为标签筛选面板（复用 `TagSelectorPanel`，视频域多标签固定 OR、隐藏匹配模式开关）、人物筛选面板（`PersonSelectorPanel`，按关键词分页搜索）、列表顶栏（`AppListHeader`，与移动端同一条：筛选入口就地展开浮层，面板是与移动抽屉共用的 `VideoFilterSectionGroup`——入库 / 标题 / 时长 / 文件大小 × 升降序，对齐后端 `sort=created_at|title|duration|file_size`，默认 `created_at:desc`；中间总数胶囊，右侧「选择」入口）与视频卡片网格（`VideoSummaryGrid` / `VideoSummaryCard`：封面 + 标题 + 左上角媒体数角标 + 中部播放按钮 + 右上角「···」菜单（加入合集 / 删除），参照切片卡）。分页复用 `PagedLoadController` + `AppPagedLoadMoreFooter`，标签 / 人物「已选项」变化即重载列表。
 - **视频详情页**（`/desktop/library/videos/:videoId`）：头部封面 + 标题 + 简介 + 标签 / 人物 chips；操作区为「播放 / 编辑 / 加入合集 / 删除」；媒体源复用 `MovieMediaItemList`，时刻复用 `MovieMediaPointGallery`（吃同形的 `MovieMediaItemDto`）。编辑 / 新建走 `VideoEditDialog`（标题 / 简介 / 发布时间 / 标签 / 人物，编辑回填、关联整体替换）。
@@ -1062,7 +1064,7 @@ Web 端复用同一套壳层和页面结构，但浏览器环境下不启用窗�
 - **人物页**（`/desktop/library/persons`）：搜索 + 新建 + 人物卡片网格（头像 + 姓名 + 性别 + 关联视频数 + 编辑 / 删除）；点击进人物详情（`/desktop/library/persons/:personId`，按 person 过滤复用视频网格）。人物增删改走 `PersonEditDialog`。
 - **视频合集页**（`/desktop/library/video-collections`）：合集卡片列表（`VideoCollectionCard`：封面图 + 底部标题 + 封面右下角视频数，编辑 / 删除收进右上角「···」菜单，参照切片「我的合集」卡）+ 新建；合集封面取按顺序排在最前的视频封面，空合集为占位图标；合集详情（`/desktop/library/video-collections/:collectionId`）结构为「标题块（合集名 + 简介 + `播放全部`，**只有一行标题**）→ 成员列表顶栏 `AppListHeader` → 列表 / 网格」，**顶栏与移动端合集详情共用同一条**：筛选入口收排序（`VideoCollectionFilterSectionGroup`：手动顺序 / 入库 / 标题 / 时长 / 文件大小 × 升降序，与视频列表对齐并额外含「手动顺序」对应后端 `position:asc`，默认手动顺序；手动顺序固定升序、隐藏方向分节），桌面点击就地展开浮层、移动弹底部抽屉；信息槽放成员数（`N 个视频`）；右侧操作槽放「选择 / 视图切换」。**成员数放信息槽而不是标题块**——标题块再多一行文字，会在移动端把列表压得很靠下。多选态原地改写整条顶栏。**仅桌面、且在「手动顺序」下**以 `ReorderableListView` 支持拖拽**乐观重排**（失败回滚重载），切到其它排序即退化为普通 `ListView` 并隐藏拖拽手柄（避免与排序冲突）；移动端不提供拖拽重排。另支持移除、单集 / 「播放全部」。
 - **连播**：合集播放携带上下文（`collectionId` + 有序 `playlist` 视频 id），`MoviePlayerSurface` 新增可加性 `onCompleted` 回调，本集自然结束自动跳下一集，到末尾停止；非合集进入不跳转。
-- **视频导入**：PornBox 列表页不再保留导入入口；导入统一在「媒体导入」页 `PornBox 影片` 标签的「新建导入」（`showVideoImportDialog`：目录浏览选源 + 媒体库 + 合集必选 + 导入方式），触发后为异步搬库作业并在该标签历史列表跟踪进度与失败文件（详见 §6.14）。
+- **视频导入**：PornBox 列表页不再保留导入入口；导入统一在「资源导入」页 `PornBox 影片` 标签的「新建导入」（`showVideoImportDialog`：目录浏览选源 + 媒体库 + 合集必选 + 导入方式），触发后为异步搬库作业并在该标签历史列表跟踪进度与失败文件（详见 §6.14）。
 - **移动端视频列表**：视频区使用 `AppListHeader`，左侧筛选图标打开排序底部抽屉，中间显示当前排序与总数，右侧「选择」仅控制视频列表；进入选择态后顶栏原地显示退出、已选数量与全选，批量加入合集 / 删除仍保留在底部操作栏。合集区的「新建 / 查看全部」保持在合集标题行，后续统一顶栏迁移时再接入操作槽。
 - **多选态两端规则**：桌面进入选择后**原地改写整条顶栏**为 `AppSelectionHeaderToolbar`（计数 / 全选 / 加入合集 / 删除 / 取消，高度与常规顶栏一致，不在筛选行下方另起一行）；移动端顶栏只留退出 / 计数 / 全选，批量动作在贴底的 `AppSelectionBottomBar`。视频合集详情页因为没有筛选顶栏，选择条用不套高度容器的裸 `AppSelectionToolbar`，挂在标题块下方。
 

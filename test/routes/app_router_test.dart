@@ -85,7 +85,7 @@ void main() {
 
   test('desktop navigation tree contains moments entry', () {
     expect(desktopNavGroups.length, 17);
-    // 管理区顺序：媒体管理 / 媒体导入 / 任务中心 / 订阅管理 / 通知 / 系统设置。
+    // 管理区顺序：媒体管理 / 资源导入 / 任务中心 / 订阅管理 / 通知 / 系统设置。
     expect(desktopNavGroups.map((group) => group.label), [
       '概览',
       '发现',
@@ -99,7 +99,7 @@ void main() {
       '排行榜',
       '热评',
       '媒体管理',
-      '媒体导入',
+      '资源导入',
       '任务中心',
       '订阅管理',
       '通知',
@@ -1863,15 +1863,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    bool dragEnabled() =>
-        tester
-            .widget<Scaffold>(
-              find.ancestor(
-                of: find.byKey(const Key('mobile-shell-body-safe-area')),
-                matching: find.byType(Scaffold),
-              ),
-            )
-            .drawerEnableOpenDragGesture;
+    bool dragEnabled() => tester
+        .widget<Scaffold>(
+          find.ancestor(
+            of: find.byKey(const Key('mobile-shell-body-safe-area')),
+            matching: find.byType(Scaffold),
+          ),
+        )
+        .drawerEnableOpenDragGesture;
 
     expect(dragEnabled(), isTrue);
 
@@ -1926,12 +1925,11 @@ void main() {
     addTearDown(bundle.dispose);
     addTearDown(() => debugMobileImageSearchFilePicker = null);
     final router = buildMobileRouter(sessionStore: sessionStore);
-    debugMobileImageSearchFilePicker =
-        () async => ImageSearchPickedFile(
-          bytes: Uint8List.fromList(const <int>[1, 2, 3, 4]),
-          fileName: 'picked.png',
-          mimeType: 'image/png',
-        );
+    debugMobileImageSearchFilePicker = () async => ImageSearchPickedFile(
+      bytes: Uint8List.fromList(const <int>[1, 2, 3, 4]),
+      fileName: 'picked.png',
+      mimeType: 'image/png',
+    );
     bundle.adapter.enqueueJson(
       method: 'POST',
       path: '/image-search/sessions',

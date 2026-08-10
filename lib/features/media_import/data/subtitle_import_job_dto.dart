@@ -1,24 +1,15 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
-import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
-export 'package:sakuramedia/features/media_import/data/import_job_dto.dart'
-    show TransferMode, TransferModeX, FailedFileDto, FailedFileKind;
-
-/// 视频（PornBox）导入作业列表项。
+/// JAV 字幕目录导入作业列表项。
 ///
-/// 与 JAV [ImportJobListItemDto] 同构，差异：无 `downloadTaskId`、有 `collectionId`。
-class VideoImportJobListItemDto implements ImportJobCardData {
-  const VideoImportJobListItemDto({
+/// 字幕资产按影片番号归档，不归属于某个媒体库；其余作业状态语义与影片导入保持一致。
+class SubtitleImportJobListItemDto implements ImportJobCardData {
+  const SubtitleImportJobListItemDto({
     required this.id,
     required this.sourcePath,
-    required this.sourceCid,
-    required this.sourceFid,
-    required this.libraryId,
-    required this.collectionId,
     required this.taskRunId,
     required this.state,
-    required this.transferMode,
     required this.importedCount,
     required this.skippedCount,
     required this.failedCount,
@@ -32,22 +23,12 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   final int id;
   @override
   final String sourcePath;
-
-  /// 115 目录导入的 CID；本地导入为 null。用于区分作业来源类型。
-  final String? sourceCid;
-
-  /// 115 单文件导入的 FID。前端暂不支持以单文件为来源发起导入，故只用于识别
-  /// 这类作业并关掉「重新导入」入口。
-  final String? sourceFid;
   @override
   String get displaySourcePath => sourcePath;
-  final int libraryId;
-  final int? collectionId;
   @override
   final int? taskRunId;
   @override
   final String state;
-  final TransferMode transferMode;
   @override
   final int importedCount;
   @override
@@ -62,46 +43,28 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   final DateTime? updatedAt;
 
   @override
-  bool get isCloud115 => sourceCid != null;
+  bool get isCloud115 => false;
 
-  /// PornBox 作业的失败文件只开放「重导」，不提供删除/重命名入口。
+  /// 字幕失败文件位于本地白名单目录，后端允许重命名和删除后再重导。
   @override
-  bool get canMutateFailedSource => false;
+  bool get canMutateFailedSource => true;
 
+  /// 字幕导入没有可选的传输方式，源文件始终保留。
   @override
-  String? get importModeLabel => transferMode.label;
-
-  /// 115 目录作业按 `sourceCid` 还原、本地作业按 `sourcePath` 还原；单文件（FID）
-  /// 来源前端没有对应的导入请求形状，直接判为不可还原。
-  MediaImportSource? get reimportSource {
-    if (sourceFid != null) {
-      return null;
-    }
-    final cid = sourceCid;
-    if (cid != null) {
-      return cid.isEmpty ? null : MediaImportSource.cloud115(cid);
-    }
-    return sourcePath.isEmpty ? null : MediaImportSource.local(sourcePath);
-  }
+  String? get importModeLabel => null;
 
   @override
-  bool get canReimport => reimportSource != null;
+  bool get canReimport => sourcePath.trim().isNotEmpty;
 
-  /// 终态（completed / failed）才允许失败文件的重导。
   @override
   bool get isTerminal => state == 'completed' || state == 'failed';
 
-  factory VideoImportJobListItemDto.fromJson(Map<String, dynamic> json) {
-    return VideoImportJobListItemDto(
+  factory SubtitleImportJobListItemDto.fromJson(Map<String, dynamic> json) {
+    return SubtitleImportJobListItemDto(
       id: asInt(json['id']),
       sourcePath: json['source_path'] as String? ?? '',
-      sourceCid: json['source_cid'] as String?,
-      sourceFid: json['source_fid'] as String?,
-      libraryId: asInt(json['library_id']),
-      collectionId: asIntOrNull(json['collection_id']),
       taskRunId: asIntOrNull(json['task_run_id']),
       state: json['state'] as String? ?? '',
-      transferMode: TransferModeX.fromWire(json['transfer_mode']),
       importedCount: asInt(json['imported_count']),
       skippedCount: asInt(json['skipped_count']),
       failedCount: asInt(json['failed_count']),
@@ -113,19 +76,14 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   }
 }
 
-/// 视频导入作业详情（含失败文件清单）。
-class VideoImportJobDto extends VideoImportJobListItemDto
+/// JAV 字幕导入作业详情（包含失败与跳过文件）。
+class SubtitleImportJobDto extends SubtitleImportJobListItemDto
     implements ImportJobCardDetailData {
-  const VideoImportJobDto({
+  const SubtitleImportJobDto({
     required super.id,
     required super.sourcePath,
-    required super.sourceCid,
-    required super.sourceFid,
-    required super.libraryId,
-    required super.collectionId,
     required super.taskRunId,
     required super.state,
-    required super.transferMode,
     required super.importedCount,
     required super.skippedCount,
     required super.failedCount,
@@ -139,13 +97,12 @@ class VideoImportJobDto extends VideoImportJobListItemDto
   @override
   final List<FailedFileDto> failedFiles;
 
-  /// 可重导的失败文件。
   @override
   List<FailedFileDto> get actionableFailedFiles =>
       failedFiles.where((file) => file.isActionable).toList(growable: false);
 
-  factory VideoImportJobDto.fromJson(Map<String, dynamic> json) {
-    final base = VideoImportJobListItemDto.fromJson(json);
+  factory SubtitleImportJobDto.fromJson(Map<String, dynamic> json) {
+    final base = SubtitleImportJobListItemDto.fromJson(json);
     final rawFiles = json['failed_files'];
     final failedFiles = rawFiles is List
         ? rawFiles
@@ -161,16 +118,11 @@ class VideoImportJobDto extends VideoImportJobListItemDto
               .toList(growable: false)
         : const <FailedFileDto>[];
 
-    return VideoImportJobDto(
+    return SubtitleImportJobDto(
       id: base.id,
       sourcePath: base.sourcePath,
-      sourceCid: base.sourceCid,
-      sourceFid: base.sourceFid,
-      libraryId: base.libraryId,
-      collectionId: base.collectionId,
       taskRunId: base.taskRunId,
       state: base.state,
-      transferMode: base.transferMode,
       importedCount: base.importedCount,
       skippedCount: base.skippedCount,
       failedCount: base.failedCount,
@@ -183,21 +135,21 @@ class VideoImportJobDto extends VideoImportJobListItemDto
   }
 }
 
-/// 触发视频导入 / 重导失败文件的响应（202）。
-class VideoImportTriggerResponseDto {
-  const VideoImportTriggerResponseDto({
-    required this.videoImportJobId,
+/// 字幕导入 / 重导请求的受理响应（202）。
+class SubtitleImportTriggerResponseDto {
+  const SubtitleImportTriggerResponseDto({
+    required this.subtitleImportJobId,
     required this.taskRunId,
     required this.status,
   });
 
-  final int videoImportJobId;
+  final int subtitleImportJobId;
   final int taskRunId;
   final String status;
 
-  factory VideoImportTriggerResponseDto.fromJson(Map<String, dynamic> json) {
-    return VideoImportTriggerResponseDto(
-      videoImportJobId: asInt(json['video_import_job_id']),
+  factory SubtitleImportTriggerResponseDto.fromJson(Map<String, dynamic> json) {
+    return SubtitleImportTriggerResponseDto(
+      subtitleImportJobId: asInt(json['subtitle_import_job_id']),
       taskRunId: asInt(json['task_run_id']),
       status: json['status'] as String? ?? '',
     );

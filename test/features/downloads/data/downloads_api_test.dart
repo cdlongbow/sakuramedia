@@ -18,7 +18,7 @@ void main() {
         path: '/download-candidates',
         body: [
           {
-            'source': 'jackett',
+            'source': 'torznab',
             'indexer_name': 'mteam',
             'indexer_kind': 'pt',
             'resolved_client_id': 2,
@@ -113,7 +113,7 @@ void main() {
           movieNumber: 'ABC-001',
           clientId: 2,
           candidate: const DownloadCandidateDto(
-            source: 'jackett',
+            source: 'torznab',
             indexerName: 'mteam',
             indexerKind: 'pt',
             resolvedClientId: 2,
@@ -134,7 +134,7 @@ void main() {
           'client_id': 2,
           'movie_number': 'ABC-001',
           'candidate': {
-            'source': 'jackett',
+            'source': 'torznab',
             'indexer_name': 'mteam',
             'indexer_kind': 'pt',
             'title': 'ABC-001 4K 中文字幕',
@@ -464,7 +464,7 @@ void main() {
             movieNumber: 'ABC-001',
             clientId: 2,
             candidate: const DownloadCandidateDto(
-              source: 'jackett',
+              source: 'torznab',
               indexerName: 'mteam',
               indexerKind: 'pt',
               resolvedClientId: 2,

@@ -1402,7 +1402,7 @@ void main() {
 
     expect(find.text('开发中'), findsNothing);
     expect(
-      find.byKey(const Key('mobile-indexers-api-key-card')),
+      find.byKey(const Key('mobile-indexers-connection-test-card')),
       findsOneWidget,
     );
     expect(
@@ -3843,8 +3843,6 @@ void _enqueueMobileDownloadersResponses(TestApiBundle bundle) {
     method: 'GET',
     path: '/indexer-settings',
     body: const <String, dynamic>{
-      'type': 'builtin',
-      'api_key': '',
       'indexers': <Map<String, dynamic>>[],
     },
   );
@@ -3860,8 +3858,6 @@ void _enqueueMobileIndexersResponses(TestApiBundle bundle) {
     method: 'GET',
     path: '/indexer-settings',
     body: const <String, dynamic>{
-      'type': 'jackett',
-      'api_key': '',
       'indexers': <Map<String, dynamic>>[],
     },
   );

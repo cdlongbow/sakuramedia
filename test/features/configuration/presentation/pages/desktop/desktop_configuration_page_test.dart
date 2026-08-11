@@ -1617,7 +1617,7 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('tests saved Jackett settings and shows the result', (
+    testWidgets('tests saved Torznab settings and shows the result', (
       WidgetTester tester,
     ) async {
       _enqueueMediaLibraries(bundle);
@@ -1650,7 +1650,7 @@ void main() {
         find.byKey(const Key('configuration-indexer-connection-test-result')),
         findsOneWidget,
       );
-      expect(find.text('Jackett 已连通，真实搜索已完成。'), findsOneWidget);
+      expect(find.text('Torznab 已连通，真实搜索已完成。'), findsOneWidget);
       expect(find.text('索引器：2 个'), findsOneWidget);
       expect(find.text('候选：5 条'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
@@ -1710,20 +1710,19 @@ void main() {
         _enqueueIndexerSettings(bundle, indexers: const []);
         _enqueueDownloadClientsList(bundle, clients: _defaultDownloadClients);
         bundle.adapter.enqueueJson(
-          method: 'PATCH',
-          path: '/indexer-settings',
-          body: {
-            'type': 'jackett',
-            'api_key': 'secret-key',
-            'indexers': [
-              {
-                'id': 1,
-                'name': 'mteam',
-                'url': 'https://mirror.example.com/torznab',
-                'kind': 'pt',
-                'download_clients': [
-                  {'id': 1, 'name': 'client-a', 'kind': 'qbittorrent'},
-                ],
+        method: 'PATCH',
+        path: '/indexer-settings',
+        body: {
+          'indexers': [
+            {
+              'id': 1,
+              'name': 'mteam',
+              'url': 'https://mirror.example.com/torznab',
+              'kind': 'pt',
+              'api_key': 'secret-key',
+              'download_clients': [
+                {'id': 1, 'name': 'client-a', 'kind': 'qbittorrent'},
+              ],
               },
             ],
           },
@@ -1745,6 +1744,10 @@ void main() {
           find.byKey(const Key('indexer-entry-url-field')),
           'https://mirror.example.com/torznab',
         );
+        await tester.enterText(
+          find.byKey(const Key('indexer-entry-api-key-field')),
+          'secret-key',
+        );
         await tester.tap(find.byKey(const Key('indexer-download-client-1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('保存').last);
@@ -1761,6 +1764,7 @@ void main() {
         expect(patchRequest.body['indexers'][0]['download_client_ids'], <int>[
           1,
         ]);
+        expect(patchRequest.body['indexers'][0]['api_key'], 'secret-key');
         expect(find.textContaining('下载器: client-a'), findsOneWidget);
         await tester.pump(const Duration(seconds: 3));
       },
@@ -1825,14 +1829,13 @@ void main() {
         method: 'PATCH',
         path: '/indexer-settings',
         body: {
-          'type': 'jackett',
-          'api_key': 'secret-key',
           'indexers': [
             {
               'id': 1,
               'name': 'mteam',
               'url': 'https://mirror.example.com/torznab',
               'kind': 'pt',
+              'api_key': 'secret-key',
               'download_clients': [
                 {'id': 2, 'name': 'client-b', 'kind': 'qbittorrent'},
               ],
@@ -1864,6 +1867,7 @@ void main() {
             request.method == 'PATCH' && request.path == '/indexer-settings',
       );
       expect(patchRequest.body['indexers'][0]['download_client_ids'], <int>[2]);
+      expect(patchRequest.body['indexers'][0]['api_key'], 'secret-key');
       expect(find.textContaining('下载器: client-b'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
     });
@@ -2096,17 +2100,22 @@ void _enqueueIndexerSettings(
   TestApiBundle bundle, {
   List<Map<String, Object?>> indexers = const [],
 }) {
+  Map<String, Object?> withApiKey(Map<String, Object?> entry) {
+    return <String, Object?>{
+      ...entry,
+      'api_key': entry.containsKey('api_key') ? entry['api_key'] : 'secret-key',
+    };
+  }
+
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/indexer-settings',
     body: {
-      'type': 'jackett',
-      'api_key': 'secret-key',
       'indexers': indexers
           .map((entry) {
-            if (entry.containsKey('download_clients')) return entry;
+            if (entry.containsKey('download_clients')) return withApiKey(entry);
             return <String, Object?>{
-              ...entry,
+              ...withApiKey(entry),
               'download_clients': <Map<String, Object?>>[
                 <String, Object?>{
                   'id': entry['download_client_id'],

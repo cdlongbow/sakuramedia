@@ -418,7 +418,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
           itemKey: _indexerItemKey,
           displayName: '索引器',
           status: DiagnosticItemStatus.unhealthy,
-          hint: indexerHints[hintKey] ?? indexerHints['jackett-request-error']!,
+          hint: indexerHints[hintKey] ?? indexerHints['torznab-request-error']!,
           summary: _indexerSummary(hintKey, settings),
         );
       }
@@ -451,7 +451,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         itemKey: _indexerItemKey,
         displayName: '索引器',
         status: DiagnosticItemStatus.unhealthy,
-        hint: indexerHints['jackett-request-error']!,
+        hint: indexerHints['torznab-request-error']!,
         summary: '索引器配置或连通性检测失败',
       );
     }
@@ -757,10 +757,6 @@ class SystemDiagnostics extends _$SystemDiagnostics {
 
   String _indexerSummary(String hintKey, IndexerSettingsDto settings) {
     switch (hintKey) {
-      case 'type-missing':
-        return '未选择索引器类型';
-      case 'api-key-missing':
-        return 'API Key 未填';
       case 'entries-empty':
         return '尚未添加任何索引器条目';
       case 'entry-url-invalid':
@@ -788,7 +784,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
     }
     return result.error?.type == 'no_indexers_configured'
         ? '尚未保存任何索引器条目'
-        : 'Jackett 连通性测试失败';
+        : 'Torznab 连通性测试失败';
   }
 
   String _shortenError(String message) {

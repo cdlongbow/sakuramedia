@@ -144,13 +144,9 @@ Map<String, dynamic> _storageResult({required bool healthy, int clientId = 1}) {
 }
 
 Map<String, dynamic> _indexerSettings({
-  String type = 'jackett',
-  String apiKey = 'k',
   List<Map<String, dynamic>> entries = const <Map<String, dynamic>>[],
 }) {
   return <String, dynamic>{
-    'type': type,
-    'api_key': apiKey,
     'indexers': entries
         .map((entry) {
           if (entry.containsKey('download_clients')) return entry;
@@ -348,8 +344,8 @@ void main() {
           <String, dynamic>{
             'id': 1,
             'name': 'e1',
-            'url': 'https://jackett.example/api',
-            'kind': 'jackett',
+            'url': 'https://torznab.example/api',
+            'kind': 'pt',
             'download_client_id': 1,
             'download_client_name': 'qb',
           },
@@ -418,7 +414,7 @@ void main() {
           <String, dynamic>{
             'id': 1,
             'name': 'dmhy',
-            'url': 'https://jackett.example/api',
+            'url': 'https://torznab.example/api',
             'kind': 'bt',
             'download_clients': <Map<String, dynamic>>[
               <String, dynamic>{'id': 8, 'name': '115 主账号', 'kind': 'cloud115'},
@@ -526,8 +522,8 @@ void main() {
           <String, dynamic>{
             'id': 1,
             'name': 'e1',
-            'url': 'https://jackett.example',
-            'kind': 'jackett',
+            'url': 'https://torznab.example',
+            'kind': 'pt',
             'download_client_id': 2,
             'download_client_name': 'qb-b',
           },
@@ -624,12 +620,11 @@ void main() {
       method: 'GET',
       path: '/indexer-settings',
       body: _indexerSettings(
-        apiKey: '',
         entries: <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 1,
             'name': 'e1',
-            'url': 'https://jackett.example/api',
+            'url': 'not-a-url',
             'kind': 'pt',
             'download_client_id': 1,
             'download_client_name': 'qb',
@@ -645,10 +640,10 @@ void main() {
     expect(_bundle.adapter.hitCount('GET', '/indexer-settings/test'), 0);
     final indexer = _find(c, (i) => i.kind == DiagnosticItemKind.indexer);
     expect(indexer.status, DiagnosticItemStatus.unhealthy);
-    expect(indexer.summary, 'API Key 未填');
+    expect(indexer.summary, '存在非法 tracker URL');
   });
 
-  test('Jackett 业务失败映射为可修复的索引器错误', () async {
+  test('Torznab 业务失败映射为可修复的索引器错误', () async {
     _bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/media-libraries',
@@ -677,7 +672,7 @@ void main() {
           <String, dynamic>{
             'id': 1,
             'name': 'e1',
-            'url': 'https://jackett.example/api',
+            'url': 'https://torznab.example/api',
             'kind': 'pt',
             'download_client_id': 1,
             'download_client_name': 'qb',
@@ -690,7 +685,7 @@ void main() {
       path: '/indexer-settings/test',
       body: _indexerConnectionTest(
         healthy: false,
-        errorType: 'jackett_request_error',
+        errorType: 'torznab_request_error',
         errorMessage: 'connection refused',
       ),
     );

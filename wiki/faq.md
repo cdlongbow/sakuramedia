@@ -224,10 +224,10 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands reset-ac
 
 - 它是否已经可播放了(已经有媒体资源了)
 - 数据库里是否已经有它的历史下载任务记录
-- Jackett 是否能搜到可用候选
+- Torznab 索引器是否能搜到可用候选
 - 下载器、索引器和媒体库绑定是否完整
 
-其中最后一条不用手动逐项核对：「总览」页跑一次「组件诊断」，会检查下载器连通、索引器配置完整性（含下载器绑定）和 Jackett 连通。
+其中最后一条不用手动逐项核对：「总览」页跑一次「组件诊断」，会检查下载器连通、索引器配置完整性（含下载器绑定）和 Torznab 索引器连通。
 
 如果你想立刻手动触发一次，可以看 [常用命令](/guide/commands) 里的 `auto-download-subscribed-movies`。
 

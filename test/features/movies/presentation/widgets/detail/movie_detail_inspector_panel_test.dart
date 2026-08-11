@@ -416,7 +416,7 @@ void main() {
             ({required String movieNumber, String? indexerKind}) async {
               return const <DownloadCandidateDto>[
                 DownloadCandidateDto(
-                  source: 'jackett',
+                  source: 'torznab',
                   indexerName: 'mteam',
                   indexerKind: 'bt',
                   resolvedClientId: 2,
@@ -471,7 +471,7 @@ void main() {
     WidgetTester tester,
   ) async {
     const candidate = DownloadCandidateDto(
-      source: 'jackett',
+      source: 'torznab',
       indexerName: 'dmhy',
       indexerKind: 'bt',
       resolvedClientId: 2,
@@ -580,7 +580,7 @@ void main() {
           ({required String movieNumber, String? indexerKind}) async =>
               const <DownloadCandidateDto>[
                 DownloadCandidateDto(
-                  source: 'jackett',
+                  source: 'torznab',
                   indexerName: 'dmhy',
                   indexerKind: 'bt',
                   resolvedClientId: 2,

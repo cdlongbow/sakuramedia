@@ -684,14 +684,13 @@ void main() {
         method: 'GET',
         path: '/indexer-settings',
         body: {
-          'type': 'jackett',
-          'api_key': 'secret-key',
           'indexers': [
             {
               'id': 1,
               'name': 'mteam',
               'url': 'https://example.com/torznab',
               'kind': 'pt',
+              'api_key': 'secret-key',
               'download_clients': [
                 {'id': 2, 'name': 'qb-main', 'kind': 'qbittorrent'},
               ],
@@ -703,14 +702,13 @@ void main() {
         method: 'PATCH',
         path: '/indexer-settings',
         body: {
-          'type': 'jackett',
-          'api_key': 'updated-key',
           'indexers': [
             {
               'id': 1,
               'name': 'mteam',
               'url': 'https://example.com/torznab',
               'kind': 'pt',
+              'api_key': 'updated-key',
               'download_clients': [
                 {'id': 2, 'name': 'qb-main', 'kind': 'qbittorrent'},
               ],
@@ -722,14 +720,13 @@ void main() {
       final settings = await bundle.indexerSettingsApi.getSettings();
       final updated = await bundle.indexerSettingsApi.updateSettings(
         const UpdateIndexerSettingsPayload(
-          type: 'jackett',
-          apiKey: 'updated-key',
           indexers: [
             IndexerEntryDto(
               id: 0,
               name: 'mteam',
               url: 'https://example.com/torznab',
               kind: 'pt',
+              apiKey: 'updated-key',
               downloadClients: [
                 IndexerBoundClientDto(
                   id: 2,
@@ -742,13 +739,18 @@ void main() {
         ),
       );
 
-      expect(settings.apiKey, 'secret-key');
       expect(settings.indexers.single.id, 1);
+      expect(settings.indexers.single.apiKey, 'secret-key');
       expect(settings.indexers.single.downloadClientIds, [2]);
       expect(settings.indexers.single.downloadClientNames, 'qb-main');
-      expect(updated.apiKey, 'updated-key');
+      expect(updated.indexers.single.apiKey, 'updated-key');
       expect(updated.indexers.single.downloadClientNames, 'qb-main');
-      expect(bundle.adapter.requests[1].body['api_key'], 'updated-key');
+      expect(bundle.adapter.requests[1].body.containsKey('type'), isFalse);
+      expect(bundle.adapter.requests[1].body.containsKey('api_key'), isFalse);
+      expect(
+        bundle.adapter.requests[1].body['indexers'][0]['api_key'],
+        'updated-key',
+      );
       expect(
         bundle.adapter.requests[1].body['indexers'][0]['download_client_ids'],
         [2],
@@ -802,7 +804,7 @@ void main() {
             'result_count': 0,
             'elapsed_ms': 30,
             'error': <String, dynamic>{
-              'type': 'jackett_request_error',
+              'type': 'torznab_request_error',
               'message': 'connection refused',
             },
           },
@@ -821,7 +823,7 @@ void main() {
         expect(healthy.error, isNull);
         expect(noIndexers.healthy, isFalse);
         expect(noIndexers.error?.type, 'no_indexers_configured');
-        expect(requestError.error?.type, 'jackett_request_error');
+        expect(requestError.error?.type, 'torznab_request_error');
         expect(requestError.error?.message, 'connection refused');
         expect(bundle.adapter.hitCount('GET', '/indexer-settings/test'), 3);
       },
@@ -843,6 +845,7 @@ void main() {
         });
 
         expect(settings.indexers.single.id, 0);
+        expect(settings.indexers.single.apiKey, isNull);
         expect(settings.indexers.single.downloadClientIds, isEmpty);
         expect(settings.indexers.single.downloadClientNames, '');
       },

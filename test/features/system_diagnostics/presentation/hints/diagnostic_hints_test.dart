@@ -33,14 +33,14 @@ DownloadClientDto _client(int id) {
 
 IndexerEntryDto _entry({
   int id = 1,
-  String url = 'https://jackett.example/torznab',
+  String url = 'https://torznab.example/torznab',
   int clientId = 1,
 }) {
   return IndexerEntryDto(
     id: id,
     name: 'e$id',
     url: url,
-    kind: 'jackett',
+    kind: 'pt',
     downloadClients:
         clientId > 0
             ? <IndexerBoundClientDto>[
@@ -241,32 +241,10 @@ void main() {
 
   group('resolveIndexerConfigHintKey', () {
     IndexerSettingsDto settings({
-      String type = 'jackett',
-      String apiKey = 'k',
       List<IndexerEntryDto> entries = const <IndexerEntryDto>[],
     }) {
-      return IndexerSettingsDto(type: type, apiKey: apiKey, indexers: entries);
+      return IndexerSettingsDto(indexers: entries);
     }
-
-    test('type 空 → type-missing', () {
-      expect(
-        resolveIndexerConfigHintKey(
-          settings: settings(type: ''),
-          existingClients: <DownloadClientDto>[_client(1)],
-        ),
-        'type-missing',
-      );
-    });
-
-    test('apiKey 空 → api-key-missing', () {
-      expect(
-        resolveIndexerConfigHintKey(
-          settings: settings(apiKey: '  '),
-          existingClients: <DownloadClientDto>[_client(1)],
-        ),
-        'api-key-missing',
-      );
-    });
 
     test('entries 空 → entries-empty', () {
       expect(
@@ -329,14 +307,14 @@ void main() {
       );
     });
 
-    test('Jackett 请求失败及未知错误 → jackett-request-error', () {
+    test('Torznab 请求失败及未知错误 → torznab-request-error', () {
       expect(
-        resolveIndexerConnectionHintKey('jackett_request_error'),
-        'jackett-request-error',
+        resolveIndexerConnectionHintKey('torznab_request_error'),
+        'torznab-request-error',
       );
       expect(
         resolveIndexerConnectionHintKey('unexpected_error'),
-        'jackett-request-error',
+        'torznab-request-error',
       );
     });
   });

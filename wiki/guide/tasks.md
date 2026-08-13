@@ -4,7 +4,7 @@ outline: [2, 3]
 
 # 后台任务
 
-SakuraMedia 后台定时任务的作用和默认频率。
+SakuraMedia 宿主内置后台定时任务的作用和默认频率。
 
 ## 任务总览
 
@@ -14,7 +14,6 @@ SakuraMedia 后台定时任务的作用和默认频率。
 | 已订阅缺失影片自动下载 | 搜索并提交符合条件的影片资源 | 每天 02:30 |
 | 影片热度重算 | 更新影片热度字段 | 每天 00:15 |
 | 影片互动数同步 | 回刷评分、想看、评论等互动统计，并联动热度 | 每天 05:00 |
-| 排行榜同步 | 同步排行榜数据 | 每天 01:45 |
 | JavDB 热评同步 | 同步热评和关联影片快照 | 每天 01:20 |
 | 合集影片同步 | 同步合集标记 | 每天 01:00 |
 | 下载任务状态同步 | 同步所有下载客户端的任务状态到本地 | 每 5 分钟 |
@@ -73,11 +72,6 @@ SakuraMedia 后台定时任务的作用和默认频率。
 
 老片评分和评论基本不动了，跟着每天刷浪费抓取额度。需要更新时重新订阅一次即可。
 
-### 排行榜同步
-
-同步排行榜数据。
-
-默认频率：每天 `01:45`
 
 ### JavDB 热评同步
 
@@ -219,7 +213,6 @@ cloud115_offline_sync_cron = "* * * * *"
 movie_collection_sync_cron = "0 1 * * *"
 movie_heat_cron = "15 0 * * *"
 movie_interaction_sync_cron = "0 5 * * *"
-ranking_sync_cron = "45 1 * * *"
 hot_review_sync_cron = "20 1 * * *"
 media_file_scan_cron = "0 4 * * *"
 movie_desc_sync_cron = "0 4 * * *"
@@ -259,7 +252,6 @@ activity_notification_read_retention_days = 3
 - `actor_subscription_sync_cron` — 已订阅女优的影片持续补进来
 - `movie_collection_sync_cron` — 合集标记持续同步
 - `movie_interaction_sync_cron` — 影片互动统计持续回刷
-- `ranking_sync_cron` — 排行榜数据更新
 - `hot_review_sync_cron` — 热评数据更新
 
 ### 媒体增强相关

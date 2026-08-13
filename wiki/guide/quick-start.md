@@ -46,7 +46,7 @@ outline: [2, 4]
 
 ```bash
 cd /mnt/ssd/sakuramedia
-mkdir -p sakuramedia-data/{cache,logs,config,joytag,media-clips,image-search-index,postgres} sakuramedia-data/cache/{assets,gfriends}
+mkdir -p sakuramedia-data/{cache,logs,config,joytag,media-clips,image-search-index,postgres,plugins} sakuramedia-data/cache/{assets,gfriends}
 ```
 
 
@@ -192,7 +192,6 @@ services:
 
 `postgres` 服务没有对宿主机映射端口，只在 compose 内部网络可见，外部无法直接访问。只有当你想用自己已有的 PostgreSQL 时，才需要去 `config.toml` 里改 `[database].url`（见[配置说明](/guide/config#database)）。
 :::
-
 ### 4. 启动
 运行 `docker compose up -d` 启动服务。
 

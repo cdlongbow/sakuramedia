@@ -18,7 +18,7 @@
 - `[media]`
 - `[metadata]`（包含元数据代理）
 - `[movie_info_translation]`
-- `[plugins]`（可选插件，只能手改配置文件）
+- `[plugins]`（可选插件）
 - `[scheduler]`
 - `[downloads]`
 - `[media_import]`
@@ -220,26 +220,8 @@ connect_timeout_seconds = 3
 
 ## `[plugins]`
 
-这一组控制「仓库内插件」的启用。目前无可选插件，未来可能会有。
+这一组控制「仓库内插件」的启用。参考各个插件的使用文档。
 
-```toml
-[plugins]
-enabled = ["示例插件ID"]
-
-[plugins.job_crons.示例插件ID]
-示例任务名 = "0 5 * * 1"
-
-[plugins.settings.示例插件ID]
-# 由插件自己定义的配置
-```
-
-字段说明：
-
-| 字段 | 作用 |
-|---|---|
-| `enabled` | 要启用的插件 ID 列表。**只有列在这里的插件才会被加载**，光有代码或光有配置都不会生效 |
-| `job_crons` | 按插件 ID 分组，覆盖该插件所注册任务的 cron；不写就用插件自带的默认 cron |
-| `settings` | 按插件 ID 分组的插件私有配置，具体字段由插件自己定义 |
 
 ## `[scheduler]`
 

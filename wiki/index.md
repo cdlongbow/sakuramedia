@@ -35,10 +35,9 @@ features:
   - title: 多客户端支持
     details: 支持 Web端、并提供 Win/Mac/iOS/Android 平台 APP。
   - title: 排行榜
-    details: 支持定时同步各个站点影片排行榜，可以快速找到最近热门的影片。
+    details: 由已启用的排行榜插件提供来源和定时同步能力，可以快速找到最近热门的影片。
 ---
 
 <p align="center">
   <img src="/images/sakuramedia-home-hero.png" alt="SakuraMedia 海报图" />
 </p>
-

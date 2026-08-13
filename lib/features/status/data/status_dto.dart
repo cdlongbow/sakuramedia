@@ -257,7 +257,7 @@ abstract final class MetadataProviderErrorType {
   /// HTTP 层失败（重试耗尽）：不可达、超时、非 2xx。
   static const String requestError = 'metadata_request_error';
 
-  /// 其它未归类异常，含 JavDB 账号登录失败（后端未单独 catch `JavdbAuthError`）。
+  /// 其它未归类异常，含 JavDB 登录失败（后端未单独 catch `JavdbAuthError`）。
   static const String unexpected = 'unexpected_error';
 }
 

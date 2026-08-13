@@ -2203,8 +2203,6 @@ Map<String, dynamic> _buildAdvancedConfigResponseJson() {
       },
       'metadata': <String, dynamic>{
         'javdb_host': 'jdforrepam.com',
-        'javdb_username': '',
-        'javdb_password': '',
         'proxy': '',
       },
       'scheduler': <String, dynamic>{

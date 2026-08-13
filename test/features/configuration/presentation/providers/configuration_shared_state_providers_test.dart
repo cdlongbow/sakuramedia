@@ -400,12 +400,7 @@ ConfigResourceDto _config(List<DownloadClientKind> kinds) => ConfigResourceDto(
     uncensoredPrefix: [],
     allowedMinVideoFileSize: 0,
   ),
-  metadata: const AdvancedMetadataConfigDto(
-    javdbHost: '',
-    javdbUsername: '',
-    javdbPassword: '',
-    proxy: '',
-  ),
+  metadata: const AdvancedMetadataConfigDto(javdbHost: '', proxy: ''),
   scheduler: const AdvancedSchedulerConfigDto(crons: {}),
   downloads: AdvancedDownloadsConfigDto(
     smallFileCleanupThresholdMb: 0,

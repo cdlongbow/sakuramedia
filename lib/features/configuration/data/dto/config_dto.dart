@@ -159,32 +159,21 @@ class AdvancedMediaConfigDto {
 class AdvancedMetadataConfigDto {
   const AdvancedMetadataConfigDto({
     required this.javdbHost,
-    required this.javdbUsername,
-    required this.javdbPassword,
     required this.proxy,
   });
 
   final String javdbHost;
-  final String javdbUsername;
-  final String javdbPassword;
   final String proxy;
 
   factory AdvancedMetadataConfigDto.fromJson(Map<String, dynamic> json) {
     return AdvancedMetadataConfigDto(
       javdbHost: _stringAt(json, 'javdb_host'),
-      javdbUsername: _stringAt(json, 'javdb_username'),
-      javdbPassword: _stringAt(json, 'javdb_password'),
       proxy: _stringAt(json, 'proxy'),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'javdb_host': javdbHost,
-      'javdb_username': javdbUsername,
-      'javdb_password': javdbPassword,
-      'proxy': proxy,
-    };
+    return <String, dynamic>{'javdb_host': javdbHost, 'proxy': proxy};
   }
 }
 
@@ -200,7 +189,6 @@ class AdvancedSchedulerConfigDto {
     'movie_collection_sync',
     'movie_heat',
     'movie_interaction_sync',
-    'ranking_sync',
     'hot_review_sync',
     'media_file_scan',
     'movie_desc_sync',

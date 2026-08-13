@@ -175,7 +175,9 @@ void main() {
     () async {
       _enqueueInitialActivityState(
         bundle,
-        jobs: <Map<String, dynamic>>[_jobJson(taskKey: 'ranking_sync')],
+        jobs: <Map<String, dynamic>>[
+          _jobJson(taskKey: 'example_plugin_sync'),
+        ],
       );
       bundle.adapter.enqueueSse(
         method: 'GET',
@@ -192,7 +194,7 @@ void main() {
       await controller.initialize();
       await Future<void>.delayed(const Duration(milliseconds: 20));
 
-      expect(controller.jobs.single.taskKey, 'ranking_sync');
+      expect(controller.jobs.single.taskKey, 'example_plugin_sync');
       expect(controller.jobErrorMessage, isNull);
     },
   );
@@ -253,7 +255,9 @@ void main() {
     () async {
       _enqueueInitialActivityState(
         bundle,
-        jobs: <Map<String, dynamic>>[_jobJson(taskKey: 'ranking_sync')],
+        jobs: <Map<String, dynamic>>[
+          _jobJson(taskKey: 'example_plugin_sync'),
+        ],
       );
       bundle.adapter.enqueueSse(
         method: 'GET',
@@ -263,10 +267,10 @@ void main() {
       );
       bundle.adapter.enqueueJson(
         method: 'POST',
-        path: '/system/jobs/ranking_sync/run',
+        path: '/system/jobs/example_plugin_sync/run',
         body: <String, dynamic>{
           'task_run_id': 13,
-          'task_key': 'ranking_sync',
+          'task_key': 'example_plugin_sync',
           'state': 'pending',
         },
       );
@@ -298,7 +302,7 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.initialize();
-      final response = await controller.triggerJob('ranking_sync');
+      final response = await controller.triggerJob('example_plugin_sync');
 
       expect(response.taskRunId, 13);
       expect(controller.activeTab, ActivityTab.tasks);
@@ -311,7 +315,9 @@ void main() {
     _enqueueInitialActivityState(
       bundle,
       activeTasks: <Map<String, dynamic>>[_runningTaskJson()],
-      jobs: <Map<String, dynamic>>[_jobJson(taskKey: 'ranking_sync')],
+      jobs: <Map<String, dynamic>>[
+        _jobJson(taskKey: 'example_plugin_sync'),
+      ],
     );
     bundle.adapter.enqueueSse(
       method: 'GET',
@@ -321,7 +327,7 @@ void main() {
     );
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/ranking_sync/run',
+      path: '/system/jobs/example_plugin_sync/run',
       statusCode: 409,
       body: <String, dynamic>{
         'error': <String, dynamic>{
@@ -341,13 +347,13 @@ void main() {
 
     await controller.initialize();
     await expectLater(
-      controller.triggerJob('ranking_sync'),
+      controller.triggerJob('example_plugin_sync'),
       throwsA(isA<Exception>()),
     );
 
     expect(controller.activeTab, ActivityTab.tasks);
     expect(controller.highlightedTaskRunId, 88);
-    expect(controller.isTriggeringJob('ranking_sync'), isFalse);
+    expect(controller.isTriggeringJob('example_plugin_sync'), isFalse);
   });
 
   test('heartbeat keeps live state without redundant notifications', () async {

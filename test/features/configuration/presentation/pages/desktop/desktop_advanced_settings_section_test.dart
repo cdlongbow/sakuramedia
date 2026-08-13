@@ -82,26 +82,22 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('omits blank javdb password and includes nonblank password', (
+    testWidgets('saves only host and proxy in metadata config', (
       WidgetTester tester,
     ) async {
       _enqueueAdvancedConfig(bundle);
       _enqueueAdvancedConfigPatch(
         bundle,
-        applied: const <String>['metadata.javdb_username'],
-      );
-      _enqueueAdvancedConfigPatch(
-        bundle,
-        applied: const <String>['metadata.javdb_password'],
+        applied: const <String>['metadata.proxy'],
       );
 
       await _pumpSection(tester, bundle, active: true);
       await tester.ensureVisible(
-        find.byKey(const Key('configuration-advanced-javdb-username-field')),
+        find.byKey(const Key('configuration-advanced-proxy-field')),
       );
       await tester.enterText(
-        find.byKey(const Key('configuration-advanced-javdb-username-field')),
-        'bob',
+        find.byKey(const Key('configuration-advanced-proxy-field')),
+        'http://127.0.0.1:7890',
       );
       await tester.ensureVisible(
         find.byKey(const Key('configuration-advanced-metadata-save-button')),
@@ -111,30 +107,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final blankPasswordRequest = bundle.adapter.requests.firstWhere(
+      final request = bundle.adapter.requests.firstWhere(
         (item) => item.method == 'PATCH' && item.path == '/config',
       );
-      expect(
-        blankPasswordRequest.body['metadata'].containsKey('javdb_password'),
-        isFalse,
-      );
-
-      await tester.enterText(
-        find.byKey(const Key('configuration-advanced-javdb-password-field')),
-        'secret',
-      );
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-advanced-metadata-save-button')),
-      );
-      await tester.tap(
-        find.byKey(const Key('configuration-advanced-metadata-save-button')),
-      );
-      await tester.pumpAndSettle();
-
-      final passwordRequest = bundle.adapter.requests.lastWhere(
-        (item) => item.method == 'PATCH' && item.path == '/config',
-      );
-      expect(passwordRequest.body['metadata']['javdb_password'], 'secret');
+      expect(request.body['metadata'], <String, dynamic>{
+        'javdb_host': 'jdforrepam.com',
+        'proxy': 'http://127.0.0.1:7890',
+      });
       await tester.pump(const Duration(seconds: 3));
     });
 
@@ -250,11 +229,11 @@ void main() {
         expect(
           buildAdvancedConfigSaveSuccessMessage(const <PendingRestartFieldDto>[
             PendingRestartFieldDto(
-              field: 'scheduler.movie_heat_cron',
+              field: 'scheduler.hot_review_sync_cron',
               restart: 'scheduler',
             ),
             PendingRestartFieldDto(
-              field: 'scheduler.ranking_sync_cron',
+              field: 'scheduler.movie_heat_cron',
               restart: 'scheduler',
             ),
           ]),
@@ -350,8 +329,6 @@ Map<String, dynamic> _buildAdvancedConfigJson({
       },
       'metadata': <String, dynamic>{
         'javdb_host': 'jdforrepam.com',
-        'javdb_username': 'alice',
-        'javdb_password': '',
         'proxy': '',
       },
       'scheduler': <String, dynamic>{

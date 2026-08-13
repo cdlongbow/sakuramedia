@@ -167,8 +167,8 @@ void _enqueueResourceTasks(TestApiBundle bundle) {
 Map<String, dynamic> _taskJson(int id) {
   return <String, dynamic>{
     'id': id,
-    'task_key': 'ranking_sync',
-    'task_name': '榜单同步',
+    'task_key': 'example_plugin_sync',
+    'task_name': '插件任务执行',
     'trigger_type': 'manual',
     'state': 'completed',
     'progress_current': 1,

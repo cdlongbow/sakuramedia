@@ -240,17 +240,19 @@ void main() {
       path: '/system/jobs',
       body: <Map<String, dynamic>>[
         <String, dynamic>{
-          'task_key': 'ranking_sync',
-          'log_name': 'ranking-sync',
-          'cli_name': 'sync-rankings',
-          'cli_help': '执行一次排行榜同步',
-          'cron_setting': 'ranking_sync_cron',
+          'task_key': 'example_plugin_sync',
+          'plugin_id': 'example_plugin',
+          'log_name': 'example-plugin-sync',
+          'cli_name': 'sync-example-plugin',
+          'cli_help': '执行一次插件任务',
+          'cron_setting':
+              'plugins.job_crons.example_plugin.example_plugin_sync',
           'cron_expr': '0 2 * * *',
           'manual_trigger_allowed': true,
           'last_task_run': <String, dynamic>{
             'id': 88,
-            'task_key': 'ranking_sync',
-            'task_name': '排行榜同步',
+            'task_key': 'example_plugin_sync',
+            'task_name': '插件任务执行',
             'trigger_type': 'manual',
             'state': 'completed',
             'created_at': '2026-03-26T09:10:00Z',
@@ -263,7 +265,7 @@ void main() {
     final jobs = await bundle.activityApi.getJobs();
 
     expect(jobs, hasLength(1));
-    expect(jobs.first.taskKey, 'ranking_sync');
+    expect(jobs.first.taskKey, 'example_plugin_sync');
     expect(jobs.first.manualTriggerAllowed, isTrue);
     expect(jobs.first.lastTaskRun?.id, 88);
     expect(bundle.adapter.hitCount('GET', '/system/jobs'), 1);
@@ -272,22 +274,25 @@ void main() {
   test('triggerJob maps manual job run endpoint', () async {
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/ranking_sync/run',
+      path: '/system/jobs/example_plugin_sync/run',
       body: <String, dynamic>{
         'task_run_id': 13,
-        'task_key': 'ranking_sync',
+        'task_key': 'example_plugin_sync',
         'state': 'pending',
       },
     );
 
     final response = await bundle.activityApi.triggerJob(
-      taskKey: 'ranking_sync',
+      taskKey: 'example_plugin_sync',
     );
 
     expect(response.taskRunId, 13);
-    expect(response.taskKey, 'ranking_sync');
+    expect(response.taskKey, 'example_plugin_sync');
     expect(response.state, 'pending');
-    expect(bundle.adapter.hitCount('POST', '/system/jobs/ranking_sync/run'), 1);
+    expect(
+      bundle.adapter.hitCount('POST', '/system/jobs/example_plugin_sync/run'),
+      1,
+    );
   });
 
   test('applyResourceTaskAction posts resource ids and maps result', () async {

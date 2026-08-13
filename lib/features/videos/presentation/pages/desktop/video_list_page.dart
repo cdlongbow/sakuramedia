@@ -454,9 +454,11 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       );
     }
     if (async.isLoading && collections.isEmpty) {
-      return const SizedBox(
-        height: 60,
-        child: Center(child: CircularProgressIndicator()),
+      return CollectionCardSkeletonRow(
+        key: const Key('videos-collections-skeleton-row'),
+        height: 172,
+        itemWidth: 210,
+        itemSpacing: context.appSpacing.md,
       );
     }
     if (collections.isEmpty) {

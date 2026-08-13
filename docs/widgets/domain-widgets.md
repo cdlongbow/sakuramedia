@@ -111,6 +111,7 @@
 - **用途**: 合集封面卡——`CollectionCard` 是内部私有 `._` 构造(不直接 new),`CollectionCoverCard` 是**对外的合集封面卡**(标题 + 计数 + 封面 + 编辑 / 删除菜单)。
 - **CollectionCoverCard required**: `title` · `count` · `coverUrl` · `onTap`;可选 `tapKey` / `menuKey` · `coverFit`(默认 cover) · `placeholderIcon`(默认 `video_library_outlined`) · `onEdit` / `onDelete`
 - **何时用**: 切片合集 / 视频合集的网格。
+- **CollectionCardSkeleton / CollectionCardSkeletonRow**: 与合集卡相同的 `16:9` 封面 + 标题结构，用于合集横滑区首屏加载；卡片与横滑行容器均由移动端与桌面端共用，行容器通过参数适配尺寸。
 
 ### CollectionMemberRow / CollectionMemberCard
 - **路径**: `lib/widgets/domain/collections/collection_member_views.dart`

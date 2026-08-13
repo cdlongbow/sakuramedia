@@ -445,9 +445,11 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       );
     }
     if (async.isLoading && collections.isEmpty) {
-      return const SizedBox(
-        height: 60,
-        child: Center(child: CircularProgressIndicator()),
+      return CollectionCardSkeletonRow(
+        key: const Key('mobile-pornbox-collections-skeleton-row'),
+        height: 116,
+        itemWidth: 116,
+        itemSpacing: spacing.sm,
       );
     }
     if (collections.isEmpty) {

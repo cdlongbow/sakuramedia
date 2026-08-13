@@ -220,7 +220,8 @@ connect_timeout_seconds = 3
 
 ## `[plugins]`
 
-这一组控制「仓库内插件」的启用。参考各个插件的使用文档。
+这一组控制「仓库内插件」的启用。插件能做什么、怎么安装和开发，见
+[插件化机制](/guide/plugins)。
 
 
 ## `[scheduler]`
@@ -239,7 +240,6 @@ download_small_file_cleanup_cron = "*/5 * * * *"
 movie_collection_sync_cron = "0 1 * * *"
 movie_heat_cron = "15 0 * * *"
 movie_interaction_sync_cron = "0 5 * * *"
-ranking_sync_cron = "45 1 * * *"
 hot_review_sync_cron = "20 1 * * *"
 media_file_scan_cron = "0 4 * * *"
 movie_desc_sync_cron = "0 4 * * *"
@@ -271,7 +271,6 @@ activity_notification_read_retention_days = 3
 | `movie_collection_sync_cron` | 合集影片同步频率 |
 | `movie_heat_cron` | 影片热度重算频率 |
 | `movie_interaction_sync_cron` | 影片互动数同步频率；当前默认每天 05:00 执行一次，任务跑起来之后哪些影片真正进入候选，还要看[分层刷新规则](/guide/tasks#影片互动数同步) |
-| `ranking_sync_cron` | 排行榜同步频率 |
 | `hot_review_sync_cron` | JavDB 热评同步频率 |
 | `media_file_scan_cron` | 媒体文件巡检频率 |
 | `movie_desc_sync_cron` | 影片原文描述回填频率 |
@@ -414,4 +413,3 @@ api_key = ""
 |---|---|
 | `url` | Qdrant HTTP API 地址；compose 部署时默认走容器内部服务名 `qdrant` |
 | `api_key` | Qdrant API Key；未启用鉴权时留空 |
-

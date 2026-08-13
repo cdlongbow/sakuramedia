@@ -1,0 +1,501 @@
+---
+outline: [2, 3, 4]
+---
+
+# 插件化机制
+
+SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，而不是把每个外部站点、
+抓取任务或榜单来源都写进主程序。插件代码运行在宿主服务进程内，宿主在启动阶段加载
+插件，插件通过固定的契约向宿主声明「我要注册什么任务、提供什么扩展」。
+
+本文同时面向两类读者：
+
+- **使用人员 / 部署者**：怎么安装、启用、配置插件，以及已提供的示例插件怎么用。
+- **插件开发人员**：怎么写一个合法插件，能调用宿主哪些能力，有什么边界。
+
+## 插件是什么
+
+一个插件就是**插件根目录下的一个子目录**：
+
+```text
+/data/plugins/
+└── <plugin_id>/
+    ├── manifest.json   # 插件声明：ID、名称、版本、宿主接口版本
+    ├── __init__.py     # 必须暴露 register(context)
+    └── ...             # 插件自己的代码
+```
+
+宿主默认从 `/data/plugins` 读取插件。只有同时满足以下条件，插件才会被加载：
+
+1. 目录在插件根目录下，目录名与 `manifest.json` 的 `plugin_id` 一致；
+2. `plugin_id` 出现在 `config.toml` 的 `plugins.enabled` 中；
+3. 重启了 api 与 aps 两个进程。
+
+单个插件加载失败**不会拖垮整个服务**：错误会被记录下来，其余插件和宿主自带功能
+照常运行。`plugins list` 可以查看每个插件的启停状态和加载错误。
+
+插件目前能做两类事：
+
+- **注册后台任务**：定时任务、手动任务、带参数任务，统一进入宿主任务中心；
+- **声明业务扩展点**：让宿主把插件提供的数据收编进自己的业务接口，当前唯一的扩展点是
+  `discovery.ranking_source`（排行榜来源）。
+
+## 使用篇
+
+### 安装与生命周期
+
+插件有两种安装方式：
+
+1. **目录方式**：把插件目录直接拷贝或挂载到 `/data/plugins/<plugin_id>/`；
+2. **zip 方式**：使用宿主 CLI 或 `/system/plugins` API 上传安装。
+
+在 Docker 部署下，用 CLI 安装 zip 的完整流程：
+
+```bash
+# 1. 把插件 zip 放进后端容器
+docker cp ./sakuramedia_javdb_ranking-0.1.0.zip sakuramedia:/tmp/
+
+# 2. 安装并启用（默认安装后自动启用；--no-enable 表示只安装不启用）
+docker exec --user app -w /app sakuramedia \
+  python -m src.start.commands plugins install /tmp/sakuramedia_javdb_ranking-0.1.0.zip
+
+# 3. 查看安装结果
+docker exec --user app -w /app sakuramedia python -m src.start.commands plugins list
+
+# 4. 插件在启动阶段加载，必须重启两个进程
+docker compose restart sakuramedia
+```
+
+常用管理命令：
+
+| 命令 | 作用 |
+|---|---|
+| `plugins list` | 列出已安装插件、启停状态、加载状态和加载错误 |
+| `plugins install <目录或zip> [--no-enable]` | 安装插件目录或 zip 包 |
+| `plugins enable <plugin_id>` | 启用插件 |
+| `plugins disable <plugin_id>` | 停用插件（目录保留） |
+| `plugins remove <plugin_id>` | 删除插件目录（**包含 data/ 运行数据**） |
+| `plugins check <目录>` | 校验插件目录是否合法，供插件作者使用 |
+
+除 CLI 外，也可以通过登录鉴权后的 `/system/plugins` API 管理：
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/system/plugins` | 插件列表 |
+| `GET` | `/system/plugins/{plugin_id}` | 插件详情 |
+| `POST` | `/system/plugins` | multipart 上传 zip，字段 `file`、可选 `sha256`、`enable` |
+| `PATCH` | `/system/plugins/{plugin_id}?enabled=true/false` | 启停 |
+| `DELETE` | `/system/plugins/{plugin_id}` | 删除插件 |
+
+生命周期要点：
+
+- **升级**：用相同 `plugin_id` 重新安装即可，旧插件目录里的 `data/` 会保留；
+- **没有版本回滚**：升级前需要自己备份插件目录；
+- **停用**：只是从 `plugins.enabled` 移除，目录和 `data/` 仍在；
+- **删除**：会连插件代码和 `data/` 一起删除，删除前先备份；
+- 任何安装、升级、启停、删除操作后，都要重启 **api 与 aps**。
+
+### 插件配置
+
+插件相关的配置都写在 `config.toml` 的 `[plugins]` 节，通用配置接口
+（前端高级设置页使用的 `/config`）**不会读取也不会修改这一节**。
+
+```toml
+[plugins]
+root_dir = "/data/plugins"
+enabled = ["sakuramedia_javdb_ranking"]
+
+[plugins.job_crons.sakuramedia_javdb_ranking]
+sakuramedia_javdb_ranking_sync = "15 3 * * *"
+
+[plugins.settings.sakuramedia_javdb_ranking]
+# 具体字段由插件自己定义，可能包含账号等敏感信息
+```
+
+| 字段 | 作用 |
+|---|---|
+| `root_dir` | 插件根目录，默认 `/data/plugins`；修改时必须保证路径已持久化且容器内 `app` 用户可读写 |
+| `enabled` | 要加载的插件 ID 列表；**只有列在这里的插件才会被加载** |
+| `job_crons` | 按插件 ID 分组，覆盖插件注册的定时任务 cron；不写则用插件默认频率 |
+| `settings` | 按插件 ID 分组的插件私有配置，插件以只读方式访问 |
+
+插件私有配置可能在启动时被读取，修改 `config.toml` 后同样需要重启 api 与 aps。
+
+### 前端能看到什么
+
+- 插件注册的任务会出现在**任务中心**的「可执行任务」里，可以查看 cron、手动执行和运行记录；
+- 排行榜插件提供的来源会出现在**排行榜页**，没有安装/启用排行榜插件时，排行榜页没有可用来源；
+- 插件管理目前**不在前端系统设置页**，安装、启停、删除请走 CLI 或 API；
+- 带参数的插件任务当前**不提供参数表单**，前端任务中心只能列出它；需要带参触发时请按插件说明使用
+  后端 CLI 或接口。
+
+### 排查插件问题
+
+| 症状 | 处理方式 |
+|---|---|
+| 插件没生效 | `plugins list` 看 `enabled` 和 `load_status`；确认已写入 `enabled` 并重启 |
+| 任务没出现在任务中心 | 插件可能未启用、`manifest.json` 缺失、`register` 报错或任务 key 冲突；`plugins list` 会显示加载错误 |
+| 手动执行任务报 422 | 该任务声明了参数但前端没有参数表单，需按插件文档用 CLI/接口带参触发 |
+| 排行榜页没有来源 | 没有安装/启用排行榜插件，或插件加载失败 |
+
+## 示例插件：JavDB 排行榜
+
+官方示例插件：[sakuramedia_javdb_ranking](https://github.com/tinypinglite/sakuramedia_javdb_ranking)。
+
+它通过 `discovery.ranking_source` 扩展点注册了 `source_key="javdb"` 的排行榜来源，
+并注册了定时全量同步和手动单榜同步两个任务。安装并启用后，排行榜页会出现 JavDB 来源。
+
+### 安装
+
+从插件仓库的 GitHub Release 下载 zip 后，按上面「安装与生命周期」的步骤安装即可：
+
+```bash
+docker cp ./sakuramedia_javdb_ranking-0.1.0.zip sakuramedia:/tmp/
+docker exec --user app -w /app sakuramedia \
+  python -m src.start.commands plugins install /tmp/sakuramedia_javdb_ranking-0.1.0.zip
+docker compose restart sakuramedia
+```
+
+### 配置
+
+```toml
+[plugins]
+enabled = ["sakuramedia_javdb_ranking"]
+
+[plugins.settings.sakuramedia_javdb_ranking]
+javdb_username = ""
+javdb_password = ""
+
+# 可选：覆盖定时全量同步默认的每天 01:45
+[plugins.job_crons.sakuramedia_javdb_ranking]
+sakuramedia_javdb_ranking_sync = "15 3 * * *"
+```
+
+账号说明：
+
+- `javdb_username` / `javdb_password` 只对 **TOP250** 榜需要；
+- 不配置账号时，TOP250 整榜跳过，其余五个免费榜照常同步；
+- 配置账号后登录失败只影响当次运行，下次任务会自动重试。
+
+### 提供的榜单
+
+| board key | 周期 | 说明 |
+|---|---|---|
+| `playback_all` | daily / weekly / monthly | 热播榜 |
+| `playback_high_score` | daily / weekly / monthly | 高评分榜 |
+| `censored` | daily / weekly / monthly | 有码 |
+| `uncensored` | daily / weekly / monthly | 无码 |
+| `fc2` | daily / weekly / monthly | FC2 |
+| `top250` | all / uncensored / censored / fc2 + 当前年份到 2008 | 需要账号；历史年份已有数据不重复抓取 |
+
+### 提供的任务
+
+| 任务 | 类型 | 说明 |
+|---|---|---|
+| `sakuramedia_javdb_ranking_sync` | 定时 | 全量同步本插件声明的全部榜单，默认每天 01:45 |
+| `sakuramedia_javdb_ranking_sync_board` | 手动带参 | 手动同步单个榜单，参数 `board_key` / `period` |
+
+## 开发篇
+
+### 最小插件
+
+一个最小插件只需要三个部分：
+
+```text
+<plugin_id>/
+├── manifest.json
+├── __init__.py          # 暴露 register(context)
+└── plugin.py            # 实现 register
+```
+
+`manifest.json`：
+
+```json
+{
+  "plugin_id": "example_plugin",
+  "display_name": "示例插件",
+  "version": "1.0.0",
+  "host_api_version": 1,
+  "requires_python": ">=3.10",
+  "author": "example",
+  "homepage": "https://example.com/example_plugin"
+}
+```
+
+`plugin.py`：
+
+```python
+from src.plugins import PluginContext, PluginRegistration
+
+
+def register(context: PluginContext) -> PluginRegistration:
+    return PluginRegistration(
+        plugin_id="example_plugin",
+        display_name="示例插件",
+        version="1.0.0",
+    )
+```
+
+`register(context)` 只做**声明**，不要在这里发网络请求或做重型初始化，那些应该放进任务执行体。
+
+### manifest.json 字段
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `plugin_id` | 是 | 只能包含小写字母、数字、下划线，且必须以字母开头（`^[a-z][a-z0-9_]*$`），必须与目录名一致 |
+| `display_name` | 是 | 展示名 |
+| `version` | 是 | 插件版本，格式为 PEP 440 |
+| `host_api_version` | 是 | 插件声明的宿主接口版本，当前必须为 `1` |
+| `requires_python` | 否 | Python 版本约束，如 `>=3.10` |
+| `author` / `homepage` | 否 | 展示信息 |
+
+未知字段会被严格拒绝，不要随意添加自定义字段。
+
+### 注册契约：PluginRegistration
+
+`register(context)` 必须返回 `PluginRegistration`：
+
+| 字段 | 说明 |
+|---|---|
+| `plugin_id` | 与 manifest / 目录名一致 |
+| `display_name` | 展示名 |
+| `version` | 与 manifest 完全一致 |
+| `host_api_version` | 当前必须为 `1` |
+| `jobs` | 后台任务元组，允许为空 |
+| `extensions` | 扩展点声明元组，允许为空 |
+
+### 任务声明：JobDefinition
+
+插件任务从 `src.scheduler.contracts` 导入 `JobDefinition`：
+
+```python
+from pydantic import BaseModel
+from src.scheduler.contracts import JobDefinition
+```
+
+常用字段：
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `task_key` | 是 | 任务稳定标识，全局唯一 |
+| `log_name` | 是 | 任务日志文件名，全局唯一 |
+| `cli_name` | 是 | `aps` 子命令名，全局唯一 |
+| `cli_help` | 是 | CLI 帮助与任务中心展示文案 |
+| `default_cron` | 视形态 | 定时任务的默认 cron |
+| `service_factory` | 视形态 | 定时执行体，接收 `TaskRunReporter` |
+| `params_schema` | 否 | 手动参数模型（pydantic `BaseModel`） |
+| `params_handler` | 否 | 带参执行体，接收 `TaskRunReporter` 和参数 dict |
+| `manual_only` | 否 | `True` 表示无 cron、只能手动触发 |
+| `manual_trigger_allowed` | 否 | 是否允许 HTTP 手动触发，默认 `True` |
+| `business_recovery` | 否 | 崩溃恢复钩子 |
+| `format_stats` | 否 | 把结果 dict 格式化为 CLI 统计文案 |
+
+三种任务形态：
+
+**定时任务**：
+
+```python
+JobDefinition(
+    task_key="daily_sync",
+    log_name="daily-sync",
+    cli_name="sync-daily",
+    cli_help="每日同步",
+    default_cron="0 4 * * *",
+    service_factory=lambda reporter: run_sync(reporter),
+)
+```
+
+**手动带参任务**：
+
+```python
+class SyncParams(BaseModel):
+    board_key: str
+    period: str | None = None
+
+JobDefinition(
+    task_key="sync_one",
+    log_name="sync-one",
+    cli_name="sync-one",
+    cli_help="手动同步单个榜单",
+    manual_only=True,
+    params_schema=SyncParams,
+    params_handler=lambda reporter, params: run_one(reporter, params),
+)
+```
+
+**混合任务**：同时声明 `default_cron + service_factory` 和
+`params_schema + params_handler`，定时触发走 `service_factory`，手动带参触发走
+`params_handler`。
+
+任务校验规则（违反会让该插件加载失败并被隔离）：
+
+- 必须提供 `service_factory` 或 `params_handler` 至少一个；
+- 定时任务必须提供 `service_factory`；
+- `manual_only` 任务不能声明 cron；
+- `params_schema` 和 `params_handler` 必须成对出现；
+- `default_cron` 必须是合法 crontab；
+- `task_key` / `log_name` / `cli_name` 不能与宿主或其它插件重复。
+
+### 宿主能力：PluginContext
+
+插件通过 `PluginContext` 访问宿主能力。常用方法：
+
+| 方法 | 说明 |
+|---|---|
+| `ensure_data_dir()` | 确保插件数据目录存在并返回路径 |
+| `data_dir` | 插件专属数据目录 `<root>/<plugin_id>/data/`，重装保留 |
+| `build_javdb_provider(username=None, password=None)` | 构造 JavDB provider；需要登录的榜单传入插件自己的账号 |
+| `build_catalog_import_service(skip_dmm=False)` | 构造目录入库服务；批量场景用 `skip_dmm=True` 提速 |
+| `import_movie_by_number(movie_number)` | 通过 JavDB 获取详情并完整入库 |
+| `list_existing_movie_numbers()` | 主库全部影片番号集合，用于批量任务做存在性判断 |
+| `import_subtitle(movie_number, content, filename, language=None)` | 写入字幕，宿主统一做扩展名校验、去重、落盘和登记 |
+| `sync_ranking_sources(progress_callback=None)` | 同步本插件声明的全部排行榜来源 |
+| `sync_ranking_board(source_key, board_key, period=None)` | 同步单个榜单；`source_key` 必须是本插件声明的 |
+| `get_task_logger(name)` | 获取绑定到任务日志文件的 logger |
+
+插件能读到的配置只有 `context.settings`（对应 `plugins.settings.<plugin_id>`），
+它是**深冻结只读**的，插件不能修改；配置只能由部署者改 `config.toml` 后重启。
+
+批量导入时不要为每个番号反复构造 provider/importer，应该在一个任务运行内复用：
+
+```python
+provider = context.build_javdb_provider(
+    username=settings.javdb_username,
+    password=settings.javdb_password,
+)
+importer = context.build_catalog_import_service(skip_dmm=True)
+```
+
+### 扩展点机制
+
+插件通过 `extensions` 声明业务领域扩展：
+
+```python
+from src.plugins import PluginExtension
+
+PluginExtension(
+    key="discovery.ranking_source",
+    data=PluginRankingSource(...),
+)
+```
+
+宿主只做通用结构校验，领域语义由对应扩展点的校验器解释。当前唯一已登记的扩展点是
+`discovery.ranking_source`；插件声明宿主未登记的扩展点 key 会被拒绝。
+
+### 排行榜扩展点
+
+```python
+from src.plugins import (
+    PluginExtension,
+    PluginRankingBoard,
+    PluginRankingSource,
+    PluginRegistration,
+    RANKING_SOURCE_EXTENSION_KEY,
+)
+
+
+def fetch_hot(period: str) -> list[str]:
+    # 插件自己抓取外部站点，返回番号列表，顺序即 rank
+    return ["ABP-123", "IPX-456"]
+
+
+def register(context):
+    return PluginRegistration(
+        plugin_id="example_rank",
+        display_name="示例榜单",
+        version="1.0.0",
+        extensions=(
+            PluginExtension(
+                key=RANKING_SOURCE_EXTENSION_KEY,
+                data=PluginRankingSource(
+                    source_key="example",
+                    name="示例站",
+                    boards=(
+                        PluginRankingBoard(
+                            key="hot",
+                            name="热榜",
+                            supported_periods=("daily", "weekly", "monthly"),
+                            default_period="daily",
+                            fetch_numbers=fetch_hot,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
+```
+
+关键语义：
+
+- `source_key` 全局唯一，两个插件声明相同 `source_key` 时后加载的插件整插件隔离；
+- `board.key` 在来源内唯一；
+- `supported_periods` 和 `supported_periods_provider` 二选一，后者用于动态周期（如逐年滚动的年份）；
+- `should_fetch(period, has_items)` 返回 `False` 时该周期跳过，可用于「未配置账号不抓」「历史年份已有数据不重抓」；
+- `fetch_numbers(period)` 返回番号列表，列表顺序就是榜单排名。
+
+需要登录的账号由插件自己从 `plugins.settings.<plugin_id>` 读取，宿主不感知账号配置。
+
+### 任务进度与日志
+
+任务执行体接收 `TaskRunReporter`：
+
+```python
+def handler(reporter, params):
+    reporter.emit(
+        current=1,
+        total=10,
+        text="processing ...",
+        summary_patch={"processed": 1},
+    )
+    return {"done": True}
+```
+
+- 进度会写入任务运行记录，前端任务中心通过任务运行接口和 SSE 看到；
+- 任务完成/失败会走通知中心；
+- 每个任务按 `log_name` 写独立日志文件；
+- 同一个 `task_key` 同时只运行一个实例：定时触发重复时会丢弃，手动触发遇到运行中实例返回 409。
+
+### 安全与边界
+
+- **插件是可信代码**：与宿主同进程运行，拥有相同的数据/网络/文件权限，只应安装可信来源的插件；
+- **zip 有介质防护，没有代码沙箱**：安装时限制 zip 大小（100MB）、解压体积（500MB）、文件数（5000），
+  拒绝绝对路径、`..` 越界路径和符号链接，可选 sha256 校验；
+- 插件**不能**注册 HTTP 路由/API、事件钩子、中间件或 Webhook；
+- 插件**不能**直接访问宿主数据库；需要持久化时使用自己的 `data/`（如 SQLite、JSON）；
+- 插件**不能**安装第三方依赖，只能使用宿主环境已装的包和标准库；
+- 插件**不能**注册前端页面或 UI 组件。
+
+### 开发、校验与发布
+
+本地开发可以在 `config.toml` 里把 `root_dir` 指到本地目录：
+
+```toml
+[plugins]
+root_dir = "./storage/plugins"
+enabled = ["example_plugin"]
+```
+
+部署前校验插件目录：
+
+```bash
+python -m src.start.commands plugins check ./example_plugin
+```
+
+`plugins check` 会真实执行 import、`register` 和契约校验。zip 打包时：
+
+```bash
+cd example_plugin
+zip -r ../example_plugin-1.0.0.zip . \
+  -x '.git/*' -x 'tests/*' -x '__pycache__/*' -x '.venv/*' -x 'data/*'
+```
+
+zip 根必须是 `manifest.json` 和 `__init__.py`，不要包一层外层目录。
+
+发布到 GitHub 时，示例插件仓库的 release workflow 会自动生成安装 zip：
+
+1. 更新 `manifest.json` 和插件代码里的版本号并提交；
+2. 打 `v<version>` 标签并推送；
+3. 基于该标签创建正式 Release，workflow 会生成并附加 `sakuramedia_javdb_ranking-<version>.zip`。
+
+插件版本和 `host_api_version` 是宿主兼容性信号：`host_api_version` 不满足当前宿主支持范围时，
+插件会被拒绝加载。开发插件时只依赖本文描述的公开契约，不要绑定宿主内部实现。

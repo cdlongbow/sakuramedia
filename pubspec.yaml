@@ -43,6 +43,7 @@ dependencies:
   riverpod_annotation: 4.0.0
   clock: ^1.1.1
   dio: ^5.7.0
+  expand_tap_area: ^1.1.1
   window_manager: ^0.5.2
   intl: ^0.20.3
   shared_preferences: ^2.2.2

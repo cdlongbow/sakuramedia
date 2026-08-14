@@ -259,6 +259,6 @@
 
 - **域内的展示件**(单域用)保留在 `lib/features/<域>/presentation/widgets/`,**不要**移到 `lib/widgets/<域>/`;真被两个 feature 借用了再上抬。
 - **卡片上下文菜单**:clip / collection 封面 / collection 成员 / video 四处**共享** `showAppCardContextMenu<T>`(见 [sheets-dialogs.md](./sheets-dialogs.md))。调用方保留私有 enum + items 组装 + 派发 switch; 弹菜单骨架统一走原子件。
-- **SubscriptionHeartBadge**: `lib/widgets/domain/movies/subscription_heart_badge.dart`——movie / actor 卡片右上/左上角的心形订阅徽标(loader + Icon + hit region),两卡共用。移动端 IconButton 变体命中区不同,不走这里。
+- **SubscriptionHeartBadge**: `lib/widgets/domain/movies/subscription_heart_badge.dart`——movie / actor 摘要卡片、影片详情 hero、演员详情（桌面 / 移动）共用的心形订阅徽标。视觉图标与布局盒固定 24，命中区经 `expand_tap_area` 外扩到 `subscriptionHeartHitSize`（44），不改变布局与相邻对齐；加载态用 `AppInlineSpinner`。移动端 follow 卡片仍是 IconButton 变体（带水波纹），视觉按钮保持 30、命中区同为 44。
 - **多选勾选标记**统一走 `SelectionCheckBadge`(见 [data-loading.md](./data-loading.md)),别再自绘。
 - **筛选状态**:filter state 是纯数据模型；控件变化后先同步写入状态，再由 Provider 经过 250ms 尾随防抖刷新服务端结果。本目录只是**渲染 UI**,不发请求、不等待接口后再点亮选中态。

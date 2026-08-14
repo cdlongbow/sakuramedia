@@ -8,6 +8,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/validation/url_validators.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -858,7 +859,7 @@ String buildAdvancedConfigSaveSuccessMessage(
   if (!needsRestart) {
     return '已保存';
   }
-  return '已保存，需重启容器才生效';
+  return buildRestartRequiredMessage('已保存');
 }
 
 class _CardBadges extends StatelessWidget {

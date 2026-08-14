@@ -43,6 +43,7 @@ SakuraMedia 是**桌面优先**的媒体管理工作台：
 - 间距 / 圆角 / 阴影：统一 `AppSpacing`、`AppRadius`、`AppShadow`；
 - 结构尺寸：表单宽度、卡片宽度、图标尺寸、顶栏高度等有独立 token；
 - 组件尺寸与交互基线：按钮、输入框、下拉、图标按钮等共享组件自带 token。
+- 小图标命中区：订阅心形等图标视觉与布局保持 24（follow 卡 30），命中区经 `expand_tap_area` 外扩到 `subscriptionHeartHitSize`（44），不改变布局与对齐。
 
 新增设计 token 后必须同步维护本文对应的「视觉总基调」描述，并检查主题测试。
 
@@ -139,7 +140,7 @@ SakuraMedia 是**桌面优先**的媒体管理工作台：
 
 优先使用以下共享组件，不在业务页面自绘基础控件：
 
-- 动作：`AppButton`、`AppTextButton`、`AppIconButton`；
+- 动作：`AppButton`、`AppTextButton`、`AppIconButton`、`AppSwitch`（紧凑启停开关，尺寸走组件 token）；
 - 表单：`AppTextField`、`AppPasswordField`、`AppSelectField`；
 - 导航/结构：`AppTabBar`、`AppListHeader`、`AppContentCard`、`AppPageFrame`；
 - 反馈：`AppEmptyState`、`AppBadge`、`AppSectionSkeleton`、`AppSectionError`、
@@ -162,7 +163,7 @@ SakuraMedia 是**桌面优先**的媒体管理工作台：
 
 ## 10. 插件机制相关 UI 现状
 
-- 插件管理（安装、启停、删除）目前**不在前端系统设置页**，走后端 CLI 或 API；
+- 桌面端「系统设置 > 插件」页提供插件管理：zip 上传安装（small 主按钮）、启停（紧凑 `AppSwitch`）、删除与插件私有 JSON 配置编辑；写操作后需重启容器才生效；
 - 已启用插件注册的任务会出现在任务中心「可执行任务」；
 - 带参数的插件任务当前不提供参数表单，前端只展示任务；
 - 排行榜来源由插件注册：未安装/未启用排行榜插件时，排行榜页显示「暂无可用排行榜」；

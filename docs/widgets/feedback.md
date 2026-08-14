@@ -57,7 +57,7 @@
 - **路径**: `lib/widgets/base/feedback/app_inline_spinner.dart`
 - **用途**: 行内小转圈 —— `movieCardLoaderSize` 见方 + `movieCardLoaderStrokeWidth` 线宽的 `CircularProgressIndicator`。
 - **可选**: `color`(不传走主题 primary；订阅心形等有专属语义色的位置才传)
-- **何时用**: 「某个小控件正在忙」——卡片上的订阅心形、列表行的动作按钮、加载更多页脚。演员详情(桌面/移动)、播放列表详情此前各写了一份逐字相同的 `SizedBox + CircularProgressIndicator`，已收口到这里。
+- **何时用**: 「某个小控件正在忙」——卡片上的订阅心形、列表行的动作按钮、加载更多页脚。演员详情(桌面/移动)、播放列表详情、`SubscriptionHeartBadge` 此前各写了一份逐字相同的 `SizedBox + CircularProgressIndicator`，已收口到这里。
 - **何时不用**: 整页 / 整区块加载态 → `AppSectionSkeleton` / `AppMobileSkeletonList` 等骨架屏。转圈只用于局部、短时的忙碌指示。
 
 ## showAppConfirmDialog
@@ -88,3 +88,4 @@
 - **四态顺序**: **骨架 → 错误 → 空态(`AppEmptyState`)→ 内容**,顺序固定。见 `lib/widgets/CLAUDE.md` "网格四态容器"段。
 - 错误文案统一走 `apiErrorMessage(error, fallback: ...)`,`fallback` 用具体动词(如 "删除下载器失败"),不要 "操作失败" 一把梭。
 - 轻量反馈用 `oktoast`(顶层已 wrap `OKToast`),别用 SnackBar。
+- toast 底色/文字统一由主题层 `kAppToastBackgroundColor` / `kAppToastTextStyle` 提供，业务侧不要给 `showToast` 传裸颜色。

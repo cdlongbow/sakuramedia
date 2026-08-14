@@ -14,6 +14,7 @@ import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 
+import '../../../../../support/logged_in_session_store.dart';
 import '../../../../../support/test_api_bundle.dart';
 
 void main() {
@@ -22,7 +23,7 @@ void main() {
     late TestApiBundle bundle;
 
     setUp(() async {
-      sessionStore = await _buildLoggedInSessionStore();
+      sessionStore = await buildLoggedInSessionStore();
       bundle = await createTestApiBundle(sessionStore);
     });
 
@@ -47,6 +48,7 @@ void main() {
           'configuration-tab-llm',
           'configuration-tab-playlists',
           'configuration-tab-advanced',
+          'configuration-tab-plugins',
         ];
         var previousTop = double.negativeInfinity;
         for (final key in categoryKeys) {
@@ -1928,7 +1930,7 @@ void main() {
   testWidgets('successful password change returns to login through router', (
     WidgetTester tester,
   ) async {
-    final sessionStore = await _buildLoggedInSessionStore();
+    final sessionStore = await buildLoggedInSessionStore();
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
     _enqueueOverviewResponses(bundle);
@@ -2293,17 +2295,6 @@ Map<String, dynamic> _buildMovieDescTranslationSettingsJson({
     'timeout_seconds': timeoutSeconds,
     'connect_timeout_seconds': connectTimeoutSeconds,
   };
-}
-
-Future<SessionStore> _buildLoggedInSessionStore() async {
-  final store = SessionStore.inMemory();
-  await store.saveBaseUrl('https://api.example.com');
-  await store.saveTokens(
-    accessToken: 'access-token',
-    refreshToken: 'refresh-token',
-    expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
-  );
-  return store;
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {

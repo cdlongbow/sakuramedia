@@ -83,7 +83,7 @@ class ConfigUpdateResultDto {
   factory ConfigUpdateResultDto.fromJson(Map<String, dynamic> json) {
     return ConfigUpdateResultDto(
       values: ConfigResourceDto.fromJson(json),
-      applied: List<String>.unmodifiable(_stringList(json, 'applied')),
+      applied: List<String>.unmodifiable(asStringList(json['applied'])),
       pendingRestart: List<PendingRestartFieldDto>.unmodifiable(
         _objectList(
           json,
@@ -128,17 +128,19 @@ class AdvancedMediaConfigDto {
   factory AdvancedMediaConfigDto.fromJson(Map<String, dynamic> json) {
     return AdvancedMediaConfigDto(
       othersNumberFeatures: List<String>.unmodifiable(
-        _stringList(json, 'others_number_features'),
+        asStringList(json['others_number_features']),
       ),
       innerSubTags: List<String>.unmodifiable(
-        _stringList(json, 'inner_sub_tags'),
+        asStringList(json['inner_sub_tags']),
       ),
-      bluerayTags: List<String>.unmodifiable(_stringList(json, 'blueray_tags')),
+      bluerayTags: List<String>.unmodifiable(
+        asStringList(json['blueray_tags']),
+      ),
       uncensoredTags: List<String>.unmodifiable(
-        _stringList(json, 'uncensored_tags'),
+        asStringList(json['uncensored_tags']),
       ),
       uncensoredPrefix: List<String>.unmodifiable(
-        _stringList(json, 'uncensored_prefix'),
+        asStringList(json['uncensored_prefix']),
       ),
       allowedMinVideoFileSize: _intAt(json, 'allowed_min_video_file_size'),
     );
@@ -359,15 +361,4 @@ String _stringAt(
 
 int _intAt(Map<String, dynamic> json, String key, {int fallback = 0}) {
   return asInt(json[key], fallback: fallback);
-}
-
-List<String> _stringList(Map<String, dynamic> json, String key) {
-  final value = json[key];
-  if (value is! List) {
-    return const <String>[];
-  }
-  return <String>[
-    for (final item in value)
-      if (asStringOrNull(item) case final text?) text,
-  ];
 }

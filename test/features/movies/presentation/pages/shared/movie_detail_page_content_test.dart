@@ -157,7 +157,6 @@ MovieDetailDto _movieDetail({int? seriesId}) {
     javdbId: 'javdb-1',
     movieNumber: 'ABC-001',
     title: 'Sample Movie',
-    titleZh: '',
     seriesId: seriesId,
     seriesName: 'Attackers',
     makerName: 'S1 NO.1 STYLE',
@@ -175,8 +174,6 @@ MovieDetailDto _movieDetail({int? seriesId}) {
     isSubscribed: false,
     canPlay: false,
     summary: '',
-    descZh: '中文简介',
-    desc: '',
     thinCoverImage: null,
     plotImages: const <MovieImageDto>[],
     actors: const <MovieActorDto>[

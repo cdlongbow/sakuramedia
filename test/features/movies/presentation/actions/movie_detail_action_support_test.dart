@@ -21,7 +21,7 @@ void main() {
   test(
     'buildMovieDetailActionDescriptors keeps action order and prerequisites',
     () {
-      final movie = _movieDetail(javdbId: '', desc: '');
+      final movie = _movieDetail(javdbId: '');
 
       final actions = buildMovieDetailActionDescriptors(
         movie: movie,
@@ -240,8 +240,6 @@ Future<MovieDetailRemoteActionSpec> _runRemoteActionSpec({
       'is_subscribed': false,
       'can_play': true,
       'summary': '',
-      'desc_zh': '',
-      'desc': 'desc',
       'thin_cover_image': null,
       'plot_images': const <Map<String, dynamic>>[],
       'actors': const <Map<String, dynamic>>[],
@@ -300,14 +298,12 @@ Future<MovieDetailApplyResult> _runApplyReturnedMovieDetail(
 
 MovieDetailDto _movieDetail({
   String javdbId = 'movie-1',
-  String desc = 'desc',
   List<int> mediaIds = const <int>[10, 20],
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
     movieNumber: 'ABC-001',
     title: 'Movie',
-    titleZh: '',
     seriesName: '',
     makerName: '',
     directorName: '',
@@ -330,8 +326,6 @@ MovieDetailDto _movieDetail({
     isSubscribed: false,
     canPlay: true,
     summary: '',
-    descZh: '',
-    desc: desc,
     thinCoverImage: null,
     plotImages: const <MovieImageDto>[],
     actors: const <MovieActorDto>[],

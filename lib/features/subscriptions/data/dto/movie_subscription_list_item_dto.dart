@@ -13,7 +13,6 @@ class MovieSubscriptionListItemDto {
     required this.movieId,
     required this.movieNumber,
     required this.title,
-    required this.titleZh,
     required this.status,
     this.coverImage,
     this.releaseDate,
@@ -36,7 +35,6 @@ class MovieSubscriptionListItemDto {
 
   final String movieNumber;
   final String title;
-  final String titleZh;
   final MovieImageDto? coverImage;
 
   /// 后端按 `YYYY-MM-DD` 下发，保持字符串原样展示（无需时区换算）。
@@ -74,7 +72,6 @@ class MovieSubscriptionListItemDto {
       movieId: asInt(json['movie_id']),
       movieNumber: asStringOrNull(json['movie_number']) ?? '',
       title: asStringOrNull(json['title']) ?? '',
-      titleZh: asStringOrNull(json['title_zh']) ?? '',
       coverImage:
           coverImage == null ? null : MovieImageDto.fromJson(coverImage),
       releaseDate: asStringOrNull(json['release_date'], trim: true),
@@ -93,12 +90,9 @@ class MovieSubscriptionListItemDto {
     );
   }
 
-  /// 列表主标题：中文标题优先，回落原标题，再回落番号。
+  /// 列表主标题：标题非空用标题，否则回落番号（title_zh 已随后端下线，
+  /// 中文标题收拢进 title，这里保留番号分支作为防御性兜底）。
   String get displayTitle {
-    final zh = titleZh.trim();
-    if (zh.isNotEmpty) {
-      return zh;
-    }
     final original = title.trim();
     return original.isNotEmpty ? original : movieNumber;
   }
@@ -126,7 +120,6 @@ class MovieSubscriptionListItemDto {
       movieId: movieId,
       movieNumber: movieNumber,
       title: title,
-      titleZh: titleZh,
       coverImage: coverImage,
       releaseDate: releaseDate,
       subscribedAt: subscribedAt,

@@ -555,7 +555,6 @@ Map<String, dynamic> _item({
     'movie_id': number.hashCode.abs() % 100000 + 1,
     'movie_number': number,
     'title': 'Title $number',
-    'title_zh': '中文 $number',
     'status': status,
     'is_fresh': isFresh,
     'attempt_count': attemptCount,

@@ -98,7 +98,6 @@ void main() {
             'movie_id': 321,
             'movie_number': 'ABP-123',
             'title': 'Original Title',
-            'title_zh': '中文标题',
             'cover_image': <String, dynamic>{
               'id': 7,
               'origin': '/covers/7-origin.jpg',
@@ -127,7 +126,7 @@ void main() {
     final item = response.items.single;
     expect(item.movieId, 321);
     expect(item.movieNumber, 'ABP-123');
-    expect(item.displayTitle, '中文标题');
+    expect(item.displayTitle, 'Original Title');
     expect(item.coverImage?.bestAvailableUrl, '/covers/7-large.jpg');
     expect(item.releaseDate, '2019-05-01');
     expect(item.status, MovieSubscriptionStatus.missing);
@@ -160,7 +159,6 @@ void main() {
     // 老响应缺 movie_id 时容错为 0（调用方按 >0 判可用）。
     expect(item.movieId, 0);
     expect(item.title, '');
-    expect(item.titleZh, '');
     // 标题全空时回落番号，列表不会出现空白行。
     expect(item.displayTitle, 'STARS-001');
     expect(item.coverImage, isNull);

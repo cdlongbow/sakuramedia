@@ -19,8 +19,9 @@ import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 ///
 /// 信息层次自上而下，一行答一个问题：
 /// 1. **这是哪部片**：番号（主）+ 标题（次）+ 右上角状态徽标；
-/// 2. **求片走到哪了**：新片 / 已查几次、上次查询多久以前、试死了几个种子——
-///    这一行是整个页面存在的理由，别的影片列表都给不出；
+/// 2. **求片走到哪了**：新片 / 剩余没找到次数、上次查询多久以前、试死了几个种子——
+///    这一行是整个页面存在的理由，别的影片列表都给不出；已拿到资源的行（下载中 /
+///    已入库 / 导入失败）不展示查询进度，只保留死种徽标；
 /// 3. **背景信息 + 操作**：发行 / 订阅时间靠左，重置 / 取消订阅靠右。
 ///
 /// `status == failed` 时在 2、3 之间插一行索引器错误详情。
@@ -250,7 +251,15 @@ String _resetDisabledReason(MovieSubscriptionStatus status) {
   };
 }
 
-/// 求片进度行：新片 / 查询次数 + 上次查询时间 + 死种数。
+/// 求片进度行：新片 / 放弃倒计时 + 上次查询时间 + 死种数。
+///
+/// `attempt_count` 的语义是「本轮没找到可用资源的次数」，不是总查询次数：成功找到
+/// 资源后后端会把计数清零，所以下载中 / 已入库 / 导入失败这些已经拿到资源的行再
+/// 展示「已查 N/M」会误导成「从没查过」。这里按状态收口：
+/// - 待查：只显示「尚未查询」（新片加「持续查询中」）；
+/// - 缺资源 / 查询出错：剩余没找到额度倒计时「再尝试 N 次就放弃」+ 上次查询时间；
+/// - 已放弃：本轮没找到次数已用尽，展示「已查询过 N 次」+ 上次查询时间；
+/// - 其余状态：不展示任何查询进度文案，只保留死种徽标。
 class _SearchProgressLine extends StatelessWidget {
   const _SearchProgressLine({required this.item});
 
@@ -266,36 +275,52 @@ class _SearchProgressLine extends StatelessWidget {
       tone: AppTextTone.muted,
     );
     final lastSearchedAt = item.lastSearchedAt;
+    // 只有还在「找资源」链路里的状态才谈得上查询进度；已拿到资源的行展示次数
+    // 只会误导（成功即清零，恒为 0）。
+    final showSearchProgress = switch (item.status) {
+      MovieSubscriptionStatus.pending ||
+      MovieSubscriptionStatus.missing ||
+      MovieSubscriptionStatus.failed ||
+      MovieSubscriptionStatus.exhausted => true,
+      _ => false,
+    };
 
     return Wrap(
       spacing: spacing.sm,
       runSpacing: spacing.xs,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        // 新片每轮都查、不计次数、永不放弃，attempt_count 恒为 0——展示次数会误导
-        // 成「一次都没查过」，所以两种口径必须分开说。
-        //
-        // 两支都用 muted 文本、不给新片加彩色 badge：它们占同一个槽、答同一个问题
-        // （查了几次），视觉权重就该一样；差异由文字承担。一行里彩色元素也因此收敛到
-        // 「状态徽标 + 死种告警」最多两个。
-        if (item.isFresh)
+        // 这些文案都用 muted 文本、不给新片加彩色 badge：它们占同一个槽、答同一个
+        // 问题（求片走到哪了），视觉权重就该一样；差异由文字承担。一行里彩色元素
+        // 也因此收敛到「状态徽标 + 死种告警」最多两个。
+        if (showSearchProgress) ...[
+          if (item.isFresh)
+            Text(
+              '新片 · 持续查询中',
+              key: Key('movie-subscription-row-fresh-${item.movieNumber}'),
+              style: mutedStyle,
+            )
+          else if (item.status == MovieSubscriptionStatus.exhausted)
+            // 已放弃时计数已攒满上限，倒计时归零没有信息量，直接说已查询过几次。
+            Text(
+              '已查询过 ${item.attemptCount} 次',
+              key: Key('movie-subscription-row-attempts-${item.movieNumber}'),
+              style: mutedStyle,
+            )
+          else if (item.attemptCount > 0 &&
+              item.attemptCount < item.attemptLimit)
+            Text(
+              '再尝试 ${item.attemptLimit - item.attemptCount} 次就放弃',
+              key: Key('movie-subscription-row-attempts-${item.movieNumber}'),
+              style: mutedStyle,
+            ),
           Text(
-            '新片 · 持续查询中',
-            key: Key('movie-subscription-row-fresh-${item.movieNumber}'),
-            style: mutedStyle,
-          )
-        else if (item.attemptLimit > 0)
-          Text(
-            '已查 ${item.attemptCount}/${item.attemptLimit} 次',
-            key: Key('movie-subscription-row-attempts-${item.movieNumber}'),
+            lastSearchedAt == null
+                ? '尚未查询'
+                : formatRelativeTimeLabel(lastSearchedAt, suffix: '查过'),
             style: mutedStyle,
           ),
-        Text(
-          lastSearchedAt == null
-              ? '尚未查询'
-              : formatRelativeTimeLabel(lastSearchedAt, suffix: '查过'),
-          style: mutedStyle,
-        ),
+        ],
         if (item.deadDownloadTaskCount > 0)
           AppBadge(
             key: Key('movie-subscription-row-dead-${item.movieNumber}'),

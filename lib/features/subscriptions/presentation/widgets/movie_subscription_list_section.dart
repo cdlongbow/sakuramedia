@@ -427,7 +427,7 @@ class _EmptyState extends ConsumerWidget {
       MovieSubscriptionStatus.exhausted => (
         Icons.check_circle_outline_rounded,
         '没有被放弃的订阅',
-        '没有影片查询次数用尽，不需要手动重置。',
+        '没有影片因多次没找到资源而放弃，不需要手动重置。',
       ),
       MovieSubscriptionStatus.importFailed => (
         Icons.check_circle_outline_rounded,

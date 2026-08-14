@@ -49,7 +49,8 @@ class MovieSubscriptionListItemDto {
   /// UI 该展示「持续查询中」而不是次数进度。
   final bool isFresh;
 
-  /// 老片已查次数 / 上限（默认上限 3）。[isFresh] 为 true 时这对值无意义。
+  /// 老片本轮没找到资源的次数 / 放弃阈值（默认 3）。成功找到资源后后端清零，
+  /// 所以下载中 / 已入库等状态恒为 0。[isFresh] 为 true 时这对值无意义。
   final int attemptCount;
   final int attemptLimit;
 

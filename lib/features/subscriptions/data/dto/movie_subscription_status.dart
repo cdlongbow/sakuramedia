@@ -34,10 +34,10 @@ enum MovieSubscriptionStatus {
   /// 这类影片重下没有意义（该修的是导入），后端也不会重新给它查资源。
   importFailed,
 
-  /// 已放弃：老片查询次数用尽，不再自动查，需要用户手动重置。
+  /// 已放弃：老片本轮没找到次数达到上限（默认 3），不再自动查，需要用户手动重置。
   exhausted,
 
-  /// 查询出错：索引器调用失败，**不消耗查询次数**，下一轮会重试。
+  /// 查询出错：索引器调用失败，**不计入本轮没找到次数**，下一轮会重试。
   failed,
 
   /// 缺资源：查过但一直没找到可用资源，仍在继续查。
@@ -115,6 +115,6 @@ extension MovieSubscriptionSortX on MovieSubscriptionSort {
     MovieSubscriptionSort.releaseDateAsc => '发行日期 · 旧到新',
     MovieSubscriptionSort.lastSearchedAtDesc => '最近查询 · 新到旧',
     MovieSubscriptionSort.lastSearchedAtAsc => '最近查询 · 旧到新',
-    MovieSubscriptionSort.attemptCountDesc => '查询次数 · 多到少',
+    MovieSubscriptionSort.attemptCountDesc => '没找到次数 · 多到少',
   };
 }

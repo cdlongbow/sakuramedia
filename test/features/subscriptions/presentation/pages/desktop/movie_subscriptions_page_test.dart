@@ -76,9 +76,13 @@ void main() {
   }
 
   void enqueueCounts({
+    int imported = 5,
+    int downloading = 0,
+    int pending = 0,
     int missing = 2,
     int exhausted = 3,
     int importFailed = 0,
+    int failed = 0,
     int total = 10,
   }) {
     adapter.setFallbackJson(
@@ -86,13 +90,13 @@ void main() {
       path: '/movie-subscriptions/status-counts',
       body: <String, dynamic>{
         'total': total,
-        'imported': 5,
+        'imported': imported,
         'import_failed': importFailed,
-        'downloading': 0,
-        'pending': 0,
+        'downloading': downloading,
+        'pending': pending,
         'missing': missing,
         'exhausted': exhausted,
-        'failed': 0,
+        'failed': failed,
       },
     );
   }
@@ -131,7 +135,7 @@ void main() {
       find.byKey(const Key('movie-subscription-row-attempts-ABP-123')),
       findsOneWidget,
     );
-    expect(find.text('已查 2/3 次'), findsOneWidget);
+    expect(find.text('再尝试 1 次就放弃'), findsOneWidget);
     expect(
       find.byKey(const Key('movie-subscription-row-dead-ABP-123')),
       findsOneWidget,
@@ -159,7 +163,84 @@ void main() {
     expect(
       find.byKey(const Key('movie-subscription-row-attempts-NEW-001')),
       findsNothing,
-      reason: '新片 attempt_count 恒为 0，展示次数会被误读成「一次都没查过」',
+      reason: '新片每轮都查、永不放弃，不该展示放弃倒计时',
+    );
+  });
+
+  testWidgets('下载中不展示查询进度文案', (tester) async {
+    enqueueCounts(downloading: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(number: 'DL-001', status: 'downloading'),
+      ]),
+    );
+
+    await pumpPage(tester);
+
+    expect(
+      find.byKey(const Key('movie-subscription-row-attempts-DL-001')),
+      findsNothing,
+    );
+    expect(find.text('尚未查询'), findsNothing);
+    expect(
+      find.byKey(const Key('movie-subscription-row-number-DL-001')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('已放弃行展示已查询次数而不是倒计时', (tester) async {
+    enqueueCounts(exhausted: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(number: 'EX-001', status: 'exhausted', attemptCount: 3),
+      ]),
+    );
+
+    await pumpPage(tester);
+
+    expect(find.text('已查询过 3 次'), findsOneWidget);
+    expect(find.textContaining('再尝试'), findsNothing);
+  });
+
+  testWidgets('已入库的新片不展示「持续查询中」', (tester) async {
+    enqueueCounts(imported: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(number: 'IMP-001', status: 'imported', isFresh: true),
+      ]),
+    );
+
+    await pumpPage(tester);
+
+    expect(
+      find.byKey(const Key('movie-subscription-row-fresh-IMP-001')),
+      findsNothing,
+    );
+    expect(find.text('新片 · 持续查询中'), findsNothing);
+  });
+
+  testWidgets('待查行只展示尚未查询', (tester) async {
+    enqueueCounts(pending: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(number: 'P-001', status: 'pending'),
+      ]),
+    );
+
+    await pumpPage(tester);
+
+    expect(find.text('尚未查询'), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-subscription-row-attempts-P-001')),
+      findsNothing,
     );
   });
 

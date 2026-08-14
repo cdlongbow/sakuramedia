@@ -142,6 +142,10 @@ services:
       PUID: 0
       PGID: 0
       TZ: "Asia/Shanghai"
+      # 可选：JavDB / GFriends 等外部站点需要走代理时，取消注释并按需修改
+      # HTTP_PROXY: "http://192.168.1.1:7890"
+      # HTTPS_PROXY: "http://192.168.1.1:7890"
+      # NO_PROXY: "localhost,127.0.0.1"
     volumes:
       # SakuraMedia 的运行数据都在 /data 下，整体挂一个目录即可
       - ./sakuramedia-data:/data

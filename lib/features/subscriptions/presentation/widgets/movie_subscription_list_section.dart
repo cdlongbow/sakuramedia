@@ -525,6 +525,7 @@ class _RowConsumer extends ConsumerWidget {
           : () => onOpenMovie(context, item.movieNumber),
       onOpenDownloads: () =>
           context.goDesktopDownloadTasks(movieNumber: item.movieNumber),
+      onOpenImportJob: () => context.goDesktopMediaImport(),
       onResetSearch: () => unawaited(_resetRow(ref, item.movieNumber)),
       onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
     );

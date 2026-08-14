@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/sse_event_stream_client.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
@@ -50,6 +53,15 @@ void main() {
             MovieSubscriptionsApi(apiClient: apiClient),
           ),
           moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
+          downloadsApiProvider.overrideWithValue(
+            DownloadsApi(
+              apiClient: apiClient,
+              streamClient: createSseEventStreamClient(
+                apiClient: apiClient,
+                sessionStore: sessionStore,
+              ),
+            ),
+          ),
           activityApiProvider.overrideWithValue(
             ActivityApi(
               apiClient: apiClient,
@@ -358,7 +370,58 @@ void main() {
       method: 'GET',
       path: '/movie-subscriptions',
       body: _page(<Map<String, dynamic>>[
-        _item(number: 'GACHI-1151', status: 'import_failed'),
+        _item(
+          number: 'GACHI-1151',
+          status: 'import_failed',
+          importOperation: <String, dynamic>{
+            'import_job_id': 525,
+            'download_task_id': 516,
+            'state': 'failed',
+            'imported_count': 0,
+            'skipped_count': 0,
+            'failed_count': 1,
+            'retryable_file_count': 0,
+            'available_actions': [
+              'open_import_job',
+              'rerun_import',
+              'delete_failed_download',
+            ],
+            'failure_reason': 'no_media_files_found',
+            'failure_detail': '下载目录中没有扫描到可导入的视频',
+          },
+        ),
+      ]),
+    );
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/download-tasks/516',
+      statusCode: 204,
+    );
+    // 删除成功后行内刷新会再打一次列表 GET。
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(
+          number: 'GACHI-1151',
+          status: 'import_failed',
+          importOperation: <String, dynamic>{
+            'import_job_id': 525,
+            'download_task_id': 516,
+            'state': 'failed',
+            'imported_count': 0,
+            'skipped_count': 0,
+            'failed_count': 1,
+            'retryable_file_count': 0,
+            'available_actions': [
+              'open_import_job',
+              'rerun_import',
+              'delete_failed_download',
+            ],
+            'failure_reason': 'no_media_files_found',
+            'failure_detail': '下载目录中没有扫描到可导入的视频',
+          },
+        ),
       ]),
     );
     await tester.tap(
@@ -378,6 +441,60 @@ void main() {
       find.byKey(const Key('movie-subscription-row-unsubscribe-GACHI-1151')),
     );
     expect(unsubscribeInk.onTap, isNotNull);
+    // 失败原因一行直接可见，且「查看导入作业」入口可用。
+    expect(
+      find.byKey(
+        const Key('movie-subscription-row-import-error-GACHI-1151'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('未发现媒体文件：下载目录中没有扫描到可导入的视频'),
+      findsOneWidget,
+    );
+    final openImportInk = tester.widget<InkWell>(
+      find.byKey(
+        const Key('movie-subscription-row-open-import-GACHI-1151'),
+      ),
+    );
+    expect(openImportInk.onTap, isNotNull);
+    // 删除下载记录入口可用：复用下载中心的删除任务逻辑，删掉后等 cron 重查。
+    final deleteDownloadInk = tester.widget<InkWell>(
+      find.byKey(
+        const Key('movie-subscription-row-delete-download-GACHI-1151'),
+      ),
+    );
+    expect(deleteDownloadInk.onTap, isNotNull);
+
+    await tester.tap(
+      find.byKey(
+        const Key('movie-subscription-row-delete-download-GACHI-1151'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(
+        const Key('movie-subscription-delete-download-dialog-GACHI-1151'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('删除记录'));
+    await tester.pumpAndSettle();
+
+    expect(
+      adapter.requests.where(
+        (request) =>
+            request.method == 'DELETE' &&
+            request.path == '/download-tasks/516',
+      ),
+      hasLength(1),
+    );
+    expect(
+      find.text('已删除下载记录，等待自动下载重新找种'),
+      findsOneWidget,
+    );
+    // 排掉 oktoast 的 ~2.3s 计时器，否则测试以「Pending timers」失败。
+    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('行内取消订阅移除该行并广播', (tester) async {
@@ -431,6 +548,7 @@ Map<String, dynamic> _item({
   int attemptCount = 0,
   int deadCount = 0,
   bool isFresh = false,
+  Map<String, dynamic>? importOperation,
 }) {
   return <String, dynamic>{
     // 页面测试不打重置请求，id 只需非零占位。
@@ -444,6 +562,7 @@ Map<String, dynamic> _item({
     'attempt_limit': 3,
     'dead_download_task_count': deadCount,
     'media_count': 0,
+    if (importOperation != null) 'import_operation': importOperation,
   };
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
+import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
@@ -207,6 +208,69 @@ void main() {
     expect(MovieSubscriptionStatus.importFailed.label, '导入失败');
     expect(MovieSubscriptionStatus.failed.apiValue, 'failed');
     expect(MovieSubscriptionStatus.failed.label, '查询出错');
+  });
+
+  test('import_failed 解析导入作业失败原因摘要', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'movie_number': 'IPX-451',
+            'status': 'import_failed',
+            'import_operation': <String, dynamic>{
+              'import_job_id': 525,
+              'download_task_id': 516,
+              'state': 'failed',
+              'imported_count': 0,
+              'skipped_count': 0,
+              'failed_count': 1,
+              'retryable_file_count': 0,
+              'available_actions': [
+                'open_import_job',
+                'rerun_import',
+                'delete_failed_download',
+              ],
+              'failure_reason': 'no_media_files_found',
+              'failure_detail': '下载目录中没有扫描到可导入的视频',
+            },
+          },
+        ],
+        total: 1,
+      ),
+    );
+
+    final item = (await api.getSubscriptions()).items.single;
+    final operation = item.importOperation!;
+
+    expect(operation.importJobId, 525);
+    expect(operation.downloadTaskId, 516);
+    expect(operation.canOpenImportJob, isTrue);
+    expect(operation.canRerun, isTrue);
+    expect(operation.canRetryFailedFiles, isFalse);
+    expect(operation.canDeleteFailedDownload, isTrue);
+    expect(operation.failureReason, 'no_media_files_found');
+    expect(operation.failureDetail, '下载目录中没有扫描到可导入的视频');
+    // 描述本身已含 detail，不重复拼接。
+    expect(
+      operation.importFailureMessage,
+      '未发现媒体文件：下载目录中没有扫描到可导入的视频',
+    );
+  });
+
+  test('失败详情与描述不重合时拼接展示', () {
+    const operation = MovieSubscriptionImportOperationDto(
+      importJobId: 1,
+      state: 'failed',
+      failureReason: 'media_import_failed',
+      failureDetail: '磁盘写入异常',
+    );
+
+    expect(
+      operation.importFailureMessage,
+      '文件导入失败：单个媒体文件搬运/落库异常：磁盘写入异常',
+    );
   });
 
   test('getStatusCounts 解析各状态计数并按状态取值', () async {

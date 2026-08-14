@@ -5,10 +5,13 @@ import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_manager_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -38,6 +41,7 @@ class MovieSubscriptionRow extends StatelessWidget {
     required this.isPending,
     required this.onTap,
     required this.onOpenDownloads,
+    required this.onOpenImportJob,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
@@ -54,6 +58,9 @@ class MovieSubscriptionRow extends StatelessWidget {
 
   /// 跳转到任务中心的下载任务视图，并定位到本订阅片对应番号。
   final VoidCallback onOpenDownloads;
+
+  /// 跳转到资源导入中心（import_failed 行看具体失败文件）。
+  final VoidCallback onOpenImportJob;
 
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
@@ -85,6 +92,13 @@ class MovieSubscriptionRow extends StatelessWidget {
           _HeadingLine(item: item),
           SizedBox(height: spacing.md),
           _SearchProgressLine(item: item),
+          if (item.importOperation?.importFailureMessage != null) ...[
+            SizedBox(height: spacing.sm),
+            _ImportFailureLine(
+              item: item,
+              message: item.importOperation!.importFailureMessage!,
+            ),
+          ],
           if (lastError != null && lastError.isNotEmpty) ...[
             SizedBox(height: spacing.sm),
             _LastErrorLine(item: item, message: lastError),
@@ -95,6 +109,7 @@ class MovieSubscriptionRow extends StatelessWidget {
             selectionMode: selectionMode,
             isPending: isPending,
             onOpenDownloads: onOpenDownloads,
+            onOpenImportJob: onOpenImportJob,
             onResetSearch: onResetSearch,
             onUnsubscribe: onUnsubscribe,
           ),
@@ -378,6 +393,52 @@ class _LastErrorLine extends StatelessWidget {
   }
 }
 
+/// 导入失败原因行：`import_failed` 档在查询进度与操作之间插一行，直接回答
+/// 「文件明明下好了，为什么没进库」。文案来自导入作业 failed_files 摘要，
+/// 与 [_LastErrorLine]（索引器查询出错）语义不同，独立成件、独立 Key。
+class _ImportFailureLine extends StatelessWidget {
+  const _ImportFailureLine({required this.item, required this.message});
+
+  final MovieSubscriptionListItemDto item;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final palette = context.appTextPalette;
+    return Tooltip(
+      message: message,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.report_gmailerrorred_rounded,
+            size: context.appComponentTokens.iconSize3xs,
+            color: palette.error,
+          ),
+          SizedBox(width: spacing.xs),
+          Expanded(
+            child: Text(
+              message,
+              key: Key(
+                'movie-subscription-row-import-error-${item.movieNumber}',
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 底行：左侧背景信息（发行 / 订阅 / 本地媒体），右侧行内操作。
 class _FooterLine extends StatelessWidget {
   const _FooterLine({
@@ -385,6 +446,7 @@ class _FooterLine extends StatelessWidget {
     required this.selectionMode,
     required this.isPending,
     required this.onOpenDownloads,
+    required this.onOpenImportJob,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
@@ -393,6 +455,7 @@ class _FooterLine extends StatelessWidget {
   final bool selectionMode;
   final bool isPending;
   final VoidCallback onOpenDownloads;
+  final VoidCallback onOpenImportJob;
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
 
@@ -441,6 +504,7 @@ class _FooterLine extends StatelessWidget {
             _RowActions(
               item: item,
               onOpenDownloads: onOpenDownloads,
+              onOpenImportJob: onOpenImportJob,
               onResetSearch: onResetSearch,
               onUnsubscribe: onUnsubscribe,
             ),
@@ -454,12 +518,14 @@ class _RowActions extends ConsumerWidget {
   const _RowActions({
     required this.item,
     required this.onOpenDownloads,
+    required this.onOpenImportJob,
     required this.onResetSearch,
     required this.onUnsubscribe,
   });
 
   final MovieSubscriptionListItemDto item;
   final VoidCallback onOpenDownloads;
+  final VoidCallback onOpenImportJob;
   final VoidCallback onResetSearch;
   final VoidCallback onUnsubscribe;
 
@@ -497,6 +563,17 @@ class _RowActions extends ConsumerWidget {
           semanticLabel: '查看下载任务',
           onPressed: onOpenDownloads,
         ),
+        // 查看导入作业：失败原因只是摘要，详细 failed_files（含每条路径）在导入中心。
+        if (importOperation?.canOpenImportJob ?? false)
+          AppIconButton(
+            key: Key('movie-subscription-row-open-import-${item.movieNumber}'),
+            icon: const Icon(Icons.folder_open_outlined),
+            size: AppIconButtonSize.regular,
+            tooltip:
+                '查看导入作业 #${importOperation!.importJobId}（失败详情与重导入口）',
+            semanticLabel: '查看导入作业',
+            onPressed: onOpenImportJob,
+          ),
         // 导入补救出口（Wave 4）：按后端 available_actions 渲染，绝不伪造重试按钮。
         if (importOperation != null && importOperation.canRetryFailedFiles)
           AppIconButton(
@@ -535,6 +612,18 @@ class _RowActions extends ConsumerWidget {
                   failureMessage: '提交重跑失败',
                 ),
           ),
+        // 忽略这条失败记录：复用下载中心的删除任务语义，删掉后本片重新参与
+        // 自动下载（下一轮 cron 找新种）。这是「不想要这条记录」的出口，
+        // 与重导/重跑（想抢救现有文件）语义相反。
+        if (importOperation?.canDeleteFailedDownload ?? false)
+          AppIconButton(
+            key: Key('movie-subscription-row-delete-download-${item.movieNumber}'),
+            icon: const Icon(Icons.delete_outline_rounded),
+            size: AppIconButtonSize.regular,
+            tooltip: '删除下载记录（本片将重新参与自动下载）',
+            semanticLabel: '删除下载记录',
+            onPressed: () => _confirmDeleteFailedDownload(context, ref, item),
+          ),
         // regular = iconSizeMd + md*2 = 44，达到 iOS HIG 最小点按尺寸。行内操作
         // 双端同一份，移动端用 compact 会挤成 26 见方、点不准。
         AppIconButton(
@@ -558,6 +647,113 @@ class _RowActions extends ConsumerWidget {
           onPressed: onUnsubscribe,
         ),
       ],
+    );
+  }
+}
+
+/// 删除 import_failed 关联的失败下载记录（复用下载中心的删除任务语义）。
+///
+/// 删除后该影片不再有活跃下载任务，订阅状态回到「缺资源」，下一轮自动下载 cron
+/// 会重新找种；旧文件是否一起删由用户在确认框里勾选，默认保留。
+Future<void> _confirmDeleteFailedDownload(
+  BuildContext context,
+  WidgetRef ref,
+  MovieSubscriptionListItemDto item,
+) async {
+  final taskId = item.importOperation?.downloadTaskId;
+  if (taskId == null) {
+    return;
+  }
+  var deleteFiles = false;
+  final confirmed = await showAppConfirmDialog(
+    context,
+    dialogKey: Key(
+      'movie-subscription-delete-download-dialog-${item.movieNumber}',
+    ),
+    title: '删除下载记录',
+    message: '确认删除「${item.movieNumber}」的失败下载记录？'
+        '删除后本片会重新参与自动下载（每天一轮），导入失败记录不再显示。',
+    danger: true,
+    confirmLabel: '删除记录',
+    failureFallback: '删除下载记录失败',
+    extraContent: _DeleteDownloadFilesCheckbox(
+      onChanged: (value) => deleteFiles = value,
+    ),
+    onConfirm: () async {
+      await ref
+          .read(downloadsApiProvider)
+          .deleteDownloadTask(taskId, deleteFiles: deleteFiles);
+      await ref.read(movieSubscriptionManagerProvider.notifier).refresh();
+    },
+  );
+  if (confirmed && context.mounted) {
+    showToast('已删除下载记录，等待自动下载重新找种');
+  }
+}
+
+class _DeleteDownloadFilesCheckbox extends StatefulWidget {
+  const _DeleteDownloadFilesCheckbox({required this.onChanged});
+
+  final ValueChanged<bool> onChanged;
+
+  @override
+  State<_DeleteDownloadFilesCheckbox> createState() =>
+      _DeleteDownloadFilesCheckboxState();
+}
+
+class _DeleteDownloadFilesCheckboxState
+    extends State<_DeleteDownloadFilesCheckbox> {
+  bool _checked = false;
+
+  void _toggle(bool value) {
+    setState(() => _checked = value);
+    widget.onChanged(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _toggle(!_checked),
+      borderRadius: context.appRadius.smBorder,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
+        child: Row(
+          children: [
+            Checkbox(
+              key: const Key('movie-subscription-delete-files-checkbox'),
+              value: _checked,
+              onChanged: (value) => _toggle(value ?? false),
+            ),
+            SizedBox(width: context.appSpacing.xs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '同时删除已下载的文件',
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.secondary,
+                    ),
+                  ),
+                  SizedBox(height: context.appSpacing.xs / 2),
+                  Text(
+                    '不影响已导入媒体库的文件',
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s10,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

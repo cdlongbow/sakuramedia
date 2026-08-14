@@ -488,6 +488,45 @@ void main() {
         );
       },
     );
+
+    test('getTaskFiles parses qb/115 unified file list', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-tasks/516/files',
+        body: <String, dynamic>{
+          'task_id': 516,
+          'client_kind': 'qbittorrent',
+          'files': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'name': 'IPX-451.iso',
+              'size': 32788611072,
+              'is_dir': false,
+            },
+            <String, dynamic>{
+              'name': 'cover.jpg',
+              'size': 2048,
+              'is_dir': false,
+            },
+          ],
+        },
+      );
+
+      final response = await bundle.downloadsApi.getTaskFiles(516);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.path, '/download-tasks/516/files');
+      expect(response.taskId, 516);
+      expect(response.clientKind, 'qbittorrent');
+      expect(response.files, hasLength(2));
+      expect(response.files.first.name, 'IPX-451.iso');
+      expect(response.files.first.size, 32788611072);
+      expect(response.files.first.isDir, isFalse);
+      expect(response.files.first.path, isNull);
+    });
   });
 }
 

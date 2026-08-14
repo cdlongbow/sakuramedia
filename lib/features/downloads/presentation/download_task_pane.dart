@@ -12,9 +12,11 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
+import 'package:sakuramedia/features/downloads/data/download_task_file_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
@@ -22,12 +24,14 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 /// 构建「下载任务」Tab 的 sliver 列表。
 ///
@@ -464,6 +468,24 @@ class _DownloadTaskCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              // 文件列表：按需拉取（qB / 115 通用），不进 SSE 快照保持列表轻量。
+              SizedBox(width: context.appSpacing.sm),
+              AppIconButton(
+                key: Key('download-task-files-${task.id}'),
+                icon: const Icon(Icons.folder_open_outlined),
+                tooltip: '文件列表',
+                semanticLabel: '文件列表',
+                onPressed: () => showAppAdaptiveModal(
+                  context: context,
+                  modalKey: Key('download-task-files-dialog-${task.id}'),
+                  desktopWidth: 560,
+                  desktopHeight: 480,
+                  builder: (_) => _DownloadTaskFilesDialog(
+                    taskId: task.id,
+                    taskName: displayTitle,
+                  ),
+                ),
+              ),
               // 已完成不显示暂停/恢复；做种态可以暂停（停止上传）。
               if (!isCloud115 && downloadState == 'paused')
                 AppIconButton(
@@ -886,6 +908,197 @@ class _DownloadFilterBar extends HookConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 下载任务文件列表弹窗。
+///
+/// 打开时按任务 id 实时拉取（qB / 115 各自从远端取），失败可原地重试；
+/// 纯查看型展示，不参与任何导入/删除逻辑。
+class _DownloadTaskFilesDialog extends ConsumerStatefulWidget {
+  const _DownloadTaskFilesDialog({
+    required this.taskId,
+    required this.taskName,
+  });
+
+  final int taskId;
+  final String taskName;
+
+  @override
+  ConsumerState<_DownloadTaskFilesDialog> createState() =>
+      _DownloadTaskFilesDialogState();
+}
+
+class _DownloadTaskFilesDialogState
+    extends ConsumerState<_DownloadTaskFilesDialog> {
+  late Future<DownloadTaskFilesDto> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetch();
+  }
+
+  Future<DownloadTaskFilesDto> _fetch() =>
+      ref.read(downloadsApiProvider).getTaskFiles(widget.taskId);
+
+  void _reload() {
+    setState(() {
+      _future = _fetch();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '文件列表',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s16,
+            weight: AppTextWeight.medium,
+            tone: AppTextTone.primary,
+          ),
+        ),
+        SizedBox(height: spacing.xs),
+        Text(
+          widget.taskName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.muted,
+          ),
+        ),
+        SizedBox(height: spacing.md),
+        Expanded(
+          child: FutureBuilder<DownloadTaskFilesDto>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: AppInlineSpinner());
+              }
+              if (snapshot.hasError) {
+                return AppEmptyState(
+                  key: const Key('download-task-files-error'),
+                  icon: Icons.folder_off_outlined,
+                  title: '读取文件列表失败',
+                  message: apiErrorMessage(
+                    snapshot.error!,
+                    fallback: '请稍后重试',
+                  ),
+                  onRetry: _reload,
+                );
+              }
+              final files =
+                  snapshot.data?.files ?? const <DownloadTaskFileDto>[];
+              if (files.isEmpty) {
+                return const AppEmptyState(
+                  key: Key('download-task-files-empty'),
+                  icon: Icons.folder_open_outlined,
+                  message: '该任务暂无文件记录',
+                );
+              }
+              return ListView.separated(
+                key: const Key('download-task-files-list'),
+                itemCount: files.length,
+                separatorBuilder: (context, index) =>
+                    SizedBox(height: spacing.sm),
+                itemBuilder: (context, index) =>
+                    _DownloadTaskFileRow(file: files[index]),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 常见光盘镜像后缀，仅用于文件列表里视觉提示"这个格式导不进去"，
+/// 不参与任何导入判定（导入判定以后端扩展名白名单为准）。
+const Set<String> _kUnsupportedDiskImageExtensions = {
+  'iso',
+  'img',
+  'mdf',
+  'nrg',
+  'bin',
+  'cue',
+};
+
+bool _isUnsupportedDiskImage(String name) {
+  final dot = name.lastIndexOf('.');
+  if (dot <= 0 || dot == name.length - 1) {
+    return false;
+  }
+  return _kUnsupportedDiskImageExtensions.contains(
+    name.substring(dot + 1).toLowerCase(),
+  );
+}
+
+class _DownloadTaskFileRow extends StatelessWidget {
+  const _DownloadTaskFileRow({required this.file});
+
+  final DownloadTaskFileDto file;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    final palette = context.appTextPalette;
+    final unsupported = !file.isDir && _isUnsupportedDiskImage(file.name);
+    final displayPath = (file.path?.isNotEmpty ?? false) ? file.path : file.name;
+    return Tooltip(
+      message: unsupported
+          ? '$displayPath（不支持的媒体格式，无法导入）'
+          : displayPath,
+      child: Row(
+        children: [
+          Icon(
+            file.isDir
+                ? Icons.folder_outlined
+                : unsupported
+                    ? Icons.dangerous_outlined
+                    : Icons.insert_drive_file_outlined,
+            size: context.appComponentTokens.iconSize3xs,
+            color: unsupported
+                ? palette.error
+                : file.isDir
+                    ? palette.muted
+                    : palette.secondary,
+          ),
+          SizedBox(width: spacing.sm),
+          Expanded(
+            child: Text(
+              file.name,
+              key: Key('download-task-file-${file.name}'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: unsupported ? AppTextTone.error : AppTextTone.primary,
+              ),
+            ),
+          ),
+          SizedBox(width: spacing.sm),
+          Text(
+            formatFileSize(file.size),
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.muted,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

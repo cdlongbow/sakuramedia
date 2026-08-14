@@ -1,5 +1,6 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/media_import/data/failure_reason_descriptions.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 
 /// `GET /movie-subscriptions` 的单条订阅影片。
@@ -144,15 +145,20 @@ class MovieSubscriptionListItemDto {
 class MovieSubscriptionImportOperationDto {
   const MovieSubscriptionImportOperationDto({
     required this.importJobId,
+    this.downloadTaskId,
     required this.state,
     this.importedCount = 0,
     this.skippedCount = 0,
     this.failedCount = 0,
     this.retryableFileCount = 0,
     this.availableActions = const <String>[],
+    this.failureReason,
+    this.failureDetail,
   });
 
   final int importJobId;
+  /// 失败导入关联的下载任务 id；手动目录导入的作业为 null。
+  final int? downloadTaskId;
   final String state;
   final int importedCount;
   final int skippedCount;
@@ -162,9 +168,36 @@ class MovieSubscriptionImportOperationDto {
   final int retryableFileCount;
   final List<String> availableActions;
 
+  /// 最新导入作业首条失败条目的 reason 原始码；无失败条目时为 null。
+  final String? failureReason;
+
+  /// 最新导入作业首条失败条目的 detail 文案（可能为空串）。
+  final String? failureDetail;
+
   bool get canRetryFailedFiles =>
       availableActions.contains('retry_failed_files');
   bool get canRerun => availableActions.contains('rerun_import');
+  bool get canOpenImportJob => availableActions.contains('open_import_job');
+  bool get canDeleteFailedDownload =>
+      availableActions.contains('delete_failed_download') &&
+      downloadTaskId != null;
+
+  /// 订阅行直接展示的失败原因一句话。
+  ///
+  /// 后端 reason 描述本身常已带 detail（如 no_media_files_found 的映射文案就
+  /// 包含"下载目录中没有扫描到可导入的视频"），detail 与描述重合时不重复拼接。
+  String? get importFailureMessage {
+    final reason = failureReason?.trim() ?? '';
+    if (reason.isEmpty) {
+      return null;
+    }
+    final description = describeFailureReason(reason);
+    final detail = failureDetail?.trim() ?? '';
+    if (detail.isEmpty || description.contains(detail)) {
+      return description;
+    }
+    return '$description：$detail';
+  }
 
   static MovieSubscriptionImportOperationDto? fromJsonOrNull(
     Map<String, dynamic>? json,
@@ -174,6 +207,7 @@ class MovieSubscriptionImportOperationDto {
     }
     return MovieSubscriptionImportOperationDto(
       importJobId: asInt(json['import_job_id']),
+      downloadTaskId: asIntOrNull(json['download_task_id']),
       state: asStringOrNull(json['state']) ?? '',
       importedCount: asInt(json['imported_count']),
       skippedCount: asInt(json['skipped_count']),
@@ -183,6 +217,8 @@ class MovieSubscriptionImportOperationDto {
           (json['available_actions'] as List<dynamic>? ?? const [])
               .map((value) => value.toString())
               .toList(),
+      failureReason: asStringOrNull(json['failure_reason'], trim: true),
+      failureDetail: asStringOrNull(json['failure_detail'], trim: true),
     );
   }
 }

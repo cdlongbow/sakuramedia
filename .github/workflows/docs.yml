@@ -38,9 +38,12 @@ jobs:
         working-directory: wiki
         run: npm install
 
+      # GITHUB_TOKEN 属于集成令牌，自 2026-07 起 GitHub 将 stargazers 数据
+      # 限制为仅仓库 admin/协作者可访问（反垃圾），集成令牌被拒（403 FORBIDDEN）。
+      # 改用仓库 owner 的 PAT（GitHub 用户令牌）才能读取 star 时间序列。
       - name: Generate star history SVGs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
           REPO: ${{ github.repository }}
         run: node scripts/generate-star-history.mjs
 

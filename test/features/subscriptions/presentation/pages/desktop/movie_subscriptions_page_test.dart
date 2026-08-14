@@ -443,19 +443,12 @@ void main() {
     expect(unsubscribeInk.onTap, isNotNull);
     // 失败原因一行直接可见，且「查看导入作业」入口可用。
     expect(
-      find.byKey(
-        const Key('movie-subscription-row-import-error-GACHI-1151'),
-      ),
+      find.byKey(const Key('movie-subscription-row-import-error-GACHI-1151')),
       findsOneWidget,
     );
-    expect(
-      find.text('未发现媒体文件：下载目录中没有扫描到可导入的视频'),
-      findsOneWidget,
-    );
+    expect(find.text('未发现媒体文件：下载目录中没有扫描到可导入的视频'), findsOneWidget);
     final openImportInk = tester.widget<InkWell>(
-      find.byKey(
-        const Key('movie-subscription-row-open-import-GACHI-1151'),
-      ),
+      find.byKey(const Key('movie-subscription-row-open-import-GACHI-1151')),
     );
     expect(openImportInk.onTap, isNotNull);
     // 删除下载记录入口可用：复用下载中心的删除任务逻辑，删掉后等 cron 重查。
@@ -484,17 +477,56 @@ void main() {
     expect(
       adapter.requests.where(
         (request) =>
-            request.method == 'DELETE' &&
-            request.path == '/download-tasks/516',
+            request.method == 'DELETE' && request.path == '/download-tasks/516',
       ),
       hasLength(1),
     );
-    expect(
-      find.text('已删除下载记录，等待自动下载重新找种'),
-      findsOneWidget,
-    );
+    expect(find.text('已删除下载记录，等待自动下载重新找种'), findsOneWidget);
     // 排掉 oktoast 的 ~2.3s 计时器，否则测试以「Pending timers」失败。
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('零产出导入显示未产出媒体而不是导入失败', (tester) async {
+    enqueueCounts(importFailed: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(number: 'ABP-123', status: 'missing'),
+      ]),
+    );
+    await pumpPage(tester);
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(<Map<String, dynamic>>[
+        _item(
+          number: 'CWPBD-99',
+          status: 'import_failed',
+          importOperation: <String, dynamic>{
+            'import_job_id': 783,
+            'download_task_id': 787,
+            'state': 'completed',
+            'outcome': 'no_media',
+            'imported_count': 0,
+            'skipped_count': 6,
+            'failed_count': 0,
+            'available_actions': ['open_import_job', 'rerun_import'],
+            'failure_reason': 'file_too_small',
+          },
+        ),
+      ]),
+    );
+    await tester.tap(
+      find.byKey(const Key('movie-subscriptions-status-tab-import_failed')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('未入库'), findsOneWidget);
+    expect(find.text('未产出媒体'), findsWidgets);
+    expect(find.text('导入失败'), findsNothing);
+    expect(find.textContaining('未产出媒体：跳过 6 个文件'), findsOneWidget);
   });
 
   testWidgets('行内取消订阅移除该行并广播', (tester) async {

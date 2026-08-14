@@ -949,6 +949,11 @@ class _DownloadTaskFilesDialogState
     });
   }
 
+  bool _isSourceUnavailable(Object error) {
+    return error is ApiException &&
+        error.error?.code == 'cloud115_download_task_source_unavailable';
+  }
+
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
@@ -985,15 +990,18 @@ class _DownloadTaskFilesDialogState
                 return const Center(child: AppInlineSpinner());
               }
               if (snapshot.hasError) {
+                final sourceUnavailable = _isSourceUnavailable(snapshot.error!);
                 return AppEmptyState(
                   key: const Key('download-task-files-error'),
                   icon: Icons.folder_off_outlined,
-                  title: '读取文件列表失败',
+                  title: sourceUnavailable ? '源目录已不存在' : '读取文件列表失败',
                   message: apiErrorMessage(
                     snapshot.error!,
-                    fallback: '请稍后重试',
+                    fallback: sourceUnavailable
+                        ? '115 下载任务的源目录已被清理或删除，无法读取文件列表'
+                        : '请稍后重试',
                   ),
-                  onRetry: _reload,
+                  onRetry: sourceUnavailable ? null : _reload,
                 );
               }
               final files =
@@ -1052,25 +1060,25 @@ class _DownloadTaskFileRow extends StatelessWidget {
     final spacing = context.appSpacing;
     final palette = context.appTextPalette;
     final unsupported = !file.isDir && _isUnsupportedDiskImage(file.name);
-    final displayPath = (file.path?.isNotEmpty ?? false) ? file.path : file.name;
+    final displayPath = (file.path?.isNotEmpty ?? false)
+        ? file.path
+        : file.name;
     return Tooltip(
-      message: unsupported
-          ? '$displayPath（不支持的媒体格式，无法导入）'
-          : displayPath,
+      message: unsupported ? '$displayPath（不支持的媒体格式，无法导入）' : displayPath,
       child: Row(
         children: [
           Icon(
             file.isDir
                 ? Icons.folder_outlined
                 : unsupported
-                    ? Icons.dangerous_outlined
-                    : Icons.insert_drive_file_outlined,
+                ? Icons.dangerous_outlined
+                : Icons.insert_drive_file_outlined,
             size: context.appComponentTokens.iconSize3xs,
             color: unsupported
                 ? palette.error
                 : file.isDir
-                    ? palette.muted
-                    : palette.secondary,
+                ? palette.muted
+                : palette.secondary,
           ),
           SizedBox(width: spacing.sm),
           Expanded(

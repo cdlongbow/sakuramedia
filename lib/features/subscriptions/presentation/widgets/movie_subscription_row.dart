@@ -24,10 +24,10 @@ import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 /// 1. **这是哪部片**：番号（主）+ 标题（次）+ 右上角状态徽标；
 /// 2. **求片走到哪了**：新片 / 剩余没找到次数、上次查询多久以前、试死了几个种子——
 ///    这一行是整个页面存在的理由，别的影片列表都给不出；已拿到资源的行（下载中 /
-///    已入库 / 导入失败）不展示查询进度，只保留死种徽标；
+///    已入库 / 未入库）不展示查询进度，只保留死种徽标；
 /// 3. **背景信息 + 操作**：发行 / 订阅时间靠左，重置 / 取消订阅靠右。
 ///
-/// `status == failed` 时在 2、3 之间插一行索引器错误详情。
+/// `status == failed` 时在 2、3 之间插一行索引器错误详情；未入库行展示导入结果。
 ///
 /// 手势分两态：常规态整卡点击 = 打开影片详情；多选态整卡点击 = 切换选中、行内
 /// 操作按钮隐藏。**不做「整卡点击即选中」**——这一页的番号是可点进详情的实体，
@@ -59,7 +59,7 @@ class MovieSubscriptionRow extends StatelessWidget {
   /// 跳转到任务中心的下载任务视图，并定位到本订阅片对应番号。
   final VoidCallback onOpenDownloads;
 
-  /// 跳转到资源导入中心（import_failed 行看具体失败文件）。
+  /// 跳转到资源导入中心（import_failed 行查看具体结果与文件）。
   final VoidCallback onOpenImportJob;
 
   final VoidCallback onResetSearch;
@@ -137,25 +137,24 @@ class _CoverSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = item.coverImage?.bestAvailableUrl.trim();
-    final Widget image =
-        url != null && url.isNotEmpty
-            ? MaskedImage(
-              key: Key('movie-subscription-cover-${item.movieNumber}'),
-              url: url,
-              fit: BoxFit.cover,
-            )
-            : Container(
-              key: Key(
-                'movie-subscription-cover-placeholder-${item.movieNumber}',
-              ),
-              color: context.appColors.surfaceMuted,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.movie_creation_outlined,
-                size: context.appComponentTokens.iconSize2xl,
-                color: context.appTextPalette.muted,
-              ),
-            );
+    final Widget image = url != null && url.isNotEmpty
+        ? MaskedImage(
+            key: Key('movie-subscription-cover-${item.movieNumber}'),
+            url: url,
+            fit: BoxFit.cover,
+          )
+        : Container(
+            key: Key(
+              'movie-subscription-cover-placeholder-${item.movieNumber}',
+            ),
+            color: context.appColors.surfaceMuted,
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.movie_creation_outlined,
+              size: context.appComponentTokens.iconSize2xl,
+              color: context.appTextPalette.muted,
+            ),
+          );
 
     if (!selectionMode) {
       return image;
@@ -223,8 +222,8 @@ class _HeadingLine extends StatelessWidget {
         SizedBox(width: spacing.sm),
         AppBadge(
           key: Key('movie-subscription-row-status-${item.movieNumber}'),
-          label: item.status.label,
-          tone: _statusBadgeTone(item.status),
+          label: item.displayStatusLabel,
+          tone: _statusBadgeTone(item),
           size: AppBadgeSize.compact,
         ),
       ],
@@ -238,8 +237,11 @@ class _HeadingLine extends StatelessWidget {
 /// 管的**（已放弃）橙，**在进行中的**（下载中 / 待查）信息蓝，**已完成的**（已入库）
 /// 成功绿，**还在等的**（缺资源）中性。缺资源刻意留中性——它是默认签、占比最大，
 /// 全页染色只会让真正要处理的那几态淹没在色块里。
-AppBadgeTone _statusBadgeTone(MovieSubscriptionStatus status) {
-  return switch (status) {
+AppBadgeTone _statusBadgeTone(MovieSubscriptionListItemDto item) {
+  if (item.isNoMediaImport) {
+    return AppBadgeTone.warning;
+  }
+  return switch (item.status) {
     MovieSubscriptionStatus.imported => AppBadgeTone.success,
     MovieSubscriptionStatus.importFailed => AppBadgeTone.error,
     MovieSubscriptionStatus.downloading => AppBadgeTone.info,
@@ -393,8 +395,8 @@ class _LastErrorLine extends StatelessWidget {
   }
 }
 
-/// 导入失败原因行：`import_failed` 档在查询进度与操作之间插一行，直接回答
-/// 「文件明明下好了，为什么没进库」。文案来自导入作业 failed_files 摘要，
+/// 导入结果行：`import_failed` 档在查询进度与操作之间插一行，直接回答
+/// 「文件明明下好了，为什么没进库」。文案来自导入作业摘要，
 /// 与 [_LastErrorLine]（索引器查询出错）语义不同，独立成件、独立 Key。
 class _ImportFailureLine extends StatelessWidget {
   const _ImportFailureLine({required this.item, required this.message});
@@ -406,15 +408,18 @@ class _ImportFailureLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final palette = context.appTextPalette;
+    final isNoMedia = item.isNoMediaImport;
     return Tooltip(
       message: message,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(
-            Icons.report_gmailerrorred_rounded,
+            isNoMedia
+                ? Icons.warning_amber_rounded
+                : Icons.report_gmailerrorred_rounded,
             size: context.appComponentTokens.iconSize3xs,
-            color: palette.error,
+            color: isNoMedia ? palette.warning : palette.error,
           ),
           SizedBox(width: spacing.xs),
           Expanded(
@@ -429,7 +434,7 @@ class _ImportFailureLine extends StatelessWidget {
                 context,
                 size: AppTextSize.s12,
                 weight: AppTextWeight.regular,
-                tone: AppTextTone.error,
+                tone: isNoMedia ? AppTextTone.warning : AppTextTone.error,
               ),
             ),
           ),
@@ -546,10 +551,9 @@ class _RowActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canReset = item.canResetSearch;
-    final importOperation =
-        item.status == MovieSubscriptionStatus.importFailed
-            ? item.importOperation
-            : null;
+    final importOperation = item.status == MovieSubscriptionStatus.importFailed
+        ? item.importOperation
+        : null;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -569,8 +573,7 @@ class _RowActions extends ConsumerWidget {
             key: Key('movie-subscription-row-open-import-${item.movieNumber}'),
             icon: const Icon(Icons.folder_open_outlined),
             size: AppIconButtonSize.regular,
-            tooltip:
-                '查看导入作业 #${importOperation!.importJobId}（失败详情与重导入口）',
+            tooltip: '查看导入作业 #${importOperation!.importJobId}（失败详情与重导入口）',
             semanticLabel: '查看导入作业',
             onPressed: onOpenImportJob,
           ),
@@ -583,41 +586,38 @@ class _RowActions extends ConsumerWidget {
             tooltip:
                 '重导 ${importOperation.retryableFileCount} 个失败文件（作业 #${importOperation.importJobId}）',
             semanticLabel: '重导失败文件',
-            onPressed:
-                () => _runImportAction(
-                  ref,
-                  request:
-                      (api) =>
-                          api.retryFailedFiles(importOperation.importJobId),
-                  successMessage: '重导任务已提交，可在导入中心跟进',
-                  failureMessage: '提交重导失败',
-                ),
+            onPressed: () => _runImportAction(
+              ref,
+              request: (api) =>
+                  api.retryFailedFiles(importOperation.importJobId),
+              successMessage: '重导任务已提交，可在导入中心跟进',
+              failureMessage: '提交重导失败',
+            ),
           ),
         if (importOperation != null && importOperation.canRerun)
           AppIconButton(
             key: Key('movie-subscription-row-rerun-import-${item.movieNumber}'),
             icon: const Icon(Icons.replay_circle_filled_outlined),
             size: AppIconButtonSize.regular,
-            tooltip:
-                importOperation.retryableFileCount > 0
-                    ? '整作业重跑（作业 #${importOperation.importJobId}）'
-                    : '上次导入零产出（跳过 ${importOperation.skippedCount} 个文件），整作业重跑一次',
+            tooltip: importOperation.retryableFileCount > 0
+                ? '整作业重跑（作业 #${importOperation.importJobId}）'
+                : '上次导入零产出（跳过 ${importOperation.skippedCount} 个文件），整作业重跑一次',
             semanticLabel: '整作业重跑',
-            onPressed:
-                () => _runImportAction(
-                  ref,
-                  request:
-                      (api) => api.rerunImportJob(importOperation.importJobId),
-                  successMessage: '重跑任务已提交，可在导入中心跟进',
-                  failureMessage: '提交重跑失败',
-                ),
+            onPressed: () => _runImportAction(
+              ref,
+              request: (api) => api.rerunImportJob(importOperation.importJobId),
+              successMessage: '重跑任务已提交，可在导入中心跟进',
+              failureMessage: '提交重跑失败',
+            ),
           ),
         // 忽略这条失败记录：复用下载中心的删除任务语义，删掉后本片重新参与
         // 自动下载（下一轮 cron 找新种）。这是「不想要这条记录」的出口，
         // 与重导/重跑（想抢救现有文件）语义相反。
         if (importOperation?.canDeleteFailedDownload ?? false)
           AppIconButton(
-            key: Key('movie-subscription-row-delete-download-${item.movieNumber}'),
+            key: Key(
+              'movie-subscription-row-delete-download-${item.movieNumber}',
+            ),
             icon: const Icon(Icons.delete_outline_rounded),
             size: AppIconButtonSize.regular,
             tooltip: '删除下载记录（本片将重新参与自动下载）',
@@ -631,10 +631,9 @@ class _RowActions extends ConsumerWidget {
           icon: const Icon(Icons.restart_alt_rounded),
           size: AppIconButtonSize.regular,
           // 禁用时也留 tooltip：说清「为什么这里点不了」比让按钮凭空变灰强。
-          tooltip:
-              canReset
-                  ? '重置资源查询状态，让它重新去找别的种子'
-                  : _resetDisabledReason(item.status),
+          tooltip: canReset
+              ? '重置资源查询状态，让它重新去找别的种子'
+              : _resetDisabledReason(item.status),
           semanticLabel: '重置资源查询状态',
           onPressed: canReset ? onResetSearch : null,
         ),
@@ -671,7 +670,8 @@ Future<void> _confirmDeleteFailedDownload(
       'movie-subscription-delete-download-dialog-${item.movieNumber}',
     ),
     title: '删除下载记录',
-    message: '确认删除「${item.movieNumber}」的失败下载记录？'
+    message:
+        '确认删除「${item.movieNumber}」的失败下载记录？'
         '删除后本片会重新参与自动下载（每天一轮），导入失败记录不再显示。',
     danger: true,
     confirmLabel: '删除记录',

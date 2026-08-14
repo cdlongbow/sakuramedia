@@ -249,6 +249,13 @@ void main() {
               'plugins.job_crons.example_plugin.example_plugin_sync',
           'cron_expr': '0 2 * * *',
           'manual_trigger_allowed': true,
+          'params_schema': <String, dynamic>{
+            'type': 'object',
+            'properties': <String, dynamic>{
+              'movie_number': <String, dynamic>{'type': 'string'},
+            },
+            'required': <String>['movie_number'],
+          },
           'last_task_run': <String, dynamic>{
             'id': 88,
             'task_key': 'example_plugin_sync',
@@ -267,6 +274,10 @@ void main() {
     expect(jobs, hasLength(1));
     expect(jobs.first.taskKey, 'example_plugin_sync');
     expect(jobs.first.manualTriggerAllowed, isTrue);
+    expect(
+      jobs.first.paramsSchema?['properties'],
+      containsPair('movie_number', containsPair('type', 'string')),
+    );
     expect(jobs.first.lastTaskRun?.id, 88);
     expect(bundle.adapter.hitCount('GET', '/system/jobs'), 1);
   });
@@ -284,11 +295,15 @@ void main() {
 
     final response = await bundle.activityApi.triggerJob(
       taskKey: 'example_plugin_sync',
+      params: <String, dynamic>{'movie_number': 'SSIS-123'},
     );
 
     expect(response.taskRunId, 13);
     expect(response.taskKey, 'example_plugin_sync');
     expect(response.state, 'pending');
+    expect(bundle.adapter.requests.single.body, <String, dynamic>{
+      'movie_number': 'SSIS-123',
+    });
     expect(
       bundle.adapter.hitCount('POST', '/system/jobs/example_plugin_sync/run'),
       1,
@@ -412,8 +427,9 @@ void main() {
       ],
     );
 
-    final events =
-        await bundle.activityApi.streamEvents(afterEventId: 120).toList();
+    final events = await bundle.activityApi
+        .streamEvents(afterEventId: 120)
+        .toList();
 
     expect(events[0].id, 121);
     expect(events[0].notification?.id, 101);

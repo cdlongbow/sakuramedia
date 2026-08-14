@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/media/data/media_play_url_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -25,6 +26,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_cl
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_item_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_similar_movie_strip.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
 typedef MovieDetailScrollViewBuilder =
@@ -77,6 +79,11 @@ class MovieDetailPageContent extends StatelessWidget {
     this.onRenameClip,
     this.onDeleteClip,
     this.onAddClipToCollection,
+    this.subtitleItems = const <MovieSubtitleItemDto>[],
+    this.isSubtitlesLoading = false,
+    this.subtitleErrorMessage,
+    this.onRetrySubtitles,
+    this.onOpenSubtitle,
     this.contentPadding = EdgeInsets.zero,
     this.bottomInfoBarVariant = MovieDetailBottomInfoBarVariant.desktopCard,
     this.scrollPhysics,
@@ -144,6 +151,11 @@ class MovieDetailPageContent extends StatelessWidget {
   final ValueChanged<MediaClipDto>? onRenameClip;
   final ValueChanged<MediaClipDto>? onDeleteClip;
   final ValueChanged<MediaClipDto>? onAddClipToCollection;
+  final List<MovieSubtitleItemDto> subtitleItems;
+  final bool isSubtitlesLoading;
+  final String? subtitleErrorMessage;
+  final Future<void> Function()? onRetrySubtitles;
+  final Future<void> Function(MovieSubtitleItemDto item)? onOpenSubtitle;
   final EdgeInsetsGeometry contentPadding;
   final MovieDetailBottomInfoBarVariant bottomInfoBarVariant;
   final ScrollPhysics? scrollPhysics;
@@ -170,10 +182,10 @@ class MovieDetailPageContent extends StatelessWidget {
           final heroHeight = viewportHeight * 0.3;
           final scrollBottomPadding =
               bottomInfoBarVariant ==
-                      MovieDetailBottomInfoBarVariant.mobileFullWidth
-                  ? context.appComponentTokens.movieDetailBottomBarMinHeight
-                  : context.appComponentTokens.movieDetailBottomBarMinHeight +
-                      context.appSpacing.sm;
+                  MovieDetailBottomInfoBarVariant.mobileFullWidth
+              ? context.appComponentTokens.movieDetailBottomBarMinHeight
+              : context.appComponentTokens.movieDetailBottomBarMinHeight +
+                    context.appSpacing.sm;
 
           final content = Padding(
             padding: EdgeInsets.only(bottom: scrollBottomPadding),
@@ -359,6 +371,22 @@ class MovieDetailPageContent extends StatelessWidget {
               ],
             ),
           ),
+        if (isSubtitlesLoading ||
+            subtitleErrorMessage?.trim().isNotEmpty == true ||
+            subtitleItems.isNotEmpty)
+          MovieDetailSection(
+            title: subtitleItems.isEmpty
+                ? '字幕'
+                : '字幕 · ${subtitleItems.length}',
+            titleKey: const Key('movie-subtitles-title'),
+            child: MovieSubtitleSection(
+              items: subtitleItems,
+              isLoading: isSubtitlesLoading,
+              errorMessage: subtitleErrorMessage,
+              onRetry: onRetrySubtitles,
+              onOpenSubtitle: onOpenSubtitle,
+            ),
+          ),
         if (isClipsLoading || clipsErrorMessage != null || clips.isNotEmpty)
           MovieDetailSection(
             title: '切片',
@@ -374,24 +402,27 @@ class MovieDetailPageContent extends StatelessWidget {
               onAddClipToCollection: onAddClipToCollection ?? (_) {},
             ),
           ),
-        MovieDetailSection(
-          title: '相似影片',
-          titleKey: const Key('movie-similar-movies-title'),
-          child: MovieSimilarMovieStrip(
-            movies: similarMovies,
-            isLoading: isSimilarMoviesLoading,
-            errorMessage: similarMoviesErrorMessage,
-            onRetry: onRetrySimilarMovies,
-            onMovieTap: onSimilarMovieTap,
-            onMovieMenuRequest:
-                (movie, globalPosition) => requestMovieCollectionMenu(
-                  context,
-                  movie.movieNumber,
-                  globalPosition,
-                  isSubscribed: movie.isSubscribed,
-                ),
+        if (isSimilarMoviesLoading ||
+            similarMoviesErrorMessage?.trim().isNotEmpty == true ||
+            similarMovies.isNotEmpty)
+          MovieDetailSection(
+            title: '相似影片',
+            titleKey: const Key('movie-similar-movies-title'),
+            child: MovieSimilarMovieStrip(
+              movies: similarMovies,
+              isLoading: isSimilarMoviesLoading,
+              errorMessage: similarMoviesErrorMessage,
+              onRetry: onRetrySimilarMovies,
+              onMovieTap: onSimilarMovieTap,
+              onMovieMenuRequest: (movie, globalPosition) =>
+                  requestMovieCollectionMenu(
+                    context,
+                    movie.movieNumber,
+                    globalPosition,
+                    isSubscribed: movie.isSubscribed,
+                  ),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -526,10 +557,9 @@ class MovieDetailLoadingSkeleton extends StatelessWidget {
                   _SkeletonBlock(height: heroHeight),
                   SizedBox(height: context.appSpacing.lg),
                   _SkeletonBlock(
-                    height:
-                        context
-                            .appComponentTokens
-                            .movieDetailPlotThumbnailHeight,
+                    height: context
+                        .appComponentTokens
+                        .movieDetailPlotThumbnailHeight,
                   ),
                   SizedBox(
                     height: context.appComponentTokens.movieDetailSectionGap,
@@ -619,17 +649,19 @@ List<MovieDetailStatItem> buildMovieDetailStatItems(
   BuildContext context,
   MovieDetailDto movie,
 ) {
-  final releaseLabel =
-      movie.releaseDate == null
-          ? '--'
-          : DateFormat('yy/MM/dd').format(movie.releaseDate!);
-  final durationLabel =
-      movie.durationMinutes > 0 ? '${movie.durationMinutes} 分钟' : '--';
+  final releaseLabel = movie.releaseDate == null
+      ? '--'
+      : DateFormat('yy/MM/dd').format(movie.releaseDate!);
+  final durationLabel = movie.durationMinutes > 0
+      ? '${movie.durationMinutes} 分钟'
+      : '--';
   final scoreLabel = movie.score > 0 ? movie.score.toStringAsFixed(1) : '--';
-  final commentCountLabel =
-      movie.commentCount > 0 ? '${movie.commentCount}' : '--';
-  final wantWatchCountLabel =
-      movie.wantWatchCount > 0 ? '${movie.wantWatchCount}' : '--';
+  final commentCountLabel = movie.commentCount > 0
+      ? '${movie.commentCount}'
+      : '--';
+  final wantWatchCountLabel = movie.wantWatchCount > 0
+      ? '${movie.wantWatchCount}'
+      : '--';
 
   return [
     MovieDetailStatItem(

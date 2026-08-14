@@ -251,10 +251,7 @@ void main() {
     expect(operation.failureReason, 'no_media_files_found');
     expect(operation.failureDetail, '下载目录中没有扫描到可导入的视频');
     // 描述本身已含 detail，不重复拼接。
-    expect(
-      operation.importFailureMessage,
-      '未发现媒体文件：下载目录中没有扫描到可导入的视频',
-    );
+    expect(operation.importFailureMessage, '未发现媒体文件：下载目录中没有扫描到可导入的视频');
   });
 
   test('失败详情与描述不重合时拼接展示', () {
@@ -265,9 +262,41 @@ void main() {
       failureDetail: '磁盘写入异常',
     );
 
+    expect(operation.importFailureMessage, '文件导入失败：单个媒体文件搬运/落库异常：磁盘写入异常');
+  });
+
+  test('零产出导入解析为 no_media，并使用未产出媒体文案', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'movie_number': 'CWPBD-99',
+            'status': 'import_failed',
+            'import_operation': <String, dynamic>{
+              'import_job_id': 783,
+              'download_task_id': 787,
+              'state': 'completed',
+              'outcome': 'no_media',
+              'imported_count': 0,
+              'skipped_count': 6,
+              'failed_count': 0,
+              'available_actions': ['open_import_job', 'rerun_import'],
+              'failure_reason': 'file_too_small',
+            },
+          },
+        ],
+      ),
+    );
+
+    final item = (await api.getSubscriptions()).items.single;
+
+    expect(item.isNoMediaImport, isTrue);
+    expect(item.displayStatusLabel, '未产出媒体');
     expect(
-      operation.importFailureMessage,
-      '文件导入失败：单个媒体文件搬运/落库异常：磁盘写入异常',
+      item.importOperation!.importFailureMessage,
+      '未产出媒体：跳过 6 个文件；文件过小：低于最小体积阈值，按样本/残片跳过',
     );
   });
 

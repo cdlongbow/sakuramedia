@@ -176,7 +176,16 @@ void main() {
       _enqueueInitialActivityState(
         bundle,
         jobs: <Map<String, dynamic>>[
-          _jobJson(taskKey: 'example_plugin_sync'),
+          _jobJson(
+            taskKey: 'example_plugin_sync',
+            paramsSchema: <String, dynamic>{
+              'type': 'object',
+              'properties': <String, dynamic>{
+                'movie_number': <String, dynamic>{'type': 'string'},
+              },
+              'required': <String>['movie_number'],
+            },
+          ),
         ],
       );
       bundle.adapter.enqueueSse(
@@ -256,7 +265,16 @@ void main() {
       _enqueueInitialActivityState(
         bundle,
         jobs: <Map<String, dynamic>>[
-          _jobJson(taskKey: 'example_plugin_sync'),
+          _jobJson(
+            taskKey: 'example_plugin_sync',
+            paramsSchema: <String, dynamic>{
+              'type': 'object',
+              'properties': <String, dynamic>{
+                'movie_number': <String, dynamic>{'type': 'string'},
+              },
+              'required': <String>['movie_number'],
+            },
+          ),
         ],
       );
       bundle.adapter.enqueueSse(
@@ -302,12 +320,25 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.initialize();
-      final response = await controller.triggerJob('example_plugin_sync');
+      final response = await controller.triggerJob(
+        'example_plugin_sync',
+        params: <String, dynamic>{'movie_number': 'SSIS-123'},
+      );
 
       expect(response.taskRunId, 13);
       expect(controller.activeTab, ActivityTab.tasks);
       expect(controller.highlightedTaskRunId, 13);
       expect(controller.activeTaskRuns.single.id, 13);
+      expect(
+        bundle.adapter.requests
+            .where(
+              (request) =>
+                  request.path == '/system/jobs/example_plugin_sync/run',
+            )
+            .single
+            .body,
+        <String, dynamic>{'movie_number': 'SSIS-123'},
+      );
     },
   );
 
@@ -315,9 +346,7 @@ void main() {
     _enqueueInitialActivityState(
       bundle,
       activeTasks: <Map<String, dynamic>>[_runningTaskJson()],
-      jobs: <Map<String, dynamic>>[
-        _jobJson(taskKey: 'example_plugin_sync'),
-      ],
+      jobs: <Map<String, dynamic>>[_jobJson(taskKey: 'example_plugin_sync')],
     );
     bundle.adapter.enqueueSse(
       method: 'GET',
@@ -547,8 +576,10 @@ class _ActivityCenterHarness {
   Future<void> applyTaskFilter(ActivityTaskFilterState next) =>
       _notifier.applyTaskFilter(next);
   Future<void> loadMoreTasks() => _notifier.loadMoreTasks();
-  Future<ManualJobTriggerResponseDto> triggerJob(String taskKey) =>
-      _notifier.triggerJob(taskKey);
+  Future<ManualJobTriggerResponseDto> triggerJob(
+    String taskKey, {
+    Map<String, dynamic>? params,
+  }) => _notifier.triggerJob(taskKey, params: params);
 }
 
 void _enqueueInitialActivityState(
@@ -672,6 +703,7 @@ Map<String, dynamic> _failedTaskJson({required int id}) {
 Map<String, dynamic> _jobJson({
   required String taskKey,
   bool manualTriggerAllowed = true,
+  Map<String, dynamic>? paramsSchema,
   Map<String, dynamic>? lastTaskRun,
 }) {
   return <String, dynamic>{
@@ -682,6 +714,7 @@ Map<String, dynamic> _jobJson({
     'cron_setting': '${taskKey}_cron',
     'cron_expr': '0 2 * * *',
     'manual_trigger_allowed': manualTriggerAllowed,
+    'params_schema': paramsSchema,
     'last_task_run': lastTaskRun,
   };
 }

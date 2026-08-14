@@ -250,7 +250,10 @@ class ActivityCenter extends _$ActivityCenter
     );
   }
 
-  Future<ManualJobTriggerResponseDto> triggerJob(String taskKey) async {
+  Future<ManualJobTriggerResponseDto> triggerJob(
+    String taskKey, {
+    Map<String, dynamic>? params,
+  }) async {
     if (current.triggeringTaskKeys.contains(taskKey)) {
       throw StateError('job trigger already running');
     }
@@ -262,7 +265,7 @@ class ActivityCenter extends _$ActivityCenter
     try {
       final response = await ref
           .read(activityApiProvider)
-          .triggerJob(taskKey: taskKey);
+          .triggerJob(taskKey: taskKey, params: params);
       if (!isDisposed) {
         state = AsyncData(
           current.copyWith(

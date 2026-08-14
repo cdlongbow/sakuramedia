@@ -48,7 +48,7 @@ SakuraMediaBE 已提供插件机制，欢迎社区贡献新的插件。插件以
 - 使用宿主提供的影片元数据入库、字幕资产写入等能力，并拥有独立的 `data/` 运行数据目录和私有配置。
 - 注册排行榜来源，声明榜单和周期，由宿主负责同步编排、数据写入以及向客户端提供统一的排行榜接口。
 
-插件负责访问和解析目标网站，宿主负责提供稳定的写入和调度能力。当前已提供的示例是 [SakuraMedia JavDB 排行榜插件](https://github.com/tinypinglite/sakuramedia_javdb_ranking)，它接入了 JavDB 的热播榜、高评分榜、有码/无码、FC2 和 TOP250 等排行榜，并支持定时同步与手动同步。
+插件负责访问和解析目标网站，宿主负责提供稳定的写入和调度能力。当前已提供的示例是 [SakuraMedia JavDB 排行榜插件](https://github.com/tinypinglite/sakuramedia_javdb_ranking)。
 
 以排行榜为例，开发者可以通过插件接入其他网站的排行榜数据：插件自行抓取目标网站，向宿主声明来源、榜单和周期，再由 SakuraMedia 统一完成同步、入库和展示，无需修改主程序。
 

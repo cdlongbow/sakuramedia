@@ -28,7 +28,7 @@ SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，�
 宿主默认从 `/data/plugins` 读取插件。只有同时满足以下条件，插件才会被加载：
 
 1. 目录在插件根目录下，目录名与 `manifest.json` 的 `plugin_id` 一致；
-2. `plugin_id` 出现在 `config.toml` 的 `plugins.enabled` 中；
+2. 插件处于启用状态（安装时默认启用，也可在插件管理页开关）；
 3. 重启了 api 与 aps 两个进程。
 
 单个插件加载失败**不会拖垮整个服务**：错误会被记录下来，其余插件和宿主自带功能
@@ -44,40 +44,22 @@ SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，�
 
 ### 安装与生命周期
 
-插件有两种安装方式：
-
-1. **目录方式**：把插件目录直接拷贝或挂载到 `/data/plugins/<plugin_id>/`；
-2. **zip 方式**：使用宿主 CLI 或 `/system/plugins` API 上传安装。
-
-在 Docker 部署下，用 CLI 安装 zip 的完整流程：
-
-```bash
-# 1. 把插件 zip 放进后端容器
-docker cp ./sakuramedia_javdb_ranking-0.1.0.zip sakuramedia:/tmp/
-
-# 2. 安装并启用（默认安装后自动启用；--no-enable 表示只安装不启用）
-docker exec --user app -w /app sakuramedia \
-  python -m src.start.commands plugins install /tmp/sakuramedia_javdb_ranking-0.1.0.zip
-
-# 3. 查看安装结果
-docker exec --user app -w /app sakuramedia python -m src.start.commands plugins list
-
-# 4. 插件在启动阶段加载，必须重启两个进程
-docker compose restart sakuramedia
-```
+插件通过**前端插件管理页**安装：进入「系统设置 → 插件」，点击「安装插件」上传 zip 包，
+安装后默认自动启用。zip 包要求插件根内容直接打包（不含外层目录），根目录须包含
+`manifest.json`；重新上传相同 `plugin_id` 的 zip 会替换代码并保留 `data/` 运行数据。
+页面还支持启停、删除和在线编辑插件配置。
 
 常用管理命令：
 
 | 命令 | 作用 |
 |---|---|
 | `plugins list` | 列出已安装插件、启停状态、加载状态和加载错误 |
-| `plugins install <目录或zip> [--no-enable]` | 安装插件目录或 zip 包 |
 | `plugins enable <plugin_id>` | 启用插件 |
 | `plugins disable <plugin_id>` | 停用插件（目录保留） |
 | `plugins remove <plugin_id>` | 删除插件目录（**包含 data/ 运行数据**） |
 | `plugins check <目录>` | 校验插件目录是否合法，供插件作者使用 |
 
-除 CLI 外，也可以通过登录鉴权后的 `/system/plugins` API 管理：
+前端插件管理页底层即登录鉴权后的 `/system/plugins` API，也可以直接调用：
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -86,6 +68,8 @@ docker compose restart sakuramedia
 | `POST` | `/system/plugins` | multipart 上传 zip，字段 `file`、可选 `sha256`、`enable` |
 | `PATCH` | `/system/plugins/{plugin_id}?enabled=true/false` | 启停 |
 | `DELETE` | `/system/plugins/{plugin_id}` | 删除插件 |
+| `GET` | `/system/plugins/{plugin_id}/settings` | 读取插件私有配置 |
+| `PUT` | `/system/plugins/{plugin_id}/settings` | 整体替换插件私有配置（JSON） |
 
 生命周期要点：
 
@@ -93,39 +77,19 @@ docker compose restart sakuramedia
 - **没有版本回滚**：升级前需要自己备份插件目录；
 - **停用**：只是从 `plugins.enabled` 移除，目录和 `data/` 仍在；
 - **删除**：会连插件代码和 `data/` 一起删除，删除前先备份；
-- 任何安装、升级、启停、删除操作后，都要重启 **api 与 aps**。
+- 任何安装、升级、启停、删除或配置修改后，都要重启 **api 与 aps**。
 
 ### 插件配置
 
-插件相关的配置都写在 `config.toml` 的 `[plugins]` 节，通用配置接口
-（前端高级设置页使用的 `/config`）**不会读取也不会修改这一节**。
-
-```toml
-[plugins]
-root_dir = "/data/plugins"
-enabled = ["sakuramedia_javdb_ranking"]
-
-[plugins.job_crons.sakuramedia_javdb_ranking]
-sakuramedia_javdb_ranking_sync = "15 3 * * *"
-
-[plugins.settings.sakuramedia_javdb_ranking]
-# 具体字段由插件自己定义，可能包含账号等敏感信息
-```
-
-| 字段 | 作用 |
-|---|---|
-| `root_dir` | 插件根目录，默认 `/data/plugins`；修改时必须保证路径已持久化且容器内 `app` 用户可读写 |
-| `enabled` | 要加载的插件 ID 列表；**只有列在这里的插件才会被加载** |
-| `job_crons` | 按插件 ID 分组，覆盖插件注册的定时任务 cron；不写则用插件默认频率 |
-| `settings` | 按插件 ID 分组的插件私有配置，插件以只读方式访问 |
-
-插件私有配置可能在启动时被读取，修改 `config.toml` 后同样需要重启 api 与 aps。
+插件私有配置在「系统设置 → 插件」里点击插件行在线编辑，保存后需重启
+api 与 aps（或容器）才生效。配置的具体字段由插件自己定义，可能包含账号等敏感信息。
 
 ### 前端能看到什么
 
 - 插件注册的任务会出现在**任务中心**的「可执行任务」里，可以查看 cron、手动执行和运行记录；
 - 排行榜插件提供的来源会出现在**排行榜页**，没有安装/启用排行榜插件时，排行榜页没有可用来源；
-- 插件管理目前**不在前端系统设置页**，安装、启停、删除请走 CLI 或 API；
+- 插件管理在**系统设置 → 插件**页：支持 zip 上传安装、启停、删除和 JSON 配置编辑，
+  写操作后需重启 api 与 aps（或容器）才生效；
 - 带参数的插件任务当前**不提供参数表单**，前端任务中心只能列出它；需要带参触发时请按插件说明使用
   后端 CLI 或接口。
 
@@ -147,29 +111,21 @@ sakuramedia_javdb_ranking_sync = "15 3 * * *"
 
 ### 安装
 
-从插件仓库的 GitHub Release 下载 zip 后，按上面「安装与生命周期」的步骤安装即可：
-
-```bash
-docker cp ./sakuramedia_javdb_ranking-0.1.0.zip sakuramedia:/tmp/
-docker exec --user app -w /app sakuramedia \
-  python -m src.start.commands plugins install /tmp/sakuramedia_javdb_ranking-0.1.0.zip
-docker compose restart sakuramedia
-```
+从插件仓库的 GitHub Release 下载 zip，在「系统设置 → 插件」页点击「安装插件」上传，
+然后重启容器。
 
 ### 配置
 
-```toml
-[plugins]
-enabled = ["sakuramedia_javdb_ranking"]
+在插件管理页点击本插件行，在线编辑：
 
-[plugins.settings.sakuramedia_javdb_ranking]
-javdb_username = ""
-javdb_password = ""
-
-# 可选：覆盖定时全量同步默认的每天 01:45
-[plugins.job_crons.sakuramedia_javdb_ranking]
-sakuramedia_javdb_ranking_sync = "15 3 * * *"
+```json
+{
+  "javdb_username": "",
+  "javdb_password": ""
+}
 ```
+
+保存后需重启 api 与 aps 才生效。
 
 账号说明：
 

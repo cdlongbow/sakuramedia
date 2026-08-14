@@ -13,6 +13,9 @@ SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，�
 - **使用人员 / 部署者**：怎么安装、启用、配置插件，以及已提供的示例插件怎么用。
 - **插件开发人员**：怎么写一个合法插件，能调用宿主哪些能力，有什么边界。
 
+> 当前宿主插件接口版本为 `2`，兼容声明范围为 `1`～`2`。旧版插件可以继续加载，
+> 但运行时按 v2 语义执行；新开发的插件应在 `manifest.json` 中声明 `2`。
+
 ## 插件是什么
 
 一个插件就是**插件根目录下的一个子目录**：
@@ -54,10 +57,12 @@ SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，�
 | 命令 | 作用 |
 |---|---|
 | `plugins list` | 列出已安装插件、启停状态、加载状态和加载错误 |
+| `plugins install <目录或 zip>` | 安装插件；可用 `--sha256` 校验 zip，`--no-enable` 安装后不启用 |
 | `plugins enable <plugin_id>` | 启用插件 |
 | `plugins disable <plugin_id>` | 停用插件（目录保留） |
 | `plugins remove <plugin_id>` | 删除插件目录（**包含 data/ 运行数据**） |
 | `plugins check <目录>` | 校验插件目录是否合法，供插件作者使用 |
+| `plugins clear-field-owners --plugin-id <plugin_id>` | 释放插件接管的影片字段；可用 `--field` 限定字段 |
 
 前端插件管理页底层即登录鉴权后的 `/system/plugins` API，也可以直接调用：
 
@@ -77,12 +82,16 @@ SakuraMedia 的插件机制让服务能力可以通过**插件目录**扩展，�
 - **没有版本回滚**：升级前需要自己备份插件目录；
 - **停用**：只是从 `plugins.enabled` 移除，目录和 `data/` 仍在；
 - **删除**：会连插件代码和 `data/` 一起删除，删除前先备份；
+- 如果插件曾接管 Movie 字段，删除后字段 owner 记录仍会保留；需要额外执行
+  `plugins clear-field-owners`，字段才会回到宿主管理；
 - 任何安装、升级、启停、删除或配置修改后，都要重启 **api 与 aps**。
 
 ### 插件配置
 
-插件私有配置在「系统设置 → 插件」里点击插件行在线编辑，保存后需重启
-api 与 aps（或容器）才生效。配置的具体字段由插件自己定义，可能包含账号等敏感信息。
+插件私有配置在「系统设置 → 插件」里点击插件行在线编辑，也可以通过
+`/system/plugins/{plugin_id}/settings` 或直接编辑 `config.toml` 修改。前端按明文
+JSON 对象整体替换配置，后端不接受 `null`；配置字段由插件自己定义，可能包含账号等
+敏感信息。保存后需重启 api 与 aps（或容器）才生效。
 
 ### 前端能看到什么
 
@@ -171,7 +180,7 @@ api 与 aps（或容器）才生效。配置的具体字段由插件自己定义
   "plugin_id": "example_plugin",
   "display_name": "示例插件",
   "version": "1.0.0",
-  "host_api_version": 1,
+  "host_api_version": 2,
   "requires_python": ">=3.10",
   "author": "example",
   "homepage": "https://example.com/example_plugin"
@@ -201,7 +210,7 @@ def register(context: PluginContext) -> PluginRegistration:
 | `plugin_id` | 是 | 只能包含小写字母、数字、下划线，且必须以字母开头（`^[a-z][a-z0-9_]*$`），必须与目录名一致 |
 | `display_name` | 是 | 展示名 |
 | `version` | 是 | 插件版本，格式为 PEP 440 |
-| `host_api_version` | 是 | 插件声明的宿主接口版本，当前必须为 `1` |
+| `host_api_version` | 是 | 插件声明的宿主接口版本，必须在 `[1, 2]` 范围内；新插件使用 `2` |
 | `requires_python` | 否 | Python 版本约束，如 `>=3.10` |
 | `author` / `homepage` | 否 | 展示信息 |
 
@@ -216,7 +225,7 @@ def register(context: PluginContext) -> PluginRegistration:
 | `plugin_id` | 与 manifest / 目录名一致 |
 | `display_name` | 展示名 |
 | `version` | 与 manifest 完全一致 |
-| `host_api_version` | 当前必须为 `1` |
+| `host_api_version` | 必须在 `[1, 2]` 范围内；以 manifest 声明为准 |
 | `jobs` | 后台任务元组，允许为空 |
 | `extensions` | 扩展点声明元组，允许为空 |
 
@@ -302,7 +311,8 @@ JobDefinition(
 | `data_dir` | 插件专属数据目录 `<root>/<plugin_id>/data/`，重装保留 |
 | `build_javdb_provider(username=None, password=None)` | 构造 JavDB provider；需要登录的榜单传入插件自己的账号 |
 | `build_catalog_import_service()` | 构造目录入库服务 |
-| `import_movie_by_number(movie_number)` | 通过 JavDB 获取详情并完整入库 |
+| `import_movie_by_number(movie_number)` | 通过 JavDB 获取详情并完整入库；已存在影片跳过不更新，返回 `MovieSnapshot` |
+| `movies` | 影片只读快照与受保护字段 patch 出口，见下文 |
 | `list_existing_movie_numbers()` | 主库全部影片番号集合，用于批量任务做存在性判断 |
 | `import_subtitle(movie_number, content, filename, language=None)` | 写入字幕，宿主统一做扩展名校验、去重、落盘和登记 |
 | `sync_ranking_sources(progress_callback=None)` | 同步本插件声明的全部排行榜来源 |
@@ -310,17 +320,48 @@ JobDefinition(
 | `get_task_logger(name)` | 获取绑定到任务日志文件的 logger |
 
 插件能读到的配置只有 `context.settings`（对应 `plugins.settings.<plugin_id>`），
-它是**深冻结只读**的，插件不能修改；配置只能由部署者改 `config.toml` 后重启。
+它是**深冻结只读**的，插件不能修改。部署者可以通过插件管理页、插件 settings API
+或 `config.toml` 修改，修改后重启 api 与 aps。
 
 批量导入时不要为每个番号反复构造 provider/importer，应该在一个任务运行内复用：
 
 ```python
+plugin_settings = context.settings
 provider = context.build_javdb_provider(
-    username=settings.javdb_username,
-    password=settings.javdb_password,
+    username=plugin_settings.get("javdb_username"),
+    password=plugin_settings.get("javdb_password"),
 )
 importer = context.build_catalog_import_service()
 ```
+
+### 影片快照与字段主权（v2）
+
+影片读取和导入都返回 `MovieSnapshot`，插件不会拿到可写的 ORM 对象。快照包含
+`movie_id`、`revision`、公开字段 `values` 和字段接管映射 `owners`；`values` 当前包含
+番号、标题、简介、发布时间、时长、评分、评分人数、观看数、想看数、评论数、厂商、导演、
+系列、合集标记和订阅标记。
+
+```python
+from src.plugins import MovieSnapshot
+
+snapshot: MovieSnapshot | None = context.movies.get(movie_id)
+snapshots = context.movies.find_by_numbers(["ABP-123", "IPX-456"])
+
+if snapshot is not None:
+    updated = context.movies.patch(
+        snapshot.movie_id,
+        {"summary": "插件补充的简介"},
+        expected_revision=snapshot.revision,
+    )
+```
+
+规则如下：
+
+- `get()` 按影片内部 id 读取，`find_by_numbers()` 按番号读取；找不到的番号会跳过；
+- `import_movie_by_number()` 保持纯新建语义，已有影片不会被覆盖；更新已有影片必须先读取快照，再调用 `movies.patch()`；
+- `patch()` 只允许写宿主白名单字段，当前是 `title`、`summary`、`maker_name`、`director_name`，且值必须是字符串；
+- `expected_revision` 过期，或字段已被其他插件接管时，整次写入返回 `False`，不会部分修改；
+- 插件成功写入后会接管对应字段，宿主后续刷新不会覆盖这些字段；插件删除后 owner 不会自动清理，需执行 `plugins clear-field-owners --plugin-id <plugin_id>`。
 
 ### 扩展点机制
 
@@ -429,7 +470,17 @@ def handler(reporter, params):
 [plugins]
 root_dir = "./storage/plugins"
 enabled = ["example_plugin"]
+
+[plugins.job_crons.example_plugin]
+daily_sync = "0 4 * * *"
+
+[plugins.settings.example_plugin]
+api_token = "..."
 ```
+
+`plugins.job_crons.<plugin_id>.<task_key>` 可以覆盖任务默认 cron；插件私有配置通过
+`context.settings` 只读读取。整个 `[plugins]` 节不由通用 `/config` API 暴露，插件安装、
+启停和私有配置请使用插件管理 API、CLI 或配置文件，修改后重启 api 与 aps。
 
 部署前校验插件目录：
 
@@ -453,5 +504,7 @@ zip 根必须是 `manifest.json` 和 `__init__.py`，不要包一层外层目录
 2. 打 `v<version>` 标签并推送；
 3. 基于该标签创建正式 Release，workflow 会生成并附加 `sakuramedia_javdb_ranking-<version>.zip`。
 
-插件版本和 `host_api_version` 是宿主兼容性信号：`host_api_version` 不满足当前宿主支持范围时，
-插件会被拒绝加载。开发插件时只依赖本文描述的公开契约，不要绑定宿主内部实现。
+插件版本和 `host_api_version` 是宿主兼容性信号：当前支持 `[1, 2]`，不满足范围时插件会被
+拒绝加载。虽然 v1 manifest 仍可加载，但运行期 `import_movie_by_number()` 已返回
+`MovieSnapshot`；依赖旧版可写返回值的插件必须升级。开发插件时只依赖本文描述的公开契约，
+不要绑定宿主内部实现。

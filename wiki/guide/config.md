@@ -159,8 +159,6 @@ media_clip_ffmpeg_timeout_seconds = 120
 ```toml
 [metadata]
 javdb_host = "jdforrepam.com"
-javdb_username = ""
-javdb_password = ""
 gfriends_filetree_url = "https://cdn.jsdelivr.net/gh/xinxin8816/gfriends/Filetree.json"
 gfriends_cdn_base_url = "https://cdn.jsdelivr.net/gh/xinxin8816/gfriends"
 gfriends_filetree_cache_path = "/data/cache/gfriends/gfriends-filetree.json"
@@ -173,13 +171,15 @@ import_metadata_max_workers = 3
 | 字段 | 作用 |
 |---|---|
 | `javdb_host` | JavDB API 域名，不带协议头 |
-| `javdb_username` | JavDB 账号，用于抓取需登录的 TOP250 榜单（全部 / 有码 / 无码 / FC2 / 各年度）；留空则不抓 TOP250 |
-| `javdb_password` | JavDB 账号密码，与 `javdb_username` 配套使用 |
 | `gfriends_filetree_url` | GFriends 文件树索引地址 |
 | `gfriends_cdn_base_url` | GFriends CDN 根地址 |
 | `gfriends_filetree_cache_path` | GFriends 文件树本地缓存路径 |
 | `gfriends_filetree_cache_ttl_hours` | 文件树缓存有效期，单位小时 |
 | `import_metadata_max_workers` | 导入本地影片时抓取元数据的并发线程数 |
+
+JavDB 排行榜账号不再属于 `[metadata]`。安装排行榜插件后，应在「系统设置 → 插件」
+中编辑插件私有配置，或写入对应的 `plugins.settings.<plugin_id>`；示例见下方
+`[plugins]` 章节。
 
 ### 代理配置（环境变量）
 
@@ -196,8 +196,29 @@ import_metadata_max_workers = 3
 
 ## `[plugins]`
 
-这一组控制「仓库内插件」的启用。插件能做什么、怎么安装和开发，见
-[插件化机制](/guide/plugins)。
+这一组控制「仓库内插件」的目录、启用清单、任务 cron 覆盖和私有配置。常用配置如下：
+
+```toml
+[plugins]
+root_dir = "/data/plugins"
+enabled = ["sakuramedia_javdb_ranking"]
+
+[plugins.job_crons.sakuramedia_javdb_ranking]
+sakuramedia_javdb_ranking_sync = "45 1 * * *"
+
+[plugins.settings.sakuramedia_javdb_ranking]
+javdb_username = ""
+javdb_password = ""
+```
+
+- `root_dir`：插件根目录，默认 `/data/plugins`；
+- `enabled`：显式启用的插件 ID，不在清单中的插件不会被加载；
+- `job_crons.<plugin_id>.<task_key>`：覆盖插件任务的默认 cron；
+- `settings.<plugin_id>`：插件私有配置，插件通过 `context.settings` 只读读取。
+
+插件安装、启停和私有配置也可以通过「系统设置 → 插件」或插件管理 API 完成；这些操作
+修改后需要重启 api 与 aps。通用 `/config` API 不返回也不修改整个 `[plugins]` 节。
+完整契约见[插件化机制](/guide/plugins)。
 
 
 ## `[scheduler]`

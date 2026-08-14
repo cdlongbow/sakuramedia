@@ -27,6 +27,8 @@ class MoviesApi {
     int? year,
     List<int>? tagIds,
     TagMatchMode? tagMatch,
+    int? heatMin,
+    int? heatMax,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -51,6 +53,12 @@ class MoviesApi {
     }
     if (year != null) {
       queryParameters['year'] = year;
+    }
+    if (heatMin != null) {
+      queryParameters['heat_min'] = heatMin;
+    }
+    if (heatMax != null) {
+      queryParameters['heat_max'] = heatMax;
     }
     if (tagIds != null && tagIds.isNotEmpty) {
       queryParameters['tag_ids'] = tagIds.join(',');

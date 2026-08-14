@@ -115,17 +115,21 @@ void main() {
     );
 
     final page = await moviesApi.getMovies(
-      status: MovieStatusFilter.subscribed,
+      status: MovieStatusFilter.unsubscribed,
       collectionType: MovieCollectionTypeFilter.single,
       sort: 'release_date:desc',
+      heatMin: 1000,
+      heatMax: 5000,
       page: 1,
       pageSize: 24,
     );
 
     final request = adapter.requests.single;
-    expect(request.uri.queryParameters['status'], 'subscribed');
+    expect(request.uri.queryParameters['status'], 'unsubscribed');
     expect(request.uri.queryParameters['collection_type'], 'single');
     expect(request.uri.queryParameters['sort'], 'release_date:desc');
+    expect(request.uri.queryParameters['heat_min'], '1000');
+    expect(request.uri.queryParameters['heat_max'], '5000');
     expect(request.uri.queryParameters['actor_id'], isNull);
     expect(request.uri.queryParameters['page'], '1');
     expect(request.uri.queryParameters['page_size'], '24');

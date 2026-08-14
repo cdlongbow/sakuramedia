@@ -3,7 +3,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
-/// 影片筛选的所有 section（状态 / 合集类型 / 番号来源 / 年份 / 排序）的纵向 Column。
+/// 影片筛选的所有 section（状态 / 合集类型 / 番号来源 / 热度范围 / 年份 / 排序）的纵向 Column。
 ///
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动 `MobileMovieFilterDrawer` 都用它，
 /// 避免双份维护。底栏/重置按钮由调用方自己附加。
@@ -67,6 +67,14 @@ class MovieFilterSectionGroup extends StatelessWidget {
           labelBuilder: (value) => value.label,
           onSelected: (value) =>
               onChanged(filterState.copyWith(numberSource: value)),
+        ),
+        SizedBox(height: context.appSpacing.lg),
+        MovieHeatRangeFilterSection(
+          heatMin: filterState.heatMin,
+          heatMax: filterState.heatMax,
+          onChanged: (range) => onChanged(
+            filterState.copyWith(heatMin: range.$1, heatMax: range.$2),
+          ),
         ),
         if (_shouldShowYearSection) ...[
           SizedBox(height: context.appSpacing.lg),
@@ -142,6 +150,155 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
                 ),
               )
               .toList(growable: false),
+        ),
+      ],
+    );
+  }
+}
+
+/// 热度范围双滑块筛选：0 ~ [movieFilterHeatSliderMax]（2w）。
+///
+/// - 左滑块拖到 0 = 下限不限；右滑块拖到顶 = 无上界（2w 及以上都包含），
+///   两者都映射为接口参数的 `null`（不传），语义对齐后端 `heat_min` / `heat_max`。
+/// - 拖动中只更新面板内的值显示，松手（onChangeEnd）才应用请求，
+///   避免拖动过程打出一串列表请求。
+class MovieHeatRangeFilterSection extends StatefulWidget {
+  const MovieHeatRangeFilterSection({
+    super.key,
+    required this.heatMin,
+    required this.heatMax,
+    required this.onChanged,
+  });
+
+  final int? heatMin;
+  final int? heatMax;
+  final ValueChanged<(int?, int?)> onChanged;
+
+  @override
+  State<MovieHeatRangeFilterSection> createState() =>
+      _MovieHeatRangeFilterSectionState();
+}
+
+class _MovieHeatRangeFilterSectionState
+    extends State<MovieHeatRangeFilterSection> {
+  late RangeValues _values;
+
+  @override
+  void initState() {
+    super.initState();
+    _values = _valuesFrom(widget.heatMin, widget.heatMax);
+  }
+
+  @override
+  void didUpdateWidget(covariant MovieHeatRangeFilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.heatMin != widget.heatMin ||
+        oldWidget.heatMax != widget.heatMax) {
+      // 外部状态变化（重置筛选 / 其他入口改条件）时同步滑块位置；
+      // onChangeEnd 应用后回传的值与此处推导一致，不会闪烁。
+      _values = _valuesFrom(widget.heatMin, widget.heatMax);
+    }
+  }
+
+  static RangeValues _valuesFrom(int? heatMin, int? heatMax) => RangeValues(
+    (heatMin ?? 0).toDouble(),
+    (heatMax ?? movieFilterHeatSliderMax).toDouble(),
+  );
+
+  void _apply(RangeValues values) {
+    final heatMin = movieHeatMinFromSlider(values.start.round());
+    final heatMax = movieHeatMaxFromSlider(values.end.round());
+    if (heatMin != widget.heatMin || heatMax != widget.heatMax) {
+      widget.onChanged((heatMin, heatMax));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final heatMin = movieHeatMinFromSlider(_values.start.round());
+    final heatMax = movieHeatMaxFromSlider(_values.end.round());
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '热度',
+              key: const Key('movie-filter-heat-section-title'),
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.primary,
+              ),
+            ),
+            Text(
+              movieHeatRangeLabel(heatMin, heatMax),
+              key: const Key('movie-filter-heat-range-label'),
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.muted,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: context.appSpacing.xs),
+        // 桌面筛选面板内的滑块保持克制的体量：3px 细轨道 + 小扁平 thumb，
+        // 拖动反馈用 10% 品牌色的浅晕圈；默认 M3 的 20px thumb + 4px 轨道
+        // 在面板里显得过重。颜色全部走品牌/divider token，几何参数为
+        // 组件内部实现细节。
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3,
+            activeTrackColor: colorScheme.primary,
+            inactiveTrackColor: context.appColors.divider,
+            rangeThumbShape: const RoundRangeSliderThumbShape(
+              enabledThumbRadius: 7,
+              disabledThumbRadius: 7,
+              elevation: 0,
+            ),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            overlayColor: colorScheme.primary.withValues(alpha: 0.10),
+          ),
+          child: RangeSlider(
+            key: const Key('movie-filter-heat-slider'),
+            min: 0,
+            max: movieFilterHeatSliderMax.toDouble(),
+            values: _values,
+            onChanged: (values) => setState(() => _values = values),
+            onChangeEnd: _apply,
+          ),
+        ),
+        // 两端刻度与 thumb 中心对齐（轨道两端各内缩一个 overlay 半径）。
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '0',
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s10,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.muted,
+                ),
+              ),
+              Text(
+                '2w',
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s10,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.muted,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

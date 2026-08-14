@@ -244,7 +244,7 @@ void main() {
       isEmpty,
     );
 
-    // 索引器/LLM/下载器这类是账号级服务端配置，登出必须失效，
+    // 索引器/下载器这类是账号级服务端配置，登出必须失效，
     // 否则换账号后仍会读到上一账号的设置。
     await store.clearSession();
 
@@ -400,7 +400,7 @@ ConfigResourceDto _config(List<DownloadClientKind> kinds) => ConfigResourceDto(
     uncensoredPrefix: [],
     allowedMinVideoFileSize: 0,
   ),
-  metadata: const AdvancedMetadataConfigDto(javdbHost: '', proxy: ''),
+  metadata: const AdvancedMetadataConfigDto(javdbHost: ''),
   scheduler: const AdvancedSchedulerConfigDto(crons: {}),
   downloads: AdvancedDownloadsConfigDto(
     smallFileCleanupThresholdMb: 0,

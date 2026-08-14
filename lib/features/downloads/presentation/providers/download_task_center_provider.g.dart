@@ -65,7 +65,7 @@ final class DownloadTaskCenterProvider
 }
 
 String _$downloadTaskCenterHash() =>
-    r'8ee15dddb2f8996afae5bddd6ea7e2c07f50489c';
+    r'f59705ed4e19faf4a34e49ac10260c40c791d2a0';
 
 /// 下载任务中心（Riverpod）：分页拉 `/download-tasks` + SSE 实时进度 + 暂停/恢复/删除。
 ///

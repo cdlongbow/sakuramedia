@@ -102,7 +102,7 @@ SakuraMedia 是**桌面优先**的媒体管理工作台：
   `/mobile/library/actors`、`/mobile/rankings`、`/mobile/pornbox`；
 - 搜索与图搜：`/mobile/search`、`/mobile/search/image`；
 - 媒体管理：`/mobile/system/media`；
-- 设置子页：媒体库、下载器、索引器、LLM 配置、播放列表、修改用户名、修改密码等
+- 设置子页：媒体库、下载器、索引器、播放列表、修改用户名、修改密码等
   `/mobile/settings/*` 页面；
 - 影片/女优详情、播放器、播放列表详情、发现子页等子流程。
 

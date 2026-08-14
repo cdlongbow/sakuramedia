@@ -8,7 +8,6 @@ part of 'subtitle_import_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-
 /// JAV 字幕导入：分页作业、详情缓存、操作与 task_run SSE 的唯一状态源。
 
 @ProviderFor(SubtitleImport)
@@ -37,7 +36,7 @@ final class SubtitleImportProvider
   SubtitleImport create() => SubtitleImport();
 }
 
-String _$subtitleImportHash() => r'7f434edf11801e0eec18cd3c4ea02b3219af76c5';
+String _$subtitleImportHash() => r'189e04b8290a243a74ae365baddc77d5ecda9f98';
 
 /// JAV 字幕导入：分页作业、详情缓存、操作与 task_run SSE 的唯一状态源。
 

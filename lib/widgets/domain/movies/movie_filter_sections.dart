@@ -275,7 +275,7 @@ class _MovieHeatRangeFilterSectionState
         ),
         // 两端刻度与 thumb 中心对齐（轨道两端各内缩一个 overlay 半径）。
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: context.appSpacing.lg),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

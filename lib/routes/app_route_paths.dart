@@ -49,7 +49,6 @@ const String mobileSettingsMediaLibrariesPath =
     '/mobile/settings/media-libraries';
 const String mobileSettingsDownloadersPath = '/mobile/settings/downloaders';
 const String mobileSettingsIndexersPath = '/mobile/settings/indexers';
-const String mobileSettingsLlmPath = '/mobile/settings/llm';
 const String mobileSettingsPlaylistsPath = '/mobile/settings/playlists';
 const String mobileSettingsExternalPlayerPath =
     '/mobile/settings/external-player';

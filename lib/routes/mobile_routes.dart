@@ -23,7 +23,6 @@ import 'package:sakuramedia/features/media/presentation/pages/mobile/media_manag
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart';
-import 'package:sakuramedia/features/configuration/presentation/pages/llm_settings_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_play_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collections_page.dart';
@@ -346,26 +345,6 @@ class MobileSettingsIndexersRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobileIndexersPage();
-  }
-}
-
-@TypedGoRoute<MobileSettingsLlmRouteData>(path: mobileSettingsLlmPath)
-class MobileSettingsLlmRouteData extends _MobileSubpageRouteData
-    with $MobileSettingsLlmRouteData {
-  const MobileSettingsLlmRouteData();
-
-  @override
-  String get pageName => 'mobile-settings-llm';
-
-  @override
-  String get title => 'LLM 配置';
-
-  @override
-  String get defaultLocation => mobileOverviewPath;
-
-  @override
-  Widget buildSubpage(BuildContext context, GoRouterState state) {
-    return const LlmSettingsPage();
   }
 }
 
@@ -905,11 +884,6 @@ class _MobileOverviewDrawer extends ConsumerWidget {
           icon: Icons.travel_explore_outlined,
           label: '索引器',
         ),
-        _MobileOverviewDrawerMenuItem(
-          key: 'llm',
-          icon: Icons.auto_awesome_outlined,
-          label: 'LLM 配置',
-        ),
       ];
 
   static const _MobileOverviewDrawerMenuItem _playlistsItem =
@@ -1174,9 +1148,6 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         return;
       case 'indexers':
         const MobileSettingsIndexersRouteData().push(hostContext);
-        return;
-      case 'llm':
-        const MobileSettingsLlmRouteData().push(hostContext);
         return;
       case 'media-management':
         const MobileMediaManagementRouteData().push(hostContext);

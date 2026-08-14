@@ -22,8 +22,6 @@ hero:
 features:
   - title: 影片发现与观影
     details: 以影片为中心，整合搜索、订阅、下载、播放功能。
-  - title: 影片信息翻译
-    details: 支持调用大模型API将日语简介翻译为中文。
   - title: 缩略图辅助观影
     details: 播放界面侧边栏可选展示影片缩略图，用于快速预览不同画面，高效定位精彩片段。
   - title: VR 影片播放

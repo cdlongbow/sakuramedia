@@ -8,19 +8,20 @@ part of 'subtitle_import_api_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-
 /// 字幕导入 API 的 Riverpod 入口。
 
 @ProviderFor(subtitleImportApi)
 final subtitleImportApiProvider = SubtitleImportApiProvider._();
 
 /// 字幕导入 API 的 Riverpod 入口。
+
 final class SubtitleImportApiProvider
-    extends $FunctionalProvider<
-      SubtitleImportApi,
-      SubtitleImportApi,
-      SubtitleImportApi
-    >
+    extends
+        $FunctionalProvider<
+          SubtitleImportApi,
+          SubtitleImportApi,
+          SubtitleImportApi
+        >
     with $Provider<SubtitleImportApi> {
   /// 字幕导入 API 的 Riverpod 入口。
   SubtitleImportApiProvider._()
@@ -57,4 +58,4 @@ final class SubtitleImportApiProvider
   }
 }
 
-String _$subtitleImportApiHash() => r'5c51a1750ee6c6c33871117d4d109d40a2d26cb8';
+String _$subtitleImportApiHash() => r'20f6f3eaa4398d90f7df2a085fbd26562c32285a';

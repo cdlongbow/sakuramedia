@@ -374,7 +374,7 @@ void main() {
       method: 'POST',
       path: '/system/resource-task-actions',
       body: <String, dynamic>{
-        'task_key': 'movie_desc_translation',
+        'task_key': 'movie_interaction_sync',
         'action': 'rerun',
         'task_run_id': 42,
         'accepted_resource_ids': <int>[11],
@@ -383,7 +383,7 @@ void main() {
     );
 
     final result = await bundle.activityApi.applyResourceTaskAction(
-      taskKey: 'movie_desc_translation',
+      taskKey: 'movie_interaction_sync',
       action: 'rerun',
       resourceIds: <int>[11],
     );

@@ -38,7 +38,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1001)],
@@ -53,7 +53,7 @@ void main() {
 
     expect(controller.initialized, isTrue);
     expect(controller.definitions, hasLength(2));
-    expect(controller.activeTaskKey, 'movie_desc_sync');
+    expect(controller.activeTaskKey, 'movie_interaction_sync');
     expect(controller.activeDefinition?.displayName, '影片描述回填');
     expect(controller.activeRecords, hasLength(1));
     expect(controller.activeRecords.single.resourceId, 1001);
@@ -73,7 +73,7 @@ void main() {
     final recordRequest = bundle.adapter.requests
         .where((req) => req.path == '/system/resource-task-states')
         .single;
-    expect(recordRequest.uri.queryParameters['task_key'], 'movie_desc_sync');
+    expect(recordRequest.uri.queryParameters['task_key'], 'movie_interaction_sync');
     expect(recordRequest.uri.queryParameters['page'], '1');
     expect(recordRequest.uri.queryParameters['page_size'], '20');
     expect(recordRequest.uri.queryParameters['state'], 'failed');
@@ -85,7 +85,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1001)],
@@ -116,8 +116,8 @@ void main() {
     expect(controller.activeRecords, hasLength(2));
 
     // 切回原 task 不应再次请求。
-    await controller.selectTaskKey('movie_desc_sync');
-    expect(controller.activeTaskKey, 'movie_desc_sync');
+    await controller.selectTaskKey('movie_interaction_sync');
+    expect(controller.activeTaskKey, 'movie_interaction_sync');
     expect(controller.activeRecords, hasLength(1));
     expect(bundle.adapter.hitCount('GET', '/system/resource-task-states'), 2);
   });
@@ -126,7 +126,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1001)],
@@ -141,7 +141,7 @@ void main() {
 
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1002, state: 'failed')],
@@ -178,7 +178,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       pageSize: 2,
       total: 3,
@@ -199,7 +199,7 @@ void main() {
 
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 2,
       pageSize: 2,
       total: 3,
@@ -226,7 +226,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 2,
       items: <Map<String, dynamic>>[
@@ -244,7 +244,7 @@ void main() {
 
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1003)],
@@ -265,7 +265,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       total: 1,
       items: <Map<String, dynamic>>[_recordJson(id: 1001)],
@@ -315,7 +315,7 @@ void main() {
     _enqueueDefinitions(bundle);
     _enqueuePage(
       bundle,
-      taskKey: 'movie_desc_sync',
+      taskKey: 'movie_interaction_sync',
       page: 1,
       pageSize: 2,
       total: 3,
@@ -353,7 +353,7 @@ void main() {
       _enqueueDefinitions(bundle);
       _enqueuePage(
         bundle,
-        taskKey: 'movie_desc_sync',
+        taskKey: 'movie_interaction_sync',
         page: 1,
         total: 0,
         items: const <Map<String, dynamic>>[],
@@ -380,12 +380,12 @@ void main() {
       expect(controller.supportsBatchReset, isTrue);
       _enqueuePage(
         bundle,
-        taskKey: 'movie_desc_sync',
+        taskKey: 'movie_interaction_sync',
         page: 1,
         total: 0,
         items: const <Map<String, dynamic>>[],
       );
-      await controller.selectTaskKey('movie_desc_sync');
+      await controller.selectTaskKey('movie_interaction_sync');
       expect(controller.supportsBatchReset, isFalse);
     });
 
@@ -393,7 +393,7 @@ void main() {
       _enqueueDefinitions(bundle);
       _enqueuePage(
         bundle,
-        taskKey: 'movie_desc_sync',
+        taskKey: 'movie_interaction_sync',
         page: 1,
         total: 1,
         items: <Map<String, dynamic>>[_recordJson(id: 1001, state: 'failed')],
@@ -525,12 +525,12 @@ void main() {
 
       _enqueuePage(
         bundle,
-        taskKey: 'movie_desc_sync',
+        taskKey: 'movie_interaction_sync',
         page: 1,
         total: 0,
         items: const <Map<String, dynamic>>[],
       );
-      await controller.selectTaskKey('movie_desc_sync');
+      await controller.selectTaskKey('movie_interaction_sync');
       expect(controller.selectionMode, isFalse);
       expect(controller.selectedCount, 0);
     });
@@ -588,7 +588,7 @@ void main() {
         path: '/system/resource-task-states/definitions',
         body: <Map<String, dynamic>>[
           <String, dynamic>{
-            'task_key': 'movie_desc_sync',
+            'task_key': 'movie_interaction_sync',
             'resource_type': 'movie',
             'display_name': '影片描述回填',
             'default_sort': 'last_attempted_at:desc',
@@ -865,7 +865,7 @@ void _enqueueDefinitions(TestApiBundle bundle) {
     path: '/system/resource-task-states/definitions',
     body: <Map<String, dynamic>>[
       <String, dynamic>{
-        'task_key': 'movie_desc_sync',
+        'task_key': 'movie_interaction_sync',
         'resource_type': 'movie',
         'display_name': '影片描述回填',
         'default_sort': 'last_attempted_at:desc',
@@ -916,7 +916,7 @@ void _enqueuePage(
 
 Map<String, dynamic> _recordJson({
   required int id,
-  String taskKey = 'movie_desc_sync',
+  String taskKey = 'movie_interaction_sync',
   String state = 'pending',
   bool? valid,
   bool hasResource = true,

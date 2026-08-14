@@ -21,9 +21,8 @@ class DiagnosticFixButton extends StatelessWidget {
     2: '下载器',
     3: '索引器',
     4: '下载偏好',
-    5: 'LLM 配置',
-    6: '播放列表',
-    7: '高级设置',
+    5: '播放列表',
+    6: '高级设置',
   };
 
   @override

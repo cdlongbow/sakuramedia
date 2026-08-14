@@ -48,7 +48,6 @@ class _DesktopAdvancedSettingsSectionState
   late final TextEditingController _uncensoredPrefixController;
   late final TextEditingController _allowedMinVideoFileSizeController;
   late final TextEditingController _javdbHostController;
-  late final TextEditingController _proxyController;
   late final TextEditingController _smallFileCleanupThresholdController;
   late final Map<String, TextEditingController> _cronControllers;
 
@@ -73,7 +72,6 @@ class _DesktopAdvancedSettingsSectionState
     _uncensoredPrefixController = TextEditingController();
     _allowedMinVideoFileSizeController = TextEditingController();
     _javdbHostController = TextEditingController();
-    _proxyController = TextEditingController();
     _smallFileCleanupThresholdController = TextEditingController();
     _cronControllers = <String, TextEditingController>{
       for (final key in AdvancedSchedulerConfigDto.cronKeys)
@@ -101,7 +99,6 @@ class _DesktopAdvancedSettingsSectionState
     _uncensoredPrefixController.dispose();
     _allowedMinVideoFileSizeController.dispose();
     _javdbHostController.dispose();
-    _proxyController.dispose();
     _smallFileCleanupThresholdController.dispose();
     for (final controller in _cronControllers.values) {
       controller.dispose();
@@ -276,35 +273,20 @@ class _DesktopAdvancedSettingsSectionState
             const _CardTip(
               icon: Icons.travel_explore_outlined,
               message:
-                  '大多数元数据抓取场景只需要配置代理用于抓取 DMM；排行榜来源与账号由插件自行管理。⚠️ JavDB 不会走代理。',
+                  '外部站点请求（JavDB / GFriends）统一跟随容器环境变量 HTTP_PROXY / HTTPS_PROXY / NO_PROXY 分流，不再在应用内配置代理；排行榜来源与账号由插件自行管理。',
             ),
             SizedBox(height: spacing.lg),
-            _buildFieldGrid(
-              context,
-              children: [
-                AppTextField(
-                  fieldKey: const Key(
-                    'configuration-advanced-javdb-host-field',
-                  ),
-                  controller: _javdbHostController,
-                  label: 'JavDB API 域名',
-                  hintText: 'jdforrepam.com',
-                  helperText: '裸域名或 IP，不带 http/https 协议头。',
-                  keyboardType: TextInputType.url,
-                  validator: _javdbHostError,
-                  onChanged: (_) => _markDirty(_AdvancedCardKind.metadata),
-                ),
-                AppTextField(
-                  fieldKey: const Key('configuration-advanced-proxy-field'),
-                  controller: _proxyController,
-                  label: '元数据代理',
-                  hintText: 'http://127.0.0.1:7890',
-                  helperText: '留空表示不配置；仅支持 http',
-                  keyboardType: TextInputType.url,
-                  validator: _proxyError,
-                  onChanged: (_) => _markDirty(_AdvancedCardKind.metadata),
-                ),
-              ],
+            AppTextField(
+              fieldKey: const Key(
+                'configuration-advanced-javdb-host-field',
+              ),
+              controller: _javdbHostController,
+              label: 'JavDB API 域名',
+              hintText: 'jdforrepam.com',
+              helperText: '裸域名或 IP，不带 http/https 协议头。',
+              keyboardType: TextInputType.url,
+              validator: _javdbHostError,
+              onChanged: (_) => _markDirty(_AdvancedCardKind.metadata),
             ),
             SizedBox(height: spacing.lg),
             _buildActions(
@@ -673,7 +655,6 @@ class _DesktopAdvancedSettingsSectionState
   Map<String, dynamic> _buildMetadataPayload() {
     return <String, dynamic>{
       'javdb_host': _javdbHostController.text.trim(),
-      'proxy': _proxyController.text.trim(),
     };
   }
 
@@ -719,7 +700,6 @@ class _DesktopAdvancedSettingsSectionState
 
   void _applyMetadata(AdvancedMetadataConfigDto metadata) {
     _javdbHostController.text = metadata.javdbHost;
-    _proxyController.text = metadata.proxy;
   }
 
   void _applyScheduler(AdvancedSchedulerConfigDto scheduler) {
@@ -765,17 +745,6 @@ class _DesktopAdvancedSettingsSectionState
     final trimmed = value?.trim() ?? '';
     if (trimmed.isEmpty || !isValidHostname(trimmed)) {
       return '请输入不带协议头的域名或 IP';
-    }
-    return null;
-  }
-
-  String? _proxyError(String? value) {
-    final trimmed = value?.trim() ?? '';
-    if (trimmed.isEmpty) {
-      return null;
-    }
-    if (!isValidProxyUrl(trimmed)) {
-      return '请输入合法的代理地址';
     }
     return null;
   }
@@ -1004,13 +973,8 @@ const List<_CronGroup> _cronGroups = <_CronGroup>[
     title: '抓取 / 回填',
     keys: <String>[
       'hot_review_sync',
-      'movie_desc_sync',
       'actor_subscription_sync',
     ],
-  ),
-  _CronGroup(
-    title: '翻译',
-    keys: <String>['movie_desc_translation', 'movie_title_translation'],
   ),
   _CronGroup(
     title: '图搜 / 相似度',
@@ -1051,9 +1015,6 @@ const Map<String, String> _cronCopy = <String, String>{
   'movie_interaction_sync': '影片互动数同步',
   'hot_review_sync': 'JavDB 热评同步',
   'media_file_scan': '媒体文件巡检',
-  'movie_desc_sync': '影片原文描述回填',
-  'movie_desc_translation': '影片中文简介翻译',
-  'movie_title_translation': '影片标题翻译',
   'media_thumbnail': '缩略图生成',
   'image_search_index': '图片搜索索引生成',
   'image_search_optimize': '图片搜索索引优化',
@@ -1074,9 +1035,6 @@ const Map<String, String> _cronFieldHelper = <String, String>{
   'movie_interaction_sync': '同步影片互动数，候选仍受分层刷新规则影响。',
   'hot_review_sync': '同步 JavDB 热评。',
   'media_file_scan': '巡检媒体文件。',
-  'movie_desc_sync': '回填影片原文描述。',
-  'movie_desc_translation': '翻译影片中文简介。',
-  'movie_title_translation': '翻译影片标题。',
   'media_thumbnail': '生成媒体缩略图。',
   'image_search_index': '生成图片搜索索引。',
   'image_search_optimize': '优化图片搜索索引。',

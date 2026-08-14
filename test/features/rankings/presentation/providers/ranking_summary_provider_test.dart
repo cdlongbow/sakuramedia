@@ -115,10 +115,10 @@ void main() {
     await prime(scope);
     adapter.enqueueJson(
       method: 'GET',
-      path: '/ranking-sources/dmm/boards',
+      path: '/ranking-sources/mock-source/boards',
       body: <Map<String, dynamic>>[
         <String, dynamic>{
-          'source_key': 'dmm',
+          'source_key': 'mock-source',
           'board_key': 'hot',
           'name': '热门',
           'supported_periods': <String>['weekly'],
@@ -128,16 +128,18 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/ranking-sources/dmm/boards/hot/items',
+      path: '/ranking-sources/mock-source/boards/hot/items',
       body: _page(items: <Map<String, dynamic>>[_rankedMovie(2)], total: 1),
     );
 
     await container
         .read(rankingSummaryProvider(scope).notifier)
-        .selectSource(const RankingSourceDto(sourceKey: 'dmm', name: 'DMM'));
+        .selectSource(
+          const RankingSourceDto(sourceKey: 'mock-source', name: 'Mock Source'),
+        );
 
     final state = container.read(rankingSummaryProvider(scope)).requireValue;
-    expect(state.filters.selectedSource?.sourceKey, 'dmm');
+    expect(state.filters.selectedSource?.sourceKey, 'mock-source');
     expect(state.filters.selectedBoard?.boardKey, 'hot');
     expect(state.filters.selectedPeriod, 'weekly');
     expect(state.paged.items.single.movieNumber, 'ABC-002');

@@ -6,7 +6,6 @@ import 'package:sakuramedia/features/configuration/presentation/pages/desktop/do
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/indexer_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/media_libraries_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/playlists_section.dart';
-import 'package:sakuramedia/features/configuration/presentation/pages/llm_settings_page.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/desktop/plugins_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -74,15 +73,6 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
           icon: Icons.low_priority_outlined,
         ),
         builder: (active) => DesktopDownloadPreferenceSection(active: active),
-      ),
-      _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-llm'),
-          label: 'LLM 配置',
-          icon: Icons.auto_awesome_outlined,
-        ),
-        wrapInScrollView: false,
-        builder: (active) => LlmSettingsPage(active: active),
       ),
       _ConfigurationTab(
         category: const _ConfigurationCategory(
@@ -191,12 +181,9 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
                   sizing: StackFit.expand,
                   children: [
                     for (var i = 0; i < _tabs.length; i++)
-                      if (_tabs[i].wrapInScrollView)
-                        _ConfigurationTabScrollView(
-                          child: _tabs[i].builder(i == _selectedIndex),
-                        )
-                      else
-                        _tabs[i].builder(i == _selectedIndex),
+                      _ConfigurationTabScrollView(
+                        child: _tabs[i].builder(i == _selectedIndex),
+                      ),
                   ],
                 ),
               ),
@@ -213,12 +200,10 @@ class _ConfigurationTab {
   const _ConfigurationTab({
     required this.category,
     required this.builder,
-    this.wrapInScrollView = true,
   });
 
   final _ConfigurationCategory category;
   final Widget Function(bool active) builder;
-  final bool wrapInScrollView;
 }
 
 /// 系统设置左侧分类项描述。

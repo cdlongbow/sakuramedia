@@ -77,7 +77,7 @@ void main() {
       1,
     );
     final record = find.byKey(
-      const Key('resource-task-record-movie_desc_sync/1001'),
+      const Key('resource-task-record-movie_interaction_sync/1001'),
     );
     expect(record, findsOneWidget);
     await tester.ensureVisible(record);
@@ -138,7 +138,7 @@ void _enqueueResourceTasks(TestApiBundle bundle) {
     path: '/system/resource-task-states/definitions',
     body: const <Map<String, dynamic>>[
       <String, dynamic>{
-        'task_key': 'movie_desc_sync',
+        'task_key': 'movie_interaction_sync',
         'resource_type': 'movie',
         'display_name': '影片描述回填',
         'default_sort': 'last_attempted_at:desc',
@@ -183,7 +183,7 @@ Map<String, dynamic> _taskJson(int id) {
 
 Map<String, dynamic> _resourceRecordJson(int id) {
   return <String, dynamic>{
-    'task_key': 'movie_desc_sync',
+    'task_key': 'movie_interaction_sync',
     'resource_type': 'movie',
     'resource_id': id,
     'state': 'failed',

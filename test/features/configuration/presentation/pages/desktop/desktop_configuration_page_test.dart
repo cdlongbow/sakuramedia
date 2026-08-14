@@ -8,7 +8,6 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/configuration_page.dart';
-import 'package:sakuramedia/features/configuration/presentation/widgets/shared/llm_settings_copy.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
@@ -45,7 +44,6 @@ void main() {
           'configuration-tab-downloads',
           'configuration-tab-indexers',
           'configuration-tab-download-preference',
-          'configuration-tab-llm',
           'configuration-tab-playlists',
           'configuration-tab-advanced',
           'configuration-tab-plugins',
@@ -93,43 +91,10 @@ void main() {
       expect(find.text('还没有下载器配置'), findsOneWidget);
     });
 
-    testWidgets('loads llm settings section lazily', (
-      WidgetTester tester,
-    ) async {
-      _enqueueMediaLibraries(bundle);
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      expect(bundle.adapter.hitCount('GET', '/config'), 0);
-      await tester.tap(find.byKey(const Key('configuration-tab-llm')));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('llm-form-card')), findsOneWidget);
-      expect(find.text('LLM 配置'), findsWidgets);
-      expect(find.byKey(const Key('llm-base-url-field')), findsOneWidget);
-      expect(find.text('启用'), findsOneWidget);
-      expect(find.text('停用'), findsOneWidget);
-      expect(find.byKey(const Key('llm-test-button')), findsOneWidget);
-      expect(find.byKey(const Key('llm-save-button')), findsOneWidget);
-      expect(find.text('可保存'), findsOneWidget);
-      expect(find.text(LlmSettingsCopy.sharedUsageDescription), findsOneWidget);
-      expect(
-        find.text(LlmSettingsCopy.sharedEndpointDescription),
-        findsOneWidget,
-      );
-      expect(bundle.adapter.hitCount('GET', '/config'), 1);
-      expect(find.text(LlmSettingsCopy.baseUrlHelperText), findsOneWidget);
-      expect(find.text(LlmSettingsCopy.modelHintText), findsOneWidget);
-      expect(
-        find.text(LlmSettingsCopy.modelRecommendationText),
-        findsOneWidget,
-      );
-    });
-
     testWidgets('confirms before leaving dirty advanced settings tab', (
       WidgetTester tester,
     ) async {
-      _enqueueMediaLibraries(bundle, includeLlmSettings: false);
+      _enqueueMediaLibraries(bundle);
       _enqueueAdvancedConfig(bundle);
       _enqueuePlaylists(bundle, playlists: const []);
 
@@ -1585,7 +1550,7 @@ void main() {
     testWidgets('saves global download preference in its own tab', (
       WidgetTester tester,
     ) async {
-      _enqueueMediaLibraries(bundle, includeLlmSettings: false);
+      _enqueueMediaLibraries(bundle);
       _enqueueAdvancedConfig(bundle);
       _enqueueDownloadPreferencePatch(bundle);
 
@@ -2171,7 +2136,6 @@ void _enqueueAdvancedConfig(TestApiBundle bundle) {
 
 void _enqueueMediaLibraries(
   TestApiBundle bundle, {
-  bool includeLlmSettings = true,
   List<Map<String, Object?>> libraries = const [
     {
       'id': 1,
@@ -2187,9 +2151,6 @@ void _enqueueMediaLibraries(
     path: '/media-libraries',
     body: libraries,
   );
-  if (includeLlmSettings) {
-    _enqueueMovieDescTranslationSettings(bundle);
-  }
 }
 
 Map<String, dynamic> _buildAdvancedConfigResponseJson() {
@@ -2205,7 +2166,6 @@ Map<String, dynamic> _buildAdvancedConfigResponseJson() {
       },
       'metadata': <String, dynamic>{
         'javdb_host': 'jdforrepam.com',
-        'proxy': '',
       },
       'scheduler': <String, dynamic>{
         for (final key in AdvancedSchedulerConfigDto.cronKeys)
@@ -2227,41 +2187,6 @@ Map<String, dynamic> _buildAdvancedConfigResponseJson() {
   };
 }
 
-void _enqueueMovieDescTranslationSettings(
-  TestApiBundle bundle, {
-  bool enabled = false,
-  String baseUrl = 'http://llm.internal:8000',
-  String apiKey = '',
-  String model = 'gpt-4o-mini',
-  double timeoutSeconds = 300,
-  double connectTimeoutSeconds = 3,
-}) {
-  bundle.adapter.enqueueJson(
-    method: 'GET',
-    path: '/config',
-    body: _buildConfigResponseJson(
-      section: _buildMovieDescTranslationSettingsJson(
-        enabled: enabled,
-        baseUrl: baseUrl,
-        apiKey: apiKey,
-        model: model,
-        timeoutSeconds: timeoutSeconds,
-        connectTimeoutSeconds: connectTimeoutSeconds,
-      ),
-    ),
-  );
-}
-
-/// 构造 `GET /config` 响应壳，`section` 落到 `values.movie_info_translation`。
-Map<String, dynamic> _buildConfigResponseJson({
-  required Map<String, dynamic> section,
-}) {
-  return <String, dynamic>{
-    'values': <String, dynamic>{'movie_info_translation': section},
-    'effects': <String, dynamic>{'movie_info_translation': 'hot'},
-  };
-}
-
 void _enqueueDownloadPreferencePatch(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
     method: 'PATCH',
@@ -2277,24 +2202,6 @@ void _enqueueDownloadPreferencePatch(TestApiBundle bundle) {
       ],
     },
   );
-}
-
-Map<String, dynamic> _buildMovieDescTranslationSettingsJson({
-  bool enabled = false,
-  String baseUrl = 'http://llm.internal:8000',
-  String apiKey = '',
-  String model = 'gpt-4o-mini',
-  double timeoutSeconds = 300,
-  double connectTimeoutSeconds = 3,
-}) {
-  return <String, dynamic>{
-    'enabled': enabled,
-    'base_url': baseUrl,
-    'api_key': apiKey,
-    'model': model,
-    'timeout_seconds': timeoutSeconds,
-    'connect_timeout_seconds': connectTimeoutSeconds,
-  };
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {

@@ -137,19 +137,7 @@ class MoviesApi {
     return MovieDetailDto.fromJson(response);
   }
 
-  /// 入队翻译任务（统一 action，任务架构 Wave 4）：执行在后台 worker。
-  ///
-  /// 旧 `/movies/{number}/desc-translation` 端点已删，改走资源级操作唯一入口。
-  /// `rerun` 是强制语义：已翻译的影片也会重译，从未记账的影片后端自动播种状态行。
-  /// 连点被 mutex 顶 409（`resource_task_action_conflict`）。
-  Future<void> translateMovieDescription({required int movieId}) async {
-    await _applyMovieResourceTaskRerun(
-      taskKey: 'movie_desc_translation',
-      movieId: movieId,
-    );
-  }
-
-  /// 入队互动数同步任务（统一 action）；语义同 [translateMovieDescription]。
+  /// 入队互动数同步任务（统一 action）：执行在后台 worker，`rerun` 是强制语义。
   Future<void> syncMovieInteraction({required int movieId}) async {
     await _applyMovieResourceTaskRerun(
       taskKey: 'movie_interaction_sync',

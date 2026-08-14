@@ -21,9 +21,6 @@ SakuraMedia 宿主内置后台定时任务的作用和默认频率。
 | 115 离线任务对账 | 115 离线任务进度回写、完成导入、超时放弃 | 每 1 分钟 |
 | 下载小文件清理 | 把种子里的小文件设为不下载并物理删除 | 每 5 分钟 |
 | 媒体文件巡检 | 检查文件是否存在并补视频信息 | 每天 04:00 |
-| 影片描述回填 | 为历史影片补抓原文描述 `desc` | 每天 04:00 |
-| 影片简介翻译 | 把原文描述翻译成中文 `desc_zh` | 每天 04:15 |
-| 影片标题翻译 | 把原始标题翻译成中文 `title_zh` | 每天 04:20 |
 | 媒体缩略图生成 | 为媒体生成缩略图 | 每 30 分钟 |
 | 以图搜图索引 | 为待处理缩略图生成向量并入索引 | 每天 00:00 |
 | 影片相似度重算 | 离线重算影片相似结果 | 每天 03:30 |
@@ -119,24 +116,6 @@ SakuraMedia 宿主内置后台定时任务的作用和默认频率。
 
 默认频率：每天 `04:00`
 
-### 影片描述回填
-
-为历史影片补抓原文描述 `desc`。
-
-默认频率：每天 `04:00`
-
-### 影片简介翻译
-
-把已抓到的原文描述翻译成中文 `desc_zh`，依赖 `[movie_info_translation]` 配置的大模型接口。模型选择可参考[常见问题里的模型建议](/faq#movie-desc-translation-model)。
-
-默认频率：每天 `04:15`
-
-### 影片标题翻译
-
-把影片原始标题翻译成中文 `title_zh`，和"影片简介翻译"共用 `[movie_info_translation]` 配置。优先处理已订阅影片和已订阅女优相关影片。
-
-默认频率：每天 `04:20`
-
 ### 媒体缩略图生成
 
 为媒体生成缩略图，是时刻预览和以图搜图的前置数据。
@@ -215,9 +194,6 @@ movie_heat_cron = "15 0 * * *"
 movie_interaction_sync_cron = "0 5 * * *"
 hot_review_sync_cron = "20 1 * * *"
 media_file_scan_cron = "0 4 * * *"
-movie_desc_sync_cron = "0 4 * * *"
-movie_desc_translation_cron = "15 4 * * *"
-movie_title_translation_cron = "20 4 * * *"
 media_thumbnail_cron = "*/30 * * * *"
 image_search_index_cron = "0 0 * * *"
 image_search_optimize_cron = "0 3 * * *"
@@ -256,8 +232,6 @@ activity_notification_read_retention_days = 3
 
 ### 媒体增强相关
 
-- `movie_desc_sync_cron` — 影片原文描述补进来
-- `movie_desc_translation_cron` — 原文描述翻译成中文
 - `media_thumbnail_cron` — 为时刻和图片搜索提供基础数据
 - `image_search_index_cron` — 缩略图送进图片搜索索引
 - `image_search_optimize_cron` — 索引压缩和优化

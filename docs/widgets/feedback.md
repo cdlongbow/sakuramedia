@@ -79,7 +79,7 @@
 - **可选**: `isBusy`(true 用 spinner 替代 `icon`) · `detail` · `dense`(更紧凑的横条/阵列场景)
 - **配色**: 标准 5 态一律走命名工厂 `AppStatusChipPalette.neutral(context) / .success / .warning / .error / .muted`，图标可覆盖(如 probing 传 `icon: Icons.hourglass_top`)。**不要在业务侧再写 `_xxxPalette(context)` helper** —— 之前 5 处逐字复制已收敛。真的非标 tone(如 accent 色 radar)才就地构造 `AppStatusChipPalette(...)`。
 - **何时用**: 任何"探针/诊断类状态指示"——连通性检测、健康检查这类多态徽章。
-- **现有用例**: `DownloadClientProbeStatusChip`（下载器探针）、`DiagnosticStatusBadge`（组件诊断 6 态）、`Cloud115AuthenticationStatusChips`（115 认证）、`ExternalDataSourceStatusChips`（JavDB/DMM）、`IndexerConnectionTestPanel`（索引器连测）。
+- **现有用例**: `DownloadClientProbeStatusChip`（下载器探针）、`DiagnosticStatusBadge`（组件诊断 6 态）、`Cloud115AuthenticationStatusChips`（115 认证）、`ExternalDataSourceStatusChips`（JavDB）、`IndexerConnectionTestPanel`（索引器连测）。
 
 ---
 

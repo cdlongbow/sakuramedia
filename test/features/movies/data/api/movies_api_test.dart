@@ -1347,64 +1347,6 @@ void main() {
     );
   });
 
-  test(
-    'translateMovieDescription posts rerun to unified action endpoint',
-    () async {
-      // 统一 action（任务架构 Wave 4）：rerun + resource_ids 寻址，响应带
-      // task_run_id，客户端不解析影片详情。
-      adapter.enqueueJson(
-        method: 'POST',
-        path: '/system/resource-task-actions',
-        body: <String, dynamic>{
-          'task_key': 'movie_desc_translation',
-          'action': 'rerun',
-          'task_run_id': 9,
-          'accepted_resource_ids': <int>[1],
-          'skipped': <Map<String, dynamic>>[],
-        },
-      );
-
-      await moviesApi.translateMovieDescription(movieId: 1);
-
-      final request = adapter.requests.single;
-      expect(request.method, 'POST');
-      expect(request.path, '/system/resource-task-actions');
-      expect(request.body, <String, dynamic>{
-        'task_key': 'movie_desc_translation',
-        'action': 'rerun',
-        'resource_ids': <int>[1],
-      });
-    },
-  );
-
-  test(
-    'translateMovieDescription preserves backend ApiException payload',
-    () async {
-      adapter.enqueueJson(
-        method: 'POST',
-        path: '/system/resource-task-actions',
-        statusCode: 409,
-        body: <String, dynamic>{
-          'error': <String, dynamic>{
-            'code': 'resource_task_action_conflict',
-            'message': '已有相同任务执行中',
-          },
-        },
-      );
-
-      expect(
-        () => moviesApi.translateMovieDescription(movieId: 1),
-        throwsA(
-          isA<ApiException>().having(
-            (ApiException error) => error.error?.code,
-            'error.code',
-            'resource_task_action_conflict',
-          ),
-        ),
-      );
-    },
-  );
-
   test('syncMovieInteraction posts rerun to unified action endpoint', () async {
     adapter.enqueueJson(
       method: 'POST',

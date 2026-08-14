@@ -16,8 +16,7 @@
 - `[database]`
 - `[auth]`
 - `[media]`
-- `[metadata]`（包含元数据代理）
-- `[movie_info_translation]`
+- `[metadata]`（元数据抓取；外部站点代理见下文「代理配置」）
 - `[plugins]`（可选插件）
 - `[scheduler]`
 - `[downloads]`
@@ -162,7 +161,6 @@ media_clip_ffmpeg_timeout_seconds = 120
 javdb_host = "jdforrepam.com"
 javdb_username = ""
 javdb_password = ""
-proxy = ""
 gfriends_filetree_url = "https://cdn.jsdelivr.net/gh/xinxin8816/gfriends/Filetree.json"
 gfriends_cdn_base_url = "https://cdn.jsdelivr.net/gh/xinxin8816/gfriends"
 gfriends_filetree_cache_path = "/data/cache/gfriends/gfriends-filetree.json"
@@ -177,46 +175,24 @@ import_metadata_max_workers = 3
 | `javdb_host` | JavDB API 域名，不带协议头 |
 | `javdb_username` | JavDB 账号，用于抓取需登录的 TOP250 榜单（全部 / 有码 / 无码 / FC2 / 各年度）；留空则不抓 TOP250 |
 | `javdb_password` | JavDB 账号密码，与 `javdb_username` 配套使用 |
-| `proxy` | DMM 与 GFriends 共用的 HTTP 代理地址，需要是一个日本节点的 HTTP 代理；JavDB 不会走代理。 |
 | `gfriends_filetree_url` | GFriends 文件树索引地址 |
 | `gfriends_cdn_base_url` | GFriends CDN 根地址 |
 | `gfriends_filetree_cache_path` | GFriends 文件树本地缓存路径 |
 | `gfriends_filetree_cache_ttl_hours` | 文件树缓存有效期，单位小时 |
 | `import_metadata_max_workers` | 导入本地影片时抓取元数据的并发线程数 |
 
-## `[movie_info_translation]`
+### 代理配置（环境变量）
 
-这一组控制影片信息翻译任务连接的外部 OpenAI 兼容大模型接口。
-当前它由“影片简介翻译”和“影片标题翻译”共用。
+外部站点请求（JavDB API、JavDB 图片下载、GFriends）**不再支持 config 层代理**（`metadata.proxy` 已移除），统一通过容器环境变量 `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` 分流：
 
-```toml
-[movie_info_translation]
-enabled = false
-base_url = "https://ollama.com"
-api_key = "填入ollama的api key"
-model = "gemma4:31b-cloud"
-timeout_seconds = 300
-connect_timeout_seconds = 3
-```
+- 未设置环境变量时全部直连，与旧行为一致；设置后由部署方自行决定哪些请求走代理。
+- 典型用法：compose 里设 `HTTP_PROXY` 指向代理软件（如 clash 混合端口），`NO_PROXY` 排除需要直连的域名；也可以交给代理软件自身的规则引擎分流，项目代码不做任何判断。
+- `NO_PROXY` 遵循 curl 语义：`example.com`（不带点）排除该域自身及子域，`.example.com`（带点）只排除子域、不排除主域自身（如 `.jdbstatic.com` 不能排除 `jdbstatic.com` 本域）。
+- **迁移提醒**：旧配置里的 `metadata.proxy` 已被移除，依赖它的部署需改用上述环境变量，否则 GFriends 请求会转直连。
+- qbittorrent / torznab / cloud115 等下载与网盘链路不受影响，保持直连。
+- Linux 容器内访问宿主机代理端口，需在 compose 加 `extra_hosts: "host.docker.internal:host-gateway"`，或直接用宿主机局域网 IP。
 
-字段说明：
-
-| 字段 | 作用 |
-|---|---|
-| `enabled` | 是否启用影片信息翻译任务 |
-| `base_url` | OpenAI 兼容大模型接口地址 |
-| `api_key` | 大模型接口 API Key |
-| `model` | 翻译使用的模型名称 |
-| `timeout_seconds` | 翻译请求总超时秒数 |
-| `connect_timeout_seconds` | 翻译请求建连超时秒数 |
-
-建议：
-
-- 如果你暂时不需要中文简介和中文标题，可以保持 `enabled = false`
-- 真正启用前，先用 [常用命令](/guide/commands) 里的 `test-trans` 验证这个 OpenAI 格式接口是否可用
-- 这组配置只影响影片信息翻译，不影响影片原文描述抓取
-- 旧配置名 `[movie_desc_translation]` 目前仍兼容，但新配置建议统一写成 `[movie_info_translation]`
-- 文档里的 `base_url` 示例当前统一写成 `https://ollama.com`，`model` 示例当前统一写成 `gemma4:31b-cloud`
+> JavDB 站点访问依托 `javdb_host` 自身的直连/反代能力。
 
 ## `[plugins]`
 
@@ -242,9 +218,6 @@ movie_heat_cron = "15 0 * * *"
 movie_interaction_sync_cron = "0 5 * * *"
 hot_review_sync_cron = "20 1 * * *"
 media_file_scan_cron = "0 4 * * *"
-movie_desc_sync_cron = "0 4 * * *"
-movie_desc_translation_cron = "15 4 * * *"
-movie_title_translation_cron = "20 4 * * *"
 media_thumbnail_cron = "*/30 * * * *"
 image_search_index_cron = "0 0 * * *"
 image_search_optimize_cron = "0 3 * * *"
@@ -273,9 +246,6 @@ activity_notification_read_retention_days = 3
 | `movie_interaction_sync_cron` | 影片互动数同步频率；当前默认每天 05:00 执行一次，任务跑起来之后哪些影片真正进入候选，还要看[分层刷新规则](/guide/tasks#影片互动数同步) |
 | `hot_review_sync_cron` | JavDB 热评同步频率 |
 | `media_file_scan_cron` | 媒体文件巡检频率 |
-| `movie_desc_sync_cron` | 影片原文描述回填频率 |
-| `movie_desc_translation_cron` | 影片中文简介翻译频率 |
-| `movie_title_translation_cron` | 影片标题翻译频率 |
 | `media_thumbnail_cron` | 缩略图生成频率 |
 | `image_search_index_cron` | 图片搜索索引生成频率 |
 | `image_search_optimize_cron` | 图片搜索索引优化频率 |

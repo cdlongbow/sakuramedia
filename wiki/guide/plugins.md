@@ -301,7 +301,7 @@ JobDefinition(
 | `ensure_data_dir()` | 确保插件数据目录存在并返回路径 |
 | `data_dir` | 插件专属数据目录 `<root>/<plugin_id>/data/`，重装保留 |
 | `build_javdb_provider(username=None, password=None)` | 构造 JavDB provider；需要登录的榜单传入插件自己的账号 |
-| `build_catalog_import_service(skip_dmm=False)` | 构造目录入库服务；批量场景用 `skip_dmm=True` 提速 |
+| `build_catalog_import_service()` | 构造目录入库服务 |
 | `import_movie_by_number(movie_number)` | 通过 JavDB 获取详情并完整入库 |
 | `list_existing_movie_numbers()` | 主库全部影片番号集合，用于批量任务做存在性判断 |
 | `import_subtitle(movie_number, content, filename, language=None)` | 写入字幕，宿主统一做扩展名校验、去重、落盘和登记 |
@@ -319,7 +319,7 @@ provider = context.build_javdb_provider(
     username=settings.javdb_username,
     password=settings.javdb_password,
 )
-importer = context.build_catalog_import_service(skip_dmm=True)
+importer = context.build_catalog_import_service()
 ```
 
 ### 扩展点机制

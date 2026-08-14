@@ -82,22 +82,22 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('saves only host and proxy in metadata config', (
+    testWidgets('saves host in metadata config', (
       WidgetTester tester,
     ) async {
       _enqueueAdvancedConfig(bundle);
       _enqueueAdvancedConfigPatch(
         bundle,
-        applied: const <String>['metadata.proxy'],
+        applied: const <String>['metadata.javdb_host'],
       );
 
       await _pumpSection(tester, bundle, active: true);
       await tester.ensureVisible(
-        find.byKey(const Key('configuration-advanced-proxy-field')),
+        find.byKey(const Key('configuration-advanced-javdb-host-field')),
       );
       await tester.enterText(
-        find.byKey(const Key('configuration-advanced-proxy-field')),
-        'http://127.0.0.1:7890',
+        find.byKey(const Key('configuration-advanced-javdb-host-field')),
+        'jdforrepam.com',
       );
       await tester.ensureVisible(
         find.byKey(const Key('configuration-advanced-metadata-save-button')),
@@ -112,7 +112,6 @@ void main() {
       );
       expect(request.body['metadata'], <String, dynamic>{
         'javdb_host': 'jdforrepam.com',
-        'proxy': 'http://127.0.0.1:7890',
       });
       await tester.pump(const Duration(seconds: 3));
     });
@@ -329,7 +328,6 @@ Map<String, dynamic> _buildAdvancedConfigJson({
       },
       'metadata': <String, dynamic>{
         'javdb_host': 'jdforrepam.com',
-        'proxy': '',
       },
       'scheduler': <String, dynamic>{
         for (final key in AdvancedSchedulerConfigDto.cronKeys)

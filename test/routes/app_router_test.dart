@@ -52,11 +52,6 @@ const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
         pageKey: Key('mobile-settings-indexers'),
       ),
       _MobileSettingsRouteCase(
-        path: mobileSettingsLlmPath,
-        title: 'LLM 配置',
-        pageKey: Key('llm-settings-page'),
-      ),
-      _MobileSettingsRouteCase(
         path: mobileSettingsPlaylistsPath,
         title: '播放列表',
         pageKey: Key('mobile-settings-playlists'),
@@ -1275,8 +1270,6 @@ void main() {
         _enqueueMobileDownloadersResponses(bundle);
       } else if (routeCase.path == mobileSettingsIndexersPath) {
         _enqueueMobileIndexersResponses(bundle);
-      } else if (routeCase.path == mobileSettingsLlmPath) {
-        _enqueueMobileLlmResponses(bundle);
       } else if (routeCase.path == mobileSettingsPlaylistsPath) {
         bundle.adapter.enqueueJson(
           method: 'GET',
@@ -1409,34 +1402,6 @@ void main() {
       find.byKey(const Key('mobile-indexers-create-button')),
       findsOneWidget,
     );
-  });
-
-  testWidgets('mobile llm route renders real page content', (
-    WidgetTester tester,
-  ) async {
-    final sessionStore = await _buildLoggedInSessionStore(
-      platform: AppPlatform.mobile,
-    );
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    final router = buildMobileRouter(sessionStore: sessionStore);
-    _enqueueMobileLlmResponses(bundle);
-
-    await _pumpRouterApp(
-      tester,
-      router: router,
-      sessionStore: sessionStore,
-      bundle: bundle,
-    );
-    await tester.pumpAndSettle();
-
-    router.go(mobileSettingsLlmPath);
-    await tester.pumpAndSettle();
-
-    expect(find.text('开发中'), findsNothing);
-    expect(find.byKey(const Key('llm-overview-card')), findsOneWidget);
-    expect(find.byKey(const Key('llm-form-card')), findsOneWidget);
-    expect(find.byKey(const Key('llm-save-button')), findsOneWidget);
   });
 
   testWidgets('mobile playlist detail route uses subpage shell', (
@@ -3859,26 +3824,6 @@ void _enqueueMobileIndexersResponses(TestApiBundle bundle) {
     path: '/indexer-settings',
     body: const <String, dynamic>{
       'indexers': <Map<String, dynamic>>[],
-    },
-  );
-}
-
-void _enqueueMobileLlmResponses(TestApiBundle bundle) {
-  bundle.adapter.enqueueJson(
-    method: 'GET',
-    path: '/config',
-    body: const <String, dynamic>{
-      'values': <String, dynamic>{
-        'movie_info_translation': <String, dynamic>{
-          'enabled': false,
-          'base_url': 'http://llm.internal:8000',
-          'api_key': '',
-          'model': 'gpt-4o-mini',
-          'timeout_seconds': 300.0,
-          'connect_timeout_seconds': 3.0,
-        },
-      },
-      'effects': <String, dynamic>{'movie_info_translation': 'hot'},
     },
   );
 }

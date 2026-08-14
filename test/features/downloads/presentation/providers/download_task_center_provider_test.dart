@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_task_stream_event_dto.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
@@ -148,6 +149,9 @@ void main() {
     expect(state.paged.items.first.task.id, 1);
     expect(state.filter, DownloadTaskFilterState.initial);
     expect(state.paged.filterUpdate.isIdle, isTrue);
+    expect(state.clientNames[2], 'qb-main');
+    expect(state.clientOptions.single.name, 'qb-main');
+    expect(state.clientKinds[2], DownloadClientKind.qbittorrent);
     final taskRequest = bundle.adapter.requests.firstWhere(
       (r) => r.uri.path.endsWith('/download-tasks'),
     );
@@ -155,6 +159,69 @@ void main() {
       'downloading',
       'stalled',
     ]);
+  });
+
+  test('客户端列表早于任务首页返回时仍会合并进 state（竞态回归）', () async {
+    final tasksCompleter = Completer<ResponseBody>();
+    final clientsResponded = Completer<void>();
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/download-tasks',
+      responder: (_, __) => tasksCompleter.future,
+    );
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/download-clients',
+      responder: (_, __) async {
+        clientsResponded.complete();
+        return ResponseBody.fromString(
+          jsonEncode(<Map<String, dynamic>>[
+            {
+              'id': 2,
+              'name': 'qb-main',
+              'kind': 'qbittorrent',
+              'base_url': 'http://qb:8080',
+              'username': 'admin',
+              'client_save_path': '/downloads',
+              'local_root_path': '/mnt/qb',
+              'media_library_id': 1,
+              'has_password': true,
+            },
+          ]),
+          200,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        );
+      },
+    );
+
+    final stateFuture = container.read(downloadTaskCenterProvider.future);
+
+    // 复现原竞态时序：客户端响应先完成，任务首页仍挂起。
+    await clientsResponded.future;
+    await Future<void>.delayed(Duration.zero);
+    tasksCompleter.complete(
+      ResponseBody.fromString(
+        jsonEncode(<String, dynamic>{
+          'items': [taskJson(id: 1)],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        }),
+        200,
+        headers: const <String, List<String>>{
+          Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+        },
+      ),
+    );
+
+    final state = await stateFuture;
+
+    expect(state.paged.items.single.task.id, 1);
+    expect(state.clientNames[2], 'qb-main');
+    expect(state.clientOptions.single.name, 'qb-main');
+    expect(state.clientKinds[2], DownloadClientKind.qbittorrent);
   });
 
   test('loadMore appends next page and preserves live overlay', () async {

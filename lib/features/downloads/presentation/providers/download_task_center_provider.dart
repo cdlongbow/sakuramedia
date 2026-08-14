@@ -43,6 +43,12 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   late final DebouncedLatestRequest _filterRequests = DebouncedLatestRequest();
   bool _restartStreamAfterFilter = false;
 
+  /// 客户端列表先于任务首页返回时暂存，等 `build()` 完成后再合并，
+  /// 避免「state 尚未就绪 → 名字被静默丢弃」的竞态。
+  List<DownloadClientOption>? _pendingClientOptions;
+  Map<int, String>? _pendingClientNames;
+  Map<int, DownloadClientKind>? _pendingClientKinds;
+
   /// SSE 连接状态机：重连退避 / unsupported 轮询兜底 / 长断线补拉 / 微任务
   /// 合批全部由它承担，本 provider 只负责「事件怎么改状态」。
   ///
@@ -117,9 +123,11 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     });
     unawaited(_loadClientOptionsInBackground());
     final paged = await loadInitialPage();
-    return DownloadTaskCenterState.initial.copyWith(
-      paged: paged,
-      filter: _activeFilter,
+    return _mergePendingClientData(
+      DownloadTaskCenterState.initial.copyWith(
+        paged: paged,
+        filter: _activeFilter,
+      ),
     );
   }
 
@@ -322,7 +330,12 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         kinds[client.id] = client.kind;
       }
       final current = state.value;
-      if (current == null) return;
+      if (current == null) {
+        _pendingClientOptions = options;
+        _pendingClientNames = names;
+        _pendingClientKinds = kinds;
+        return;
+      }
       state = AsyncData(
         current.copyWith(
           clientOptions: options,
@@ -333,6 +346,25 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     } catch (_) {
       // 静默：客户端名加载失败展示 `客户端 #<id>` 兜底。
     }
+  }
+
+  DownloadTaskCenterState _mergePendingClientData(
+    DownloadTaskCenterState state,
+  ) {
+    final options = _pendingClientOptions;
+    final names = _pendingClientNames;
+    final kinds = _pendingClientKinds;
+    if (options == null || names == null || kinds == null) {
+      return state;
+    }
+    _pendingClientOptions = null;
+    _pendingClientNames = null;
+    _pendingClientKinds = null;
+    return state.copyWith(
+      clientOptions: options,
+      clientNames: names,
+      clientKinds: kinds,
+    );
   }
 
   Future<void> _shutdownChannel() async {

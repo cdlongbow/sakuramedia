@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
@@ -203,90 +204,91 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
           ref.read(rankingSummaryProvider(_scope).notifier).refresh(),
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
-        child: AppFilterResultLoadingOverlay(
-          isLoading: summary.paged.filterUpdate.isLoading,
-          hasPreviousItems: summary.paged.items.isNotEmpty,
-          child: CustomScrollView(
-            key: const PageStorageKey<String>('desktop:rankings:list'),
-            controller: _scrollController,
-            slivers: [
-              SliverMainAxisGroup(
-                key: const Key('desktop-rankings-page'),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (selectionMode)
-                          buildBatchSelectionToolbar()
-                        else
-                          _buildHeader(context, summary),
-                        SizedBox(height: context.appSpacing.md),
-                        if (summary.filters.errorMessage != null &&
-                            summary.paged.filterUpdate.isIdle) ...[
-                          _FilterErrorBanner(
-                            message: summary.filters.errorMessage!,
+        child: AppFixedHeaderLayout(
+          header: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (selectionMode)
+                buildBatchSelectionToolbar()
+              else
+                _buildHeader(context, summary),
+              SizedBox(height: context.appSpacing.md),
+              if (summary.filters.errorMessage != null &&
+                  summary.paged.filterUpdate.isIdle) ...[
+                _FilterErrorBanner(
+                  message: summary.filters.errorMessage!,
+                  onRetry: () => ref
+                      .read(rankingSummaryProvider(_scope).notifier)
+                      .reloadFiltersAndData(),
+                ),
+                SizedBox(height: context.appSpacing.md),
+              ],
+              SizedBox(height: context.appSpacing.sm),
+            ],
+          ),
+          child: AppFilterResultLoadingOverlay(
+            isLoading: summary.paged.filterUpdate.isLoading,
+            hasPreviousItems: summary.paged.items.isNotEmpty,
+            child: CustomScrollView(
+              key: const PageStorageKey<String>('desktop:rankings:list'),
+              controller: _scrollController,
+              slivers: [
+                SliverMainAxisGroup(
+                  key: const Key('desktop-rankings-page'),
+                  slivers: [
+                    if (hasNoSources &&
+                        !(summary.paged.filterUpdate.hasFailed &&
+                            summary.paged.items.isEmpty))
+                      const SliverToBoxAdapter(
+                        child: AppEmptyState(message: '暂无可用排行榜'),
+                      )
+                    else if (!summary.paged.filterUpdate.hasFailed ||
+                        summary.paged.items.isNotEmpty)
+                      RankedMovieSummarySliver(
+                        items: summary.paged.items,
+                        isLoading: summary.filters.isLoading
+                            ? summary.paged.items.isEmpty
+                            : summary.isListLoading,
+                        errorMessage: summary.initialErrorMessage,
+                        onMovieTap: (movie) => context.pushDesktopMovieDetail(
+                          movieNumber: movie.movieNumber,
+                          fallbackPath: desktopRankingsPath,
+                        ),
+                        onMovieMenuRequest: (movie, globalPosition) =>
+                            requestMovieCollectionMenu(
+                              context,
+                              movie.movieNumber,
+                              globalPosition,
+                              isSubscribed: movie.isSubscribed,
+                            ),
+                        onMovieSubscriptionTap: (movie) =>
+                            _toggleMovieSubscription(movie.movieNumber),
+                        isMovieSubscriptionUpdating: (movie) =>
+                            summary.isSubscriptionUpdating(movie.movieNumber),
+                        emptyMessage: '暂无榜单数据',
+                        selectionMode: selectionMode,
+                        isMovieSelected: (movie) =>
+                            isSelected(movie.movieNumber),
+                        onMovieSelectedChanged: (movie, _) =>
+                            toggleSelect(movie.movieNumber),
+                      ),
+                    if (showFooter)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: context.appSpacing.md),
+                          child: AppPagedLoadMoreFooter(
+                            isLoading: summary.paged.isLoadingMore,
+                            errorMessage: summary.paged.loadMoreErrorMessage,
                             onRetry: () => ref
                                 .read(rankingSummaryProvider(_scope).notifier)
-                                .reloadFiltersAndData(),
+                                .loadMore(),
                           ),
-                          SizedBox(height: context.appSpacing.md),
-                        ],
-                        SizedBox(height: context.appSpacing.sm),
-                      ],
-                    ),
-                  ),
-                  if (hasNoSources &&
-                      !(summary.paged.filterUpdate.hasFailed &&
-                          summary.paged.items.isEmpty))
-                    const SliverToBoxAdapter(
-                      child: AppEmptyState(message: '暂无可用排行榜'),
-                    )
-                  else if (!summary.paged.filterUpdate.hasFailed ||
-                      summary.paged.items.isNotEmpty)
-                    RankedMovieSummarySliver(
-                      items: summary.paged.items,
-                      isLoading: summary.filters.isLoading
-                          ? summary.paged.items.isEmpty
-                          : summary.isListLoading,
-                      errorMessage: summary.initialErrorMessage,
-                      onMovieTap: (movie) => context.pushDesktopMovieDetail(
-                        movieNumber: movie.movieNumber,
-                        fallbackPath: desktopRankingsPath,
-                      ),
-                      onMovieMenuRequest: (movie, globalPosition) =>
-                          requestMovieCollectionMenu(
-                            context,
-                            movie.movieNumber,
-                            globalPosition,
-                            isSubscribed: movie.isSubscribed,
-                          ),
-                      onMovieSubscriptionTap: (movie) =>
-                          _toggleMovieSubscription(movie.movieNumber),
-                      isMovieSubscriptionUpdating: (movie) =>
-                          summary.isSubscriptionUpdating(movie.movieNumber),
-                      emptyMessage: '暂无榜单数据',
-                      selectionMode: selectionMode,
-                      isMovieSelected: (movie) => isSelected(movie.movieNumber),
-                      onMovieSelectedChanged: (movie, _) =>
-                          toggleSelect(movie.movieNumber),
-                    ),
-                  if (showFooter)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: context.appSpacing.md),
-                        child: AppPagedLoadMoreFooter(
-                          isLoading: summary.paged.isLoadingMore,
-                          errorMessage: summary.paged.loadMoreErrorMessage,
-                          onRetry: () => ref
-                              .read(rankingSummaryProvider(_scope).notifier)
-                              .loadMore(),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

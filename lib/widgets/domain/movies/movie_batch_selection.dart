@@ -264,7 +264,7 @@ Future<MovieSubscriptionBatchToggleResult?> runMovieSubscriptionBatch({
     return null;
   }
   if (context.mounted) {
-    await showMovieSubscriptionBatchFeedback(
+    return showMovieSubscriptionBatchFeedback(
       context,
       batchResult,
       subscribe: subscribe,

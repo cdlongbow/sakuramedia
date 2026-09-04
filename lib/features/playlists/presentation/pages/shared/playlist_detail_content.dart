@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
@@ -54,6 +55,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
         MultiSelectStateMixin<PlaylistDetailContent, String>,
         MovieBatchSelectionMixin<PlaylistDetailContent> {
   late final ScrollController _scrollController;
+  final _listHeaderKey = GlobalKey();
 
   MovieSummaryScope get _scope =>
       MovieSummaryScope.playlist(playlistId: widget.playlistId);
@@ -143,7 +145,9 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                     paged?.items.firstOrNull?.coverImage?.bestAvailableUrl,
               ),
             ),
-            SliverToBoxAdapter(
+            AppPinnedListHeader(
+              key: _listHeaderKey,
+              color: context.appColors.surfaceElevated,
               child: Padding(
                 padding: EdgeInsets.only(bottom: context.appSpacing.sm),
                 child: selectionMode
@@ -213,6 +217,8 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           }
 
           return AppFilterResultLoadingOverlay(
+            protectedHeaderKey: _listHeaderKey,
+            scrollController: _scrollController,
             isLoading: paged?.filterUpdate.isLoading ?? false,
             hasPreviousItems: paged?.items.isNotEmpty ?? false,
             child: listContent,
@@ -316,9 +322,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
     if (selectionMode) {
       exitSelection();
     }
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
-    }
+    AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
     unawaited(
       ref
           .read(movieSummaryProvider(_scope).notifier)

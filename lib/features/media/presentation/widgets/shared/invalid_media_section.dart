@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
@@ -29,15 +30,35 @@ class InvalidMediaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      key: const Key('invalid-media-scroll-view'),
-      controller: scrollController,
-      slivers: [
-        const SliverToBoxAdapter(child: _InvalidMediaHeader()),
-        SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
-        const _InvalidMediaBodySliver(),
-        SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
-      ],
+    return AppFixedHeaderLayout(
+      header: _InvalidMediaHeader(),
+      child: CustomScrollView(
+        key: const Key('invalid-media-scroll-view'),
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: context.appSpacing.xs),
+                Text(
+                  '巡检标记为失效的媒体会出现在这里。确认无需保留后，可删除记录及对应文件。',
+                  key: const Key('invalid-media-section-description'),
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s12,
+                    weight: AppTextWeight.regular,
+                    tone: AppTextTone.muted,
+                  ),
+                ),
+                SizedBox(height: context.appSpacing.lg),
+              ],
+            ),
+          ),
+          const _InvalidMediaBodySliver(),
+          SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
+        ],
+      ),
     );
   }
 }
@@ -55,39 +76,23 @@ class _InvalidMediaHeader extends ConsumerWidget {
         ),
       ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppFilterTotalHeader(
-          leading: const SizedBox.shrink(),
-          totalText: '共 ${headerState.total} 条失效媒体',
-          totalKey: const Key('invalid-media-total-text'),
-          trailing: AppIconButton(
-            key: const Key('invalid-media-refresh-button'),
-            tooltip: headerState.isInitialLoading ? '刷新中' : '刷新',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: headerState.isInitialLoading
-                ? null
-                : () async {
-                    final message = await ref
-                        .read(invalidMediaProvider.notifier)
-                        .refresh();
-                    if (message != null) showToast(message);
-                  },
-          ),
-        ),
-        SizedBox(height: context.appSpacing.xs),
-        Text(
-          '巡检标记为失效的媒体会出现在这里。确认无需保留后，可删除记录及对应文件。',
-          key: const Key('invalid-media-section-description'),
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.muted,
-          ),
-        ),
-      ],
+    return AppFilterTotalHeader(
+      leading: const SizedBox.shrink(),
+      totalText: '共 ${headerState.total} 条失效媒体',
+      totalKey: const Key('invalid-media-total-text'),
+      trailing: AppIconButton(
+        key: const Key('invalid-media-refresh-button'),
+        tooltip: headerState.isInitialLoading ? '刷新中' : '刷新',
+        icon: const Icon(Icons.refresh_rounded),
+        onPressed: headerState.isInitialLoading
+            ? null
+            : () async {
+                final message = await ref
+                    .read(invalidMediaProvider.notifier)
+                    .refresh();
+                if (message != null) showToast(message);
+              },
+      ),
     );
   }
 }

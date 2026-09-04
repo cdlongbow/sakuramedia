@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
@@ -51,6 +52,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
 
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
+  final _listHeaderKey = GlobalKey();
   bool _railRefreshScheduled = false;
 
   @override
@@ -118,7 +120,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       return;
     }
     if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
+      AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
     }
     unawaited(
       ref.read(videoSummaryProvider(_scope).notifier).applyFilter(next),
@@ -306,6 +308,8 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: AppFilterResultLoadingOverlay(
+          protectedHeaderKey: _listHeaderKey,
+          scrollController: _scrollController,
           isLoading: paged?.filterUpdate.isLoading ?? false,
           hasPreviousItems: paged?.items.isNotEmpty ?? false,
           child: CustomScrollView(
@@ -323,6 +327,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 ),
               ),
               VideoListContent(
+                headerKey: _listHeaderKey,
                 paged: paged ?? const PagedListState<VideoItemListItemDto>(),
                 isInitialLoading: videosAsync.isLoading && summary == null,
                 initialErrorMessage: videosAsync.hasError && summary == null

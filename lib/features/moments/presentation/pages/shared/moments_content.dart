@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_filter_sections.dart';
@@ -97,16 +98,6 @@ class MomentsContent extends HookConsumerWidget {
     final sliver = SliverMainAxisGroup(
       key: rootKey,
       slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: context.appSpacing.sm),
-              _buildHeader(context, ref, scrollController, paged, filter),
-              SizedBox(height: context.appSpacing.md),
-            ],
-          ),
-        ),
         _buildBody(context, ref, async, paged),
         if (showFooter)
           SliverToBoxAdapter(
@@ -127,20 +118,30 @@ class MomentsContent extends HookConsumerWidget {
       onRefresh: () => _handleRefresh(context, ref),
       child: ColoredBox(
         color: context.appColors.surfaceCard,
-        child: AppFilterResultLoadingOverlay(
-          isLoading: paged.filterUpdate.isLoading,
-          hasPreviousItems: paged.items.isNotEmpty,
-          child: enablePullToRefresh
-              ? AppAdaptiveRefreshScrollView(
-                  onRefresh: () => _handleRefresh(context, ref),
-                  controller: scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: <Widget>[sliver],
-                )
-              : CustomScrollView(
-                  controller: scrollController,
-                  slivers: <Widget>[sliver],
-                ),
+        child: AppFixedHeaderLayout(
+          header: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: context.appSpacing.sm),
+              _buildHeader(context, ref, scrollController, paged, filter),
+              SizedBox(height: context.appSpacing.md),
+            ],
+          ),
+          child: AppFilterResultLoadingOverlay(
+            isLoading: paged.filterUpdate.isLoading,
+            hasPreviousItems: paged.items.isNotEmpty,
+            child: enablePullToRefresh
+                ? AppAdaptiveRefreshScrollView(
+                    onRefresh: () => _handleRefresh(context, ref),
+                    controller: scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: <Widget>[sliver],
+                  )
+                : CustomScrollView(
+                    controller: scrollController,
+                    slivers: <Widget>[sliver],
+                  ),
+          ),
         ),
       ),
     );

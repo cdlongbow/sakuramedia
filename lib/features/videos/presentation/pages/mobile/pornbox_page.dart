@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
+  final _listHeaderKey = GlobalKey();
   bool _railRefreshScheduled = false;
 
   @override
@@ -119,7 +121,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       return;
     }
     if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
+      AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
     }
     unawaited(
       ref.read(videoSummaryProvider(_scope).notifier).applyFilter(next),
@@ -347,6 +349,8 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         children: [
           Expanded(
             child: AppFilterResultLoadingOverlay(
+              protectedHeaderKey: _listHeaderKey,
+              scrollController: _scrollController,
               isLoading: paged.filterUpdate.isLoading,
               hasPreviousItems: paged.items.isNotEmpty,
               child: AppAdaptiveRefreshScrollView(
@@ -358,7 +362,9 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                     SliverToBoxAdapter(
                       child: _buildCollectionsSection(context),
                     ),
-                  SliverToBoxAdapter(
+                  AppPinnedListHeader(
+                    key: _listHeaderKey,
+                    color: context.appColors.surfaceCard,
                     child: _buildVideosHeader(
                       context,
                       paged: paged,

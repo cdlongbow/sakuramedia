@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
@@ -101,19 +102,6 @@ class MediaListSection extends StatelessWidget {
       key: Key('$keyPrefix-list-scroll-view'),
       controller: scrollController,
       slivers: [
-        SliverToBoxAdapter(
-          child: _MediaListHeader(
-            keyPrefix: keyPrefix,
-            mobile: mobile,
-            selectionMode: selectionMode,
-            isDeleting: isDeleting,
-            isTransferring: isTransferring,
-            onBatchDelete: onBatchDelete,
-            onBatchTransfer: onBatchTransfer,
-            onRefresh: onRefresh,
-            onExitSelection: onExitSelection,
-          ),
-        ),
         SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
         _MediaListBodySliver(
           keyPrefix: keyPrefix,
@@ -129,10 +117,23 @@ class MediaListSection extends StatelessWidget {
         final paged = ref.watch(
           mediaBrowseProvider.select((asyncState) => asyncState.value?.paged),
         );
-        return AppFilterResultLoadingOverlay(
-          isLoading: paged?.filterUpdate.isLoading ?? false,
-          hasPreviousItems: paged?.items.isNotEmpty ?? false,
-          child: scrollView,
+        return AppFixedHeaderLayout(
+          header: _MediaListHeader(
+            keyPrefix: keyPrefix,
+            mobile: mobile,
+            selectionMode: selectionMode,
+            isDeleting: isDeleting,
+            isTransferring: isTransferring,
+            onBatchDelete: onBatchDelete,
+            onBatchTransfer: onBatchTransfer,
+            onRefresh: onRefresh,
+            onExitSelection: onExitSelection,
+          ),
+          child: AppFilterResultLoadingOverlay(
+            isLoading: paged?.filterUpdate.isLoading ?? false,
+            hasPreviousItems: paged?.items.isNotEmpty ?? false,
+            child: scrollView,
+          ),
         );
       },
     );

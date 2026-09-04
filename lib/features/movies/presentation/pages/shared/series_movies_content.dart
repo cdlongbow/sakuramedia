@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -198,45 +199,45 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
       onRefresh: _handleRefresh,
       child: ColoredBox(
         color: widget.surfaceColor,
-        child: widget.bodyBuilder(
-          context,
-          _scrollController,
-          SliverMainAxisGroup(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  key: widget.contentKey,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (selectionMode)
-                      (widget.useMobileSelectionLayout
-                          ? buildMobileBatchSelectionHeader()
-                          : buildBatchSelectionToolbar())
-                    else
-                      _buildHeader(context, summary),
-                    SizedBox(height: widget.sectionSpacing),
-                  ],
-                ),
-              ),
-              _buildMoviesArea(context, moviesAsync),
-              if (paged != null &&
-                  paged.items.isNotEmpty &&
-                  (paged.isLoadingMore || paged.loadMoreErrorMessage != null))
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: context.appSpacing.md),
-                    child: AppPagedLoadMoreFooter(
-                      isLoading: paged.isLoadingMore,
-                      errorMessage: paged.loadMoreErrorMessage,
-                      onRetry: () => ref
-                          .read(movieSummaryProvider(_scope).notifier)
-                          .loadMore(),
-                    ),
-                  ),
-                ),
+        child: AppFixedHeaderLayout(
+          header: Column(
+            key: widget.contentKey,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (selectionMode)
+                (widget.useMobileSelectionLayout
+                    ? buildMobileBatchSelectionHeader()
+                    : buildBatchSelectionToolbar())
+              else
+                _buildHeader(context, summary),
+              SizedBox(height: widget.sectionSpacing),
             ],
           ),
-          widget.enableRefresh ? _handleRefresh : null,
+          child: widget.bodyBuilder(
+            context,
+            _scrollController,
+            SliverMainAxisGroup(
+              slivers: [
+                _buildMoviesArea(context, moviesAsync),
+                if (paged != null &&
+                    paged.items.isNotEmpty &&
+                    (paged.isLoadingMore || paged.loadMoreErrorMessage != null))
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: context.appSpacing.md),
+                      child: AppPagedLoadMoreFooter(
+                        isLoading: paged.isLoadingMore,
+                        errorMessage: paged.loadMoreErrorMessage,
+                        onRetry: () => ref
+                            .read(movieSummaryProvider(_scope).notifier)
+                            .loadMore(),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            widget.enableRefresh ? _handleRefresh : null,
+          ),
         ),
       ),
     );

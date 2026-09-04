@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/interaction/refresh/app_pull_refresh_notification.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 服务端筛选请求中的结果区反馈。
@@ -13,12 +14,18 @@ class AppFilterResultLoadingOverlay extends StatefulWidget {
     required this.isLoading,
     required this.hasPreviousItems,
     required this.child,
+    this.protectedHeaderKey,
+    this.scrollController,
     this.indicatorDelay = const Duration(milliseconds: 150),
   });
 
   final bool isLoading;
   final bool hasPreviousItems;
   final Widget child;
+
+  /// 吸顶页的控制栏和主滚动控制器，用于把加载遮罩裁剪在控制栏下方。
+  final GlobalKey? protectedHeaderKey;
+  final ScrollController? scrollController;
 
   /// 实际请求很快完成时不显示进度标记，避免短暂闪烁。
   final Duration indicatorDelay;
@@ -30,13 +37,17 @@ class AppFilterResultLoadingOverlay extends StatefulWidget {
 
 class _AppFilterResultLoadingOverlayState
     extends State<AppFilterResultLoadingOverlay> {
+  final _stackKey = GlobalKey();
   Timer? _showTimer;
   bool _isIndicatorVisible = false;
+  bool _isPullRefreshing = false;
+
+  bool get _isLoading => widget.isLoading && !_isPullRefreshing;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isLoading && !widget.hasPreviousItems) {
+    if (_isLoading && !widget.hasPreviousItems) {
       _isIndicatorVisible = true;
     } else {
       _syncVisibility();
@@ -63,7 +74,7 @@ class _AppFilterResultLoadingOverlayState
     _showTimer?.cancel();
     _showTimer = null;
 
-    if (!widget.isLoading) {
+    if (!_isLoading) {
       if (_isIndicatorVisible && mounted) {
         setState(() => _isIndicatorVisible = false);
       }
@@ -84,30 +95,47 @@ class _AppFilterResultLoadingOverlayState
     }
 
     _showTimer = Timer(widget.indicatorDelay, () {
-      if (!mounted || !widget.isLoading) return;
+      if (!mounted || !_isLoading) return;
       setState(() => _isIndicatorVisible = true);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        widget.child,
-        if (_isIndicatorVisible)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Semantics(
-                label: '筛选结果加载中',
-                liveRegion: true,
-                child: _FilterResultLoadingIndicator(
-                  obscureContent: !widget.hasPreviousItems,
+    return NotificationListener<AppPullRefreshNotification>(
+      onNotification: (notification) {
+        _isPullRefreshing = notification.isRefreshing;
+        _syncVisibility();
+        return true;
+      },
+      child: Stack(
+        key: _stackKey,
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          if (_isIndicatorVisible)
+            Positioned.fill(
+              child: ClipRect(
+                clipper: widget.protectedHeaderKey == null
+                    ? null
+                    : _BelowHeaderClipper(
+                        headerKey: widget.protectedHeaderKey!,
+                        stackKey: _stackKey,
+                        scrollController: widget.scrollController,
+                      ),
+                child: IgnorePointer(
+                  child: Semantics(
+                    label: '筛选结果加载中',
+                    liveRegion: true,
+                    child: _FilterResultLoadingIndicator(
+                      obscureContent: !widget.hasPreviousItems,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -149,4 +177,32 @@ class _FilterResultLoadingIndicator extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BelowHeaderClipper extends CustomClipper<Rect> {
+  _BelowHeaderClipper({
+    required this.headerKey,
+    required this.stackKey,
+    required ScrollController? scrollController,
+  }) : super(reclip: scrollController);
+  final GlobalKey headerKey;
+  final GlobalKey stackKey;
+
+  @override
+  Rect getClip(Size size) {
+    final header = headerKey.currentContext?.findRenderObject();
+    final stack = stackKey.currentContext?.findRenderObject();
+    if (header == null || stack == null || !header.attached) {
+      return Offset.zero & size;
+    }
+    final bounds = MatrixUtils.transformRect(
+      header.getTransformTo(stack),
+      header.paintBounds,
+    );
+    final top = bounds.bottom.clamp(0.0, size.height);
+    return Rect.fromLTRB(0, top, size.width, size.height);
+  }
+
+  @override
+  bool shouldReclip(_BelowHeaderClipper oldClipper) => true;
 }

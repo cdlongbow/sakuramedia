@@ -509,10 +509,12 @@ class _MovieInlineMetaRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                label,
-                style: textStyle.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+              Flexible(
+                child: Text(
+                  label,
+                  style: textStyle.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
               SizedBox(width: context.appSpacing.xs),

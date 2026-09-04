@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sakuramedia/widgets/base/interaction/refresh/app_pull_refresh_notification.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
 
 class AppAdaptiveRefreshScrollView extends StatelessWidget {
@@ -29,13 +30,14 @@ class AppAdaptiveRefreshScrollView extends StatelessWidget {
       controller: controller,
       cacheExtent: cacheExtent,
       physics: physics ?? const AlwaysScrollableScrollPhysics(),
-      slivers:
-          isIosRefresh
-              ? <Widget>[
-                CupertinoSliverRefreshControl(onRefresh: onRefresh),
-                ...slivers,
-              ]
-              : slivers,
+      slivers: isIosRefresh
+          ? <Widget>[
+              CupertinoSliverRefreshControl(
+                onRefresh: () => runAppPullRefresh(context, onRefresh),
+              ),
+              ...slivers,
+            ]
+          : slivers,
     );
 
     if (isIosRefresh) {

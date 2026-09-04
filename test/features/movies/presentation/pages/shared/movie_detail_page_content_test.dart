@@ -61,48 +61,68 @@ void main() {
     expect(detail.watchedCount, 0);
   });
 
-  testWidgets('movie detail page content exposes clickable series row', (
-    WidgetTester tester,
-  ) async {
-    var tapCount = 0;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraMobileThemeData,
-        home: Scaffold(
-          body: MovieDetailPageContent(
-            movie: _movieDetail(seriesId: 7),
-            selectedPreviewKey: 'movie-preview',
-            selectedPreviewUrl: null,
-            isCollection: false,
-            isSubscribed: false,
-            isCollectionUpdating: false,
-            isSubscriptionUpdating: false,
-            selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
-            similarMovies: const <MovieListItemDto>[],
-            isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
-            onPlaylistTap: _noop,
-            onCollectionToggle: _noop,
-            onMediaSelect: (_) {},
-            onSeriesTap: () => tapCount += 1,
+  for (final seriesName in [
+    'Attackers',
+    '这是一个用于验证影片详情页面在窄屏下能够完整换行且不会溢出的超长系列名称',
+  ]) {
+    testWidgets(
+      'movie detail wraps clickable series on narrow screens: $seriesName',
+      (WidgetTester tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 800));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        var tapCount = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: sakuraMobileThemeData,
+            home: Scaffold(
+              body: MovieDetailPageContent(
+                movie: _movieDetail(seriesId: 7, seriesName: seriesName),
+                selectedPreviewKey: 'movie-preview',
+                selectedPreviewUrl: null,
+                isCollection: false,
+                isSubscribed: false,
+                isCollectionUpdating: false,
+                isSubscriptionUpdating: false,
+                selectedMediaId: 100,
+                statItems: const <MovieDetailStatItem>[],
+                similarMovies: const <MovieListItemDto>[],
+                isSimilarMoviesLoading: false,
+                onInspectorTap: _noop,
+                onPlaylistTap: _noop,
+                onCollectionToggle: _noop,
+                onMediaSelect: (_) {},
+                onSeriesTap: () => tapCount += 1,
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
 
-    await tester.tap(find.byKey(const Key('movie-detail-series-link')));
-    await tester.pump();
+        expect(tester.takeException(), isNull);
+        final seriesLink = find.byKey(const Key('movie-detail-series-link'));
+        final seriesText = find.text('系列 · $seriesName');
+        await tester.ensureVisible(seriesLink);
+        await tester.pumpAndSettle();
+        expect(
+          tester.getRect(seriesText).right,
+          lessThanOrEqualTo(tester.getRect(seriesLink).right),
+        );
+        if (seriesName != 'Attackers') {
+          expect(tester.getSize(seriesText).height, greaterThan(30));
+        }
+        await tester.tap(seriesLink);
+        await tester.pump();
 
-    expect(tapCount, 1);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('movie-detail-series-link')),
-        matching: find.byIcon(Icons.chevron_right_rounded),
-      ),
-      findsOneWidget,
+        expect(tapCount, 1);
+        expect(
+          find.descendant(
+            of: find.byKey(const Key('movie-detail-series-link')),
+            matching: find.byIcon(Icons.chevron_right_rounded),
+          ),
+          findsOneWidget,
+        );
+      },
     );
-  });
+  }
 
   testWidgets('movie detail page content keeps series text plain without id', (
     WidgetTester tester,
@@ -261,6 +281,7 @@ void main() {
 
 MovieDetailDto _movieDetail({
   int? seriesId,
+  String seriesName = 'Attackers',
   String? javdbId = 'javdb-1',
   String? metadataSourceName,
 }) {
@@ -270,7 +291,7 @@ MovieDetailDto _movieDetail({
     movieNumber: 'ABC-001',
     title: 'Sample Movie',
     seriesId: seriesId,
-    seriesName: 'Attackers',
+    seriesName: seriesName,
     makerName: 'S1 NO.1 STYLE',
     directorName: '紋℃',
     coverImage: null,

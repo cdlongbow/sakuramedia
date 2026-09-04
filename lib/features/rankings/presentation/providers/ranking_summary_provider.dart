@@ -71,6 +71,21 @@ class RankingSummary extends _$RankingSummary
       }
     });
 
+    ref.listen(movieMediaEventsProvider, (_, next) {
+      final change = next.value;
+      final current = state.value;
+      if (change == null || current == null) return;
+      final paged = current.paged.patchWhere(
+        (item) => item.movieNumber == change.movieNumber,
+        (item) => item.copyWith(
+          canPlay: change.canPlay,
+          isSubscribed: change.isSubscribed,
+        ),
+      );
+      if (!identical(paged, current.paged)) {
+        state = AsyncData(current.copyWith(paged: paged));
+      }
+    });
     final filters = await _loadInitialFilters();
     _activeFilters = filters;
     if (filters.errorMessage != null || filters.sources.isEmpty) {

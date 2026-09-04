@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart' show HookConsumerWidget;
@@ -69,19 +70,21 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
         (asyncState) => asyncState.value?.paged,
       ),
     );
-    return AppFilterResultLoadingOverlay(
-      isLoading: paged?.filterUpdate.isLoading ?? false,
-      hasPreviousItems: paged?.items.isNotEmpty ?? false,
-      child: CustomScrollView(
-        key: const Key('movie-subscriptions-scroll-view'),
-        controller: effectiveScrollController,
-        slivers: [
-          const SliverToBoxAdapter(child: _ListHeader()),
-          SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
-          const SliverToBoxAdapter(child: _queryExplanationTip),
-          SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
-          _ListBodySliver(onOpenMovie: onOpenMovie),
-        ],
+    return AppFixedHeaderLayout(
+      header: _ListHeader(),
+      child: AppFilterResultLoadingOverlay(
+        isLoading: paged?.filterUpdate.isLoading ?? false,
+        hasPreviousItems: paged?.items.isNotEmpty ?? false,
+        child: CustomScrollView(
+          key: const Key('movie-subscriptions-scroll-view'),
+          controller: effectiveScrollController,
+          slivers: [
+            SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
+            const SliverToBoxAdapter(child: _queryExplanationTip),
+            SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
+            _ListBodySliver(onOpenMovie: onOpenMovie),
+          ],
+        ),
       ),
     );
   }

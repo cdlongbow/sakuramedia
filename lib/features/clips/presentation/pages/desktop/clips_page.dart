@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
@@ -49,6 +50,7 @@ class DesktopClipsPage extends ConsumerStatefulWidget {
 class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     with MultiSelectStateMixin<DesktopClipsPage, int> {
   final ScrollController _scrollController = ScrollController();
+  final _listHeaderKey = GlobalKey();
   bool _railRefreshScheduled = false;
 
   @override
@@ -139,6 +141,8 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
               );
             }
             return AppFilterResultLoadingOverlay(
+              protectedHeaderKey: _listHeaderKey,
+              scrollController: _scrollController,
               isLoading: clipsState?.paged.filterUpdate.isLoading ?? false,
               hasPreviousItems: clips.isNotEmpty,
               child: CustomScrollView(
@@ -147,7 +151,11 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                   SliverToBoxAdapter(
                     child: _buildCollectionsSection(context, collectionsAsync),
                   ),
-                  SliverToBoxAdapter(child: _buildClipsHeader(context, clips)),
+                  AppPinnedListHeader(
+                    key: _listHeaderKey,
+                    color: context.appColors.surfaceElevated,
+                    child: _buildClipsHeader(context, clips),
+                  ),
                   _buildClipsSliver(
                     context,
                     clips,
@@ -350,7 +358,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     final current = ref.read(clipsOverviewProvider).value?.filter.sort;
     if (current == sort) return;
     if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
+      AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
     }
     unawaited(ref.read(clipsOverviewProvider.notifier).applySort(sort));
   }

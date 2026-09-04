@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
@@ -106,16 +107,59 @@ class _DesktopNotificationsPageState
               message: state.initialErrorMessage!,
               onRetry: ref.read(notificationCenterProvider.notifier).reloadAll,
             )
-          : AppFilterResultLoadingOverlay(
-              isLoading: state.filterUpdate.isLoading,
-              hasPreviousItems: state.notifications.isNotEmpty,
-              child: CustomScrollView(
-                controller: _scrollController,
-                // 收敛视口外预构建，避免卡片「提前已读」。
-                cacheExtent: 0,
-                slivers: _buildSlivers(context, state),
+          : AppFixedHeaderLayout(
+              header: _buildHeader(context, state),
+              child: AppFilterResultLoadingOverlay(
+                isLoading: state.filterUpdate.isLoading,
+                hasPreviousItems: state.notifications.isNotEmpty,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  // 收敛视口外预构建，避免卡片「提前已读」。
+                  cacheExtent: 0,
+                  slivers: _buildSlivers(context, state),
+                ),
               ),
             ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, NotificationCenterState state) {
+    final notifier = ref.read(notificationCenterProvider.notifier);
+    return Padding(
+      key: const Key('desktop-notifications-page'),
+      padding: EdgeInsets.only(bottom: context.appSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: NotificationFilterBar(
+                  state: state,
+                  onFilterChanged: notifier.applyNotificationFilter,
+                ),
+              ),
+              SizedBox(width: context.appSpacing.md),
+              AppButton(
+                key: const Key('notifications-mark-all-read'),
+                label: '全部已读',
+                size: AppButtonSize.small,
+                variant: AppButtonVariant.secondary,
+                isLoading: state.isMarkingAllRead,
+                onPressed: state.unreadCount > 0 && !state.isMarkingAllRead
+                    ? notifier.markAllRead
+                    : null,
+              ),
+            ],
+          ),
+          AppFilterUpdateBar(
+            state: state.filterUpdate,
+            hasPreviousItems: state.notifications.isNotEmpty,
+            onRetry: notifier.refreshNotifications,
+          ),
+        ],
+      ),
     );
   }
 
@@ -124,46 +168,7 @@ class _DesktopNotificationsPageState
     NotificationCenterState state,
   ) {
     final notifier = ref.read(notificationCenterProvider.notifier);
-    final slivers = <Widget>[
-      SliverToBoxAdapter(
-        child: Padding(
-          key: const Key('desktop-notifications-page'),
-          padding: EdgeInsets.only(bottom: context.appSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: NotificationFilterBar(
-                      state: state,
-                      onFilterChanged: notifier.applyNotificationFilter,
-                    ),
-                  ),
-                  SizedBox(width: context.appSpacing.md),
-                  AppButton(
-                    key: const Key('notifications-mark-all-read'),
-                    label: '全部已读',
-                    size: AppButtonSize.small,
-                    variant: AppButtonVariant.secondary,
-                    isLoading: state.isMarkingAllRead,
-                    onPressed: state.unreadCount > 0 && !state.isMarkingAllRead
-                        ? notifier.markAllRead
-                        : null,
-                  ),
-                ],
-              ),
-              AppFilterUpdateBar(
-                state: state.filterUpdate,
-                hasPreviousItems: state.notifications.isNotEmpty,
-                onRetry: notifier.refreshNotifications,
-              ),
-            ],
-          ),
-        ),
-      ),
-    ];
+    final slivers = <Widget>[];
 
     if (state.notifications.isEmpty && state.filterUpdate.hasFailed) {
       return slivers;

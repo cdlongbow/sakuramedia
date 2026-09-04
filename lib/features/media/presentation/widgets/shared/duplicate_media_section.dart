@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/media/data/duplicate_media_group_dto.dart';
@@ -81,29 +82,47 @@ class DuplicateMediaSection extends ConsumerWidget {
       }
     }
 
-    return CustomScrollView(
-      key: Key('$keyPrefix-duplicate-scroll-view'),
-      controller: scrollController,
-      slivers: [
-        SliverToBoxAdapter(
-          child: _DuplicateMediaHeader(
+    return AppFixedHeaderLayout(
+      header: _DuplicateMediaHeader(
+        kind: kind,
+        keyPrefix: keyPrefix,
+        onKindChanged: onKindChanged,
+        onRefresh: onRefresh,
+      ),
+      child: CustomScrollView(
+        key: Key('$keyPrefix-duplicate-scroll-view'),
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: context.appSpacing.xs),
+                Text(
+                  '按文件内容指纹聚合同一文件的媒体记录。删除前请确认至少保留一个可用副本。',
+                  key: Key('$keyPrefix-duplicate-description'),
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s12,
+                    weight: AppTextWeight.regular,
+                    tone: AppTextTone.muted,
+                  ),
+                ),
+                SizedBox(height: context.appSpacing.lg),
+              ],
+            ),
+          ),
+          _DuplicateMediaBodySliver(
             kind: kind,
             keyPrefix: keyPrefix,
-            onKindChanged: onKindChanged,
-            onRefresh: onRefresh,
+            mobile: mobile,
+            onOpenMovieDetail: onOpenMovieDetail,
+            onOpenVideoCollectionDetail: onOpenVideoCollectionDetail,
+            onDelete: (group, item) => unawaited(deleteMedia(group, item)),
           ),
-        ),
-        SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
-        _DuplicateMediaBodySliver(
-          kind: kind,
-          keyPrefix: keyPrefix,
-          mobile: mobile,
-          onOpenMovieDetail: onOpenMovieDetail,
-          onOpenVideoCollectionDetail: onOpenVideoCollectionDetail,
-          onDelete: (group, item) => unawaited(deleteMedia(group, item)),
-        ),
-        SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
-      ],
+          SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
+        ],
+      ),
     );
   }
 }
@@ -126,39 +145,23 @@ class _DuplicateMediaHeader extends ConsumerWidget {
     final asyncState = ref.watch(duplicateMediaProvider(kind));
     final total = asyncState.value?.total ?? 0;
     final isInitialLoading = asyncState.isLoading && !asyncState.hasValue;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppFilterTotalHeader(
-          leading: Align(
-            alignment: Alignment.centerLeft,
-            child: _DuplicateKindSwitcher(
-              kind: kind,
-              keyPrefix: keyPrefix,
-              onChanged: onKindChanged,
-            ),
-          ),
-          totalText: '共 $total 组',
-          totalKey: Key('$keyPrefix-duplicate-total-text'),
-          trailing: AppIconButton(
-            key: Key('$keyPrefix-duplicate-refresh-button'),
-            tooltip: isInitialLoading ? '刷新中' : '刷新',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: isInitialLoading ? null : onRefresh,
-          ),
+    return AppFilterTotalHeader(
+      leading: Align(
+        alignment: Alignment.centerLeft,
+        child: _DuplicateKindSwitcher(
+          kind: kind,
+          keyPrefix: keyPrefix,
+          onChanged: onKindChanged,
         ),
-        SizedBox(height: context.appSpacing.xs),
-        Text(
-          '按文件内容指纹聚合同一文件的媒体记录。删除前请确认至少保留一个可用副本。',
-          key: Key('$keyPrefix-duplicate-description'),
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.muted,
-          ),
-        ),
-      ],
+      ),
+      totalText: '共 $total 组',
+      totalKey: Key('$keyPrefix-duplicate-total-text'),
+      trailing: AppIconButton(
+        key: Key('$keyPrefix-duplicate-refresh-button'),
+        tooltip: isInitialLoading ? '刷新中' : '刷新',
+        icon: const Icon(Icons.refresh_rounded),
+        onPressed: isInitialLoading ? null : onRefresh,
+      ),
     );
   }
 }

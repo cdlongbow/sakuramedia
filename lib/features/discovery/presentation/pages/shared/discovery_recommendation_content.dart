@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -180,19 +181,6 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
       slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppFilterTotalHeader(
-                leading: const SizedBox.shrink(),
-                totalText: '${paged.total} 部',
-                totalKey: Key('$keyPrefix-total'),
-              ),
-              SizedBox(height: headerGap),
-            ],
-          ),
-        ),
         _buildBody(context, ref, async, paged),
         if (showFooter)
           SliverToBoxAdapter(
@@ -208,25 +196,38 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
       ],
     );
 
-    return AppPageRefreshScope(
-      onRefresh: () => _handleRefresh(context, ref),
-      child: enablePullToRefresh
-          ? ColoredBox(
-              color: backgroundColor,
-              child: AppAdaptiveRefreshScrollView(
-                controller: scrollController,
-                onRefresh: () => _handleRefresh(context, ref),
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
+    return AppFixedHeaderLayout(
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppFilterTotalHeader(
+            leading: const SizedBox.shrink(),
+            totalText: '${paged.total} 部',
+            totalKey: Key('$keyPrefix-total'),
+          ),
+          SizedBox(height: headerGap),
+        ],
+      ),
+      child: AppPageRefreshScope(
+        onRefresh: () => _handleRefresh(context, ref),
+        child: enablePullToRefresh
+            ? ColoredBox(
+                color: backgroundColor,
+                child: AppAdaptiveRefreshScrollView(
+                  controller: scrollController,
+                  onRefresh: () => _handleRefresh(context, ref),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: <Widget>[sliver],
+                ),
+              )
+            : ColoredBox(
+                color: backgroundColor,
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [sliver],
+                ),
               ),
-            )
-          : ColoredBox(
-              color: backgroundColor,
-              child: CustomScrollView(
-                controller: scrollController,
-                slivers: [sliver],
-              ),
-            ),
+      ),
     );
   }
 
@@ -340,19 +341,6 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
       slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppFilterTotalHeader(
-                leading: const SizedBox.shrink(),
-                totalText: '${paged.total} 个',
-                totalKey: Key('$keyPrefix-total'),
-              ),
-              SizedBox(height: headerGap),
-            ],
-          ),
-        ),
         _buildBody(context, ref, async, paged),
         if (showFooter)
           SliverToBoxAdapter(
@@ -369,25 +357,38 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
       ],
     );
 
-    return AppPageRefreshScope(
-      onRefresh: () => _handleRefresh(context, ref),
-      child: enablePullToRefresh
-          ? ColoredBox(
-              color: backgroundColor,
-              child: AppAdaptiveRefreshScrollView(
-                controller: scrollController,
-                onRefresh: () => _handleRefresh(context, ref),
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
+    return AppFixedHeaderLayout(
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppFilterTotalHeader(
+            leading: const SizedBox.shrink(),
+            totalText: '${paged.total} 个',
+            totalKey: Key('$keyPrefix-total'),
+          ),
+          SizedBox(height: headerGap),
+        ],
+      ),
+      child: AppPageRefreshScope(
+        onRefresh: () => _handleRefresh(context, ref),
+        child: enablePullToRefresh
+            ? ColoredBox(
+                color: backgroundColor,
+                child: AppAdaptiveRefreshScrollView(
+                  controller: scrollController,
+                  onRefresh: () => _handleRefresh(context, ref),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: <Widget>[sliver],
+                ),
+              )
+            : ColoredBox(
+                color: backgroundColor,
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [sliver],
+                ),
               ),
-            )
-          : ColoredBox(
-              color: backgroundColor,
-              child: CustomScrollView(
-                controller: scrollController,
-                slivers: [sliver],
-              ),
-            ),
+      ),
     );
   }
 

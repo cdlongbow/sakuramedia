@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
@@ -315,21 +316,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
               onOpen: () => unawaited(_openExecutableJobsDialog(context)),
             ),
             SizedBox(height: context.appSpacing.xl),
-            _ActivitySection(
-              title: '任务历史',
-              titleStyle: titleStyle,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _TaskFilterBar(controller: _controller),
-                  AppFilterUpdateBar(
-                    state: _controller.taskFilterUpdate,
-                    hasPreviousItems: _controller.taskRuns.isNotEmpty,
-                    onRetry: _controller.refreshTaskHistory,
-                  ),
-                ],
-              ),
-            ),
+            Text('任务历史', style: titleStyle),
             SizedBox(height: context.appSpacing.lg),
           ],
         ),
@@ -456,38 +443,53 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     };
     return AppPageRefreshScope(
       onRefresh: _refreshActiveTab,
-      child: AppFilterResultLoadingOverlay(
-        isLoading: filterUpdate.isLoading,
-        hasPreviousItems: hasPreviousItems,
-        child: CustomScrollView(
-          controller: _pageScrollController,
-          slivers: [
-            SliverToBoxAdapter(
-              child: Column(
-                key: const Key('desktop-activity-page'),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTabBar(
-                    controller: _tabController,
-                    tabs: const [
-                      Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
-                      Tab(
-                        key: Key('activity-tab-download-tasks'),
-                        text: '下载任务',
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _ConnectionBanner(
-                    state: _controller.connectionState,
-                    message: _controller.connectionMessage,
-                  ),
-                  SizedBox(height: context.appSpacing.xl),
-                ],
-              ),
+      child: AppFixedHeaderLayout(
+        header: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
+                Tab(key: Key('activity-tab-download-tasks'), text: '下载任务'),
+              ],
             ),
-            ..._buildTabSlivers(context),
+            SizedBox(height: context.appSpacing.lg),
+            if (activeTab == ActivityTab.tasks) ...[
+              _TaskFilterBar(controller: _controller),
+              AppFilterUpdateBar(
+                state: _controller.taskFilterUpdate,
+                hasPreviousItems: _controller.taskRuns.isNotEmpty,
+                onRetry: _controller.refreshTaskHistory,
+              ),
+              SizedBox(height: context.appSpacing.lg),
+            ] else
+              buildDownloadTaskHeader(context: context, ref: ref),
           ],
+        ),
+        child: AppFilterResultLoadingOverlay(
+          isLoading: filterUpdate.isLoading,
+          hasPreviousItems: hasPreviousItems,
+          child: CustomScrollView(
+            controller: _pageScrollController,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  key: const Key('desktop-activity-page'),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: context.appSpacing.lg),
+                    _ConnectionBanner(
+                      state: _controller.connectionState,
+                      message: _controller.connectionMessage,
+                    ),
+                    SizedBox(height: context.appSpacing.xl),
+                  ],
+                ),
+              ),
+              ..._buildTabSlivers(context),
+            ],
+          ),
         ),
       ),
     );

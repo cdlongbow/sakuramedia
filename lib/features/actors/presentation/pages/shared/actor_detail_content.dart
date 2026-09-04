@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -109,6 +110,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         MultiSelectStateMixin<ActorDetailContent, String>,
         MovieBatchSelectionMixin<ActorDetailContent> {
   late final ScrollController _scrollController;
+  final _listHeaderKey = GlobalKey();
 
   List<MovieFilterYearOption> _movieYearOptions =
       const <MovieFilterYearOption>[];
@@ -183,9 +185,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     if (selectionMode) {
       exitSelection();
     }
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(0);
-    }
+    AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
     unawaited(
       ref
           .read(movieSummaryProvider(_scope).notifier)
@@ -438,6 +438,8 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                   );
 
             return AppFilterResultLoadingOverlay(
+              protectedHeaderKey: _listHeaderKey,
+              scrollController: _scrollController,
               isLoading: movies?.paged.filterUpdate.isLoading ?? false,
               hasPreviousItems: movies?.paged.items.isNotEmpty ?? false,
               child: widget.bodyBuilder(
@@ -465,7 +467,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                     SliverToBoxAdapter(
                       child: SizedBox(height: widget.sectionSpacing),
                     ),
-                    SliverToBoxAdapter(
+                    AppPinnedListHeader(
+                      key: _listHeaderKey,
+                      color: widget.surfaceColor,
                       child: selectionMode
                           ? (widget.useMobileSelectionLayout
                                 ? buildMobileBatchSelectionHeader()

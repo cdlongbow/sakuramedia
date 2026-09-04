@@ -14,6 +14,8 @@
 
 包含 `MovieSummaryCard`、`MovieSummaryGrid`、`MovieFilterSections`、`MovieBatchSelection`、`SubscriptionHeartBadge` 和 `MovieMagnetSearchContent` / `showMovieMagnetSearchDialog`。后两者复用影片磁力搜索的候选资源、下载器选择与提交交互；状态由 movies feature 的 Provider 提供。影片详情内部组件仍位于 `features/movies/presentation/widgets/detail/`。
 
+批量取消订阅遇到已有媒体时，未处理清单提供“删除媒体并强制取消订阅”入口。确认后先读取媒体总数，再按顺序删除；弹窗进度条显示已删除数量和当前影片，全部删除后显示批量取消订阅阶段。删除失败会停止。反馈返回最终合并结果，多选状态仅保留未处理番号。
+
 ## clips
 
 路径：`lib/widgets/domain/clips/`
@@ -41,7 +43,7 @@
 ## playlists and search
 
 - `lib/widgets/domain/playlists/`：`PlaylistBannerCard`、`PlaylistManagementCard`。
-- `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。
+- `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。`CatalogSearchContent` 固定搜索框和影片/女优页签，流式进度卡与结果一起滚动。
 
 ## media import and batch
 

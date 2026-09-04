@@ -30,7 +30,7 @@ void main() {
     bundle.dispose();
   });
 
-  void enqueueInitialLoad() {
+  void enqueueInitialLoad({int total = 2}) {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/actors/1',
@@ -39,7 +39,7 @@ void main() {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/movies',
-      body: _moviesJson(),
+      body: _moviesJson(total: total),
     );
   }
 
@@ -47,10 +47,53 @@ void main() {
     return ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(body: child),
+        ),
       ),
     );
   }
+
+  testWidgets('资料滚走后筛选栏吸顶，切筛选回到影片起点', (tester) async {
+    enqueueInitialLoad(total: 40);
+    await tester.pumpWidget(wrap(const MobileActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+    final header = find.byKey(const Key('actor-detail-filter-trigger'));
+    final initialTop = tester.getTopLeft(header).dy;
+    final scroll = tester
+        .widget<CustomScrollView>(find.byType(CustomScrollView))
+        .controller!;
+    scroll.jumpTo(500);
+    await tester.pump();
+    final pinnedTop = tester.getTopLeft(header).dy;
+    expect(pinnedTop, lessThan(initialTop));
+    scroll.jumpTo(800);
+    await tester.pump();
+    expect(tester.getTopLeft(header).dy, pinnedTop);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1/years',
+      body: [],
+    );
+    await tester.tap(header);
+    await tester.pumpAndSettle();
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 40),
+    );
+    await tester.tap(find.text('未订阅'));
+    await tester.pumpAndSettle();
+    expect(scroll.offset, greaterThan(0));
+    expect(scroll.offset, lessThan(500));
+    Navigator.of(
+      tester.element(find.byKey(const Key('mobile-movies-filter-drawer'))),
+    ).pop();
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(header).dy, pinnedTop);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('影片筛选走底部抽屉，而不是桌面就地浮层', (WidgetTester tester) async {
     enqueueInitialLoad();

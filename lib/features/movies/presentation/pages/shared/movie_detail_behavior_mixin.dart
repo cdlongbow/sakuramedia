@@ -218,6 +218,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     if (!mounted) {
       return;
     }
+    final movie = ref.read(movieDetailProvider(movieNumber)).movie;
+    if (movie != null) {
+      ref
+          .read(movieMediaEventsProvider.notifier)
+          .reportChange(
+            MovieMediaChange(
+              movieNumber: movie.movieNumber,
+              canPlay: movie.canPlay,
+              isSubscribed: movie.isSubscribed,
+            ),
+          );
+    }
     resetDetailOverridesAfterRefresh(deletedMediaId: deletedMediaId);
     await loadMovieCollectionStatus();
   }

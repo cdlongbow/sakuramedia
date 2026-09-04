@@ -32,6 +32,29 @@ import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_sca
 /// 构建「下载任务」Tab 的 sliver 列表。
 ///
 /// 调用方负责把返回的 slivers 放进外层 `CustomScrollView`。
+Widget buildDownloadTaskHeader({
+  required BuildContext context,
+  required WidgetRef ref,
+}) {
+  final state = ref.watch(downloadTaskCenterProvider).value;
+  if (state == null) return const SizedBox.shrink();
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _DownloadFilterBar(state: state),
+      AppFilterUpdateBar(
+        key: const Key('download-tasks-reloading-indicator'),
+        state: state.paged.filterUpdate,
+        hasPreviousItems: state.paged.items.isNotEmpty,
+        onRetry: () => unawaited(
+          ref.read(downloadTaskCenterProvider.notifier).retryFilter(),
+        ),
+      ),
+      SizedBox(height: context.appSpacing.lg),
+    ],
+  );
+}
+
 List<Widget> buildDownloadTaskSlivers({
   required BuildContext context,
   required WidgetRef ref,
@@ -56,28 +79,7 @@ List<Widget> buildDownloadTaskSlivers({
   }
 
   final state = asyncState.requireValue;
-  final slivers = <Widget>[
-    SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.only(bottom: context.appSpacing.lg),
-        child: _DownloadFilterBar(state: state),
-      ),
-    ),
-    if (state.paged.filterUpdate.hasFailed)
-      SliverToBoxAdapter(
-        key: const Key('download-tasks-reloading-indicator'),
-        child: Padding(
-          padding: EdgeInsets.only(bottom: context.appSpacing.md),
-          child: AppFilterUpdateBar(
-            state: state.paged.filterUpdate,
-            hasPreviousItems: state.paged.items.isNotEmpty,
-            onRetry: () => unawaited(
-              ref.read(downloadTaskCenterProvider.notifier).retryFilter(),
-            ),
-          ),
-        ),
-      ),
-  ];
+  final slivers = <Widget>[];
 
   final items = state.paged.items;
   if (items.isEmpty) {

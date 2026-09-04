@@ -12,6 +12,10 @@
 
 列表页标题、筛选入口、结果信息和操作槽的统一容器。`AppListHeaderInfo` 用于显示总数、更新时间等辅助信息。
 
+固定或吸顶由页面布局负责：普通列表用 `AppFixedHeaderLayout`，介绍区后的列表用 `AppPinnedListHeader`。`AppListHeader` 本身不控制滚动。多选时使用 `AppListHeader.selection` 在同一位置替换正常内容；移动批量操作放在结果区之外的底部操作条。
+
+标签影片页用 feature 内的 `TagSelectionHeader` 固定选择入口、横向已选摘要和匹配模式；完整 `TagSelectorPanel` 在移动底部抽屉或桌面浮层内滚动，选择即时生效。
+
 ## `AppFilterEntryButton`
 
 路径：`app_filter_entry_button.dart`

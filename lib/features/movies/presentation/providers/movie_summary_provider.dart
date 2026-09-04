@@ -163,6 +163,12 @@ class MovieSummary extends _$MovieSummary
         _applyCollectionTypeChange(change);
       }
     });
+    ref.listen(movieMediaEventsProvider, (_, next) {
+      final change = next.value;
+      if (change != null) {
+        _applyMediaChange(change);
+      }
+    });
     if (scope.source == MovieSummarySource.tags &&
         activeFilter.tagIds.isEmpty) {
       return MovieSummaryState(
@@ -246,6 +252,40 @@ class MovieSummary extends _$MovieSummary
     state = AsyncData(current.copyWith(paged: paged));
   }
 
+  void _applyMediaChange(MovieMediaChange change) {
+    final current = state.value;
+    if (current == null) return;
+    final filtersByStatus =
+        scope.source == MovieSummarySource.actor ||
+        scope.source == MovieSummarySource.movies ||
+        scope.source == MovieSummarySource.tags;
+    final remove =
+        filtersByStatus &&
+        switch (current.filter.movie.status) {
+          MovieStatusFilter.all => false,
+          MovieStatusFilter.playable => !change.canPlay,
+          MovieStatusFilter.subscribed => !change.isSubscribed,
+          MovieStatusFilter.unsubscribed => change.isSubscribed,
+        };
+    final paged = remove
+        ? current.paged.removeWhere(
+            (item) => item.movieNumber == change.movieNumber,
+          )
+        : current.paged.patchWhere(
+            (item) =>
+                item.movieNumber == change.movieNumber &&
+                (item.canPlay != change.canPlay ||
+                    item.isSubscribed != change.isSubscribed),
+            (item) => item.copyWith(
+              canPlay: change.canPlay,
+              isSubscribed: change.isSubscribed,
+            ),
+          );
+    if (!identical(paged, current.paged)) {
+      state = AsyncData(current.copyWith(paged: paged));
+    }
+  }
+
   void _applyCollectionTypeChange(MovieCollectionTypeChange change) {
     if (change.targetType != MovieCollectionType.collection ||
         !_removesCollectionMovies) {
@@ -277,7 +317,8 @@ class MovieSummary extends _$MovieSummary
 
   bool get _removesSubscriptionFlipRows {
     if (scope.source != MovieSummarySource.movies &&
-        scope.source != MovieSummarySource.tags) {
+        scope.source != MovieSummarySource.tags &&
+        scope.source != MovieSummarySource.actor) {
       return false;
     }
     // subscribed 视图：取消订阅的影片不再满足条件；

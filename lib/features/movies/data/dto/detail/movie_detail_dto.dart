@@ -4,6 +4,7 @@ class MovieDetailDto {
   const MovieDetailDto({
     this.id = 0,
     required this.javdbId,
+    this.metadataSourceName,
     required this.movieNumber,
     required this.title,
     this.seriesId,
@@ -36,7 +37,8 @@ class MovieDetailDto {
   /// 后端返回的影片整数主键，可用于与订阅等域数据关联。
   final int id;
 
-  final String javdbId;
+  final String? javdbId;
+  final String? metadataSourceName;
   final String movieNumber;
   final String title;
   final int? seriesId;
@@ -75,7 +77,10 @@ class MovieDetailDto {
   factory MovieDetailDto.fromJson(Map<String, dynamic> json) {
     return MovieDetailDto(
       id: _intFromJson(json['id']) ?? 0,
-      javdbId: json['javdb_id'] as String? ?? '',
+      javdbId: json['javdb_id'] as String?,
+      metadataSourceName:
+          (json['metadata_source'] as Map<String, dynamic>?)?['display_name']
+              as String?,
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',
       seriesId: _intFromJson(json['series_id']),

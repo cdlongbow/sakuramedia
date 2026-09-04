@@ -11,6 +11,56 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
 void main() {
+  testWidgets('plugin movie displays its source and pending JavDB status', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: _movieDetail(javdbId: null, metadataSourceName: '示例来源'),
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            isCollection: false,
+            isSubscribed: false,
+            isCollectionUpdating: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            statItems: const <MovieDetailStatItem>[],
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorTap: _noop,
+            onPlaylistTap: _noop,
+            onCollectionToggle: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.text('元数据 · 示例来源 · 待 JavDB 收录'), findsOneWidget);
+  });
+
+  test('movie DTOs accept plugin movies without a JavDB ID', () {
+    final json = <String, dynamic>{
+      'id': 12,
+      'javdb_id': null,
+      'movie_number': 'TEST-001',
+      'title': 'Plugin title',
+      'metadata_source': <String, dynamic>{
+        'plugin_id': 'example',
+        'display_name': '示例来源',
+      },
+    };
+    final detail = MovieDetailDto.fromJson(json);
+    final item = MovieListItemDto.fromJson(json);
+    expect(detail.javdbId, isNull);
+    expect(item.javdbId, isNull);
+    expect(detail.metadataSourceName, '示例来源');
+    expect(detail.score, 0);
+    expect(detail.watchedCount, 0);
+  });
+
   testWidgets('movie detail page content exposes clickable series row', (
     WidgetTester tester,
   ) async {
@@ -209,9 +259,14 @@ void main() {
   });
 }
 
-MovieDetailDto _movieDetail({int? seriesId}) {
+MovieDetailDto _movieDetail({
+  int? seriesId,
+  String? javdbId = 'javdb-1',
+  String? metadataSourceName,
+}) {
   return MovieDetailDto(
-    javdbId: 'javdb-1',
+    javdbId: javdbId,
+    metadataSourceName: metadataSourceName,
     movieNumber: 'ABC-001',
     title: 'Sample Movie',
     seriesId: seriesId,

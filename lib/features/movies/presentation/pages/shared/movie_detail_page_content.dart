@@ -432,6 +432,13 @@ List<Widget> _buildInlineMetaItems(
     ),
     _MovieInlineMetaItem(label: '厂商', value: movie.makerName.trim()),
     _MovieInlineMetaItem(label: '导演', value: movie.directorName.trim()),
+    if (movie.metadataSourceName != null)
+      _MovieInlineMetaItem(
+        label: '元数据',
+        value: movie.javdbId == null
+            ? '${movie.metadataSourceName} · 待 JavDB 收录'
+            : 'JavDB',
+      ),
   ].where((item) => item.value.isNotEmpty).toList(growable: false);
 
   if (items.isEmpty) {

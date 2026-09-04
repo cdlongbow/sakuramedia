@@ -116,6 +116,57 @@ void main() {
       find.byKey(const Key('actor-detail-batch-bottom-bar')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('actor-detail-batch-blacklist-button')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    bundle.adapter.enqueueJson(
+      method: 'PUT',
+      path: '/movies/blacklist',
+      statusCode: 204,
+    );
+    await tester.tap(
+      find.byKey(const Key('actor-detail-batch-blacklist-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('actor-detail-batch-blacklist-confirm')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
+    expect(find.byKey(const Key('movie-summary-card-ABC-002')), findsOneWidget);
+    expect(
+      find.byKey(const Key('actor-detail-batch-bottom-bar')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('长按菜单屏蔽单片后立即移除影片并更新总数', (tester) async {
+    enqueueInitialLoad();
+    bundle.adapter.enqueueJson(
+      method: 'PUT',
+      path: '/movies/blacklist',
+      statusCode: 204,
+    );
+    await tester.pumpWidget(wrap(const MobileActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+    await tester.longPress(find.byKey(const Key('movie-summary-card-ABC-001')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('屏蔽影片'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('屏蔽'));
+    await tester.pumpAndSettle();
+    expect(bundle.adapter.requests.singleWhere((r) => r.method == 'PUT').body, {
+      'movie_numbers': ['ABC-001'],
+    });
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
+    expect(find.byKey(const Key('movie-summary-card-ABC-002')), findsOneWidget);
+    expect(find.text('1 部'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 }

@@ -65,6 +65,7 @@ Map<String, dynamic> _configJson({
       'download_task_auto_import_cron': '* * * * *',
       'movie_heat_cron': '15 0 * * *',
       'movie_interaction_sync_cron': '0 5 * * *',
+      'movie_javdb_backfill_cron': '30 5 * * *',
       'media_thumbnail_cron': '*/30 * * * *',
       'image_search_index_cron': '*/5 * * * *',
       'movie_similarity_recompute_cron': '30 3 * * *',

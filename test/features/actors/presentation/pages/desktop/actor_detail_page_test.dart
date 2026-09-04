@@ -96,6 +96,81 @@ void main() {
     expect(find.text('2024(2)'), findsOneWidget);
     expect(find.text('重置'), findsOneWidget);
   });
+
+  for (final succeeds in [true, false]) {
+    testWidgets('批量屏蔽${succeeds ? '成功移除所选影片并退出多选' : '失败保留影片与选中状态'}', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1280, 1600);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/actors/1',
+        body: _actorJson(),
+      );
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        body: _moviesJson(),
+      );
+      bundle.adapter.enqueueJson(
+        method: 'PUT',
+        path: '/movies/blacklist',
+        statusCode: succeeds ? 204 : 500,
+      );
+      await tester.pumpWidget(wrap(const DesktopActorDetailPage(actorId: 1)));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('actor-detail-enter-selection-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('actor-detail-batch-blacklist-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(bundle.adapter.hitCount('PUT', '/movies/blacklist'), 0);
+      await tester.tap(
+        find.byKey(const Key('actor-detail-batch-blacklist-confirm')),
+      );
+      await tester.pumpAndSettle();
+      final request = bundle.adapter.requests.singleWhere(
+        (r) => r.method == 'PUT',
+      );
+      expect(request.body, {
+        'movie_numbers': ['ABC-001'],
+      });
+      expect(
+        find.byKey(const Key('movie-summary-card-ABC-001')),
+        succeeds ? findsNothing : findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('movie-summary-card-ABC-002')),
+        findsOneWidget,
+      );
+      if (succeeds) {
+        expect(
+          find.byKey(const Key('actor-detail-enter-selection-button')),
+          findsOneWidget,
+        );
+        expect(find.text('1 部'), findsOneWidget);
+      } else {
+        expect(find.text('已选 1 部'), findsOneWidget);
+        expect(
+          find.byKey(const Key('actor-detail-batch-blacklist-dialog')),
+          findsOneWidget,
+        );
+      }
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 Map<String, dynamic> _actorJson() {

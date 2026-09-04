@@ -68,7 +68,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   /// 后端返回的影片整数主键，可用于与订阅等域数据关联。
   final int id;
 
-  final String javdbId;
+  final String? javdbId;
   @override
   final String movieNumber;
   final String title;
@@ -128,7 +128,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   factory MovieListItemDto.fromJson(Map<String, dynamic> json) {
     return MovieListItemDto(
       id: _intFromJson(json['id']) ?? 0,
-      javdbId: json['javdb_id'] as String? ?? '',
+      javdbId: json['javdb_id'] as String?,
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',
       seriesId: _intFromJson(json['series_id']),

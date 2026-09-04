@@ -133,6 +133,10 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       ref.read(movieSummaryProvider(_scope).notifier).batchToggleSubscription;
 
   @override
+  MovieBlacklistBatchExecutor get batchBlacklistExecutor =>
+      ref.read(movieSummaryProvider(_scope).notifier).blacklistMovies;
+
+  @override
   List<String> get batchSelectableNumbers =>
       ref
           .read(movieSummaryProvider(_scope))
@@ -488,6 +492,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                               movieNumber: movie.movieNumber,
                               globalPosition: globalPosition,
                               isSubscribed: movie.isSubscribed,
+                              onBlacklisted: () => ref
+                                  .read(movieSummaryProvider(_scope).notifier)
+                                  .removeMovies(<String>[movie.movieNumber]),
                               onEnterSelection: widget.useMobileSelectionLayout
                                   ? () {
                                       enterSelection();

@@ -112,16 +112,18 @@ class _MobileActorDetailHeader extends StatelessWidget {
         ),
         SizedBox(width: context.appSpacing.md),
         Expanded(
-          child: Text(
-            actor.displayName,
-            key: const Key('mobile-actor-detail-name'),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.primary,
+          child: SelectionArea(
+            child: Text(
+              actor.displayName,
+              key: const Key('mobile-actor-detail-name'),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.primary,
+              ),
             ),
           ),
         ),

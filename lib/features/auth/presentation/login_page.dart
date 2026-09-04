@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
@@ -197,6 +198,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final isCompact = MediaQuery.of(context).size.width < 640;
 
     return Scaffold(
+      appBar: usesAppWindowsCaption
+          ? PreferredSize(
+              preferredSize: Size.fromHeight(
+                context.appComponentTokens.desktopTitleBarHeight,
+              ),
+              child: const AppWindowsCaption(standalone: true),
+            )
+          : null,
       backgroundColor: colors.surfacePage,
       body: DecoratedBox(
         decoration: BoxDecoration(

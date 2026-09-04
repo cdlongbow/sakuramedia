@@ -14,6 +14,7 @@ const String _prefsMaximizedKey = 'desktop_window:maximized';
 Future<void> bootstrapDesktopWindow() async {
   await windowManager.ensureInitialized();
   final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
+  final isWindows = defaultTargetPlatform == TargetPlatform.windows;
 
   final restored = await _readPersistedWindowState();
 
@@ -24,11 +25,17 @@ Future<void> bootstrapDesktopWindow() async {
     backgroundColor:
         isMacOS ? Colors.transparent : const AppColors.defaults().surfaceCard,
     skipTaskbar: false,
-    titleBarStyle: isMacOS ? TitleBarStyle.hidden : TitleBarStyle.normal,
+    titleBarStyle: isMacOS || isWindows
+        ? TitleBarStyle.hidden
+        : TitleBarStyle.normal,
     windowButtonVisibility: true,
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    if (isWindows) {
+      // Hidden title bars still reserve native side/bottom resize borders.
+      await windowManager.setAsFrameless();
+    }
     if (restored.maximized) {
       await windowManager.maximize();
     }

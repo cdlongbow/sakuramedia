@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/theme/app_component_tokens.dart';
 import 'package:sakuramedia/theme/app_colors.dart';
 import 'package:sakuramedia/theme/app_form_tokens.dart';
@@ -107,7 +108,11 @@ ThemeData _buildSakuraThemeData({
       onInverseSurface: Color(0xFFF8EEEA),
       inversePrimary: Color(0xFFFFB4A9),
     ),
-    textTheme: textScale.toTextTheme(textWeights),
+    textTheme: textScale.toTextTheme(textWeights).apply(
+      fontFamily: !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
+          ? kAppWindowsFontFamily
+          : null,
+    ),
     extensions: <ThemeExtension<dynamic>>[
       const AppColors.defaults(),
       componentTokens,

@@ -1,10 +1,14 @@
 import 'dart:ui' show lerpDouble;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 enum AppTextSize { s20, s18, s16, s14, s12, s10 }
 
 enum AppTextWeight { regular, medium, semibold }
+
+/// Use one Chinese-capable family on Windows instead of per-glyph fallback.
+const kAppWindowsFontFamily = 'Microsoft YaHei';
 
 enum AppTextTone {
   primary,
@@ -319,6 +323,9 @@ TextStyle resolveAppTextStyle(
 }) {
   final fontWeight = resolveAppTextWeight(context, weight);
   return TextStyle(
+    fontFamily: !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
+        ? kAppWindowsFontFamily
+        : null,
     fontSize: resolveAppTextFontSize(context, size),
     fontWeight: fontWeight,
     color: resolveAppTextToneColor(context, tone),

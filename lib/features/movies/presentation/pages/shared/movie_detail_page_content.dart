@@ -310,12 +310,14 @@ class MovieDetailPageContent extends StatelessWidget {
             onPressed: onMergePlaybackTap,
           ),
         ],
-        SizedBox(height: context.appSpacing.lg),
-        MoviePlotGallery(
-          plotImages: movie.plotImages,
-          onRequestImageMenu: onRequestPlotImageMenu,
-          onOpenPreview: onOpenPlotPreview,
-        ),
+        if (movie.plotImages.isNotEmpty) ...[
+          SizedBox(height: context.appSpacing.lg),
+          MoviePlotGallery(
+            plotImages: movie.plotImages,
+            onRequestImageMenu: onRequestPlotImageMenu,
+            onOpenPreview: onOpenPlotPreview,
+          ),
+        ],
         SizedBox(height: context.appComponentTokens.movieDetailSectionGap),
         MovieDetailNumberBar(
           movieNumber: movie.movieNumber,
@@ -336,14 +338,19 @@ class MovieDetailPageContent extends StatelessWidget {
           ),
         ),
         ..._buildInlineMetaItems(context, movie, onSeriesTap),
-        MovieDetailSection(
-          title: '标签',
-          child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
-        ),
-        MovieDetailSection(
-          title: '演员',
-          child: MovieActorWrap(actors: orderedActors, onActorTap: onActorTap),
-        ),
+        if (movie.tags.isNotEmpty)
+          MovieDetailSection(
+            title: '标签',
+            child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
+          ),
+        if (orderedActors.isNotEmpty)
+          MovieDetailSection(
+            title: '演员',
+            child: MovieActorWrap(
+              actors: orderedActors,
+              onActorTap: onActorTap,
+            ),
+          ),
         if (mediaItems.isNotEmpty)
           MovieDetailSection(
             title: '媒体源',

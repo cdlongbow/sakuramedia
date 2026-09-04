@@ -82,6 +82,7 @@ Future<bool> showAppConfirmDialog(
       return AppDesktopDialog(
         dialogKey: dialogKey,
         width: dialogContext.appLayoutTokens.dialogWidthSm,
+        onClose: () => Navigator.of(dialogContext).maybePop(),
         child: buildBody(dialogContext),
       );
     },
@@ -181,19 +182,30 @@ class _ConfirmBodyState extends State<_ConfirmBody> {
             ),
           ),
           SizedBox(height: spacing.lg),
-          Text(
-            widget.message,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
+          Flexible(
+            fit: FlexFit.loose,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.message,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s14,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.secondary,
+                    ),
+                  ),
+                  if (widget.extraContent != null) ...[
+                    SizedBox(height: spacing.md),
+                    widget.extraContent!,
+                  ],
+                ],
+              ),
             ),
           ),
-          if (widget.extraContent != null) ...[
-            SizedBox(height: spacing.md),
-            widget.extraContent!,
-          ],
           SizedBox(height: spacing.xl),
           Row(
             children: [

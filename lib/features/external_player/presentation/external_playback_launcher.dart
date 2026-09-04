@@ -39,6 +39,7 @@ Future<bool> tryLaunchConfiguredExternalPlayer(
     final launched = await channel.launch(
       playerId: selection.playerId!,
       url: url,
+      playbackMode: selection.playbackMode,
       title: title,
       positionMs: positionMs,
     );

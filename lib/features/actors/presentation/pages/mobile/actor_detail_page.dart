@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_detail_content.dart';
+import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_profile_details.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:oktoast/oktoast.dart';
@@ -34,16 +35,20 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
           (
             context,
             actor,
-            total,
             isSubscribed,
             isSubscriptionUpdating,
             onSubscriptionTap,
-          ) => _MobileActorDetailHeader(
-            actor: actor,
-            total: total,
-            isSubscribed: isSubscribed,
-            isSubscriptionUpdating: isSubscriptionUpdating,
-            onSubscriptionTap: onSubscriptionTap,
+          ) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MobileActorDetailHeader(
+                actor: actor.summary,
+                isSubscribed: isSubscribed,
+                isSubscriptionUpdating: isSubscriptionUpdating,
+                onSubscriptionTap: onSubscriptionTap,
+              ),
+              ActorProfileDetails(actor: actor, compact: true),
+            ],
           ),
       loadingBuilder: (_) => const _MobileActorDetailLoadingSkeleton(),
       errorBuilder: (context, message, onRetry) => AppEmptyState(
@@ -87,14 +92,12 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
 class _MobileActorDetailHeader extends StatelessWidget {
   const _MobileActorDetailHeader({
     required this.actor,
-    required this.total,
     required this.isSubscribed,
     required this.isSubscriptionUpdating,
     required this.onSubscriptionTap,
   });
 
   final ActorListItemDto actor;
-  final int total;
   final bool isSubscribed;
   final bool isSubscriptionUpdating;
   final VoidCallback? onSubscriptionTap;
@@ -136,17 +139,6 @@ class _MobileActorDetailHeader extends StatelessWidget {
           isSubscribed: isSubscribed,
           isUpdating: isSubscriptionUpdating,
           onTap: onSubscriptionTap,
-        ),
-        SizedBox(width: context.appSpacing.sm),
-        Text(
-          '$total 部',
-          key: const Key('mobile-actor-detail-total'),
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
         ),
       ],
     );

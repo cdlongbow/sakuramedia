@@ -18,7 +18,7 @@ import 'package:oktoast/oktoast.dart';
 /// 还是直接拉起外部播放器。
 ///
 /// 详情接口返回的 [MovieMediaItemDto.playUrl] 已经是后端签名播放地址。前端只
-/// 负责把相对地址补成完整 URL，不再探测、拼接或转换播放流。
+/// 负责补全 URL，外部播放器通道按用户偏好选择传输方式。
 Future<void> launchMoviePlayback(
   BuildContext context, {
   required String movieNumber,
@@ -92,6 +92,7 @@ Future<void> launchMoviePlayback(
   final launched = await channel.launch(
     playerId: selection.playerId!,
     url: resolvedUrl,
+    playbackMode: selection.playbackMode,
     title: title,
     positionMs: resumeSeconds > 0 ? resumeSeconds * 1000 : null,
   );

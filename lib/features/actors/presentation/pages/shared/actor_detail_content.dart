@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_detail_provider.dart';
@@ -43,8 +43,7 @@ typedef ActorDetailBodyBuilder =
 typedef ActorDetailHeaderBuilder =
     Widget Function(
       BuildContext context,
-      ActorListItemDto actor,
-      int total,
+      ActorDetailDto actor,
       bool isSubscribed,
       bool isSubscriptionUpdating,
       VoidCallback? onSubscriptionTap,
@@ -299,7 +298,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   /// 影片区顶栏：与影片 / 女优列表页共用同一条 `AppListHeader`。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
   ///
-  /// 总数不进信息槽：女优信息头里已经有「N 部」，再放一遍是重复。
+  /// 数量属于当前作品筛选结果，随作品列表一起展示。
   Widget _buildFilterHeader(
     BuildContext context,
     PagedListState<MovieListItemDto>? paged,
@@ -333,6 +332,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         isDefault: _filterState.isDefault,
         onReset: _resetFilters,
       ),
+      informationSlots: [
+        if (paged != null) AppListHeaderInfo(label: '作品 · ${paged.total} 部'),
+      ],
       actionSlots: [
         // 移动端多选入口挂在卡片长按菜单里，顶栏不常驻「选择」。
         if (!widget.useMobileSelectionLayout) buildEnterSelectionButton(),
@@ -426,7 +428,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
 
             final actor = actorState!.actor!;
             final isActorSubscribed =
-                _isActorSubscribedOverride ?? actor.isSubscribed;
+                _isActorSubscribedOverride ?? actor.summary.isSubscribed;
             final footer = movies == null
                 ? null
                 : widget.footerBuilder(
@@ -453,7 +455,6 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                         child: widget.headerBuilder(
                           context,
                           actor,
-                          movies?.paged.total ?? 0,
                           isActorSubscribed,
                           _isActorSubscriptionUpdating,
                           _isActorSubscriptionUpdating

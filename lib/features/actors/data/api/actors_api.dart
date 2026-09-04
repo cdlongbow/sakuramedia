@@ -2,6 +2,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
@@ -39,9 +40,9 @@ class ActorsApi {
     );
   }
 
-  Future<ActorListItemDto> getActorDetail({required int actorId}) async {
+  Future<ActorDetailDto> getActorDetail({required int actorId}) async {
     final response = await _apiClient.get('/actors/$actorId');
-    return ActorListItemDto.fromJson(response);
+    return ActorDetailDto.fromJson(response);
   }
 
   Future<List<int>> getActorMovieIds({required int actorId}) async {

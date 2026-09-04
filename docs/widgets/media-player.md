@@ -19,9 +19,9 @@
 
 - `CollectionPlaySplitLayout`：左侧播放器、右侧整部合集面板的布局。
 - `CollectionPlaybackPageMixin`：合集连播页共用的播放器登记、跨集定位和面板接线。
-- `CollectionEpisodeQueueItem`：选集队列条目。
-- `CollectionFilmstripController`：合集胶片条和跨集位置计算。
-- `EpisodeSelectorOverlay`：选集浮层。
+- `CollectionEpisodeQueueItem`：选集队列条目，可传入尾部操作；播放标记会移到副标题旁。
+- `CollectionFilmstripController`：合集胶片条和跨集位置计算，移除成员时复用缓存并丢弃过期帧请求。
+- `EpisodeSelectorOverlay`：选集浮层，打开时定位当前集。PornBox 通过根导航浮层让窗口和全屏共用选集管理。
 - `MergedPositionIndicator`：合并后的整部进度指示。
 
 这些组件位于 `lib/widgets/domain/collections/playback/` 或其关联的 player 目录。切片合集和视频合集通过闭包传入各自的数据，不要让共享组件依赖某个具体 API。

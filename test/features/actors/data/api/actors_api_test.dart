@@ -156,14 +156,30 @@ void main() {
           'large': 'large.jpg',
         },
         'is_subscribed': true,
+        'birthday': '1993-08-16',
+        'age': 33,
+        'height_cm': 159,
+        'bust_cm': 84,
+        'waist_cm': 58,
+        'hips_cm': 88,
+        'cup': ' F ',
+        'birthplace': '出生地',
+        'blood_type': 'O',
       },
     );
 
     final actor = await actorsApi.getActorDetail(actorId: 1);
 
-    expect(actor.id, 1);
-    expect(actor.displayName, '三上悠亚 / 鬼头桃菜');
-    expect(actor.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(actor.summary.id, 1);
+    expect(actor.summary.displayName, '三上悠亚 / 鬼头桃菜');
+    expect(actor.summary.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(actor.birthday, DateTime(1993, 8, 16));
+    expect(actor.age, 33);
+    expect(actor.heightCm, 159);
+    expect([actor.bustCm, actor.waistCm, actor.hipsCm], [84, 58, 88]);
+    expect(actor.cup, 'F');
+    expect(actor.birthplace, '出生地');
+    expect(actor.bloodType, 'O');
     expect(adapter.requests.single.path, '/actors/1');
   });
 

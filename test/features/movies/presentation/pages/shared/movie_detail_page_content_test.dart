@@ -9,8 +9,79 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 
 void main() {
+  for (final mobile in [true, false]) {
+    for (final showTags in [true, false]) {
+      for (final showActors in [true, false]) {
+        testWidgets(
+          'detail hides empty sections (mobile: $mobile, tags: $showTags, actors: $showActors)',
+          (tester) async {
+            tester.view.devicePixelRatio = 1;
+            tester.view.physicalSize = mobile
+                ? const Size(360, 760)
+                : const Size(1100, 760);
+            addTearDown(tester.view.resetDevicePixelRatio);
+            addTearDown(tester.view.resetPhysicalSize);
+            var actorTaps = 0;
+            var tagTaps = 0;
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+                home: Scaffold(
+                  body: MovieDetailPageContent(
+                    movie: _movieDetail(
+                      actors: showActors ? null : const [],
+                      tags: showTags ? null : const [],
+                    ),
+                    selectedPreviewKey: 'movie-preview',
+                    selectedPreviewUrl: null,
+                    isCollection: false,
+                    isSubscribed: false,
+                    isCollectionUpdating: false,
+                    isSubscriptionUpdating: false,
+                    selectedMediaId: 100,
+                    statItems: const [],
+                    similarMovies: const [],
+                    isSimilarMoviesLoading: false,
+                    bottomInfoBarVariant: mobile
+                        ? MovieDetailBottomInfoBarVariant.mobileFullWidth
+                        : MovieDetailBottomInfoBarVariant.desktopCard,
+                    onInspectorTap: _noop,
+                    onPlaylistTap: _noop,
+                    onCollectionToggle: _noop,
+                    onMediaSelect: (_) {},
+                    onActorTap: (_) => actorTaps++,
+                    onTagTap: (_) => tagTaps++,
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(find.text('标签'), showTags ? findsOneWidget : findsNothing);
+            expect(find.text('演员'), showActors ? findsOneWidget : findsNothing);
+            expect(find.textContaining('暂无'), findsNothing);
+            expect(find.byType(MoviePlotGallery), findsNothing);
+            if (showTags) {
+              await tester.ensureVisible(find.text('剧情'));
+              await tester.tap(find.text('剧情'));
+              expect(tagTaps, 1);
+            }
+            if (showActors) {
+              await tester.ensureVisible(find.text('演员一'));
+              await tester.tap(find.text('演员一'));
+              expect(actorTaps, 1);
+            }
+            await tester.ensureVisible(find.text('媒体源'));
+            expect(find.text('媒体源').hitTestable(), findsOneWidget);
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
+  }
+
   testWidgets('plugin movie displays its source and pending JavDB status', (
     tester,
   ) async {
@@ -284,6 +355,8 @@ MovieDetailDto _movieDetail({
   String seriesName = 'Attackers',
   String? javdbId = 'javdb-1',
   String? metadataSourceName,
+  List<MovieActorDto>? actors,
+  List<MovieTagDto>? tags,
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
@@ -309,7 +382,7 @@ MovieDetailDto _movieDetail({
     summary: '',
     thinCoverImage: null,
     plotImages: const <MovieImageDto>[],
-    actors: const <MovieActorDto>[
+    actors: actors ?? const <MovieActorDto>[
       MovieActorDto(
         id: 1,
         javdbId: 'actor-1',
@@ -329,7 +402,7 @@ MovieDetailDto _movieDetail({
         profileImage: null,
       ),
     ],
-    tags: const <MovieTagDto>[
+    tags: tags ?? const <MovieTagDto>[
       MovieTagDto(tagId: 1, name: '单体作品'),
       MovieTagDto(tagId: 2, name: '剧情'),
     ],

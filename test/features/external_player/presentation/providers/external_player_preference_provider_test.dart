@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/external_player/data/external_playback_mode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -109,5 +110,50 @@ void main() {
       '/Applications/IINA.app',
     );
     expect(preferences.getString('macos.external_player.label'), 'IINA');
+  });
+
+  test('旧偏好和未知模式保持跟随后端', () async {
+    SharedPreferences.setMockInitialValues({
+      'android.external_player.package_name': 'player',
+      'external_player.playback_mode': 'unknown',
+    });
+    final selection = await container.read(
+      externalPlayerPreferenceProvider.future,
+    );
+    expect(selection.playerId, 'player');
+    expect(selection.playbackMode, ExternalPlaybackMode.followBackend);
+  });
+
+  test('三种模式分别持久化，切换播放器及内置播放不重置模式', () async {
+    SharedPreferences.setMockInitialValues({});
+    await container.read(externalPlayerPreferenceProvider.future);
+    final notifier = container.read(externalPlayerPreferenceProvider.notifier);
+    for (final mode in [
+      ExternalPlaybackMode.proxy,
+      ExternalPlaybackMode.redirect,
+      ExternalPlaybackMode.followBackend,
+    ]) {
+      await notifier.selectPlaybackMode(mode);
+      await notifier.selectExternalPlayer(playerId: 'player-a', label: 'A');
+      await notifier.useInAppPlayer();
+      expect(
+        container
+            .read(externalPlayerPreferenceProvider)
+            .requireValue
+            .playbackMode,
+        mode,
+      );
+      await notifier.selectExternalPlayer(playerId: 'player-b', label: 'B');
+      final reloaded = ProviderContainer();
+      try {
+        final selection = await reloaded.read(
+          externalPlayerPreferenceProvider.future,
+        );
+        expect(selection.playbackMode, mode);
+        expect(selection.playerId, 'player-b');
+      } finally {
+        reloaded.dispose();
+      }
+    }
   });
 }

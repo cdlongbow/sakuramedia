@@ -16,6 +16,7 @@ class VideoMutationChange {
     required this.kind,
     required this.videoId,
     this.collectionId,
+    this.removedFromCollection = false,
   });
 
   final VideoMutationKind kind;
@@ -23,4 +24,5 @@ class VideoMutationChange {
 
   /// 仅 [VideoMutationKind.collectionMembershipChanged] 时有意义，可能为空。
   final int? collectionId;
+  final bool removedFromCollection;
 }

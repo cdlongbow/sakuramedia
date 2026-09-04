@@ -1,3 +1,12 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 
@@ -21,6 +30,75 @@ MovieMediaItemDto _media({
 }
 
 void main() {
+  for (final mode in ['proxy', 'redirect']) {
+    testWidgets('影片入口传递 $mode 偏好，不按 provider 类型筛选', (tester) async {
+      final previous = debugDefaultTargetPlatformOverride;
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      final session = SessionStore.inMemory();
+      const channel = MethodChannel('sakuramedia/external_player');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      try {
+        await session.saveBaseUrl('http://nas:8000');
+        SharedPreferences.setMockInitialValues({
+          'android.external_player.package_name': 'player',
+          'external_player.playback_mode': mode,
+        });
+        Map? args;
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          args = call.arguments as Map;
+          return true;
+        });
+        late BuildContext context;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [sessionStoreProvider.overrideWithValue(session)],
+            child: MaterialApp(
+              home: Builder(
+                builder: (innerContext) {
+                  context = innerContext;
+                  return const SizedBox();
+                },
+              ),
+            ),
+          ),
+        );
+        await ProviderScope.containerOf(
+          context,
+        ).read(externalPlayerPreferenceProvider.future);
+        await launchMoviePlayback(
+          context,
+          movieNumber: 'TEST-001',
+          positionSeconds: 30,
+          movie: MovieDetailDto.fromJson({
+            'movie_number': 'TEST-001',
+            'media_items': [
+              {
+                'media_id': 1,
+                'library_id': 2,
+                'provider_key': 'future-provider',
+                'play_url':
+                    '/media/1/play/?expires=1&signature=sig&delivery=redirect',
+              },
+            ],
+          }),
+        );
+        expect(args, isNotNull);
+        expect(
+          Uri.parse(args!['url'] as String).queryParameters['delivery'],
+          mode,
+        );
+        expect(args!['positionMs'], 30000);
+        expect(args!['playerId'], 'player');
+      } finally {
+        await tester.pumpWidget(const SizedBox());
+        messenger.setMockMethodCallHandler(channel, null);
+        session.dispose();
+        debugDefaultTargetPlatformOverride = previous;
+      }
+    });
+  }
+
   test('parses the provider play URL without a delivery choice', () {
     final dto = MovieMediaItemDto.fromJson(<String, dynamic>{
       'media_id': 12,

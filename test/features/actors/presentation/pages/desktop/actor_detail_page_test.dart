@@ -158,7 +158,7 @@ void main() {
           find.byKey(const Key('actor-detail-enter-selection-button')),
           findsOneWidget,
         );
-        expect(find.text('1 部'), findsOneWidget);
+        expect(find.text('作品 · 1 部'), findsOneWidget);
       } else {
         expect(find.text('已选 1 部'), findsOneWidget);
         expect(

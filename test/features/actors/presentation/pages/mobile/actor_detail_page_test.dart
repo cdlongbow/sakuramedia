@@ -207,7 +207,7 @@ void main() {
     });
     expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
     expect(find.byKey(const Key('movie-summary-card-ABC-002')), findsOneWidget);
-    expect(find.text('1 部'), findsOneWidget);
+    expect(find.text('作品 · 1 部'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);

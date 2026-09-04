@@ -35,6 +35,7 @@ class VideoMutationEvents extends _$VideoMutationEvents {
   void reportCollectionMembershipChanged({
     required int videoId,
     int? collectionId,
+    bool removedFromCollection = false,
   }) {
     if (_controller.isClosed) return;
     _controller.add(
@@ -42,6 +43,7 @@ class VideoMutationEvents extends _$VideoMutationEvents {
         kind: VideoMutationKind.collectionMembershipChanged,
         videoId: videoId,
         collectionId: collectionId,
+        removedFromCollection: removedFromCollection,
       ),
     );
   }

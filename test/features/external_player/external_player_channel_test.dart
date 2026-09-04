@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/external_player/data/external_playback_mode.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -113,5 +114,71 @@ void main() {
       await external.launch(playerId: 'org.videolan.vlc', url: 'http://x/v'),
       isFalse,
     );
+  });
+
+  for (final mode in ExternalPlaybackMode.values) {
+    test('外部播放使用 $mode，保留签名、续播及其他参数', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      const url =
+          'http://nas:8000/api/media/116/play/?expires=1777777777&signature=abc&delivery=redirect&tag=a&tag=b';
+      MethodCall? captured;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        captured = call;
+        return true;
+      });
+      expect(
+        await const ExternalPlayerChannel().launch(
+          playerId: 'player',
+          url: url,
+          playbackMode: mode,
+          title: '视频',
+          positionMs: 90000,
+        ),
+        isTrue,
+      );
+      final args = captured!.arguments as Map;
+      final result = Uri.parse(args['url'] as String);
+      expect(
+        result.queryParameters['delivery'],
+        mode == ExternalPlaybackMode.proxy ? 'proxy' : 'redirect',
+      );
+      expect(result.queryParameters['signature'], 'abc');
+      expect(result.queryParameters['expires'], '1777777777');
+      expect(result.queryParametersAll['tag'], ['a', 'b']);
+      expect(result.path, '/api/media/116/play/');
+      expect(args['positionMs'], 90000);
+      expect(args['title'], '视频');
+      if (mode == ExternalPlaybackMode.followBackend) {
+        expect(args['url'], url);
+      }
+    });
+  }
+  test('显式模式覆盖或补充 delivery，包含带资源路径的签名媒体', () {
+    for (final suffix in ['', '/', '/movie.mp4']) {
+      for (final delivery in ['', '&delivery=proxy']) {
+        final url =
+            'http://nas/media/1/play$suffix?expires=1&signature=x$delivery';
+        expect(
+          Uri.parse(
+            ExternalPlaybackMode.redirect.applyToUrl(url),
+          ).queryParameters['delivery'],
+          'redirect',
+        );
+        expect(ExternalPlaybackMode.followBackend.applyToUrl(url), url);
+      }
+    }
+  });
+
+  test('强制模式保留合并、切片和第三方地址', () {
+    for (final url in [
+      'http://nas/media/merged-play/?media_ids=1,2&expires=1&signature=x',
+      'http://nas/media-clips/1/stream?expires=1&signature=x',
+      'https://cdn.example/video.mp4?signature=x',
+      'file:///video.mp4',
+    ]) {
+      for (final mode in ExternalPlaybackMode.values) {
+        expect(mode.applyToUrl(url), url);
+      }
+    }
   });
 }

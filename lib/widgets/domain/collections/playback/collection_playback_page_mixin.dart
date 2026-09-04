@@ -68,6 +68,8 @@ List<Widget> buildCollectionPlayBottomControls({
 /// 在 `dispose` 调 [disposePlayback]，`build` 用 [currentIndex]/[videoController]/
 /// [filmstrip] 与 [buildFilmstripPanel]/[jumpTo]。
 mixin CollectionPlaybackPageMixin<T extends StatefulWidget> on State<T> {
+  bool playbackMutationInProgress = false;
+
   Player? player;
   VideoController? videoController;
   CollectionFilmstripController? filmstrip;
@@ -119,7 +121,12 @@ mixin CollectionPlaybackPageMixin<T extends StatefulWidget> on State<T> {
     _positionSub = player.stream.position.listen((position) {
       // 用播放器的**实时** index 而非可能滞后的 currentIndex：position 流可能先于
       // playlist 流为新集触发，用 currentIndex 会把进度记到上一集、错位高亮。
-      filmstrip.updatePosition(player.state.playlist.index, position.inSeconds);
+      if (!playbackMutationInProgress) {
+        filmstrip.updatePosition(
+          player.state.playlist.index,
+          position.inSeconds,
+        );
+      }
     });
   }
 
@@ -132,11 +139,13 @@ mixin CollectionPlaybackPageMixin<T extends StatefulWidget> on State<T> {
   }
 
   Future<void> jumpTo(int index) async {
+    if (playbackMutationInProgress) return;
+    _clearPendingSeek();
     await player?.jump(index);
   }
 
   void _handlePlaylist(Playlist playlist) {
-    if (!mounted) {
+    if (!mounted || playbackMutationInProgress) {
       return;
     }
     if (playlist.index != currentIndex) {
@@ -163,11 +172,97 @@ mixin CollectionPlaybackPageMixin<T extends StatefulWidget> on State<T> {
     });
   }
 
+  /// 持久化成功后原位更新队列；仅删除正在使用的媒体时先释放源。
+  /// [onRemoved] 同步更新调用方的成员，并广播跨页变更。
+  Future<void> removePlaybackEpisode(
+    int index, {
+    required bool deleteMedia,
+    required Future<void> Function() persist,
+    required VoidCallback onRemoved,
+  }) async {
+    final activePlayer = player!;
+    if (playbackMutationInProgress) return;
+    playbackMutationInProgress = true;
+    _clearPendingSeek();
+    final original = activePlayer.state.playlist;
+    final originalPosition = activePlayer.state.position;
+    final wasPlaying = activePlayer.state.playing;
+    final releaseSource = deleteMedia && original.index == index;
+    var committed = false;
+    try {
+      if (releaseSource) await activePlayer.stop();
+      await persist();
+      committed = true;
+      onRemoved();
+      if (!mounted) return;
+      final current = releaseSource
+          ? original.index
+          : activePlayer.state.playlist.index;
+      final removingCurrent = current == index;
+      final remaining = original.medias.toList()..removeAt(index);
+      if (remaining.isEmpty) {
+        if (!releaseSource) await activePlayer.stop();
+      } else if (releaseSource) {
+        await activePlayer.open(
+          Playlist(remaining, index: index.clamp(0, remaining.length - 1)),
+          play: wasPlaying && index < remaining.length,
+        );
+      } else {
+        final keepPlaying = activePlayer.state.playing;
+        await activePlayer.remove(index);
+        if (removingCurrent) {
+          if (index == remaining.length) {
+            await activePlayer.jump(remaining.length - 1);
+            await activePlayer.pause();
+          } else if (keepPlaying) {
+            await activePlayer.play();
+          } else {
+            await activePlayer.pause();
+          }
+        }
+      }
+    } catch (_) {
+      // 接口失败不改本地队列；若已释放当前源，恢复原集及集内位置。
+      if (!committed && releaseSource && mounted) {
+        await activePlayer.open(original, play: wasPlaying);
+        if (mounted && originalPosition > Duration.zero) {
+          // open 的零位置通知不代表媒体就绪；时长到达后暂停态也能 seek。
+          // 恢复只作用一次，不把当前位置写成该媒体今后每次加载的 start。
+          if (activePlayer.state.duration > Duration.zero) {
+            await activePlayer.seek(originalPosition);
+          } else {
+            _pendingSeekSub = activePlayer.stream.duration.listen((duration) {
+              if (duration <= Duration.zero) return;
+              _clearPendingSeek();
+              activePlayer.seek(originalPosition);
+            });
+          }
+        }
+      }
+      rethrow;
+    } finally {
+      if (committed && mounted) {
+        episodeDurationsSeconds = episodeDurationsSeconds.toList()
+          ..removeAt(index);
+        filmstrip?.removeEpisode(index);
+      }
+      playbackMutationInProgress = false;
+      if (mounted) {
+        currentIndex = activePlayer.state.playlist.index;
+        filmstrip?.updatePosition(
+          currentIndex,
+          activePlayer.state.position.inSeconds,
+        );
+        setState(() {});
+      }
+    }
+  }
+
   /// 点击「整部合集」缩略图：定位到该帧所属集的对应时间（必要时跨集）。
   void seekToFrame(int globalIndex) {
     final target = filmstrip?.resolveTarget(globalIndex);
     final activePlayer = player;
-    if (target == null || activePlayer == null) {
+    if (target == null || activePlayer == null || playbackMutationInProgress) {
       return;
     }
     // 「有效当前集」：有在途跨集 jump 时，实时 playlist.index 仍是旧集、不可信，
@@ -205,7 +300,9 @@ mixin CollectionPlaybackPageMixin<T extends StatefulWidget> on State<T> {
   void seekToGlobalSeconds(int globalSeconds) {
     final activePlayer = player;
     final durations = episodeDurationsSeconds;
-    if (activePlayer == null || durations.isEmpty) {
+    if (activePlayer == null ||
+        durations.isEmpty ||
+        playbackMutationInProgress) {
       return;
     }
     // 解出目标集：线性扫累积时长（集数小，O(N) 够用），最后一集兜底落点防越界。

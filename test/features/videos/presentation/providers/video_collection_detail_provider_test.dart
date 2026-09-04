@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -346,5 +347,50 @@ void main() {
       adapter.requests.last.uri.queryParameters.containsKey('sort'),
       isFalse,
     );
+  });
+  test('播放页移出/删除事件原位同步详情，加入和其它合集事件不误删', () async {
+    enqueueLoad();
+    keepAlive();
+    await container.read(videoCollectionDetailProvider(3).future);
+    final events = container.read(videoMutationEventsProvider.notifier);
+    events.reportCollectionMembershipChanged(videoId: 1, collectionId: 3);
+    await container.pump();
+    expect(
+      container.read(videoCollectionDetailProvider(3)).requireValue.items,
+      hasLength(2),
+    );
+    events.reportCollectionMembershipChanged(
+      videoId: 1,
+      collectionId: 4,
+      removedFromCollection: true,
+    );
+    await container.pump();
+    expect(
+      container.read(videoCollectionDetailProvider(3)).requireValue.items,
+      hasLength(2),
+    );
+    events.reportCollectionMembershipChanged(
+      videoId: 1,
+      collectionId: 3,
+      removedFromCollection: true,
+    );
+    await container.pump();
+    expect(
+      container
+          .read(videoCollectionDetailProvider(3))
+          .requireValue
+          .items
+          .single
+          .video
+          .id,
+      2,
+    );
+    events.reportDeleted(2);
+    await container.pump();
+    expect(
+      container.read(videoCollectionDetailProvider(3)).requireValue.items,
+      isEmpty,
+    );
+    expect(adapter.requests, hasLength(2));
   });
 }

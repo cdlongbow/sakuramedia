@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:sakuramedia/features/external_player/data/external_playback_mode.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_app.dart';
 
 /// 与原生交互的外部播放器通道：枚举可用播放器、显式拉起播放。
@@ -64,6 +65,7 @@ class ExternalPlayerChannel {
   Future<bool> launch({
     required String playerId,
     required String url,
+    ExternalPlaybackMode playbackMode = ExternalPlaybackMode.followBackend,
     String? title,
     int? positionMs,
   }) async {
@@ -73,7 +75,7 @@ class ExternalPlayerChannel {
     try {
       final launched = await _channel.invokeMethod<bool>('launch', {
         'playerId': playerId,
-        'url': url,
+        'url': playbackMode.applyToUrl(url),
         'title': title,
         'positionMs': positionMs,
       });

@@ -54,6 +54,21 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     final spacing = context.appSpacing;
     final ownedScrollController = useScrollController();
     final effectiveScrollController = scrollController ?? ownedScrollController;
+    useEffect(() {
+      void loadMoreIfNeeded() {
+        if (!effectiveScrollController.hasClients) return;
+        final current = ref.read(movieSubscriptionManagerProvider).value;
+        if (current == null ||
+            current.paged.loadMoreErrorMessage != null ||
+            effectiveScrollController.position.extentAfter > 300) {
+          return;
+        }
+        unawaited(ref.read(movieSubscriptionManagerProvider.notifier).loadMore());
+      }
+
+      effectiveScrollController.addListener(loadMoreIfNeeded);
+      return () => effectiveScrollController.removeListener(loadMoreIfNeeded);
+    }, [effectiveScrollController]);
     ref.listen(
       movieSubscriptionManagerProvider.select((value) => value.value?.filter),
       (previous, next) {

@@ -456,7 +456,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                                 SizedBox(
                                                   width: spacing.lg,
                                                   height: spacing.lg,
-                                                  child: CircularProgressIndicator(
+                                                  child: CircularProgressIndicator.adaptive(
+                                                    backgroundColor: switch (Theme.of(context).platform) {
+                                                      TargetPlatform.iOS || TargetPlatform.macOS => Theme.of(context).colorScheme.onPrimary,
+                                                      _ => null,
+                                                    },
                                                     strokeWidth: 2.2,
                                                     valueColor:
                                                         AlwaysStoppedAnimation<

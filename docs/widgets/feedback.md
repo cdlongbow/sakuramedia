@@ -13,7 +13,7 @@
 - `AppSectionSkeleton`：桌面 section 骨架。
 - `AppSkeletonBlock`、`AppMobileSkeletonCard`、`AppMobileSkeletonList`：移动页面和局部占位。
 - `AppCoverCardSkeleton`：封面网格占位。
-- `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading。
+- `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading，随平台自适应。
 - `AppFilterUpdateBar`：筛选请求更新中的行内反馈。
 
 文件均位于 `lib/widgets/base/feedback/`。骨架只描述布局轮廓，不应把真实业务数据写进组件。

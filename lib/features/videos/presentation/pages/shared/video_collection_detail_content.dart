@@ -203,7 +203,7 @@ class _VideoCollectionDetailContentState
       builder: (context) {
         if (async.isLoading && state == null) {
           return (widget.loadingBuilder ??
-              (_) => const Center(child: CircularProgressIndicator()))(context);
+              (_) => const Center(child: CircularProgressIndicator.adaptive()))(context);
         }
         if (async.hasError && state == null) {
           return _buildError(context, async.error!);

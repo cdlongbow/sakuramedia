@@ -384,7 +384,7 @@ class _MediaImportSourcePickerState
 
   Widget _buildBrowserBody(BuildContext context) {
     if (_isBrowsing) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator.adaptive());
     }
     if (_browseError != null) {
       return SingleChildScrollView(
@@ -427,7 +427,7 @@ class _MediaImportSourcePickerState
     if (_isLoadingMore) {
       return Padding(
         padding: EdgeInsets.all(context.appSpacing.md),
-        child: const Center(child: CircularProgressIndicator()),
+        child: const Center(child: CircularProgressIndicator.adaptive()),
       );
     }
     return Padding(

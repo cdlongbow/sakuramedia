@@ -112,7 +112,7 @@ class _ExternalPlayerSettingsContentState
           title: '正在检测已安装的播放器…',
           trailing: SizedBox.square(
             dimension: context.appComponentTokens.iconSizeSm,
-            child: const CircularProgressIndicator(strokeWidth: 2),
+            child: const CircularProgressIndicator.adaptive(strokeWidth: 2),
           ),
         ),
       if (!_isLoading && _players.isEmpty)

@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import '../../../../support/fake_http_client_adapter.dart';
 
 void main() {
+  final provider = movieSubscriptionManagerProvider(MovieSubscriptionStatus.missing);
   late SessionStore sessionStore;
   late ApiClient apiClient;
   late FakeHttpClientAdapter adapter;
@@ -56,7 +57,7 @@ void main() {
   test('default filter loads missing subscriptions', () async {
     _enqueuePage(adapter, [_item('A-1', 'missing')]);
 
-    final state = await container.read(movieSubscriptionManagerProvider.future);
+    final state = await container.read(provider.future);
 
     expect(state.filter.status, MovieSubscriptionStatus.missing);
     expect(state.paged.items.single.movieNumber, 'A-1');
@@ -65,7 +66,7 @@ void main() {
 
   test('resetSearch posts movie id and reloads the list', () async {
     _enqueuePage(adapter, [_item('A-1', 'missing')]);
-    await container.read(movieSubscriptionManagerProvider.future);
+    await container.read(provider.future);
     adapter.enqueueJson(
       method: 'POST',
       path: '/movie-subscriptions/search-resets',
@@ -74,14 +75,14 @@ void main() {
     _enqueuePage(adapter, [_item('A-1', 'pending')]);
 
     final result = await container
-        .read(movieSubscriptionManagerProvider.notifier)
+        .read(provider.notifier)
         .resetSearch('A-1');
 
     expect(result.affectedCount, 1);
     expect(result.hasError, isFalse);
     expect(
       container
-          .read(movieSubscriptionManagerProvider)
+          .read(provider)
           .requireValue
           .paged
           .items
@@ -97,7 +98,7 @@ void main() {
 
   test('resetAllExhausted uses the reset endpoint without legacy actions', () async {
     _enqueuePage(adapter, [_item('A-1', 'exhausted')]);
-    await container.read(movieSubscriptionManagerProvider.future);
+    await container.read(provider.future);
     adapter.enqueueJson(
       method: 'POST',
       path: '/movie-subscriptions/search-resets',
@@ -106,7 +107,7 @@ void main() {
     _enqueuePage(adapter, const <Map<String, dynamic>>[]);
 
     final result = await container
-        .read(movieSubscriptionManagerProvider.notifier)
+        .read(provider.notifier)
         .resetAllExhausted();
 
     expect(result.affectedCount, 1);

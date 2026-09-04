@@ -105,7 +105,7 @@ class _MediaLibrarySelectorFieldState
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator.adaptive());
     }
     if (_error != null) {
       return Column(

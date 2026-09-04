@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -45,7 +46,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
         > {
   @override
   MovieSubscriptionFilterState get initialFilter =>
-      MovieSubscriptionFilterState.initial;
+      MovieSubscriptionFilterState.initial.copyWith(status: status);
 
   @override
   int get pageSize => 20;
@@ -85,7 +86,9 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   }
 
   @override
-  Future<MovieSubscriptionManagerState> build() async {
+  Future<MovieSubscriptionManagerState> build(
+    MovieSubscriptionStatus? status,
+  ) async {
     invalidateOnSignOut(ref);
     attachDisposeGuard();
     // 页面离开后本 provider 没有监听者，Riverpod 会**挂起**这条入站订阅——但底层
@@ -106,11 +109,6 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
 
   // --- 筛选 -----------------------------------------------------------------
 
-  /// 切换状态分段签。
-  Future<void> applyStatus(MovieSubscriptionStatus? status) {
-    return applyFilterState(activeFilter.copyWith(status: status));
-  }
-
   @override
   MovieSubscriptionManagerState applyFilterToState(
     MovieSubscriptionManagerState state,
@@ -123,6 +121,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
 
   @override
   Future<String?> refresh() async {
+    ref.invalidate(movieDownloadTasksProvider);
     unawaited(
       ref.read(movieSubscriptionStatusCountsProvider.notifier).refresh(),
     );
@@ -470,5 +469,19 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
     final current = state.value;
     if (current == null) return;
     state = AsyncData(current.copyWith(runningBatchAction: action));
+  }
+}
+
+@Riverpod(keepAlive: true)
+class MovieSubscriptionStatusSelection
+    extends _$MovieSubscriptionStatusSelection {
+  @override
+  MovieSubscriptionStatus? build() {
+    invalidateOnSignOut(ref);
+    return MovieSubscriptionFilterState.initial.status;
+  }
+
+  void select(MovieSubscriptionStatus? status) {
+    state = status;
   }
 }

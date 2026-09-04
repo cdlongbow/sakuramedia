@@ -1,3 +1,5 @@
+import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
+import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
@@ -15,4 +17,26 @@ DownloadsApi downloadsApi(Ref ref) {
 @Riverpod(keepAlive: true)
 DownloadClientsApi downloadClientsApi(Ref ref) {
   return DownloadClientsApi(apiClient: ref.watch(apiClientProvider));
+}
+
+@Riverpod(retry: kNoAsyncNotifierRetry)
+Future<List<DownloadTaskDto>> movieDownloadTasks(
+  Ref ref,
+  String movieNumber,
+) async {
+  final api = ref.watch(downloadsApiProvider);
+  final tasks = <DownloadTaskDto>[];
+  for (var page = 1; ; page++) {
+    final response = await api.getDownloadTasks(
+      movieNumber: movieNumber,
+      page: page,
+      pageSize: 100,
+    );
+    tasks.addAll(
+      response.items.where((task) => task.movieNumber == movieNumber),
+    );
+    if (page * response.pageSize >= response.total || response.items.isEmpty) {
+      return tasks;
+    }
+  }
 }

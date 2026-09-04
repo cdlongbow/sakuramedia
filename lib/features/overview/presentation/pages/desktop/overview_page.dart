@@ -298,7 +298,7 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
           child: SizedBox(
             width: componentTokens.movieCardLoaderSize,
             height: componentTokens.movieCardLoaderSize,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
             ),
           ),

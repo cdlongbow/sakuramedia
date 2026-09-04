@@ -106,3 +106,81 @@ final class DownloadClientsApiProvider
 
 String _$downloadClientsApiHash() =>
     r'600e51c3399f3b69d9759783804aa51357609557';
+
+@ProviderFor(movieDownloadTasks)
+final movieDownloadTasksProvider = MovieDownloadTasksFamily._();
+
+final class MovieDownloadTasksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<DownloadTaskDto>>,
+          List<DownloadTaskDto>,
+          FutureOr<List<DownloadTaskDto>>
+        >
+    with
+        $FutureModifier<List<DownloadTaskDto>>,
+        $FutureProvider<List<DownloadTaskDto>> {
+  MovieDownloadTasksProvider._({
+    required MovieDownloadTasksFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: kNoAsyncNotifierRetry,
+         name: r'movieDownloadTasksProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$movieDownloadTasksHash();
+
+  @override
+  String toString() {
+    return r'movieDownloadTasksProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<DownloadTaskDto>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<DownloadTaskDto>> create(Ref ref) {
+    final argument = this.argument as String;
+    return movieDownloadTasks(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MovieDownloadTasksProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$movieDownloadTasksHash() =>
+    r'4f1c6fbd081f632dea8992189d261b0b7c4e7cb3';
+
+final class MovieDownloadTasksFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<DownloadTaskDto>>, String> {
+  MovieDownloadTasksFamily._()
+    : super(
+        retry: kNoAsyncNotifierRetry,
+        name: r'movieDownloadTasksProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  MovieDownloadTasksProvider call(String movieNumber) =>
+      MovieDownloadTasksProvider._(argument: movieNumber, from: this);
+
+  @override
+  String toString() => r'movieDownloadTasksProvider';
+}

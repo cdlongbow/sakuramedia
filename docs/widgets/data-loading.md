@@ -4,7 +4,7 @@
 
 - `AppPullToRefresh`：`lib/widgets/base/layout/scrolling/app_pull_to_refresh.dart`，移动下拉刷新。
 - `AppAdaptiveRefreshScrollView`：根据平台组合刷新和滚动行为。
-- `AppPagedLoadMoreFooter`：分页底部的加载中、失败重试和已完成状态。
+- `AppPagedLoadMoreFooter`：分页底部的加载中、失败重试和已完成状态；加载动画随平台自适应。
 - `AppFilterTotalHeader`：筛选结果总数信息。
 
 这些组件只表达 UI 状态；请求、页码、筛选和重试由 feature Provider 提供。

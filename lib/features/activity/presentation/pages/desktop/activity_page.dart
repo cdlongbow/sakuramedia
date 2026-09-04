@@ -804,7 +804,7 @@ class _ExecutableJobsDialog extends ConsumerWidget {
   }
 }
 
-class _ExecutableJobsDialogContent extends StatelessWidget {
+class _ExecutableJobsDialogContent extends StatefulWidget {
   const _ExecutableJobsDialogContent({
     required this.state,
     required this.controller,
@@ -816,9 +816,59 @@ class _ExecutableJobsDialogContent extends StatelessWidget {
   final ValueChanged<JobMetadataDto> onTriggerJob;
 
   @override
+  State<_ExecutableJobsDialogContent> createState() =>
+      _ExecutableJobsDialogContentState();
+}
+
+class _ExecutableJobsDialogContentState
+    extends State<_ExecutableJobsDialogContent> {
+  static const String _systemFilterValue = '__system__';
+
+  String? _selectedFilter;
+
+  @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final state = widget.state;
     final jobs = state.jobs;
+    final pluginIds = <String>{};
+    var hasSystemJobs = false;
+    for (final job in jobs) {
+      final pluginId = job.pluginId?.trim();
+      if (pluginId == null || pluginId.isEmpty) {
+        hasSystemJobs = true;
+      } else {
+        pluginIds.add(pluginId);
+      }
+    }
+    final sortedPluginIds = pluginIds.toList()..sort();
+    final filterItems = <DropdownMenuItem<String?>>[
+      const DropdownMenuItem<String?>(value: null, child: Text('全部任务')),
+      if (hasSystemJobs)
+        const DropdownMenuItem<String?>(
+          value: _systemFilterValue,
+          child: Text('系统任务'),
+        ),
+      ...sortedPluginIds.map(
+        (pluginId) =>
+            DropdownMenuItem<String?>(value: pluginId, child: Text(pluginId)),
+      ),
+    ];
+    final selectedFilter =
+        filterItems.any((item) => item.value == _selectedFilter)
+        ? _selectedFilter
+        : null;
+    final visibleJobs = selectedFilter == null
+        ? jobs
+        : jobs
+              .where((job) {
+                final pluginId = job.pluginId?.trim();
+                if (selectedFilter == _systemFilterValue) {
+                  return pluginId == null || pluginId.isEmpty;
+                }
+                return pluginId == selectedFilter;
+              })
+              .toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -828,7 +878,7 @@ class _ExecutableJobsDialogContent extends StatelessWidget {
           AppEmptyState(
             key: const Key('activity-jobs-error'),
             message: state.jobErrorMessage!,
-            onRetry: controller.refreshJobs,
+            onRetry: widget.controller.refreshJobs,
             retryKey: const Key('activity-jobs-retry-button'),
           )
         else if (jobs.isEmpty)
@@ -852,6 +902,20 @@ class _ExecutableJobsDialogContent extends StatelessWidget {
             ),
             SizedBox(height: spacing.md),
           ],
+          SizedBox(
+            width: context.appLayoutTokens.filterFieldWidthLg,
+            child: AppSelectField<String?>(
+              key: const Key('activity-job-plugin-filter'),
+              label: '任务来源',
+              value: selectedFilter,
+              size: AppSelectFieldSize.compact,
+              items: filterItems,
+              onChanged: (value) {
+                setState(() => _selectedFilter = value);
+              },
+            ),
+          ),
+          SizedBox(height: spacing.md),
           ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.sizeOf(context).height * 0.68,
@@ -859,14 +923,16 @@ class _ExecutableJobsDialogContent extends StatelessWidget {
             child: ListView.separated(
               key: const Key('activity-executable-jobs-list'),
               shrinkWrap: true,
-              itemCount: jobs.length,
+              itemCount: visibleJobs.length,
               separatorBuilder: (_, __) => SizedBox(height: spacing.md),
               itemBuilder: (_, index) {
-                final job = jobs[index];
+                final job = visibleJobs[index];
                 return _ExecutableJobCard(
                   job: job,
-                  isTriggering: controller.isTriggeringJob(job.taskKey),
-                  onTrigger: () => onTriggerJob(job),
+                  isTriggering: widget.controller.isTriggeringJob(
+                    job.taskKey,
+                  ),
+                  onTrigger: () => widget.onTriggerJob(job),
                 );
               },
             ),
@@ -875,7 +941,7 @@ class _ExecutableJobsDialogContent extends StatelessWidget {
             SizedBox(height: spacing.md),
             _ExecutableJobsRefreshError(
               message: state.jobErrorMessage!,
-              onRetry: controller.refreshJobs,
+              onRetry: widget.controller.refreshJobs,
             ),
           ],
         ],

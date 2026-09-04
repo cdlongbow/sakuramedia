@@ -556,7 +556,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
             padding: EdgeInsets.symmetric(
               vertical: context.appLayoutTokens.emptySectionVerticalPadding,
             ),
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               key: Key('desktop-image-search-loading-indicator'),
             ),
           ),
@@ -598,7 +598,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
           child: SizedBox(
             width: componentTokens.movieCardLoaderSize,
             height: componentTokens.movieCardLoaderSize,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
             ),
           ),

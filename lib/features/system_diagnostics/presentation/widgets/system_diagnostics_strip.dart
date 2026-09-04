@@ -102,7 +102,7 @@ class _SystemDiagnosticsStripState
           SizedBox(
             width: context.appComponentTokens.iconSizeSm,
             height: context.appComponentTokens.iconSizeSm,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
               strokeWidth:
                   context.appComponentTokens.movieCardLoaderStrokeWidth,
             ),

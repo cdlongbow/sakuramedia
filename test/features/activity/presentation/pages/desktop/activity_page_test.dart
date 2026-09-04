@@ -27,7 +27,25 @@ void main() {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/system/jobs',
-      body: const <dynamic>[],
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_key': 'core_job',
+          'cli_help': '核心维护任务',
+          'manual_trigger_allowed': true,
+        },
+        <String, dynamic>{
+          'task_key': 'plugin_job_1',
+          'plugin_id': 'demo_plugin',
+          'cli_help': '插件任务一',
+          'manual_trigger_allowed': true,
+        },
+        <String, dynamic>{
+          'task_key': 'plugin_job_2',
+          'plugin_id': 'demo_plugin',
+          'cli_help': '插件任务二',
+          'manual_trigger_allowed': true,
+        },
+      ],
     );
     bundle.adapter.enqueueJson(
       method: 'GET',
@@ -74,7 +92,26 @@ void main() {
 
     expect(find.byKey(const Key('desktop-activity-page')), findsOneWidget);
     expect(find.byKey(const Key('activity-tab-tasks')), findsOneWidget);
-    expect(find.byKey(const Key('activity-tab-download-tasks')), findsOneWidget);
+    expect(
+      find.byKey(const Key('activity-tab-download-tasks')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('activity-task-201')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('activity-job-plugin-filter')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('activity-job-plugin-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('系统任务'), findsOneWidget);
+    expect(find.text('demo_plugin'), findsOneWidget);
+    await tester.tap(find.text('demo_plugin'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('activity-job-core_job')), findsNothing);
+    expect(find.byKey(const Key('activity-job-plugin_job_1')), findsOneWidget);
+    expect(find.byKey(const Key('activity-job-plugin_job_2')), findsOneWidget);
   });
 }

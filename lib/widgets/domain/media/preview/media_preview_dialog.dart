@@ -454,7 +454,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     if (_isLoadingMovieDetail) {
       return const SizedBox(
         height: 132,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator.adaptive()),
       );
     }
     if (_movieDetailErrorMessage != null) {

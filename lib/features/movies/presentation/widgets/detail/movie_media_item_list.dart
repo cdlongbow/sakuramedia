@@ -98,7 +98,11 @@ class MovieMediaItemList extends StatelessWidget {
                       ? SizedBox(
                           width: context.appComponentTokens.iconSizeSm,
                           height: context.appComponentTokens.iconSizeSm,
-                          child: CircularProgressIndicator(
+                          child: CircularProgressIndicator.adaptive(
+                            backgroundColor: switch (Theme.of(context).platform) {
+                              TargetPlatform.iOS || TargetPlatform.macOS => context.appTextPalette.error,
+                              _ => null,
+                            },
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               context.appTextPalette.error,

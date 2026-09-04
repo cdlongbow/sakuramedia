@@ -140,9 +140,13 @@ class _TopBarRefreshButton extends StatelessWidget {
           child: SizedBox(
             width: iconSize,
             height: iconSize,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
+              backgroundColor: switch (Theme.of(context).platform) {
+                TargetPlatform.iOS || TargetPlatform.macOS => context.appTextPalette.muted,
+                _ => null,
+              },
               strokeWidth: 2,
-              color: context.appTextPalette.muted,
+              valueColor: AlwaysStoppedAnimation<Color?>(context.appTextPalette.muted),
             ),
           ),
         ),

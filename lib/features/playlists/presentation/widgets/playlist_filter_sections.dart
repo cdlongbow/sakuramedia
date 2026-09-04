@@ -185,9 +185,13 @@ class _ResolutionInlineStatus extends StatelessWidget {
           SizedBox(
             width: 14,
             height: 14,
-            child: CircularProgressIndicator(
+            child: CircularProgressIndicator.adaptive(
+              backgroundColor: switch (Theme.of(context).platform) {
+                TargetPlatform.iOS || TargetPlatform.macOS => Theme.of(context).colorScheme.primary,
+                _ => null,
+              },
               strokeWidth: 2,
-              color: Theme.of(context).colorScheme.primary,
+              valueColor: AlwaysStoppedAnimation<Color?>(Theme.of(context).colorScheme.primary),
             ),
           ),
           SizedBox(width: context.appSpacing.sm),

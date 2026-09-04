@@ -172,7 +172,7 @@ class VideoEpisodeQueueItem extends StatelessWidget {
           icon: isBusy
               ? SizedBox.square(
                   dimension: context.appComponentTokens.iconSizeSm,
-                  child: const CircularProgressIndicator(strokeWidth: 2),
+                  child: const CircularProgressIndicator.adaptive(strokeWidth: 2),
                 )
               : const Icon(Icons.more_horiz_rounded),
           onPressed: onActions == null

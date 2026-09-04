@@ -1,3 +1,4 @@
+import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,8 +6,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
@@ -16,7 +15,7 @@ import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -152,7 +151,7 @@ class _DownloadInitialLoading extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 36,
-          child: CircularProgressIndicator(
+          child: CircularProgressIndicator.adaptive(
             strokeWidth: context.appComponentTokens.movieCardLoaderStrokeWidth,
           ),
         ),
@@ -302,7 +301,13 @@ class _DownloadTaskCard extends ConsumerWidget {
                 tooltip: isImportRunning ? '任务正在导入，无法删除' : '删除',
                 onPressed: (isPending || isImportRunning)
                     ? null
-                    : () => _confirmDelete(context, ref, task),
+                    : () => showDownloadTaskDeleteDialog(
+                        context,
+                        tasks: [task],
+                        onDelete: (id, deleteFiles) => ref
+                            .read(downloadTaskCenterProvider.notifier)
+                            .deleteTask(id, deleteFiles: deleteFiles),
+                      ),
               ),
             ],
           ),
@@ -392,111 +397,6 @@ class _DownloadTaskCover extends StatelessWidget {
           key: Key('download-task-cover-tap-${movieNumber ?? ''}'),
           onTap: onTap,
           child: image,
-        ),
-      ),
-    );
-  }
-}
-
-Future<void> _confirmDelete(
-  BuildContext context,
-  WidgetRef ref,
-  DownloadTaskDto task,
-) async {
-  var deleteFiles = false;
-  await showAppConfirmDialog(
-    context,
-    dialogKey: const Key('download-task-delete-dialog'),
-    title: '删除下载任务',
-    message: '确认删除任务「${task.name.isEmpty ? task.remoteId : task.name}」？',
-    danger: true,
-    confirmLabel: '删除',
-    failureFallback: '删除失败',
-    extraContent: _DeleteFilesCheckbox(
-      onChanged: (value) => deleteFiles = value,
-    ),
-    onConfirm: () async {
-      try {
-        await ref
-            .read(downloadTaskCenterProvider.notifier)
-            .deleteTask(task.id, deleteFiles: deleteFiles);
-      } catch (error) {
-        // 抛一个只带 message 的 ApiException，让 confirm dialog 的
-        // apiErrorMessage 直接吐出我们映射的中文（error.error 留空 →
-        // 走 message 分支）。
-        throw ApiException(
-          message: _downloadErrorMessage(error, fallback: '删除失败'),
-        );
-      }
-    },
-  );
-}
-
-String _downloadErrorMessage(Object error, {required String fallback}) {
-  if (error is ApiException) {
-    final code = error.error?.code;
-    switch (code) {
-      case 'download_task_import_running':
-        return '任务正在导入，无法删除';
-    }
-  }
-  return apiErrorMessage(error, fallback: fallback);
-}
-
-class _DeleteFilesCheckbox extends HookWidget {
-  const _DeleteFilesCheckbox({required this.onChanged});
-
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final deleteFiles = useState(false);
-
-    void toggle(bool value) {
-      deleteFiles.value = value;
-      onChanged(value);
-    }
-
-    return InkWell(
-      onTap: () => toggle(!deleteFiles.value),
-      borderRadius: context.appRadius.smBorder,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
-        child: Row(
-          children: [
-            Checkbox(
-              key: const Key('download-task-delete-files-checkbox'),
-              value: deleteFiles.value,
-              onChanged: (value) => toggle(value ?? false),
-            ),
-            SizedBox(width: context.appSpacing.xs),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '同时删除下载器中的文件',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s12,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.secondary,
-                    ),
-                  ),
-                  SizedBox(height: context.appSpacing.xs / 2),
-                  Text(
-                    '不影响已导入媒体库的文件',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s10,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.muted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

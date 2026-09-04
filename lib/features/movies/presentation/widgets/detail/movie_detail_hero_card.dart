@@ -162,11 +162,15 @@ class MovieDetailHeroCard extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: isPlayLoading
-                            ? const Padding(
-                                padding: EdgeInsets.all(22),
-                                child: CircularProgressIndicator(
+                            ? Padding(
+                                padding: const EdgeInsets.all(22),
+                                child: CircularProgressIndicator.adaptive(
+                                  backgroundColor: switch (Theme.of(context).platform) {
+                                    TargetPlatform.iOS || TargetPlatform.macOS => Colors.white,
+                                    _ => null,
+                                  },
                                   strokeWidth: 3,
-                                  color: Colors.white,
+                                  valueColor: AlwaysStoppedAnimation<Color?>(Colors.white),
                                 ),
                               )
                             : Icon(
@@ -285,10 +289,14 @@ class _HeroMoreActionsButton extends StatelessWidget {
           ? SizedBox(
               width: tokens.iconSizeSm,
               height: tokens.iconSizeSm,
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
+                backgroundColor: switch (Theme.of(context).platform) {
+                  TargetPlatform.iOS || TargetPlatform.macOS => context.appTextPalette.onMedia,
+                  _ => null,
+                },
                 key: const Key('movie-detail-hero-more-actions-loading'),
                 strokeWidth: 2,
-                color: context.appTextPalette.onMedia,
+                valueColor: AlwaysStoppedAnimation<Color?>(context.appTextPalette.onMedia),
               ),
             )
           : Icon(

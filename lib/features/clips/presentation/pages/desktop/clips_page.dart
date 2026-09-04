@@ -530,7 +530,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           child: SizedBox(
             width: 24,
             height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
           ),
         ),
       );

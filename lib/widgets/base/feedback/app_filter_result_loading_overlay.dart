@@ -168,7 +168,7 @@ class _FilterResultLoadingIndicator extends StatelessWidget {
             child: SizedBox(
               width: componentTokens.iconSizeMd,
               height: componentTokens.iconSizeMd,
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
               ),
             ),

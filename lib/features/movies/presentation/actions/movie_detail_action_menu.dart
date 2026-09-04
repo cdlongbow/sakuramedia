@@ -411,9 +411,13 @@ class _MovieDetailDrawerActionRow extends StatelessWidget {
                     key: Key('movie-detail-actions-loading-$label'),
                     width: context.appComponentTokens.iconSizeMd,
                     height: context.appComponentTokens.iconSizeMd,
-                    child: CircularProgressIndicator(
+                    child: CircularProgressIndicator.adaptive(
+                      backgroundColor: switch (Theme.of(context).platform) {
+                        TargetPlatform.iOS || TargetPlatform.macOS => textColor,
+                        _ => null,
+                      },
                       strokeWidth: 2,
-                      color: textColor,
+                      valueColor: AlwaysStoppedAnimation<Color?>(textColor),
                     ),
                   )
                 else

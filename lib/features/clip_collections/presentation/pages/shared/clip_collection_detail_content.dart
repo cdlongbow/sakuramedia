@@ -203,7 +203,7 @@ class _ClipCollectionDetailContentState
         if (async.isLoading && state == null) {
           return (
             widget.loadingBuilder ??
-            (_) => const Center(child: CircularProgressIndicator())
+            (_) => const Center(child: CircularProgressIndicator.adaptive())
           )(context);
         }
         if (async.hasError && state == null) {

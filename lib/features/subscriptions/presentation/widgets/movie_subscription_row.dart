@@ -21,6 +21,7 @@ class MovieSubscriptionRow extends StatelessWidget {
     required this.onOpenDownloads,
     required this.onSearchMagnet,
     required this.onUnsubscribe,
+    this.onDeleteDownloads,
   });
 
   final MovieSubscriptionListItemDto item;
@@ -31,6 +32,7 @@ class MovieSubscriptionRow extends StatelessWidget {
   final VoidCallback onOpenDownloads;
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
+  final VoidCallback? onDeleteDownloads;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,7 @@ class MovieSubscriptionRow extends StatelessWidget {
             onOpenDownloads: onOpenDownloads,
             onSearchMagnet: onSearchMagnet,
             onUnsubscribe: onUnsubscribe,
+            onDeleteDownloads: onDeleteDownloads,
           ),
         ],
       ),
@@ -283,6 +286,7 @@ class _FooterLine extends StatelessWidget {
     required this.onOpenDownloads,
     required this.onSearchMagnet,
     required this.onUnsubscribe,
+    this.onDeleteDownloads,
   });
 
   final MovieSubscriptionListItemDto item;
@@ -291,6 +295,7 @@ class _FooterLine extends StatelessWidget {
   final VoidCallback onOpenDownloads;
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
+  final VoidCallback? onDeleteDownloads;
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +336,7 @@ class _FooterLine extends StatelessWidget {
               onOpenDownloads: onOpenDownloads,
               onSearchMagnet: onSearchMagnet,
               onUnsubscribe: onUnsubscribe,
+              onDeleteDownloads: onDeleteDownloads,
             ),
         ],
       ],
@@ -343,11 +349,13 @@ class _RowActions extends StatelessWidget {
     required this.onOpenDownloads,
     required this.onSearchMagnet,
     required this.onUnsubscribe,
+    this.onDeleteDownloads,
   });
 
   final VoidCallback onOpenDownloads;
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
+  final VoidCallback? onDeleteDownloads;
 
   @override
   Widget build(BuildContext context) {
@@ -370,6 +378,15 @@ class _RowActions extends StatelessWidget {
           semanticLabel: '磁力搜索',
           onPressed: onSearchMagnet,
         ),
+        if (onDeleteDownloads != null)
+          AppIconButton(
+            key: const Key('movie-subscription-row-delete-downloads'),
+            icon: const Icon(Icons.delete_outline_rounded),
+            size: AppIconButtonSize.regular,
+            tooltip: '删除下载任务',
+            semanticLabel: '删除下载任务',
+            onPressed: onDeleteDownloads,
+          ),
         AppIconButton(
           key: const Key('movie-subscription-row-unsubscribe'),
           icon: const Icon(Icons.bookmark_remove_outlined),

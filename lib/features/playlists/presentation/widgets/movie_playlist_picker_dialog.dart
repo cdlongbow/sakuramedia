@@ -211,13 +211,13 @@ class _MoviePlaylistPickerDialogState
                       fit: FlexFit.loose,
                       child: Center(
                         key: Key('movie-playlist-loading'),
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator.adaptive(),
                       ),
                     )
                     : const SizedBox(
                       key: Key('movie-playlist-loading'),
                       height: 160,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: CircularProgressIndicator.adaptive()),
                     )
               else if (_errorMessage != null)
                 isBottomDrawer

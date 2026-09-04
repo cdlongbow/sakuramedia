@@ -30,28 +30,30 @@ class AppSidebar extends ConsumerWidget {
     final isCompact = ref.watch(appShellSidebarCollapsedProvider);
     final sidebarTokens = context.appSidebarTokens;
     final appColors = context.appColors;
-    final useMacSidebarGlass = _useMacSidebarGlass;
-    final width =
-        isCompact ? sidebarTokens.collapsedWidth : sidebarTokens.expandedWidth;
+    final useDesktopSidebarGlass = _useDesktopSidebarGlass;
+    final glassTint = defaultTargetPlatform == TargetPlatform.windows
+        ? appColors.windowsSidebarGlassTint
+        : appColors.desktopSidebarGlassTint;
+    final width = isCompact
+        ? sidebarTokens.collapsedWidth
+        : sidebarTokens.expandedWidth;
 
     return AnimatedContainer(
       key: const Key('desktop-shell-sidebar'),
       duration: const Duration(milliseconds: 180),
       width: width,
       decoration: BoxDecoration(
-        color:
-            useMacSidebarGlass
-                ? appColors.desktopSidebarGlassTint
-                : appColors.sidebarBackground,
+        color: useDesktopSidebarGlass
+            ? glassTint
+            : appColors.sidebarBackground,
         border: Border(
           right: BorderSide(
-            color:
-                useMacSidebarGlass
-                    ? appColors.borderSubtle.withValues(alpha: 0.68)
-                    : appColors.borderSubtle,
+            color: useDesktopSidebarGlass
+                ? appColors.borderSubtle.withValues(alpha: 0.68)
+                : appColors.borderSubtle,
           ),
         ),
-        boxShadow: useMacSidebarGlass ? const [] : context.appShadows.panel,
+        boxShadow: useDesktopSidebarGlass ? const [] : context.appShadows.panel,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,13 +66,12 @@ class AppSidebar extends ConsumerWidget {
                 final toggleButton = AppIconButton(
                   key: const Key('sidebar-toggle-button'),
                   iconColor: context.appTextPalette.primary,
-                  onPressed:
-                      ref
-                          .read(appShellSidebarCollapsedProvider.notifier)
-                          .toggle,
+                  onPressed: ref
+                      .read(appShellSidebarCollapsedProvider.notifier)
+                      .toggle,
                   icon: Icon(isCompact ? Icons.menu_open : Icons.menu_open),
                 );
-                if (useMacSidebarGlass) {
+                if (defaultTargetPlatform == TargetPlatform.macOS) {
                   return Stack(
                     children: [
                       const Positioned.fill(
@@ -97,7 +98,7 @@ class AppSidebar extends ConsumerWidget {
           Divider(
             key: const Key('sidebar-header-divider'),
             height: 1,
-            color: _sidebarDividerColor(appColors, useMacSidebarGlass),
+            color: _sidebarDividerColor(appColors, useDesktopSidebarGlass),
           ),
           Padding(
             padding: EdgeInsets.all(context.appSpacing.sm),
@@ -109,10 +110,9 @@ class AppSidebar extends ConsumerWidget {
           Expanded(
             child: _SidebarNavScrollArea(
               horizontalPadding: context.appSpacing.sm,
-              fadeColor:
-                  useMacSidebarGlass
-                      ? appColors.desktopSidebarGlassTint
-                      : appColors.sidebarBackground,
+              fadeColor: useDesktopSidebarGlass
+                  ? glassTint
+                  : appColors.sidebarBackground,
               children: _buildNavChildren(context, isCompact),
             ),
           ),
@@ -123,7 +123,10 @@ class AppSidebar extends ConsumerWidget {
               children: [
                 Divider(
                   height: 1,
-                  color: _sidebarDividerColor(appColors, useMacSidebarGlass),
+                  color: _sidebarDividerColor(
+                    appColors,
+                    useDesktopSidebarGlass,
+                  ),
                 ),
                 SizedBox(height: context.appSpacing.sm),
                 AppVersionInfoCard(isCompact: isCompact),
@@ -187,7 +190,10 @@ class _SidebarSectionHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),
         child: Divider(
           height: 1,
-          color: _sidebarDividerColor(context.appColors, _useMacSidebarGlass),
+          color: _sidebarDividerColor(
+            context.appColors,
+            _useDesktopSidebarGlass,
+          ),
         ),
       );
     }
@@ -401,11 +407,10 @@ class _SidebarSearchSectionState extends State<_SidebarSearchSection> {
             borderRadius: context.appRadius.smBorder,
             child: InkWell(
               key: const Key('sidebar-search-button'),
-              onTap:
-                  () => context.pushDesktopSearch(
-                    query: '',
-                    fallbackPath: widget.currentPath,
-                  ),
+              onTap: () => context.pushDesktopSearch(
+                query: '',
+                fallbackPath: widget.currentPath,
+              ),
               borderRadius: context.appRadius.smBorder,
               child: SizedBox(
                 height: context.appSidebarTokens.itemHeight,
@@ -552,20 +557,19 @@ class _AppSidebarItemState extends State<AppSidebarItem> {
   Widget build(BuildContext context) {
     final appColors = context.appColors;
     final sidebarTokens = context.appSidebarTokens;
-    final useMacSidebarGlass = _useMacSidebarGlass;
+    final useDesktopSidebarGlass = _useDesktopSidebarGlass;
     final isHovered = _hovered && !widget.selected;
-    final backgroundColor =
-        useMacSidebarGlass
-            ? widget.selected
-                ? appColors.desktopSidebarGlassActive
-                : isHovered
-                ? appColors.desktopSidebarGlassHover
-                : Colors.transparent
-            : widget.selected
-            ? appColors.sidebarActiveBackground
-            : isHovered
-            ? appColors.sidebarHoverBackground
-            : appColors.sidebarBackground;
+    final backgroundColor = useDesktopSidebarGlass
+        ? widget.selected
+              ? appColors.desktopSidebarGlassActive
+              : isHovered
+              ? appColors.desktopSidebarGlassHover
+              : Colors.transparent
+        : widget.selected
+        ? appColors.sidebarActiveBackground
+        : isHovered
+        ? appColors.sidebarHoverBackground
+        : appColors.sidebarBackground;
 
     final foregroundColor = context.appTextPalette.primary;
 
@@ -595,20 +599,18 @@ class _AppSidebarItemState extends State<AppSidebarItem> {
               duration: const Duration(milliseconds: 120),
               height: sidebarTokens.itemHeight,
               padding: EdgeInsets.symmetric(
-                horizontal:
-                    widget.collapsed
-                        ? context.appSpacing.sm
-                        : context.appSpacing.md,
+                horizontal: widget.collapsed
+                    ? context.appSpacing.sm
+                    : context.appSpacing.md,
               ),
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: context.appRadius.smBorder,
               ),
               child: Row(
-                mainAxisAlignment:
-                    widget.collapsed
-                        ? MainAxisAlignment.center
-                        : MainAxisAlignment.start,
+                mainAxisAlignment: widget.collapsed
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.start,
                 children: [
                   _buildIcon(context, foregroundColor),
                   if (!widget.collapsed) ...[
@@ -644,10 +646,12 @@ class _AppSidebarItemState extends State<AppSidebarItem> {
   }
 }
 
-bool get _useMacSidebarGlass =>
-    defaultTargetPlatform == TargetPlatform.macOS;
+bool get _useDesktopSidebarGlass =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows);
 
-Color _sidebarDividerColor(AppColors appColors, bool useMacSidebarGlass) =>
-    useMacSidebarGlass
-        ? appColors.borderSubtle.withValues(alpha: 0.68)
-        : appColors.borderSubtle;
+Color _sidebarDividerColor(AppColors appColors, bool useDesktopSidebarGlass) =>
+    useDesktopSidebarGlass
+    ? appColors.borderSubtle.withValues(alpha: 0.68)
+    : appColors.borderSubtle;

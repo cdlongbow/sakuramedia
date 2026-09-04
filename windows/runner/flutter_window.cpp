@@ -13,6 +13,19 @@
 
 namespace {
 
+// Query the real build: Windows 10 and 11 both report major version 10.
+int32_t WindowsBuildNumber() {
+  using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
+  const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  if (!ntdll) return 0;
+  const auto get_version = reinterpret_cast<RtlGetVersionFn>(
+      GetProcAddress(ntdll, "RtlGetVersion"));
+  OSVERSIONINFOW version{};
+  version.dwOSVersionInfoSize = sizeof(version);
+  if (!get_version || get_version(&version) != 0) return 0;
+  return static_cast<int32_t>(version.dwBuildNumber);
+}
+
 constexpr wchar_t kApplicationsRegistryKey[] = L"Applications";
 constexpr wchar_t kAppPathsRegistryKey[] =
     L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
@@ -301,6 +314,19 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  window_effects_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "sakuramedia/window_effects",
+          &flutter::StandardMethodCodec::GetInstance());
+  window_effects_channel_->SetMethodCallHandler(
+      [](const auto& call, auto result) {
+        if (call.method_name() == "getWindowsBuildNumber") {
+          result->Success(flutter::EncodableValue(WindowsBuildNumber()));
+        } else {
+          result->NotImplemented();
+        }
+      });
   external_player_channel_ =
       std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
           flutter_controller_->engine()->messenger(),
@@ -325,6 +351,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  window_effects_channel_ = nullptr;
   external_player_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;

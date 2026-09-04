@@ -92,7 +92,7 @@ services:
       PGID: 0
       # 不使用中国时区时修改为宿主机所在时区。
       TZ: "Asia/Shanghai"
-      # 需要为 JavDB / GFriends 配置代理时再填写。
+      # 若部署机器无法直连 JavDB API 或 GFriends，取消下方三行注释并填入 HTTP_PROXY和HTTPS_PROXY
       # HTTP_PROXY: "http://192.168.1.1:7890"
       # HTTPS_PROXY: "http://192.168.1.1:7890"
       # NO_PROXY: "localhost,127.0.0.1"
@@ -124,6 +124,12 @@ services:
         soft: 65536
         hard: 65536
 ```
+
+::: warning JavDB 图片分流
+`c0.jdbstatic.com` 是 JavDB 的静态图片域名，用于下载封面、剧照和头像。该域名经日本节点出口可能被拒绝，请在代理规则中将它设为直连，或改由非日本节点转发。
+
+如果主路由启用了透明代理，即使没有填写上面的代理环境变量，也要配置相同的分流规则；否则影片图片可能无法下载。
+:::
 
 ::: tip 数据库
 后端默认按 `postgres` 服务名连接内置 PostgreSQL，照抄示例即可运行。若使用外部 PostgreSQL，再按[配置说明](/guide/config#database)修改 `[database].url`。

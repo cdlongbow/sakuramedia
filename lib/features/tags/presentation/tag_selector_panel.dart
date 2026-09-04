@@ -67,72 +67,63 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
     final selection = widget.selection;
     final spacing = context.appSpacing;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(spacing.lg),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '选择标签',
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.medium,
+                tone: AppTextTone.primary,
+              ),
+            ),
+            const Spacer(),
+            if (selection.hasSelection)
               Text(
-                '选择标签',
+                '已选 ${selection.selectedCount} 个',
+                key: const Key('tags-selected-count'),
                 style: resolveAppTextStyle(
                   context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.medium,
-                  tone: AppTextTone.primary,
+                  size: AppTextSize.s12,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.secondary,
                 ),
               ),
-              const Spacer(),
-              if (selection.hasSelection)
-                Text(
-                  '已选 ${selection.selectedCount} 个',
-                  key: const Key('tags-selected-count'),
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-            ],
+          ],
+        ),
+        SizedBox(height: spacing.md),
+        AppTextField(
+          fieldKey: const Key('tags-search-field'),
+          controller: _searchController,
+          hintText: '搜索标签',
+          prefix: Icon(
+            Icons.search,
+            size: context.appComponentTokens.iconSizeSm,
+            color: context.appTextPalette.secondary,
           ),
-          SizedBox(height: spacing.md),
-          AppTextField(
-            fieldKey: const Key('tags-search-field'),
-            controller: _searchController,
-            hintText: '搜索标签',
-            prefix: Icon(
-              Icons.search,
-              size: context.appComponentTokens.iconSizeSm,
-              color: context.appTextPalette.secondary,
-            ),
-            suffix:
-                _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        size: context.appComponentTokens.iconSizeSm,
-                      ),
-                      splashRadius: 16,
-                      onPressed: () {
-                        _searchController.clear();
-                        widget.onQueryChanged('');
-                      },
+          suffix:
+              _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      size: context.appComponentTokens.iconSizeSm,
                     ),
-            onChanged: widget.onQueryChanged,
-          ),
-          SizedBox(height: spacing.md),
-          _buildBody(context),
-        ],
-      ),
+                    splashRadius: 16,
+                    onPressed: () {
+                      _searchController.clear();
+                      widget.onQueryChanged('');
+                    },
+                  ),
+          onChanged: widget.onQueryChanged,
+        ),
+        SizedBox(height: spacing.md),
+        _buildBody(context),
+      ],
     );
   }
 

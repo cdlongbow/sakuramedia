@@ -35,6 +35,9 @@ Future<void> bootstrapDesktopWindow() async {
     if (isWindows) {
       // Hidden title bars still reserve native side/bottom resize borders.
       await windowManager.setAsFrameless();
+      // Frameless windows default to no shadow; enable the native DWM shadow
+      // after switching modes (setHasShadow is a no-op on framed Windows).
+      await windowManager.setHasShadow(true);
     }
     if (restored.maximized) {
       await windowManager.maximize();

@@ -179,12 +179,15 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                   )
                 : null,
             isPlayLoading: _isLaunchingPlayback,
-            onPlaylistTap: () => showMoviePlaylistPickerDialog(
-              context,
-              movieNumber: widget.movieNumber,
-              initialPlaylists: movie.playlists,
-              presentation: MoviePlaylistPickerPresentation.dialog,
-            ),
+            onPlaylistTap: () async {
+              await showMoviePlaylistPickerDialog(
+                context,
+                movieNumber: widget.movieNumber,
+                initialPlaylists: movie.playlists,
+                presentation: MoviePlaylistPickerPresentation.dialog,
+              );
+              if (mounted) await reloadPlaylistMembership();
+            },
             onCollectionToggle: isActionControlsLocked
                 ? null
                 : () => toggleMovieCollectionType(isCollection: isCollection),

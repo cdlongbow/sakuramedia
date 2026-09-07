@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sakuramedia/core/format/media_timecode.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
@@ -10,7 +12,6 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
@@ -219,10 +220,84 @@ class MovieDetailPageContent extends StatelessWidget {
     );
   }
 
+  MovieMediaProgressDto? get _latestProgress {
+    MovieMediaProgressDto? latest;
+    for (final media in movie.mediaItems) {
+      final progress = media.progress;
+      if (progress == null) continue;
+      if (latest == null ||
+          (progress.lastWatchedAt != null &&
+              (latest.lastWatchedAt == null ||
+                  progress.lastWatchedAt!.isAfter(latest.lastWatchedAt!)))) {
+        latest = progress;
+      }
+    }
+    return latest;
+  }
+
+  Widget _buildPlaylistMembership(BuildContext context) {
+    final style = resolveAppTextStyle(
+      context,
+      size: AppTextSize.s12,
+      tone: AppTextTone.muted,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: context.appSpacing.sm),
+          child: Wrap(
+            spacing: context.appSpacing.sm,
+            runSpacing: context.appSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text('已加入', style: style),
+              for (final playlist in movie.playlists.take(2))
+                Tooltip(
+                  message: playlist.name,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: constraints.maxWidth / 2,
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: context.appSpacing.sm,
+                        vertical: context.appSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.appColors.surfaceMuted,
+                        borderRadius: context.appRadius.smBorder,
+                      ),
+                      child: Text(
+                        playlist.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s12,
+                          tone: AppTextTone.secondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (movie.playlists.length > 2)
+                Text('共 ${movie.playlists.length} 个', style: style),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildDetailBody({
     required BuildContext context,
     required double heroHeight,
   }) {
+    final progress = _latestProgress;
+    final watchLabel = progress == null
+        ? null
+        : '上次看到 ${formatMediaTimecode(progress.lastPositionSeconds)}';
+    final watchedAt = progress?.lastWatchedAt?.toLocal();
     final mediaItems = mediaItemsOverride ?? movie.mediaItems;
     final normalizedMergePlaybackLabel = mergePlaybackLabel?.trim() ?? '';
     final hasMergePlaybackAction = normalizedMergePlaybackLabel.isNotEmpty;
@@ -231,16 +306,6 @@ class MovieDetailPageContent extends StatelessWidget {
       ...movie.actors.where((actor) => actor.isFemale),
       ...movie.actors.where((actor) => !actor.isFemale),
     ];
-    final playlistTrigger = AppIconButton(
-      key: const Key('movie-detail-playlist-trigger'),
-      onPressed: onPlaylistTap,
-      icon: Icon(
-        Icons.playlist_add_rounded,
-        size: context.appComponentTokens.iconSizeLg,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-      tooltip: '加入播放列表',
-    );
     final collectionTrigger = TextButton(
       key: const Key('movie-detail-collection-trigger'),
       onPressed: isCollectionUpdating ? null : onCollectionToggle,
@@ -284,6 +349,10 @@ class MovieDetailPageContent extends StatelessWidget {
         ),
         MovieDetailHeroCard(
           height: heroHeight,
+          watchLabel: watchLabel,
+          watchTooltip: watchedAt == null
+              ? watchLabel
+              : '$watchLabel · ${DateFormat('yyyy年M月d日 HH:mm').format(watchedAt)}',
           mainImageKey: selectedPreviewKey,
           mainImageUrl: selectedPreviewUrl,
           heat: movie.heat,
@@ -333,10 +402,20 @@ class MovieDetailPageContent extends StatelessWidget {
             children: [
               collectionTrigger,
               SizedBox(width: context.appSpacing.xs),
-              playlistTrigger,
+              AppIconButton(
+                key: const Key('movie-detail-playlist-trigger'),
+                onPressed: onPlaylistTap,
+                icon: Icon(
+                  Icons.playlist_add_rounded,
+                  size: context.appComponentTokens.iconSizeLg,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                tooltip: movie.playlists.isEmpty ? '加入播放列表' : '管理播放列表',
+              ),
             ],
           ),
         ),
+        if (movie.playlists.isNotEmpty) _buildPlaylistMembership(context),
         ..._buildInlineMetaItems(context, movie, onSeriesTap),
         if (movie.tags.isNotEmpty)
           MovieDetailSection(

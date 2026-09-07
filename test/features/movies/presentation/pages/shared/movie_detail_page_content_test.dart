@@ -12,6 +12,74 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_ta
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 
 void main() {
+  testWidgets('personal info uses latest watch and opens playlist editor', (
+    tester,
+  ) async {
+    var edits = 0;
+    final media = _movieDetail().mediaItems.first;
+    final movie = _movieDetail(
+      mediaItems: [
+        media.copyWith(
+          progress: MovieMediaProgressDto(
+            lastPositionSeconds: 3600,
+            lastWatchedAt: DateTime(2026, 1, 1),
+          ),
+        ),
+        media.copyWith(
+          mediaId: 101,
+          progress: MovieMediaProgressDto(
+            lastPositionSeconds: 1938,
+            lastWatchedAt: DateTime(2026, 2, 1),
+          ),
+        ),
+      ],
+      playlists: [
+        for (var id = 1; id <= 3; id++)
+          MoviePlaylistSummaryDto(
+            id: id,
+            name: '片单$id',
+            kind: 'custom',
+            isSystem: false,
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: movie,
+            selectedPreviewKey: 'preview',
+            selectedPreviewUrl: null,
+            isCollection: false,
+            isSubscribed: false,
+            isCollectionUpdating: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            statItems: const [],
+            similarMovies: const [],
+            isSimilarMoviesLoading: false,
+            onInspectorTap: _noop,
+            onPlaylistTap: () => edits++,
+            onCollectionToggle: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('上次看到 32:18'), findsOneWidget);
+    expect(find.text('片单1'), findsOneWidget);
+    expect(find.text('共 3 个'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('movie-detail-playlist-trigger')));
+    await tester.tap(find.byKey(const Key('movie-detail-playlist-trigger')));
+    expect(edits, 1);
+    await tester.ensureVisible(find.text('片单1'));
+    await tester.tap(find.text('片单1'));
+    expect(edits, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final mobile in [true, false]) {
     for (final showTags in [true, false]) {
       for (final showActors in [true, false]) {
@@ -61,7 +129,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(find.text('标签'), showTags ? findsOneWidget : findsNothing);
             expect(find.text('演员'), showActors ? findsOneWidget : findsNothing);
-            expect(find.textContaining('暂无'), findsNothing);
+            expect(find.text('暂无观看记录'), findsNothing);
+            expect(find.textContaining('上次看到'), findsNothing);
             expect(find.byType(MoviePlotGallery), findsNothing);
             if (showTags) {
               await tester.ensureVisible(find.text('剧情'));
@@ -355,6 +424,8 @@ MovieDetailDto _movieDetail({
   String seriesName = 'Attackers',
   String? javdbId = 'javdb-1',
   String? metadataSourceName,
+  List<MovieMediaItemDto>? mediaItems,
+  List<MoviePlaylistSummaryDto> playlists = const [],
   List<MovieActorDto>? actors,
   List<MovieTagDto>? tags,
 }) {
@@ -406,22 +477,24 @@ MovieDetailDto _movieDetail({
       MovieTagDto(tagId: 1, name: '单体作品'),
       MovieTagDto(tagId: 2, name: '剧情'),
     ],
-    mediaItems: const <MovieMediaItemDto>[
-      MovieMediaItemDto(
-        mediaId: 100,
-        libraryId: 1,
-        providerKey: 'filesystem',
-        playUrl: '',
-        fileName: 'ABC-001.mp4',
-        resolution: '1920x1080',
-        fileSizeBytes: 1073741824,
-        durationSeconds: 7200,
-        valid: true,
-        progress: null,
-        points: <MovieMediaPointDto>[],
-      ),
-    ],
-    playlists: const <MoviePlaylistSummaryDto>[],
+    mediaItems:
+        mediaItems ??
+        const <MovieMediaItemDto>[
+          MovieMediaItemDto(
+            mediaId: 100,
+            libraryId: 1,
+            providerKey: 'filesystem',
+            playUrl: '',
+            fileName: 'ABC-001.mp4',
+            resolution: '1920x1080',
+            fileSizeBytes: 1073741824,
+            durationSeconds: 7200,
+            valid: true,
+            progress: null,
+            points: <MovieMediaPointDto>[],
+          ),
+        ],
+    playlists: playlists,
   );
 }
 

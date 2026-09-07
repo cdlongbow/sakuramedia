@@ -14,6 +14,8 @@ class MovieDetailHeroCard extends StatelessWidget {
     required this.isSubscribed,
     required this.isCollection,
     required this.onPlayTap,
+    this.watchLabel,
+    this.watchTooltip,
     this.onSubscriptionTap,
     this.onMoreActionsTap,
     this.isSubscriptionUpdating = false,
@@ -21,6 +23,8 @@ class MovieDetailHeroCard extends StatelessWidget {
     this.isPlayLoading = false,
   });
 
+  final String? watchLabel;
+  final String? watchTooltip;
   final double height;
   final String mainImageKey;
   final String? mainImageUrl;
@@ -141,6 +145,35 @@ class MovieDetailHeroCard extends StatelessWidget {
               ],
             ),
           ),
+          if (watchLabel != null)
+            Positioned(
+              left: spacing.md,
+              bottom: spacing.md,
+              right: spacing.md,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Tooltip(
+                  message: watchTooltip ?? watchLabel!,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: spacing.sm, vertical: spacing.xs),
+                    decoration: BoxDecoration(
+                      color: colors.mediaOverlayStrong,
+                      borderRadius: context.appRadius.smBorder,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history_rounded, size: tokens.iconSizeXs, color: context.appTextPalette.onMedia),
+                        SizedBox(width: spacing.xs),
+                        Flexible(child: Text(watchLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: resolveAppTextStyle(context, size: AppTextSize.s12, tone: AppTextTone.onMedia),
+                        )),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (onPlayTap != null || isPlayLoading)
             Positioned.fill(
               child: Center(

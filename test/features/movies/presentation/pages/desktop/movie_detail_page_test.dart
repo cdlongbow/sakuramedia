@@ -65,6 +65,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('playlist edits update the detail summary when closed', (
+    tester,
+  ) async {
+    _enqueueMovieDetailResponses(
+      bundle,
+      playlists: [
+        {'id': 1, 'name': '周末待看', 'kind': 'custom', 'is_system': false},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: [
+        {'id': 1, 'name': '周末待看', 'kind': 'custom', 'is_system': false},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/playlists/1/movies/ABC-001',
+      statusCode: 204,
+    );
+    await pumpPage(tester);
+    expect(find.text('周末待看'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('movie-detail-playlist-trigger')));
+    await tester.tap(find.byKey(const Key('movie-detail-playlist-trigger')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('movie-playlist-option-1')));
+    await tester.pumpAndSettle();
+    _enqueueMovieDetailResponses(bundle);
+    Navigator.of(
+      tester.element(find.byKey(const Key('movie-playlist-option-1'))),
+    ).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('周末待看'), findsNothing);
+    expect(find.byTooltip('加入播放列表'), findsOneWidget);
+    expect(bundle.adapter.hitCount('DELETE', '/playlists/1/movies/ABC-001'), 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('does not expose a playback delivery switch', (
     WidgetTester tester,
   ) async {
@@ -83,11 +122,15 @@ void main() {
   });
 }
 
-void _enqueueMovieDetailResponses(TestApiBundle bundle) {
+void _enqueueMovieDetailResponses(
+  TestApiBundle bundle, {
+  List<Map<String, dynamic>> playlists = const [],
+}) {
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/movies/ABC-001',
     body: <String, dynamic>{
+      'playlists': playlists,
       'javdb_id': 'MovieA1',
       'movie_number': 'ABC-001',
       'title': 'Movie 1',

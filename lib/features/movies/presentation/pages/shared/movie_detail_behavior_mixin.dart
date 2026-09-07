@@ -102,6 +102,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       isCollectionUpdating ||
       activeMovieAction != null;
 
+  Future<void> reloadPlaylistMembership() async {
+    try {
+      final movie = await ref
+          .read(moviesApiProvider)
+          .getMovieDetail(movieNumber: movieNumber);
+      if (!mounted) return;
+      ref.read(movieDetailProvider(movieNumber).notifier).applyMovie(movie);
+    } catch (error) {
+      if (mounted) showToast(apiErrorMessage(error, fallback: '播放列表更新失败'));
+    }
+  }
+
   // ==========================================================================
   //  合集类型
   // ==========================================================================

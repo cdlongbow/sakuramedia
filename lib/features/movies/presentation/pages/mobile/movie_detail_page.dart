@@ -179,12 +179,15 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
                 ? () => _openMoviePlayer(mediaId: selectedMedia.mediaId)
                 : null,
             isPlayLoading: _isLaunchingPlayback,
-            onPlaylistTap: () => showMoviePlaylistPickerDialog(
-              context,
-              movieNumber: widget.movieNumber,
-              initialPlaylists: movie.playlists,
-              presentation: MoviePlaylistPickerPresentation.bottomDrawer,
-            ),
+            onPlaylistTap: () async {
+              await showMoviePlaylistPickerDialog(
+                context,
+                movieNumber: widget.movieNumber,
+                initialPlaylists: movie.playlists,
+                presentation: MoviePlaylistPickerPresentation.bottomDrawer,
+              );
+              if (mounted) await reloadPlaylistMembership();
+            },
             onCollectionToggle: isActionControlsLocked
                 ? null
                 : () => toggleMovieCollectionType(isCollection: isCollection),

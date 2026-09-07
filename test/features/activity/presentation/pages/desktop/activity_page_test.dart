@@ -11,6 +11,7 @@ void main() {
   testWidgets('shows task and download tabs without removed task UI', (
     tester,
   ) async {
+    const pluginId = 'sakuramedia_115_provider';
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -35,13 +36,13 @@ void main() {
         },
         <String, dynamic>{
           'task_key': 'plugin_job_1',
-          'plugin_id': 'demo_plugin',
+          'plugin_id': pluginId,
           'cli_help': '插件任务一',
           'manual_trigger_allowed': true,
         },
         <String, dynamic>{
           'task_key': 'plugin_job_2',
-          'plugin_id': 'demo_plugin',
+          'plugin_id': pluginId,
           'cli_help': '插件任务二',
           'manual_trigger_allowed': true,
         },
@@ -106,8 +107,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('系统任务'), findsOneWidget);
-    expect(find.text('demo_plugin'), findsOneWidget);
-    await tester.tap(find.text('demo_plugin'));
+    expect(find.text(pluginId), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('activity-job-plugin-filter'))).width,
+      moreOrLessEquals(
+        sakuraDesktopThemeData.appLayoutTokens.dialogWidthMd -
+            sakuraDesktopThemeData.appSpacing.xl * 2,
+        epsilon: 0.1,
+      ),
+    );
+    await tester.tap(find.text(pluginId));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('activity-job-core_job')), findsNothing);

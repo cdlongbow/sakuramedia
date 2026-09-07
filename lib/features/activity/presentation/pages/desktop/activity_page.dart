@@ -903,7 +903,7 @@ class _ExecutableJobsDialogContentState
             SizedBox(height: spacing.md),
           ],
           SizedBox(
-            width: context.appLayoutTokens.filterFieldWidthLg,
+            width: double.infinity,
             child: AppSelectField<String?>(
               key: const Key('activity-job-plugin-filter'),
               label: '任务来源',

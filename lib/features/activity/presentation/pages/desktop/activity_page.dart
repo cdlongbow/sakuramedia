@@ -57,6 +57,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   bool _isViewportWorkScheduled = false;
   ActivityTab? _lastActiveTab = ActivityTab.tasks;
   bool _hasOpenedDownloadTasks = false;
+  bool? _isPageVisible;
 
   ActivityCenter get _controller => ref.read(activityCenterProvider.notifier);
 
@@ -73,21 +74,63 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     });
     // 订阅卡片跳转进来的下载意图：等首帧后统一走同一路径（切 tab + 应用筛选），
     // 避免与 activity provider 的 bootstrap 初始化互相踩。
-    if (widget.initialDownloadMovieNumber != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          unawaited(_applyInitialDownloadIntent());
-        }
-      });
+    _scheduleInitialDownloadIntent();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isVisible = TickerMode.of(context);
+    if (_isPageVisible == isVisible) return;
+    _isPageVisible = isVisible;
+
+    // didChangeDependencies 属于 widget 构建阶段；延后 provider 写入，避免
+    // TickerMode 切换时同步更新轮询状态而触发 build 期间修改 provider。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isPageVisible != isVisible) return;
+      _updatePollingForVisibility(isVisible);
+    });
+  }
+
+  void _updatePollingForVisibility(bool isVisible) {
+    if (isVisible) {
+      unawaited(_controller.resumePolling());
+    } else {
+      _controller.pausePolling();
+    }
+
+    // 下载中心保持按需初始化：从未进入下载 tab 的隐藏分支不应创建它。
+    if (!_hasOpenedDownloadTasks) return;
+    final downloadController = ref.read(downloadTaskCenterProvider.notifier);
+    if (isVisible) {
+      unawaited(downloadController.resumePolling());
+    } else {
+      downloadController.pausePolling();
     }
   }
 
-  /// 消费「打开即看某番号下载任务」的意图：先应用筛选再切 tab。
-  Future<void> _applyInitialDownloadIntent() async {
-    final movieNumber = widget.initialDownloadMovieNumber?.trim();
-    if (movieNumber == null || movieNumber.isEmpty) {
+  @override
+  void didUpdateWidget(covariant DesktopActivityPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialDownloadMovieNumber ==
+        widget.initialDownloadMovieNumber) {
       return;
     }
+    _scheduleInitialDownloadIntent();
+  }
+
+  void _scheduleInitialDownloadIntent() {
+    final movieNumber = widget.initialDownloadMovieNumber?.trim();
+    if (movieNumber == null || movieNumber.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.initialDownloadMovieNumber?.trim() == movieNumber) {
+        unawaited(_applyInitialDownloadIntent(movieNumber));
+      }
+    });
+  }
+
+  /// 消费「打开即看某番号下载任务」的意图：先应用筛选再切 tab。
+  Future<void> _applyInitialDownloadIntent(String movieNumber) async {
     await ref
         .read(downloadTaskCenterProvider.notifier)
         .applyFilter(
@@ -98,7 +141,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
             search: movieNumber,
           ),
         );
-    if (!mounted) {
+    if (!mounted || widget.initialDownloadMovieNumber?.trim() != movieNumber) {
       return;
     }
     _controller.setActiveTab(ActivityTab.downloadTasks);
@@ -144,7 +187,11 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
           _hasOpenedDownloadTasks = true;
         });
       }
-      unawaited(ref.read(downloadTaskCenterProvider.notifier).startPolling());
+      final downloadController = ref.read(downloadTaskCenterProvider.notifier);
+      if (_isPageVisible == false) {
+        downloadController.pausePolling();
+      }
+      unawaited(downloadController.startPolling());
     } else if (previousTab == ActivityTab.downloadTasks) {
       ref.read(downloadTaskCenterProvider.notifier).stopPolling();
     }

@@ -59,7 +59,7 @@ final class MovieDetailThumbnailProvider
 }
 
 String _$movieDetailThumbnailHash() =>
-    r'aeb7fa4d6cc5a0af4ef8e7af8b1c7ff3dfe06a0b';
+    r'acc4e17a747c4934e93f3f3ee47af6842b492809';
 
 final class MovieDetailThumbnailFamily extends $Family
     with

@@ -21,6 +21,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
@@ -49,10 +50,10 @@ class MobileOverviewSkeletonPage extends StatelessWidget {
                 child: TabBarView(
                   key: const Key('mobile-overview-tab-view'),
                   children: const [
-                    _MobileOverviewMyTab(),
-                    MobileOverviewClipsTab(),
-                    MobileOverviewDiscoverTab(),
-                    MobileOverviewMomentsTab(),
+                    AppKeepAlive(child: _MobileOverviewMyTab()),
+                    AppKeepAlive(child: MobileOverviewClipsTab()),
+                    AppKeepAlive(child: MobileOverviewDiscoverTab()),
+                    AppKeepAlive(child: MobileOverviewMomentsTab()),
                   ],
                 ),
               ),

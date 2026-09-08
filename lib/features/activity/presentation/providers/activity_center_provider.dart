@@ -21,6 +21,7 @@ class ActivityCenter extends _$ActivityCenter
 
   Timer? _pollTimer;
   bool _isPolling = false;
+  bool _pollingEnabled = true;
   late final DebouncedLatestRequest _taskFilterRequests =
       DebouncedLatestRequest();
   int _taskFilterGeneration = 0;
@@ -80,10 +81,27 @@ class ActivityCenter extends _$ActivityCenter
   }
 
   void _startPolling() {
+    if (isDisposed || !_pollingEnabled) return;
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(_pollingInterval, (_) {
       unawaited(_refreshFromPolling());
     });
+  }
+
+  /// 暂停页面不可见期间的任务快照轮询，但保留已加载数据和筛选条件。
+  void pausePolling() {
+    _pollingEnabled = false;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  /// 恢复页面可见后的任务快照轮询，并立即同步一次当前筛选结果。
+  Future<void> resumePolling() async {
+    if (_pollingEnabled) return;
+    _pollingEnabled = true;
+    if (isDisposed || state.value == null) return;
+    _startPolling();
+    await _refreshFromPolling();
   }
 
   Future<void> reloadAll() async {
@@ -373,7 +391,9 @@ class ActivityCenter extends _$ActivityCenter
   }
 
   Future<void> _refreshFromPolling() async {
-    if (isDisposed || state.value == null || _isPolling) return;
+    if (isDisposed || !_pollingEnabled || state.value == null || _isPolling) {
+      return;
+    }
     _isPolling = true;
     final generation = _taskFilterGeneration;
     try {
@@ -390,7 +410,7 @@ class ActivityCenter extends _$ActivityCenter
         ),
         api.getActiveTaskRuns(),
       ).wait;
-      if (isDisposed) return;
+      if (isDisposed || !_pollingEnabled) return;
       final now = current;
       if (generation != _taskFilterGeneration || !now.taskFilterUpdate.isIdle) {
         state = AsyncData(now.copyWith(activeTaskRuns: activeTaskRuns));
@@ -409,7 +429,7 @@ class ActivityCenter extends _$ActivityCenter
         ),
       );
     } catch (_) {
-      if (!isDisposed) {
+      if (!isDisposed && _pollingEnabled) {
         state = AsyncData(
           current.copyWith(
             connectionState: ActivityConnectionState.polling,

@@ -55,6 +55,35 @@ void main() {
     expect(find.byKey(const Key('mobile-downloader-card-1')), findsOneWidget);
   });
 
+  testWidgets('keeps the downloaders scroll position after opening the guide', (
+    tester,
+  ) async {
+    _enqueueData(
+      bundle,
+      clients: List<Map<String, dynamic>>.generate(
+        16,
+        (index) => _clientJson(id: index + 1, name: 'Downloader ${index + 1}'),
+      ),
+      libraries: <Map<String, dynamic>>[_libraryJson()],
+    );
+    await _pumpPage(tester, bundle);
+
+    final downloadersScroll = _downloadersScrollView();
+    await tester.drag(downloadersScroll, const Offset(0, -360));
+    await tester.pumpAndSettle();
+    final before = _scrollOffset(tester, downloadersScroll);
+    expect(before, greaterThan(0));
+
+    await tester.tap(find.byKey(const Key('mobile-downloaders-tab-guide')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('mobile-downloaders-tab-downloaders')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(_scrollOffset(tester, downloadersScroll), closeTo(before, 1));
+  });
+
   testWidgets(
     'editing a downloader keeps its library when the provider catalog is unavailable',
     (tester) async {
@@ -169,15 +198,32 @@ void _enqueueData(
 }
 
 Map<String, dynamic> _clientJson({
+  int id = 1,
+  String name = 'Downloader A',
   Map<String, dynamic> providerConfig = const {'endpoint': 'http://demo'},
 }) => {
-  'id': 1,
-  'name': 'Downloader A',
+  'id': id,
+  'name': name,
   'library_id': 1,
   'provider_config': providerConfig,
   'created_at': '2026-03-08T09:30:00Z',
   'updated_at': '2026-03-08T10:30:00Z',
 };
+
+double _scrollOffset(WidgetTester tester, Finder scrollView) {
+  final scrollable = find.descendant(
+    of: scrollView,
+    matching: find.byType(Scrollable),
+  );
+  return tester.state<ScrollableState>(scrollable).position.pixels;
+}
+
+Finder _downloadersScrollView() {
+  return find.ancestor(
+    of: find.byKey(const Key('mobile-downloaders-overview-card')),
+    matching: find.byType(CustomScrollView),
+  );
+}
 
 Map<String, dynamic> _libraryJson({String providerKey = 'demo'}) => {
   'id': 1,

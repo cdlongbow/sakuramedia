@@ -73,18 +73,32 @@ void main() {
       },
     );
 
-    await container
-        .read(activityCenterProvider.notifier)
-        .refreshTaskHistory();
+    await container.read(activityCenterProvider.notifier).refreshTaskHistory();
 
     expect(
       container.read(activityCenterProvider).requireValue.taskRuns.single.id,
       10,
     );
-    expect(
-      bundle.adapter.requests.last.path,
-      '/system/task-runs',
-    );
+    expect(bundle.adapter.requests.last.path, '/system/task-runs');
+  });
+
+  test('resume polling refreshes the retained task snapshot', () async {
+    final subscription = container.listen(activityCenterProvider, (_, __) {});
+    addTearDown(subscription.close);
+    _enqueueJobs(bundle);
+    _enqueueBootstrap(bundle, activeTaskId: 1, historyTaskId: 2);
+    await container.read(activityCenterProvider.future);
+
+    final controller = container.read(activityCenterProvider.notifier);
+    controller.pausePolling();
+    _enqueueTaskHistory(bundle, id: 12);
+    _enqueueActiveTasks(bundle, id: 11);
+
+    await controller.resumePolling();
+
+    final state = container.read(activityCenterProvider).requireValue;
+    expect(state.activeTaskRuns.single.id, 11);
+    expect(state.taskRuns.single.id, 12);
   });
 
   test('polling keeps a long-running task outside the history page', () async {
@@ -144,6 +158,27 @@ void main() {
   });
 }
 
+void _enqueueTaskHistory(TestApiBundle bundle, {required int id}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/system/task-runs',
+    body: <String, dynamic>{
+      'items': <Map<String, dynamic>>[_taskRunJson(id: id, state: 'completed')],
+      'page': 1,
+      'page_size': 20,
+      'total': 1,
+    },
+  );
+}
+
+void _enqueueActiveTasks(TestApiBundle bundle, {required int id}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/system/task-runs/active',
+    body: <Map<String, dynamic>>[_taskRunJson(id: id, state: 'running')],
+  );
+}
+
 void _enqueueJobs(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
     method: 'GET',
@@ -187,16 +222,15 @@ Map<String, dynamic> _taskRunJson({
   required int id,
   required String state,
   int progressCurrent = 1,
-}) =>
-    <String, dynamic>{
-      'id': id,
-      'task_key': 'media_import',
-      'task_name': '媒体导入',
-      'trigger_type': 'manual',
-      'state': state,
-      'progress_current': progressCurrent,
-      'progress_total': 2,
-      'progress_text': '处理中',
-      'created_at': '2026-03-26T09:10:00Z',
-      'updated_at': '2026-03-26T09:11:00Z',
-    };
+}) => <String, dynamic>{
+  'id': id,
+  'task_key': 'media_import',
+  'task_name': '媒体导入',
+  'trigger_type': 'manual',
+  'state': state,
+  'progress_current': progressCurrent,
+  'progress_total': 2,
+  'progress_text': '处理中',
+  'created_at': '2026-03-26T09:10:00Z',
+  'updated_at': '2026-03-26T09:11:00Z',
+};

@@ -24,6 +24,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_selection_status_bar.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/thumbnail_grid_column_resolver.dart';
@@ -344,14 +345,22 @@ class _MovieDetailInspectorPanelState
           child: TabBarView(
             controller: _tabController,
             children: [
-              _MovieDetailReviewTab(movieNumber: widget.movieNumber),
-              MovieMagnetSearchContent(movieNumber: widget.movieNumber),
-              _MovieDetailThumbnailTab(
-                mediaId: widget.selectedMedia?.mediaId,
-                thumbnailPreviewPresentation:
-                    widget.thumbnailPreviewPresentation,
-                onThumbnailMenuRequested: _showThumbnailActions,
-                onCreateClip: _handleCreateClip,
+              AppKeepAlive(
+                child: _MovieDetailReviewTab(movieNumber: widget.movieNumber),
+              ),
+              AppKeepAlive(
+                child: MovieMagnetSearchContent(
+                  movieNumber: widget.movieNumber,
+                ),
+              ),
+              AppKeepAlive(
+                child: _MovieDetailThumbnailTab(
+                  mediaId: widget.selectedMedia?.mediaId,
+                  thumbnailPreviewPresentation:
+                      widget.thumbnailPreviewPresentation,
+                  onThumbnailMenuRequested: _showThumbnailActions,
+                  onCreateClip: _handleCreateClip,
+                ),
               ),
             ],
           ),

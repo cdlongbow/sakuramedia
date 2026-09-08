@@ -192,7 +192,7 @@ final class HotActressReleaseFeedProvider
 }
 
 String _$hotActressReleaseFeedHash() =>
-    r'51cd3c7eb28df3e9edfe7a0257fb7909d61645f2';
+    r'b7a33476e41ec95e9f3c3ce090076a478fb19504';
 
 final class HotActressReleaseFeedFamily extends $Family
     with

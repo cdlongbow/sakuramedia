@@ -57,6 +57,7 @@ class ImageSearchContent extends ConsumerStatefulWidget {
     this.onSearchSimilar,
     this.onOpenPlayer,
     this.onOpenMovieDetail,
+    this.onOpenActorDetail,
     this.resultPreviewPresentation =
         ImageSearchResultPreviewPresentation.dialog,
   });
@@ -78,6 +79,7 @@ class ImageSearchContent extends ConsumerStatefulWidget {
   onOpenPlayer;
   final void Function(BuildContext context, ImageSearchResultItemDto item)?
   onOpenMovieDetail;
+  final void Function(BuildContext context, int actorId)? onOpenActorDetail;
   final ImageSearchResultPreviewPresentation resultPreviewPresentation;
 
   @override
@@ -873,6 +875,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Future<void> _openResultPreviewDialog(ImageSearchResultItemDto item) async {
+    int? selectedActorId;
     final presentation =
         widget.resultPreviewPresentation ==
             ImageSearchResultPreviewPresentation.bottomDrawer
@@ -887,11 +890,25 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       builder: (_) => ImageSearchResultPreviewDialog(
         item: item,
         presentation: presentation,
+        onActorSelected: (actorId) => selectedActorId = actorId,
       ),
     );
-    if (!mounted || action == null) {
+    if (!mounted) {
       return;
     }
+    final actorId = selectedActorId;
+    if (actorId != null) {
+      if (widget.onOpenActorDetail != null) {
+        widget.onOpenActorDetail!(context, actorId);
+      } else {
+        context.pushDesktopActorDetail(
+          actorId: actorId,
+          fallbackPath: desktopImageSearchPath,
+        );
+      }
+      return;
+    }
+    if (action == null) return;
     switch (action) {
       case MediaPreviewAction.searchSimilar:
         await _searchSimilarFromResult(item);

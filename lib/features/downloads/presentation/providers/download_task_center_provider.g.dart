@@ -38,7 +38,7 @@ final class DownloadTaskCenterProvider
 }
 
 String _$downloadTaskCenterHash() =>
-    r'b97b3837827fa9bf2013b5f7c8790c2e8b8cf3c7';
+    r'cf21ece22842c19ffdad9779ce7aaa8dfcfa53ad';
 
 /// 下载任务中心：列表快照轮询 + 删除。
 

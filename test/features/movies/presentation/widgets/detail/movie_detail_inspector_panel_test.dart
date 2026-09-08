@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 
 typedef _FetchMovieReviews =
     Future<List<MovieReviewDto>> Function({
@@ -468,6 +469,66 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byTooltip('当前升序，点击切换为降序'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'inspector keeps a selected downloader after visiting other tabs',
+    (WidgetTester tester) async {
+      const candidate = DownloadCandidateDto(
+        sourceUri: 'provider://dmhy/abcdef',
+        indexerName: 'dmhy',
+        indexerKind: 'bt',
+        resolvedClientId: 2,
+        resolvedClientName: 'qb-main',
+        downloadClients: <DownloadCandidateClientDto>[
+          DownloadCandidateClientDto(id: 2, name: 'qb-main'),
+          DownloadCandidateClientDto(id: 3, name: '115-main'),
+        ],
+        movieNumber: 'ABC-001',
+        title: 'ABC-001 中文字幕',
+        sizeBytes: 1024,
+        seeders: 8,
+      );
+      final clientSelector = find.byKey(
+        Key('movie-detail-magnet-client-${candidate.submitKey}'),
+      );
+
+      await _pumpInspectorPanel(
+        tester,
+        panelHeight: 520,
+        fetchMovieReviews:
+            ({
+              required String movieNumber,
+              required int page,
+              required int pageSize,
+              required MovieReviewSort sort,
+            }) async => const <MovieReviewDto>[],
+        searchCandidates:
+            ({required String movieNumber, String? indexerKind}) async =>
+                const <DownloadCandidateDto>[candidate],
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('磁力搜索'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('movie-detail-magnet-search-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(clientSelector);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('115-main').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('评论'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('缩略图'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('磁力搜索'));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<AppSelectField<int>>(clientSelector).value, 3);
     },
   );
 

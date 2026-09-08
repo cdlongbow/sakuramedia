@@ -24,6 +24,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   late final DebouncedLatestRequest _filterRequests = DebouncedLatestRequest();
   Timer? _pollTimer;
   bool _pollRequested = false;
+  bool _pollingEnabled = true;
   int _filterGeneration = 0;
   List<DownloadClientOption>? _pendingClientOptions;
   Map<int, String>? _pendingClientNames;
@@ -92,7 +93,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         filter: _activeFilter,
       ),
     );
-    if (_pollRequested && !isDisposed) _beginPolling();
+    if (_pollRequested && _pollingEnabled && !isDisposed) _beginPolling();
     return result;
   }
 
@@ -190,7 +191,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   /// 页面进入下载任务 tab 时开始快照轮询。
   Future<void> startPolling() async {
     _pollRequested = true;
-    if (isDisposed || state.value == null) return;
+    if (isDisposed || !_pollingEnabled || state.value == null) return;
     _beginPolling();
     await _pollSnapshot();
   }
@@ -202,7 +203,25 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     _setPollingState(DownloadTaskPollingState.idle);
   }
 
+  /// 暂停页面不可见期间的下载快照轮询，但保留当前筛选和轮询请求意图。
+  void pausePolling() {
+    _pollingEnabled = false;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _setPollingState(DownloadTaskPollingState.idle);
+  }
+
+  /// 恢复页面可见后的下载快照轮询；只有下载 tab 原本已请求轮询时才重新同步。
+  Future<void> resumePolling() async {
+    if (_pollingEnabled) return;
+    _pollingEnabled = true;
+    if (!_pollRequested || isDisposed || state.value == null) return;
+    _beginPolling();
+    await _pollSnapshot();
+  }
+
   void _beginPolling() {
+    if (isDisposed || !_pollRequested || !_pollingEnabled) return;
     _pollTimer?.cancel();
     _setPollingState(DownloadTaskPollingState.polling);
     _pollTimer = Timer.periodic(_pollingInterval, (_) {
@@ -211,11 +230,21 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   }
 
   Future<void> _pollSnapshot() async {
-    if (isDisposed || !_pollRequested || state.value == null) return;
+    if (isDisposed ||
+        !_pollRequested ||
+        !_pollingEnabled ||
+        state.value == null) {
+      return;
+    }
     final generation = _filterGeneration;
     try {
       final firstPage = await fetchPage(1, _pageSize);
-      if (isDisposed || generation != _filterGeneration) return;
+      if (isDisposed ||
+          !_pollRequested ||
+          !_pollingEnabled ||
+          generation != _filterGeneration) {
+        return;
+      }
       final current = state.value;
       if (current == null || !current.paged.filterUpdate.isIdle) return;
       state = AsyncData(

@@ -66,6 +66,28 @@ void main() {
     expect(state.paged.items.single.task.id, 2);
   });
 
+  test('resumePolling refreshes the retained download snapshot', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    _enqueueTaskPage(bundle, [taskJson(id: 2)]);
+    await controller.startPolling();
+    controller.pausePolling();
+    expect(
+      container.read(downloadTaskCenterProvider).requireValue.pollingState,
+      DownloadTaskPollingState.idle,
+    );
+
+    _enqueueTaskPage(bundle, [taskJson(id: 3)]);
+    await controller.resumePolling();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.pollingState, DownloadTaskPollingState.polling);
+    expect(state.paged.items.single.task.id, 3);
+  });
+
   test('delete updates the current snapshot', () async {
     _enqueueTaskPage(bundle, [taskJson(id: 3)]);
     _enqueueClients(bundle);

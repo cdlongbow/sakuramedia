@@ -30,6 +30,7 @@ import 'package:sakuramedia/routes/desktop_image_search_route_state.dart';
 import 'package:sakuramedia/routes/desktop_navigation_route_state.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_desktop_shell.dart';
+import 'package:sakuramedia/widgets/shell/desktop/desktop_branch_cache.dart';
 
 part 'desktop_routes.g.dart';
 
@@ -190,8 +191,92 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
 
 @TypedShellRoute<DesktopShellRouteData>(
   routes: <TypedRoute<RouteData>>[
-    TypedGoRoute<DesktopOverviewRouteData>(path: desktopOverviewPath),
-    TypedGoRoute<DesktopDiscoverRouteData>(path: desktopDiscoverPath),
+    TypedStatefulShellRoute<DesktopPrimaryShellRouteData>(
+      branches: [
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopOverviewRouteData>(path: desktopOverviewPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopDiscoverRouteData>(path: desktopDiscoverPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopMoviesRouteData>(path: desktopMoviesPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopActorsRouteData>(path: desktopActorsPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [TypedGoRoute<DesktopTagsRouteData>(path: desktopTagsPath)],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopMomentsRouteData>(path: desktopMomentsPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopPlaylistsRouteData>(path: desktopPlaylistsPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [TypedGoRoute<DesktopClipsRouteData>(path: desktopClipsPath)],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopVideosRouteData>(path: desktopVideosPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopRankingsRouteData>(path: desktopRankingsPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopActivityRouteData>(path: desktopActivityPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [TypedGoRoute<DesktopMediaRouteData>(path: desktopMediaPath)],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopNotificationsRouteData>(
+              path: desktopNotificationsPath,
+            ),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopConfigurationRouteData>(
+              path: desktopConfigurationPath,
+            ),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopMediaImportRouteData>(
+              path: desktopMediaImportPath,
+            ),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopMovieSubscriptionsRouteData>(
+              path: desktopMovieSubscriptionsPath,
+            ),
+          ],
+        ),
+      ],
+    ),
     TypedGoRoute<DesktopDiscoverMoviesRouteData>(
       path: desktopDiscoverMoviesPath,
     ),
@@ -202,24 +287,8 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
       path: desktopHotActressReleasesPath,
     ),
     TypedGoRoute<DesktopFollowRouteData>(path: desktopFollowPath),
-    TypedGoRoute<DesktopMoviesRouteData>(path: desktopMoviesPath),
-    TypedGoRoute<DesktopActorsRouteData>(path: desktopActorsPath),
-    TypedGoRoute<DesktopTagsRouteData>(path: desktopTagsPath),
-    TypedGoRoute<DesktopMomentsRouteData>(path: desktopMomentsPath),
-    TypedGoRoute<DesktopPlaylistsRouteData>(path: desktopPlaylistsPath),
-    TypedGoRoute<DesktopClipsRouteData>(path: desktopClipsPath),
-    TypedGoRoute<DesktopVideosRouteData>(path: desktopVideosPath),
     TypedGoRoute<DesktopVideoCollectionsRouteData>(
       path: desktopVideoCollectionsPath,
-    ),
-    TypedGoRoute<DesktopRankingsRouteData>(path: desktopRankingsPath),
-    TypedGoRoute<DesktopActivityRouteData>(path: desktopActivityPath),
-    TypedGoRoute<DesktopMediaRouteData>(path: desktopMediaPath),
-    TypedGoRoute<DesktopNotificationsRouteData>(path: desktopNotificationsPath),
-    TypedGoRoute<DesktopConfigurationRouteData>(path: desktopConfigurationPath),
-    TypedGoRoute<DesktopMediaImportRouteData>(path: desktopMediaImportPath),
-    TypedGoRoute<DesktopMovieSubscriptionsRouteData>(
-      path: desktopMovieSubscriptionsPath,
     ),
     TypedGoRoute<DesktopSystemDiagnosticsRouteData>(
       path: desktopSystemDiagnosticsPath,
@@ -278,6 +347,32 @@ class DesktopShellRouteData extends ShellRouteData {
       child: navigator,
     );
   }
+}
+
+/// Only fixed primary destinations are retained. Detail routes remain on the
+/// outer shell navigator so push/pop keeps its existing return behavior.
+class DesktopPrimaryShellRouteData extends StatefulShellRouteData {
+  const DesktopPrimaryShellRouteData();
+
+  static Widget $navigatorContainerBuilder(
+    BuildContext context,
+    StatefulNavigationShell navigationShell,
+    List<Widget> children,
+  ) => DesktopBranchCache(
+    currentIndex: navigationShell.currentIndex,
+    children: children,
+  );
+
+  @override
+  Widget builder(
+    BuildContext context,
+    GoRouterState state,
+    StatefulNavigationShell navigationShell,
+  ) => navigationShell;
+}
+
+class DesktopPrimaryBranchData extends StatefulShellBranchData {
+  const DesktopPrimaryBranchData();
 }
 
 class DesktopOverviewRouteData extends _DesktopShellSpecRouteData

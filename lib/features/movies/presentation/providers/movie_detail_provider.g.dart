@@ -91,7 +91,7 @@ final class MovieDetailProvider
   }
 }
 
-String _$movieDetailHash() => r'66c8f8a525d23c16858e46998e3713f571b300d9';
+String _$movieDetailHash() => r'059e6e26ee5ac78882de7fc581b68c3953ef61d7';
 
 /// 影片详情 provider —— autoDispose family (movieNumber) + `cacheLink` 挂
 /// [RiverpodPageCache]，跨导航保活。

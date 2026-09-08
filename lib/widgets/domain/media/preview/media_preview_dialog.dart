@@ -101,6 +101,8 @@ class MediaPreviewDialog extends ConsumerStatefulWidget {
     this.onPointRemoved,
     this.closeOnPointRemoved = false,
     this.presentation = MediaPreviewPresentation.dialog,
+    this.useInlineNavigation = false,
+    this.onActorSelected,
   });
 
   final MediaPreviewItem item;
@@ -108,6 +110,11 @@ class MediaPreviewDialog extends ConsumerStatefulWidget {
   final VoidCallback? onPointRemoved;
   final bool closeOnPointRemoved;
   final MediaPreviewPresentation presentation;
+  final bool useInlineNavigation;
+
+  /// Records the selected actor before the overlay closes; navigation belongs
+  /// to the caller after awaiting the overlay.
+  final ValueChanged<int>? onActorSelected;
 
   @override
   ConsumerState<MediaPreviewDialog> createState() => _MediaPreviewDialogState();
@@ -316,13 +323,15 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         MediaPreviewActionItem(
           label: '播放',
           icon: Icons.play_circle_outline_rounded,
-          visible: _canPlay,
+          visible: _canPlay && !widget.useInlineNavigation,
           onTap: _canPlay ? _handlePlay : null,
         ),
         MediaPreviewActionItem(
           label: '影片详情',
           icon: Icons.info_outline_rounded,
-          visible: _canOpenMovieDetail,
+          visible:
+              _canOpenMovieDetail &&
+              (!widget.useInlineNavigation || _movieDetail == null),
           onTap: _canOpenMovieDetail ? _handleOpenMovieDetail : null,
         ),
       ],
@@ -480,8 +489,12 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
+              InkWell(
                 key: const Key('image-search-result-preview-movie-cover'),
+                borderRadius: context.appRadius.mdBorder,
+                onTap: widget.useInlineNavigation && _canOpenMovieDetail
+                    ? _handleOpenMovieDetail
+                    : null,
                 child:
                     movie.coverImage == null
                         ? ClipRRect(
@@ -523,6 +536,12 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
                         : _MovieActorStrip(
                           actors: movie.actors,
                           controller: _actorScrollController,
+                          onActorTap: widget.onActorSelected == null
+                              ? null
+                              : (actorId) {
+                                  widget.onActorSelected!(actorId);
+                                  Navigator.of(context).pop();
+                                },
                         ),
               ),
             ],
@@ -653,10 +672,15 @@ class _MediaPreviewSectionDivider extends StatelessWidget {
 }
 
 class _MovieActorStrip extends StatelessWidget {
-  const _MovieActorStrip({required this.actors, required this.controller});
+  const _MovieActorStrip({
+    required this.actors,
+    required this.controller,
+    this.onActorTap,
+  });
 
   final List<MovieActorDto> actors;
   final ScrollController controller;
+  final ValueChanged<int>? onActorTap;
 
   @override
   Widget build(BuildContext context) {
@@ -691,8 +715,12 @@ class _MovieActorStrip extends StatelessWidget {
 
             return Tooltip(
               message: tooltip,
-              child: KeyedSubtree(
+              child: InkWell(
                 key: itemKey,
+                borderRadius: context.appRadius.smBorder,
+                onTap: actor.id > 0 && onActorTap != null
+                    ? () => onActorTap!(actor.id)
+                    : null,
                 child: SizedBox(
                   // width: tokens.movieDetailActorCardWidth,
                   child: Column(

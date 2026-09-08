@@ -3117,6 +3117,86 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, desktopMoviesPath);
   });
 
+  for (final platform in [AppPlatform.desktop, AppPlatform.mobile]) {
+    testWidgets('$platform image search actor navigation returns to results', (
+      tester,
+    ) async {
+      final sessionStore = await _buildLoggedInSessionStore(platform: platform);
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      _enqueueImageSearchSingleResultResponse(bundle);
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001',
+        body: {
+          'movie_number': 'ABC-001',
+          'title': '测试影片',
+          'actors': [
+            {'id': 1, 'name': '测试演员', 'gender': 1},
+          ],
+        },
+      );
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/media/456/points',
+        body: [],
+      );
+      _enqueueActorDetailResponse(bundle);
+      _enqueueActorMoviesResponse(bundle);
+      final mobile = platform == AppPlatform.mobile;
+      final router = mobile
+          ? buildMobileRouter(sessionStore: sessionStore)
+          : buildDesktopRouter(sessionStore: sessionStore);
+      final drafts = ImageSearchDraftStore();
+      final draftId = drafts.save(
+        fileName: 'query.png',
+        bytes: Uint8List.fromList([1, 2, 3]),
+        mimeType: 'image/png',
+      );
+      final location = _buildImageSearchLocation(
+        mobile ? mobileImageSearchPath : desktopImageSearchPath,
+        draftId: draftId,
+      );
+      await _pumpRouterApp(
+        tester,
+        router: router,
+        sessionStore: sessionStore,
+        bundle: bundle,
+        includeShellController: !mobile,
+        imageSearchDraftStore: drafts,
+      );
+      router.go(location);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('image-search-result-card-123')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('image-search-result-preview-actor-1')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        '${mobile ? mobileActorsPath : desktopActorsPath}/1',
+      );
+      expect(
+        find.byKey(const Key('image-search-result-preview-movie-cover')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.byKey(
+          Key(mobile ? 'mobile-subpage-back-button' : 'topbar-back-button'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.toString(), location);
+      expect(
+        find.byKey(const Key('image-search-result-card-123')),
+        findsOneWidget,
+      );
+      expect(bundle.adapter.hitCount('POST', '/image-search/sessions'), 1);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('image search detail back keeps image search route in history', (
     WidgetTester tester,
   ) async {
@@ -3165,7 +3245,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(
-      find.ancestor(of: find.text('影片详情'), matching: find.byType(InkWell)),
+      find.byKey(const Key('image-search-result-preview-movie-cover')),
     );
     await tester.pumpAndSettle();
 
@@ -3501,7 +3581,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(
-        find.ancestor(of: find.text('影片详情'), matching: find.byType(InkWell)),
+        find.byKey(const Key('image-search-result-preview-movie-cover')),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('topbar-back-button')));

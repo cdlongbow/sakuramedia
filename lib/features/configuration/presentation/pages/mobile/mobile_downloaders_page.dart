@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
+import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -176,20 +177,24 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildDownloadersTab(
-                  context,
-                  clients: clients,
-                  libraries: allLibraries,
-                  downloadableLibraries: downloadableLibraries,
-                  providers: providers,
-                  loading: loading,
-                  error: error,
-                  providerCatalogUnavailable: providersAsync.hasError,
+                AppKeepAlive(
+                  child: _buildDownloadersTab(
+                    context,
+                    clients: clients,
+                    libraries: allLibraries,
+                    downloadableLibraries: downloadableLibraries,
+                    providers: providers,
+                    loading: loading,
+                    error: error,
+                    providerCatalogUnavailable: providersAsync.hasError,
+                  ),
                 ),
-                _buildGuideTab(
-                  context,
-                  clients: clients,
-                  libraries: downloadableLibraries,
+                AppKeepAlive(
+                  child: _buildGuideTab(
+                    context,
+                    clients: clients,
+                    libraries: downloadableLibraries,
+                  ),
                 ),
               ],
             ),

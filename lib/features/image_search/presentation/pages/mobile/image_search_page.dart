@@ -98,6 +98,8 @@ class MobileImageSearchPage extends StatelessWidget {
       onSearchSimilar: _searchSimilar,
       onOpenPlayer: _openPlayer,
       onOpenMovieDetail: _openMovieDetail,
+      onOpenActorDetail: (context, actorId) =>
+          MobileActorDetailRouteData(actorId: actorId).push(context),
       resultPreviewPresentation:
           ImageSearchResultPreviewPresentation.bottomDrawer,
     );

@@ -25,3 +25,5 @@
 - `AppSelectionBottomBar`：移动批量操作条。
 
 选中项、批量动作和失败反馈由业务页面或 Provider 管理；组件不直接发送业务请求。
+
+`AppPageRefreshScope` 仅在所在页面的 TickerMode 启用时向桌面壳注册刷新回调，隐藏的保活页面不接收顶栏刷新。

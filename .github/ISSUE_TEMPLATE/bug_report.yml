@@ -60,7 +60,7 @@ body:
     id: logs
     attributes:
       label: 相关日志或截图
-      description: 如有报错日志、截图或录屏，请贴在这里
+      description: 如有报错日志、截图或录屏，请贴在这里。 注意给图片打码
       render: text
     validations:
       required: false

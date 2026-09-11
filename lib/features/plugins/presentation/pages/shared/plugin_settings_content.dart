@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/plugins/presentation/widgets/plugin_settings_schema.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/features/plugins/presentation/widgets/plugin_settings_form.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
@@ -19,7 +22,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_bottom_form_sheet.dart';
 
 const _jsonEncoder = JsonEncoder.withIndent('  ');
 
-/// 插件私有 JSON 配置的共享内容。
+/// 插件私有配置的共享内容。
 ///
 /// 这里集中负责读取、格式化、校验和保存，桌面与移动端只替换外层弹窗。
 class PluginSettingsContent extends ConsumerStatefulWidget {
@@ -45,6 +48,9 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
   bool _saving = false;
   String? _errorMessage;
   Map<String, dynamic>? _lastValidatedSettings;
+  Map<String, dynamic>? _schema;
+  Map<String, dynamic> _formSettings = {};
+  Map<String, String> _fieldErrors = {};
 
   @override
   void initState() {
@@ -74,6 +80,15 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       }
       setState(() {
         _controller.text = _jsonEncoder.convert(result.settings);
+        final schema = result.schema;
+        _schema = schema == null ? null : pluginFormSchema(schema);
+        if (_schema != null) {
+          _formSettings = pluginFormValues(
+            _schema!,
+            result.defaults,
+            result.settings,
+          );
+        }
         _loading = false;
       });
     } catch (error) {
@@ -124,7 +139,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         _saving) {
       return;
     }
-    final settings = _lastValidatedSettings;
+    final settings = _schema != null ? _formSettings : _lastValidatedSettings;
     if (settings == null) {
       return;
     }
@@ -143,8 +158,22 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       if (!mounted) {
         return;
       }
-      setState(() => _saving = false);
+      setState(() {
+        _saving = false;
+        final details = error is ApiException ? error.error?.details : null;
+        final fields = details?['fields'];
+        if (fields is List) {
+          _fieldErrors = {
+            for (final field in fields.whereType<Map>())
+              if (field['path'] is List && field['message'] is String)
+                (field['path'] as List).join('.'): field['message'] as String,
+          };
+        }
+      });
       showToast(apiErrorMessage(error, fallback: '插件配置保存失败'));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _formKey.currentState?.validate();
+      });
     }
   }
 
@@ -161,7 +190,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       children: [
         _buildHeader(context),
         SizedBox(height: spacing.lg),
-        _buildDesktopBody(context),
+        Flexible(child: _buildDesktopBody(context)),
       ],
     );
   }
@@ -275,7 +304,29 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
     }
     return Form(
       key: _formKey,
-      child: _buildFields(context, includeSaveButton: true),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              child: _buildFields(context, includeSaveButton: _schema == null),
+            ),
+          ),
+          if (_schema != null) SizedBox(height: context.appSpacing.md),
+          if (_schema != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: AppButton(
+                key: const Key('plugin-settings-save-button'),
+                label: '保存',
+                variant: AppButtonVariant.primary,
+                size: AppButtonSize.small,
+                isLoading: _saving,
+                onPressed: _saving ? null : _save,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -303,31 +354,47 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppTextField(
-          fieldKey: const Key('plugin-settings-json-field'),
-          controller: _controller,
-          label: '配置内容（JSON）',
-          hintText: '{ "key": "value" }',
-          minLines: 14,
-          maxLines: 14,
-          enabled: !_saving,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-          ).copyWith(fontFamilyFallback: kAppMonospaceFontFallback),
-          validator: _validateJson,
-        ),
+        if (_schema != null)
+          PluginSettingsForm(
+            schema: _schema!,
+            values: _formSettings,
+            enabled: !_saving,
+            fieldErrors: _fieldErrors,
+            onEdited: () {
+              if (_fieldErrors.isNotEmpty) {
+                setState(() {
+                  _fieldErrors = {};
+                });
+              }
+            },
+          )
+        else
+          AppTextField(
+            fieldKey: const Key('plugin-settings-json-field'),
+            controller: _controller,
+            label: '配置内容（JSON）',
+            hintText: '{ "key": "value" }',
+            minLines: 14,
+            maxLines: 14,
+            enabled: !_saving,
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s14,
+            ).copyWith(fontFamilyFallback: kAppMonospaceFontFallback),
+            validator: _validateJson,
+          ),
         SizedBox(height: spacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            AppButton(
-              key: const Key('plugin-settings-format-button'),
-              label: '格式化',
-              size: AppButtonSize.small,
-              icon: const Icon(Icons.format_align_left_rounded),
-              onPressed: _saving ? null : _format,
-            ),
+            if (_schema == null)
+              AppButton(
+                key: const Key('plugin-settings-format-button'),
+                label: '格式化',
+                size: AppButtonSize.small,
+                icon: const Icon(Icons.format_align_left_rounded),
+                onPressed: _saving ? null : _format,
+              ),
             if (includeSaveButton) ...[
               SizedBox(width: spacing.sm),
               AppButton(

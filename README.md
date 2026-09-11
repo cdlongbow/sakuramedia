@@ -40,3 +40,15 @@
 - 如有侵权，请联系：tinyping@protonmail.com。
 - 使用本项目产生的一切后果由使用者自行承担，与项目作者无关。
 - License: [GNU GPL v3](./LICENSE)
+
+<h2 align="center">Star History</h2>
+
+<p align="center">
+  <a href="https://github.com/tinypinglite/sakuramedia/stargazers">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://tinypinglite.github.io/sakuramedia/star-history-dark.svg" />
+      <source media="(prefers-color-scheme: light)" srcset="https://tinypinglite.github.io/sakuramedia/star-history-light.svg" />
+      <img alt="Star History Chart" src="https://tinypinglite.github.io/sakuramedia/star-history-light.svg" />
+    </picture>
+  </a>
+</p>

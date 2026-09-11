@@ -68,11 +68,21 @@ class PluginReleaseUpdate {
 
 /// 插件私有配置接口的响应（`plugins.settings.<plugin_id>`）。
 class PluginSettingsDto {
-  const PluginSettingsDto({required this.settings});
+  const PluginSettingsDto({
+    required this.settings,
+    this.schema,
+    this.defaults = const {},
+  });
 
   final Map<String, dynamic> settings;
+  final Map<String, dynamic>? schema;
+  final Map<String, dynamic> defaults;
 
   factory PluginSettingsDto.fromJson(Map<String, dynamic> json) {
-    return PluginSettingsDto(settings: asMap(json['settings']));
+    return PluginSettingsDto(
+      settings: asMap(json['settings']),
+      schema: asMapOrNull(json['schema']),
+      defaults: asMap(json['defaults']),
+    );
   }
 }

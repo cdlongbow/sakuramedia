@@ -287,6 +287,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   }
 
   Future<void> _openExecutableJobsDialog(BuildContext context) async {
+    unawaited(_controller.refreshJobs());
     await showAppAdaptiveModal<void>(
       context: context,
       modalKey: const Key('activity-executable-jobs-dialog'),

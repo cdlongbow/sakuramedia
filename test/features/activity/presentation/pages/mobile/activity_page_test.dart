@@ -150,6 +150,30 @@ void main() {
       findsOneWidget,
     );
 
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_key': 'new_plugin_job',
+          'plugin_id': 'new_plugin',
+          'cli_help': '新插件任务',
+          'manual_trigger_allowed': true,
+        },
+      ],
+    );
+    await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('新插件任务'), findsOneWidget);
+    expect(
+      bundle.adapter.requests.where((r) => r.path == '/system/jobs'),
+      hasLength(2),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pumpAndSettle();
+
     await tester.tap(
       find.byKey(const Key('mobile-activity-task-filter-button')),
     );
@@ -199,5 +223,6 @@ void main() {
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+
   });
 }

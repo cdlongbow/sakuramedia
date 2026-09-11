@@ -33,25 +33,7 @@ void main() {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/system/jobs',
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'task_key': 'core_job',
-          'cli_help': '核心维护任务',
-          'manual_trigger_allowed': true,
-        },
-        <String, dynamic>{
-          'task_key': 'plugin_job_1',
-          'plugin_id': pluginId,
-          'cli_help': '插件任务一',
-          'manual_trigger_allowed': true,
-        },
-        <String, dynamic>{
-          'task_key': 'plugin_job_2',
-          'plugin_id': pluginId,
-          'cli_help': '插件任务二',
-          'manual_trigger_allowed': true,
-        },
-      ],
+      body: const <dynamic>[],
     );
     bundle.adapter.enqueueJson(
       method: 'GET',
@@ -104,9 +86,37 @@ void main() {
     );
     expect(find.byKey(const Key('activity-task-201')), findsOneWidget);
 
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_key': 'core_job',
+          'cli_help': '核心维护任务',
+          'manual_trigger_allowed': true,
+        },
+        <String, dynamic>{
+          'task_key': 'plugin_job_1',
+          'plugin_id': pluginId,
+          'cli_help': '插件任务一',
+          'manual_trigger_allowed': true,
+        },
+        <String, dynamic>{
+          'task_key': 'plugin_job_2',
+          'plugin_id': pluginId,
+          'cli_help': '插件任务二',
+          'manual_trigger_allowed': true,
+        },
+      ],
+    );
+
     await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
     await tester.pumpAndSettle();
 
+    expect(
+      bundle.adapter.requests.where((r) => r.path == '/system/jobs'),
+      hasLength(2),
+    );
     expect(find.byKey(const Key('activity-job-plugin-filter')), findsOneWidget);
     await tester.tap(find.byKey(const Key('activity-job-plugin-filter')));
     await tester.pumpAndSettle();

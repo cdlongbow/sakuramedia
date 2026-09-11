@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -172,97 +174,177 @@ class MovieSummaryCard extends StatelessWidget {
       return interactiveCard;
     }
 
-    return Stack(
-      children: [
-        interactiveCard,
-        if (showStatusBadges)
-          Positioned(
-            top: spacing.xs,
-            right: spacing.xs,
-            child: Container(
-              key: Key('movie-summary-card-heat-${movie.movieNumber}'),
-              padding: EdgeInsets.symmetric(
-                horizontal: spacing.sm,
-                vertical: spacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: colors.mediaOverlayStrong,
-                borderRadius: context.appRadius.pillBorder,
-                border: Border.all(
-                  color: colors.borderSubtle.withValues(alpha: 0.42),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final heatStyle = resolveAppTextStyle(
+          context,
+          size: AppTextSize.s10,
+          weight: AppTextWeight.regular,
+          tone: AppTextTone.onMedia,
+        );
+        final heatLabel = _formatMovieHeat(movie.heat);
+        final heatText = TextPainter(
+          text: TextSpan(text: heatLabel, style: heatStyle),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        final heatWidth =
+            spacing.sm * 2 +
+            componentTokens.iconSizeXs +
+            spacing.xs +
+            heatText.width +
+            2;
+        heatText.dispose();
+        final statusWidth =
+            componentTokens.movieCardStatusBadgeSize +
+            (!selectionMode && movie.canPlay
+                ? spacing.xs + componentTokens.movieCardStatusBadgeSize
+                : 0) +
+            (!selectionMode && movie.maxMediaHeight >= 2160
+                ? spacing.xs +
+                      spacing.sm +
+                      componentTokens.movieCardStatusBadgeSize
+                : 0);
+        final wrapHeat =
+            statusWidth + heatWidth + spacing.xs * 3 > constraints.maxWidth;
+        return Stack(
+          children: [
+            interactiveCard,
+            if (showStatusBadges)
+              Positioned(
+                top: wrapHeat
+                    ? spacing.xs * 2 + componentTokens.movieCardStatusBadgeSize
+                    : spacing.xs,
+                left: wrapHeat ? spacing.xs : null,
+                right: wrapHeat ? null : spacing.xs,
+                child: Container(
+                  key: Key('movie-summary-card-heat-${movie.movieNumber}'),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: spacing.sm,
+                    vertical: spacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.mediaOverlayStrong,
+                    borderRadius: context.appRadius.pillBorder,
+                    border: Border.all(
+                      color: colors.borderSubtle.withValues(alpha: 0.42),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.local_fire_department_rounded,
+                        size: componentTokens.iconSizeXs,
+                        color: colors.movieDetailHeatIcon,
+                      ),
+                      SizedBox(width: spacing.xs),
+                      Text(
+                        heatLabel,
+                        key: Key(
+                          'movie-summary-card-heat-text-${movie.movieNumber}',
+                        ),
+                        style: heatStyle,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.local_fire_department_rounded,
-                    size: componentTokens.iconSizeXs,
-                    color: colors.movieDetailHeatIcon,
-                  ),
-                  SizedBox(width: spacing.xs),
-                  Text(
-                    _formatMovieHeat(movie.heat),
-                    key: Key(
-                      'movie-summary-card-heat-text-${movie.movieNumber}',
+            // 选择模式下屏蔽订阅心/播放态角标，避免手势冲突与信息噪音。
+            if (showStatusBadges && !selectionMode)
+              Positioned(
+                top: spacing.xs,
+                left: spacing.xs,
+                child: Wrap(
+                  spacing: spacing.xs,
+                  runSpacing: spacing.xs,
+                  children: [
+                    IgnorePointer(
+                      ignoring: handlesSubscriptionTapAtCardLevel,
+                      child: SubscriptionHeartBadge(
+                        key: Key(
+                          'movie-summary-card-subscription-${movie.movieNumber}',
+                        ),
+                        loadingKey: Key(
+                          'movie-summary-card-subscription-loading-${movie.movieNumber}',
+                        ),
+                        isSubscribed: movie.isSubscribed,
+                        isUpdating: isSubscriptionUpdating,
+                        onTap: handlesSubscriptionTapAtCardLevel
+                            ? null
+                            : onSubscriptionTap,
+                      ),
                     ),
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s10,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.onMedia,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        // 选择模式下屏蔽订阅心/播放态角标，避免手势冲突与信息噪音。
-        if (showStatusBadges && !selectionMode)
-          Positioned(
-            top: spacing.xs,
-            left: spacing.xs,
-            child: Wrap(
-              spacing: spacing.xs,
-              runSpacing: spacing.xs,
-              children: [
-                IgnorePointer(
-                  ignoring: handlesSubscriptionTapAtCardLevel,
-                  child: SubscriptionHeartBadge(
-                    key: Key(
-                      'movie-summary-card-subscription-${movie.movieNumber}',
-                    ),
-                    loadingKey: Key(
-                      'movie-summary-card-subscription-loading-${movie.movieNumber}',
-                    ),
-                    isSubscribed: movie.isSubscribed,
-                    isUpdating: isSubscriptionUpdating,
-                    onTap: handlesSubscriptionTapAtCardLevel
-                        ? null
-                        : onSubscriptionTap,
-                  ),
+                    if (movie.canPlay)
+                      _StatusBadge(
+                        key: Key(
+                          'movie-summary-card-status-playable-${movie.movieNumber}',
+                        ),
+                        icon: Icons.play_arrow_rounded,
+                        iconColor: context.appTextPalette.onMedia,
+                        background: colors.movieCardPlayableBadgeBackground,
+                      ),
+                    if (movie.maxMediaHeight >= 2160)
+                      IgnorePointer(
+                        child: ClipRRect(
+                          borderRadius: context.appRadius.pillBorder,
+                          child: BackdropFilter(
+                            filter: ui.ImageFilter.blur(
+                              sigmaX: spacing.xs,
+                              sigmaY: spacing.xs,
+                            ),
+                            child: Container(
+                              key: Key(
+                                'movie-summary-card-resolution-${movie.movieNumber}',
+                              ),
+                              width:
+                                  componentTokens.movieCardStatusBadgeSize +
+                                  spacing.sm,
+                              height: componentTokens.movieCardStatusBadgeSize,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: colors.mediaOverlayStrong,
+                                borderRadius: context.appRadius.pillBorder,
+                                border: Border.all(
+                                  color: colors.borderSubtle.withValues(
+                                    alpha: 0.42,
+                                  ),
+                                ),
+                              ),
+                              child: Text(
+                                movie.maxMediaHeight >= 4320 ? '8K' : '4K',
+                                style:
+                                    resolveAppTextStyle(
+                                      context,
+                                      size: AppTextSize.s12,
+                                      weight: AppTextWeight.semibold,
+                                      tone: AppTextTone.onMedia,
+                                    ).copyWith(
+                                      color: context.appTextPalette.onMedia,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1,
+                                      leadingDistribution:
+                                          TextLeadingDistribution.even,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                if (movie.canPlay)
-                  _StatusBadge(
-                    key: Key(
-                      'movie-summary-card-status-playable-${movie.movieNumber}',
-                    ),
-                    icon: Icons.play_arrow_rounded,
-                    iconColor: context.appTextPalette.onMedia,
-                    background: colors.movieCardPlayableBadgeBackground,
-                  ),
-              ],
-            ),
-          ),
-        if (selectionMode)
-          Positioned(
-            top: spacing.xs,
-            left: spacing.xs,
-            child: IgnorePointer(
-              child: SelectionCheckBadge(isSelected: isSelected),
-            ),
-          ),
-      ],
+              ),
+            if (selectionMode)
+              Positioned(
+                top: spacing.xs,
+                left: spacing.xs,
+                child: IgnorePointer(
+                  child: SelectionCheckBadge(isSelected: isSelected),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

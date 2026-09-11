@@ -1,13 +1,11 @@
 <p align="center">
   <img src="./wiki/public/brand/sakuramedia-logo.png" alt="SakuraMedia logo" width="96" />
 </p>
-
 <h1 align="center">SakuraMedia</h1>
 
-<p align="center">个人自用 NSFW 观影平台</p>
-
 <p align="center">
-以Jav影片为中心，整合搜索、订阅、下载、播放功能；同时也可用于非Jav影片的管理和观看。
+  收藏久了，我开始在意：这部影片里，我究竟想留下什么？<br />
+  <a href="https://tinypinglite.github.io/sakuramedia/guide/collection-strategy"><strong>为什么做 SakuraMedia：让喜欢的内容留下来 →</strong></a>
 </p>
 
 <p align="center">

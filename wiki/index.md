@@ -7,7 +7,7 @@ hero:
     alt: SakuraMedia logo
   name: SakuraMedia
   text: 面向 NAS 用户的 NSFW 观影平台
-  tagline: 以 Jav 影片为中心，整合搜索、订阅、下载、播放功能；同时也可用于非 Jav 影片的管理和观看。由 Flutter 开发提供桌面端和移动端支持。
+  tagline: 记住喜欢的影片，收藏心动的时刻，留下值得回看的片段。
   actions:
     - theme: brand
       text: 快速开始

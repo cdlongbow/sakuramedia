@@ -14,7 +14,7 @@
 
 包含 `MovieSummaryCard`、`MovieSummaryGrid`、`MovieFilterSections`、`MovieBatchSelection`、`SubscriptionHeartBadge` 和 `MovieMagnetSearchContent` / `showMovieMagnetSearchDialog`。后两者复用影片磁力搜索的候选资源、下载器选择与提交交互；状态由 movies feature 的 Provider 提供。影片详情内部组件仍位于 `features/movies/presentation/widgets/detail/`。
 
-`MovieSummaryCard` 在左上可播放图标后显示有效媒体的最高分辨率角标：高度 ≥4320 为 8K，≥2160 为 4K；低于 4K、缺失或无效媒体不显示。选择模式及隐藏状态角标时一并隐藏。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
+`MovieSummaryCard` 在左上可播放图标后显示有效媒体的最高分辨率角标：宽度 ≥7680 为 8K，3840 ≤宽度 <7680 为 4K 档；低于 4K、缺失或无效媒体不显示。选择模式及隐藏状态角标时一并隐藏。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
 
 批量取消订阅遇到已有媒体时，未处理清单提供“删除媒体并强制取消订阅”入口。确认后先读取媒体总数，再按顺序删除；弹窗进度条显示已删除数量和当前影片，全部删除后显示批量取消订阅阶段。删除失败会停止。反馈返回最终合并结果，多选状态仅保留未处理番号。
 
@@ -57,3 +57,7 @@ moments feature 负责。
 新增业务展示件时先确认复用范围，再决定放在这里还是 feature 私有目录；文档只同步当前实际文件和公共使用边界。
 
 下载任务删除确认复用 `lib/widgets/domain/downloads/download_task_delete_dialog.dart`，支持展示一个或多个任务，每次独立选择是否同时删除下载器中的文件。 批量入口通过 `showProgress` 复用 `runBatchOperation` 展示处理进度和成功、失败数量。
+
+影片筛选面板的分辨率选项仅在“可播放”状态启用，切换到其他状态时清空；与其他条件组合并即时生效。
+
+播放列表分辨率筛选复用 `MovieFilterChoiceSection`，固定展示全部、8K、4K、2K、1080P、720P、480P、360P，不显示数量；桌面浮层与移动抽屉均即时生效。

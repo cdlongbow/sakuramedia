@@ -29,6 +29,7 @@ class MoviesApi {
     TagMatchMode? tagMatch,
     int? heatMin,
     int? heatMax,
+    String? resolution,
     bool? blacklisted,
     int page = 1,
     int pageSize = 20,
@@ -57,6 +58,9 @@ class MoviesApi {
     }
     if (heatMin != null) {
       queryParameters['heat_min'] = heatMin;
+    }
+    if (resolution != null) {
+      queryParameters['resolution'] = resolution;
     }
     if (heatMax != null) {
       queryParameters['heat_max'] = heatMax;

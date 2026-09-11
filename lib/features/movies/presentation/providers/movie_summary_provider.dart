@@ -90,6 +90,7 @@ class MovieSummary extends _$MovieSummary
         year: filter.movie.year,
         heatMin: filter.movie.heatMin,
         heatMax: filter.movie.heatMax,
+        resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.tags => moviesApi.getMovies(
         tagIds: filter.tagIds,
@@ -103,6 +104,7 @@ class MovieSummary extends _$MovieSummary
         year: filter.movie.year,
         heatMin: filter.movie.heatMin,
         heatMax: filter.movie.heatMax,
+        resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.subscribedActorsLatest =>
         moviesApi.getSubscribedActorsLatestMovies(
@@ -125,6 +127,7 @@ class MovieSummary extends _$MovieSummary
         year: filter.movie.year,
         heatMin: filter.movie.heatMin,
         heatMax: filter.movie.heatMax,
+        resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.playlist =>
         ref

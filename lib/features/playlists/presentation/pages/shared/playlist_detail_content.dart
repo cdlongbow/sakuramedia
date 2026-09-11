@@ -14,7 +14,6 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
-import 'package:sakuramedia/features/playlists/presentation/providers/playlist_resolution_options_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -233,9 +232,6 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       await Future.wait<void>([
         ref.read(playlistDetailProvider(widget.playlistId).notifier).refresh(),
         ref.read(movieSummaryProvider(_scope).notifier).refresh(),
-        ref
-            .read(playlistResolutionOptionsProvider(widget.playlistId).notifier)
-            .refresh(),
       ]);
     } catch (_) {
       if (mounted) {
@@ -246,10 +242,6 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
 
   /// 列表顶栏：与影片 / 女优列表共用同一条 `AppListHeader`。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
-  ///
-  /// 分辨率状态通过 [playlistResolutionOptionsProvider] 暴露（惰性加载，面板首次
-  /// 打开才拉取），widgets 层通过纯值 [PlaylistResolutionOptionsState] 传入，
-  /// 桌面/移动都实时跟随 provider 更新；抽屉里的重试按钮也能正确刷新。
   Widget _buildListHeader(
     BuildContext context,
     int totalMovies,
@@ -268,37 +260,9 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       onFilterTap: isMobile ? () => unawaited(_openFilterDrawer()) : null,
       filterPanelBuilder: isMobile
           ? null
-          : (_) => Consumer(
-              builder: (context, ref, _) {
-                final resolutionState = ref.watch(
-                  playlistResolutionOptionsProvider(widget.playlistId),
-                );
-                return PlaylistFilterSectionGroup(
-                  filterState: _filterState,
-                  onChanged: _applyFilter,
-                  resolutionState: resolutionState,
-                  onResolutionRetry: () => unawaited(
-                    ref
-                        .read(
-                          playlistResolutionOptionsProvider(
-                            widget.playlistId,
-                          ).notifier,
-                        )
-                        .retry(),
-                  ),
-                );
-              },
-            ),
-      onFilterPanelOpened: isMobile
-          ? null
-          : () => unawaited(
-              ref
-                  .read(
-                    playlistResolutionOptionsProvider(
-                      widget.playlistId,
-                    ).notifier,
-                  )
-                  .ensureLoaded(),
+          : (_) => PlaylistFilterSectionGroup(
+              filterState: _filterState,
+              onChanged: _applyFilter,
             ),
       filterPanelFooter: AppFilterPanelFooter(
         isDefault: _filterState.isDefault,
@@ -335,25 +299,10 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 
   Future<void> _openFilterDrawer() async {
-    // 分辨率状态由 provider 惰性加载，抽屉打开时若还没加载过就触发一次。
-    // 抽屉内部通过 resolutionStateBuilder 回调实时读 provider 快照——移动抽屉
-    // 是 modal route 且 build 是同步的，每次 build 都会调 builder 拿最新状态。
-    unawaited(
-      ref
-          .read(playlistResolutionOptionsProvider(widget.playlistId).notifier)
-          .ensureLoaded(),
-    );
     await showMobilePlaylistFilterDrawer(
       context,
       current: _filterState,
       onChanged: _applyFilter,
-      resolutionStateBuilder: (_) =>
-          ref.read(playlistResolutionOptionsProvider(widget.playlistId)),
-      onResolutionRetry: () => unawaited(
-        ref
-            .read(playlistResolutionOptionsProvider(widget.playlistId).notifier)
-            .retry(),
-      ),
     );
   }
 

@@ -5,7 +5,7 @@ class RankedMovieListItemDto
     implements SubscriptionMovieListItem<RankedMovieListItemDto> {
   const RankedMovieListItemDto({
     required this.rank,
-    this.maxMediaHeight = 0,
+    this.maxMediaWidth = 0,
     required this.javdbId,
     required this.movieNumber,
     required this.title,
@@ -19,7 +19,7 @@ class RankedMovieListItemDto
   });
 
   final int rank;
-  final int maxMediaHeight;
+  final int maxMediaWidth;
   final String javdbId;
   @override
   final String movieNumber;
@@ -48,7 +48,7 @@ class RankedMovieListItemDto
   }) {
     return RankedMovieListItemDto(
       rank: rank ?? this.rank,
-      maxMediaHeight: maxMediaHeight,
+      maxMediaWidth: maxMediaWidth,
       javdbId: javdbId ?? this.javdbId,
       movieNumber: movieNumber ?? this.movieNumber,
       title: title ?? this.title,
@@ -78,14 +78,14 @@ class RankedMovieListItemDto
       heat: heat,
       isSubscribed: isSubscribed,
       canPlay: canPlay,
-      maxMediaHeight: maxMediaHeight,
+      maxMediaWidth: maxMediaWidth,
     );
   }
 
   factory RankedMovieListItemDto.fromJson(Map<String, dynamic> json) {
     return RankedMovieListItemDto(
       rank: json['rank'] as int? ?? 0,
-      maxMediaHeight: MovieListItemDto.fromJson(json).maxMediaHeight,
+      maxMediaWidth: MovieListItemDto.fromJson(json).maxMediaWidth,
       javdbId: json['javdb_id'] as String? ?? '',
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',

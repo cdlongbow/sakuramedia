@@ -12,9 +12,16 @@ void main() {
       for (final entry in <String?, int>{
         null: 0,
         '': 0,
-        '1920x1080': 1080,
-        '3840x2160': 2160,
-        '7680x4320': 4320,
+        '1920x1080': 1920,
+        '3840x2160': 3840,
+        '7680x4320': 7680,
+        '8192x4096': 8192,
+        '7680x3840': 7680,
+        '4096x1716': 4096,
+        '4096x2048': 4096,
+        '3840x1920': 3840,
+        '3840x1600': 3840,
+        '7680x0': 0,
         'bad': 0,
         '0x4320': 0,
       }.entries) {
@@ -25,27 +32,27 @@ void main() {
           ],
         };
         final movie = MovieListItemDto.fromJson(json);
-        expect(movie.maxMediaHeight, entry.value);
+        expect(movie.maxMediaWidth, entry.value);
         expect(
-          movie.copyWithSubscriptionStatus(true).maxMediaHeight,
+          movie.copyWithSubscriptionStatus(true).maxMediaWidth,
           entry.value,
         );
         expect(
           RankedMovieListItemDto.fromJson(
             json,
-          ).copyWithSubscriptionStatus(true).toMovieListItem().maxMediaHeight,
+          ).copyWithSubscriptionStatus(true).toMovieListItem().maxMediaWidth,
           entry.value,
         );
       }
-      expect(MovieListItemDto.fromJson({}).maxMediaHeight, 0);
+      expect(MovieListItemDto.fromJson({}).maxMediaWidth, 0);
       expect(
         MovieListItemDto.fromJson({
           'media_items': [
             {'resolution': '7680x4320'},
             {'resolution': '3840x2160'},
           ],
-        }).maxMediaHeight,
-        4320,
+        }).maxMediaWidth,
+        7680,
       );
     },
   );
@@ -54,7 +61,7 @@ void main() {
     (tester) async {
       var taps = 0;
       var subscriptions = 0;
-      for (final height in [0, 1080, 2159, 2160, 4319, 4320]) {
+      for (final width in [0, 1920, 3839, 3840, 7679, 7680]) {
         for (final hidden in [false, true]) {
           for (final selection in [false, true]) {
             await tester.pumpWidget(
@@ -68,7 +75,7 @@ void main() {
                         'movie_number': 'TEST',
                         'can_play': true,
                         'media_items': [
-                          {'resolution': '7680x$height'},
+                          {'resolution': '${width}x1920'},
                         ],
                       }),
                       showStatusBadges: !hidden,
@@ -82,17 +89,17 @@ void main() {
             );
             expect(
               find.text('8K'),
-              height >= 4320 && !hidden && !selection
+              width >= 7680 && !hidden && !selection
                   ? findsOneWidget
                   : findsNothing,
             );
             expect(
               find.text('4K'),
-              height >= 2160 && height < 4320 && !hidden && !selection
+              width >= 3840 && width < 7680 && !hidden && !selection
                   ? findsOneWidget
                   : findsNothing,
             );
-            if (height >= 2160 && !hidden && !selection) {
+            if (width >= 3840 && !hidden && !selection) {
               final quality = tester.getRect(
                 find.byKey(const Key('movie-summary-card-resolution-TEST')),
               );

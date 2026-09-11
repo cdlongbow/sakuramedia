@@ -200,7 +200,7 @@ class MovieSummaryCard extends StatelessWidget {
             (!selectionMode && movie.canPlay
                 ? spacing.xs + componentTokens.movieCardStatusBadgeSize
                 : 0) +
-            (!selectionMode && movie.maxMediaHeight >= 2160
+            (!selectionMode && movie.maxMediaWidth >= 3840
                 ? spacing.xs +
                       spacing.sm +
                       componentTokens.movieCardStatusBadgeSize
@@ -284,7 +284,7 @@ class MovieSummaryCard extends StatelessWidget {
                         iconColor: context.appTextPalette.onMedia,
                         background: colors.movieCardPlayableBadgeBackground,
                       ),
-                    if (movie.maxMediaHeight >= 2160)
+                    if (movie.maxMediaWidth >= 3840)
                       IgnorePointer(
                         child: ClipRRect(
                           borderRadius: context.appRadius.pillBorder,
@@ -312,7 +312,7 @@ class MovieSummaryCard extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                movie.maxMediaHeight >= 4320 ? '8K' : '4K',
+                                movie.maxMediaWidth >= 7680 ? '8K' : '4K',
                                 style:
                                     resolveAppTextStyle(
                                       context,

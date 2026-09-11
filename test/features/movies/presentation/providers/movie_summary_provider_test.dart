@@ -83,6 +83,35 @@ void main() {
     return container.read(movieSummaryProvider(scope).future);
   }
 
+  test('分辨率筛选发送参数，退出可播放后清空并回到第一页', () async {
+    const scope = MovieSummaryScope.actor(actorId: 8, pageSize: 1);
+    await prime(scope, [_movie('ABC-001')]);
+    final notifier = container.read(movieSummaryProvider(scope).notifier);
+    final filter = MovieFilterState.initial.copyWith(
+      status: MovieStatusFilter.playable,
+      resolution: PlaylistResolutionFilter.k4k,
+    );
+    for (final next in [
+      filter,
+      filter.copyWith(status: MovieStatusFilter.all),
+      filter.copyWith(status: MovieStatusFilter.all).copyWith(
+        status: MovieStatusFilter.playable,
+      ),
+    ]) {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        body: _page(items: [_movie('ABC-002')], total: 1, pageSize: 1),
+      );
+      await notifier.applyMovieFilter(next);
+      expect(
+        adapter.requests.last.uri.queryParameters['resolution'],
+        next.resolution?.apiValue,
+      );
+      expect(adapter.requests.last.uri.queryParameters['page'], '1');
+    }
+  });
+
   test('媒体变更同步女优影片状态，保留已加载分页且不重拉列表', () async {
     const scope = MovieSummaryScope.actor(actorId: 8, pageSize: 1);
     adapter.enqueueJson(

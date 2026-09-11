@@ -80,8 +80,6 @@ class MovieMediaItemList extends StatelessWidget {
                     : Text(
                         technicalSummary,
                         key: const Key('movie-media-tech-summary'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,

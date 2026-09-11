@@ -63,7 +63,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
     required this.isSubscribed,
     required this.canPlay,
     this.similarityScore,
-    this.maxMediaHeight = 0,
+    this.maxMediaWidth = 0,
   });
 
   /// 后端返回的影片整数主键，可用于与订阅等域数据关联。
@@ -84,7 +84,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   final bool isSubscribed;
   final bool canPlay;
   final double? similarityScore;
-  final int maxMediaHeight;
+  final int maxMediaWidth;
 
   /// DMM 中文标题字段已随后端下线（存量收拢进 [title]），这里保留 getter 只做 trim。
   String get preferredTitle => title.trim();
@@ -107,7 +107,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
     return MovieListItemDto(
       // id 是不可变主键，copyWith 不开放改写、只透传（漏传会被默认 0 抹掉）。
       id: id,
-      maxMediaHeight: maxMediaHeight,
+      maxMediaWidth: maxMediaWidth,
       javdbId: javdbId ?? this.javdbId,
       movieNumber: movieNumber ?? this.movieNumber,
       title: title ?? this.title,
@@ -131,7 +131,7 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   factory MovieListItemDto.fromJson(Map<String, dynamic> json) {
     return MovieListItemDto(
       id: _intFromJson(json['id']) ?? 0,
-      maxMediaHeight: _maxMediaHeightFromJson(json['media_items']),
+      maxMediaWidth: _maxMediaWidthFromJson(json['media_items']),
       javdbId: json['javdb_id'] as String?,
       movieNumber: json['movie_number'] as String? ?? '',
       title: json['title'] as String? ?? '',
@@ -190,10 +190,10 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   }
 }
 
-// 与后端播放列表分辨率筛选一致，按有效媒体的高度划分清晰度。
-int _maxMediaHeightFromJson(dynamic value) {
+// 与后端播放列表分辨率筛选一致，按有效媒体的宽度划分 4K/8K 清晰度。
+int _maxMediaWidthFromJson(dynamic value) {
   if (value is! List) return 0;
-  var maxHeight = 0;
+  var maxWidth = 0;
   for (final media in value) {
     if (media is! Map || media['valid'] == false) continue;
     final resolution = media['resolution'];
@@ -202,9 +202,13 @@ int _maxMediaHeightFromJson(dynamic value) {
     if (match == null) continue;
     final width = int.tryParse(match[1]!);
     final height = int.tryParse(match[2]!);
-    if (width != null && width > 0 && height != null && height > maxHeight) {
-      maxHeight = height;
+    if (width != null &&
+        width > 0 &&
+        height != null &&
+        height > 0 &&
+        width > maxWidth) {
+      maxWidth = width;
     }
   }
-  return maxHeight;
+  return maxWidth;
 }

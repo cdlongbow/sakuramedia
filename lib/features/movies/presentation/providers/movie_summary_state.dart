@@ -54,6 +54,7 @@ class MovieSummaryFilter {
     movie.sortField,
     movie.sortDirection,
     movie.year,
+    movie.resolution,
     playlist.sortField,
     playlist.sortDirection,
     playlist.resolution,

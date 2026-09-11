@@ -3,7 +3,7 @@ import 'package:sakuramedia/features/media/presentation/pages/shared/media_manag
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 
-/// 「媒体管理」移动端壳：媒体列表 / 重复媒体 / 失效媒体三个 tab 与全部编排逻辑在
+/// 「媒体管理」移动端壳：媒体列表 / 重复媒体 / 多版本影片 / 失效媒体四个 tab 与全部编排逻辑在
 /// [MediaManagementContent]，
 /// 壳只注入 Key 前缀、根 Key、移动端布局开关与跳影片详情的导航回调。
 class MobileMediaManagementPage extends StatelessWidget {

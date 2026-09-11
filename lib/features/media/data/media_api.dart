@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/media_transfer_dto.dart';
+import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 
@@ -138,6 +139,20 @@ class MediaApi {
     return PaginatedResponseDto<DuplicateMediaGroupDto>.fromJson(
       response,
       DuplicateMediaGroupDto.fromJson,
+    );
+  }
+
+  Future<PaginatedResponseDto<MultiVersionMovieDto>> getMultiVersionMovies({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final response = await _apiClient.get(
+      '/media/multi-version-movies',
+      queryParameters: {'page': page, 'page_size': pageSize},
+    );
+    return PaginatedResponseDto<MultiVersionMovieDto>.fromJson(
+      response,
+      MultiVersionMovieDto.fromJson,
     );
   }
 

@@ -11,10 +11,12 @@ import 'package:sakuramedia/features/media/presentation/providers/invalid_media_
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/duplicate_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/invalid_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_transfer_target_dialog.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_version_movies_section.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -23,8 +25,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
 /// 「媒体管理」双端共享内容（桌面 / 移动壳收敛的 content 层）。
 ///
-/// 当前后端支持媒体列表、重复媒体分组、失效媒体列表和媒体删除，因此页面只保留
-/// 这三个管理 tab；Provider 专属上传和有效性复查入口不在页面中暴露。
+/// 提供媒体列表、重复媒体、多版本影片和失效媒体管理。
 class MediaManagementContent extends HookConsumerWidget {
   const MediaManagementContent({
     super.key,
@@ -44,11 +45,12 @@ class MediaManagementContent extends HookConsumerWidget {
   final bool mobile;
 
   static const int _duplicateTabIndex = 1;
-  static const int _maintenanceTabIndex = 2;
+  static const int _versionsTabIndex = 2;
+  static const int _maintenanceTabIndex = 3;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tabController = useTabController(initialLength: 3);
+    final tabController = useTabController(initialLength: 4);
     useListenable(tabController);
     final currentTab = tabController.index;
     final duplicateKind = useState(MediaListItemKind.jav);
@@ -56,6 +58,8 @@ class MediaManagementContent extends HookConsumerWidget {
       onReachBottom: () {
         if (currentTab == _maintenanceTabIndex) {
           unawaited(ref.read(invalidMediaProvider.notifier).loadMore());
+        } else if (currentTab == _versionsTabIndex) {
+          unawaited(ref.read(multiVersionMoviesProvider.notifier).loadMore());
         } else if (currentTab == _duplicateTabIndex) {
           unawaited(
             ref
@@ -117,12 +121,19 @@ class MediaManagementContent extends HookConsumerWidget {
             tabs: [
               Tab(key: Key('$keyPrefix-tab-list'), text: '媒体列表'),
               Tab(key: Key('$keyPrefix-tab-duplicates'), text: '重复媒体'),
+              Tab(key: Key('$keyPrefix-tab-versions'), text: '多版本影片'),
               Tab(key: Key('$keyPrefix-tab-maintenance'), text: '失效媒体'),
             ],
           ),
           SizedBox(height: context.appSpacing.lg),
           Expanded(
             child: switch (currentTab) {
+              _versionsTabIndex => MultiVersionMoviesSection(
+                scrollController: scrollController,
+                keyPrefix: keyPrefix,
+                mobile: mobile,
+                onOpenMovieDetail: onOpenMovieDetail,
+              ),
               _maintenanceTabIndex => InvalidMediaSection(
                 key: Key('$keyPrefix-invalid-media-section'),
                 scrollController: scrollController,
@@ -197,6 +208,9 @@ class MediaManagementContent extends HookConsumerWidget {
       refreshes.add(
         ref.read(duplicateMediaProvider(duplicateKind).notifier).refresh(),
       );
+    }
+    if (currentTab == _versionsTabIndex) {
+      refreshes.add(ref.read(multiVersionMoviesProvider.notifier).refresh());
     }
     final results = await Future.wait<String?>(refreshes);
     for (final message in results) {

@@ -28,6 +28,8 @@ export default defineConfig({
             { text: '媒体存储迁移', link: '/guide/media-storage-transfer' },
             { text: '普通视频与视频合集', link: '/guide/videos' },
             { text: '为什么做 SakuraMedia', link: '/guide/collection-strategy' },
+            { text: '从喜欢的画面开始看', link: '/guide/watch-from-a-frame' },
+            { text: '有空的时候，想看的已经在了', link: '/guide/waiting-for-a-movie' },
             { text: '常用命令', link: '/guide/commands' },
             { text: '常见问题', link: '/faq' },
           ],

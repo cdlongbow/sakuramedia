@@ -209,6 +209,40 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('deletes a media item from its card', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(total: 1, items: [_duplicateMediaItemJson(1)]),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(find.byKey(const Key('media-management-delete-1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('media-management-delete-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('media-management-delete-dialog-1')),
+      findsOneWidget,
+    );
+    expect(find.text('共 1 条 · 已选 1 项'), findsNothing);
+    await tester.tap(
+      find.byKey(const Key('media-management-delete-confirm-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    expect(find.byKey(const Key('media-management-row-1')), findsNothing);
+    expect(find.text('共 0 条'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets(
     'submits a provider-neutral media transfer from the batch toolbar',
     (tester) async {

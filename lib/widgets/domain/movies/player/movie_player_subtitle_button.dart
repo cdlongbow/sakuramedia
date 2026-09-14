@@ -348,6 +348,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
     final overlayTokens = context.appOverlayTokens;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: _handleButtonEnter,
       onExit: _handleButtonExit,
       child: GestureDetector(
@@ -431,25 +432,24 @@ class _MoviePlayerSubtitleMenu extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children:
-            hasOptions
-                ? options
-                    .map(
-                      (option) => _MoviePlayerSubtitleMenuItem(
-                        subtitleId: option.subtitleId,
-                        label: option.label,
-                        selected: selectedSubtitleId == option.subtitleId,
-                        hovered: hoveredSubtitleId == option.subtitleId,
-                        onHoverChanged: (hovered) {
-                          onHoveredSubtitleChanged(
-                            hovered ? option.subtitleId : null,
-                          );
-                        },
-                        onTap: () => onSubtitleSelected(option.subtitleId),
-                      ),
-                    )
-                    .toList(growable: false)
-                : const <Widget>[_MoviePlayerSubtitleEmptyItem()],
+        children: hasOptions
+            ? options
+                  .map(
+                    (option) => _MoviePlayerSubtitleMenuItem(
+                      subtitleId: option.subtitleId,
+                      label: option.label,
+                      selected: selectedSubtitleId == option.subtitleId,
+                      hovered: hoveredSubtitleId == option.subtitleId,
+                      onHoverChanged: (hovered) {
+                        onHoveredSubtitleChanged(
+                          hovered ? option.subtitleId : null,
+                        );
+                      },
+                      onTap: () => onSubtitleSelected(option.subtitleId),
+                    ),
+                  )
+                  .toList(growable: false)
+            : const <Widget>[_MoviePlayerSubtitleEmptyItem()],
       ),
     );
   }
@@ -501,14 +501,14 @@ class _MoviePlayerSubtitleMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
-    final backgroundColor =
-        hovered
-            ? context.appTextPalette.onMedia.withValues(
-              alpha: overlayTokens.hoverAlpha,
-            )
-            : null;
+    final backgroundColor = hovered
+        ? context.appTextPalette.onMedia.withValues(
+            alpha: overlayTokens.hoverAlpha,
+          )
+        : null;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => onHoverChanged(true),
       onExit: (_) => onHoverChanged(false),
       child: GestureDetector(

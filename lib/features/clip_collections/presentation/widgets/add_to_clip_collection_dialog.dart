@@ -35,11 +35,10 @@ Future<void> showAddToClipCollectionDialog(
         context: context,
         drawerKey: const Key('add-to-clip-collection-bottom-sheet'),
         heightFactor: 0.7,
-        builder:
-            (sheetContext) => AddToClipCollectionDialog(
-              clipId: clipId,
-              presentation: AddToClipCollectionPresentation.bottomDrawer,
-            ),
+        builder: (sheetContext) => AddToClipCollectionDialog(
+          clipId: clipId,
+          presentation: AddToClipCollectionPresentation.bottomDrawer,
+        ),
       );
   }
 }
@@ -108,8 +107,9 @@ class _AddToClipCollectionDialogState
 
   @override
   Widget build(BuildContext context) {
-    final maxListHeight =
-        _isBottomDrawer ? MediaQuery.sizeOf(context).height * 0.5 : 320.0;
+    final maxListHeight = _isBottomDrawer
+        ? MediaQuery.sizeOf(context).height * 0.5
+        : 320.0;
     final content = _buildContent(context, maxListHeight: maxListHeight);
     if (_isBottomDrawer) {
       return content;
@@ -204,6 +204,9 @@ class _AddToClipCollectionDialogState
           final collection = _collections[index];
           final selected = _selectedIds.contains(collection.id);
           return InkWell(
+            mouseCursor: isAnyUpdating
+                ? SystemMouseCursors.basic
+                : SystemMouseCursors.click,
             key: Key('add-to-clip-collection-option-${collection.id}'),
             borderRadius: context.appRadius.xsBorder,
             onTap: isAnyUpdating ? null : () => _toggle(collection),
@@ -213,10 +216,9 @@ class _AddToClipCollectionDialogState
                 color: context.appColors.surfaceMuted,
                 borderRadius: context.appRadius.xsBorder,
                 border: Border.all(
-                  color:
-                      selected
-                          ? Theme.of(context).colorScheme.primary
-                          : context.appColors.borderSubtle,
+                  color: selected
+                      ? Theme.of(context).colorScheme.primary
+                      : context.appColors.borderSubtle,
                 ),
               ),
               child: Row(
@@ -228,8 +230,9 @@ class _AddToClipCollectionDialogState
                         'add-to-clip-collection-checkbox-${collection.id}',
                       ),
                       value: selected,
-                      onChanged:
-                          isAnyUpdating ? null : (_) => _toggle(collection),
+                      onChanged: isAnyUpdating
+                          ? null
+                          : (_) => _toggle(collection),
                     ),
                   ),
                   SizedBox(width: spacing.sm),
@@ -308,10 +311,9 @@ class _AddToClipCollectionDialogState
   Future<void> _createCollection() async {
     final created = await showCreateClipCollectionDialog(
       context,
-      presentation:
-          _isBottomDrawer
-              ? ClipCollectionEditPresentation.bottomDrawer
-              : ClipCollectionEditPresentation.dialog,
+      presentation: _isBottomDrawer
+          ? ClipCollectionEditPresentation.bottomDrawer
+          : ClipCollectionEditPresentation.dialog,
     );
     if (!mounted || created == null) {
       return;

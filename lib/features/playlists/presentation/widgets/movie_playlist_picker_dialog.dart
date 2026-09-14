@@ -134,6 +134,9 @@ class _MoviePlaylistPickerDialogState
             color: context.appColors.surfaceCard,
             clipBehavior: Clip.hardEdge,
             child: InkWell(
+              mouseCursor: updating
+                  ? SystemMouseCursors.basic
+                  : SystemMouseCursors.click,
               key: Key('movie-playlist-option-${playlist.id}'),
               hoverColor: context.appColors.surfaceMuted.withValues(
                 alpha: 0.45,

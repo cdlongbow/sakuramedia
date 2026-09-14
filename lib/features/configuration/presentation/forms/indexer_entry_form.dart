@@ -465,6 +465,9 @@ class IndexerKindOptionButton extends StatelessWidget {
         : context.appTextPalette.secondary;
 
     return InkWell(
+      mouseCursor: enabled
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       onTap: enabled ? onTap : null,
       borderRadius: context.appRadius.mdBorder,
       child: AnimatedContainer(

@@ -25,6 +25,9 @@ class ImageSearchResultCard extends StatelessWidget {
     final child = Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: onTap != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         key: Key('image-search-result-card-${item.resultImageId}'),
         borderRadius: context.appRadius.lgBorder,
         onTap: onTap,

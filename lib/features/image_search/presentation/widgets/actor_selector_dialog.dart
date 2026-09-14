@@ -85,6 +85,7 @@ class _ImageSearchActorSelectorBodyState
             color: context.appColors.surfaceCard,
             clipBehavior: Clip.hardEdge,
             child: InkWell(
+              mouseCursor: SystemMouseCursors.click,
               key: Key('image-search-actor-option-${actor.id}'),
               hoverColor: context.appColors.surfaceMuted.withValues(
                 alpha: 0.45,

@@ -517,6 +517,9 @@ class _ImportEntryRow extends StatelessWidget {
     final muted = !entry.isDirectory && !canSelect;
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     return InkWell(
+      mouseCursor: entry.isDirectory || canSelect
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       onTap: entry.isDirectory || canSelect ? onTap : null,
       child: Padding(
         padding: EdgeInsets.symmetric(

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 class MoviePlayerBackButton extends StatelessWidget {
   const MoviePlayerBackButton({super.key, required this.onPressed});
@@ -11,20 +12,24 @@ class MoviePlayerBackButton extends StatelessWidget {
     final componentTokens = context.appComponentTokens;
     final overlayTokens = context.appOverlayTokens;
 
-    return Material(
-      type: MaterialType.transparency,
-      borderRadius: context.appRadius.pillBorder,
-      child: InkWell(
-        key: const Key('movie-player-back-button'),
+    return AppClickable(
+      enabled: true,
+      child: Material(
+        type: MaterialType.transparency,
         borderRadius: context.appRadius.pillBorder,
-        onTap: onPressed,
-        child: SizedBox(
-          width: overlayTokens.playerBackBadgeMinHeight,
-          height: overlayTokens.playerBackBadgeMinHeight,
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: componentTokens.iconSizeSm,
-            color: context.appTextPalette.onMedia,
+        child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
+          key: const Key('movie-player-back-button'),
+          borderRadius: context.appRadius.pillBorder,
+          onTap: onPressed,
+          child: SizedBox(
+            width: overlayTokens.playerBackBadgeMinHeight,
+            height: overlayTokens.playerBackBadgeMinHeight,
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: componentTokens.iconSizeSm,
+              color: context.appTextPalette.onMedia,
+            ),
           ),
         ),
       ),
@@ -43,20 +48,24 @@ class MoviePlayerInfoButton extends StatelessWidget {
     final overlayTokens = context.appOverlayTokens;
     return Tooltip(
       message: '播放信息',
-      child: Material(
-        type: MaterialType.transparency,
-        borderRadius: context.appRadius.pillBorder,
-        child: InkWell(
-          key: const Key('movie-player-info-button'),
+      child: AppClickable(
+        enabled: true,
+        child: Material(
+          type: MaterialType.transparency,
           borderRadius: context.appRadius.pillBorder,
-          onTap: onPressed,
-          child: SizedBox(
-            width: overlayTokens.playerBackBadgeMinHeight,
-            height: overlayTokens.playerBackBadgeMinHeight,
-            child: Icon(
-              Icons.info_outline_rounded,
-              size: componentTokens.iconSizeSm,
-              color: context.appTextPalette.onMedia,
+          child: InkWell(
+            mouseCursor: SystemMouseCursors.click,
+            key: const Key('movie-player-info-button'),
+            borderRadius: context.appRadius.pillBorder,
+            onTap: onPressed,
+            child: SizedBox(
+              width: overlayTokens.playerBackBadgeMinHeight,
+              height: overlayTokens.playerBackBadgeMinHeight,
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: componentTokens.iconSizeSm,
+                color: context.appTextPalette.onMedia,
+              ),
             ),
           ),
         ),

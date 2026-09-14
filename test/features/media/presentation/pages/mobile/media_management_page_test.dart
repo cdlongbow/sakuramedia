@@ -103,6 +103,83 @@ void main() {
       find.byKey(const Key('mobile-media-management-batch-transfer-button')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('mobile-media-management-delete-1')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('deletes a media item from its mobile card', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: [_mediaItemJson(1)]),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('mobile-media-management-delete-1')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('mobile-media-management-delete-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('media-management-delete-dialog-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-media-management-batch-delete-button')),
+      findsNothing,
+    );
+    await tester.tap(
+      find.byKey(const Key('media-management-delete-confirm-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    expect(
+      find.byKey(const Key('mobile-media-management-row-1')),
+      findsNothing,
+    );
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('invalid media reuses the mobile media card', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: <String, dynamic>{
+        'items': [_invalidMediaJson(1)],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-tab-maintenance')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('invalid-media-row-1')), findsOneWidget);
+    expect(
+      find.byKey(const Key('invalid-media-row-heading-1')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('invalid-media-delete-1')), findsOneWidget);
   });
 
   testWidgets('mobile filter opens bottom drawer', (tester) async {
@@ -195,5 +272,21 @@ Map<String, dynamic> _mediaItemJson(int id) {
     'heat': 100,
     'created_at': '2026-03-12T10:00:00Z',
     'updated_at': '2026-03-12T10:00:00Z',
+  };
+}
+
+Map<String, dynamic> _invalidMediaJson(int id) {
+  return <String, dynamic>{
+    'id': id,
+    'movie_number': 'ABC-$id',
+    'video_item_id': null,
+    'movie_title': 'Movie $id',
+    'cover_image': null,
+    'thin_cover_image': null,
+    'file_name': 'ABC-$id.mp4',
+    'library_id': 1,
+    'library_name': 'Main Library',
+    'file_size_bytes': 1024,
+    'updated_at': '2026-05-13T12:00:00Z',
   };
 }

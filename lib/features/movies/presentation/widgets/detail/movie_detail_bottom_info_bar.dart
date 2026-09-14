@@ -19,26 +19,25 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = variant == MovieDetailBottomInfoBarVariant.mobileFullWidth;
-    final borderRadius =
-        isMobile
-            ? BorderRadius.vertical(top: context.appRadius.smBorder.topLeft)
-            : context.appRadius.xsBorder;
-    final decoration =
-        isMobile
-            ? BoxDecoration(
-              borderRadius: borderRadius,
-              boxShadow: context.appShadows.card,
-            )
-            : BoxDecoration(
-              borderRadius: context.appRadius.smBorder,
-              border: Border.all(color: context.appColors.borderSubtle),
-            );
+    final borderRadius = isMobile
+        ? BorderRadius.vertical(top: context.appRadius.smBorder.topLeft)
+        : context.appRadius.xsBorder;
+    final decoration = isMobile
+        ? BoxDecoration(
+            borderRadius: borderRadius,
+            boxShadow: context.appShadows.card,
+          )
+        : BoxDecoration(
+            borderRadius: context.appRadius.smBorder,
+            border: Border.all(color: context.appColors.borderSubtle),
+          );
 
     return Material(
       key: const Key('movie-detail-fixed-info-bar'),
       color: context.appColors.surfaceCard,
       borderRadius: borderRadius,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         borderRadius: borderRadius,
         child: Container(

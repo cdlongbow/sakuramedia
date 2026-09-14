@@ -28,23 +28,21 @@ Future<void> showAddClipsToCollectionDialog(
     case ClipCollectionEditPresentation.dialog:
       return showDialog<void>(
         context: context,
-        builder:
-            (dialogContext) => AddClipsToCollectionDialog(
-              collectionId: collectionId,
-              memberClipIds: memberClipIds,
-            ),
+        builder: (dialogContext) => AddClipsToCollectionDialog(
+          collectionId: collectionId,
+          memberClipIds: memberClipIds,
+        ),
       );
     case ClipCollectionEditPresentation.bottomDrawer:
       return showAppBottomDrawer<void>(
         context: context,
         drawerKey: const Key('add-clips-to-collection-bottom-sheet'),
         heightFactor: 0.8,
-        builder:
-            (sheetContext) => AddClipsToCollectionDialog(
-              collectionId: collectionId,
-              memberClipIds: memberClipIds,
-              presentation: ClipCollectionEditPresentation.bottomDrawer,
-            ),
+        builder: (sheetContext) => AddClipsToCollectionDialog(
+          collectionId: collectionId,
+          memberClipIds: memberClipIds,
+          presentation: ClipCollectionEditPresentation.bottomDrawer,
+        ),
       );
   }
 }
@@ -268,6 +266,9 @@ class _AddClipsToCollectionDialogState
     ];
 
     return InkWell(
+      mouseCursor: isAnyUpdating
+          ? SystemMouseCursors.basic
+          : SystemMouseCursors.click,
       key: Key('add-clips-option-${clip.clipId}'),
       borderRadius: context.appRadius.xsBorder,
       onTap: isAnyUpdating ? null : () => _toggle(clip),
@@ -277,10 +278,9 @@ class _AddClipsToCollectionDialogState
           color: colors.surfaceMuted,
           borderRadius: context.appRadius.xsBorder,
           border: Border.all(
-            color:
-                selected
-                    ? Theme.of(context).colorScheme.primary
-                    : colors.borderSubtle,
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : colors.borderSubtle,
           ),
         ),
         child: Row(
@@ -299,10 +299,9 @@ class _AddClipsToCollectionDialogState
                 width: 72,
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
-                  child:
-                      coverUrl != null && coverUrl.isNotEmpty
-                          ? MaskedImage(url: coverUrl, fit: BoxFit.cover)
-                          : ColoredBox(color: colors.surfaceMuted),
+                  child: coverUrl != null && coverUrl.isNotEmpty
+                      ? MaskedImage(url: coverUrl, fit: BoxFit.cover)
+                      : ColoredBox(color: colors.surfaceMuted),
                 ),
               ),
             ),

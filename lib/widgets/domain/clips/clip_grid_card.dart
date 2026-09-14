@@ -93,10 +93,14 @@ class ClipGridCard extends StatelessWidget {
           (backgroundOnDecoration ? Colors.transparent : colors.surfaceCard),
       borderRadius: context.appRadius.mdBorder,
       child: InkWell(
+        mouseCursor: selectionMode && onSelectedChanged == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
         key: tapKey,
         borderRadius: context.appRadius.mdBorder,
-        onTap:
-            selectionMode ? () => onSelectedChanged?.call(!isSelected) : onTap,
+        onTap: selectionMode
+            ? () => onSelectedChanged?.call(!isSelected)
+            : onTap,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: backgroundOnDecoration ? colors.surfaceCard : null,
@@ -169,10 +173,10 @@ class ClipGridCard extends StatelessWidget {
     }
     return GestureDetector(
       behavior: HitTestBehavior.deferToChild,
-      onSecondaryTapDown:
-          (details) => _showContextMenu(context, details.globalPosition),
-      onLongPressStart:
-          (details) => _showContextMenu(context, details.globalPosition),
+      onSecondaryTapDown: (details) =>
+          _showContextMenu(context, details.globalPosition),
+      onLongPressStart: (details) =>
+          _showContextMenu(context, details.globalPosition),
       child: card,
     );
   }

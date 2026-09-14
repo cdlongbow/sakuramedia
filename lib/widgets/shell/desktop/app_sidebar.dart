@@ -43,9 +43,7 @@ class AppSidebar extends ConsumerWidget {
       duration: const Duration(milliseconds: 180),
       width: width,
       decoration: BoxDecoration(
-        color: useDesktopSidebarGlass
-            ? glassTint
-            : appColors.sidebarBackground,
+        color: useDesktopSidebarGlass ? glassTint : appColors.sidebarBackground,
         border: Border(
           right: BorderSide(
             color: useDesktopSidebarGlass
@@ -210,7 +208,7 @@ class _SidebarSectionHeader extends StatelessWidget {
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s10,
-          weight: AppTextWeight.medium,
+          weight: AppTextWeight.regular,
           tone: AppTextTone.muted,
         ).copyWith(letterSpacing: 1.2),
       ),
@@ -406,6 +404,7 @@ class _SidebarSearchSectionState extends State<_SidebarSearchSection> {
             color: context.appColors.surfaceMuted,
             borderRadius: context.appRadius.smBorder,
             child: InkWell(
+              mouseCursor: SystemMouseCursors.click,
               key: const Key('sidebar-search-button'),
               onTap: () => context.pushDesktopSearch(
                 query: '',
@@ -621,7 +620,7 @@ class _AppSidebarItemState extends State<AppSidebarItem> {
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s14,
-                          weight: AppTextWeight.medium,
+                          weight: AppTextWeight.regular,
                           tone: AppTextTone.tertiary,
                         ),
                       ),

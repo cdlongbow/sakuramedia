@@ -120,6 +120,7 @@ class MediaManagementContent extends HookConsumerWidget {
 
     final isDeleting = useState<bool>(false);
     final isTransferring = useState<bool>(false);
+    final deletingMediaId = useState<int?>(null);
     final selectionMode = useState<bool>(false);
 
     void exitSelectionMode() {
@@ -160,6 +161,7 @@ class MediaManagementContent extends HookConsumerWidget {
               _maintenanceTabIndex => InvalidMediaSection(
                 key: Key('$keyPrefix-invalid-media-section'),
                 scrollController: scrollController,
+                mobile: mobile,
               ),
               _duplicateTabIndex => DuplicateMediaSection(
                 key: Key('$keyPrefix-duplicate-media-section'),
@@ -211,6 +213,13 @@ class MediaManagementContent extends HookConsumerWidget {
                 selectionMode: selectionMode.value,
                 onEnterSelection: () => selectionMode.value = true,
                 onExitSelection: exitSelectionMode,
+                onDeleteItem: (item) => _openSingleDeleteDialog(
+                  context,
+                  ref,
+                  item,
+                  deletingMediaId,
+                ),
+                deletingItemId: deletingMediaId,
               ),
             },
           ),
@@ -304,6 +313,41 @@ class MediaManagementContent extends HookConsumerWidget {
           : apiErrorMessage(firstError, fallback: '批量删除失败');
       showToast('已删除 ${okIds.length} 项，${failedIds.length} 项失败：$errorMessage');
       unawaited(ref.read(mediaBrowseProvider.notifier).refresh());
+    }
+  }
+
+  Future<void> _openSingleDeleteDialog(
+    BuildContext context,
+    WidgetRef ref,
+    MediaListItemDto item,
+    ValueNotifier<int?> deletingMediaId,
+  ) async {
+    if (deletingMediaId.value != null) return;
+    final confirmed = await showAppConfirmDialog(
+      context,
+      dialogKey: Key('media-management-delete-dialog-${item.id}'),
+      confirmKey: Key('media-management-delete-confirm-${item.id}'),
+      cancelKey: Key('media-management-delete-cancel-${item.id}'),
+      title: '删除媒体',
+      message: '确认删除“${item.fileName}”及对应文件？该操作不可恢复。',
+      confirmLabel: '删除',
+      danger: true,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    deletingMediaId.value = item.id;
+    try {
+      await ref.read(mediaApiProvider).deleteMedia(mediaId: item.id);
+      ref.read(mediaBrowseProvider.notifier).removeItemsByIds([item.id]);
+      if (context.mounted) showToast('媒体已删除');
+    } catch (error) {
+      if (context.mounted) {
+        showToast(apiErrorMessage(error, fallback: '删除媒体失败'));
+      }
+    } finally {
+      if (context.mounted && deletingMediaId.value == item.id) {
+        deletingMediaId.value = null;
+      }
     }
   }
 

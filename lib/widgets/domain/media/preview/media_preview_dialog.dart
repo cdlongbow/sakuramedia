@@ -343,10 +343,9 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         ),
         MediaPreviewActionItem(
           label: _existingPoint == null ? '添加标记' : '删除标记',
-          icon:
-              _existingPoint == null
-                  ? Icons.bookmark_add_outlined
-                  : Icons.bookmark_remove_outlined,
+          icon: _existingPoint == null
+              ? Icons.bookmark_add_outlined
+              : Icons.bookmark_remove_outlined,
           isLoading: _isTogglingPoint,
           onTap: _canTogglePoint ? _handleTogglePoint : null,
         ),
@@ -524,59 +523,60 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               InkWell(
+                mouseCursor: widget.useInlineNavigation && _canOpenMovieDetail
+                    ? SystemMouseCursors.click
+                    : SystemMouseCursors.basic,
                 key: const Key('image-search-result-preview-movie-cover'),
                 borderRadius: context.appRadius.mdBorder,
                 onTap: widget.useInlineNavigation && _canOpenMovieDetail
                     ? _handleOpenMovieDetail
                     : null,
-                child:
-                    movie.coverImage == null
-                        ? ClipRRect(
-                          borderRadius: context.appRadius.mdBorder,
-                          child: SizedBox(
-                            width: 88,
-                            height: 80,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: context.appColors.surfaceMuted,
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.movie_outlined),
-                              ),
+                child: movie.coverImage == null
+                    ? ClipRRect(
+                        borderRadius: context.appRadius.mdBorder,
+                        child: SizedBox(
+                          width: 88,
+                          height: 80,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: context.appColors.surfaceMuted,
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.movie_outlined),
                             ),
                           ),
-                        )
-                        : MoviePlotThumbnail(
-                          url: movie.coverImage!.bestAvailableUrl,
-                          maxHeight: 80,
-                          fit: BoxFit.cover,
-                          borderRadius: context.appRadius.mdBorder,
-                          fallbackAspectRatio: 0.72,
                         ),
+                      )
+                    : MoviePlotThumbnail(
+                        url: movie.coverImage!.bestAvailableUrl,
+                        maxHeight: 80,
+                        fit: BoxFit.cover,
+                        borderRadius: context.appRadius.mdBorder,
+                        fallbackAspectRatio: 0.72,
+                      ),
               ),
               SizedBox(width: spacing.sm),
               Expanded(
-                child:
-                    movie.actors.isEmpty
-                        ? Text(
-                          movie.title,
-                          style: resolveAppTextStyle(
-                            context,
-                            size: AppTextSize.s18,
-                            weight: AppTextWeight.semibold,
-                            tone: AppTextTone.primary,
-                          ),
-                        )
-                        : _MovieActorStrip(
-                          actors: movie.actors,
-                          controller: _actorScrollController,
-                          onActorTap: widget.onActorSelected == null
-                              ? null
-                              : (actorId) {
-                                  widget.onActorSelected!(actorId);
-                                  Navigator.of(context).pop();
-                                },
+                child: movie.actors.isEmpty
+                    ? Text(
+                        movie.title,
+                        style: resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s18,
+                          weight: AppTextWeight.semibold,
+                          tone: AppTextTone.primary,
                         ),
+                      )
+                    : _MovieActorStrip(
+                        actors: movie.actors,
+                        controller: _actorScrollController,
+                        onActorTap: widget.onActorSelected == null
+                            ? null
+                            : (actorId) {
+                                widget.onActorSelected!(actorId);
+                                Navigator.of(context).pop();
+                              },
+                      ),
               ),
             ],
           ),
@@ -603,13 +603,14 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     }
     setState(() => _isSavingImage = true);
     try {
-      final result = await ImageSaveService(
-        fetchBytes: ref.read(apiClientProvider).getBytes,
-      ).saveImageFromUrl(
-        imageUrl: widget.item.imageUrl,
-        fileName: widget.item.fileName,
-        dialogTitle: '保存到本地',
-      );
+      final result =
+          await ImageSaveService(
+            fetchBytes: ref.read(apiClientProvider).getBytes,
+          ).saveImageFromUrl(
+            imageUrl: widget.item.imageUrl,
+            fileName: widget.item.fileName,
+            dialogTitle: '保存到本地',
+          );
       if (mounted && result.status == ImageSaveStatus.success) {
         showToast(result.message ?? '图片已保存');
       }
@@ -837,14 +838,16 @@ class _MovieActorStrip extends StatelessWidget {
           itemBuilder: (context, index) {
             final actor = actors[index];
             final tooltip = actor.displayName;
-            final itemKey =
-                actor.id > 0
-                    ? Key('image-search-result-preview-actor-${actor.id}')
-                    : Key('image-search-result-preview-actor-index-$index');
+            final itemKey = actor.id > 0
+                ? Key('image-search-result-preview-actor-${actor.id}')
+                : Key('image-search-result-preview-actor-index-$index');
 
             return Tooltip(
               message: tooltip,
               child: InkWell(
+                mouseCursor: actor.id > 0 && onActorTap != null
+                    ? SystemMouseCursors.click
+                    : SystemMouseCursors.basic,
                 key: itemKey,
                 borderRadius: context.appRadius.smBorder,
                 onTap: actor.id > 0 && onActorTap != null

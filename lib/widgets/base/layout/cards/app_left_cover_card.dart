@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 /// 「封面贴左」样式的白底列表卡片外壳，供跨 feature 复用。
 ///
@@ -94,9 +95,17 @@ class AppLeftCoverCard extends StatelessWidget {
     );
 
     if (onTap != null) {
-      card = Material(
-        color: Colors.transparent,
-        child: InkWell(borderRadius: radius, onTap: onTap, child: card),
+      card = AppClickable(
+        enabled: true,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            mouseCursor: SystemMouseCursors.click,
+            borderRadius: radius,
+            onTap: onTap,
+            child: card,
+          ),
+        ),
       );
     }
     return card;

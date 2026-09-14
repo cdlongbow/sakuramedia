@@ -186,6 +186,9 @@ class _PluginRow extends StatelessWidget {
     final spacing = context.appSpacing;
     final disabled = busy || installing || checkingUpdates;
     return InkWell(
+      mouseCursor: disabled
+          ? SystemMouseCursors.basic
+          : SystemMouseCursors.click,
       key: Key('plugin-row-${plugin.pluginId}'),
       onTap: disabled ? null : onTap,
       borderRadius: context.appRadius.mdBorder,

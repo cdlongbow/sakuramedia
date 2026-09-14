@@ -182,6 +182,9 @@ class MovieDetailHeroCard extends StatelessWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
+                      mouseCursor: !isPlayLoading && onPlayTap != null
+                          ? SystemMouseCursors.click
+                          : SystemMouseCursors.basic,
                       key: const Key('movie-detail-hero-play-button'),
                       customBorder: const CircleBorder(),
                       onTap: isPlayLoading ? null : onPlayTap,

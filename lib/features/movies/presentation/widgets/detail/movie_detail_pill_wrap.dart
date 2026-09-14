@@ -61,20 +61,17 @@ class _MovieDetailPill extends StatelessWidget {
     final isInteractive = item.onTap != null;
     final primary = Theme.of(context).colorScheme.primary;
     final staticBorderColor = primary.withValues(alpha: 0.22);
-    final backgroundColor =
-        isInteractive
-            ? (item.isSelected
-                ? primary.withValues(alpha: 0.14)
-                : context.appColors.surfaceMuted)
-            : primary.withValues(alpha: 0.12);
-    final foregroundColor =
-        isInteractive
-            ? (item.isSelected ? primary : context.appTextPalette.primary)
-            : primary;
-    final borderColor =
-        isInteractive
-            ? (item.isSelected ? primary : context.appColors.borderSubtle)
-            : staticBorderColor;
+    final backgroundColor = isInteractive
+        ? (item.isSelected
+              ? primary.withValues(alpha: 0.14)
+              : context.appColors.surfaceMuted)
+        : primary.withValues(alpha: 0.12);
+    final foregroundColor = isInteractive
+        ? (item.isSelected ? primary : context.appTextPalette.primary)
+        : primary;
+    final borderColor = isInteractive
+        ? (item.isSelected ? primary : context.appColors.borderSubtle)
+        : staticBorderColor;
     final radius = context.appRadius.xsBorder;
     final tokens = context.appComponentTokens;
     final content = Padding(
@@ -87,8 +84,9 @@ class _MovieDetailPill extends StatelessWidget {
         style: resolveAppTextStyle(
           context,
           size: AppTextSize.s12,
-          weight:
-              item.isSelected ? AppTextWeight.semibold : AppTextWeight.medium,
+          weight: item.isSelected
+              ? AppTextWeight.semibold
+              : AppTextWeight.medium,
           tone: AppTextTone.primary,
         ).copyWith(color: foregroundColor),
       ),
@@ -109,7 +107,12 @@ class _MovieDetailPill extends StatelessWidget {
       borderRadius: radius,
       child: DecoratedBox(
         decoration: decoration,
-        child: InkWell(borderRadius: radius, onTap: item.onTap, child: content),
+        child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
+          borderRadius: radius,
+          onTap: item.onTap,
+          child: content,
+        ),
       ),
     );
   }

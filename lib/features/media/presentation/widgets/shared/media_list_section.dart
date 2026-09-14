@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,7 @@ import 'package:sakuramedia/features/media/presentation/media_browse_filter_stat
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/media_browse_filter_toolbar.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/mobile/media_mobile_list_card.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_cover_thumbnail.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_meta_line.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_path_line.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -22,8 +20,6 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
@@ -37,7 +33,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart'
 /// 由内部 `ref.read(...notifier)` 触发；父页只提供跨 provider 的批量操作与复合刷新。
 ///
 /// 平台差异（`mobile: true` 时启用）：
-/// - 行卡片：桌面固定行高 `_MediaRow` / 移动流式 [MediaMobileListCard]（长按进入多选态）；
+/// - 行卡片：桌面 / 移动均使用 [MediaListItemCard]（移动端长按进入多选态）；
 /// - 筛选入口：桌面 popover 工具栏 / 移动底部抽屉（`MediaBrowseFilterSectionGroup` 复用）；
 /// - 多选：桌面顶栏按钮流 / 移动 `AppListHeader.selection`（顶）+ `AppSelectionBottomBar`（底）。
 ///
@@ -59,6 +55,8 @@ class MediaListSection extends StatelessWidget {
     this.selectionMode = false,
     this.onEnterSelection,
     this.onExitSelection,
+    this.onDeleteItem,
+    this.deletingItemId,
   });
 
   final ScrollController scrollController;
@@ -96,6 +94,12 @@ class MediaListSection extends StatelessWidget {
   /// 移动端退出多选态（清空选择由本组件内部调 provider）；桌面端不用。
   final VoidCallback? onExitSelection;
 
+  /// 单项删除入口；不传时不显示卡片级删除按钮。
+  final Future<void> Function(MediaListItemDto item)? onDeleteItem;
+
+  /// 当前正在删除的媒体 ID，用于只显示对应卡片的 loading。
+  final ValueListenable<int?>? deletingItemId;
+
   @override
   Widget build(BuildContext context) {
     final scrollView = CustomScrollView(
@@ -109,6 +113,10 @@ class MediaListSection extends StatelessWidget {
           selectionMode: selectionMode,
           onEnterSelection: onEnterSelection,
           onOpenMovieDetail: onOpenMovieDetail,
+          isDeleting: isDeleting,
+          isTransferring: isTransferring,
+          onDeleteItem: onDeleteItem,
+          deletingItemId: deletingItemId,
         ),
       ],
     );
@@ -401,6 +409,10 @@ class _MediaListBodySliver extends ConsumerWidget {
     required this.selectionMode,
     required this.onEnterSelection,
     required this.onOpenMovieDetail,
+    required this.isDeleting,
+    required this.isTransferring,
+    required this.onDeleteItem,
+    required this.deletingItemId,
   });
 
   final String keyPrefix;
@@ -409,6 +421,10 @@ class _MediaListBodySliver extends ConsumerWidget {
   final VoidCallback? onEnterSelection;
   final void Function(BuildContext context, String movieNumber)?
   onOpenMovieDetail;
+  final bool isDeleting;
+  final bool isTransferring;
+  final Future<void> Function(MediaListItemDto item)? onDeleteItem;
+  final ValueListenable<int?>? deletingItemId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -444,13 +460,25 @@ class _MediaListBodySliver extends ConsumerWidget {
               selectionMode: selectionMode,
               onEnterSelection: onEnterSelection,
               onOpenMovieDetail: onOpenMovieDetail,
+              isDeleting: isDeleting,
+              isTransferring: isTransferring,
+              onDeleteItem: onDeleteItem,
+              deletingItemId: deletingItemId,
             )
-          : _MediaRowConsumer(item: item, onOpenMovieDetail: onOpenMovieDetail),
+          : _MediaRowConsumer(
+              keyPrefix: keyPrefix,
+              item: item,
+              onOpenMovieDetail: onOpenMovieDetail,
+              isDeleting: isDeleting,
+              isTransferring: isTransferring,
+              onDeleteItem: onDeleteItem,
+              deletingItemId: deletingItemId,
+            ),
     );
   }
 }
 
-/// 移动端行 consumer：订阅选中态 / 媒体库，组装 [MediaMobileListCard]。
+/// 移动端行 consumer：订阅选中态 / 媒体库，组装 [MediaListItemCard]。
 class _MediaMobileRowConsumer extends ConsumerWidget {
   const _MediaMobileRowConsumer({
     required this.keyPrefix,
@@ -458,6 +486,10 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
     required this.selectionMode,
     required this.onEnterSelection,
     this.onOpenMovieDetail,
+    required this.isDeleting,
+    required this.isTransferring,
+    required this.onDeleteItem,
+    required this.deletingItemId,
   });
 
   final String keyPrefix;
@@ -466,6 +498,10 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
   final VoidCallback? onEnterSelection;
   final void Function(BuildContext context, String movieNumber)?
   onOpenMovieDetail;
+  final bool isDeleting;
+  final bool isTransferring;
+  final Future<void> Function(MediaListItemDto item)? onDeleteItem;
+  final ValueListenable<int?>? deletingItemId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -484,19 +520,35 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    return MediaMobileListCard(
+    Widget buildCard(int? deletingId) => MediaListItemCard(
       keyPrefix: keyPrefix,
       item: item,
       library: library,
-      isSelected: isSelected,
-      selectionMode: selectionMode,
-      onLongPress: () {
-        ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
-        onEnterSelection?.call();
-      },
-      onToggleSelect: () =>
-          ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
+      mobile: true,
+      selected: isSelected,
+      onTap: selectionMode
+          ? () =>
+                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id)
+          : null,
+      onLongPress: selectionMode
+          ? null
+          : () {
+              ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
+              onEnterSelection?.call();
+            },
       onOpenMovieDetail: onOpenMovieDetail,
+      onDelete: selectionMode || onDeleteItem == null
+          ? null
+          : () => unawaited(onDeleteItem!(item)),
+      isDeleting: deletingId == item.id,
+      canDelete: !isDeleting && !isTransferring && deletingId == null,
+    );
+
+    final notifier = deletingItemId;
+    if (notifier == null) return buildCard(null);
+    return ValueListenableBuilder<int?>(
+      valueListenable: notifier,
+      builder: (context, deletingId, child) => buildCard(deletingId),
     );
   }
 }
@@ -558,11 +610,24 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
 }
 
 class _MediaRowConsumer extends ConsumerWidget {
-  const _MediaRowConsumer({required this.item, this.onOpenMovieDetail});
+  const _MediaRowConsumer({
+    required this.keyPrefix,
+    required this.item,
+    this.onOpenMovieDetail,
+    required this.isDeleting,
+    required this.isTransferring,
+    required this.onDeleteItem,
+    required this.deletingItemId,
+  });
 
+  final String keyPrefix;
   final MediaListItemDto item;
   final void Function(BuildContext context, String movieNumber)?
   onOpenMovieDetail;
+  final bool isDeleting;
+  final bool isTransferring;
+  final Future<void> Function(MediaListItemDto item)? onDeleteItem;
+  final ValueListenable<int?>? deletingItemId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -581,13 +646,28 @@ class _MediaRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    return _MediaRow(
+    Widget buildCard(int? deletingId) => MediaListItemCard(
+      keyPrefix: keyPrefix,
       item: item,
       library: library,
-      isSelected: isSelected,
-      onToggle: () =>
+      mobile: false,
+      selected: isSelected,
+      onTap: () =>
           ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
       onOpenMovieDetail: onOpenMovieDetail,
+      onDelete: onDeleteItem == null
+          ? null
+          : () => unawaited(onDeleteItem!(item)),
+      isDeleting: deletingId == item.id,
+      canDelete: !isDeleting && !isTransferring && deletingId == null,
+      showUpdatedAt: true,
+    );
+
+    final notifier = deletingItemId;
+    if (notifier == null) return buildCard(null);
+    return ValueListenableBuilder<int?>(
+      valueListenable: notifier,
+      builder: (context, deletingId, child) => buildCard(deletingId),
     );
   }
 }
@@ -681,193 +761,3 @@ class _MediaListActionBar extends ConsumerWidget {
     );
   }
 }
-
-/// 单条 media 卡片：走 [AppLeftCoverCard] 外壳（封面贴左的白底卡），整卡点选、
-/// 选中态外框换 `selectionBorder`（无 checkbox，靠外框传达选中）。
-///
-/// 内容层次（自上而下）：
-/// 1) 标题栏：标题（一行）+ 可选副标题；右上贴角「失效」badge（仅无效时显示）。
-/// 2) 元数据 Wrap：kind / provider / 库名 compact badge + 大小 / 时长 / 分辨率 muted 文本。
-/// 3) 文件名行：folder icon + provider 返回的文件名；右侧「更新 …」（若有）。
-///
-/// 封面区独立 InkWell：JAV 项跳影片详情，视频项无跳转（videos 域没有单视频详情页）。
-class _MediaRow extends StatelessWidget {
-  const _MediaRow({
-    required this.item,
-    this.library,
-    required this.isSelected,
-    required this.onToggle,
-    this.onOpenMovieDetail,
-  });
-
-  final MediaListItemDto item;
-  final MediaLibraryDto? library;
-  final bool isSelected;
-  final VoidCallback onToggle;
-
-  /// 封面跳影片详情回调（JAV 项）；null 时封面纯图不可点。
-  final void Function(BuildContext context, String movieNumber)?
-  onOpenMovieDetail;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final componentTokens = context.appComponentTokens;
-
-    final card = AppLeftCoverCard(
-      key: Key('media-management-row-${item.id}'),
-      coverWidth: componentTokens.downloadTaskCoverWidth,
-      bodyMinHeight: componentTokens.mediaManagementRowHeight,
-      bodyPadding: EdgeInsets.symmetric(
-        horizontal: spacing.lg,
-        vertical: spacing.md,
-      ),
-      selected: isSelected,
-      onTap: onToggle,
-      cover: _MediaCoverSlot(item: item, onOpenMovieDetail: onOpenMovieDetail),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _MediaHeadingLine(item: item),
-          SizedBox(height: spacing.md),
-          MediaListItemMetaLine(
-            item: item,
-            library: library,
-            spacing: spacing.sm,
-            runSpacing: spacing.xs,
-          ),
-          SizedBox(height: spacing.sm),
-          MediaListItemPathLine(
-            keyPrefix: 'media-management',
-            item: item,
-            showUpdatedAt: true,
-          ),
-        ],
-      ),
-    );
-
-    return card;
-  }
-}
-
-/// 封面 slot：宽图横向铺满，`BoxFit.cover` 横向裁切；JAV 且有番号 → InkWell
-/// 独立可点跳详情；否则纯图/占位。
-///
-/// 内层 InkWell 会拦截手势不冒泡到外层"切换选中"，两层交互天然分离。
-/// URL 优先取 `coverImage`（横版）而非 `thin_cover_image`（竖版 thin）。
-class _MediaCoverSlot extends StatelessWidget {
-  const _MediaCoverSlot({required this.item, this.onOpenMovieDetail});
-
-  final MediaListItemDto item;
-  final void Function(BuildContext context, String movieNumber)?
-  onOpenMovieDetail;
-
-  String? get _wideCoverUrl {
-    final coverUrl = item.coverImage?.bestAvailableUrl.trim();
-    if (coverUrl != null && coverUrl.isNotEmpty) {
-      return coverUrl;
-    }
-    final thinUrl = item.thinCoverImage?.bestAvailableUrl.trim();
-    if (thinUrl != null && thinUrl.isNotEmpty) {
-      return thinUrl;
-    }
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final url = _wideCoverUrl;
-    final componentTokens = context.appComponentTokens;
-    final image = MediaCoverThumbnail(
-      url: url,
-      width: componentTokens.downloadTaskCoverWidth,
-      height: componentTokens.mediaManagementRowHeight,
-      fit: BoxFit.cover,
-      placeholderKey: Key('media-management-cover-placeholder-${item.id}'),
-      imageKey: Key('media-management-cover-${item.id}'),
-      placeholderBackground: context.appColors.surfaceMuted,
-    );
-
-    // JAV 且有番号：封面独立可点，跳影片详情。videos 域无单视频详情页，视频项
-    // 封面保持纯图（点击冒泡到外层触发选中）。
-    final movieNumber = item.movieNumber?.trim();
-    final openMovieDetail = onOpenMovieDetail;
-    if (!item.isJav || movieNumber == null || movieNumber.isEmpty) {
-      return image;
-    }
-    if (openMovieDetail == null) {
-      return image;
-    }
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('media-management-cover-tap-${item.id}'),
-        onTap: () => openMovieDetail(context, movieNumber),
-        child: image,
-      ),
-    );
-  }
-}
-
-/// 标题栏：标题 + 可选副标题；右上贴角「失效」badge（仅无效时）。
-class _MediaHeadingLine extends StatelessWidget {
-  const _MediaHeadingLine({required this.item});
-
-  final MediaListItemDto item;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.displayHeading,
-                key: Key('media-management-row-heading-${item.id}'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              if (item.displaySubtitle != null) ...[
-                SizedBox(height: spacing.xs),
-                Text(
-                  item.displaySubtitle!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (!item.valid) ...[
-          SizedBox(width: spacing.sm),
-          const AppBadge(
-            label: '失效',
-            tone: AppBadgeTone.error,
-            size: AppBadgeSize.compact,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// 元数据行 / 文件名行已抽为共享件 [MediaListItemMetaLine] /
-/// [MediaListItemPathLine]（`widgets/shared/media_list_item_*_line.dart`），
-/// 桌面行与移动卡共用。

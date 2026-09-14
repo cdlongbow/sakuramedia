@@ -66,6 +66,7 @@ Future<VideoCollectionEpisodeAction?> showVideoCollectionEpisodeActions({
             ),
             for (final value in VideoCollectionEpisodeAction.values)
               InkWell(
+                mouseCursor: SystemMouseCursors.click,
                 key: Key('video-episode-action-${value.name}'),
                 onTap: () => Navigator.of(sheetContext).pop(value),
                 child: action(sheetContext, value),

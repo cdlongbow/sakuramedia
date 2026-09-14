@@ -11,6 +11,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/staggered_layout.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
@@ -814,9 +815,12 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
 
     final menuHandler = widget.onThumbnailMenuRequested;
     if (menuHandler == null) {
-      return GestureDetector(
-        onTap: () => widget.onThumbnailTap(index),
-        child: child,
+      return AppClickable(
+        enabled: true,
+        child: GestureDetector(
+          onTap: () => widget.onThumbnailTap(index),
+          child: child,
+        ),
       );
     }
 

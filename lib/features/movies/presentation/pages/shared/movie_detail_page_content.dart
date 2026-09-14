@@ -584,6 +584,7 @@ class _MovieInlineMetaRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         key: const Key('movie-detail-series-link'),
         onTap: onTap,
         borderRadius: context.appRadius.xsBorder,

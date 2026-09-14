@@ -394,6 +394,7 @@ class _DownloadTaskCover extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
           key: Key('download-task-cover-tap-${movieNumber ?? ''}'),
           onTap: onTap,
           child: image,

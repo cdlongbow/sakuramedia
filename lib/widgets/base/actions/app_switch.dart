@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 /// 紧凑型启停开关。
 ///
@@ -34,11 +35,14 @@ class AppSwitch extends StatelessWidget {
       toggled: value,
       enabled: enabled,
       button: true,
-      child: MouseRegion(
-        cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: AppClickable(
+        enabled: enabled,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            mouseCursor: enabled
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
             borderRadius: context.appRadius.pillBorder,
             onTap: enabled ? () => onChanged!(!value) : null,
             child: AnimatedContainer(

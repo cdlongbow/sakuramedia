@@ -376,6 +376,9 @@ class _MovieDetailDrawerActionRow extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          mouseCursor: isEnabled
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
           onTap: onTap,
           borderRadius: context.appRadius.lgBorder,
           child: Container(

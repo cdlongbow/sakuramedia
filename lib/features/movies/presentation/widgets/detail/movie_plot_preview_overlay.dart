@@ -9,6 +9,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
@@ -42,14 +43,13 @@ Future<void> showMoviePlotPreviewOverlay({
     case MoviePlotPreviewPresentation.dialog:
       return showDialog<void>(
         context: context,
-        builder:
-            (dialogContext) => _MoviePlotPreviewDialog(
-              plotImages: plotImages,
-              initialIndex: initialIndex,
-              onRequestImageMenu: onRequestImageMenu,
-              thumbnailStripLayout: thumbnailStripLayout,
-              enablePinchToFullscreen: false,
-            ),
+        builder: (dialogContext) => _MoviePlotPreviewDialog(
+          plotImages: plotImages,
+          initialIndex: initialIndex,
+          onRequestImageMenu: onRequestImageMenu,
+          thumbnailStripLayout: thumbnailStripLayout,
+          enablePinchToFullscreen: false,
+        ),
       );
     case MoviePlotPreviewPresentation.bottomDrawer:
       return showAppBottomDrawer<void>(
@@ -57,14 +57,13 @@ Future<void> showMoviePlotPreviewOverlay({
         drawerKey: const Key('movie-plot-preview-bottom-drawer'),
         heightFactor: kMoviePlotPreviewDrawerHeightFactor,
         ignoreTopSafeArea: true,
-        builder:
-            (sheetContext) => _MoviePlotPreviewContent(
-              plotImages: plotImages,
-              initialIndex: initialIndex,
-              onRequestImageMenu: onRequestImageMenu,
-              thumbnailStripLayout: thumbnailStripLayout,
-              enablePinchToFullscreen: isMobileAppPlatform(),
-            ),
+        builder: (sheetContext) => _MoviePlotPreviewContent(
+          plotImages: plotImages,
+          initialIndex: initialIndex,
+          onRequestImageMenu: onRequestImageMenu,
+          thumbnailStripLayout: thumbnailStripLayout,
+          enablePinchToFullscreen: isMobileAppPlatform(),
+        ),
       );
   }
 }
@@ -333,10 +332,9 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
       child: Column(
         children: [
           Padding(
-            padding:
-                isMobileAppPlatform()
-                    ? EdgeInsets.symmetric(horizontal: spacing.md)
-                    : EdgeInsets.all(spacing.lg),
+            padding: isMobileAppPlatform()
+                ? EdgeInsets.symmetric(horizontal: spacing.md)
+                : EdgeInsets.all(spacing.lg),
             child: Row(
               children: [
                 Expanded(
@@ -359,10 +357,9 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
             child: PageView.builder(
               key: const Key('movie-plot-preview-page-view'),
               controller: _pageController,
-              physics:
-                  _isFullscreenActive
-                      ? const NeverScrollableScrollPhysics()
-                      : null,
+              physics: _isFullscreenActive
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               itemCount: widget.plotImages.length,
               onPageChanged: (index) {
                 if (_currentIndex == index) {
@@ -393,15 +390,14 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
                       _isFullscreenActive = isActive;
                     });
                   },
-                  onRequestMenu:
-                      widget.onRequestImageMenu == null
-                          ? null
-                          : (previewIndex, globalPosition) =>
-                              widget.onRequestImageMenu!(
-                                context,
-                                previewIndex,
-                                globalPosition,
-                              ),
+                  onRequestMenu: widget.onRequestImageMenu == null
+                      ? null
+                      : (previewIndex, globalPosition) =>
+                            widget.onRequestImageMenu!(
+                              context,
+                              previewIndex,
+                              globalPosition,
+                            ),
                 );
               },
             ),
@@ -435,22 +431,25 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
                     ),
                   );
                   return widget.onRequestImageMenu == null
-                      ? GestureDetector(
-                        key: Key('movie-plot-preview-thumb-$index'),
-                        onTap: () => _goToIndex(index),
-                        child: animatedThumbnail,
-                      )
+                      ? AppClickable(
+                          enabled: true,
+                          child: GestureDetector(
+                            key: Key('movie-plot-preview-thumb-$index'),
+                            onTap: () => _goToIndex(index),
+                            child: animatedThumbnail,
+                          ),
+                        )
                       : AppImageActionTrigger(
-                        key: Key('movie-plot-preview-thumb-$index'),
-                        onTap: () => _goToIndex(index),
-                        onRequestMenu:
-                            (globalPosition) => widget.onRequestImageMenu!(
-                              context,
-                              index,
-                              globalPosition,
-                            ),
-                        child: animatedThumbnail,
-                      );
+                          key: Key('movie-plot-preview-thumb-$index'),
+                          onTap: () => _goToIndex(index),
+                          onRequestMenu: (globalPosition) =>
+                              widget.onRequestImageMenu!(
+                                context,
+                                index,
+                                globalPosition,
+                              ),
+                          child: animatedThumbnail,
+                        );
                 },
               ),
             ),
@@ -550,11 +549,10 @@ class _PreviewMainImageActionTargetState
   }
 
   void _resolveImageProvider() {
-    final baseUrl =
-        ProviderScope.containerOf(
-          context,
-          listen: false,
-        ).read(sessionStoreProvider).baseUrl;
+    final baseUrl = ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(sessionStoreProvider).baseUrl;
     final resolvedUrl = resolveMediaUrl(
       rawUrl: widget.imageUrl,
       baseUrl: baseUrl,
@@ -644,8 +642,8 @@ class _PreviewMainImageActionTargetState
 
     final resolvedAspectRatio =
         (_imageAspectRatio != null && _imageAspectRatio! > 0)
-            ? _imageAspectRatio!
-            : widget.fallbackAspectRatio;
+        ? _imageAspectRatio!
+        : widget.fallbackAspectRatio;
     if (resolvedAspectRatio <= 0) {
       return false;
     }
@@ -700,20 +698,18 @@ class _PreviewMainImageActionTargetState
       },
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onLongPressStart:
-            widget.onRequestMenu == null
-                ? null
-                : (details) => _requestMenuIfHit(
-                  localPosition: details.localPosition,
-                  globalPosition: details.globalPosition,
-                ),
-        onSecondaryTapDown:
-            widget.onRequestMenu == null
-                ? null
-                : (details) => _requestMenuIfHit(
-                  localPosition: details.localPosition,
-                  globalPosition: details.globalPosition,
-                ),
+        onLongPressStart: widget.onRequestMenu == null
+            ? null
+            : (details) => _requestMenuIfHit(
+                localPosition: details.localPosition,
+                globalPosition: details.globalPosition,
+              ),
+        onSecondaryTapDown: widget.onRequestMenu == null
+            ? null
+            : (details) => _requestMenuIfHit(
+                localPosition: details.localPosition,
+                globalPosition: details.globalPosition,
+              ),
         child: MaskedImage(url: widget.imageUrl, fit: BoxFit.contain),
       ),
     );

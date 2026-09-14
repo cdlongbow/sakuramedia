@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 /// 列表顶栏最左侧的**筛选入口**：实底胶囊 + 当前筛选摘要 + 下拉箭头。
 ///
@@ -47,59 +48,62 @@ class AppFilterEntryButton extends StatelessWidget {
     Widget entry = Semantics(
       button: true,
       label: tooltip,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          height: double.infinity,
-          child: Center(
-            child: Container(
-              height: componentTokens.buttonHeightXs,
-              padding: EdgeInsets.symmetric(
-                horizontal: resolvedLabel == null ? spacing.sm : spacing.md,
-              ),
-              decoration: BoxDecoration(
-                color: colors.surfaceMuted,
-                // 胶囊只有 28/32 高，md(12) 会圆到接近药丸；sm(8) 才是顶栏这
-                // 一档小控件的圆角，与 AppListHeaderInfo 保持同一档。
-                borderRadius: context.appRadius.smBorder,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: componentTokens.iconSizeXs,
-                    color: foreground,
-                  ),
-                  if (resolvedLabel != null) ...[
-                    SizedBox(width: spacing.xs),
-                    ConstrainedBox(
-                      // 摘要可能很长，给个上限免得把信息槽 / 操作槽挤没。
-                      constraints: BoxConstraints(
-                        maxWidth:
-                            componentTokens.mobileFilterEntryMaxLabelWidth,
-                      ),
-                      child: Text(
-                        resolvedLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: tone,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: spacing.xs),
+      child: AppClickable(
+        enabled: onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: SizedBox(
+            height: double.infinity,
+            child: Center(
+              child: Container(
+                height: componentTokens.buttonHeightXs,
+                padding: EdgeInsets.symmetric(
+                  horizontal: resolvedLabel == null ? spacing.sm : spacing.md,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.surfaceMuted,
+                  // 胶囊只有 28/32 高，md(12) 会圆到接近药丸；sm(8) 才是顶栏这
+                  // 一档小控件的圆角，与 AppListHeaderInfo 保持同一档。
+                  borderRadius: context.appRadius.smBorder,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Icon(
-                      trailingIcon,
+                      icon,
                       size: componentTokens.iconSizeXs,
                       color: foreground,
                     ),
+                    if (resolvedLabel != null) ...[
+                      SizedBox(width: spacing.xs),
+                      ConstrainedBox(
+                        // 摘要可能很长，给个上限免得把信息槽 / 操作槽挤没。
+                        constraints: BoxConstraints(
+                          maxWidth:
+                              componentTokens.mobileFilterEntryMaxLabelWidth,
+                        ),
+                        child: Text(
+                          resolvedLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: resolveAppTextStyle(
+                            context,
+                            size: AppTextSize.s12,
+                            weight: AppTextWeight.regular,
+                            tone: tone,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: spacing.xs),
+                      Icon(
+                        trailingIcon,
+                        size: componentTokens.iconSizeXs,
+                        color: foreground,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

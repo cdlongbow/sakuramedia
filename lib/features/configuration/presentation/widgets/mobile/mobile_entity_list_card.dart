@@ -62,6 +62,7 @@ class MobileEntityListCard extends StatelessWidget {
     final tapArea = Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         key: bodyKey,
         borderRadius: context.appRadius.lgBorder,
         onTap: onTap,

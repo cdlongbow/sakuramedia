@@ -51,7 +51,14 @@ class MediaListItemPathLine extends StatelessWidget {
         ),
         if (updatedLabel != null) ...[
           SizedBox(width: spacing.md),
-          Text('更新 $updatedLabel', style: mutedTextStyle),
+          Flexible(
+            child: Text(
+              '更新 $updatedLabel',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: mutedTextStyle,
+            ),
+          ),
         ],
       ],
     );

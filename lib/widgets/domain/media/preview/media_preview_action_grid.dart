@@ -85,9 +85,8 @@ class MediaPreviewActionGrid extends StatelessWidget {
           mainAxisSpacing: resolvedSpacing,
           childAspectRatio: 1.5,
         ),
-        itemBuilder:
-            (context, index) =>
-                MediaPreviewActionTile(item: visibleActions[index]),
+        itemBuilder: (context, index) =>
+            MediaPreviewActionTile(item: visibleActions[index]),
       ),
       MediaPreviewActionGridLayout.horizontalScroll => ScrollConfiguration(
         key: gridKey,
@@ -203,14 +202,18 @@ class MediaPreviewActionTile extends StatelessWidget {
     final tokens = context.appComponentTokens;
     final canTap = item.onTap != null && !item.isLoading;
     final spacing = context.appSpacing;
-    final iconColor =
-        canTap ? context.appTextPalette.primary : context.appTextPalette.muted;
+    final iconColor = canTap
+        ? context.appTextPalette.primary
+        : context.appTextPalette.muted;
     final textTone = canTap ? AppTextTone.primary : AppTextTone.muted;
 
     return Material(
       key: item.key,
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: canTap
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         borderRadius: context.appRadius.smBorder,
         onTap: canTap ? item.onTap : null,
         child: Column(
@@ -226,18 +229,19 @@ class MediaPreviewActionTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 child: Center(
-                  child:
-                      item.isLoading
-                          ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-                          )
-                          : Icon(
-                            item.icon,
-                            size: tokens.iconSizeMd,
-                            color: iconColor,
+                  child: item.isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator.adaptive(
+                            strokeWidth: 2,
                           ),
+                        )
+                      : Icon(
+                          item.icon,
+                          size: tokens.iconSizeMd,
+                          color: iconColor,
+                        ),
                 ),
               ),
             ),

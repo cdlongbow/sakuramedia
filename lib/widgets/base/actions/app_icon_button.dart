@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 enum AppIconButtonSize { mini, compact, regular }
 
@@ -43,18 +44,15 @@ class AppIconButton extends StatelessWidget {
     final colors = context.appColors;
     final resolvedBorderRadius = borderRadius ?? context.appRadius.smBorder;
     final resolvedPadding = padding ?? EdgeInsets.all(context.appSpacing.xs);
-    final resolvedBackgroundColor =
-        isSelected
-            ? selectedBackgroundColor ?? colors.surfaceCard
-            : backgroundColor ?? Colors.transparent;
-    final resolvedBorderColor =
-        isSelected
-            ? selectedBorderColor ?? colors.borderStrong
-            : borderColor ?? Colors.transparent;
-    final resolvedIconColor =
-        isSelected
-            ? selectedIconColor ?? iconColor ?? context.appTextPalette.primary
-            : iconColor ?? context.appTextPalette.muted;
+    final resolvedBackgroundColor = isSelected
+        ? selectedBackgroundColor ?? colors.surfaceCard
+        : backgroundColor ?? Colors.transparent;
+    final resolvedBorderColor = isSelected
+        ? selectedBorderColor ?? colors.borderStrong
+        : borderColor ?? Colors.transparent;
+    final resolvedIconColor = isSelected
+        ? selectedIconColor ?? iconColor ?? context.appTextPalette.primary
+        : iconColor ?? context.appTextPalette.muted;
     final (buttonDimension, iconSize) = switch (size) {
       AppIconButtonSize.mini => (
         context.appComponentTokens.iconSizeSm + context.appSpacing.xs * 2,
@@ -70,28 +68,37 @@ class AppIconButton extends StatelessWidget {
       ),
     };
 
-    Widget child = Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Material(
-        color: resolvedBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: resolvedBorderRadius,
-          side: BorderSide(color: resolvedBorderColor),
-        ),
-        child: InkWell(
-          key: _buttonKey,
-          onTap: onPressed,
-          borderRadius: resolvedBorderRadius,
-          child: SizedBox(
-            width: buttonDimension,
-            height: buttonDimension,
-            child: Padding(
-              padding: resolvedPadding,
-              child: Center(
-                child: IconTheme(
-                  data: IconThemeData(size: iconSize, color: resolvedIconColor),
-                  child: icon,
+    Widget child = AppClickable(
+      enabled: onPressed != null,
+      child: Semantics(
+        button: true,
+        label: semanticLabel,
+        child: Material(
+          color: resolvedBackgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: resolvedBorderRadius,
+            side: BorderSide(color: resolvedBorderColor),
+          ),
+          child: InkWell(
+            mouseCursor: onPressed != null
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
+            key: _buttonKey,
+            onTap: onPressed,
+            borderRadius: resolvedBorderRadius,
+            child: SizedBox(
+              width: buttonDimension,
+              height: buttonDimension,
+              child: Padding(
+                padding: resolvedPadding,
+                child: Center(
+                  child: IconTheme(
+                    data: IconThemeData(
+                      size: iconSize,
+                      color: resolvedIconColor,
+                    ),
+                    child: icon,
+                  ),
                 ),
               ),
             ),

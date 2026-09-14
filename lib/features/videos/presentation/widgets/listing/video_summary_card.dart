@@ -42,10 +42,9 @@ class VideoSummaryCard extends StatelessWidget {
     final colors = context.appColors;
     final spacing = context.appSpacing;
 
-    final borderColor =
-        selectionMode && isSelected
-            ? colors.selectionBorder
-            : colors.borderSubtle;
+    final borderColor = selectionMode && isSelected
+        ? colors.selectionBorder
+        : colors.borderSubtle;
 
     final card = Container(
       key: Key('video-summary-card-${video.id}'),
@@ -71,6 +70,9 @@ class VideoSummaryCard extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
+                  mouseCursor: onSelectedChanged != null
+                      ? SystemMouseCursors.click
+                      : SystemMouseCursors.basic,
                   key: Key('video-summary-card-select-${video.id}'),
                   onTap: () => onSelectedChanged?.call(!isSelected),
                 ),
@@ -81,6 +83,7 @@ class VideoSummaryCard extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
+                  mouseCursor: SystemMouseCursors.click,
                   key: Key('video-summary-card-tap-${video.id}'),
                   onTap: onTap,
                 ),

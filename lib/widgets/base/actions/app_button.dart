@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 enum AppButtonVariant { primary, secondary, ghost, danger }
 
@@ -117,13 +118,16 @@ class AppButton extends StatelessWidget {
       tone: tone,
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 
-    return MouseRegion(
-      cursor: _isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+    return AppClickable(
+      enabled: _isEnabled,
       child: Opacity(
         opacity: _isEnabled ? 1 : 0.56,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            mouseCursor: _isEnabled
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
             borderRadius: borderRadius,
             onTap: _isEnabled ? onPressed : null,
             child: AnimatedContainer(
@@ -147,7 +151,8 @@ class AppButton extends StatelessWidget {
                       height: iconSize,
                       child: CircularProgressIndicator.adaptive(
                         backgroundColor: switch (Theme.of(context).platform) {
-                          TargetPlatform.iOS || TargetPlatform.macOS => foregroundColor,
+                          TargetPlatform.iOS ||
+                          TargetPlatform.macOS => foregroundColor,
                           _ => null,
                         },
                         strokeWidth: 2,

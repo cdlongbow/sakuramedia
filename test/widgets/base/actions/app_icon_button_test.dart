@@ -135,6 +135,32 @@ void main() {
     expect(tapped, isFalse);
   });
 
+  testWidgets('app icon button uses a click cursor when enabled', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppIconButton(
+            icon: const Icon(Icons.search_rounded),
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    final mouseRegion = tester
+        .widgetList<MouseRegion>(
+          find.ancestor(
+            of: find.byIcon(Icons.search_rounded),
+            matching: find.byType(MouseRegion),
+          ),
+        )
+        .firstWhere((region) => region.cursor == SystemMouseCursors.click);
+    expect(mouseRegion.cursor, SystemMouseCursors.click);
+  });
+
   testWidgets('app icon button regular size expands tap target', (
     WidgetTester tester,
   ) async {

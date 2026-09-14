@@ -48,6 +48,8 @@ class MediaListItemMetaLine extends StatelessWidget {
       AppBadge(
         label: library?.name.trim().isNotEmpty == true
             ? library!.name
+            : item.libraryName?.trim().isNotEmpty == true
+            ? item.libraryName!
             : item.libraryId == null
             ? '媒体库已删除'
             : '媒体库 ${item.libraryId}',

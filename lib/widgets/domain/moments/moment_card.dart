@@ -36,6 +36,9 @@ class MomentCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: (selectionMode ? onSelectedChanged != null : onTap != null)
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         key: Key('moment-card-${item.pointId}'),
         borderRadius: context.appRadius.lgBorder,
         onTap: selectionMode

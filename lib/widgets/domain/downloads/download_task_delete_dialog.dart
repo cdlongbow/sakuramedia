@@ -41,29 +41,29 @@ Future<bool> showDownloadTaskDeleteDialog(
           ),
           SizedBox(height: context.appSpacing.sm),
         ],
-        _DeleteFilesCheckbox(
-          onChanged: (value) => deleteFiles = value,
-        ),
+        _DeleteFilesCheckbox(onChanged: (value) => deleteFiles = value),
       ],
     ),
-    onConfirm: showProgress ? null : () async {
-      final confirmedDeleteFiles = deleteFiles;
-      while (remaining.isNotEmpty) {
-        try {
-          await onDelete(remaining.first.id, confirmedDeleteFiles);
-          remaining.removeAt(0);
-        } catch (error) {
-          final importing =
-              error is ApiException &&
-              error.error?.code == 'download_task_import_running';
-          throw ApiException(
-            message: importing
-                ? '任务正在导入，无法删除'
-                : apiErrorMessage(error, fallback: '删除失败'),
-          );
-        }
-      }
-    },
+    onConfirm: showProgress
+        ? null
+        : () async {
+            final confirmedDeleteFiles = deleteFiles;
+            while (remaining.isNotEmpty) {
+              try {
+                await onDelete(remaining.first.id, confirmedDeleteFiles);
+                remaining.removeAt(0);
+              } catch (error) {
+                final importing =
+                    error is ApiException &&
+                    error.error?.code == 'download_task_import_running';
+                throw ApiException(
+                  message: importing
+                      ? '任务正在导入，无法删除'
+                      : apiErrorMessage(error, fallback: '删除失败'),
+                );
+              }
+            }
+          },
   );
   if (!confirmed || !showProgress || !context.mounted) return confirmed;
   final confirmedDeleteFiles = deleteFiles;
@@ -91,6 +91,7 @@ class _DeleteFilesCheckbox extends HookWidget {
     }
 
     return InkWell(
+      mouseCursor: SystemMouseCursors.click,
       onTap: () => toggle(!deleteFiles.value),
       borderRadius: context.appRadius.smBorder,
       child: Padding(

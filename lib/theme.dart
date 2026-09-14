@@ -27,8 +27,10 @@ export 'package:sakuramedia/theme/app_typography.dart';
 export 'package:sakuramedia/widgets/base/typography/app_text.dart';
 
 /// oktoast 在 MaterialApp 之外用独立 overlay 树显示 toast, 拿不到 ThemeData
-const TextStyle kAppToastTextStyle =
-    TextStyle(fontSize: 15, color: Colors.white);
+const TextStyle kAppToastTextStyle = TextStyle(
+  fontSize: 15,
+  color: Colors.white,
+);
 
 /// oktoast 的 toast 底色。
 ///
@@ -46,6 +48,9 @@ const _desktopTextPalette = AppTextPalette.defaults();
 const _mobileTextScale = AppTextScale.mobile();
 const _mobileTextWeights = AppTextWeights.mobile();
 const _mobileTextPalette = AppTextPalette.mobile();
+const _appClickableButtonStyle = ButtonStyle(
+  mouseCursor: WidgetStateMouseCursor.clickable,
+);
 
 final sakuraDesktopThemeData = _buildSakuraThemeData(
   componentTokens: const AppComponentTokens.defaults(),
@@ -73,10 +78,7 @@ ThemeData _buildSakuraThemeData({
   required AppTextWeights textWeights,
   required AppTextPalette textPalette,
 }) {
-  return ThemeData(
-    brightness: Brightness.light,
-    useMaterial3: true,
-  ).copyWith(
+  return ThemeData(brightness: Brightness.light, useMaterial3: true).copyWith(
     scaffoldBackgroundColor: const Color(0xFFF5F5F5),
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
@@ -108,10 +110,32 @@ ThemeData _buildSakuraThemeData({
       onInverseSurface: Color(0xFFF8EEEA),
       inversePrimary: Color(0xFFFFB4A9),
     ),
-    textTheme: textScale.toTextTheme(textWeights).apply(
-      fontFamily: !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
-          ? kAppWindowsFontFamily
-          : null,
+    textTheme: textScale
+        .toTextTheme(textWeights)
+        .apply(
+          fontFamily: !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
+              ? kAppWindowsFontFamily
+              : null,
+        ),
+    elevatedButtonTheme: const ElevatedButtonThemeData(
+      style: _appClickableButtonStyle,
+    ),
+    filledButtonTheme: const FilledButtonThemeData(
+      style: _appClickableButtonStyle,
+    ),
+    iconButtonTheme: const IconButtonThemeData(style: _appClickableButtonStyle),
+    outlinedButtonTheme: const OutlinedButtonThemeData(
+      style: _appClickableButtonStyle,
+    ),
+    popupMenuTheme: const PopupMenuThemeData(
+      mouseCursor: WidgetStateMouseCursor.clickable,
+    ),
+    radioTheme: const RadioThemeData(
+      mouseCursor: WidgetStateMouseCursor.clickable,
+    ),
+    textButtonTheme: const TextButtonThemeData(style: _appClickableButtonStyle),
+    checkboxTheme: const CheckboxThemeData(
+      mouseCursor: WidgetStateMouseCursor.clickable,
     ),
     extensions: <ThemeExtension<dynamic>>[
       const AppColors.defaults(),

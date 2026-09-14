@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
@@ -78,27 +79,26 @@ class MovieMediaPointGallery extends StatelessWidget {
             ],
           );
 
-          final gestureChild =
-              onRequestPointMenu == null
-                  ? GestureDetector(
+          final gestureChild = onRequestPointMenu == null
+              ? AppClickable(
+                  enabled: onOpenPreview != null,
+                  child: GestureDetector(
                     key: Key('movie-media-point-thumb-$index'),
-                    onTap:
-                        onOpenPreview == null
-                            ? null
-                            : () => onOpenPreview!(point),
+                    onTap: onOpenPreview == null
+                        ? null
+                        : () => onOpenPreview!(point),
                     child: thumbnail,
-                  )
-                  : AppImageActionTrigger(
-                    key: Key('movie-media-point-thumb-$index'),
-                    onTap:
-                        onOpenPreview == null
-                            ? null
-                            : () => onOpenPreview!(point),
-                    onRequestMenu:
-                        (globalPosition) =>
-                            onRequestPointMenu!(context, point, globalPosition),
-                    child: thumbnail,
-                  );
+                  ),
+                )
+              : AppImageActionTrigger(
+                  key: Key('movie-media-point-thumb-$index'),
+                  onTap: onOpenPreview == null
+                      ? null
+                      : () => onOpenPreview!(point),
+                  onRequestMenu: (globalPosition) =>
+                      onRequestPointMenu!(context, point, globalPosition),
+                  child: thumbnail,
+                );
 
           return Padding(
             padding: EdgeInsets.only(

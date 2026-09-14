@@ -134,6 +134,9 @@ class MovieSummaryCard extends StatelessWidget {
         color: Colors.transparent,
         borderRadius: context.appRadius.lgBorder,
         child: InkWell(
+          mouseCursor: onSelectedChanged != null
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
           key: Key('movie-summary-card-checkbox-${movie.movieNumber}'),
           borderRadius: context.appRadius.lgBorder,
           onTap: () => onSelectedChanged?.call(!isSelected),

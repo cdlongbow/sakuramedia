@@ -147,8 +147,9 @@ class _AppSelectTriggerState<T> extends State<_AppSelectTrigger<T>> {
       math.min(idealMenuHeight, availableSpace),
     );
 
-    _placement =
-        opensUpward ? _AppSelectMenuPlacement.up : _AppSelectMenuPlacement.down;
+    _placement = opensUpward
+        ? _AppSelectMenuPlacement.up
+        : _AppSelectMenuPlacement.down;
     _menuHeight = constrainedHeight.toDouble();
 
     setState(() {
@@ -224,13 +225,13 @@ class _AppSelectTriggerState<T> extends State<_AppSelectTrigger<T>> {
     final colors = context.appColors;
     final theme = Theme.of(context);
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
-    final borderColor =
-        hasError ? theme.colorScheme.error : colors.borderSubtle;
+    final borderColor = hasError
+        ? theme.colorScheme.error
+        : colors.borderSubtle;
     final selectedItem = _selectedItem();
-    final displayChild =
-        selectedItem == null
-            ? Text(widget.placeholder, overflow: TextOverflow.ellipsis)
-            : _buildTriggerDisplayChild(selectedItem);
+    final displayChild = selectedItem == null
+        ? Text(widget.placeholder, overflow: TextOverflow.ellipsis)
+        : _buildTriggerDisplayChild(selectedItem);
     final baseTextStyle =
         widget.textStyle ??
         resolveAppTextStyle(
@@ -270,10 +271,9 @@ class _AppSelectTriggerState<T> extends State<_AppSelectTrigger<T>> {
           SizedBox(height: formTokens.labelGap),
         ],
         MouseRegion(
-          cursor:
-              widget.enabled
-                  ? SystemMouseCursors.click
-                  : SystemMouseCursors.basic,
+          cursor: widget.enabled
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
           child: CompositedTransformTarget(
             link: _layerLink,
             child: GestureDetector(
@@ -300,10 +300,9 @@ class _AppSelectTriggerState<T> extends State<_AppSelectTrigger<T>> {
                           context,
                           baseStyle: baseTextStyle,
                           fallbackSize: AppTextSize.s14,
-                          tone:
-                              selectedItem == null
-                                  ? AppTextTone.muted
-                                  : AppTextTone.primary,
+                          tone: selectedItem == null
+                              ? AppTextTone.muted
+                              : AppTextTone.primary,
                         ),
                         child: displayChild,
                       ),
@@ -463,14 +462,14 @@ class _AppSelectMenuItemState<T> extends State<_AppSelectMenuItem<T>> {
           weight: AppTextWeight.regular,
           tone: AppTextTone.primary,
         );
-    final backgroundColor =
-        widget.selected
-            ? colors.surfaceMuted
-            : _isHovered
-            ? colors.sidebarHoverBackground
-            : Colors.transparent;
+    final backgroundColor = widget.selected
+        ? colors.surfaceMuted
+        : _isHovered
+        ? colors.sidebarHoverBackground
+        : Colors.transparent;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(

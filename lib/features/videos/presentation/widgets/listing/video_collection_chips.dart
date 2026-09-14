@@ -70,6 +70,7 @@ class _VideoCollectionChip extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(

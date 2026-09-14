@@ -291,12 +291,12 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
   @override
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
-    final label =
-        _displayHasExplicitSelection
-            ? formatMoviePlayerPlaybackRateLabel(_displayRate)
-            : '倍速';
+    final label = _displayHasExplicitSelection
+        ? formatMoviePlayerPlaybackRateLabel(_displayRate)
+        : '倍速';
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: _handleButtonEnter,
       onExit: _handleButtonExit,
       child: GestureDetector(
@@ -417,15 +417,15 @@ class _MoviePlayerSpeedMenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
     final label = formatMoviePlayerPlaybackRateLabel(rate);
-    final backgroundColor =
-        hovered
-            ? context.appTextPalette.onMedia.withValues(
-              alpha: overlayTokens.hoverAlpha,
-            )
-            : null;
+    final backgroundColor = hovered
+        ? context.appTextPalette.onMedia.withValues(
+            alpha: overlayTokens.hoverAlpha,
+          )
+        : null;
     final rateKey = _rateKey(rate);
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => onHoverChanged(true),
       onExit: (_) => onHoverChanged(false),
       child: GestureDetector(

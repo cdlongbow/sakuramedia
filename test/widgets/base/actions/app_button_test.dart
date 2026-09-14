@@ -1,4 +1,6 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -219,5 +221,34 @@ void main() {
     final labelRect = tester.getRect(find.text('确认修改'));
 
     expect(labelRect.center.dx, closeTo(buttonRect.center.dx, 0.01));
+  });
+
+  testWidgets('app button exposes click cursor to the actual mouse tracker', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppButton(label: '开始检测', onPressed: () {}),
+        ),
+      ),
+    );
+
+    const mousePointer = 1;
+    final mouse = await tester.createGesture(
+      pointer: mousePointer,
+      kind: PointerDeviceKind.mouse,
+    );
+    await mouse.moveTo(tester.getCenter(find.text('开始检测')));
+
+    expect(
+      RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(
+        mousePointer,
+      ),
+      SystemMouseCursors.click,
+    );
+
+    await mouse.removePointer();
   });
 }

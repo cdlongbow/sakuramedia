@@ -306,6 +306,9 @@ class _MobilePluginCard extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
+                mouseCursor: disabled
+                    ? SystemMouseCursors.basic
+                    : SystemMouseCursors.click,
                 key: Key('mobile-plugin-card-body-${plugin.pluginId}'),
                 borderRadius: context.appRadius.lgBorder,
                 onTap: disabled ? null : onTap,
@@ -546,6 +549,9 @@ class _MobilePluginActionRow extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          mouseCursor: disabled
+              ? SystemMouseCursors.basic
+              : SystemMouseCursors.click,
           onTap: disabled ? null : onTap,
           borderRadius: context.appRadius.mdBorder,
           child: Padding(

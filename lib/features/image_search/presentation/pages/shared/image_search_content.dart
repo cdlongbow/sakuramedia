@@ -412,6 +412,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
         color: context.appColors.surfaceMuted,
         borderRadius: context.appRadius.smBorder,
         child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
           key: const Key('desktop-image-search-empty-select-button'),
           onTap: _pickAndSearchImage,
           borderRadius: context.appRadius.smBorder,

@@ -100,6 +100,7 @@ class PlaylistBannerCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
+          mouseCursor: SystemMouseCursors.click,
           borderRadius: context.appRadius.lgBorder,
           onTap: onTap,
           child: card,

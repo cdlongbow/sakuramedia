@@ -91,6 +91,7 @@ class _RailItem extends StatelessWidget {
       color: selected ? primary.withValues(alpha: 0.08) : Colors.transparent,
       borderRadius: context.appRadius.mdBorder,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         borderRadius: context.appRadius.mdBorder,
         hoverColor: colors.surfaceMuted,

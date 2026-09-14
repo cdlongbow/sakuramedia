@@ -180,6 +180,7 @@ class AppSettingCell extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        mouseCursor: SystemMouseCursors.click,
         onTap: onTap,
         hoverColor: context.appColors.surfaceMuted,
         child: content,

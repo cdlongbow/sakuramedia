@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
@@ -44,27 +45,26 @@ class MoviePlotGallery extends StatelessWidget {
             url: image.bestAvailableUrl,
           );
 
-          final gestureChild =
-              onRequestImageMenu == null
-                  ? GestureDetector(
+          final gestureChild = onRequestImageMenu == null
+              ? AppClickable(
+                  enabled: onOpenPreview != null,
+                  child: GestureDetector(
                     key: Key('movie-plot-thumb-$index'),
-                    onTap:
-                        onOpenPreview == null
-                            ? null
-                            : () => onOpenPreview!(index),
+                    onTap: onOpenPreview == null
+                        ? null
+                        : () => onOpenPreview!(index),
                     child: thumbnail,
-                  )
-                  : AppImageActionTrigger(
-                    key: Key('movie-plot-thumb-$index'),
-                    onTap:
-                        onOpenPreview == null
-                            ? null
-                            : () => onOpenPreview!(index),
-                    onRequestMenu:
-                        (globalPosition) =>
-                            onRequestImageMenu!(context, index, globalPosition),
-                    child: thumbnail,
-                  );
+                  ),
+                )
+              : AppImageActionTrigger(
+                  key: Key('movie-plot-thumb-$index'),
+                  onTap: onOpenPreview == null
+                      ? null
+                      : () => onOpenPreview!(index),
+                  onRequestMenu: (globalPosition) =>
+                      onRequestImageMenu!(context, index, globalPosition),
+                  child: thumbnail,
+                );
 
           return Padding(
             padding: EdgeInsets.only(

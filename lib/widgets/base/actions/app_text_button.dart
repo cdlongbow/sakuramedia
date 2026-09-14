@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 
 enum AppTextButtonSize { medium, small, xSmall, xxSmall, xxxSmall }
 
@@ -83,13 +84,12 @@ class AppTextButton extends StatelessWidget {
     final isAccent = isSelected || emphasis == AppTextButtonEmphasis.accent;
     final tone = isAccent ? AppTextTone.accent : AppTextTone.muted;
     final foregroundColor = resolveAppTextToneColor(context, tone);
-    final backgroundColor =
-        isAccent
-            ? theme.colorScheme.primary.withValues(alpha: 0.08)
-            : switch (backgroundStyle) {
-              AppTextButtonBackgroundStyle.transparent => Colors.transparent,
-              AppTextButtonBackgroundStyle.muted => colors.surfaceMuted,
-            };
+    final backgroundColor = isAccent
+        ? theme.colorScheme.primary.withValues(alpha: 0.08)
+        : switch (backgroundStyle) {
+            AppTextButtonBackgroundStyle.transparent => Colors.transparent,
+            AppTextButtonBackgroundStyle.muted => colors.surfaceMuted,
+          };
     final disabledColor = colors.borderSubtle;
     final labelStyle = resolveAppTextStyle(
       context,
@@ -97,13 +97,16 @@ class AppTextButton extends StatelessWidget {
       tone: tone,
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 
-    return MouseRegion(
-      cursor: _isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+    return AppClickable(
+      enabled: _isEnabled,
       child: Opacity(
         opacity: _isEnabled ? 1 : 0.56,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            mouseCursor: _isEnabled
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
             borderRadius: borderRadius,
             onTap: _isEnabled ? onPressed : null,
             child: AnimatedContainer(
@@ -111,10 +114,9 @@ class AppTextButton extends StatelessWidget {
               height: height,
               padding: EdgeInsets.symmetric(horizontal: horizontal),
               decoration: BoxDecoration(
-                color:
-                    _isEnabled
-                        ? backgroundColor
-                        : disabledColor.withValues(alpha: 0.32),
+                color: _isEnabled
+                    ? backgroundColor
+                    : disabledColor.withValues(alpha: 0.32),
                 borderRadius: borderRadius,
               ),
               child: Row(
@@ -124,8 +126,9 @@ class AppTextButton extends StatelessWidget {
                     IconTheme(
                       data: IconThemeData(
                         size: iconSize,
-                        color:
-                            _isEnabled ? foregroundColor : colors.borderStrong,
+                        color: _isEnabled
+                            ? foregroundColor
+                            : colors.borderStrong,
                       ),
                       child: icon!,
                     ),
@@ -136,8 +139,9 @@ class AppTextButton extends StatelessWidget {
                       label,
                       overflow: TextOverflow.ellipsis,
                       style: labelStyle.copyWith(
-                        color:
-                            _isEnabled ? foregroundColor : colors.borderStrong,
+                        color: _isEnabled
+                            ? foregroundColor
+                            : colors.borderStrong,
                       ),
                     ),
                   ),
@@ -146,8 +150,9 @@ class AppTextButton extends StatelessWidget {
                     IconTheme(
                       data: IconThemeData(
                         size: iconSize,
-                        color:
-                            _isEnabled ? foregroundColor : colors.borderStrong,
+                        color: _isEnabled
+                            ? foregroundColor
+                            : colors.borderStrong,
                       ),
                       child: trailingIcon!,
                     ),

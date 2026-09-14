@@ -36,6 +36,10 @@ void main() {
   test(
     'paginates by movie and resets pagination after removing a group',
     () async {
+      final provider = multiVersionMoviesProvider(
+        includeVr: true,
+        includeFc2: true,
+      );
       bundle.adapter.enqueueJson(
         method: 'GET',
         path: '/media/multi-version-movies',
@@ -54,16 +58,12 @@ void main() {
           number: 2,
         ),
       );
-      container.listen(multiVersionMoviesProvider, (_, __) {});
-      await container.read(multiVersionMoviesProvider.future);
-      final notifier = container.read(multiVersionMoviesProvider.notifier);
-      await container.read(multiVersionMoviesProvider.notifier).loadMore();
+      container.listen(provider, (_, __) {});
+      await container.read(provider.future);
+      final notifier = container.read(provider.notifier);
+      await container.read(provider.notifier).loadMore();
       expect(
-        container
-            .read(multiVersionMoviesProvider)
-            .requireValue
-            .items
-            .map((g) => g.movieNumber),
+        container.read(provider).requireValue.items.map((g) => g.movieNumber),
         ['A', 'B'],
       );
       bundle.adapter.enqueueJson(
@@ -79,19 +79,10 @@ void main() {
         ], total: 2),
       );
       await notifier.deleteVersion(
-        container
-            .read(multiVersionMoviesProvider)
-            .requireValue
-            .items
-            .first
-            .mediaItems
-            .first,
+        container.read(provider).requireValue.items.first.mediaItems.first,
       );
-      expect(
-        container.read(multiVersionMoviesProvider).requireValue.currentPage,
-        1,
-      );
-      expect(container.read(multiVersionMoviesProvider).requireValue.total, 2);
+      expect(container.read(provider).requireValue.currentPage, 1);
+      expect(container.read(provider).requireValue.total, 2);
       bundle.adapter.enqueueJson(
         method: 'GET',
         path: '/media/multi-version-movies',
@@ -103,13 +94,9 @@ void main() {
           number: 2,
         ),
       );
-      await container.read(multiVersionMoviesProvider.notifier).loadMore();
+      await container.read(provider.notifier).loadMore();
       expect(
-        container
-            .read(multiVersionMoviesProvider)
-            .requireValue
-            .items
-            .map((g) => g.movieNumber),
+        container.read(provider).requireValue.items.map((g) => g.movieNumber),
         ['B', 'C'],
       );
       final requests = bundle.adapter.requests
@@ -122,6 +109,14 @@ void main() {
         '2',
       ]);
       expect(requests.first.uri.queryParameters.containsKey('kind'), isFalse);
+      expect(
+        requests.every(
+          (r) =>
+              r.uri.queryParameters['include_vr'] == 'true' &&
+              r.uri.queryParameters['include_fc2'] == 'true',
+        ),
+        isTrue,
+      );
     },
   );
 
@@ -133,8 +128,8 @@ void main() {
         group('A', [1, 2, 3]),
       ]),
     );
-    container.listen(multiVersionMoviesProvider, (_, __) {});
-    await container.read(multiVersionMoviesProvider.future);
+    container.listen(multiVersionMoviesProvider(), (_, __) {});
+    await container.read(multiVersionMoviesProvider().future);
     bundle.adapter.enqueueJson(
       method: 'DELETE',
       path: '/media/1',
@@ -148,10 +143,10 @@ void main() {
       ]),
     );
     await container
-        .read(multiVersionMoviesProvider.notifier)
+        .read(multiVersionMoviesProvider().notifier)
         .deleteVersion(
           container
-              .read(multiVersionMoviesProvider)
+              .read(multiVersionMoviesProvider())
               .requireValue
               .items
               .first
@@ -160,7 +155,7 @@ void main() {
         );
     expect(
       container
-          .read(multiVersionMoviesProvider)
+          .read(multiVersionMoviesProvider())
           .requireValue
           .items
           .single
@@ -179,9 +174,9 @@ void main() {
           group('A', [1, 2]),
         ]),
       );
-      container.listen(multiVersionMoviesProvider, (_, __) {});
-      await container.read(multiVersionMoviesProvider.future);
-      final before = container.read(multiVersionMoviesProvider).requireValue;
+      container.listen(multiVersionMoviesProvider(), (_, __) {});
+      await container.read(multiVersionMoviesProvider().future);
+      final before = container.read(multiVersionMoviesProvider()).requireValue;
       bundle.adapter.enqueueJson(
         method: 'DELETE',
         path: '/media/1',
@@ -192,12 +187,12 @@ void main() {
       );
       await expectLater(
         container
-            .read(multiVersionMoviesProvider.notifier)
+            .read(multiVersionMoviesProvider().notifier)
             .deleteVersion(before.items.first.mediaItems.first),
         throwsA(anything),
       );
       expect(
-        container.read(multiVersionMoviesProvider).requireValue,
+        container.read(multiVersionMoviesProvider()).requireValue,
         same(before),
       );
       expect(bundle.adapter.hitCount('GET', '/media/multi-version-movies'), 1);
@@ -213,11 +208,11 @@ void main() {
       path: '/media/multi-version-movies',
       body: before,
     );
-    container.listen(multiVersionMoviesProvider, (_, __) {});
-    await container.read(multiVersionMoviesProvider.future);
-    final notifier = container.read(multiVersionMoviesProvider.notifier);
+    container.listen(multiVersionMoviesProvider(), (_, __) {});
+    await container.read(multiVersionMoviesProvider().future);
+    final notifier = container.read(multiVersionMoviesProvider().notifier);
     final item = container
-        .read(multiVersionMoviesProvider)
+        .read(multiVersionMoviesProvider())
         .requireValue
         .items
         .first
@@ -259,7 +254,7 @@ void main() {
     await refresh;
     await deletion;
     expect(
-      container.read(multiVersionMoviesProvider).requireValue.items,
+      container.read(multiVersionMoviesProvider()).requireValue.items,
       isEmpty,
     );
   });
@@ -274,10 +269,10 @@ void main() {
           group('A', [1, 2]),
         ]),
       );
-      container.listen(multiVersionMoviesProvider, (_, __) {});
-      await container.read(multiVersionMoviesProvider.future);
+      container.listen(multiVersionMoviesProvider(), (_, __) {});
+      await container.read(multiVersionMoviesProvider().future);
       final item = container
-          .read(multiVersionMoviesProvider)
+          .read(multiVersionMoviesProvider())
           .requireValue
           .items
           .first
@@ -297,9 +292,9 @@ void main() {
         },
       );
       await container
-          .read(multiVersionMoviesProvider.notifier)
+          .read(multiVersionMoviesProvider().notifier)
           .deleteVersion(item);
-      expect(container.read(multiVersionMoviesProvider).hasError, isTrue);
+      expect(container.read(multiVersionMoviesProvider()).hasError, isTrue);
     },
   );
 }

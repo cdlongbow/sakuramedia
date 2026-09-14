@@ -41,9 +41,17 @@ class MultiVersionMovies extends _$MultiVersionMovies
     int pageSize,
   ) => ref
       .read(mediaApiProvider)
-      .getMultiVersionMovies(page: page, pageSize: pageSize);
+      .getMultiVersionMovies(
+        page: page,
+        pageSize: pageSize,
+        includeVr: includeVr,
+        includeFc2: includeFc2,
+      );
   @override
-  Future<PagedListState<MultiVersionMovieDto>> build() async {
+  Future<PagedListState<MultiVersionMovieDto>> build({
+    bool includeVr = false,
+    bool includeFc2 = false,
+  }) async {
     attachDisposeGuard();
     invalidateOnSignOut(ref);
     return loadInitialPage();
@@ -74,23 +82,40 @@ class MultiVersionMovies extends _$MultiVersionMovies
       if (isDisposed) return;
       await ref.read(mediaApiProvider).deleteMedia(mediaId: item.id);
       if (isDisposed) return;
-      ref.read(mediaBrowseProvider.notifier).removeItemsByIds([item.id]);
+      await refreshAfterDelete([item]);
+    } finally {
+      _deleting = false;
+      link.close();
+    }
+  }
+
+  Future<void> refreshAfterDelete(List<MediaListItemDto> deleted) async {
+    if (deleted.isEmpty || isDisposed) return;
+    _deleting = true;
+    try {
+      await _refreshRequest;
+      if (isDisposed) return;
+      ref
+          .read(mediaBrowseProvider.notifier)
+          .removeItemsByIds(deleted.map((item) => item.id).toList());
       final duplicates = duplicateMediaProvider(MediaListItemKind.jav);
-      final detail = movieDetailProvider(item.movieNumber!);
-      // 删除会改变分组数量及排序，从首页重新分页。
+      final movieNumbers = deleted.map((item) => item.movieNumber!).toSet();
+      // 删除会改变分组数量及排序，批量完成后统一重建分页。
       await Future.wait([
         reload(),
         if (ref.exists(duplicates)) ref.read(duplicates.notifier).reload(),
         if (ref.exists(invalidMediaProvider))
           ref.read(invalidMediaProvider.notifier).reload(),
-        if (ref.exists(detail))
-          ref.read(detail.notifier).refresh().catchError((Object _) {
-            // 删除已成功，详情刷新失败不应提示删除失败。
-          }),
+        for (final number in movieNumbers)
+          if (ref.exists(movieDetailProvider(number)))
+            ref.read(movieDetailProvider(number).notifier).refresh().catchError(
+              (Object _) {
+                // 删除已成功，详情刷新失败不应提示删除失败。
+              },
+            ),
       ]);
     } finally {
       _deleting = false;
-      link.close();
     }
   }
 }

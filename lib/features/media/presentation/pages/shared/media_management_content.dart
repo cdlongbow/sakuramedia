@@ -54,12 +54,18 @@ class MediaManagementContent extends HookConsumerWidget {
     useListenable(tabController);
     final currentTab = tabController.index;
     final duplicateKind = useState(MediaListItemKind.jav);
+    final includeVr = useState(false);
+    final includeFc2 = useState(false);
+    final versionsProvider = multiVersionMoviesProvider(
+      includeVr: includeVr.value,
+      includeFc2: includeFc2.value,
+    );
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
         if (currentTab == _maintenanceTabIndex) {
           unawaited(ref.read(invalidMediaProvider.notifier).loadMore());
         } else if (currentTab == _versionsTabIndex) {
-          unawaited(ref.read(multiVersionMoviesProvider.notifier).loadMore());
+          unawaited(ref.read(versionsProvider.notifier).loadMore());
         } else if (currentTab == _duplicateTabIndex) {
           unawaited(
             ref
@@ -71,7 +77,12 @@ class MediaManagementContent extends HookConsumerWidget {
         }
       },
       enabled: true,
-      keys: [currentTab, duplicateKind.value],
+      keys: [
+        currentTab,
+        duplicateKind.value,
+        includeVr.value,
+        includeFc2.value,
+      ],
     );
     ref.listen(mediaBrowseProvider.select((value) => value.value?.filter), (
       previous,
@@ -111,6 +122,7 @@ class MediaManagementContent extends HookConsumerWidget {
         ref,
         currentTab: currentTab,
         duplicateKind: duplicateKind.value,
+        versionsProvider: versionsProvider,
       ),
       child: Column(
         key: rootKey,
@@ -129,6 +141,8 @@ class MediaManagementContent extends HookConsumerWidget {
           Expanded(
             child: switch (currentTab) {
               _versionsTabIndex => MultiVersionMoviesSection(
+                includeVr: includeVr,
+                includeFc2: includeFc2,
                 scrollController: scrollController,
                 keyPrefix: keyPrefix,
                 mobile: mobile,
@@ -155,6 +169,7 @@ class MediaManagementContent extends HookConsumerWidget {
                   ref,
                   currentTab: currentTab,
                   duplicateKind: duplicateKind.value,
+                  versionsProvider: versionsProvider,
                 ),
                 onOpenMovieDetail: onOpenMovieDetail,
                 onOpenVideoCollectionDetail: onOpenVideoCollectionDetail,
@@ -179,6 +194,7 @@ class MediaManagementContent extends HookConsumerWidget {
                   ref,
                   currentTab: currentTab,
                   duplicateKind: duplicateKind.value,
+                  versionsProvider: versionsProvider,
                 ),
                 onOpenMovieDetail: onOpenMovieDetail,
                 keyPrefix: keyPrefix,
@@ -198,6 +214,7 @@ class MediaManagementContent extends HookConsumerWidget {
     WidgetRef ref, {
     required int currentTab,
     required MediaListItemKind duplicateKind,
+    required MultiVersionMoviesProvider versionsProvider,
   }) async {
     final refreshes = <Future<String?>>[
       ref.read(mediaBrowseProvider.notifier).refresh(),
@@ -210,7 +227,7 @@ class MediaManagementContent extends HookConsumerWidget {
       );
     }
     if (currentTab == _versionsTabIndex) {
-      refreshes.add(ref.read(multiVersionMoviesProvider.notifier).refresh());
+      refreshes.add(ref.read(versionsProvider.notifier).refresh());
     }
     final results = await Future.wait<String?>(refreshes);
     for (final message in results) {

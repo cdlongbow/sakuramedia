@@ -145,10 +145,17 @@ class MediaApi {
   Future<PaginatedResponseDto<MultiVersionMovieDto>> getMultiVersionMovies({
     int page = 1,
     int pageSize = 20,
+    bool includeVr = false,
+    bool includeFc2 = false,
   }) async {
     final response = await _apiClient.get(
       '/media/multi-version-movies',
-      queryParameters: {'page': page, 'page_size': pageSize},
+      queryParameters: {
+        'page': page,
+        'page_size': pageSize,
+        'include_vr': includeVr,
+        'include_fc2': includeFc2,
+      },
     );
     return PaginatedResponseDto<MultiVersionMovieDto>.fromJson(
       response,

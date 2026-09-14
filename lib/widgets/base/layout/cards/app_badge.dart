@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 enum AppBadgeTone { neutral, primary, info, warning, error, success }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -47,7 +47,7 @@ void main() {
 
       await pumpWithProviders(
         tester,
-        home: const MobileOverviewSkeletonPage(),
+        home: const Material(child: MobileOverviewSkeletonPage()),
         bundle: bundle,
       );
       // 首帧对齐走 postFrame,这里若在 build 期写 provider 会直接抛异常挂掉。
@@ -69,7 +69,7 @@ void main() {
 
     await pumpWithProviders(
       tester,
-      home: const MobileOverviewSkeletonPage(),
+      home: const Material(child: MobileOverviewSkeletonPage()),
       bundle: bundle,
     );
     await tester.pump();
@@ -111,7 +111,7 @@ void main() {
 
     await pumpWithProviders(
       tester,
-      home: const MobileOverviewSkeletonPage(),
+      home: const Material(child: MobileOverviewSkeletonPage()),
       bundle: bundle,
     );
     await tester.pumpAndSettle();

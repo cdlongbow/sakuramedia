@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/series_movies_content.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';

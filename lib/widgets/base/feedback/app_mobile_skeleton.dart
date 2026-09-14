@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 移动端骨架占位原子块：纯 surfaceMuted 矩形 + 可选圆角。

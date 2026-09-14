@@ -45,7 +45,7 @@ abstract class _$DownloadClients
   FutureOr<List<DownloadClientDto>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -63,6 +63,6 @@ abstract class _$DownloadClients
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

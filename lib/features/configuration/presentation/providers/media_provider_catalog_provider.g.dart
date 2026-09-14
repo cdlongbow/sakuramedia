@@ -47,7 +47,7 @@ abstract class _$MediaProviderCatalog
   FutureOr<List<MediaProviderDto>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<MediaProviderDto>>, List<MediaProviderDto>>;
@@ -62,6 +62,6 @@ abstract class _$MediaProviderCatalog
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

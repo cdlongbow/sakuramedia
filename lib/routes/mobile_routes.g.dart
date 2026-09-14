@@ -43,6 +43,7 @@ List<RouteBase> get $appRoutes => [
 
 RouteBase get $mobileLoginRouteData => GoRouteData.$route(
   path: '/login',
+  hasOverriddenOnExit: false,
   factory: $MobileLoginRouteData._fromState,
 );
 
@@ -69,6 +70,7 @@ mixin $MobileLoginRouteData on GoRouteData {
 
 RouteBase get $mobileSearchRouteData => GoRouteData.$route(
   path: '/mobile/search',
+  hasOverriddenOnExit: false,
   factory: $MobileSearchRouteData._fromState,
 );
 
@@ -131,6 +133,7 @@ bool _$boolConverter(String value) {
 
 RouteBase get $mobileImageSearchRouteData => GoRouteData.$route(
   path: '/mobile/search/image',
+  hasOverriddenOnExit: false,
   factory: $MobileImageSearchRouteData._fromState,
 );
 
@@ -175,6 +178,7 @@ mixin $MobileImageSearchRouteData on GoRouteData {
 
 RouteBase get $mobileSearchQueryRouteData => GoRouteData.$route(
   path: '/mobile/search/:query',
+  hasOverriddenOnExit: false,
   factory: $MobileSearchQueryRouteData._fromState,
 );
 
@@ -218,6 +222,7 @@ mixin $MobileSearchQueryRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsMediaLibrariesRouteData => GoRouteData.$route(
   path: '/mobile/settings/media-libraries',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsMediaLibrariesRouteData._fromState,
 );
 
@@ -246,6 +251,7 @@ mixin $MobileSettingsMediaLibrariesRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsPluginsRouteData => GoRouteData.$route(
   path: '/mobile/settings/plugins',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsPluginsRouteData._fromState,
 );
 
@@ -272,6 +278,7 @@ mixin $MobileSettingsPluginsRouteData on GoRouteData {
 
 RouteBase get $mobileSystemOverviewRouteData => GoRouteData.$route(
   path: '/mobile/system/overview',
+  hasOverriddenOnExit: false,
   factory: $MobileSystemOverviewRouteData._fromState,
 );
 
@@ -298,6 +305,7 @@ mixin $MobileSystemOverviewRouteData on GoRouteData {
 
 RouteBase get $mobileMediaImportRouteData => GoRouteData.$route(
   path: '/mobile/system/media-import',
+  hasOverriddenOnExit: false,
   factory: $MobileMediaImportRouteData._fromState,
 );
 
@@ -324,6 +332,7 @@ mixin $MobileMediaImportRouteData on GoRouteData {
 
 RouteBase get $mobileActivityRouteData => GoRouteData.$route(
   path: '/mobile/system/activity',
+  hasOverriddenOnExit: false,
   factory: $MobileActivityRouteData._fromState,
 );
 
@@ -350,6 +359,7 @@ mixin $MobileActivityRouteData on GoRouteData {
 
 RouteBase get $mobileNotificationsRouteData => GoRouteData.$route(
   path: '/mobile/system/notifications',
+  hasOverriddenOnExit: false,
   factory: $MobileNotificationsRouteData._fromState,
 );
 
@@ -376,6 +386,7 @@ mixin $MobileNotificationsRouteData on GoRouteData {
 
 RouteBase get $mobileMediaManagementRouteData => GoRouteData.$route(
   path: '/mobile/system/media',
+  hasOverriddenOnExit: false,
   factory: $MobileMediaManagementRouteData._fromState,
 );
 
@@ -402,6 +413,7 @@ mixin $MobileMediaManagementRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsDownloadersRouteData => GoRouteData.$route(
   path: '/mobile/settings/downloaders',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsDownloadersRouteData._fromState,
 );
 
@@ -428,6 +440,7 @@ mixin $MobileSettingsDownloadersRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsIndexersRouteData => GoRouteData.$route(
   path: '/mobile/settings/indexers',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsIndexersRouteData._fromState,
 );
 
@@ -454,6 +467,7 @@ mixin $MobileSettingsIndexersRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsPlaylistsRouteData => GoRouteData.$route(
   path: '/mobile/settings/playlists',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsPlaylistsRouteData._fromState,
 );
 
@@ -480,6 +494,7 @@ mixin $MobileSettingsPlaylistsRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsSystemMaintenanceRouteData => GoRouteData.$route(
   path: '/mobile/settings/system-maintenance',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsSystemMaintenanceRouteData._fromState,
 );
 
@@ -508,6 +523,7 @@ mixin $MobileSettingsSystemMaintenanceRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsExternalPlayerRouteData => GoRouteData.$route(
   path: '/mobile/settings/external-player',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsExternalPlayerRouteData._fromState,
 );
 
@@ -536,6 +552,7 @@ mixin $MobileSettingsExternalPlayerRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsUsernameRouteData => GoRouteData.$route(
   path: '/mobile/settings/username',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsUsernameRouteData._fromState,
 );
 
@@ -562,6 +579,7 @@ mixin $MobileSettingsUsernameRouteData on GoRouteData {
 
 RouteBase get $mobileSettingsPasswordRouteData => GoRouteData.$route(
   path: '/mobile/settings/password',
+  hasOverriddenOnExit: false,
   factory: $MobileSettingsPasswordRouteData._fromState,
 );
 
@@ -588,6 +606,7 @@ mixin $MobileSettingsPasswordRouteData on GoRouteData {
 
 RouteBase get $mobileMoviePlayerRouteData => GoRouteData.$route(
   path: '/mobile/library/movies/:movieNumber/player',
+  hasOverriddenOnExit: false,
   factory: $MobileMoviePlayerRouteData._fromState,
 );
 
@@ -642,6 +661,7 @@ mixin $MobileMoviePlayerRouteData on GoRouteData {
 
 RouteBase get $mobileVideoPlayerRouteData => GoRouteData.$route(
   path: '/mobile/library/videos/:videoId/player',
+  hasOverriddenOnExit: false,
   factory: $MobileVideoPlayerRouteData._fromState,
 );
 
@@ -683,6 +703,7 @@ mixin $MobileVideoPlayerRouteData on GoRouteData {
 
 RouteBase get $mobileVideoThumbnailRouteData => GoRouteData.$route(
   path: '/mobile/library/videos/:videoId/thumbnails',
+  hasOverriddenOnExit: false,
   factory: $MobileVideoThumbnailRouteData._fromState,
 );
 
@@ -716,6 +737,7 @@ mixin $MobileVideoThumbnailRouteData on GoRouteData {
 
 RouteBase get $mobileTagsRouteData => GoRouteData.$route(
   path: '/mobile/library/tags',
+  hasOverriddenOnExit: false,
   factory: $MobileTagsRouteData._fromState,
 );
 
@@ -742,6 +764,7 @@ mixin $MobileTagsRouteData on GoRouteData {
 
 RouteBase get $mobileTagMoviesRouteData => GoRouteData.$route(
   path: '/mobile/library/tags/:tagId',
+  hasOverriddenOnExit: false,
   factory: $MobileTagMoviesRouteData._fromState,
 );
 
@@ -774,6 +797,7 @@ mixin $MobileTagMoviesRouteData on GoRouteData {
 
 RouteBase get $mobileClipCollectionsRouteData => GoRouteData.$route(
   path: '/mobile/library/clip-collections',
+  hasOverriddenOnExit: false,
   factory: $MobileClipCollectionsRouteData._fromState,
 );
 
@@ -801,6 +825,7 @@ mixin $MobileClipCollectionsRouteData on GoRouteData {
 
 RouteBase get $mobileClipCollectionDetailRouteData => GoRouteData.$route(
   path: '/mobile/library/clip-collections/:collectionId',
+  hasOverriddenOnExit: false,
   factory: $MobileClipCollectionDetailRouteData._fromState,
 );
 
@@ -834,6 +859,7 @@ mixin $MobileClipCollectionDetailRouteData on GoRouteData {
 
 RouteBase get $mobileMomentCollectionsRouteData => GoRouteData.$route(
   path: '/mobile/library/moment-collections',
+  hasOverriddenOnExit: false,
   factory: $MobileMomentCollectionsRouteData._fromState,
 );
 
@@ -861,6 +887,7 @@ mixin $MobileMomentCollectionsRouteData on GoRouteData {
 
 RouteBase get $mobileMomentCollectionDetailRouteData => GoRouteData.$route(
   path: '/mobile/library/moment-collections/:collectionId',
+  hasOverriddenOnExit: false,
   factory: $MobileMomentCollectionDetailRouteData._fromState,
 );
 
@@ -895,6 +922,7 @@ mixin $MobileMomentCollectionDetailRouteData on GoRouteData {
 
 RouteBase get $mobileClipCollectionPlayRouteData => GoRouteData.$route(
   path: '/mobile/library/clip-collections/:collectionId/play',
+  hasOverriddenOnExit: false,
   factory: $MobileClipCollectionPlayRouteData._fromState,
 );
 
@@ -938,6 +966,7 @@ mixin $MobileClipCollectionPlayRouteData on GoRouteData {
 
 RouteBase get $mobileVideoCollectionsRouteData => GoRouteData.$route(
   path: '/mobile/library/video-collections',
+  hasOverriddenOnExit: false,
   factory: $MobileVideoCollectionsRouteData._fromState,
 );
 
@@ -965,6 +994,7 @@ mixin $MobileVideoCollectionsRouteData on GoRouteData {
 
 RouteBase get $mobileVideoCollectionDetailRouteData => GoRouteData.$route(
   path: '/mobile/library/video-collections/:collectionId',
+  hasOverriddenOnExit: false,
   factory: $MobileVideoCollectionDetailRouteData._fromState,
 );
 
@@ -998,6 +1028,7 @@ mixin $MobileVideoCollectionDetailRouteData on GoRouteData {
 
 RouteBase get $mobileVideoCollectionPlayRouteData => GoRouteData.$route(
   path: '/mobile/library/video-collections/:collectionId/play',
+  hasOverriddenOnExit: false,
   factory: $MobileVideoCollectionPlayRouteData._fromState,
 );
 
@@ -1049,33 +1080,39 @@ RouteBase get $mobileRootShellRouteData => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/mobile/overview',
+          hasOverriddenOnExit: false,
           factory: $MobileOverviewRouteData._fromState,
           routes: [
             GoRouteData.$route(
               path: 'discover/follow',
+              hasOverriddenOnExit: false,
               parentNavigatorKey: MobileFollowRouteData.$parentNavigatorKey,
               factory: $MobileFollowRouteData._fromState,
             ),
             GoRouteData.$route(
               path: 'discover/movies',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileDiscoverMoviesRouteData.$parentNavigatorKey,
               factory: $MobileDiscoverMoviesRouteData._fromState,
             ),
             GoRouteData.$route(
               path: 'discover/moments',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileDiscoverMomentsRouteData.$parentNavigatorKey,
               factory: $MobileDiscoverMomentsRouteData._fromState,
             ),
             GoRouteData.$route(
               path: 'discover/hot-actress-releases',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileHotActressReleasesRouteData.$parentNavigatorKey,
               factory: $MobileHotActressReleasesRouteData._fromState,
             ),
             GoRouteData.$route(
               path: 'playlists/:playlistId',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobilePlaylistDetailRouteData.$parentNavigatorKey,
               factory: $MobilePlaylistDetailRouteData._fromState,
@@ -1089,16 +1126,19 @@ RouteBase get $mobileRootShellRouteData => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/mobile/library/movies',
+          hasOverriddenOnExit: false,
           factory: $MobileMoviesRouteData._fromState,
           routes: [
             GoRouteData.$route(
               path: 'series/:seriesId',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileMovieSeriesRouteData.$parentNavigatorKey,
               factory: $MobileMovieSeriesRouteData._fromState,
             ),
             GoRouteData.$route(
               path: ':movieNumber',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileMovieDetailRouteData.$parentNavigatorKey,
               factory: $MobileMovieDetailRouteData._fromState,
@@ -1112,10 +1152,12 @@ RouteBase get $mobileRootShellRouteData => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/mobile/library/actors',
+          hasOverriddenOnExit: false,
           factory: $MobileActorsRouteData._fromState,
           routes: [
             GoRouteData.$route(
               path: ':actorId',
+              hasOverriddenOnExit: false,
               parentNavigatorKey:
                   MobileActorDetailRouteData.$parentNavigatorKey,
               factory: $MobileActorDetailRouteData._fromState,
@@ -1129,6 +1171,7 @@ RouteBase get $mobileRootShellRouteData => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/mobile/rankings',
+          hasOverriddenOnExit: false,
           factory: $MobileRankingsRouteData._fromState,
         ),
       ],
@@ -1138,6 +1181,7 @@ RouteBase get $mobileRootShellRouteData => StatefulShellRouteData.$route(
       routes: [
         GoRouteData.$route(
           path: '/mobile/pornbox',
+          hasOverriddenOnExit: false,
           factory: $MobilePornboxRouteData._fromState,
         ),
       ],

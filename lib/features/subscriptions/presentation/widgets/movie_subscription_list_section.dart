@@ -6,7 +6,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/download_t
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

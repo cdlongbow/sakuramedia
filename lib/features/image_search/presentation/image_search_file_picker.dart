@@ -55,7 +55,6 @@ Future<ImageSearchPickedFile?> pickImageSearchFile() async {
     final picked = await pickFileWithBytes(
       allowedExtensions: const <String>['jpg', 'jpeg', 'png', 'gif', 'webp'],
       initialDirectory: initialDirectory,
-      readPathFallback: file_system.readFileBytes,
       unreadableMessage: '无法读取所选图片，请换一张再试',
       pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
       openFailureMessage: '打开图片选择器失败，请稍后再试',
@@ -86,7 +85,6 @@ Future<ImageSearchPickedFile?> pickMobileImageSearchFile() async {
   try {
     final picked = await pickFileWithBytes(
       type: FileType.image,
-      readPathFallback: file_system.readFileBytes,
       unreadableMessage: '无法读取所选图片，请换一张再试',
       pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
       openFailureMessage: '打开图片选择器失败，请稍后再试',

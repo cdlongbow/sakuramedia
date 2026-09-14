@@ -24,7 +24,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.38.10
+          flutter-version: 3.47.2
           cache: true
 
       - name: Install dependencies
@@ -55,7 +55,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.38.10
+          flutter-version: 3.47.2
           cache: true
 
       - name: Install dependencies
@@ -80,7 +80,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.38.10
+          flutter-version: 3.47.2
           cache: true
 
       - name: Install dependencies
@@ -94,8 +94,6 @@ jobs:
 
   windows-build-checks:
     name: Windows analyze and build
-    # 固定到 windows-2022:windows-latest 已升级到 VS2026(v18),
-    # Flutter 3.38.10 尚未纳入 VS2026(v18) 支持，固定 runner 避免 CMake 生成器不兼容。
     runs-on: windows-2022
     if: github.event_name == 'workflow_dispatch'
 
@@ -107,7 +105,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.38.10
+          flutter-version: 3.47.2
           cache: true
 
       - name: Enable Windows desktop

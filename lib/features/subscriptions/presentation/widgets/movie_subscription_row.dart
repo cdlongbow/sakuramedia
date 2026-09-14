@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';

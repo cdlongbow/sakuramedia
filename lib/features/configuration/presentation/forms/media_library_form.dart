@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';

@@ -148,7 +148,7 @@ abstract class _$DiscoveryDailyPreview
   DiscoveryPreviewState<DailyRecommendationMovieDto> build(int pageSize);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -166,7 +166,7 @@ abstract class _$DiscoveryDailyPreview
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -271,7 +271,7 @@ abstract class _$DiscoveryHotActressReleasePreview
   DiscoveryPreviewState<HotActressReleaseMovieDto> build(int pageSize);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -289,7 +289,7 @@ abstract class _$DiscoveryHotActressReleasePreview
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -398,7 +398,7 @@ abstract class _$DiscoveryMomentPreview
   DiscoveryPreviewState<MomentRecommendationDto> build(int pageSize);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -416,6 +416,6 @@ abstract class _$DiscoveryMomentPreview
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

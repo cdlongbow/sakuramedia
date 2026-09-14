@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/account_security_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/advanced_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/download_clients_section.dart';

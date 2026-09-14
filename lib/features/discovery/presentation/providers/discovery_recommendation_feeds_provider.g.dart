@@ -124,7 +124,7 @@ abstract class _$DailyRecommendationFeed
   FutureOr<PagedListState<DailyRecommendationMovieDto>> build(int itemsPerPage);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -142,7 +142,7 @@ abstract class _$DailyRecommendationFeed
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -227,7 +227,7 @@ abstract class _$HotActressReleaseFeed
   FutureOr<PagedListState<HotActressReleaseMovieDto>> build(int itemsPerPage);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -245,7 +245,7 @@ abstract class _$HotActressReleaseFeed
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -359,7 +359,7 @@ abstract class _$MomentRecommendationFeed
   FutureOr<PagedListState<MomentRecommendationDto>> build(int itemsPerPage);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -377,6 +377,6 @@ abstract class _$MomentRecommendationFeed
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

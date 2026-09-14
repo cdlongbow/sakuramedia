@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actors_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';

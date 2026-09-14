@@ -56,7 +56,7 @@ abstract class _$IndexerSettings extends $AsyncNotifier<IndexerSettingsState> {
   FutureOr<IndexerSettingsState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<IndexerSettingsState>, IndexerSettingsState>;
@@ -71,6 +71,6 @@ abstract class _$IndexerSettings extends $AsyncNotifier<IndexerSettingsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

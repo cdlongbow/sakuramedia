@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 卡片 trailing 区的小尺寸图标按钮:hover 时填充 surfaceMuted 背景,

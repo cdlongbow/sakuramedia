@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_collection_play_content.dart';
 
 /// 桌面视频合集连播壳：平台差异只有 `useTouchOptimizedControls: false`（hover 唤出

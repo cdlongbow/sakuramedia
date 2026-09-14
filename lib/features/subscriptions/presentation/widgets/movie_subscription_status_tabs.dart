@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
@@ -58,10 +58,16 @@ class MovieSubscriptionStatusTabs extends HookConsumerWidget {
 
     final activeIndex = kMovieSubscriptionStatusTabs.indexOf(activeStatus);
     final selectedIndex = activeIndex >= 0 ? activeIndex : 0;
-    final tabController = useTabController(
-      initialLength: kMovieSubscriptionStatusTabs.length,
-      initialIndex: selectedIndex,
+    final tabTickerProvider = useSingleTickerProvider();
+    final tabController = useMemoized(
+      () => TabController(
+        length: kMovieSubscriptionStatusTabs.length,
+        initialIndex: selectedIndex,
+        vsync: tabTickerProvider,
+      ),
+      [tabTickerProvider],
     );
+    useEffect(() => tabController.dispose, [tabController]);
 
     // 分段签是状态的唯一入口，但筛选状态归 provider——别的路径改了 status（深链、
     // 未来的「去看已放弃」引导按钮）时把指示器拨过去。

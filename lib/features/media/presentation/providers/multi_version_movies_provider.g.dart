@@ -99,7 +99,7 @@ abstract class _$MultiVersionMovies
   });
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -117,7 +117,7 @@ abstract class _$MultiVersionMovies
               Object?,
               Object?
             >;
-    element.handleCreate(
+    return element.handleCreate(
       ref,
       () => build(includeVr: _$args.includeVr, includeFc2: _$args.includeFc2),
     );

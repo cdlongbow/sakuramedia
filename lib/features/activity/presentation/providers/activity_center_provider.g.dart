@@ -39,7 +39,7 @@ abstract class _$ActivityCenter extends $AsyncNotifier<ActivityCenterState> {
   FutureOr<ActivityCenterState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ActivityCenterState>, ActivityCenterState>;
     final element =
@@ -50,6 +50,6 @@ abstract class _$ActivityCenter extends $AsyncNotifier<ActivityCenterState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_play_content.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/landscape_player_system_ui.dart';
 

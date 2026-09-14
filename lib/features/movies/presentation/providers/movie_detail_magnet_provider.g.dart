@@ -92,7 +92,7 @@ abstract class _$MovieDetailMagnet extends $Notifier<MovieDetailMagnetState> {
   MovieDetailMagnetState build(String movieNumber);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<MovieDetailMagnetState, MovieDetailMagnetState>;
     final element =
@@ -103,6 +103,6 @@ abstract class _$MovieDetailMagnet extends $Notifier<MovieDetailMagnetState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

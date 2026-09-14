@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/external_player/presentation/widgets/external_player_settings_content.dart';
 
 class MobileExternalPlayerSettingsPage extends StatelessWidget {

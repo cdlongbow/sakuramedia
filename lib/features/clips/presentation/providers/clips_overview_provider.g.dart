@@ -72,7 +72,7 @@ abstract class _$ClipsOverview extends $AsyncNotifier<ClipsOverviewState> {
   FutureOr<ClipsOverviewState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ClipsOverviewState>, ClipsOverviewState>;
     final element =
@@ -83,6 +83,6 @@ abstract class _$ClipsOverview extends $AsyncNotifier<ClipsOverviewState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

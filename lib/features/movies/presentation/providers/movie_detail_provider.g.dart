@@ -161,7 +161,7 @@ abstract class _$MovieDetail extends $Notifier<MovieDetailState> {
   MovieDetailState build(String movieNumber);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<MovieDetailState, MovieDetailState>;
     final element =
         ref.element
@@ -171,6 +171,6 @@ abstract class _$MovieDetail extends $Notifier<MovieDetailState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

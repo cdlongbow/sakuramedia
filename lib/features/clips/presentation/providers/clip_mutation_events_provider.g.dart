@@ -90,7 +90,7 @@ abstract class _$ClipMutationEvents
   Stream<ClipMutationChange> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ClipMutationChange>, ClipMutationChange>;
     final element =
@@ -101,6 +101,6 @@ abstract class _$ClipMutationEvents
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

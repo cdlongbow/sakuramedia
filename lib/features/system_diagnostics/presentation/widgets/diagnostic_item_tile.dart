@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_fix_button.dart';

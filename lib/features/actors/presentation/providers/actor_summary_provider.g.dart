@@ -117,7 +117,7 @@ abstract class _$ActorSummary extends $AsyncNotifier<ActorSummaryState> {
   FutureOr<ActorSummaryState> build(ActorSummaryScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ActorSummaryState>, ActorSummaryState>;
     final element =
@@ -128,6 +128,6 @@ abstract class _$ActorSummary extends $AsyncNotifier<ActorSummaryState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

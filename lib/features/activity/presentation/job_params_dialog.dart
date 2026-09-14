@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';

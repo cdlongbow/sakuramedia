@@ -72,7 +72,7 @@ abstract class _$Moments extends $AsyncNotifier<MomentsState> {
   FutureOr<MomentsState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<MomentsState>, MomentsState>;
     final element =
         ref.element
@@ -82,6 +82,6 @@ abstract class _$Moments extends $AsyncNotifier<MomentsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

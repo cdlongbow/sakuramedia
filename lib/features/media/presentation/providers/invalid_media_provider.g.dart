@@ -44,7 +44,7 @@ abstract class _$InvalidMedia extends $AsyncNotifier<InvalidMediaState> {
   FutureOr<InvalidMediaState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<InvalidMediaState>, InvalidMediaState>;
     final element =
@@ -55,6 +55,6 @@ abstract class _$InvalidMedia extends $AsyncNotifier<InvalidMediaState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

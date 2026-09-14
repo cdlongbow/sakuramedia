@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 播放器菜单 / 抽屉里的一行:左右留白 + 中央 label + 右侧勾选槽。

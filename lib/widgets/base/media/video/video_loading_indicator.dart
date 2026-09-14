@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 播放器统一加载反馈：用于页面取流、首帧等待与播放中缓冲。

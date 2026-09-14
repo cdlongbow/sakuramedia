@@ -81,7 +81,7 @@ abstract class _$OverviewSystemInfo extends $Notifier<OverviewSystemInfoState> {
   OverviewSystemInfoState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<OverviewSystemInfoState, OverviewSystemInfoState>;
     final element =
@@ -92,6 +92,6 @@ abstract class _$OverviewSystemInfo extends $Notifier<OverviewSystemInfoState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

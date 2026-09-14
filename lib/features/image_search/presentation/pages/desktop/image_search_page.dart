@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/shared/image_search_content.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';

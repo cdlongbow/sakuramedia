@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 合集连播页的「选集」浮层：从播放器右侧滑出一个剧集列表面板，盖在画面上，

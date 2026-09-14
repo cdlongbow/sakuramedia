@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';

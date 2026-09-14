@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_detail_content.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/shared/actor_profile_details.dart';

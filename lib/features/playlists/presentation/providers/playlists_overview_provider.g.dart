@@ -172,7 +172,7 @@ abstract class _$PlaylistsOverview
   FutureOr<PlaylistsOverviewState> build(PlaylistsOverviewScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<PlaylistsOverviewState>, PlaylistsOverviewState>;
@@ -187,6 +187,6 @@ abstract class _$PlaylistsOverview
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

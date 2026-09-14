@@ -17,6 +17,7 @@ List<RouteBase> get $appRoutes => [
 
 RouteBase get $desktopLoginRouteData => GoRouteData.$route(
   path: '/login',
+  hasOverriddenOnExit: false,
   factory: $DesktopLoginRouteData._fromState,
 );
 
@@ -43,6 +44,7 @@ mixin $DesktopLoginRouteData on GoRouteData {
 
 RouteBase get $desktopMoviePlayerRouteData => GoRouteData.$route(
   path: '/desktop/library/movies/:movieNumber/player',
+  hasOverriddenOnExit: false,
   factory: $DesktopMoviePlayerRouteData._fromState,
 );
 
@@ -106,6 +108,7 @@ T? _$convertMapValue<T>(
 
 RouteBase get $desktopVideoPlayerRouteData => GoRouteData.$route(
   path: '/desktop/library/videos/:videoId/player',
+  hasOverriddenOnExit: false,
   factory: $DesktopVideoPlayerRouteData._fromState,
 );
 
@@ -147,6 +150,7 @@ mixin $DesktopVideoPlayerRouteData on GoRouteData {
 
 RouteBase get $desktopClipCollectionPlayRouteData => GoRouteData.$route(
   path: '/desktop/library/clip-collections/:collectionId/play',
+  hasOverriddenOnExit: false,
   factory: $DesktopClipCollectionPlayRouteData._fromState,
 );
 
@@ -190,6 +194,7 @@ mixin $DesktopClipCollectionPlayRouteData on GoRouteData {
 
 RouteBase get $desktopVideoCollectionPlayRouteData => GoRouteData.$route(
   path: '/desktop/library/video-collections/:collectionId/play',
+  hasOverriddenOnExit: false,
   factory: $DesktopVideoCollectionPlayRouteData._fromState,
 );
 
@@ -246,6 +251,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/overview',
+              hasOverriddenOnExit: false,
               factory: $DesktopOverviewRouteData._fromState,
             ),
           ],
@@ -254,6 +260,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/discover',
+              hasOverriddenOnExit: false,
               factory: $DesktopDiscoverRouteData._fromState,
             ),
           ],
@@ -262,6 +269,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/movies',
+              hasOverriddenOnExit: false,
               factory: $DesktopMoviesRouteData._fromState,
             ),
           ],
@@ -270,6 +278,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/actors',
+              hasOverriddenOnExit: false,
               factory: $DesktopActorsRouteData._fromState,
             ),
           ],
@@ -278,6 +287,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/tags',
+              hasOverriddenOnExit: false,
               factory: $DesktopTagsRouteData._fromState,
             ),
           ],
@@ -286,6 +296,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/moments',
+              hasOverriddenOnExit: false,
               factory: $DesktopMomentsRouteData._fromState,
             ),
           ],
@@ -294,6 +305,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/playlists',
+              hasOverriddenOnExit: false,
               factory: $DesktopPlaylistsRouteData._fromState,
             ),
           ],
@@ -302,6 +314,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/clips',
+              hasOverriddenOnExit: false,
               factory: $DesktopClipsRouteData._fromState,
             ),
           ],
@@ -310,6 +323,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/videos',
+              hasOverriddenOnExit: false,
               factory: $DesktopVideosRouteData._fromState,
             ),
           ],
@@ -318,6 +332,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/library/rankings',
+              hasOverriddenOnExit: false,
               factory: $DesktopRankingsRouteData._fromState,
             ),
           ],
@@ -326,6 +341,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/activity',
+              hasOverriddenOnExit: false,
               factory: $DesktopActivityRouteData._fromState,
             ),
           ],
@@ -334,6 +350,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/media',
+              hasOverriddenOnExit: false,
               factory: $DesktopMediaRouteData._fromState,
             ),
           ],
@@ -342,6 +359,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/notifications',
+              hasOverriddenOnExit: false,
               factory: $DesktopNotificationsRouteData._fromState,
             ),
           ],
@@ -350,6 +368,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/configuration',
+              hasOverriddenOnExit: false,
               factory: $DesktopConfigurationRouteData._fromState,
             ),
           ],
@@ -358,6 +377,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/media-import',
+              hasOverriddenOnExit: false,
               factory: $DesktopMediaImportRouteData._fromState,
             ),
           ],
@@ -366,6 +386,7 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
           routes: [
             GoRouteData.$route(
               path: '/desktop/system/movie-subscriptions',
+              hasOverriddenOnExit: false,
               factory: $DesktopMovieSubscriptionsRouteData._fromState,
             ),
           ],
@@ -374,82 +395,102 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
     ),
     GoRouteData.$route(
       path: '/desktop/library/discover/movies',
+      hasOverriddenOnExit: false,
       factory: $DesktopDiscoverMoviesRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/discover/moments',
+      hasOverriddenOnExit: false,
       factory: $DesktopDiscoverMomentsRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/discover/hot-actress-releases',
+      hasOverriddenOnExit: false,
       factory: $DesktopHotActressReleasesRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/follow',
+      hasOverriddenOnExit: false,
       factory: $DesktopFollowRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/video-collections',
+      hasOverriddenOnExit: false,
       factory: $DesktopVideoCollectionsRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/system/diagnostics',
+      hasOverriddenOnExit: false,
       factory: $DesktopSystemDiagnosticsRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/search',
+      hasOverriddenOnExit: false,
       factory: $DesktopSearchRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/search/image',
+      hasOverriddenOnExit: false,
       factory: $DesktopImageSearchRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/search/:query',
+      hasOverriddenOnExit: false,
       factory: $DesktopSearchQueryRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/movies/series/:seriesId',
+      hasOverriddenOnExit: false,
       factory: $DesktopMovieSeriesRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/movies/:movieNumber',
+      hasOverriddenOnExit: false,
       factory: $DesktopMovieDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/playlists/:playlistId',
+      hasOverriddenOnExit: false,
       factory: $DesktopPlaylistDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/clip-collections',
+      hasOverriddenOnExit: false,
       factory: $DesktopClipCollectionsRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/clip-collections/:collectionId',
+      hasOverriddenOnExit: false,
       factory: $DesktopClipCollectionDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/moment-collections',
+      hasOverriddenOnExit: false,
       factory: $DesktopMomentCollectionsRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/moment-collections/:collectionId',
+      hasOverriddenOnExit: false,
       factory: $DesktopMomentCollectionDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/actors/:actorId',
+      hasOverriddenOnExit: false,
       factory: $DesktopActorDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/tags/:tagId',
+      hasOverriddenOnExit: false,
       factory: $DesktopTagMoviesRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/video-collections/:collectionId',
+      hasOverriddenOnExit: false,
       factory: $DesktopVideoCollectionDetailRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/videos/:videoId/thumbnails',
+      hasOverriddenOnExit: false,
       factory: $DesktopVideoThumbnailRouteData._fromState,
     ),
   ],

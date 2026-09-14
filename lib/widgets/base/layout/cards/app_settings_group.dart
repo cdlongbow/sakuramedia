@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 分组卡片：浅灰底上浮起的白色圆角卡片，承载一组语义相关的设置行/内容。

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/system_maintenance_content.dart';
 
 class SystemMaintenanceSection extends StatelessWidget {

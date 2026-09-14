@@ -19,40 +19,33 @@ class FilePickerWithBytesException implements Exception {
   final String message;
 }
 
-/// 统一的“选择单个文件并读取字节”原语。
-///
-/// image_search 与 plugins 的文件选择器此前复制了同一套
-/// `FilePicker.platform.pickFiles` + 空结果 / 空字节处理 + 平台异常映射，
-/// 这里把横切逻辑收拢，业务侧只保留扩展名、初始目录、路径回退与文案。
+/// 选择单个文件并读取字节。
 Future<PickedFileWithBytes?> pickFileWithBytes({
   List<String>? allowedExtensions,
   FileType type = FileType.custom,
   String? initialDirectory,
-  bool allowCompression = false,
-  Future<Uint8List?> Function(String path)? readPathFallback,
   required String unreadableMessage,
   required String pickerUnavailableMessage,
   required String openFailureMessage,
 }) async {
   try {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       initialDirectory: initialDirectory,
       type: type,
       allowedExtensions: type == FileType.custom ? allowedExtensions : null,
-      allowMultiple: false,
-      withData: true,
-      allowCompression: allowCompression,
+      compressionQuality: 0,
     );
-    if (result == null || result.files.isEmpty) {
+    if (file == null) {
       return null;
     }
 
-    final file = result.files.single;
-    Uint8List? bytes = file.bytes;
-    if (bytes == null && readPathFallback != null && file.path != null) {
-      bytes = await readPathFallback(file.path!);
+    final Uint8List bytes;
+    try {
+      bytes = await file.readAsBytes();
+    } catch (_) {
+      throw FilePickerWithBytesException(unreadableMessage);
     }
-    if (bytes == null || bytes.isEmpty) {
+    if (bytes.isEmpty) {
       throw FilePickerWithBytesException(unreadableMessage);
     }
     return PickedFileWithBytes(bytes: bytes, fileName: file.name);

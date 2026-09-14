@@ -60,7 +60,7 @@ abstract class _$MediaBrowse extends $AsyncNotifier<MediaBrowseState> {
   FutureOr<MediaBrowseState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<MediaBrowseState>, MediaBrowseState>;
     final element =
@@ -71,6 +71,6 @@ abstract class _$MediaBrowse extends $AsyncNotifier<MediaBrowseState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
 import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_card.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';

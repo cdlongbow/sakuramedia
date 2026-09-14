@@ -92,7 +92,7 @@ abstract class _$MovieClips extends $Notifier<MovieClipsState> {
   MovieClipsState build(String movieNumber);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<MovieClipsState, MovieClipsState>;
     final element =
         ref.element
@@ -102,6 +102,6 @@ abstract class _$MovieClips extends $Notifier<MovieClipsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

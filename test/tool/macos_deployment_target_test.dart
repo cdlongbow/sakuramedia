@@ -8,10 +8,10 @@ void main() {
     final projectFile =
         File('macos/Runner.xcodeproj/project.pbxproj').readAsStringSync();
 
-    expect(podfile, contains("platform :osx, '10.15'"));
+    expect(podfile, contains("platform :osx, '12.0'"));
     expect(
       RegExp(
-        r'MACOSX_DEPLOYMENT_TARGET = 10\.15;',
+        r'MACOSX_DEPLOYMENT_TARGET = 12\.0;',
       ).allMatches(projectFile).length,
       3,
     );

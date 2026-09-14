@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 封面卡骨架 = 圆角 Container(surfaceCard) + 可选 AspectRatio + surfaceMuted 内框。

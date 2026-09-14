@@ -53,7 +53,7 @@ abstract class _$NotificationCenter extends $Notifier<NotificationCenterState> {
   NotificationCenterState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<NotificationCenterState, NotificationCenterState>;
     final element =
@@ -64,6 +64,6 @@ abstract class _$NotificationCenter extends $Notifier<NotificationCenterState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

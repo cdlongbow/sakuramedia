@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 封面底部渐变遮罩(用 [mediaOverlaySoft] → [mediaOverlayStrong] 从中间往下加深),

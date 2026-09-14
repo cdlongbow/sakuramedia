@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 行内小转圈：`movieCardLoaderSize` 见方 + `movieCardLoaderStrokeWidth` 线宽。

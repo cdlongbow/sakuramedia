@@ -168,7 +168,7 @@ abstract class _$MovieSubscriptionManager
   );
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -186,7 +186,7 @@ abstract class _$MovieSubscriptionManager
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -236,7 +236,7 @@ abstract class _$MovieSubscriptionStatusSelection
   MovieSubscriptionStatus? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<MovieSubscriptionStatus?, MovieSubscriptionStatus?>;
     final element =
@@ -247,6 +247,6 @@ abstract class _$MovieSubscriptionStatusSelection
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

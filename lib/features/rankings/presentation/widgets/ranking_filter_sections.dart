@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';

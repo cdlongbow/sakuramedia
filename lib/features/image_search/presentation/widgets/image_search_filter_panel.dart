@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_target.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/shared/moment_collections_content.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 

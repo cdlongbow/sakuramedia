@@ -117,7 +117,7 @@ abstract class _$VideoSummary extends $AsyncNotifier<VideoSummaryState> {
   FutureOr<VideoSummaryState> build(VideoSummaryScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<VideoSummaryState>, VideoSummaryState>;
     final element =
@@ -128,6 +128,6 @@ abstract class _$VideoSummary extends $AsyncNotifier<VideoSummaryState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

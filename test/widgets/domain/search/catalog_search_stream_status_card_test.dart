@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';

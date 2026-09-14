@@ -119,7 +119,7 @@ abstract class _$CatalogSearch extends $Notifier<CatalogSearchState> {
   CatalogSearchState build(CatalogSearchScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<CatalogSearchState, CatalogSearchState>;
     final element =
         ref.element
@@ -129,6 +129,6 @@ abstract class _$CatalogSearch extends $Notifier<CatalogSearchState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

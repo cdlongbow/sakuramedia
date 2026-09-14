@@ -101,7 +101,7 @@ abstract class _$SeriesImport extends $Notifier<SeriesImportState> {
   SeriesImportState build(int seriesId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SeriesImportState, SeriesImportState>;
     final element =
         ref.element
@@ -111,6 +111,6 @@ abstract class _$SeriesImport extends $Notifier<SeriesImportState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

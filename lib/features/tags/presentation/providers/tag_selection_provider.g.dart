@@ -119,7 +119,7 @@ abstract class _$TagSelection extends $Notifier<TagSelectionState> {
   TagSelectionState build(TagSelectionScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<TagSelectionState, TagSelectionState>;
     final element =
         ref.element
@@ -129,6 +129,6 @@ abstract class _$TagSelection extends $Notifier<TagSelectionState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

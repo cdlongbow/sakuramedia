@@ -92,7 +92,7 @@ abstract class _$AccountProfile extends $Notifier<AccountProfileState> {
   AccountProfileState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AccountProfileState, AccountProfileState>;
     final element =
         ref.element
@@ -102,6 +102,6 @@ abstract class _$AccountProfile extends $Notifier<AccountProfileState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

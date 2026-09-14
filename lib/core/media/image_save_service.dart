@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sakuramedia/core/media/image_file_writer_io.dart'
-    as file_writer;
 import 'package:sakuramedia/core/media/image_runtime_platform_io.dart'
     as runtime_platform;
 
@@ -21,12 +19,12 @@ class ImageSaveResult {
 }
 
 typedef ImageBytesFetcher = Future<Uint8List> Function(String imageUrl);
-typedef ImageSavePathPicker =
+typedef ImageDesktopSaver =
     Future<String?> Function({
       required String suggestedFileName,
+      required Uint8List bytes,
       String? dialogTitle,
     });
-typedef ImageFileWriter = Future<void> Function(String path, Uint8List bytes);
 typedef ImageSavePlatformResolver = ImageSavePlatform Function();
 typedef ImageGalleryPermissionRequester = Future<bool> Function();
 typedef ImageGallerySaver =
@@ -35,21 +33,18 @@ typedef ImageGallerySaver =
 class ImageSaveService {
   ImageSaveService({
     required this.fetchBytes,
-    ImageSavePathPicker? pickSavePath,
-    ImageFileWriter? writeFile,
+    ImageDesktopSaver? saveToDesktop,
     ImageSavePlatformResolver? resolvePlatform,
     ImageGalleryPermissionRequester? requestGalleryPermission,
     ImageGallerySaver? saveToGallery,
-  }) : pickSavePath = pickSavePath ?? _defaultPickSavePath,
-       writeFile = writeFile ?? _defaultWriteFile,
+  }) : saveToDesktop = saveToDesktop ?? _defaultSaveToDesktop,
        resolvePlatform = resolvePlatform ?? _defaultResolvePlatform,
        requestGalleryPermission =
            requestGalleryPermission ?? _defaultRequestGalleryPermission,
        saveToGallery = saveToGallery ?? _defaultSaveToGallery;
 
   final ImageBytesFetcher fetchBytes;
-  final ImageSavePathPicker pickSavePath;
-  final ImageFileWriter writeFile;
+  final ImageDesktopSaver saveToDesktop;
   final ImageSavePlatformResolver resolvePlatform;
   final ImageGalleryPermissionRequester requestGalleryPermission;
   final ImageGallerySaver saveToGallery;
@@ -60,22 +55,21 @@ class ImageSaveService {
     String? dialogTitle,
   }) async {
     try {
-      final suggestedFileName =
-          (fileName == null || fileName.trim().isEmpty)
-              ? _resolveFileName(imageUrl)
-              : fileName.trim();
+      final suggestedFileName = (fileName == null || fileName.trim().isEmpty)
+          ? _resolveFileName(imageUrl)
+          : fileName.trim();
 
       switch (resolvePlatform()) {
         case ImageSavePlatform.desktop:
-          final savePath = await pickSavePath(
+          final bytes = await fetchBytes(imageUrl);
+          final savePath = await saveToDesktop(
             suggestedFileName: suggestedFileName,
+            bytes: bytes,
             dialogTitle: dialogTitle,
           );
           if (savePath == null || savePath.trim().isEmpty) {
             return const ImageSaveResult(status: ImageSaveStatus.cancelled);
           }
-          final bytes = await fetchBytes(imageUrl);
-          await writeFile(savePath, bytes);
           return ImageSaveResult(
             status: ImageSaveStatus.success,
             savedPath: savePath,
@@ -123,20 +117,19 @@ class ImageSaveService {
     }
   }
 
-  static Future<String?> _defaultPickSavePath({
+  static Future<String?> _defaultSaveToDesktop({
     required String suggestedFileName,
+    required Uint8List bytes,
     String? dialogTitle,
-  }) {
-    return FilePicker.platform.saveFile(
+  }) async {
+    final extension = _guessImageFileExtension(suggestedFileName);
+    final uri = await FilePicker.saveFile(
       dialogTitle: dialogTitle,
       fileName: suggestedFileName,
-      type: FileType.custom,
-      allowedExtensions: <String>[_guessImageFileExtension(suggestedFileName)],
+      bytes: bytes,
+      mimeType: extension == 'jpg' ? 'image/jpeg' : 'image/$extension',
     );
-  }
-
-  static Future<void> _defaultWriteFile(String path, Uint8List bytes) {
-    return file_writer.writeBytesToFile(path, bytes);
+    return uri?.toFilePath();
   }
 
   static ImageSavePlatform _defaultResolvePlatform() {
@@ -203,8 +196,9 @@ class ImageSaveService {
 
   static String _resolveFileName(String imageUrl) {
     final uri = Uri.tryParse(imageUrl);
-    final segment =
-        uri != null && uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+    final segment = uri != null && uri.pathSegments.isNotEmpty
+        ? uri.pathSegments.last
+        : '';
     final normalized = segment.split('?').first.trim();
     if (normalized.isNotEmpty) {
       return normalized.contains('.')

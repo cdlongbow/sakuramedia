@@ -104,7 +104,7 @@ abstract class _$IndexerConnectionTest
   IndexerConnectionTestState build(Object scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<IndexerConnectionTestState, IndexerConnectionTestState>;
@@ -119,6 +119,6 @@ abstract class _$IndexerConnectionTest
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

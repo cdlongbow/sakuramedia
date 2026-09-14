@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/shared/moment_collection_detail_content.dart';
 
 class DesktopMomentCollectionDetailPage extends StatelessWidget {

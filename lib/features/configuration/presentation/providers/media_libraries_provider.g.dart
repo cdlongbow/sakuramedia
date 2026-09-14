@@ -44,7 +44,7 @@ abstract class _$MediaLibraries extends $AsyncNotifier<List<MediaLibraryDto>> {
   FutureOr<List<MediaLibraryDto>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<MediaLibraryDto>>, List<MediaLibraryDto>>;
@@ -59,6 +59,6 @@ abstract class _$MediaLibraries extends $AsyncNotifier<List<MediaLibraryDto>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

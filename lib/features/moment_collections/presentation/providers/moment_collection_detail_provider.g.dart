@@ -91,7 +91,7 @@ abstract class _$MomentCollectionDetail
   FutureOr<MomentCollectionDetailState> build(int collectionId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -109,6 +109,6 @@ abstract class _$MomentCollectionDetail
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

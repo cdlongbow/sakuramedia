@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
@@ -50,7 +50,12 @@ class MediaManagementContent extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tabController = useTabController(initialLength: 4);
+    final tabTickerProvider = useSingleTickerProvider();
+    final tabController = useMemoized(
+      () => TabController(length: 4, vsync: tabTickerProvider),
+      [tabTickerProvider],
+    );
+    useEffect(() => tabController.dispose, [tabController]);
     useListenable(tabController);
     final currentTab = tabController.index;
     final duplicateKind = useState(MediaListItemKind.jav);

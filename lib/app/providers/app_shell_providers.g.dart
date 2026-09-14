@@ -69,7 +69,7 @@ abstract class _$AppShellSidebarCollapsed extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -79,7 +79,7 @@ abstract class _$AppShellSidebarCollapsed extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -171,7 +171,7 @@ abstract class _$AppVersionInfo extends $AsyncNotifier<AppVersionInfoState> {
   FutureOr<AppVersionInfoState> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<AppVersionInfoState>, AppVersionInfoState>;
     final element =
@@ -182,6 +182,6 @@ abstract class _$AppVersionInfo extends $AsyncNotifier<AppVersionInfoState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

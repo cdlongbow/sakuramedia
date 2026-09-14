@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show IconData;
+import 'package:material_ui/material_ui.dart' show IconData;
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_state.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 

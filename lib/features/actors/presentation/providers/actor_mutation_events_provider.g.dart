@@ -45,7 +45,7 @@ abstract class _$ActorMutationEvents extends $StreamNotifier<ActorListItemDto> {
   Stream<ActorListItemDto> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<ActorListItemDto>, ActorListItemDto>;
     final element =
@@ -56,6 +56,6 @@ abstract class _$ActorMutationEvents extends $StreamNotifier<ActorListItemDto> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

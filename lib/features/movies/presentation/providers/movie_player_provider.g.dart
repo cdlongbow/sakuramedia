@@ -59,7 +59,7 @@ final class MoviePlayerDependenciesProvider
 }
 
 String _$moviePlayerDependenciesHash() =>
-    r'72ac8d4950e0aba8bd1d7951aec5c352f9cbb987';
+    r'f7db669ab0d3269925597b653f5a36e369366801';
 
 /// 单个播放器路由的业务状态；页面离开后自动销毁并停止定时上报。
 
@@ -114,7 +114,7 @@ final class MoviePlayerProvider
   }
 }
 
-String _$moviePlayerHash() => r'6900527f09f31978ed3ac5420eb6e5d4a771b84c';
+String _$moviePlayerHash() => r'5f3658beb5354d7a4e39d28c2a2d021f63368b77';
 
 /// 单个播放器路由的业务状态；页面离开后自动销毁并停止定时上报。
 
@@ -154,7 +154,7 @@ abstract class _$MoviePlayer extends $Notifier<MoviePlayerState> {
   MoviePlayerState build(MoviePlayerScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<MoviePlayerState, MoviePlayerState>;
     final element =
         ref.element
@@ -164,6 +164,6 @@ abstract class _$MoviePlayer extends $Notifier<MoviePlayerState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

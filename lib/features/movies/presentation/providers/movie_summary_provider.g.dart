@@ -65,7 +65,7 @@ final class MovieSummaryProvider
   }
 }
 
-String _$movieSummaryHash() => r'1900b7bd7be1256832358935746801497e5ae42b';
+String _$movieSummaryHash() => r'd00d65b4151c9a390993ba6588b09a559031543c';
 
 /// 波 A 的影片摘要分页状态。
 ///
@@ -117,7 +117,7 @@ abstract class _$MovieSummary extends $AsyncNotifier<MovieSummaryState> {
   FutureOr<MovieSummaryState> build(MovieSummaryScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<MovieSummaryState>, MovieSummaryState>;
     final element =
@@ -128,6 +128,6 @@ abstract class _$MovieSummary extends $AsyncNotifier<MovieSummaryState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

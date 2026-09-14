@@ -7,13 +7,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _RecordingFilePicker recordingFilePicker;
+  late FilePickerPlatform originalFilePicker;
 
   setUp(() {
     recordingFilePicker = _RecordingFilePicker();
-    FilePicker.platform = recordingFilePicker;
+    originalFilePicker = FilePickerPlatform.instance;
+    FilePickerPlatform.instance = recordingFilePicker;
   });
 
   tearDown(() {
+    FilePickerPlatform.instance = originalFilePicker;
     debugDefaultTargetPlatformOverride = null;
     debugImageSearchDownloadsDirectoryProvider = null;
     debugImageSearchDocumentsDirectoryProvider = null;
@@ -22,30 +25,69 @@ void main() {
     debugMobileImageSearchFilePicker = null;
   });
 
+  test('pickMobileImageSearchFile reads selected file bytes', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    recordingFilePicker.selectedFile = _SelectedFile(
+      bytes: Uint8List.fromList([1, 2, 3]),
+    );
+
+    final result = await pickMobileImageSearchFile();
+
+    expect(result!.bytes, [1, 2, 3]);
+    expect(result.fileName, 'photo.png');
+    expect(result.mimeType, 'image/png');
+  });
+
+  test('pickMobileImageSearchFile rejects empty files', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    recordingFilePicker.selectedFile = _SelectedFile(bytes: Uint8List(0));
+
+    await expectLater(
+      pickMobileImageSearchFile(),
+      throwsA(isA<ImageSearchFilePickerException>()),
+    );
+  });
+
+  test('pickMobileImageSearchFile reports unreadable files', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    recordingFilePicker.selectedFile = _SelectedFile();
+
+    await expectLater(
+      pickMobileImageSearchFile(),
+      throwsA(
+        isA<ImageSearchFilePickerException>().having(
+          (error) => error.message,
+          'message',
+          '无法读取所选图片，请换一张再试',
+        ),
+      ),
+    );
+  });
+
   test('pickImageSearchFile uses downloads directory on macOS', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
-    debugImageSearchDownloadsDirectoryProvider =
-        () async => '/Users/test/Downloads';
+    debugImageSearchDownloadsDirectoryProvider = () async =>
+        '/Users/test/Downloads';
     debugImageSearchDirectoryExists = (_) => true;
 
     await pickImageSearchFile();
 
     expect(
-      recordingFilePicker.pickFilesInitialDirectory,
+      recordingFilePicker.pickFileInitialDirectory,
       '/Users/test/Downloads',
     );
   });
 
   test('pickImageSearchFile uses downloads directory on Android', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    debugImageSearchDownloadsDirectoryProvider =
-        () async => '/storage/emulated/0/Download';
+    debugImageSearchDownloadsDirectoryProvider = () async =>
+        '/storage/emulated/0/Download';
     debugImageSearchDirectoryExists = (_) => true;
 
     await pickImageSearchFile();
 
     expect(
-      recordingFilePicker.pickFilesInitialDirectory,
+      recordingFilePicker.pickFileInitialDirectory,
       '/storage/emulated/0/Download',
     );
   });
@@ -55,14 +97,14 @@ void main() {
     () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       debugImageSearchDownloadsDirectoryProvider = () async => null;
-      debugImageSearchDocumentsDirectoryProvider =
-          () async => '/var/mobile/Documents';
+      debugImageSearchDocumentsDirectoryProvider = () async =>
+          '/var/mobile/Documents';
       debugImageSearchDirectoryExists = (_) => true;
 
       await pickImageSearchFile();
 
       expect(
-        recordingFilePicker.pickFilesInitialDirectory,
+        recordingFilePicker.pickFileInitialDirectory,
         '/var/mobile/Documents',
       );
     },
@@ -71,13 +113,13 @@ void main() {
   test('pickImageSearchFile falls back to USERPROFILE on Windows', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     debugImageSearchDownloadsDirectoryProvider = () async => null;
-    debugImageSearchEnvironmentLookup =
-        (name) => name == 'USERPROFILE' ? r'C:\Users\tester' : null;
+    debugImageSearchEnvironmentLookup = (name) =>
+        name == 'USERPROFILE' ? r'C:\Users\tester' : null;
     debugImageSearchDirectoryExists = (_) => true;
 
     await pickImageSearchFile();
 
-    expect(recordingFilePicker.pickFilesInitialDirectory, r'C:\Users\tester');
+    expect(recordingFilePicker.pickFileInitialDirectory, r'C:\Users\tester');
   });
 
   test(
@@ -87,17 +129,16 @@ void main() {
 
       await pickImageSearchFile();
 
-      expect(recordingFilePicker.pickFilesInitialDirectory, isNull);
+      expect(recordingFilePicker.pickFileInitialDirectory, isNull);
     },
   );
 
   test('pickMobileImageSearchFile uses debug override', () async {
-    debugMobileImageSearchFilePicker =
-        () async => ImageSearchPickedFile(
-          bytes: Uint8List.fromList(const <int>[7, 8, 9]),
-          fileName: 'mobile.png',
-          mimeType: 'image/png',
-        );
+    debugMobileImageSearchFilePicker = () async => ImageSearchPickedFile(
+      bytes: Uint8List.fromList(const <int>[7, 8, 9]),
+      fileName: 'mobile.png',
+      mimeType: 'image/png',
+    );
 
     final picked = await pickMobileImageSearchFile();
 
@@ -125,8 +166,8 @@ void main() {
 
       await pickMobileImageSearchFile();
 
-      expect(recordingFilePicker.pickFilesType, FileType.image);
-      expect(recordingFilePicker.pickFilesInitialDirectory, isNull);
+      expect(recordingFilePicker.pickFileType, FileType.image);
+      expect(recordingFilePicker.pickFileInitialDirectory, isNull);
     },
   );
 
@@ -135,54 +176,51 @@ void main() {
 
     await pickMobileImageSearchFile();
 
-    expect(recordingFilePicker.pickFilesAllowCompression, isFalse);
+    expect(recordingFilePicker.pickFileCompressionQuality, 0);
   });
 }
 
-class _RecordingFilePicker extends FilePicker {
-  String? pickFilesInitialDirectory;
-  FileType? pickFilesType;
-  bool? pickFilesAllowCompression;
+class _RecordingFilePicker extends FilePickerPlatform {
+  String? pickFileInitialDirectory;
+  FileType? pickFileType;
+  int? pickFileCompressionQuality;
+  PlatformFile? selectedFile;
 
   @override
-  Future<FilePickerResult?> pickFiles({
+  Future<PlatformFile?> pickFile({
     String? dialogTitle,
     String? initialDirectory,
     FileType type = FileType.any,
     List<String>? allowedExtensions,
-    Function(FilePickerStatus p1)? onFileLoading,
-    bool allowCompression = true,
-    int compressionQuality = 30,
-    bool allowMultiple = false,
-    bool withData = false,
-    bool withReadStream = false,
-    bool lockParentWindow = false,
-    bool readSequential = false,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
   }) async {
-    pickFilesInitialDirectory = initialDirectory;
-    pickFilesType = type;
-    pickFilesAllowCompression = allowCompression;
-    return null;
+    pickFileInitialDirectory = initialDirectory;
+    pickFileType = type;
+    pickFileCompressionQuality = compressionQuality;
+    return selectedFile;
+  }
+}
+
+final class _SelectedFile extends PlatformFile {
+  _SelectedFile({this.bytes});
+
+  final Uint8List? bytes;
+
+  @override
+  String get name => 'photo.png';
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    if (bytes == null) throw StateError('Cannot read selected file');
+    return bytes!;
   }
 
   @override
-  Future<bool?> clearTemporaryFiles() async => true;
-
-  @override
-  Future<String?> getDirectoryPath({
-    String? dialogTitle,
-    bool lockParentWindow = false,
-    String? initialDirectory,
-  }) async => null;
-
-  @override
-  Future<String?> saveFile({
-    String? dialogTitle,
-    String? fileName,
-    String? initialDirectory,
-    FileType type = FileType.any,
-    List<String>? allowedExtensions,
-    Uint8List? bytes,
-    bool lockParentWindow = false,
-  }) async => null;
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

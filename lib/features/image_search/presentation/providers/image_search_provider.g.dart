@@ -101,7 +101,7 @@ abstract class _$ImageSearch extends $Notifier<ImageSearchState> {
   ImageSearchState build(ImageSearchScope scope);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ImageSearchState, ImageSearchState>;
     final element =
         ref.element
@@ -111,6 +111,6 @@ abstract class _$ImageSearch extends $Notifier<ImageSearchState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

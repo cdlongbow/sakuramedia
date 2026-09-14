@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 import 'package:sakuramedia/theme.dart';

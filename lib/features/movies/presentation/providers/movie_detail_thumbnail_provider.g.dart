@@ -59,7 +59,7 @@ final class MovieDetailThumbnailProvider
 }
 
 String _$movieDetailThumbnailHash() =>
-    r'24601d705af52765f5a51458d092b0577cd57197';
+    r'5ced02811f1f23a5a20b47eb40b386f80765b78a';
 
 final class MovieDetailThumbnailFamily extends $Family
     with
@@ -94,7 +94,7 @@ abstract class _$MovieDetailThumbnail
   MovieDetailThumbnailState build({required int? mediaId});
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<MovieDetailThumbnailState, MovieDetailThumbnailState>;
     final element =
@@ -105,6 +105,6 @@ abstract class _$MovieDetailThumbnail
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(mediaId: _$args));
+    return element.handleCreate(ref, () => build(mediaId: _$args));
   }
 }

@@ -102,7 +102,7 @@ abstract class _$MovieSubscriptionEvents
   Stream<List<MovieSubscriptionChange>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -120,7 +120,7 @@ abstract class _$MovieSubscriptionEvents
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -170,7 +170,7 @@ abstract class _$MovieCollectionTypeEvents
   Stream<MovieCollectionTypeChange> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -188,7 +188,7 @@ abstract class _$MovieCollectionTypeEvents
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -222,7 +222,7 @@ abstract class _$MovieMediaEvents extends $StreamNotifier<MovieMediaChange> {
   Stream<MovieMediaChange> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<MovieMediaChange>, MovieMediaChange>;
     final element =
@@ -233,6 +233,6 @@ abstract class _$MovieMediaEvents extends $StreamNotifier<MovieMediaChange> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

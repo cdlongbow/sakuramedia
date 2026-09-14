@@ -143,7 +143,7 @@ abstract class _$SystemDiagnostics extends $Notifier<SystemDiagnosticsState> {
   SystemDiagnosticsState build(SystemDiagnosticsHost host);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<SystemDiagnosticsState, SystemDiagnosticsState>;
     final element =
@@ -154,6 +154,6 @@ abstract class _$SystemDiagnostics extends $Notifier<SystemDiagnosticsState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

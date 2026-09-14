@@ -78,7 +78,7 @@ abstract class _$VideoCollectionsOverview
   FutureOr<List<VideoCollectionDto>> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -96,6 +96,6 @@ abstract class _$VideoCollectionsOverview
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

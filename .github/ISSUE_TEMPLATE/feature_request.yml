@@ -12,15 +12,6 @@ body:
 
         以上都确认过，请继续填写 👇
 
-  - type: checkboxes
-    id: checklist
-    attributes:
-      label: 提交前确认
-      options:
-        - label: 我已查阅 [Wiki 常见问题](https://tinypinglite.github.io/sakuramedia/faq)，没有找到解答
-          required: true
-        - label: 我已搜索过已有 Issue，没有重复
-          required: true
 
   - type: textarea
     id: description
@@ -59,3 +50,15 @@ body:
       description: 如有截图、参考实现或其它信息，请贴在这里，注意给图片打码
     validations:
       required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已查阅 [Wiki 常见问题](https://tinypinglite.github.io/sakuramedia/faq)，没有找到解答
+          required: true
+        - label: 我已搜索过已有 Issue，没有重复
+          required: true
+        - label: 我确定我没有上传包含敏感信息文字、图片/视频.
+          required: true
+        

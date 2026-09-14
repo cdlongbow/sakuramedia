@@ -1,6 +1,10 @@
 import 'dart:async';
 
-import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -12,19 +16,14 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_cover_thumbnail.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_meta_line.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 
 class MultiVersionMoviesSection extends HookConsumerWidget {
@@ -151,6 +150,49 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       if (confirmed && context.mounted) showToast('影片版本已删除');
     }
 
+    Widget filterOptions(BuildContext context) => HookBuilder(
+      builder: (context) {
+        useListenable(includeVr);
+        useListenable(includeFc2);
+        return Wrap(
+          spacing: spacing.sm,
+          runSpacing: spacing.sm,
+          children: [
+            for (final filter in [
+              (label: '包含 VR', state: includeVr, key: 'vr'),
+              (label: '包含 FC2', state: includeFc2, key: 'fc2'),
+            ])
+              AppTextButton(
+                key: Key('$keyPrefix-versions-include-${filter.key}'),
+                label: filter.label,
+                size: AppTextButtonSize.xSmall,
+                isSelected: filter.state.value,
+                onPressed: () {
+                  exitSelection();
+                  filter.state.value = !filter.state.value;
+                  if (scrollController.hasClients) scrollController.jumpTo(0);
+                },
+              ),
+          ],
+        );
+      },
+    );
+
+    Widget filterFooter() => HookBuilder(
+      builder: (context) {
+        useListenable(includeVr);
+        useListenable(includeFc2);
+        return AppFilterPanelFooter(
+          isDefault: !includeVr.value && !includeFc2.value,
+          onReset: () {
+            includeVr.value = false;
+            includeFc2.value = false;
+            if (scrollController.hasClients) scrollController.jumpTo(0);
+          },
+        );
+      },
+    );
+
     final content = AppFixedHeaderLayout(
       header: selectionMode.value
           ? AppSelectionHeaderToolbar(
@@ -165,80 +207,46 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
               exitKey: Key('$keyPrefix-versions-exit-selection'),
               onExit: deleting.value ? null : exitSelection,
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppFilterTotalHeader(
-                  leading: Text(
-                    '影片筛选',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s12,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.secondary,
-                    ),
-                  ),
-                  totalText: '共 ${asyncState.value?.total ?? 0} 部',
-                  totalKey: Key('$keyPrefix-versions-total'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppSelectionEntryButton(
-                        key: Key('$keyPrefix-versions-select'),
-                        onPressed: groups.isEmpty
-                            ? null
-                            : () => selectionMode.value = true,
+          : AppListHeader(
+              filterButtonKey: Key('$keyPrefix-versions-filter'),
+              filterLabel: !includeVr.value && !includeFc2.value
+                  ? '筛选'
+                  : [
+                      if (includeVr.value) 'VR',
+                      if (includeFc2.value) 'FC2',
+                    ].join(' / '),
+              filterPanelKey: Key('$keyPrefix-versions-filter-panel'),
+              filterPanelBuilder: mobile ? null : filterOptions,
+              filterPanelFooter: mobile ? null : filterFooter(),
+              onFilterTap: mobile
+                  ? () => showAppBottomDrawer(
+                      context: context,
+                      drawerKey: Key('$keyPrefix-versions-filter-drawer'),
+                      maxHeightFactor: 0.8,
+                      builder: (context) => AppMobileFilterDrawerScaffold(
+                        footer: filterFooter(),
+                        child: filterOptions(context),
                       ),
-                      SizedBox(width: spacing.sm),
-                      AppIconButton(
-                        key: Key('$keyPrefix-versions-refresh'),
-                        tooltip: '刷新',
-                        icon: const Icon(Icons.refresh_rounded),
-                        onPressed: asyncState.isLoading ? null : refresh,
-                      ),
-                    ],
-                  ),
+                    )
+                  : null,
+              informationSlots: [
+                AppListHeaderInfo(
+                  key: Key('$keyPrefix-versions-total'),
+                  label: '共 ${asyncState.value?.total ?? 0} 部',
                 ),
-                Padding(
-                  padding: EdgeInsets.only(bottom: spacing.md),
-                  child: Wrap(
-                    spacing: spacing.lg,
-                    runSpacing: spacing.sm,
-                    children: [
-                      for (final filter in [
-                        (label: '包含 VR', state: includeVr, key: 'vr'),
-                        (label: '包含 FC2', state: includeFc2, key: 'fc2'),
-                      ])
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              filter.label,
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s12,
-                                weight: AppTextWeight.regular,
-                                tone: AppTextTone.secondary,
-                              ),
-                            ),
-                            SizedBox(width: spacing.sm),
-                            AppSwitch(
-                              key: Key(
-                                '$keyPrefix-versions-include-${filter.key}',
-                              ),
-                              value: filter.state.value,
-                              onChanged: (value) {
-                                exitSelection();
-                                filter.state.value = value;
-                                if (scrollController.hasClients) {
-                                  scrollController.jumpTo(0);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
+              ],
+              actionSlots: [
+                AppSelectionEntryButton(
+                  key: Key('$keyPrefix-versions-select'),
+                  onPressed: groups.isEmpty
+                      ? null
+                      : () => selectionMode.value = true,
+                ),
+                AppIconButton(
+                  key: Key('$keyPrefix-versions-refresh'),
+                  tooltip: '刷新',
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: asyncState.isLoading ? null : refresh,
                 ),
               ],
             ),
@@ -273,25 +281,20 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             initialRetryKey: Key('$keyPrefix-versions-retry'),
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),
-            itemBuilder: (context, group, index) => _MovieVersionCard(
+            itemBuilder: (context, group, index) => MediaFileGroupCard(
               key: Key('$keyPrefix-version-group-${group.movieNumber}'),
-              group: group,
-              keyPrefix: keyPrefix,
+              items: group.mediaItems,
+              countLabel: '${group.mediaCount} 个版本',
+              headerKey: Key('$keyPrefix-version-movie-${group.movieNumber}'),
+              deleteLabel: '删除此版本',
+              keyPrefix: '$keyPrefix-version',
               mobile: mobile,
               onOpen: () => onOpenMovieDetail(context, group.movieNumber),
               onDelete: (item) => unawaited(deleteVersion(group, item)),
               selectedIds: selectionMode.value ? selectedIds.value : null,
               onToggle: (item) {
                 final next = {...selectedIds.value};
-                if (!next.remove(item.id)) {
-                  if (group.mediaItems
-                          .where((media) => next.contains(media.id))
-                          .length >=
-                      group.mediaItems.length - 1) {
-                    return;
-                  }
-                  next.add(item.id);
-                }
+                if (!next.remove(item.id)) next.add(item.id);
                 selectedIds.value = next;
               },
             ),
@@ -308,188 +311,4 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       ],
     );
   }
-}
-
-class _MovieVersionCard extends ConsumerWidget {
-  const _MovieVersionCard({
-    super.key,
-    required this.group,
-    required this.keyPrefix,
-    required this.mobile,
-    required this.onOpen,
-    required this.onDelete,
-    required this.selectedIds,
-    required this.onToggle,
-  });
-
-  final MultiVersionMovieDto group;
-  final String keyPrefix;
-  final bool mobile;
-  final VoidCallback onOpen;
-  final ValueChanged<MediaListItemDto> onDelete;
-  final Set<int>? selectedIds;
-  final ValueChanged<MediaListItemDto> onToggle;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final spacing = context.appSpacing;
-    final tokens = context.appComponentTokens;
-    final movie = group.mediaItems.first;
-    final selectionLimitReached =
-        group.mediaItems
-            .where((item) => selectedIds?.contains(item.id) ?? false)
-            .length >=
-        group.mediaItems.length - 1;
-    final libraries = ref.watch(mediaLibrariesProvider).value?.librariesById;
-    return AppContentCard(
-      title: group.movieNumber,
-      padding: EdgeInsets.all(spacing.lg),
-      headerTrailing: AppBadge(
-        label: '${group.mediaCount} 个版本',
-        tone: AppBadgeTone.neutral,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              key: Key('$keyPrefix-version-movie-${group.movieNumber}'),
-              borderRadius: context.appRadius.mdBorder,
-              onTap: onOpen,
-              child: Row(
-                children: [
-                  MediaCoverThumbnail(
-                    url: movie.coverImage?.bestAvailableUrl,
-                    width: mobile
-                        ? tokens.movieDetailPlotThumbnailWidth
-                        : tokens.downloadTaskCoverWidth,
-                    height: mobile
-                        ? tokens.movieDetailPlotThumbnailHeight
-                        : tokens.mediaManagementRowHeight,
-                    fit: BoxFit.contain,
-                    placeholderBackground: context.appColors.surfacePage,
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: Text(
-                      movie.title ?? group.movieNumber,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        weight: AppTextWeight.medium,
-                        tone: AppTextTone.primary,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: spacing.sm),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.appTextPalette.muted,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          for (final item in group.mediaItems) ...[
-            Divider(height: spacing.xl, color: context.appColors.divider),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                key: Key('$keyPrefix-version-row-${item.id}'),
-                borderRadius: context.appRadius.mdBorder,
-                onTap:
-                    selectedIds == null ||
-                        (selectionLimitReached &&
-                            !selectedIds!.contains(item.id))
-                    ? null
-                    : () => onToggle(item),
-                child: IgnorePointer(
-                  ignoring: selectedIds != null,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (selectedIds != null) ...[
-                        Tooltip(
-                          message:
-                              selectionLimitReached &&
-                                  !selectedIds!.contains(item.id)
-                              ? '至少保留一个版本'
-                              : '选择此版本',
-                          child: Checkbox(
-                            key: Key('$keyPrefix-version-select-${item.id}'),
-                            value: selectedIds!.contains(item.id),
-                            onChanged:
-                                selectionLimitReached &&
-                                    !selectedIds!.contains(item.id)
-                                ? null
-                                : (_) => onToggle(item),
-                          ),
-                        ),
-                        SizedBox(width: spacing.sm),
-                      ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SelectableText(
-                              item.fileName,
-                              key: Key('$keyPrefix-version-file-${item.id}'),
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s14,
-                                weight: AppTextWeight.medium,
-                                tone: AppTextTone.primary,
-                              ),
-                            ),
-                            SizedBox(height: spacing.sm),
-                            MediaListItemMetaLine(
-                              item: item,
-                              library: libraries?[item.libraryId],
-                              spacing: spacing.sm,
-                              runSpacing: spacing.xs,
-                            ),
-                            if (!item.valid) ...[
-                              SizedBox(height: spacing.sm),
-                              const AppBadge(
-                                label: '失效',
-                                tone: AppBadgeTone.error,
-                                size: AppBadgeSize.compact,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (!mobile && selectedIds == null) ...[
-                        SizedBox(width: spacing.lg),
-                        _deleteButton(item),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (mobile && selectedIds == null) ...[
-              SizedBox(height: spacing.md),
-              Align(
-                alignment: Alignment.centerRight,
-                child: _deleteButton(item),
-              ),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _deleteButton(MediaListItemDto item) => AppButton(
-    key: Key('$keyPrefix-version-delete-${item.id}'),
-    label: '删除此版本',
-    size: AppButtonSize.small,
-    variant: AppButtonVariant.danger,
-    icon: const Icon(Icons.delete_outline_rounded),
-    onPressed: () => onDelete(item),
-  );
 }

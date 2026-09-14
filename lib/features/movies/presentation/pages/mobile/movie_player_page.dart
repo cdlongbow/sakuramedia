@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_player_content.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_merged_play_content.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/landscape_player_system_ui.dart';
 
 const double _mobilePlayerDividerHandleBuffer = 12;
@@ -15,12 +17,14 @@ class MobileMoviePlayerPage extends StatefulWidget {
     super.key,
     required this.movieNumber,
     this.initialMediaId,
+    this.mergedLibraryId,
     this.initialPositionSeconds,
     this.surfaceBuilder,
   });
 
   final String movieNumber;
   final int? initialMediaId;
+  final int? mergedLibraryId;
   final int? initialPositionSeconds;
   final MoviePlayerSurfaceBuilder? surfaceBuilder;
 
@@ -46,6 +50,17 @@ class _MobileMoviePlayerPageState extends State<MobileMoviePlayerPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.mergedLibraryId != null) {
+      return MovieMergedPlayContent(
+        movieNumber: widget.movieNumber,
+        libraryId: widget.mergedLibraryId!,
+        fallbackPath: MobileMovieDetailRouteData(
+          movieNumber: widget.movieNumber,
+        ).location,
+        useTouchOptimizedControls: true,
+        imageSearchRoutePath: mobileImageSearchPath,
+      );
+    }
     return MoviePlayerContent(
       movieNumber: widget.movieNumber,
       initialMediaId: widget.initialMediaId,

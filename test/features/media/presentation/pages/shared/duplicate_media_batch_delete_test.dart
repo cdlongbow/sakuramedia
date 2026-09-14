@@ -8,8 +8,10 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/presentation/pages/shared/media_management_content.dart';
-import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
+import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
+import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import '../../../../../support/test_api_bundle.dart';
 
 void main() {
@@ -36,7 +38,7 @@ void main() {
     );
     bundle.adapter.enqueueJson(
       method: 'GET',
-      path: '/media/multi-version-movies',
+      path: '/media/duplicates',
       body: _page([
         _group('A-001', [1, 2, 3]),
         _group('B-001', [4, 5, 6]),
@@ -49,88 +51,99 @@ void main() {
   });
 
   for (final mobile in [false, true]) {
-    testWidgets(
-      'version filters ${mobile ? "mobile" : "desktop"} send independent options',
-      (tester) async {
-        await _pump(tester, bundle, mobile: mobile);
-        bundle.adapter.setFallbackJson(
-          method: 'GET',
-          path: '/media/multi-version-movies',
-          body: _page([]),
-        );
-        await tester.tap(find.byKey(const Key('batch-versions-filter')));
-        await tester.pumpAndSettle();
-        for (final key in ['vr', 'fc2', 'vr', 'fc2']) {
-          await tester.tap(find.byKey(Key('batch-versions-include-$key')));
-          await tester.pumpAndSettle();
-        }
-        final requests = bundle.adapter.requests
-            .where((r) => r.path == '/media/multi-version-movies')
-            .toList();
-        expect(
-          requests.map(
-            (r) => [
-              r.uri.queryParameters['include_vr'],
-              r.uri.queryParameters['include_fc2'],
-            ],
-          ),
-          [
-            ['false', 'false'],
-            ['true', 'false'],
-            ['true', 'true'],
-            ['false', 'true'],
-            ['false', 'false'],
-          ],
-        );
-        expect(
-          requests.every((r) => r.uri.queryParameters['page'] == '1'),
-          isTrue,
-        );
-        await tester.tap(find.byKey(const Key('batch-versions-include-vr')));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('重置'));
-        await tester.pumpAndSettle();
-        final resetRequest = bundle.adapter.requests
-            .where((request) => request.path == '/media/multi-version-movies')
-            .last;
-        expect(resetRequest.uri.queryParameters['include_vr'], 'false');
-        expect(resetRequest.uri.queryParameters['include_fc2'], 'false');
+    testWidgets('duplicate filters $mobile: switch, reopen and reset', (
+      tester,
+    ) async {
+      await _pump(tester, bundle, mobile: mobile);
+      bundle.adapter.setFallbackJson(
+        method: 'GET',
+        path: '/media/duplicates',
+        body: _page([]),
+      );
+      Future<void> closeFilter() async {
         if (mobile) {
           Navigator.of(tester.element(find.text('重置'))).pop();
         } else {
           await tester.tapAt(const Offset(1000, 700));
         }
         await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull);
-      },
-    );
+      }
+
+      await tester.tap(find.byKey(const Key('batch-duplicates-filter')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('batch-duplicate-kind-video')));
+      await tester.pumpAndSettle();
+      expect(
+        bundle.adapter.requests
+            .where((r) => r.path == '/media/duplicates')
+            .map((r) => r.uri.queryParameters['kind']),
+        ['jav', 'video'],
+      );
+      expect(
+        tester
+            .widget<AppTextButton>(
+              find.byKey(const Key('batch-duplicate-kind-video')),
+            )
+            .isSelected,
+        isTrue,
+      );
+      await closeFilter();
+      await tester.tap(find.byKey(const Key('batch-duplicates-filter')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<AppTextButton>(
+              find.byKey(const Key('batch-duplicate-kind-video')),
+            )
+            .isSelected,
+        isTrue,
+      );
+      await tester.tap(find.text('重置'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<AppTextButton>(
+              find.byKey(const Key('batch-duplicate-kind-jav')),
+            )
+            .isSelected,
+        isTrue,
+      );
+      await closeFilter();
+      expect(find.text('共 2 组'), findsOneWidget);
+      expect(bundle.adapter.hitCount('DELETE', '/media/1'), 0);
+      expect(tester.takeException(), isNull);
+    });
     testWidgets(
       'batch ${mobile ? "mobile" : "desktop"}: keep one, show progress, continue on failure and retry',
       (tester) async {
         await _pump(tester, bundle, mobile: mobile);
-        await tester.tap(find.byKey(const Key('batch-versions-select')));
+        await tester.tap(find.byKey(const Key('batch-duplicates-select')));
         await tester.pumpAndSettle();
         expect(find.text('已选 0 个'), findsOneWidget);
         await _select(tester, 1);
         await _select(tester, 2);
         expect(
           tester
-              .widget<Checkbox>(find.byKey(const Key('batch-version-select-3')))
+              .widget<Checkbox>(
+                find.byKey(const Key('batch-duplicate-select-3')),
+              )
               .onChanged,
           isNull,
         );
         await tester.tapAt(
-          tester.getCenter(find.byKey(const Key('batch-version-row-3'))),
+          tester.getCenter(find.byKey(const Key('batch-duplicate-row-3'))),
         );
         await tester.pumpAndSettle();
         expect(find.text('已选 2 个'), findsOneWidget);
         await tester.tapAt(
-          tester.getCenter(find.byKey(const Key('batch-version-file-1'))),
+          tester.getCenter(find.byKey(const Key('batch-duplicate-file-1'))),
         );
         await tester.pumpAndSettle();
         expect(
           tester
-              .widget<Checkbox>(find.byKey(const Key('batch-version-select-3')))
+              .widget<Checkbox>(
+                find.byKey(const Key('batch-duplicate-select-3')),
+              )
               .onChanged,
           isNotNull,
         );
@@ -154,18 +167,14 @@ void main() {
           path: '/media/4',
           responder: (_, __) => third.future,
         );
-        bundle.adapter.enqueueJson(
-          method: 'GET',
-          path: '/media/multi-version-movies',
-          body: _page([
-            _group('A-001', [2, 3]),
-            _group('B-001', [5, 6]),
-          ]),
+        await tester.tap(
+          find.byKey(const Key('batch-duplicates-batch-delete')),
         );
-        await tester.tap(find.byKey(const Key('batch-versions-batch-delete')));
         await tester.pumpAndSettle();
-        expect(find.textContaining('每部影片至少保留一个版本'), findsOneWidget);
-        await tester.tap(find.byKey(const Key('batch-versions-batch-confirm')));
+        expect(find.textContaining('将删除选中的 3 项媒体'), findsOneWidget);
+        await tester.tap(
+          find.byKey(const Key('batch-duplicates-batch-confirm')),
+        );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
         expect(find.text('处理中 0/3'), findsOneWidget);
@@ -189,30 +198,28 @@ void main() {
               .value,
           closeTo(2 / 3, 0.001),
         );
-        expect(
-          bundle.adapter.hitCount('GET', '/media/multi-version-movies'),
-          1,
-        );
+        expect(bundle.adapter.hitCount('GET', '/media/duplicates'), 1);
         third.complete(ResponseBody.fromBytes([], 204));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
         expect(find.text('成功 2 个，失败 1 个'), findsOneWidget);
         await tester.tap(find.byKey(const Key('batch-progress-close-button')));
         await tester.pumpAndSettle();
-        expect(
-          bundle.adapter.hitCount('GET', '/media/multi-version-movies'),
-          2,
-        );
+        expect(bundle.adapter.hitCount('GET', '/media/duplicates'), 1);
         expect(find.text('已选 1 个'), findsOneWidget);
         expect(
           tester
-              .widget<Checkbox>(find.byKey(const Key('batch-version-select-2')))
+              .widget<Checkbox>(
+                find.byKey(const Key('batch-duplicate-select-2')),
+              )
               .value,
           isTrue,
         );
         expect(
           tester
-              .widget<Checkbox>(find.byKey(const Key('batch-version-select-3')))
+              .widget<Checkbox>(
+                find.byKey(const Key('batch-duplicate-select-3')),
+              )
               .onChanged,
           isNull,
         );
@@ -224,23 +231,20 @@ void main() {
           path: '/media/2',
           statusCode: 204,
         );
-        bundle.adapter.enqueueJson(
-          method: 'GET',
-          path: '/media/multi-version-movies',
-          body: _page([
-            _group('B-001', [5, 6]),
-          ]),
+        await tester.tap(
+          find.byKey(const Key('batch-duplicates-batch-delete')),
         );
-        await tester.tap(find.byKey(const Key('batch-versions-batch-delete')));
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('batch-versions-batch-confirm')));
+        await tester.tap(
+          find.byKey(const Key('batch-duplicates-batch-confirm')),
+        );
         await tester.pumpAndSettle();
-        expect(find.text('正在删除影片版本'), findsNothing);
+        expect(find.text('正在删除重复媒体'), findsNothing);
+        expect(find.byKey(const Key('batch-duplicate-file-2')), findsNothing);
         expect(
-          find.byKey(const Key('batch-version-group-A-001')),
-          findsNothing,
+          find.byKey(const Key('batch-duplicates-select')),
+          findsOneWidget,
         );
-        expect(find.byKey(const Key('batch-versions-select')), findsOneWidget);
         expect(bundle.adapter.hitCount('DELETE', '/media/2'), 2);
         expect(tester.takeException(), isNull);
       },
@@ -251,23 +255,27 @@ void main() {
     'clear and cancel selection send no delete; changed groups abort confirmation',
     (tester) async {
       await _pump(tester, bundle, mobile: false);
-      await tester.tap(find.byKey(const Key('batch-versions-select')));
+      await tester.tap(find.byKey(const Key('batch-duplicates-select')));
       await tester.pumpAndSettle();
       await _select(tester, 1);
-      await tester.tap(find.byKey(const Key('batch-versions-clear-selection')));
+      await tester.tap(
+        find.byKey(const Key('batch-duplicates-clear-selection')),
+      );
       await tester.pumpAndSettle();
       expect(find.text('已选 0 个'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('batch-versions-exit-selection')));
+      await tester.tap(
+        find.byKey(const Key('batch-duplicates-exit-selection')),
+      );
       await tester.pumpAndSettle();
       expect(bundle.adapter.hitCount('DELETE', '/media/1'), 0);
-      await tester.tap(find.byKey(const Key('batch-versions-select')));
+      await tester.tap(find.byKey(const Key('batch-duplicates-select')));
       await tester.pumpAndSettle();
       await _select(tester, 1);
-      await tester.tap(find.byKey(const Key('batch-versions-batch-delete')));
+      await tester.tap(find.byKey(const Key('batch-duplicates-batch-delete')));
       await tester.pumpAndSettle();
       bundle.adapter.enqueueJson(
         method: 'GET',
-        path: '/media/multi-version-movies',
+        path: '/media/duplicates',
         body: _page([
           _group('B-001', [4, 5, 6]),
         ]),
@@ -276,14 +284,14 @@ void main() {
         tester.element(find.byType(MediaManagementContent)),
       );
       final refresh = container
-          .read(multiVersionMoviesProvider().notifier)
+          .read(duplicateMediaProvider(MediaListItemKind.jav).notifier)
           .refresh();
       await tester.pumpAndSettle();
       await refresh;
-      await tester.tap(find.byKey(const Key('batch-versions-batch-confirm')));
+      await tester.tap(find.byKey(const Key('batch-duplicates-batch-confirm')));
       await tester.pumpAndSettle();
       expect(bundle.adapter.hitCount('DELETE', '/media/1'), 0);
-      expect(find.text('影片版本已变化，请重新选择，至少保留一个版本'), findsOneWidget);
+      expect(find.text('重复媒体已变化，请重新选择，至少保留一个副本'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
     },
   );
@@ -323,15 +331,15 @@ Future<void> _pump(
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('batch-tab-versions')));
+  await tester.tap(find.byKey(const Key('batch-tab-duplicates')));
   await tester.pumpAndSettle();
 }
 
 Future<void> _select(WidgetTester tester, int id) async {
-  final target = find.byKey(Key('batch-version-row-$id'));
+  final target = find.byKey(Key('batch-duplicate-row-$id'));
   for (var i = 0; i < 15 && target.hitTestable().evaluate().isEmpty; i++) {
     await tester.drag(
-      find.byKey(const Key('batch-versions-scroll')),
+      find.byKey(const Key('batch-duplicate-scroll-view')),
       const Offset(0, -220),
     );
     await tester.pumpAndSettle();
@@ -347,7 +355,7 @@ Map<String, dynamic> _page(List<dynamic> items) => {
   'page_size': 20,
 };
 Map<String, dynamic> _group(String number, List<int> ids) => {
-  'movie_number': number,
+  'kind': 'jav',
   'media_count': ids.length,
   'media_items': ids
       .map(

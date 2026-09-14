@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_ac
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_merge_playback_candidates.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clip_section_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_behavior_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
@@ -126,12 +127,14 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
           final externalPlayerSelection = ref
               .watch(externalPlayerPreferenceProvider)
               .value;
-          final mergePlaybackCandidates = movie.mergePlaybackCandidates;
           final canLaunchMergedPlayback =
               const ExternalPlayerChannel().isSupported &&
               externalPlayerSelection?.hasExternalPlayer == true;
-          final mergePlaybackLabel =
-              !canLaunchMergedPlayback || mergePlaybackCandidates.isEmpty
+          final mergePlaybackCandidates = resolveMovieMergePlaybackCandidates(
+            movie,
+            useExternalPlayer: canLaunchMergedPlayback,
+          );
+          final mergePlaybackLabel = mergePlaybackCandidates.isEmpty
               ? null
               : mergePlaybackCandidates.length == 1
               ? '合并播放 · ${mergePlaybackCandidates.single.segmentCount} 段'
@@ -196,7 +199,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             onMergePlaybackTap:
                 mergePlaybackLabel == null || _isLaunchingPlayback
                 ? null
-                : () => _openMergedPlayback(movie),
+                : () => _openMergedPlayback(movie, mergePlaybackCandidates),
             isMergePlaybackLoading: _isLaunchingPlayback,
             isDeletingSelectedMedia:
                 selectedMedia != null &&
@@ -530,13 +533,14 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     );
   }
 
-  Future<void> _openMergedPlayback(MovieDetailDto movie) async {
+  Future<void> _openMergedPlayback(
+    MovieDetailDto movie,
+    List<MovieMergePlaybackCandidateDto> candidates,
+  ) async {
     if (_isLaunchingPlayback) {
       return;
     }
-    final candidate = await _pickMergePlaybackCandidate(
-      movie.mergePlaybackCandidates,
-    );
+    final candidate = await _pickMergePlaybackCandidate(candidates);
     if (candidate == null || !mounted) {
       return;
     }

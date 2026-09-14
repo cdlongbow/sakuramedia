@@ -112,7 +112,7 @@ Future<void> launchMoviePlayback(
   }
 }
 
-/// 合并播放只能交给外部播放器；应用内播放器只理解单个媒体源。
+/// 外部播放器使用后端合并地址；内置播放器按同库媒体顺序连播。
 Future<void> launchMovieMergedPlayback(
   BuildContext context, {
   required String movieNumber,
@@ -124,9 +124,11 @@ Future<void> launchMovieMergedPlayback(
   if (selection == null ||
       !selection.hasExternalPlayer ||
       !channel.isSupported) {
-    if (context.mounted) {
-      showToast('合并播放需要配置外部播放器');
-    }
+    _pushInAppPlayer(
+      context,
+      movieNumber: movieNumber,
+      mergedLibraryId: libraryId,
+    );
     return;
   }
 
@@ -179,6 +181,7 @@ void _pushInAppPlayer(
   BuildContext context, {
   required String movieNumber,
   int? mediaId,
+  int? mergedLibraryId,
   int? positionSeconds,
   String? fallbackPath,
 }) {
@@ -192,6 +195,7 @@ void _pushInAppPlayer(
             fallbackPath ??
             DesktopMovieDetailRouteData(movieNumber: movieNumber).location,
         mediaId: mediaId,
+        mergedLibraryId: mergedLibraryId,
         positionSeconds: positionSeconds,
       );
     case TargetPlatform.android:
@@ -200,6 +204,7 @@ void _pushInAppPlayer(
       MobileMoviePlayerRouteData(
         movieNumber: movieNumber,
         mediaId: mediaId,
+        mergedLibraryId: mergedLibraryId,
         positionSeconds: positionSeconds,
       ).push(context);
   }

@@ -43,7 +43,14 @@ class MediaCoverThumbnail extends StatelessWidget {
         height: height,
         child:
             _hasUrl
-                ? MaskedImage(key: imageKey, url: url!, fit: fit)
+                ? MaskedImage(
+                  key: imageKey,
+                  url: url!,
+                  fit: fit,
+                  borderRadius: fit == BoxFit.contain
+                      ? context.appRadius.mdBorder
+                      : null,
+                )
                 : DecoratedBox(
                   key: placeholderKey,
                   decoration: BoxDecoration(

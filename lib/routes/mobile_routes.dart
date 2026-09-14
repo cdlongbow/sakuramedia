@@ -546,11 +546,13 @@ class MobileMoviePlayerRouteData extends _MobileCupertinoRouteData
   const MobileMoviePlayerRouteData({
     required this.movieNumber,
     this.mediaId,
+    this.mergedLibraryId,
     this.positionSeconds,
   });
 
   final String movieNumber;
   final int? mediaId;
+  final int? mergedLibraryId;
   final int? positionSeconds;
 
   @override
@@ -561,6 +563,7 @@ class MobileMoviePlayerRouteData extends _MobileCupertinoRouteData
     path: '$mobileMoviesPath/${Uri.encodeComponent(movieNumber)}/player',
     queryParameters: <String, String?>{
       if (mediaId != null) 'mediaId': '$mediaId',
+      if (mergedLibraryId != null) 'mergedLibraryId': '$mergedLibraryId',
       if (positionSeconds != null) 'positionSeconds': '$positionSeconds',
     },
   );
@@ -570,6 +573,11 @@ class MobileMoviePlayerRouteData extends _MobileCupertinoRouteData
     // 兼容 typed route 新参数名与现有 URL 中的旧参数名。
     return MobileMoviePlayerPage(
       movieNumber: movieNumber,
+      mergedLibraryId: resolveIntQueryParameter(
+        state,
+        names: const <String>['mergedLibraryId', 'merged-library-id'],
+        fallback: mergedLibraryId,
+      ),
       initialMediaId: resolveIntQueryParameter(
         state,
         names: const <String>['mediaId', 'media-id'],

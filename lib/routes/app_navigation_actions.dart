@@ -116,12 +116,14 @@ extension AppNavigationActions on BuildContext {
     required String movieNumber,
     String? fallbackPath,
     int? mediaId,
+    int? mergedLibraryId,
     int? positionSeconds,
   }) {
     GoRouter.optionURLReflectsImperativeAPIs = true;
     final route = DesktopMoviePlayerRouteData(
       movieNumber: movieNumber,
       mediaId: mediaId,
+      mergedLibraryId: mergedLibraryId,
       positionSeconds: positionSeconds,
     );
     _pushDesktopRoute(this, route.location, fallbackPath: fallbackPath);

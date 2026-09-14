@@ -60,6 +60,10 @@ class MediaManagementContent extends HookConsumerWidget {
       includeVr: includeVr.value,
       includeFc2: includeFc2.value,
     );
+    final versionsVisited = useRef(false);
+    if (currentTab == _versionsTabIndex) versionsVisited.value = true;
+    // 首次访问后由管理页持有订阅，切换 Tab 时保留当前筛选的数据和分页。
+    if (versionsVisited.value) ref.watch(versionsProvider);
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
         if (currentTab == _maintenanceTabIndex) {

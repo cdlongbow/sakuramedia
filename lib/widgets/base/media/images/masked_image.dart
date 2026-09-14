@@ -25,12 +25,14 @@ class MaskedImage extends ConsumerStatefulWidget {
     this.alignment = Alignment.center,
     this.memCacheWidth,
     this.memCacheHeight,
+    this.borderRadius,
   });
 
   static const int _decodeSizeUpperBound = 1024;
 
   final String url;
   final BoxFit fit;
+  final BorderRadius? borderRadius;
 
   /// 图片在容器内的对齐方式（与 `BoxFit.cover` 组合决定裁哪一侧）。
   /// 竖封面套横框场景常传 `Alignment.topCenter` 露出海报上半部（番号+人脸）。
@@ -143,6 +145,15 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
           );
         }
 
+        if (widget.borderRadius != null) {
+          return Align(
+            alignment: widget.alignment,
+            child: ClipRRect(
+              borderRadius: widget.borderRadius!,
+              child: imageContent,
+            ),
+          );
+        }
         return imageContent;
       },
     );

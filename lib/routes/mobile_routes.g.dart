@@ -600,6 +600,11 @@ mixin $MobileMoviePlayerRouteData on GoRouteData {
           state.uri.queryParameters,
           int.tryParse,
         ),
+        mergedLibraryId: _$convertMapValue(
+          'merged-library-id',
+          state.uri.queryParameters,
+          int.tryParse,
+        ),
         positionSeconds: _$convertMapValue(
           'position-seconds',
           state.uri.queryParameters,
@@ -614,6 +619,8 @@ mixin $MobileMoviePlayerRouteData on GoRouteData {
     '/mobile/library/movies/${Uri.encodeComponent(_self.movieNumber)}/player',
     queryParams: {
       if (_self.mediaId != null) 'media-id': _self.mediaId!.toString(),
+      if (_self.mergedLibraryId != null)
+        'merged-library-id': _self.mergedLibraryId!.toString(),
       if (_self.positionSeconds != null)
         'position-seconds': _self.positionSeconds!.toString(),
     },

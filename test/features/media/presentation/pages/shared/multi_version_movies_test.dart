@@ -89,6 +89,18 @@ void main() {
         expect(find.text('2160p'), findsOneWidget);
         expect(find.text('失效'), findsOneWidget);
         expect(find.text('本地影视库'), findsNWidgets(2));
+        for (var round = 0; round < 2; round++) {
+          await tester.tap(find.byKey(const Key('test-tab-list')));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('test-tab-versions')));
+          await tester.pumpAndSettle();
+        }
+        expect(
+          bundle.adapter.hitCount('GET', '/media/multi-version-movies'),
+          1,
+        );
+        expect(find.text('8.0 GB'), findsOneWidget);
+        expect(find.text('2 个版本'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.tap(find.byKey(const Key('test-version-movie-DEMO-001')));
         expect(opened, 'DEMO-001');

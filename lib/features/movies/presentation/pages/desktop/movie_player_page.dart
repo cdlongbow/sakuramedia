@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_player_content.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_merged_play_content.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/desktop_routes.dart';
 
 export 'package:sakuramedia/features/movies/presentation/pages/shared/movie_player_content.dart'
     show MoviePlayerSurfaceBuilder;
@@ -12,6 +14,7 @@ class DesktopMoviePlayerPage extends StatelessWidget {
     super.key,
     required this.movieNumber,
     this.initialMediaId,
+    this.mergedLibraryId,
     this.initialPositionSeconds,
     this.fallbackPath,
     this.imageSearchRoutePath = desktopImageSearchPath,
@@ -22,6 +25,7 @@ class DesktopMoviePlayerPage extends StatelessWidget {
 
   final String movieNumber;
   final int? initialMediaId;
+  final int? mergedLibraryId;
   final int? initialPositionSeconds;
   final String? fallbackPath;
   final String imageSearchRoutePath;
@@ -31,6 +35,17 @@ class DesktopMoviePlayerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (mergedLibraryId != null) {
+      return MovieMergedPlayContent(
+        movieNumber: movieNumber,
+        libraryId: mergedLibraryId!,
+        fallbackPath:
+            fallbackPath ??
+            DesktopMovieDetailRouteData(movieNumber: movieNumber).location,
+        useTouchOptimizedControls: useTouchOptimizedControls,
+        imageSearchRoutePath: imageSearchRoutePath,
+      );
+    }
     return MoviePlayerContent(
       movieNumber: movieNumber,
       initialMediaId: initialMediaId,

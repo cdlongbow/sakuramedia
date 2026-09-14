@@ -66,11 +66,13 @@ class DesktopMoviePlayerRouteData extends _DesktopNoTransitionRouteData
   const DesktopMoviePlayerRouteData({
     required this.movieNumber,
     this.mediaId,
+    this.mergedLibraryId,
     this.positionSeconds,
   });
 
   final String movieNumber;
   final int? mediaId;
+  final int? mergedLibraryId;
   final int? positionSeconds;
 
   @override
@@ -81,6 +83,7 @@ class DesktopMoviePlayerRouteData extends _DesktopNoTransitionRouteData
     path: '/desktop/library/movies/${Uri.encodeComponent(movieNumber)}/player',
     queryParameters: <String, String?>{
       if (mediaId != null) 'mediaId': '$mediaId',
+      if (mergedLibraryId != null) 'mergedLibraryId': '$mergedLibraryId',
       if (positionSeconds != null) 'positionSeconds': '$positionSeconds',
     },
   );
@@ -90,6 +93,11 @@ class DesktopMoviePlayerRouteData extends _DesktopNoTransitionRouteData
     // 兼容 typed route 新参数名与现有 URL 中的旧参数名。
     return DesktopMoviePlayerPage(
       movieNumber: movieNumber,
+      mergedLibraryId: resolveIntQueryParameter(
+        state,
+        names: const <String>['mergedLibraryId', 'merged-library-id'],
+        fallback: mergedLibraryId,
+      ),
       fallbackPath: desktopNavigationFallbackPathFromExtra(state.extra),
       initialMediaId: resolveIntQueryParameter(
         state,

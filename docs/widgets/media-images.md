@@ -2,7 +2,7 @@
 
 ## 图片展示
 
-- `MaskedImage`：`lib/widgets/base/media/images/masked_image.dart`，带统一裁切、占位和远端 URL 处理的图片。
+- `MaskedImage`：`lib/widgets/base/media/images/masked_image.dart`，带统一裁切、占位和远端 URL 处理的图片；`borderRadius` 可为完整显示的图片添加贴合图片边缘的圆角。
 - `AppImageFullscreenHost` / `AppPinchToFullscreenImage`：`app_image_fullscreen.dart`，全屏查看和缩放手势。
 - `AppCoverBottomShade`：封面底部渐变遮罩。
 

@@ -32,6 +32,19 @@
 
 - **项目当前处理快速迭代阶段， 如遇问题可尝试将前后端以及各个插件升级到最新版本**
 
+
+
+
+## 参与贡献
+
+此项目不需要捐赠，如果对你有用，可以点个Star，如果你想要帮助改进这个项目，可以通过以下方式参与进来：
+
+- 帮助撰写和改进Wiki
+- 开发新的插件扩展新功能，可以查看[插件开发文档](https://tinypinglite.github.io/sakuramedia/guide/plugin-development.html)
+- Bug修复 / 新功能 PR
+
+
+
 <h2 align="center">风险与声明</h2>
 
 - **SakuraMedia 当前仍处于快速迭代阶段，不保证任何功能可用性及历史版本兼容性**。

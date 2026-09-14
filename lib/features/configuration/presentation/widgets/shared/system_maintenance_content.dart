@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -38,9 +40,13 @@ class SystemMaintenanceContent extends ConsumerStatefulWidget {
 
 class _SystemMaintenanceContentState
     extends ConsumerState<SystemMaintenanceContent> {
+  static const _mediaInfoBackfillTaskKey = 'media_video_info_backfill';
+  static const _fileHashBackfillTaskKey = 'media_file_hash_backfill';
+
   StatusImageSearchDto? _imageSearchStatus;
   String? _errorMessage;
   bool _isLoading = false;
+  String? _submittingTaskKey;
 
   bool get _isMobile =>
       widget.variant == SystemMaintenanceContentVariant.mobile;
@@ -121,6 +127,33 @@ class _SystemMaintenanceContentState
   }
 
   Widget _buildContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildImageSearchSection(context),
+        SizedBox(height: context.appSpacing.xl),
+        _buildMaintenanceTaskCard(
+          context,
+          taskKey: _mediaInfoBackfillTaskKey,
+          title: '媒体信息回填',
+          description:
+              '为缺少或不完整技术信息的媒体文件重新探测，补齐时长、分辨率和视频信息。只处理缺失或不完整项，不会无条件覆盖已有信息。',
+          successMessage: '媒体信息回填任务已提交，进度请在任务中心查看',
+        ),
+        SizedBox(height: context.appSpacing.xl),
+        _buildMaintenanceTaskCard(
+          context,
+          taskKey: _fileHashBackfillTaskKey,
+          title: '媒体文件哈希补算',
+          description:
+              '为尚未记录文件哈希的媒体文件计算并保存文件指纹，用于识别重复媒体。只处理哈希为空的文件，媒体库较大时可能运行较久。',
+          successMessage: '媒体文件哈希补算任务已提交，进度请在任务中心查看',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageSearchSection(BuildContext context) {
     final status = _imageSearchStatus;
     if (status == null) {
       if (_errorMessage != null) {
@@ -171,6 +204,94 @@ class _SystemMaintenanceContentState
               isRebuilding: isRebuilding,
             ),
     );
+  }
+
+  Widget _buildMaintenanceTaskCard(
+    BuildContext context, {
+    required String taskKey,
+    required String title,
+    required String description,
+    required String successMessage,
+  }) {
+    final platformPrefix = _isMobile ? 'mobile' : 'configuration';
+    final isSubmitting = _submittingTaskKey == taskKey;
+    final hasSubmittingTask = _submittingTaskKey != null;
+    final button = AppButton(
+      key: Key('$platformPrefix-system-maintenance-$taskKey-run'),
+      label: isSubmitting ? '提交中' : '立即执行',
+      variant: AppButtonVariant.primary,
+      size: _isMobile ? AppButtonSize.medium : AppButtonSize.small,
+      isLoading: isSubmitting,
+      onPressed: hasSubmittingTask
+          ? null
+          : () => unawaited(
+              _runMaintenanceTask(
+                taskKey: taskKey,
+                successMessage: successMessage,
+              ),
+            ),
+    );
+    final descriptionText = Text(
+      description,
+      style: resolveAppTextStyle(
+        context,
+        size: AppTextSize.s14,
+        tone: AppTextTone.secondary,
+      ),
+    );
+
+    return AppContentCard(
+      key: Key('$platformPrefix-system-maintenance-$taskKey-card'),
+      title: title,
+      padding: _isMobile ? EdgeInsets.all(context.appSpacing.lg) : null,
+      child: _isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                descriptionText,
+                SizedBox(height: context.appSpacing.lg),
+                button,
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: descriptionText),
+                SizedBox(width: context.appSpacing.lg),
+                button,
+              ],
+            ),
+    );
+  }
+
+  Future<void> _runMaintenanceTask({
+    required String taskKey,
+    required String successMessage,
+  }) async {
+    if (_submittingTaskKey != null || !mounted) {
+      return;
+    }
+    setState(() => _submittingTaskKey = taskKey);
+    try {
+      await ref.read(activityApiProvider).triggerJob(taskKey: taskKey);
+      if (mounted) {
+        showToast(successMessage);
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      if (error is ApiException &&
+          error.statusCode == 409 &&
+          error.error?.code == 'task_conflict') {
+        showToast('任务已在运行中');
+      } else {
+        showToast(apiErrorMessage(error, fallback: '任务提交失败，请重试'));
+      }
+    } finally {
+      if (mounted && _submittingTaskKey == taskKey) {
+        setState(() => _submittingTaskKey = null);
+      }
+    }
   }
 
   Widget _buildDesktopCardBody(

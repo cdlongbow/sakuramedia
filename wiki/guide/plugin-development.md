@@ -28,8 +28,11 @@ SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前
 example_plugin/
 ├── manifest.json
 ├── __init__.py
-└── plugin.py
+├── plugin.py
+└── settings.py
 ```
+
+其中 `settings.py` 仅在 manifest 声明 `settings_model` 时需要。
 
 `manifest.json`：
 
@@ -39,20 +42,34 @@ example_plugin/
   "display_name": "示例插件",
   "version": "1.0.0",
   "host_api_version": 7,
+  "settings_model": "Settings",
   "requires_python": ">=3.10,<3.11",
   "dependencies": []
 }
 ```
 
-`plugin_id` 只能使用小写字母、数字和下划线，且以字母开头。`dependencies` 是可选的 PEP 508 依赖列表；声明依赖后，宿主会在完整容器启动前同步它们。manifest 还可填写 `author`、`homepage`、`release_api_url`，其中 `release_api_url` 用于声明检查更新的 Release API 地址；未知字段会被拒绝。
+`plugin_id` 只能使用小写字母、数字和下划线，且以字母开头。`settings_model` 是可选字段；声明后，宿主会从插件包根目录读取同名的 Pydantic `BaseModel`，用于生成配置 schema、默认值并校验配置更新。`dependencies` 是可选的 PEP 508 依赖列表；声明依赖后，宿主会在完整容器启动前同步它们。manifest 还可填写 `author`、`homepage`、`release_api_url`，其中 `release_api_url` 用于声明检查更新的 Release API 地址；未知字段会被拒绝。
 
-`__init__.py` 只需暴露 `register`：
+`__init__.py` 至少暴露 `register`；如果声明了 `settings_model`，还必须从包根目录暴露对应模型：
 
 ```python
 from .plugin import register
+from .settings import Settings
 
-__all__ = ["register"]
+__all__ = ["Settings", "register"]
 ```
+
+`settings.py` 的最小示例：
+
+```python
+from pydantic import BaseModel
+
+
+class Settings(BaseModel):
+    enabled: bool = True
+```
+
+不需要结构化配置时，删除 manifest 的 `settings_model`，并只暴露 `register` 即可。
 
 下面是一个最小的定时任务插件：
 
@@ -91,34 +108,57 @@ def register(context: PluginContext) -> PluginRegistration:
 
 宿主在 API 和任务服务启动时 import 插件并调用 `register(context)`。注册阶段只应构造声明和校验本地配置：不要联网、校验 Cookie、创建外部目录或启动后台线程。
 
-`PluginContext` 提供以下稳定能力：
+`PluginContext` 主要提供以下稳定能力：
 
-- `settings`：`plugins.settings.<plugin_id>` 对应的只读配置；插件自行定义和校验字段。
+- `settings`：`plugins.settings.<plugin_id>` 对应的只读配置；声明 `settings_model` 时，宿主的插件设置接口同时提供 schema 和默认值，并在配置保存时按模型校验。
 - `data_dir`：插件专属运行数据目录，重新安装时会保留。运行状态写在这里，不要写进插件代码目录。
-- `movies`：读取影片及关联演员、标签快照，分页遍历并更新受保护字段。
+- `movies`：查询影片及关联演员、标签快照，分页遍历并更新受保护字段。
 - `actors`：读取演员身份与资料快照，分页遍历并更新资料字段。
+- `subscriptions`：读取订阅状态、订阅或取消订阅，以及重置订阅搜索状态。
+- `notifications`：创建、幂等创建和解决插件通知。
+- `collections`：按插件自己的 key 管理 playlist、moment 和 clip 合集。
 - `subtitles`：列出影片已登记的字幕，读取原始字节及 SHA256。
 - `media`：按影片、媒体库读取媒体快照，判断是否存在媒体或可播放媒体。
-- `downloads`：读取下载目标，指定 `download_client_id` 搜索候选并提交到该下载器关联的媒体库。
+- `downloads`：列出下载目标，按宿主默认路由或指定 `download_client_id` 搜索候选并提交。
 - `import_movie_by_number(movie_number, *, force_subscribed=False)`：复用本地影片，或按 JavDB 优先、元数据插件兜底的顺序导入，返回 `MovieSnapshot`。
 - `list_existing_movie_numbers()`：读取全库影片番号的大写集合。
 - `import_subtitle(movie_number, content, filename, language=None)`：交由宿主校验、去重、落盘并登记字幕。
-- `sync_ranking_sources()`、`sync_ranking_board()`：同步当前插件声明的排行榜来源。
-- `get_task_logger()`：取得任务日志 logger。
+- `sync_ranking_sources(progress_callback=None)`、`sync_ranking_board()`：同步当前插件声明的排行榜来源。
+- `get_task_logger(name)`：取得任务日志 logger。
 
-影片、演员快照和字幕类型从 `src.plugins.types` 导入；元数据来源模型从 `src.plugins` 导入。公开入口是 `src.plugins`、`src.plugins.types`、`src.scheduler.contracts`，以及媒体 Provider 所用的 `src.plugins.provider_protocol`。
+影片、演员、查询结果、订阅、通知、合集、下载和字幕类型从 `src.plugins.types` 导入；元数据来源模型从 `src.plugins` 导入。公开入口是 `src.plugins`、`src.plugins.types`、`src.scheduler.contracts`，以及媒体 Provider 所用的 `src.plugins.provider_protocol`。
+
+### 插件配置模型
+
+声明 `settings_model` 后，宿主的插件设置接口会返回当前 `settings`、`schema` 和 `defaults`。保存配置时，宿主使用该模型校验并按模型别名写回配置；校验失败返回字段级错误。配置更新后需要重启 API 和任务服务时，接口会返回 `pending_restart`。模型未声明时保持旧的自由 JSON 配置行为。
 
 ## 影片与演员资料
 
 ### 快照与分页
 
-`context.movies` 提供 `get(movie_id)`、`find_by_numbers(numbers)`、`list_page(after_id=0, limit=500)`；`context.actors` 提供 `get(actor_id)` 和相同参数的 `list_page()`。`get()` 找不到时返回 `None`；批量番号查询按输入顺序去重并跳过不存在的影片。分页上限是 1000，将 `next_cursor` 作为下一页的 `after_id`，为 `None` 时结束。
+`context.movies` 提供 `get(movie_id)`、`find_by_numbers(numbers)`、`list_page(after_id=0, limit=500)` 和 `query(filters=None, after_id=0, limit=500)`；`context.actors` 提供 `get(actor_id)` 和相同参数的 `list_page()`。`get()` 找不到时返回 `None`；批量番号查询按输入顺序去重并跳过不存在的影片。分页上限是 1000，将 `next_cursor` 作为下一页的 `after_id`，为 `None` 时结束。
 
 快照通过 `values` 读取字段，通过 `owners` 查看归属，通过 `revision` 做并发更新检查。可读字段分别以 `MOVIE_SNAPSHOT_FIELDS`、`ACTOR_SNAPSHOT_FIELDS` 为准：
 
 - 影片新增可读的 `series_name`、`is_blacklisted`，并通过 `actors`、`tags` 返回关联快照元组。
 - 演员快照包含 `actor_id`、身份与订阅信息，以及生日、身高、三围等资料。`TagSnapshot` 只包含 `tag_id` 和 `name`。
 - 影片的 `revision` 不覆盖关联演员、标签；更新演员时必须使用该演员自己的快照版本。
+
+### 影片筛选查询
+
+`context.movies.query()` 接受 `MovieQueryFilters` 或同结构的 mapping。可用筛选包括 `search`（番号或标题）、`actor_id`、`tag_ids`、`tag_match`、`year`、`subscribed`、`playable`、`status`、`collection_type`、`series_id`、`director_name`、`maker_name`、`number_source`、`heat_min`、`heat_max` 和 `blacklisted`。`status` 不能与 `subscribed` 或 `playable` 同时使用；结果按影片内部 id 稳定排序并使用 `after_id` 游标。
+
+```python
+from src.plugins.types import MovieQueryFilters
+
+
+page = context.movies.query(
+    MovieQueryFilters(subscribed=True, playable=False),
+    limit=100,
+)
+for movie in page.items:
+    print(movie.values["movie_number"])
+```
 
 ### 受保护字段更新
 
@@ -161,6 +201,14 @@ def update_actor_height(context, actor_id: int, height_cm: int) -> bool:
 
 `is_blacklisted=True` 不能用于已订阅影片，否则整次 patch 返回 `False`。`import_movie_by_number()` 也不会覆盖已存在影片的字段；需要更改时单独读取快照并 patch。
 
+## 订阅、通知与合集
+
+`context.subscriptions` 提供 `list()`、`count_by_status()`、`get(movie_id)`、`subscribe(movie_number)`、`unsubscribe(movie_number)` 和 `reset_search(movie_ids=None)`。订阅列表使用页码分页；`reset_search(None)` 重置全部订阅的搜索状态，传入影片 id 集合时只重置指定影片。
+
+`context.notifications` 提供 `create()`、`create_once()` 和 `resolve(dedupe_key)`。幂等键会自动带上当前插件命名空间，插件之间不会互相覆盖；创建结果中的 key 和 `resolve()` 都使用插件自己的原始 key。
+
+`context.collections` 提供 `ensure_playlist()` / `set_playlist_movies()`、`ensure_moment()` / `set_moment_points()` 和 `ensure_clip()` / `set_clip_clips()`。合集通过插件自己的 `key` 管理，设置成员时会替换该合集的全部成员，不能修改其他插件拥有的 key。
+
 ## 字幕读取与导入
 
 `context.subtitles.list(movie_id)` 返回 `tuple[SubtitleAsset, ...]`，每项包含 `subtitle_id`、`file_name`、`format`、`size_bytes`、`created_at`。它只列出已登记且仍可访问的字幕，跳过失效文件，不扫描或清理目录。
@@ -189,12 +237,11 @@ def update_actor_height(context, actor_id: int, height_cm: int) -> bool:
 
 多媒体库场景必须传入目标 `library_id`；不传时表示跨所有媒体库聚合，不能用来判断某个下载目标是否缺片。目标下载器对应的媒体库可通过 `context.downloads.get_target(download_client_id).library_id` 获取。
 
-下载候选必须先绑定目标下载器：
+下载目标可以由宿主自动路由，也可以由插件显式指定。未指定 `download_client_id` 时，宿主按照索引器与下载器的绑定关系选择目标，并把解析出的目标写入每个候选：
 
 ```python
 candidates = context.downloads.search_candidates(
     movie_number="ABC-001",
-    download_client_id=target_client_id,
     indexer_kind="pt",
 )
 
@@ -205,7 +252,7 @@ result = context.downloads.submit(
 )
 ```
 
-候选会携带宿主解析出的 `download_client_id`、`library_id`、`library_name` 和 `provider_key`；插件不能把一个候选改投到另一个媒体库。目标下载器被删除、解绑或媒体库提供方发生变化时，提交会失败，不会自动回退到索引器的第一个绑定下载器。
+`context.downloads.list_targets()` 可读取当前下载目标，返回值不包含凭据；没有目标时返回空元组。默认路由时，每个索引器使用其绑定顺序中的第一个下载器，目标列表的返回顺序不代表默认优先级。显式传入 `download_client_id` 时，只搜索绑定该下载器的索引器。候选会携带宿主解析出的 `download_client_id`、`library_id`、`library_name` 和 `provider_key`；插件不能把一个候选改投到另一个媒体库。目标下载器被删除、解绑或媒体库提供方发生变化时，提交会失败，不会在提交阶段自动改选其他目标。
 
 同一影片要提交到多个媒体库时，插件必须针对每个目标下载器分别搜索并提交。下载完成后的导入仍进入该下载器关联的媒体库，不能在普通插件中组合一个下载 Provider 和另一个存储 Provider。
 
@@ -304,9 +351,11 @@ bundle 必须声明：
 | 导入事务 | `stage_import_file`、`finalize_import`、`abort_import` |
 | 媒体处理 | `delete_media`、`compute_file_hash`、`handle_playback`、`generate_thumbnails`、`create_clip` |
 
+`scan_import_source(source_ref=..., progress_callback=None)` 可接收 JSON 进度回调；只有按 Host API 7 注册的 Provider 才会收到该参数，旧 Provider 仍按不带回调的旧签名调用。`generate_thumbnails(media=..., workspace=..., progress_callback=None)` 的进度回调是可选的，宿主会兼容尚未声明该参数的旧实现。
+
 `source_ref`、`storage_ref`、导入回执和 `provider_config` 都是不透明 JSON：宿主只保存并原样传回，Provider 自己负责解释。`stage_import_file` 必须按 `operation_key` 幂等；`finalize_import` 和 `abort_import` 必须可安全重试。
 
-若实现下载组件，还需实现配置准备与诊断（`prepare_client`、`test_client`、`build`），以及远端任务的提交、列举和删除（`submit`、`list_tasks`、`delete_task`）。下载完成的来源只能交给同一个 Provider 导入。
+若实现下载组件，还需声明 `config_fields`，实现配置准备与诊断（`prepare_client`、`test_client`、`build`），以及远端任务的提交、列举和删除（`submit`、`list_tasks`、`delete_task`）。下载完成的来源只能交给同一个 Provider 导入。
 
 ### 可选存储能力
 
@@ -321,6 +370,7 @@ bundle 必须声明：
 | 核对已管理媒体 | `scan_managed_media_ref_keys()`、`managed_media_ref_key(media_ref=...)` | 返回当前媒体库文件的键集合，并能用同一规则计算已登记媒体的键 |
 | 普通视频封面 | `open_cover_source(media=...)` | 以上下文管理器提供封面生成使用的视频来源 |
 | 补充时长与分辨率 | `probe_duration_seconds(media=...)`、`probe_resolution(media=...)` | 分别返回整数秒和 `"WxH"` 字符串（或 `None`）；导入时也可通过 `StagedMedia.resolution` 提供分辨率 |
+| 探测原始视频信息 | `probe_video_info(media=...)` | 返回 JSON 对象或 `None`，用于补充原始文件技术信息 |
 
 ### 媒体存储转存
 
@@ -362,5 +412,6 @@ uv run python -m src.start.commands plugins check /path/to/example_plugin
 - `register()` 的 `host_api_version` 必须等于 manifest 声明的版本，或当前宿主版本 `7`。例如 manifest 为 `4` 时，注册返回 `4` 或导入宿主常量得到的 `7` 均可，返回 `5` 则不兼容。
 - `catalog.metadata_source` 额外要求 manifest 声明 **6**；只把 `register()` 改为宿主常量不能绕过这一限制。
 - `context.media` 和 `context.downloads` 需要 Host API **7**；旧宿主能加载旧声明，不意味着旧宿主能提供这两个接口。
+- Provider 的扫描进度回调只对按 Host API **7** 注册的实现启用；旧 Provider 仍按不带回调的旧签名调用。
 
 升级前应核对实际宿主版本、公开类型与所用能力，再运行插件检查。插件自身的 `version` 与 Host API 版本是两个概念，manifest 与 `register()` 的插件 `version` 仍须严格一致。

@@ -50,6 +50,66 @@ void main() {
     expect(find.text('重建索引'), findsOneWidget);
   });
 
+  testWidgets('runs and explains media backfill tasks on mobile', (
+    tester,
+  ) async {
+    _enqueueImageSearchStatus(bundle);
+
+    await _pumpPage(tester, bundle);
+
+    expect(find.text('媒体信息回填'), findsOneWidget);
+    expect(find.textContaining('补齐时长、分辨率和视频信息'), findsOneWidget);
+    expect(find.text('媒体文件哈希补算'), findsOneWidget);
+    expect(find.textContaining('用于识别重复媒体'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/system/jobs/media_video_info_backfill/run',
+      body: <String, dynamic>{
+        'task_run_id': 1,
+        'task_key': 'media_video_info_backfill',
+        'state': 'pending',
+      },
+    );
+    await tester.tap(
+      find.byKey(
+        const Key('mobile-system-maintenance-media_video_info_backfill-run'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      bundle.adapter.hitCount(
+        'POST',
+        '/system/jobs/media_video_info_backfill/run',
+      ),
+      1,
+    );
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/system/jobs/media_file_hash_backfill/run',
+      body: <String, dynamic>{
+        'task_run_id': 2,
+        'task_key': 'media_file_hash_backfill',
+        'state': 'pending',
+      },
+    );
+    await tester.tap(
+      find.byKey(
+        const Key('mobile-system-maintenance-media_file_hash_backfill-run'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      bundle.adapter.hitCount(
+        'POST',
+        '/system/jobs/media_file_hash_backfill/run',
+      ),
+      1,
+    );
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('confirms and starts a required image-search rebuild', (
     tester,
   ) async {

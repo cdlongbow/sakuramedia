@@ -120,7 +120,9 @@ class MediaManagementContent extends HookConsumerWidget {
 
     final isDeleting = useState<bool>(false);
     final isTransferring = useState<bool>(false);
+    final isResettingThumbnails = useState<bool>(false);
     final deletingMediaId = useState<int?>(null);
+    final retryingThumbnailMediaId = useState<int?>(null);
     final selectionMode = useState<bool>(false);
 
     void exitSelectionMode() {
@@ -189,6 +191,7 @@ class MediaManagementContent extends HookConsumerWidget {
                 scrollController: scrollController,
                 isDeleting: isDeleting.value,
                 isTransferring: isTransferring.value,
+                isResettingThumbnails: isResettingThumbnails.value,
                 onBatchDelete: () => _openBatchDeleteDialog(
                   context,
                   ref,
@@ -199,6 +202,12 @@ class MediaManagementContent extends HookConsumerWidget {
                   context,
                   ref,
                   isTransferring,
+                  selectionMode,
+                ),
+                onBatchResetThumbnails: () => _openBatchThumbnailResetDialog(
+                  context,
+                  ref,
+                  isResettingThumbnails,
                   selectionMode,
                 ),
                 onRefresh: () => _refreshAll(
@@ -220,6 +229,14 @@ class MediaManagementContent extends HookConsumerWidget {
                   deletingMediaId,
                 ),
                 deletingItemId: deletingMediaId,
+                onRetryThumbnails: (item) => _resetThumbnails(
+                  context,
+                  ref,
+                  mediaIds: [item.id],
+                  isResettingThumbnails: isResettingThumbnails,
+                  retryingThumbnailMediaId: retryingThumbnailMediaId,
+                ),
+                retryingThumbnailMediaId: retryingThumbnailMediaId,
               ),
             },
           ),
@@ -394,6 +411,86 @@ class MediaManagementContent extends HookConsumerWidget {
       }
     } finally {
       if (context.mounted) isTransferring.value = false;
+    }
+  }
+
+  Future<void> _openBatchThumbnailResetDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ValueNotifier<bool> isResettingThumbnails,
+    ValueNotifier<bool> selectionMode,
+  ) async {
+    if (isResettingThumbnails.value) return;
+    final browseState = ref.read(mediaBrowseProvider).value;
+    if (browseState == null || browseState.selectedIds.isEmpty) return;
+    final selectedIds = browseState.selectedIds.toList(growable: false);
+
+    final confirmed = await showAppConfirmDialog(
+      context,
+      dialogKey: const Key('media-management-batch-reset-thumbnails-dialog'),
+      confirmKey: const Key(
+        'media-management-batch-reset-thumbnails-confirm-button',
+      ),
+      cancelKey: const Key(
+        'media-management-batch-reset-thumbnails-cancel-button',
+      ),
+      title: '重试缩略图',
+      message: '将把已选 ${selectedIds.length} 项重新加入缩略图生成队列。确认继续吗？',
+      confirmLabel: '重试',
+    );
+    if (!confirmed || !context.mounted) return;
+
+    await _resetThumbnails(
+      context,
+      ref,
+      mediaIds: selectedIds,
+      isResettingThumbnails: isResettingThumbnails,
+      selectionMode: selectionMode,
+    );
+  }
+
+  /// 批量与单项共用的缩略图重置：置忙、重置、清选、刷新，并按结果提示。
+  ///
+  /// [selectionMode] 仅批量入口传入（成功后退出移动端多选态）；
+  /// [retryingThumbnailMediaId] 仅单项入口传入（标记对应卡片 loading）。
+  Future<void> _resetThumbnails(
+    BuildContext context,
+    WidgetRef ref, {
+    required List<int> mediaIds,
+    required ValueNotifier<bool> isResettingThumbnails,
+    ValueNotifier<bool>? selectionMode,
+    ValueNotifier<int?>? retryingThumbnailMediaId,
+  }) async {
+    if (isResettingThumbnails.value) return;
+    isResettingThumbnails.value = true;
+    retryingThumbnailMediaId?.value = mediaIds.first;
+    try {
+      final resetCount = await ref
+          .read(mediaApiProvider)
+          .resetFailedMediaThumbnails(mediaIds: mediaIds);
+      if (!context.mounted) return;
+      ref.read(mediaBrowseProvider.notifier).clearSelection();
+      if (mobile) selectionMode?.value = false;
+      final refreshMessage = await ref
+          .read(mediaBrowseProvider.notifier)
+          .refresh();
+      if (!context.mounted) return;
+      if (refreshMessage != null) {
+        showToast('已重置 $resetCount 项，但列表刷新失败：$refreshMessage');
+      } else if (resetCount == 0) {
+        showToast('媒体已无可重试的失败状态');
+      } else {
+        showToast('已重置 $resetCount 项缩略图，已重新加入生成队列');
+      }
+    } catch (error) {
+      if (context.mounted) {
+        showToast(apiErrorMessage(error, fallback: '重试缩略图失败，请稍后重试。'));
+      }
+    } finally {
+      if (context.mounted) {
+        retryingThumbnailMediaId?.value = null;
+        isResettingThumbnails.value = false;
+      }
     }
   }
 }

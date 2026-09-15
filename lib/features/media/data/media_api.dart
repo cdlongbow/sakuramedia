@@ -1,3 +1,4 @@
+import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/duplicate_media_group_dto.dart';
@@ -58,6 +59,14 @@ class MediaApi {
       response,
       MediaListItemDto.fromJson,
     );
+  }
+
+  Future<int> resetFailedMediaThumbnails({required List<int> mediaIds}) async {
+    final response = await _apiClient.post(
+      '/media/thumbnail-generation/reset',
+      data: <String, dynamic>{'media_ids': mediaIds},
+    );
+    return asInt(response['reset_count']);
   }
 
   Future<PaginatedResponseDto<MediaPointListItemDto>> getGlobalMediaPoints({

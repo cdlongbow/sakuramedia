@@ -1,5 +1,7 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/media_import/data/import_accepted_response_dto.dart';
+import 'package:sakuramedia/features/media_import/data/import_failed_item_dto.dart';
+import 'package:sakuramedia/features/media_import/data/import_metadata_search_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_source_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
@@ -44,6 +46,42 @@ class MediaImportApi {
         'source_disposition': sourceDisposition.wireValue,
         if (collectionId != null) 'collection_id': collectionId,
       },
+    );
+    return ImportAcceptedResponseDto.fromJson(response);
+  }
+
+  /// 列出某个导入任务运行记录的失败文件（不含宿主内部 source_ref 等字段）。
+  Future<List<ImportFailedItemDto>> getFailedItems({
+    required int taskRunId,
+  }) async {
+    final response = await _apiClient.getList(
+      '/imports/$taskRunId/failed-items',
+    );
+    return response.map(ImportFailedItemDto.fromJson).toList(growable: false);
+  }
+
+  /// 按用户输入的番号搜索可用元数据候选（JavDB + 已启用插件）。
+  Future<ImportMetadataSearchResponseDto> searchMetadataCandidates({
+    required int taskRunId,
+    required String itemId,
+    required String movieNumber,
+  }) async {
+    final response = await _apiClient.post(
+      '/imports/$taskRunId/failed-items/$itemId/search',
+      data: <String, dynamic>{'movie_number': movieNumber},
+    );
+    return ImportMetadataSearchResponseDto.fromJson(response);
+  }
+
+  /// 用选定的元数据候选重试导入失败文件。
+  Future<ImportAcceptedResponseDto> retryFailedItem({
+    required int taskRunId,
+    required String itemId,
+    required String candidateId,
+  }) async {
+    final response = await _apiClient.post(
+      '/imports/$taskRunId/failed-items/$itemId/retry',
+      data: <String, dynamic>{'candidate_id': candidateId},
     );
     return ImportAcceptedResponseDto.fromJson(response);
   }

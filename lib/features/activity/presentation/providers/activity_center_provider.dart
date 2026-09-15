@@ -508,6 +508,7 @@ class ActivityCenter extends _$ActivityCenter
   bool isTriggeringJob(String taskKey) => current.isTriggeringJob(taskKey);
   bool get isPollingFallback => true;
   List<String> get knownTaskKeys => current.knownTaskKeys;
+  Map<String, String> get knownTaskKeyLabels => current.knownTaskKeyLabels;
 }
 
 class _JobsResult {

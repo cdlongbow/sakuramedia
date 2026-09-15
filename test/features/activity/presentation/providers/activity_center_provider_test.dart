@@ -53,6 +53,35 @@ void main() {
     );
   });
 
+  test('knownTaskKeyLabels prefers run names and falls back to job help', () async {
+    final subscription = container.listen(activityCenterProvider, (_, __) {});
+    addTearDown(subscription.close);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_key': 'gfriends_filetree_refresh',
+          'cli_help': '拉取一次 GFriends Filetree 并写入本地缓存',
+          'manual_trigger_allowed': true,
+        },
+        <String, dynamic>{
+          'task_key': 'media_import',
+          'cli_help': '执行一次媒体库导入',
+          'manual_trigger_allowed': true,
+        },
+      ],
+    );
+    _enqueueBootstrap(bundle, activeTaskId: 8, historyTaskId: 9);
+
+    final state = await container.read(activityCenterProvider.future);
+
+    expect(state.knownTaskKeyLabels, <String, String>{
+      'gfriends_filetree_refresh': '拉取一次 GFriends Filetree 并写入本地缓存',
+      'media_import': '媒体导入',
+    });
+  });
+
   test('refreshTaskHistory reads /system/task-runs', () async {
     final subscription = container.listen(activityCenterProvider, (_, __) {});
     addTearDown(subscription.close);

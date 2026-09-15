@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/media_import/data/import_failed_item_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
@@ -135,4 +136,111 @@ void main() {
       });
     },
   );
+
+  test('getFailedItems reads the task-scoped failed file list', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/imports/42/failed-items',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'failure-1',
+          'relative_path': 'release/ABC.unknown.mp4',
+          'size_bytes': 1024,
+          'is_video': true,
+          'reason': 'movie_number_not_found',
+          'detail': '无法从文件名识别番号',
+          'kind': 'file',
+          'state': 'pending',
+          'retry_task_run_id': null,
+          'resolved_movie_id': null,
+          'resolved_media_id': null,
+          'last_retry_error': null,
+          'can_manual_search': true,
+        },
+      ],
+    );
+
+    final items = await api.getFailedItems(taskRunId: 42);
+
+    expect(items.single.id, 'failure-1');
+    expect(items.single.fileName, 'ABC.unknown.mp4');
+    expect(items.single.sizeBytes, 1024);
+    expect(items.single.kind, 'file');
+    expect(items.single.isSkipped, isFalse);
+    expect(items.single.state, ImportFailedItemState.pending);
+    expect(items.single.canManualSearch, isTrue);
+    expect(items.single.lastRetryError, isNull);
+  });
+
+  test('searchMetadataCandidates posts the number and parses candidates', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/imports/42/failed-items/failure-1/search',
+      body: <String, dynamic>{
+        'movie_number': 'ABC-001',
+        'candidates': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'candidate_id': 'javdb:ABC-001:javdb-001',
+            'source': 'javdb',
+            'source_name': 'JavDB',
+            'source_id': null,
+            'javdb_id': 'javdb-001',
+            'movie_number': 'ABC-001',
+            'title': 'JavDB 标题',
+            'cover_url': '/files/images/metadata-search/a/0.jpg',
+            'release_date': '2026-09-01',
+            'duration_minutes': 120,
+          },
+        ],
+        'source_errors': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'source': 'metadata_two',
+            'source_name': 'Metadata Two',
+            'reason': 'RuntimeError',
+            'detail': 'plugin offline',
+          },
+        ],
+      },
+    );
+
+    final response = await api.searchMetadataCandidates(
+      taskRunId: 42,
+      itemId: 'failure-1',
+      movieNumber: 'ABC-001',
+    );
+
+    expect(response.candidates.single.title, 'JavDB 标题');
+    expect(
+      response.candidates.single.coverUrl,
+      '/files/images/metadata-search/a/0.jpg',
+    );
+    expect(response.sourceErrors.single.sourceName, 'Metadata Two');
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'movie_number': 'ABC-001',
+    });
+  });
+
+  test('retryFailedItem posts the candidate and returns the accepted run', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/imports/42/failed-items/failure-1/retry',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 77,
+        'task_key': 'library_import',
+        'state': 'pending',
+      },
+    );
+
+    final response = await api.retryFailedItem(
+      taskRunId: 42,
+      itemId: 'failure-1',
+      candidateId: 'javdb:ABC-001:javdb-001',
+    );
+
+    expect(response.taskRunId, 77);
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'candidate_id': 'javdb:ABC-001:javdb-001',
+    });
+  });
 }

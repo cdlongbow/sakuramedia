@@ -24,6 +24,9 @@ class MediaListItemCard extends StatelessWidget {
     this.onDelete,
     this.isDeleting = false,
     this.canDelete = true,
+    this.onRetryThumbnails,
+    this.isRetryingThumbnails = false,
+    this.canRetryThumbnails = true,
     this.showUpdatedAt = false,
   });
 
@@ -39,6 +42,9 @@ class MediaListItemCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isDeleting;
   final bool canDelete;
+  final VoidCallback? onRetryThumbnails;
+  final bool isRetryingThumbnails;
+  final bool canRetryThumbnails;
   final bool showUpdatedAt;
 
   @override
@@ -78,6 +84,9 @@ class MediaListItemCard extends StatelessWidget {
         onDelete: onDelete,
         isDeleting: isDeleting,
         canDelete: canDelete,
+        onRetryThumbnails: onRetryThumbnails,
+        isRetryingThumbnails: isRetryingThumbnails,
+        canRetryThumbnails: canRetryThumbnails,
         showUpdatedAt: showUpdatedAt,
       ),
     );
@@ -101,6 +110,9 @@ class _MediaListItemBody extends StatelessWidget {
     required this.onDelete,
     required this.isDeleting,
     required this.canDelete,
+    required this.onRetryThumbnails,
+    required this.isRetryingThumbnails,
+    required this.canRetryThumbnails,
     required this.showUpdatedAt,
   });
 
@@ -111,14 +123,21 @@ class _MediaListItemBody extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isDeleting;
   final bool canDelete;
+  final VoidCallback? onRetryThumbnails;
+  final bool isRetryingThumbnails;
+  final bool canRetryThumbnails;
   final bool showUpdatedAt;
 
-  Widget _content(BuildContext context) {
+  Widget _content(BuildContext context, {Widget? headingTrailing}) {
     final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _MediaListItemHeading(keyPrefix: keyPrefix, item: item),
+        _MediaListItemHeading(
+          keyPrefix: keyPrefix,
+          item: item,
+          trailing: headingTrailing,
+        ),
         SizedBox(height: spacing.md),
         MediaListItemMetaLine(
           item: item,
@@ -140,23 +159,39 @@ class _MediaListItemBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (onDelete == null) return _content(context);
-    final deleteButton = AppButton(
-      key: Key('$keyPrefix-delete-${item.id}'),
-      label: isDeleting ? '删除中' : '删除',
-      size: AppButtonSize.small,
-      variant: AppButtonVariant.danger,
-      icon: const Icon(Icons.delete_outline_rounded),
-      isLoading: isDeleting,
-      onPressed: canDelete ? onDelete : null,
-    );
+    final retryButton = onRetryThumbnails == null
+        ? null
+        : AppButton(
+            key: Key('$keyPrefix-retry-thumbnails-${item.id}'),
+            label: '重试缩略图',
+            size: mobile ? AppButtonSize.xSmall : AppButtonSize.small,
+            icon: const Icon(Icons.refresh_rounded),
+            isLoading: isRetryingThumbnails,
+            onPressed: canRetryThumbnails ? onRetryThumbnails : null,
+          );
+    final deleteButton = onDelete == null
+        ? null
+        : AppButton(
+            key: Key('$keyPrefix-delete-${item.id}'),
+            label: isDeleting ? '删除中' : '删除',
+            size: AppButtonSize.small,
+            variant: AppButtonVariant.danger,
+            icon: const Icon(Icons.delete_outline_rounded),
+            isLoading: isDeleting,
+            onPressed: canDelete ? onDelete : null,
+          );
+    if (retryButton == null && deleteButton == null) {
+      return _content(context);
+    }
     if (mobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _content(context),
-          SizedBox(height: context.appSpacing.md),
-          Align(alignment: Alignment.centerRight, child: deleteButton),
+          _content(context, headingTrailing: retryButton),
+          if (deleteButton != null) ...[
+            SizedBox(height: context.appSpacing.md),
+            Align(alignment: Alignment.centerRight, child: deleteButton),
+          ],
         ],
       );
     }
@@ -165,7 +200,15 @@ class _MediaListItemBody extends StatelessWidget {
       children: [
         Expanded(child: _content(context)),
         SizedBox(width: context.appSpacing.lg),
-        deleteButton,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ?retryButton,
+            if (retryButton != null && deleteButton != null)
+              SizedBox(width: context.appSpacing.sm),
+            ?deleteButton,
+          ],
+        ),
       ],
     );
   }
@@ -226,10 +269,15 @@ class _MediaListItemCover extends StatelessWidget {
 }
 
 class _MediaListItemHeading extends StatelessWidget {
-  const _MediaListItemHeading({required this.keyPrefix, required this.item});
+  const _MediaListItemHeading({
+    required this.keyPrefix,
+    required this.item,
+    this.trailing,
+  });
 
   final String keyPrefix;
   final MediaListItemDto item;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +326,7 @@ class _MediaListItemHeading extends StatelessWidget {
             size: AppBadgeSize.compact,
           ),
         ],
+        if (trailing != null) ...[SizedBox(width: spacing.sm), trailing!],
       ],
     );
   }

@@ -48,6 +48,8 @@ class MediaListSection extends StatelessWidget {
     required this.isTransferring,
     required this.onBatchDelete,
     required this.onBatchTransfer,
+    this.isResettingThumbnails = false,
+    this.onBatchResetThumbnails,
     this.onRefresh,
     this.onOpenMovieDetail,
     this.keyPrefix = 'media-management',
@@ -57,11 +59,13 @@ class MediaListSection extends StatelessWidget {
     this.onExitSelection,
     this.onDeleteItem,
     this.deletingItemId,
+    this.onRetryThumbnails,
+    this.retryingThumbnailMediaId,
   });
 
   final ScrollController scrollController;
 
-  /// 批量删除或迁移进行中——按钮 spinner + 禁用其它多选动作。
+  /// 批量操作进行中——按钮 spinner + 禁用其它多选动作。
   final bool isDeleting;
 
   final bool isTransferring;
@@ -70,6 +74,10 @@ class MediaListSection extends StatelessWidget {
   final Future<void> Function() onBatchDelete;
 
   final Future<void> Function() onBatchTransfer;
+
+  final bool isResettingThumbnails;
+
+  final Future<void> Function()? onBatchResetThumbnails;
 
   /// 可选：父页复合刷新；不传则默认刷新媒体列表 + 媒体库。
   final Future<void> Function()? onRefresh;
@@ -100,6 +108,12 @@ class MediaListSection extends StatelessWidget {
   /// 当前正在删除的媒体 ID，用于只显示对应卡片的 loading。
   final ValueListenable<int?>? deletingItemId;
 
+  /// 单项缩略图重试入口；不传时不显示卡片级重试按钮。
+  final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
+
+  /// 当前正在重试缩略图的媒体 ID，用于只显示对应卡片的 loading。
+  final ValueListenable<int?>? retryingThumbnailMediaId;
+
   @override
   Widget build(BuildContext context) {
     final scrollView = CustomScrollView(
@@ -115,8 +129,11 @@ class MediaListSection extends StatelessWidget {
           onOpenMovieDetail: onOpenMovieDetail,
           isDeleting: isDeleting,
           isTransferring: isTransferring,
+          isResettingThumbnails: isResettingThumbnails,
           onDeleteItem: onDeleteItem,
           deletingItemId: deletingItemId,
+          onRetryThumbnails: onRetryThumbnails,
+          retryingThumbnailMediaId: retryingThumbnailMediaId,
         ),
       ],
     );
@@ -134,6 +151,8 @@ class MediaListSection extends StatelessWidget {
             isTransferring: isTransferring,
             onBatchDelete: onBatchDelete,
             onBatchTransfer: onBatchTransfer,
+            isResettingThumbnails: isResettingThumbnails,
+            onBatchResetThumbnails: onBatchResetThumbnails,
             onRefresh: onRefresh,
             onExitSelection: onExitSelection,
           ),
@@ -155,8 +174,10 @@ class MediaListSection extends StatelessWidget {
             keyPrefix: keyPrefix,
             isDeleting: isDeleting,
             isTransferring: isTransferring,
+            isResettingThumbnails: isResettingThumbnails,
             onBatchDelete: onBatchDelete,
             onBatchTransfer: onBatchTransfer,
+            onBatchResetThumbnails: onBatchResetThumbnails,
           ),
         ],
       );
@@ -172,8 +193,10 @@ class _MediaListHeader extends ConsumerWidget {
     required this.selectionMode,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.onBatchDelete,
     required this.onBatchTransfer,
+    required this.onBatchResetThumbnails,
     required this.onRefresh,
     required this.onExitSelection,
   });
@@ -183,8 +206,10 @@ class _MediaListHeader extends ConsumerWidget {
   final bool selectionMode;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final Future<void> Function() onBatchDelete;
   final Future<void> Function() onBatchTransfer;
+  final Future<void> Function()? onBatchResetThumbnails;
   final Future<void> Function()? onRefresh;
   final VoidCallback? onExitSelection;
 
@@ -247,7 +272,7 @@ class _MediaListHeader extends ConsumerWidget {
         currentState != null && currentState.paged.items.isNotEmpty;
     final filter = currentState?.filter ?? MediaBrowseFilterState.initial;
     final isInitialLoading = asyncState.isLoading && !asyncState.hasValue;
-    final busy = isDeleting || isTransferring;
+    final busy = isDeleting || isTransferring || isResettingThumbnails;
     final allLoadedSelected = currentState?.allLoadedSelected ?? false;
 
     // 移动端多选态：顶栏换 `AppListHeader.selection`（退出 / 计数 / 全选），
@@ -339,10 +364,15 @@ class _MediaListHeader extends ConsumerWidget {
         allLoadedSelected: allLoadedSelected,
         isDeleting: isDeleting,
         isTransferring: isTransferring,
+        isResettingThumbnails: isResettingThumbnails,
         isInitialLoading: isInitialLoading,
         busy: busy,
         onBatchDelete: onBatchDelete,
         onBatchTransfer: onBatchTransfer,
+        canResetThumbnails:
+            filter.thumbnailGenerationState ==
+            MediaBrowseThumbnailGenerationFilter.terminal,
+        onBatchResetThumbnails: onBatchResetThumbnails,
         onRefresh: () => unawaited((onRefresh ?? () => _defaultRefresh(ref))()),
       ),
     );
@@ -411,8 +441,11 @@ class _MediaListBodySliver extends ConsumerWidget {
     required this.onOpenMovieDetail,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onRetryThumbnails,
+    required this.retryingThumbnailMediaId,
   });
 
   final String keyPrefix;
@@ -423,8 +456,11 @@ class _MediaListBodySliver extends ConsumerWidget {
   onOpenMovieDetail;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
+  final ValueListenable<int?>? retryingThumbnailMediaId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -462,8 +498,11 @@ class _MediaListBodySliver extends ConsumerWidget {
               onOpenMovieDetail: onOpenMovieDetail,
               isDeleting: isDeleting,
               isTransferring: isTransferring,
+              isResettingThumbnails: isResettingThumbnails,
               onDeleteItem: onDeleteItem,
               deletingItemId: deletingItemId,
+              onRetryThumbnails: onRetryThumbnails,
+              retryingThumbnailMediaId: retryingThumbnailMediaId,
             )
           : _MediaRowConsumer(
               keyPrefix: keyPrefix,
@@ -471,8 +510,11 @@ class _MediaListBodySliver extends ConsumerWidget {
               onOpenMovieDetail: onOpenMovieDetail,
               isDeleting: isDeleting,
               isTransferring: isTransferring,
+              isResettingThumbnails: isResettingThumbnails,
               onDeleteItem: onDeleteItem,
               deletingItemId: deletingItemId,
+              onRetryThumbnails: onRetryThumbnails,
+              retryingThumbnailMediaId: retryingThumbnailMediaId,
             ),
     );
   }
@@ -488,8 +530,11 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
     this.onOpenMovieDetail,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onRetryThumbnails,
+    required this.retryingThumbnailMediaId,
   });
 
   final String keyPrefix;
@@ -500,8 +545,11 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
   onOpenMovieDetail;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
+  final ValueListenable<int?>? retryingThumbnailMediaId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -520,35 +568,62 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    Widget buildCard(int? deletingId) => MediaListItemCard(
-      keyPrefix: keyPrefix,
-      item: item,
-      library: library,
-      mobile: true,
-      selected: isSelected,
-      onTap: selectionMode
-          ? () =>
-                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id)
-          : null,
-      onLongPress: selectionMode
-          ? null
-          : () {
-              ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
-              onEnterSelection?.call();
-            },
-      onOpenMovieDetail: onOpenMovieDetail,
-      onDelete: selectionMode || onDeleteItem == null
-          ? null
-          : () => unawaited(onDeleteItem!(item)),
-      isDeleting: deletingId == item.id,
-      canDelete: !isDeleting && !isTransferring && deletingId == null,
-    );
+    Widget buildCard(int? deletingId, int? retryingId) {
+      final isRetryable =
+          !selectionMode &&
+          item.thumbnailGenerationState ==
+              MediaThumbnailGenerationState.terminal;
+      final isRetrying = retryingId == item.id;
+      return MediaListItemCard(
+        keyPrefix: keyPrefix,
+        item: item,
+        library: library,
+        mobile: true,
+        selected: isSelected,
+        onTap: selectionMode
+            ? () => ref
+                  .read(mediaBrowseProvider.notifier)
+                  .toggleSelection(item.id)
+            : null,
+        onLongPress: selectionMode
+            ? null
+            : () {
+                ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
+                onEnterSelection?.call();
+              },
+        onOpenMovieDetail: onOpenMovieDetail,
+        onDelete: selectionMode || onDeleteItem == null
+            ? null
+            : () => unawaited(onDeleteItem!(item)),
+        isDeleting: deletingId == item.id,
+        canDelete:
+            !isDeleting &&
+            !isTransferring &&
+            !isResettingThumbnails &&
+            retryingId == null &&
+            deletingId == null,
+        onRetryThumbnails: isRetryable && onRetryThumbnails != null
+            ? () => unawaited(onRetryThumbnails!(item))
+            : null,
+        isRetryingThumbnails: isRetrying,
+        canRetryThumbnails:
+            isRetryable &&
+            !isDeleting &&
+            !isTransferring &&
+            !isResettingThumbnails &&
+            retryingId == null,
+      );
+    }
 
-    final notifier = deletingItemId;
-    if (notifier == null) return buildCard(null);
-    return ValueListenableBuilder<int?>(
-      valueListenable: notifier,
-      builder: (context, deletingId, child) => buildCard(deletingId),
+    final listenables = <Listenable>[
+      ?deletingItemId,
+      ?retryingThumbnailMediaId,
+    ];
+    if (listenables.isEmpty) return buildCard(null, null);
+    return ListenableBuilder(
+      listenable: Listenable.merge(listenables),
+      builder: (context, child) =>
+          buildCard(deletingItemId?.value, retryingThumbnailMediaId?.value),
     );
   }
 }
@@ -559,15 +634,19 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
     required this.keyPrefix,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.onBatchDelete,
     required this.onBatchTransfer,
+    required this.onBatchResetThumbnails,
   });
 
   final String keyPrefix;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final Future<void> Function() onBatchDelete;
   final Future<void> Function() onBatchTransfer;
+  final Future<void> Function()? onBatchResetThumbnails;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -576,7 +655,14 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
         (asyncState) => asyncState.value?.selectionCount ?? 0,
       ),
     );
-    final busy = isDeleting || isTransferring;
+    final canResetThumbnails = ref.watch(
+      mediaBrowseProvider.select(
+        (asyncState) =>
+            asyncState.value?.filter.thumbnailGenerationState ==
+            MediaBrowseThumbnailGenerationFilter.terminal,
+      ),
+    );
+    final busy = isDeleting || isTransferring || isResettingThumbnails;
     return AppSelectionBottomBar(
       leading: Text(
         '已选 $selectionCount 项',
@@ -604,6 +690,16 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
           isLoading: isDeleting,
           onPressed: busy || selectionCount == 0 ? null : onBatchDelete,
         ),
+        if (canResetThumbnails && onBatchResetThumbnails != null)
+          AppButton(
+            key: Key('$keyPrefix-batch-reset-thumbnails-button'),
+            label: '重试',
+            icon: const Icon(Icons.refresh_rounded),
+            isLoading: isResettingThumbnails,
+            onPressed: busy || selectionCount == 0
+                ? null
+                : onBatchResetThumbnails,
+          ),
       ],
     );
   }
@@ -616,8 +712,11 @@ class _MediaRowConsumer extends ConsumerWidget {
     this.onOpenMovieDetail,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onRetryThumbnails,
+    required this.retryingThumbnailMediaId,
   });
 
   final String keyPrefix;
@@ -626,8 +725,11 @@ class _MediaRowConsumer extends ConsumerWidget {
   onOpenMovieDetail;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
+  final ValueListenable<int?>? retryingThumbnailMediaId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -646,33 +748,58 @@ class _MediaRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    Widget buildCard(int? deletingId) => MediaListItemCard(
-      keyPrefix: keyPrefix,
-      item: item,
-      library: library,
-      mobile: false,
-      selected: isSelected,
-      onTap: () =>
-          ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
-      onOpenMovieDetail: onOpenMovieDetail,
-      onDelete: onDeleteItem == null
-          ? null
-          : () => unawaited(onDeleteItem!(item)),
-      isDeleting: deletingId == item.id,
-      canDelete: !isDeleting && !isTransferring && deletingId == null,
-      showUpdatedAt: true,
-    );
+    Widget buildCard(int? deletingId, int? retryingId) {
+      final isRetryable =
+          item.thumbnailGenerationState ==
+          MediaThumbnailGenerationState.terminal;
+      final isRetrying = retryingId == item.id;
+      return MediaListItemCard(
+        keyPrefix: keyPrefix,
+        item: item,
+        library: library,
+        mobile: false,
+        selected: isSelected,
+        onTap: () =>
+            ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
+        onOpenMovieDetail: onOpenMovieDetail,
+        onDelete: onDeleteItem == null
+            ? null
+            : () => unawaited(onDeleteItem!(item)),
+        isDeleting: deletingId == item.id,
+        canDelete:
+            !isDeleting &&
+            !isTransferring &&
+            !isResettingThumbnails &&
+            retryingId == null &&
+            deletingId == null,
+        onRetryThumbnails: isRetryable && onRetryThumbnails != null
+            ? () => unawaited(onRetryThumbnails!(item))
+            : null,
+        isRetryingThumbnails: isRetrying,
+        canRetryThumbnails:
+            isRetryable &&
+            !isDeleting &&
+            !isTransferring &&
+            !isResettingThumbnails &&
+            retryingId == null,
+        showUpdatedAt: true,
+      );
+    }
 
-    final notifier = deletingItemId;
-    if (notifier == null) return buildCard(null);
-    return ValueListenableBuilder<int?>(
-      valueListenable: notifier,
-      builder: (context, deletingId, child) => buildCard(deletingId),
+    final listenables = <Listenable>[
+      ?deletingItemId,
+      ?retryingThumbnailMediaId,
+    ];
+    if (listenables.isEmpty) return buildCard(null, null);
+    return ListenableBuilder(
+      listenable: Listenable.merge(listenables),
+      builder: (context, child) =>
+          buildCard(deletingItemId?.value, retryingThumbnailMediaId?.value),
     );
   }
 }
 
-/// 顶栏右侧多选操作条：全选 / 迁移 / 清空 / 批量删除 / 刷新。
+/// 顶栏右侧多选操作条：全选 / 迁移 / 重试 / 清空 / 批量删除 / 刷新。
 ///
 /// 无选择态：仅保留「全选本页」+「刷新」（不占空间过多，视觉上不喧宾夺主）；
 /// 有选择态：追加「迁移 / 清空 / 批量删除」，危险色只用于删除。
@@ -684,10 +811,13 @@ class _MediaListActionBar extends ConsumerWidget {
     required this.allLoadedSelected,
     required this.isDeleting,
     required this.isTransferring,
+    required this.isResettingThumbnails,
     required this.isInitialLoading,
     required this.busy,
     required this.onBatchDelete,
     required this.onBatchTransfer,
+    required this.canResetThumbnails,
+    required this.onBatchResetThumbnails,
     required this.onRefresh,
   });
 
@@ -697,10 +827,13 @@ class _MediaListActionBar extends ConsumerWidget {
   final bool allLoadedSelected;
   final bool isDeleting;
   final bool isTransferring;
+  final bool isResettingThumbnails;
   final bool isInitialLoading;
   final bool busy;
   final Future<void> Function() onBatchDelete;
   final Future<void> Function() onBatchTransfer;
+  final bool canResetThumbnails;
+  final Future<void> Function()? onBatchResetThumbnails;
   final VoidCallback onRefresh;
 
   @override
@@ -730,6 +863,17 @@ class _MediaListActionBar extends ConsumerWidget {
             icon: const Icon(Icons.drive_file_move_outline),
             isLoading: isTransferring,
             onPressed: busy ? null : onBatchTransfer,
+          ),
+        if (hasSelection &&
+            canResetThumbnails &&
+            onBatchResetThumbnails != null)
+          AppButton(
+            key: const Key('media-management-batch-reset-thumbnails-button'),
+            label: '重试缩略图（$selectionCount）',
+            size: AppButtonSize.small,
+            icon: const Icon(Icons.refresh_rounded),
+            isLoading: isResettingThumbnails,
+            onPressed: busy ? null : onBatchResetThumbnails,
           ),
         if (hasSelection)
           AppButton(

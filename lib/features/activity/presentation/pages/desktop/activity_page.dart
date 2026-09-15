@@ -21,6 +21,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/download_t
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -36,6 +37,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
+import 'package:sakuramedia/widgets/domain/media_import/import_failed_items_dialog.dart';
 
 class DesktopActivityPage extends ConsumerStatefulWidget {
   const DesktopActivityPage({super.key, this.initialDownloadMovieNumber});
@@ -1107,6 +1109,7 @@ class _TaskFilterBar extends StatelessWidget {
       return _MobileTaskFilterEntry(controller: controller);
     }
     final layoutTokens = context.appLayoutTokens;
+    final taskKeyLabels = controller.knownTaskKeyLabels;
     final filterTextStyle = resolveAppTextStyle(
       context,
       size: AppTextSize.s12,
@@ -1152,8 +1155,10 @@ class _TaskFilterBar extends StatelessWidget {
                 child: Text('全部任务类型'),
               ),
               ...controller.knownTaskKeys.map(
-                (value) =>
-                    DropdownMenuItem<String?>(value: value, child: Text(value)),
+                (value) => DropdownMenuItem<String?>(
+                  value: value,
+                  child: Text(taskKeyLabels[value] ?? value),
+                ),
               ),
             ],
             onChanged: (value) => controller.applyTaskFilter(
@@ -1220,12 +1225,13 @@ class _MobileTaskFilterEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filter = controller.taskFilter;
+    final taskKeyLabels = controller.knownTaskKeyLabels;
     final isSelected = filter != ActivityTaskFilterState.initial;
     return Row(
       children: [
         Expanded(
           child: Text(
-            _taskFilterSummary(filter),
+            _taskFilterSummary(filter, taskKeyLabels),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: resolveAppTextStyle(
@@ -1246,7 +1252,7 @@ class _MobileTaskFilterEntry extends StatelessWidget {
           onPressed: () => _showMobileActivityTaskFilterDrawer(
             context,
             current: filter,
-            knownTaskKeys: controller.knownTaskKeys,
+            taskKeyLabels: taskKeyLabels,
             onChanged: (next) => unawaited(controller.applyTaskFilter(next)),
           ),
         ),
@@ -1258,7 +1264,7 @@ class _MobileTaskFilterEntry extends StatelessWidget {
 Future<void> _showMobileActivityTaskFilterDrawer(
   BuildContext context, {
   required ActivityTaskFilterState current,
-  required List<String> knownTaskKeys,
+  required Map<String, String> taskKeyLabels,
   required ValueChanged<ActivityTaskFilterState> onChanged,
 }) {
   return showAppBottomDrawer<void>(
@@ -1267,7 +1273,7 @@ Future<void> _showMobileActivityTaskFilterDrawer(
     maxHeightFactor: 0.68,
     builder: (_) => _MobileTaskFilterDrawerContent(
       current: current,
-      knownTaskKeys: knownTaskKeys,
+      taskKeyLabels: taskKeyLabels,
       onChanged: onChanged,
     ),
   );
@@ -1276,12 +1282,12 @@ Future<void> _showMobileActivityTaskFilterDrawer(
 class _MobileTaskFilterDrawerContent extends StatefulWidget {
   const _MobileTaskFilterDrawerContent({
     required this.current,
-    required this.knownTaskKeys,
+    required this.taskKeyLabels,
     required this.onChanged,
   });
 
   final ActivityTaskFilterState current;
-  final List<String> knownTaskKeys;
+  final Map<String, String> taskKeyLabels;
   final ValueChanged<ActivityTaskFilterState> onChanged;
 
   @override
@@ -1350,9 +1356,11 @@ class _MobileTaskFilterDrawerContentState
                 value: null,
                 child: Text('全部任务类型'),
               ),
-              ...widget.knownTaskKeys.map(
-                (value) =>
-                    DropdownMenuItem<String?>(value: value, child: Text(value)),
+              ...widget.taskKeyLabels.entries.map(
+                (entry) => DropdownMenuItem<String?>(
+                  value: entry.key,
+                  child: Text(entry.value),
+                ),
               ),
             ],
             onChanged: (value) => _apply(_local.copyWith(taskKey: value)),
@@ -1399,10 +1407,15 @@ class _MobileTaskFilterDrawerContentState
   }
 }
 
-String _taskFilterSummary(ActivityTaskFilterState filter) {
+String _taskFilterSummary(
+  ActivityTaskFilterState filter,
+  Map<String, String> taskKeyLabels,
+) {
   final values = <String>[];
   if (filter.state != null) values.add(_labelForTaskState(filter.state!));
-  if (filter.taskKey != null) values.add(filter.taskKey!);
+  if (filter.taskKey != null) {
+    values.add(taskKeyLabels[filter.taskKey] ?? filter.taskKey!);
+  }
   if (filter.triggerType != null) {
     values.add(_labelForTriggerType(filter.triggerType!));
   }
@@ -1524,6 +1537,27 @@ class _TaskRunCard extends StatelessWidget {
                 size: AppTextSize.s14,
                 weight: AppTextWeight.regular,
                 tone: AppTextTone.secondary,
+              ),
+            ),
+          ],
+          if ((taskRun.unresolvedFailedFileCount > 0 ||
+                  taskRun.skippedFileCount > 0) &&
+              !taskRun.isActive) ...[
+            SizedBox(height: context.appSpacing.sm),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: AppTextButton(
+                key: Key('activity-task-failed-items-${taskRun.id}'),
+                label: taskRun.unresolvedFailedFileCount > 0
+                    ? '处理失败文件（${taskRun.unresolvedFailedFileCount}）'
+                    : '查看跳过文件（${taskRun.skippedFileCount}）',
+                size: AppTextButtonSize.small,
+                emphasis: AppTextButtonEmphasis.accent,
+                onPressed: () => showImportFailedItemsDialog(
+                  context: context,
+                  taskRunId: taskRun.id,
+                  taskName: taskRun.taskName,
+                ),
               ),
             ),
           ],

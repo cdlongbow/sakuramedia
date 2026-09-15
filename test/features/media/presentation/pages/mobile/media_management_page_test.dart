@@ -151,6 +151,57 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('retries a terminal thumbnail from its mobile card', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'terminal')],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: const []),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('mobile-media-management-retry-thumbnails-1')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-retry-thumbnails-1')),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+    });
+    expect(
+      find.byKey(const Key('mobile-media-management-row-1')),
+      findsNothing,
+    );
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('invalid media reuses the mobile media card', (tester) async {
     adapter.enqueueJson(
       method: 'GET',
@@ -204,6 +255,89 @@ void main() {
     );
     expect(find.text('缩略图状态'), findsOneWidget);
   });
+
+  testWidgets('retries selected terminal thumbnails from mobile actions', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'terminal')],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'terminal')],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: const []),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-filter-trigger')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-thumbnail-generation-filter-terminal')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const Key('mobile-media-management-row-long-press-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(
+        const Key('mobile-media-management-batch-reset-thumbnails-button'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(
+        const Key('mobile-media-management-batch-reset-thumbnails-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(
+        const Key('media-management-batch-reset-thumbnails-confirm-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+    });
+    expect(
+      find.byKey(const Key('mobile-media-management-row-1')),
+      findsNothing,
+    );
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
 
 Future<void> _pumpPage(
@@ -251,7 +385,10 @@ Map<String, dynamic> _mediaPage({required List<Map<String, dynamic>> items}) {
   };
 }
 
-Map<String, dynamic> _mediaItemJson(int id) {
+Map<String, dynamic> _mediaItemJson(
+  int id, {
+  String thumbnailGenerationState = 'succeeded',
+}) {
   return <String, dynamic>{
     'id': id,
     'kind': 'jav',
@@ -267,7 +404,7 @@ Map<String, dynamic> _mediaItemJson(int id) {
     'duration_seconds': 60,
     'resolution': '1920x1080',
     'valid': true,
-    'thumbnail_generation_state': 'succeeded',
+    'thumbnail_generation_state': thumbnailGenerationState,
     'thumbnail_last_error_code': null,
     'heat': 100,
     'created_at': '2026-03-12T10:00:00Z',

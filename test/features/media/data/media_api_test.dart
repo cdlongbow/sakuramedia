@@ -487,6 +487,25 @@ void main() {
     });
   });
 
+  test('resetFailedMediaThumbnails posts selected media IDs', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 2},
+    );
+
+    final resetCount = await mediaApi.resetFailedMediaThumbnails(
+      mediaIds: [12, 34],
+    );
+
+    expect(resetCount, 2);
+    expect(adapter.requests.single.method, 'POST');
+    expect(adapter.requests.single.path, '/media/thumbnail-generation/reset');
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'media_ids': <int>[12, 34],
+    });
+  });
+
   test('getMediaList parses jav and video items', () async {
     adapter.enqueueJson(
       method: 'GET',

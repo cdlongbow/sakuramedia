@@ -308,7 +308,7 @@ class _MediaImportSourcePickerState
             key: Key('media-import-source-disposition-warning'),
             leadingIcon: Icons.warning_amber_rounded,
             title: '导入成功后将删除源文件',
-            description: '仅在媒体已成功入库后由存储提供方执行删除。',
+            description: '在媒体已成功入库后会将源文件删除!!!',
           ),
         ],
       ],
@@ -460,7 +460,7 @@ class _MediaImportSourcePickerState
       children: [
         AppSelectField<SourceDisposition>(
           key: const Key('media-import-picker-source-disposition-select'),
-          label: '源文件处理',
+          label: '导入方式',
           value: widget.sourceDisposition,
           items: SourceDisposition.values
               .map(
@@ -478,7 +478,7 @@ class _MediaImportSourcePickerState
         ),
         SizedBox(height: context.appSpacing.xs),
         Text(
-          '源文件处理方式由存储提供方执行，导入任务会在任务中心显示结果。',
+          '将源文件复制到媒体库中，导入后不会删除源文件',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,

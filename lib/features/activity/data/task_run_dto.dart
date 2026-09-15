@@ -45,6 +45,28 @@ class TaskRunDto {
     return (progressCurrent! / progressTotal!).clamp(0.0, 1.0);
   }
 
+  /// `library_import` 任务里尚未解决的失败文件数（不含主动跳过项）；其他任务或无明细时为 0。
+  ///
+  /// 失败项在后端重试成功后会被标记为 `resolved`，任务中心轮询到新 summary 后
+  /// 计数自然回落，处理入口随之消失。
+  int get unresolvedFailedFileCount => _failedFileItems
+      .where((item) => item['kind'] != 'skipped' && item['state'] != 'resolved')
+      .length;
+
+  /// `library_import` 任务里被主动跳过的文件数（如文件过小/格式不支持），仅信息展示。
+  int get skippedFileCount =>
+      _failedFileItems.where((item) => item['kind'] == 'skipped').length;
+
+  Iterable<Map<String, dynamic>> get _failedFileItems sync* {
+    if (taskKey != 'library_import') return;
+    final failedFiles = resultSummary?['failed_files'];
+    if (failedFiles is! List) return;
+    for (final item in failedFiles) {
+      final map = asMapOrNull(item);
+      if (map != null) yield map;
+    }
+  }
+
   String? get displaySummary {
     if (state == 'failed' &&
         errorMessage != null &&

@@ -50,6 +50,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.movieCardStatusBadgeSize,
     required this.subscriptionHeartHitSize,
     required this.downloadTaskCoverWidth,
+    required this.importMetadataCandidateCoverWidth,
     required this.downloadTaskCardMinHeight,
     required this.downloadTaskProgressHeight,
     required this.mediaManagementRowHeight,
@@ -134,6 +135,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardStatusBadgeSize = 24,
       subscriptionHeartHitSize = 44,
       downloadTaskCoverWidth = 220,
+      importMetadataCandidateCoverWidth = 72,
       downloadTaskCardMinHeight = 120,
       downloadTaskProgressHeight = 6,
       mediaManagementRowHeight = 144,
@@ -217,6 +219,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardStatusBadgeSize = 24,
       subscriptionHeartHitSize = 44,
       downloadTaskCoverWidth = 96,
+      importMetadataCandidateCoverWidth = 72,
       downloadTaskCardMinHeight = 120,
       downloadTaskProgressHeight = 6,
       mediaManagementRowHeight = 144,
@@ -304,6 +307,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   /// 订阅心形等小图标的命中区尺寸：视觉图标保持 24，外层点击区扩大到该值。
   final double subscriptionHeartHitSize;
   final double downloadTaskCoverWidth;
+
+  /// 导入失败项「手动匹配」候选行的竖版封面宽度。
+  final double importMetadataCandidateCoverWidth;
   final double downloadTaskCardMinHeight;
   final double downloadTaskProgressHeight;
   final double mediaManagementRowHeight;
@@ -395,6 +401,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? movieCardStatusBadgeSize,
     double? subscriptionHeartHitSize,
     double? downloadTaskCoverWidth,
+    double? importMetadataCandidateCoverWidth,
     double? downloadTaskCardMinHeight,
     double? downloadTaskProgressHeight,
     double? mediaManagementRowHeight,
@@ -500,6 +507,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
           subscriptionHeartHitSize ?? this.subscriptionHeartHitSize,
       downloadTaskCoverWidth:
           downloadTaskCoverWidth ?? this.downloadTaskCoverWidth,
+      importMetadataCandidateCoverWidth:
+          importMetadataCandidateCoverWidth ??
+          this.importMetadataCandidateCoverWidth,
       downloadTaskCardMinHeight:
           downloadTaskCardMinHeight ?? this.downloadTaskCardMinHeight,
       downloadTaskProgressHeight:
@@ -726,6 +736,11 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       downloadTaskCoverWidth: lerpDouble(
         downloadTaskCoverWidth,
         other.downloadTaskCoverWidth,
+        t,
+      )!,
+      importMetadataCandidateCoverWidth: lerpDouble(
+        importMetadataCandidateCoverWidth,
+        other.importMetadataCandidateCoverWidth,
         t,
       )!,
       downloadTaskCardMinHeight: lerpDouble(

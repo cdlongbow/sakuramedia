@@ -66,16 +66,37 @@ class ActivityCenterState {
 
   bool isTriggeringJob(String taskKey) => triggeringTaskKeys.contains(taskKey);
 
-  List<String> get knownTaskKeys {
-    final values = <String>{};
+  /// 任务 key 到中文展示名的映射（按 key 排序），原始 key 仍用于接口过滤。
+  ///
+  /// 展示名优先取任务运行里后端解析好的中文名，其次用任务定义的 cli_help，
+  /// 都没有时回退 key 本身。
+  Map<String, String> get knownTaskKeyLabels {
+    final keys = <String>{};
+    final names = <String, String>{};
+    void register(String key, String? name) {
+      final normalizedKey = key.trim();
+      if (normalizedKey.isEmpty) return;
+      keys.add(normalizedKey);
+      final normalizedName = (name ?? '').trim();
+      if (normalizedName.isNotEmpty) {
+        names.putIfAbsent(normalizedKey, () => normalizedName);
+      }
+    }
+
     for (final item in <TaskRunDto>[...activeTaskRuns, ...taskRuns]) {
-      if (item.taskKey.trim().isNotEmpty) values.add(item.taskKey);
+      register(item.taskKey, item.taskName);
     }
     for (final item in jobs) {
-      if (item.taskKey.trim().isNotEmpty) values.add(item.taskKey);
+      register(item.taskKey, item.lastTaskRun?.taskName ?? item.cliHelp);
     }
-    return values.toList()..sort();
+    final sortedKeys = keys.toList()..sort();
+    return <String, String>{
+      for (final key in sortedKeys) key: names[key] ?? key,
+    };
   }
+
+  /// 出现过的任务 key，按字典序排序。
+  List<String> get knownTaskKeys => knownTaskKeyLabels.keys.toList();
 
   ActivityCenterState copyWith({
     bool? initialized,

@@ -243,6 +243,53 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('retries a terminal thumbnail from its media card', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(1, thumbnailGenerationState: 'terminal'),
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(method: 'GET', path: '/media', body: _emptyPage());
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('media-management-retry-thumbnails-1')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('media-management-retry-thumbnails-1')),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+    });
+    expect(find.byKey(const Key('media-management-row-1')), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets(
     'submits a provider-neutral media transfer from the batch toolbar',
     (tester) async {
@@ -314,6 +361,84 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     },
   );
+
+  testWidgets('retries selected terminal thumbnails from the filtered list', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(1, thumbnailGenerationState: 'terminal'),
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(1, thumbnailGenerationState: 'terminal'),
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(method: 'GET', path: '/media', body: _emptyPage());
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('media-management-batch-reset-thumbnails-button')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const Key('media-management-filter-trigger')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-thumbnail-generation-filter-terminal')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-filter-trigger')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-reset-thumbnails-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-management-batch-reset-thumbnails-dialog')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(
+        const Key('media-management-batch-reset-thumbnails-confirm-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+    });
+    expect(find.byKey(const Key('media-management-row-1')), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
 
 Future<void> _pumpPage(
@@ -429,6 +554,7 @@ Map<String, dynamic> _duplicateMediaItemJson(
   String kind = 'jav',
   int? videoItemId,
   List<Map<String, dynamic>> collections = const <Map<String, dynamic>>[],
+  String thumbnailGenerationState = 'succeeded',
 }) {
   return <String, dynamic>{
     'id': id,
@@ -445,7 +571,7 @@ Map<String, dynamic> _duplicateMediaItemJson(
     'duration_seconds': 60,
     'resolution': '1920x1080',
     'valid': true,
-    'thumbnail_generation_state': 'succeeded',
+    'thumbnail_generation_state': thumbnailGenerationState,
     'thumbnail_last_error_code': null,
     'heat': 100,
     'collections': collections,

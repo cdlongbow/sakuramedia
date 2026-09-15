@@ -139,6 +139,228 @@ void main() {
     expect(find.byKey(const Key('activity-job-plugin_job_2')), findsOneWidget);
   });
 
+  testWidgets('task key filter lists chinese task names but filters by key', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <dynamic>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <dynamic>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <dynamic>[],
+        'task_runs': <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 601,
+              'task_key': 'download_task_sync',
+              'task_name': '下载任务状态同步',
+              'trigger_type': 'scheduled',
+              'state': 'completed',
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      },
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopActivityPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('activity-task-key-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('全部任务类型'), findsNWidgets(2));
+    expect(find.text('下载任务状态同步'), findsWidgets);
+    expect(find.text('download_task_sync'), findsNothing);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': const <dynamic>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+    await tester.tap(find.text('下载任务状态同步').last);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final request = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/system/task-runs',
+    );
+    expect(request.uri.queryParameters['task_key'], 'download_task_sync');
+    expect(find.text('download_task_sync'), findsNothing);
+  });
+
+  testWidgets('completed import task exposes failed file handling entry', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <dynamic>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <dynamic>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <dynamic>[],
+        'task_runs': <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 301,
+              'task_key': 'library_import',
+              'task_name': 'JAV媒体库导入',
+              'trigger_type': 'manual',
+              'state': 'failed',
+              'result_summary': <String, dynamic>{
+                'failed_count': 1,
+                'failed_files': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'failure-1',
+                    'state': 'pending',
+                    'reason': 'movie_number_not_found',
+                    'kind': 'file',
+                  },
+                ],
+              },
+            },
+            <String, dynamic>{
+              'id': 302,
+              'task_key': 'library_import',
+              'task_name': '视频导入',
+              'trigger_type': 'manual',
+              'state': 'completed',
+              'result_summary': <String, dynamic>{
+                'failed_count': 0,
+                'failed_files': <Map<String, dynamic>>[
+                  <String, dynamic>{
+                    'id': 'skipped-1',
+                    'state': 'pending',
+                    'reason': 'unsupported_format',
+                    'kind': 'skipped',
+                  },
+                  <String, dynamic>{
+                    'id': 'skipped-2',
+                    'state': 'pending',
+                    'reason': 'file_too_small',
+                    'kind': 'skipped',
+                  },
+                ],
+              },
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/imports/301/failed-items',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'failure-1',
+          'relative_path': 'release/no-number.mp4',
+          'size_bytes': 2048,
+          'is_video': true,
+          'reason': 'movie_number_not_found',
+          'detail': '无法从文件名识别番号',
+          'kind': 'file',
+          'state': 'pending',
+          'retry_task_run_id': null,
+          'resolved_movie_id': null,
+          'resolved_media_id': null,
+          'last_retry_error': null,
+          'can_manual_search': true,
+        },
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopActivityPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final entry = find.byKey(const Key('activity-task-failed-items-301'));
+    expect(entry, findsOneWidget);
+    expect(find.text('处理失败文件（1）'), findsOneWidget);
+    expect(find.byKey(const Key('activity-task-failed-items-302')), findsOneWidget);
+    expect(find.text('查看跳过文件（2）'), findsOneWidget);
+
+    await tester.tap(entry);
+    await tester.pumpAndSettle();
+
+    expect(find.text('失败与跳过文件'), findsOneWidget);
+    expect(find.text('no-number.mp4'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
   testWidgets('retained page follows visibility and updated download intent', (
     tester,
   ) async {

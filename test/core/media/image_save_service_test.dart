@@ -25,7 +25,7 @@ void main() {
       );
 
       expect(result.status, ImageSaveStatus.success);
-      expect(result.savedPath, '/tmp/photo.jpg');
+      expect(result.savedPath, Uri.file('/tmp/photo.jpg').toFilePath());
       expect(picker.fileName, 'photo.jpg');
       expect(picker.bytes, [1, 2, 3]);
       expect(picker.mimeType, 'image/jpeg');

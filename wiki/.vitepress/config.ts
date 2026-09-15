@@ -11,7 +11,7 @@ export default defineConfig({
     nav: [
       { text: '开始使用', link: '/guide/introduction' },
       { text: '使用手册', link: '/manual/' },
-      { text: '产品理念', link: '/guide/collection-strategy' },
+      { text: '设计理念', link: '/guide/collection-strategy' },
     ],
 
     sidebar: [
@@ -67,7 +67,7 @@ export default defineConfig({
         ],
       },
       {
-        text: '产品理念',
+        text: '设计理念',
         collapsed: true,
         items: [
           { text: '为什么做 SakuraMedia', link: '/guide/collection-strategy' },

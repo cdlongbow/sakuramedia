@@ -36,7 +36,7 @@ docker exec -it --user app -w /app sakuramedia python -m src.start.commands rese
 
 ### 为什么“女优上新”是空的？
 
-该页面只展示已订阅女优的影片更新。没有订阅或没有符合条件的新作时，空列表是正常结果。
+该页面只展示已订阅女优的影片更新。没有订阅、同步任务尚未完成或没有符合条件的新作时，空列表是正常结果。女优订阅不会主动订阅她的影片，看到想看的作品后需要单独订阅影片。详见[发现与女优订阅](/manual/discover)。
 
 ### 以图搜图需要什么条件？
 
@@ -48,7 +48,7 @@ docker exec -it --user app -w /app sakuramedia python -m src.start.commands rese
 
 ### 导入普通视频时如何选择来源？
 
-进入「管理 → 媒体导入」，选择「普通视频」和目标媒体库，再使用 provider 来源浏览器选择文件或目录。提交的数据是 provider 能理解的 `source_ref`，不需要填写宿主机目录或下载器目录。
+进入「管理 → 资源导入」，切换到「视频」，新建导入并选择目标媒体库，再使用来源浏览器选择文件或目录。导入前确认是否保留源文件。
 
 普通视频可以归入视频合集；导入任务完成后，在合集页调整成员顺序即可。详情见[普通视频与视频合集](/guide/videos)。
 
@@ -94,6 +94,10 @@ docker exec -it --user app -w /app sakuramedia python -m src.start.commands rese
 
 ## 切片与视频合集
 
+### 删除媒体后，时刻还在吗？
+
+当前版本会随媒体删除关联时刻及其合集成员关系。时刻不支持脱离媒体后自动接回。已生成的独立切片会保留，清理前请先验证切片可播放。详见[媒体库管理](/manual/media-management)。
+
 ### 切片存在哪里？
 
 切片是独立的 mp4 文件，存放在 `[media].media_clip_root_path`（默认 `/data/media-clips`）。该目录需要持久化，删除来源影片不会删除切片文件。
@@ -105,6 +109,12 @@ docker exec -it --user app -w /app sakuramedia python -m src.start.commands rese
 ### 视频合集可以连续播放吗？
 
 可以。合集保存视频成员及顺序，播放时客户端按顺序播放；同一个视频可以加入多个合集。
+
+## 使用教程
+
+- [使用手册阅读导航](/manual/)
+- [订阅状态与处理方法](/manual/subscriptions)
+- [导入已有资源](/manual/import)
 
 ## 相关页面
 

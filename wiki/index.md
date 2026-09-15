@@ -13,6 +13,9 @@ hero:
       text: 快速开始
       link: /guide/quick-start
     - theme: alt
+      text: 使用手册
+      link: /manual/
+    - theme: alt
       text: GitHub
       link: https://github.com/tinypinglite/sakuramedia
     - theme: alt

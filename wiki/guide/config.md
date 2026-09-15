@@ -183,8 +183,8 @@ subscription_search_stale_attempt_limit = 3
 
 | 字段 | 作用 |
 |---|---|
-| `subscription_search_fresh_days` | 订阅影片搜索结果保持新鲜的天数。 |
-| `subscription_search_stale_attempt_limit` | 连续未找到结果后进入等待状态前的尝试次数。 |
+| `subscription_search_fresh_days` | 按影片发行日期划分新片的天数；新片查询未找到资源时不消耗老片尝试次数。 |
+| `subscription_search_stale_attempt_limit` | 老片每轮未找到可用资源的次数上限；达到后标记为「已放弃」，需手动重置查询。 |
 
 索引器与下载器的选择通过索引器绑定关系决定；provider 自己的连接参数在媒体库或下载器配置中填写。
 

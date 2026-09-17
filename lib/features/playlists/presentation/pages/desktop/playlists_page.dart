@@ -253,7 +253,7 @@ class _DesktopPlaylistsLoadingState extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               key: const Key('playlists-page-loading'),
-              itemCount: 3,
+              itemCount: 18,
               separatorBuilder: (_, _) => SizedBox(height: spacing.sm),
               itemBuilder: (_, _) => const PlaylistBannerCardSkeleton(),
             ),

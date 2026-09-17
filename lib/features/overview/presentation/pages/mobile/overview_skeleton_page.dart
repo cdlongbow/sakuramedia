@@ -504,7 +504,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
     final height = context.appComponentTokens.playlistBannerHeight;
 
     return Column(
-      children: List<Widget>.generate(2, (index) {
+      children: List<Widget>.generate(6, (index) {
         return Padding(
           padding: EdgeInsets.only(bottom: context.appSpacing.sm),
           child: Container(

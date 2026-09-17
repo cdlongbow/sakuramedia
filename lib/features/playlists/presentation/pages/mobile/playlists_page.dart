@@ -278,9 +278,9 @@ class _MobilePlaylistsLoadingSection extends StatelessWidget {
 
     return Column(
       children: List<Widget>.generate(
-        3,
+        18,
         (index) => Padding(
-          padding: EdgeInsets.only(bottom: index == 2 ? 0 : spacing.sm),
+          padding: EdgeInsets.only(bottom: index == 17 ? 0 : spacing.sm),
           child: _MobilePlaylistSkeletonCard(
             key: Key('mobile-playlist-skeleton-$index'),
           ),

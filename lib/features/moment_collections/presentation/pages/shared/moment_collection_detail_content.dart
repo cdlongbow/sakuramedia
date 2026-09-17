@@ -148,7 +148,7 @@ class MomentCollectionDetailContent extends ConsumerWidget {
           key: ValueKey<int>(point.pointId),
           item: item,
           index: index,
-          onTap: () => _preview(context, item),
+          onTap: () => _preview(context, ref, item),
           onRemove: notifier.isMutating
               ? null
               : () => _remove(context, ref, point.pointId),
@@ -194,11 +194,25 @@ class MomentCollectionDetailContent extends ConsumerWidget {
     }
   }
 
-  Future<void> _preview(BuildContext context, MomentListItem item) async {
+  Future<void> _preview(
+    BuildContext context,
+    WidgetRef ref,
+    MomentListItem item,
+  ) async {
     final action = await showMomentPreviewOverlay(
       context: context,
       item: item,
+      pointId: item.pointId,
       presentation: MediaPreviewPresentation.auto,
+      onPointRemoved: () {
+        ref
+            .read(momentCollectionDetailProvider(collectionId).notifier)
+            .refresh();
+        ref
+            .read(momentCollectionMutationEventsProvider.notifier)
+            .reportChanged(collectionId);
+      },
+      closeOnPointRemoved: true,
     );
     if (!context.mounted || action != MediaPreviewAction.play) return;
     if (item.isVideo) {
@@ -260,7 +274,10 @@ class _MomentCollectionPointRow extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(formatMediaTimecode(item.offsetSeconds)),
+        subtitle: Text(
+          '${item.mediaId <= 0 ? '来源已删除 · ' : ''}'
+          '${formatMediaTimecode(item.offsetSeconds)}',
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

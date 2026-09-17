@@ -82,11 +82,19 @@ class MomentCard extends StatelessWidget {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              item.displayLabel,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: labelTextStyle,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.displayLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: labelTextStyle,
+                                ),
+                                if (item.mediaId <= 0)
+                                  Text('来源已删除', style: labelTextStyle),
+                              ],
                             ),
                           ),
                           SizedBox(width: spacing.sm),

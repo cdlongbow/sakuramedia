@@ -164,7 +164,7 @@ void main() {
     _enqueueMomentsPageResponses(bundle, sort: 'created_at:desc');
     bundle.adapter.enqueueJson(
       method: 'DELETE',
-      path: '/media/456/points/10',
+      path: '/media-points/10',
       statusCode: 204,
     );
     bundle.adapter.enqueueJson(
@@ -197,14 +197,14 @@ void main() {
       find.byKey(const Key('moments-batch-delete-confirm-button')),
       findsOneWidget,
     );
-    expect(find.textContaining('只会删除时刻标记'), findsOneWidget);
+    expect(find.textContaining('不会删除原视频或切片'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const Key('moments-batch-delete-confirm-button')),
     );
     await tester.pumpAndSettle();
 
-    expect(bundle.adapter.hitCount('DELETE', '/media/456/points/10'), 1);
+    expect(bundle.adapter.hitCount('DELETE', '/media-points/10'), 1);
     expect(find.text('ABC-001'), findsNothing);
     expect(find.text('0 个时刻'), findsOneWidget);
     expect(find.text('已选 1 个'), findsNothing);

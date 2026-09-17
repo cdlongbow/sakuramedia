@@ -187,6 +187,10 @@ class MediaApi {
     return _apiClient.deleteNoContent('/media/$mediaId/points/$pointId');
   }
 
+  Future<void> deleteMediaPointById({required int pointId}) {
+    return _apiClient.deleteNoContent('/media-points/$pointId');
+  }
+
   Future<void> deleteMedia({required int mediaId}) {
     return _apiClient.deleteNoContent('/media/$mediaId');
   }

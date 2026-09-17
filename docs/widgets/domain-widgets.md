@@ -42,7 +42,7 @@
 
 包含 `MomentCard`、`MomentGrid`、`MomentImage` 和时刻预览适配器
 `moment_preview_launcher.dart`（内部复用 `MediaPreviewDialog`）。时刻筛选和数据加载由
-moments feature 负责。
+moments feature 负责。已有时刻通过 `pointId` 执行删除和合集操作；来源媒体删除后仍可查看图片，显示“来源已删除”并隐藏播放入口。
 
 ## playlists and search
 

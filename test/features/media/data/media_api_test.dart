@@ -31,6 +31,50 @@ void main() {
     apiClient.dispose();
   });
 
+  for (final video in [false, true]) {
+    test(
+      'orphan point keeps its ${video ? 'video' : 'JAV'} classification',
+      () async {
+        adapter.enqueueJson(
+          method: 'GET',
+          path: '/media-points',
+          body: {
+            'items': [
+              {
+                'point_id': 20,
+                'media_id': null,
+                'thumbnail_id': null,
+                'movie_number': video ? null : 'ABC-001',
+                'video_item_id': video ? 7 : null,
+                'offset_seconds': 90,
+                'image': {'id': 5, 'origin': '/saved.webp'},
+              },
+            ],
+            'page': 1,
+            'page_size': 20,
+            'total': 1,
+          },
+        );
+        final page = await mediaApi.getGlobalMediaPoints(
+          kind: video ? 'video' : 'jav',
+        );
+        final point = page.items.single;
+        expect(point.mediaId, 0);
+        expect(point.thumbnailId, 0);
+        expect(point.isVideo, video);
+        expect(point.image?.bestAvailableUrl, '/saved.webp');
+        adapter.enqueueJson(
+          method: 'DELETE',
+          path: '/media-points/20',
+          statusCode: 204,
+          body: null,
+        );
+        await mediaApi.deleteMediaPointById(pointId: point.pointId);
+        expect(adapter.hitCount('DELETE', '/media-points/20'), 1);
+      },
+    );
+  }
+
   test('getMediaPoints maps GET /media/{media_id}/points', () async {
     adapter.enqueueJson(
       method: 'GET',

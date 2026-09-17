@@ -732,6 +732,7 @@ class MomentsContent extends HookConsumerWidget {
     final action = await showMomentPreviewOverlay(
       context: context,
       item: item,
+      pointId: item.pointId,
       presentation: MediaPreviewPresentation.auto,
       drawerKey: previewDrawerKey,
       onPointRemoved: () => unawaited(_refreshAfterPointDelete(ref)),
@@ -820,7 +821,7 @@ class MomentsContent extends HookConsumerWidget {
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除时刻',
-      message: '确认删除选中的 ${selected.length} 个时刻？只会删除时刻标记，不会删除原视频或媒体文件。',
+      message: '确认删除选中的 ${selected.length} 个时刻？不会删除原视频或切片。',
       confirmLabel: '删除',
       danger: true,
       dialogKey: Key('$keyPrefix-batch-delete-dialog'),
@@ -833,7 +834,7 @@ class MomentsContent extends HookConsumerWidget {
       items: selected,
       action: (item) => ref
           .read(mediaApiProvider)
-          .deleteMediaPoint(mediaId: item.mediaId, pointId: item.pointId),
+          .deleteMediaPointById(pointId: item.pointId),
     );
     if (!context.mounted) return;
     onFinished();

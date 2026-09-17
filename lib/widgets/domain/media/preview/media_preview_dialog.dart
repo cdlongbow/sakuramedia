@@ -9,7 +9,6 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -33,6 +32,7 @@ class MediaPreviewItem {
     required this.thumbnailId,
     required this.offsetSeconds,
     this.scoreText,
+    this.pointId,
   });
 
   final String imageUrl;
@@ -44,6 +44,7 @@ class MediaPreviewItem {
   final int thumbnailId;
   final int offsetSeconds;
   final String? scoreText;
+  final int? pointId;
 
   bool get isVideo => videoItemId != null && videoItemId! > 0;
 }
@@ -129,7 +130,7 @@ class MediaPreviewDialog extends ConsumerStatefulWidget {
 class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   final ScrollController _actorScrollController = ScrollController();
   MovieDetailDto? _movieDetail;
-  List<MediaPointDto> _mediaPoints = const <MediaPointDto>[];
+  int? _pointId;
   bool _isLoadingMovieDetail = true;
   bool _isLoadingMediaPoints = true;
   bool _isSavingImage = false;
@@ -140,6 +141,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   @override
   void initState() {
     super.initState();
+    _pointId = widget.item.pointId;
     _loadData();
   }
 
@@ -194,6 +196,10 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   }
 
   Future<void> _loadMediaPoints() async {
+    if (_pointId != null) {
+      setState(() => _isLoadingMediaPoints = false);
+      return;
+    }
     if (widget.item.mediaId <= 0) {
       setState(() {
         _isLoadingMediaPoints = false;
@@ -214,7 +220,13 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         return;
       }
       setState(() {
-        _mediaPoints = points;
+        _pointId = null;
+        for (final point in points) {
+          if (point.thumbnailId == widget.item.thumbnailId) {
+            _pointId = point.pointId;
+            break;
+          }
+        }
       });
     } catch (error) {
       if (!mounted) {
@@ -232,28 +244,19 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     }
   }
 
-  MediaPointDto? get _existingPoint {
-    for (final point in _mediaPoints) {
-      if (point.thumbnailId == widget.item.thumbnailId) {
-        return point;
-      }
-    }
-    return null;
-  }
-
   bool get _canTogglePoint =>
-      widget.item.mediaId > 0 &&
-      widget.item.thumbnailId > 0 &&
       !_isLoadingMediaPoints &&
-      _mediaPointsErrorMessage == null;
+      _mediaPointsErrorMessage == null &&
+      (_pointId != null ||
+          (widget.item.mediaId > 0 && widget.item.thumbnailId > 0));
 
   bool get _canSearchSimilar =>
       widget.availableActions.contains(MediaPreviewAction.searchSimilar);
 
   bool get _canAddToCollection =>
       widget.availableActions.contains(MediaPreviewAction.addToCollection) &&
-      widget.item.mediaId > 0 &&
-      widget.item.thumbnailId > 0;
+      (_pointId != null ||
+          (widget.item.mediaId > 0 && widget.item.thumbnailId > 0));
 
   bool get _canPlay =>
       widget.item.mediaId > 0 &&
@@ -342,8 +345,8 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           onTap: _handleSaveToLocal,
         ),
         MediaPreviewActionItem(
-          label: _existingPoint == null ? '添加标记' : '删除标记',
-          icon: _existingPoint == null
+          label: _pointId == null ? '添加标记' : '删除标记',
+          icon: _pointId == null
               ? Icons.bookmark_add_outlined
               : Icons.bookmark_remove_outlined,
           isLoading: _isTogglingPoint,
@@ -480,7 +483,9 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
 
   String get _summaryText {
     final scoreText = widget.item.scoreText;
-    final fragments = <String>[];
+    final fragments = <String>[
+      if (widget.item.pointId != null && widget.item.mediaId <= 0) '来源已删除',
+    ];
     if (scoreText != null && scoreText.isNotEmpty) {
       fragments.add('相似度 $scoreText');
     }
@@ -634,8 +639,8 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     }
     setState(() => _isTogglingPoint = true);
     try {
-      final existingPoint = _existingPoint;
-      if (existingPoint == null) {
+      final pointId = _pointId;
+      if (pointId == null) {
         final point = await ref
             .read(mediaApiProvider)
             .createMediaPoint(
@@ -646,23 +651,16 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           return;
         }
         setState(() {
-          _mediaPoints = <MediaPointDto>[..._mediaPoints, point];
+          _pointId = point.pointId;
         });
         showToast('已添加标记');
       } else {
-        await ref
-            .read(mediaApiProvider)
-            .deleteMediaPoint(
-              mediaId: widget.item.mediaId,
-              pointId: existingPoint.pointId,
-            );
+        await ref.read(mediaApiProvider).deleteMediaPointById(pointId: pointId);
         if (!mounted) {
           return;
         }
         setState(() {
-          _mediaPoints = _mediaPoints
-              .where((point) => point.pointId != existingPoint.pointId)
-              .toList(growable: false);
+          _pointId = null;
         });
         widget.onPointRemoved?.call();
         showToast('已删除标记');

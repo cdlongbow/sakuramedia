@@ -8,6 +8,8 @@ Future<MediaPreviewAction?> showMomentPreviewOverlay({
   required MomentListItem item,
   required MediaPreviewPresentation presentation,
   Key? drawerKey,
+  // 仅传真实收藏 ID；推荐条目的 item.pointId 是推荐 ID。
+  int? pointId,
   VoidCallback? onPointRemoved,
   bool closeOnPointRemoved = false,
   bool allowAddToCollection = false,
@@ -23,6 +25,7 @@ Future<MediaPreviewAction?> showMomentPreviewOverlay({
     builder: (_) => MediaPreviewDialog(
       item: MediaPreviewItem(
         imageUrl: imageUrl,
+        pointId: pointId,
         fileName: buildMomentImageFileName(item, imageUrl),
         mediaId: item.mediaId,
         movieNumber: item.movieNumber,
@@ -32,7 +35,8 @@ Future<MediaPreviewAction?> showMomentPreviewOverlay({
       ),
       availableActions: <MediaPreviewAction>{
         if (imageUrl.isNotEmpty) MediaPreviewAction.searchSimilar,
-        if (allowAddToCollection && item.mediaId > 0 && item.thumbnailId > 0)
+        if (allowAddToCollection &&
+            (pointId != null || (item.mediaId > 0 && item.thumbnailId > 0)))
           MediaPreviewAction.addToCollection,
         if (item.mediaId > 0) MediaPreviewAction.play,
         if (!item.isVideo && movieNumber != null && movieNumber.isNotEmpty)

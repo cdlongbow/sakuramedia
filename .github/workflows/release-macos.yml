@@ -8,11 +8,11 @@ permissions:
 
 jobs:
   build-and-release:
-    name: Build macOS zip and publish release
+    name: Build macOS dmg and publish release
     runs-on: macos-latest
 
     env:
-      ARCHIVE_NAME: sakuramedia-macos-${{ github.ref_name }}-unsigned.zip
+      DMG_NAME: sakuramedia-macos-${{ github.ref_name }}-unsigned.dmg
 
     steps:
       - name: Checkout repository
@@ -38,7 +38,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           flutter build macos --release --build-name="$VERSION"
 
-      - name: Package unsigned app
+      - name: Package unsigned dmg
         run: |
           mkdir -p dist
           release_dir="build/macos/Build/Products/Release"
@@ -60,18 +60,35 @@ jobs:
 
           app_path="${apps[0]}"
           echo "Packaging app bundle: ${app_path}"
-          ditto -c -k --sequesterRsrc --keepParent \
-            "${app_path}" \
-            "dist/${ARCHIVE_NAME}"
-          shasum -a 256 "dist/${ARCHIVE_NAME}" > "dist/${ARCHIVE_NAME}.sha256"
+
+          # hdiutil 是 macOS 自带工具：.app + /Applications 软链，双击 dmg 后可拖拽安装。
+          staging="$(mktemp -d)"
+          cp -R "${app_path}" "${staging}/"
+          ln -s /Applications "${staging}/Applications"
+
+          # hdiutil 在 CI 上偶发 Resource busy（create-dmg / electron-builder 均做重试），这里做有界重试。
+          attempt=1
+          until hdiutil create -volname "樱视" -srcfolder "${staging}" -ov -format UDZO "dist/${DMG_NAME}"; do
+            if [ "${attempt}" -ge 3 ]; then
+              echo "::error::hdiutil create failed after ${attempt} attempts"
+              rm -rf "${staging}"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            echo "hdiutil create failed, retrying (${attempt}/3)..."
+            sleep 5
+          done
+          rm -rf "${staging}"
+
+          shasum -a 256 "dist/${DMG_NAME}" > "dist/${DMG_NAME}.sha256"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-release-${{ github.ref_name }}
           path: |
-            dist/${{ env.ARCHIVE_NAME }}
-            dist/${{ env.ARCHIVE_NAME }}.sha256
+            dist/${{ env.DMG_NAME }}
+            dist/${{ env.DMG_NAME }}.sha256
           if-no-files-found: error
 
       - name: Publish GitHub release
@@ -80,5 +97,5 @@ jobs:
           name: sakuramedia ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            dist/${{ env.ARCHIVE_NAME }}
-            dist/${{ env.ARCHIVE_NAME }}.sha256
+            dist/${{ env.DMG_NAME }}
+            dist/${{ env.DMG_NAME }}.sha256

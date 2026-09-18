@@ -38,6 +38,7 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_thum
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
+import 'package:sakuramedia/features/overview/presentation/pages/mobile/latest_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/system_overview_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlists_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
@@ -281,6 +282,26 @@ class MobileSettingsPluginsRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobilePluginsPage();
+  }
+}
+
+@TypedGoRoute<MobileLatestMoviesRouteData>(path: mobileLatestMoviesPath)
+class MobileLatestMoviesRouteData extends _MobileSubpageRouteData
+    with $MobileLatestMoviesRouteData {
+  const MobileLatestMoviesRouteData();
+
+  @override
+  String get pageName => 'mobile-latest-movies';
+
+  @override
+  String get title => '最近添加';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileLatestMoviesPage();
   }
 }
 

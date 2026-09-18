@@ -31,6 +31,7 @@ class MoviesApi {
     int? heatMax,
     String? resolution,
     bool? blacklisted,
+    String? query,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -38,6 +39,9 @@ class MoviesApi {
       'page': page,
       'page_size': pageSize,
     };
+    if (query != null && query.isNotEmpty) {
+      queryParameters['query'] = query;
+    }
     if (status != null) {
       queryParameters['status'] = status.apiValue;
     }
@@ -206,16 +210,6 @@ class MoviesApi {
       data: <String, dynamic>{'query': query.trim()},
     );
     return ParsedMovieNumberDto.fromJson(response);
-  }
-
-  Future<List<MovieListItemDto>> searchLocalMovies({
-    required String movieNumber,
-  }) async {
-    final response = await _apiClient.getList(
-      '/movies/search/local',
-      queryParameters: <String, dynamic>{'movie_number': movieNumber},
-    );
-    return response.map(MovieListItemDto.fromJson).toList(growable: false);
   }
 
   Future<MovieCollectionStatusDto> getMovieCollectionStatus({

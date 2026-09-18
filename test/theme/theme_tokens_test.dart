@@ -87,7 +87,6 @@ void main() {
     expect(textPalette.success, const Color(0xFF027A48));
     expect(spacing.xl, 24);
     expect(radius.lg, 16);
-    expect(componentTokens.overviewStatTileMinWidth, 150);
     expect(componentTokens.desktopTitleBarHeight, 56);
     expect(componentTokens.desktopMacTrafficLightInsetWidth, 52);
     expect(componentTokens.desktopTitleBarControlGap, 8);

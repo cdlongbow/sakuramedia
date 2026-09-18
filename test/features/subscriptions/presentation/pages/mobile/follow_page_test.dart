@@ -22,8 +22,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('mobile-follow-page')), findsOneWidget);
-    expect(find.byKey(const Key('mobile-follow-page-total')), findsOneWidget);
-    expect(find.text('19 部'), findsOneWidget);
     expect(
       find.byKey(const Key('movie-summary-card-FOLLOW-001')),
       findsOneWidget,
@@ -41,6 +39,35 @@ void main() {
     expect(
       bundle.adapter.hitCount('GET', '/movies/subscribed-actors/latest'),
       2,
+    );
+  });
+
+  testWidgets('mobile follow page enters selection from the card menu', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueFollowPage(bundle, page: 1, start: 1, count: 2, total: 2);
+
+    await _pumpFollowPage(tester, sessionStore: sessionStore, bundle: bundle);
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const Key('movie-summary-card-FOLLOW-001')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('选择'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('app-list-header-selection-label')),
+      findsOneWidget,
+    );
+    expect(find.text('已选 1 部'), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-list-batch-bottom-bar')),
+      findsOneWidget,
     );
   });
 }

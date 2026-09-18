@@ -13,6 +13,7 @@ List<RouteBase> get $appRoutes => [
   $mobileSearchQueryRouteData,
   $mobileSettingsMediaLibrariesRouteData,
   $mobileSettingsPluginsRouteData,
+  $mobileLatestMoviesRouteData,
   $mobileSystemOverviewRouteData,
   $mobileMediaImportRouteData,
   $mobileActivityRouteData,
@@ -261,6 +262,33 @@ mixin $MobileSettingsPluginsRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/mobile/settings/plugins');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileLatestMoviesRouteData => GoRouteData.$route(
+  path: '/mobile/library/latest',
+  hasOverriddenOnExit: false,
+  factory: $MobileLatestMoviesRouteData._fromState,
+);
+
+mixin $MobileLatestMoviesRouteData on GoRouteData {
+  static MobileLatestMoviesRouteData _fromState(GoRouterState state) =>
+      const MobileLatestMoviesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/library/latest');
 
   @override
   void go(BuildContext context) => context.go(location);

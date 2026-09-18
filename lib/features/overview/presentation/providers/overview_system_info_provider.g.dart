@@ -14,8 +14,9 @@ part of 'overview_system_info_provider.dart';
 /// autoDispose，离开页面即释放。
 ///
 /// - [load] 不置 loading 标志([refresh] 才置)——桌面概览页刷新走 [load],
-///   统计条不闪骨架;移动页刷新走 [refresh],闪骨架。
-/// - 元数据源探针进行中直接 return；系统信息与图片搜索两条加载腿不加重入锁。
+///   卡片不闪骨架;移动页刷新走 [refresh],闪骨架。
+/// - 元数据源探针进行中直接 return；其余加载腿不加重入锁。
+/// - 图搜索引状态失败静默（UI 显示「不可用」），不打扰主信息。
 
 @ProviderFor(OverviewSystemInfo)
 final overviewSystemInfoProvider = OverviewSystemInfoProvider._();
@@ -26,8 +27,9 @@ final overviewSystemInfoProvider = OverviewSystemInfoProvider._();
 /// autoDispose，离开页面即释放。
 ///
 /// - [load] 不置 loading 标志([refresh] 才置)——桌面概览页刷新走 [load],
-///   统计条不闪骨架;移动页刷新走 [refresh],闪骨架。
-/// - 元数据源探针进行中直接 return；系统信息与图片搜索两条加载腿不加重入锁。
+///   卡片不闪骨架;移动页刷新走 [refresh],闪骨架。
+/// - 元数据源探针进行中直接 return；其余加载腿不加重入锁。
+/// - 图搜索引状态失败静默（UI 显示「不可用」），不打扰主信息。
 final class OverviewSystemInfoProvider
     extends $NotifierProvider<OverviewSystemInfo, OverviewSystemInfoState> {
   /// 系统概览(一次性加载 + 两个手动探针,无轮询)。
@@ -36,8 +38,9 @@ final class OverviewSystemInfoProvider
   /// autoDispose，离开页面即释放。
   ///
   /// - [load] 不置 loading 标志([refresh] 才置)——桌面概览页刷新走 [load],
-  ///   统计条不闪骨架;移动页刷新走 [refresh],闪骨架。
-  /// - 元数据源探针进行中直接 return；系统信息与图片搜索两条加载腿不加重入锁。
+  ///   卡片不闪骨架;移动页刷新走 [refresh],闪骨架。
+  /// - 元数据源探针进行中直接 return；其余加载腿不加重入锁。
+  /// - 图搜索引状态失败静默（UI 显示「不可用」），不打扰主信息。
   OverviewSystemInfoProvider._()
     : super(
         from: null,
@@ -66,7 +69,7 @@ final class OverviewSystemInfoProvider
 }
 
 String _$overviewSystemInfoHash() =>
-    r'487a0622b0d0933964e5a80765c9fef8aa2a5774';
+    r'3adb4ee7f8877000365c03745806dbd0a794d064';
 
 /// 系统概览(一次性加载 + 两个手动探针,无轮询)。
 ///
@@ -74,8 +77,9 @@ String _$overviewSystemInfoHash() =>
 /// autoDispose，离开页面即释放。
 ///
 /// - [load] 不置 loading 标志([refresh] 才置)——桌面概览页刷新走 [load],
-///   统计条不闪骨架;移动页刷新走 [refresh],闪骨架。
-/// - 元数据源探针进行中直接 return；系统信息与图片搜索两条加载腿不加重入锁。
+///   卡片不闪骨架;移动页刷新走 [refresh],闪骨架。
+/// - 元数据源探针进行中直接 return；其余加载腿不加重入锁。
+/// - 图搜索引状态失败静默（UI 显示「不可用」），不打扰主信息。
 
 abstract class _$OverviewSystemInfo extends $Notifier<OverviewSystemInfoState> {
   OverviewSystemInfoState build();

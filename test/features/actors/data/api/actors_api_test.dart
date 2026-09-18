@@ -101,6 +101,7 @@ void main() {
       subscriptionStatus: ActorSubscriptionStatus.unsubscribed,
       gender: ActorGender.male,
       sort: 'movie_count:desc',
+      query: '三上',
       page: 1,
       pageSize: 24,
     );
@@ -111,6 +112,7 @@ void main() {
     expect(request.uri.queryParameters['subscription_status'], 'unsubscribed');
     expect(request.uri.queryParameters['gender'], 'male');
     expect(request.uri.queryParameters['sort'], 'movie_count:desc');
+    expect(request.uri.queryParameters['query'], '三上');
     expect(request.uri.queryParameters['page'], '1');
     expect(request.uri.queryParameters['page_size'], '24');
   });

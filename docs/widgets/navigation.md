@@ -16,6 +16,12 @@
 
 标签影片页用 feature 内的 `TagSelectionHeader` 固定选择入口、横向已选摘要和匹配模式；完整 `TagSelectorPanel` 在移动底部抽屉或桌面浮层内滚动，选择即时生效。
 
+## `AppSectionHeader`
+
+路径：`app_section_header.dart`
+
+内容区内的分区标题行：`标题（+可选数量）……右侧动作入口`。用于「发现」「概览」这类由多个预览分区拼成的页面，动作用 `AppTextButton`（默认「更多」+ chevron），跳转由调用方决定；没有落点页或窄布局时可只传标题。
+
 ## `AppFilterEntryButton`
 
 路径：`app_filter_entry_button.dart`

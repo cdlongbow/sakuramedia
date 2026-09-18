@@ -22,6 +22,9 @@ part 'catalog_search_provider.g.dart';
 /// 搜索流，并以版本号丢弃旧查询的迟到回包，逐项复刻原控制器的竞态语义。
 @riverpod
 class CatalogSearch extends _$CatalogSearch {
+  /// 本地关键词搜索一次性拉取的条数；结果不走分页，超出部分用户需收窄关键词。
+  static const int _localSearchPageSize = 50;
+
   KeepAliveLink? _cacheLink;
   StreamSubscription<Object?>? _activeSearchSubscription;
   int _requestVersion = 0;
@@ -97,58 +100,15 @@ class CatalogSearch extends _$CatalogSearch {
     );
 
     try {
-      final parsed = await ref
-          .read(moviesApiProvider)
-          .parseMovieNumber(query: trimmed);
-      if (!_isCurrent(requestVersion)) {
-        return;
-      }
-
-      var isActualOnlineSearch = useOnlineSearch;
-      if (parsed.parsed && (parsed.movieNumber?.isNotEmpty ?? false)) {
-        state = state.copyWith(
-          lastResolvedKind: CatalogSearchKind.movies,
-          activeKind: CatalogSearchKind.movies,
-          isOnlineSearchActive: isActualOnlineSearch,
-        );
-        if (isActualOnlineSearch) {
-          state = state.copyWith(
-            streamStatus: const CatalogSearchStreamStatus(
-              message: '正在从外部数据源搜索影片',
-              isRunning: true,
-              isFailure: false,
-            ),
-          );
-          await _consumeMovieOnlineSearch(
-            requestVersion: requestVersion,
-            movieNumber: parsed.movieNumber!,
-          );
-        } else {
-          final results = await ref
-              .read(moviesApiProvider)
-              .searchLocalMovies(movieNumber: parsed.movieNumber!);
-          if (!_isCurrent(requestVersion)) {
-            return;
-          }
-          state = state.copyWith(movieResults: results, actorResults: const []);
-        }
-      } else {
-        state = state.copyWith(
-          lastResolvedKind: CatalogSearchKind.actors,
-          activeKind: CatalogSearchKind.actors,
-          isOnlineSearchActive: true,
-        );
-        isActualOnlineSearch = true;
-        state = state.copyWith(
-          streamStatus: const CatalogSearchStreamStatus(
-            message: '正在从外部数据源搜索女优',
-            isRunning: true,
-            isFailure: false,
-          ),
-        );
-        await _consumeActorOnlineSearch(
+      if (useOnlineSearch) {
+        await _submitOnlineSearch(
           requestVersion: requestVersion,
-          actorName: trimmed,
+          query: trimmed,
+        );
+      } else {
+        await _submitLocalSearch(
+          requestVersion: requestVersion,
+          query: trimmed,
         );
       }
     } catch (error) {
@@ -159,12 +119,88 @@ class CatalogSearch extends _$CatalogSearch {
         movieResults: const [],
         actorResults: const [],
         errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+        isLoading: false,
       );
-    } finally {
-      if (_isCurrent(requestVersion) && !state.isOnlineSearchActive) {
-        state = state.copyWith(isLoading: false);
-      }
     }
+  }
+
+  /// 联网搜索：沿用番号解析决定走影片还是女优，始终携带外部数据源副作用。
+  /// 加载态由 SSE 的完成回调关闭。
+  Future<void> _submitOnlineSearch({
+    required int requestVersion,
+    required String query,
+  }) async {
+    final parsed = await ref
+        .read(moviesApiProvider)
+        .parseMovieNumber(query: query);
+    if (!_isCurrent(requestVersion)) {
+      return;
+    }
+
+    if (parsed.parsed && (parsed.movieNumber?.isNotEmpty ?? false)) {
+      state = state.copyWith(
+        activeKind: CatalogSearchKind.movies,
+        isOnlineSearchActive: true,
+        streamStatus: const CatalogSearchStreamStatus(
+          message: '正在从外部数据源搜索影片',
+          isRunning: true,
+          isFailure: false,
+        ),
+      );
+      await _consumeMovieOnlineSearch(
+        requestVersion: requestVersion,
+        movieNumber: parsed.movieNumber!,
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      activeKind: CatalogSearchKind.actors,
+      isOnlineSearchActive: true,
+      streamStatus: const CatalogSearchStreamStatus(
+        message: '正在从外部数据源搜索女优',
+        isRunning: true,
+        isFailure: false,
+      ),
+    );
+    await _consumeActorOnlineSearch(
+      requestVersion: requestVersion,
+      actorName: query,
+    );
+  }
+
+  /// 本地关键词搜索：影片与女优依次查询，按命中结果决定默认展示的页签。
+  Future<void> _submitLocalSearch({
+    required int requestVersion,
+    required String query,
+  }) async {
+    final moviePage = await ref
+        .read(moviesApiProvider)
+        .getMovies(query: query, pageSize: _localSearchPageSize);
+    if (!_isCurrent(requestVersion)) {
+      return;
+    }
+    final actorPage = await ref
+        .read(actorsApiProvider)
+        .getActors(query: query, pageSize: _localSearchPageSize);
+    if (!_isCurrent(requestVersion)) {
+      return;
+    }
+    final CatalogSearchKind resolvedKind;
+    if (moviePage.items.isNotEmpty) {
+      resolvedKind = CatalogSearchKind.movies;
+    } else if (actorPage.items.isNotEmpty) {
+      resolvedKind = CatalogSearchKind.actors;
+    } else {
+      resolvedKind = state.activeKind;
+    }
+    state = state.copyWith(
+      activeKind: resolvedKind,
+      isOnlineSearchActive: false,
+      isLoading: false,
+      movieResults: moviePage.items,
+      actorResults: actorPage.items,
+    );
   }
 
   void setActiveKind(CatalogSearchKind kind) {

@@ -4,6 +4,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_quality_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_subtitle_button.dart';
 
@@ -41,6 +42,8 @@ List<Widget> buildMoviePlayerMobileBottomControls({
   speedDisplayListenable,
   required VoidCallback onSpeedButtonPressed,
   required VoidCallback onSubtitleButtonPressed,
+  required ValueListenable<bool> qualityEnabledListenable,
+  required VoidCallback onQualityPressed,
 }) {
   return <Widget>[
     const MaterialPlayOrPauseButton(),
@@ -52,6 +55,11 @@ List<Widget> buildMoviePlayerMobileBottomControls({
       speedDisplayListenable: speedDisplayListenable,
       onSpeedButtonPressed: onSpeedButtonPressed,
       onSubtitleButtonPressed: onSubtitleButtonPressed,
+    ),
+    // 移动控制条宽度紧张：只放开关本体，不放「画质增强」标签。
+    MoviePlayerQualityButton(
+      enabledListenable: qualityEnabledListenable,
+      onPressed: onQualityPressed,
     ),
     const MaterialFullscreenButton(),
   ];
@@ -65,6 +73,8 @@ List<Widget> buildMoviePlayerDesktopBottomControls({
   required ValueListenable<bool> isApplyingListenable,
   required Future<void> Function(int? subtitleId) onSubtitleSelected,
   required Future<void> Function() onSubtitleReloadRequested,
+  required ValueListenable<bool> qualityEnabledListenable,
+  required VoidCallback onQualityPressed,
 }) {
   return <Widget>[
     const MaterialPlayOrPauseButton(),
@@ -81,6 +91,11 @@ List<Widget> buildMoviePlayerDesktopBottomControls({
       isApplyingListenable: isApplyingListenable,
       onSubtitleSelected: onSubtitleSelected,
       onReloadRequested: onSubtitleReloadRequested,
+    ),
+    MoviePlayerQualityButton(
+      label: '画质增强',
+      enabledListenable: qualityEnabledListenable,
+      onPressed: onQualityPressed,
     ),
     const MaterialFullscreenButton(),
   ];

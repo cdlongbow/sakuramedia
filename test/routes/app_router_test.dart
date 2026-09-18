@@ -183,7 +183,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('desktop-follow-page')), findsOneWidget);
-    expect(find.byKey(const Key('desktop-follow-page-total')), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-summary-card-FOL-001')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('desktop latest movies route renders the paged latest list', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    final router = buildAppRouter(AppPlatform.desktop, sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopLatestMoviesPath);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('desktop-latest-movies-page')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('desktop-latest-movies-total')),
+      findsOneWidget,
+    );
+    expect(find.text('ABC-001'), findsOneWidget);
   });
 
   test('desktop top bar config disables back on overview', () {
@@ -195,6 +231,17 @@ void main() {
     expect(config.title, '概览');
     expect(config.fallbackPath, isNull);
     expect(config.isBackEnabled, isFalse);
+  });
+
+  test('desktop top bar config enables back on latest movies page', () {
+    final config = resolveDesktopTopBarConfig(
+      currentPath: desktopLatestMoviesPath,
+      routeSpecs: desktopRouteSpecs,
+    );
+
+    expect(config.title, '最近添加');
+    expect(config.fallbackPath, desktopOverviewPath);
+    expect(config.isBackEnabled, isTrue);
   });
 
   test('desktop top bar config enables back on movie detail', () {
@@ -704,19 +751,24 @@ void main() {
     addTearDown(bundle.dispose);
     _enqueueDesktopOverviewResponses(bundle);
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
+      method: 'GET',
+      path: '/movies',
       body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 50,
+        'total': 0,
       },
     );
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/javdb/stream',
-      body: <Map<String, dynamic>>[],
+      method: 'GET',
+      path: '/actors',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 50,
+        'total': 0,
+      },
     );
     final router = buildDesktopRouter(sessionStore: sessionStore);
 
@@ -925,22 +977,33 @@ void main() {
     addTearDown(bundle.dispose);
     _enqueueDesktopOverviewResponses(bundle);
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
+      method: 'GET',
+      path: '/movies',
       body: <String, dynamic>{
-        'query': 'Rio %',
-        'parsed': false,
-        'movie_number': null,
-        'reason': 'movie_number_not_found',
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 50,
+        'total': 0,
       },
     );
-    bundle.adapter.enqueueSse(
-      method: 'POST',
-      path: '/actors/search/javdb/stream',
-      chunks: <String>[
-        'event: completed\n'
-            'data: {"success":true,"actors":[{"id":1,"javdb_id":"ActorA1","name":"Rio","alias_name":"Rio %","profile_image":null,"is_subscribed":false}]}\n\n',
-      ],
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 1,
+            'javdb_id': 'ActorA1',
+            'name': 'Rio',
+            'alias_name': 'Rio %',
+            'profile_image': null,
+            'is_subscribed': false,
+          },
+        ],
+        'page': 1,
+        'page_size': 50,
+        'total': 1,
+      },
     );
     final router = buildDesktopRouter(sessionStore: sessionStore);
 
@@ -1098,6 +1161,43 @@ void main() {
     expect(find.text('时刻'), findsOneWidget);
   });
 
+  testWidgets('mobile overview latest section opens the latest movies page', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore(
+      platform: AppPlatform.mobile,
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueMobileSystemOverviewResponses(bundle);
+    final router = buildMobileRouter(sessionStore: sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-overview-latest-more')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('mobile-overview-latest-more')));
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      mobileLatestMoviesPath,
+    );
+    expect(
+      find.byKey(const Key('mobile-latest-movies-page')),
+      findsOneWidget,
+    );
+    expect(find.text('最近添加'), findsOneWidget);
+  });
+
   testWidgets('mobile system overview route uses subpage shell', (
     WidgetTester tester,
   ) async {
@@ -1154,19 +1254,24 @@ void main() {
     await tester.pumpAndSettle();
 
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
+      method: 'GET',
+      path: '/movies',
       body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 50,
+        'total': 0,
       },
     );
     bundle.adapter.enqueueJson(
       method: 'GET',
-      path: '/movies/search/local',
-      body: <Map<String, dynamic>>[],
+      path: '/actors',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 50,
+        'total': 0,
+      },
     );
 
     router.go('/mobile/search/abp123');
@@ -2450,7 +2555,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.routeInformationProvider.value.uri.path, desktopOverviewPath);
-    expect(find.byKey(const Key('overview-stat-movies-total')), findsOneWidget);
+    expect(find.byKey(const Key('overview-asset-movies')), findsOneWidget);
   });
 
   testWidgets('authenticated user can access protected mobile routes', (
@@ -3000,6 +3105,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // 概览页改成统计工作台后，最近添加网格落在首屏之外，先滚动到卡片再点。
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-summary-card-ABC-001')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
     await tester.pumpAndSettle();
 
@@ -3033,6 +3143,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // 概览页改成统计工作台后，最近添加网格落在首屏之外，先滚动到卡片再点。
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-summary-card-ABC-001')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
     await tester.pumpAndSettle();
 
@@ -3464,30 +3579,36 @@ void main() {
       addTearDown(bundle.dispose);
       _enqueueDesktopOverviewResponses(bundle);
       bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/search/parse-number',
+        method: 'GET',
+        path: '/movies',
         body: <String, dynamic>{
-          'query': 'abc001',
-          'parsed': true,
-          'movie_number': 'ABC-001',
-          'reason': null,
+          'items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 1,
+              'javdb_id': 'MovieA1',
+              'movie_number': 'ABC-001',
+              'title': 'Movie 1',
+              'cover_image': null,
+              'release_date': null,
+              'duration_minutes': 120,
+              'is_subscribed': false,
+              'can_play': true,
+            },
+          ],
+          'page': 1,
+          'page_size': 50,
+          'total': 1,
         },
       );
       bundle.adapter.enqueueJson(
         method: 'GET',
-        path: '/movies/search/local',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{
-            'javdb_id': 'MovieA1',
-            'movie_number': 'ABC-001',
-            'title': 'Movie 1',
-            'cover_image': null,
-            'release_date': null,
-            'duration_minutes': 120,
-            'is_subscribed': false,
-            'can_play': true,
-          },
-        ],
+        path: '/actors',
+        body: <String, dynamic>{
+          'items': <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 50,
+          'total': 0,
+        },
       );
       _enqueueMovieDetailResponse(bundle);
       _enqueueMobileActorsResponse(bundle);
@@ -3504,8 +3625,8 @@ void main() {
 
       router.go('/desktop/search/abc001');
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-      expect(bundle.adapter.hitCount('GET', '/movies/search/local'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/actors'), 1);
 
       await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
       await tester.pumpAndSettle();
@@ -3516,16 +3637,16 @@ void main() {
         router.routeInformationProvider.value.uri.path,
         '/desktop/search/abc001',
       );
-      expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-      expect(bundle.adapter.hitCount('GET', '/movies/search/local'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/actors'), 1);
 
       router.go(desktopActorsPath);
       await tester.pumpAndSettle();
       router.go('/desktop/search/abc001');
       await tester.pumpAndSettle();
 
-      expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-      expect(bundle.adapter.hitCount('GET', '/movies/search/local'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/actors'), 2);
       expect(
         find.byKey(const Key('movie-summary-card-ABC-001')),
         findsOneWidget,

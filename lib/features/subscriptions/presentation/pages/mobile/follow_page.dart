@@ -5,7 +5,6 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
 class MobileFollowPage extends StatelessWidget {
   const MobileFollowPage({super.key});
@@ -21,19 +20,11 @@ class MobileFollowPage extends StatelessWidget {
       scope: _scope,
       surfaceColor: context.appColors.surfaceCard,
       contentKey: const Key('mobile-follow-page'),
-      totalKey: const Key('mobile-follow-page-total'),
       sectionSpacing: context.appSpacing.md,
       emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
       onMovieTap: (context, movieNumber) =>
           MobileMovieDetailRouteData(movieNumber: movieNumber).push(context),
-      headerBuilder: (context, args) => AppListHeader(
-        informationSlots: <AppListHeaderInfo>[
-          AppListHeaderInfo(
-            key: const Key('mobile-follow-page-total'),
-            label: '${args.total} 部',
-          ),
-        ],
-      ),
+      showHeader: false,
       useMobileSelectionLayout: true,
       bodyBuilder: (context, scrollController, sliver, onRefresh) =>
           AppAdaptiveRefreshScrollView(

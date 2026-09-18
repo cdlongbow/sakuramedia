@@ -6,6 +6,7 @@
 - `AppAdaptiveRefreshScrollView`：根据平台组合刷新和滚动行为。
 - `AppPagedLoadMoreFooter`：分页底部的加载中、失败重试和已完成状态；加载动画随平台自适应。
 - `AppFilterTotalHeader`：筛选结果总数信息。
+- `AppSelectableTextScrollConfiguration`：包裹含可选文本的滚动区域，把鼠标排除在拖拽滚动之外，避免列表滚动抢走鼠标文本选择；触摸、触控板、滚轮和滚动条不受影响。
 
 这些组件只表达 UI 状态；请求、页码、筛选和重试由 feature Provider 提供。
 

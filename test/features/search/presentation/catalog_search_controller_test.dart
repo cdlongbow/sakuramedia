@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -6,6 +8,71 @@ import 'package:sakuramedia/features/search/presentation/providers/catalog_searc
 
 import '../../../support/test_api_bundle.dart';
 import 'catalog_search_harness.dart';
+
+Map<String, dynamic> _movieItem({
+  String movieNumber = 'ABP-123',
+  bool isSubscribed = false,
+}) => <String, dynamic>{
+  'id': 11,
+  'javdb_id': 'MovieA1',
+  'movie_number': movieNumber,
+  'title': 'Movie 1',
+  'cover_image': null,
+  'release_date': null,
+  'duration_minutes': 120,
+  'is_subscribed': isSubscribed,
+  'can_play': true,
+};
+
+Map<String, dynamic> _actorItem({int id = 1, bool isSubscribed = false}) =>
+    <String, dynamic>{
+      'id': id,
+      'javdb_id': 'ActorA1',
+      'name': '三上悠亚',
+      'alias_name': '三上悠亚 / 鬼头桃菜',
+      'profile_image': null,
+      'is_subscribed': isSubscribed,
+    };
+
+Map<String, dynamic> _page(List<Map<String, dynamic>> items) =>
+    <String, dynamic>{
+      'items': items,
+      'page': 1,
+      'page_size': 50,
+      'total': items.length,
+    };
+
+void _enqueueLocalSearch(
+  TestApiBundle bundle, {
+  List<Map<String, dynamic>> movies = const <Map<String, dynamic>>[],
+  List<Map<String, dynamic>> actors = const <Map<String, dynamic>>[],
+}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies',
+    body: _page(movies),
+  );
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/actors',
+    body: _page(actors),
+  );
+}
+
+/// 等待某个请求真正发出；用于「先启动联网流、再发起新查询」的竞态用例。
+Future<void> _waitForRequest(
+  TestApiBundle bundle,
+  String method,
+  String path,
+) async {
+  for (var index = 0; index < 200; index += 1) {
+    if (bundle.adapter.hitCount(method, path) > 0) {
+      return;
+    }
+    await Future<void>.delayed(Duration.zero);
+  }
+  fail('$method $path was not requested');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -42,110 +109,66 @@ void main() {
     expect(controller.isLoading, isFalse);
   });
 
-  test('submit searches movies when parse succeeds', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'javdb_id': 'MovieA1',
-          'movie_number': 'ABP-123',
-          'title': 'Movie 1',
-          'cover_image': null,
-          'release_date': null,
-          'duration_minutes': 120,
-          'is_subscribed': false,
-          'can_play': true,
-        },
-      ],
+  test('submit searches local movies and actors by keyword', () async {
+    _enqueueLocalSearch(
+      bundle,
+      movies: <Map<String, dynamic>>[_movieItem()],
+      actors: <Map<String, dynamic>>[_actorItem()],
     );
 
     await controller.submit('abp123', useOnlineSearch: false);
 
-    expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-    expect(bundle.adapter.hitCount('GET', '/movies/search/local'), 1);
-    expect(bundle.adapter.hitCount('GET', '/actors/search/local'), 0);
+    expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 0);
+    expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+    expect(bundle.adapter.hitCount('GET', '/actors'), 1);
     expect(controller.activeKind, CatalogSearchKind.movies);
+    expect(controller.isOnlineSearchActive, isFalse);
     expect(controller.movieResults.single.movieNumber, 'ABP-123');
-    expect(controller.actorResults, isEmpty);
+    expect(controller.actorResults.single.id, 1);
     expect(controller.errorMessage, isNull);
   });
 
-  test('submit forces online actor search when parse fails', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'mikami',
-        'parsed': false,
-        'movie_number': null,
-        'reason': 'movie_number_not_found',
-      },
-    );
-    bundle.adapter.enqueueSse(
-      method: 'POST',
-      path: '/actors/search/javdb/stream',
-      chunks: <String>[
-        'event: completed\n'
-            'data: {"success":true,"actors":[{"id":1,"javdb_id":"ActorA1","name":"三上悠亚","alias_name":"三上悠亚 / 鬼头桃菜","profile_image":null,"is_subscribed":false}]}\n\n',
-      ],
+  test('submit switches to actors tab when only local actors match', () async {
+    _enqueueLocalSearch(
+      bundle,
+      actors: <Map<String, dynamic>>[_actorItem()],
     );
 
     await controller.submit('mikami', useOnlineSearch: false);
 
-    expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-    expect(bundle.adapter.hitCount('GET', '/movies/search/local'), 0);
-    expect(bundle.adapter.hitCount('POST', '/actors/search/javdb/stream'), 1);
+    expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 0);
+    expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+    expect(bundle.adapter.hitCount('GET', '/actors'), 1);
     expect(controller.activeKind, CatalogSearchKind.actors);
-    expect(controller.isOnlineSearchActive, isTrue);
+    expect(controller.isOnlineSearchActive, isFalse);
     expect(controller.actorResults.single.id, 1);
     expect(controller.movieResults, isEmpty);
     expect(controller.errorMessage, isNull);
   });
 
   test('setActiveKind only switches visible tab state', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      body: <Map<String, dynamic>>[],
-    );
+    _enqueueLocalSearch(bundle);
 
     await controller.submit('abp123', useOnlineSearch: false);
     controller.setActiveKind(CatalogSearchKind.actors);
 
     expect(controller.activeKind, CatalogSearchKind.actors);
-    expect(bundle.adapter.hitCount('GET', '/actors/search/local'), 0);
     expect(bundle.adapter.requests.length, 2);
   });
 
   test('submit exposes error and clears results when request fails', () async {
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
+      method: 'GET',
+      path: '/movies',
       statusCode: 500,
       body: <String, dynamic>{
         'error': <String, dynamic>{'code': 'server_error', 'message': 'boom'},
       },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _page(const <Map<String, dynamic>>[]),
     );
 
     await controller.submit('abp123', useOnlineSearch: false);
@@ -158,31 +181,9 @@ void main() {
   });
 
   test('toggleMovieSubscription updates matched movie result state', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'javdb_id': 'MovieA1',
-          'movie_number': 'ABP-123',
-          'title': 'Movie 1',
-          'cover_image': null,
-          'release_date': null,
-          'duration_minutes': 120,
-          'is_subscribed': false,
-          'can_play': true,
-        },
-      ],
+    _enqueueLocalSearch(
+      bundle,
+      movies: <Map<String, dynamic>>[_movieItem()],
     );
     bundle.adapter.enqueueJson(
       method: 'PUT',
@@ -204,31 +205,9 @@ void main() {
   test(
     'toggleMovieSubscription maps movie media conflict to blockedByMedia',
     () async {
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/search/parse-number',
-        body: <String, dynamic>{
-          'query': 'abp123',
-          'parsed': true,
-          'movie_number': 'ABP-123',
-          'reason': null,
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/movies/search/local',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{
-            'javdb_id': 'MovieA1',
-            'movie_number': 'ABP-123',
-            'title': 'Movie 1',
-            'cover_image': null,
-            'release_date': null,
-            'duration_minutes': 120,
-            'is_subscribed': true,
-            'can_play': true,
-          },
-        ],
+      _enqueueLocalSearch(
+        bundle,
+        movies: <Map<String, dynamic>>[_movieItem(isSubscribed: true)],
       );
       bundle.adapter.enqueueJson(
         method: 'DELETE',
@@ -254,23 +233,9 @@ void main() {
   );
 
   test('toggleActorSubscription updates matched actor result state', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'mikami',
-        'parsed': false,
-        'movie_number': null,
-        'reason': 'movie_number_not_found',
-      },
-    );
-    bundle.adapter.enqueueSse(
-      method: 'POST',
-      path: '/actors/search/javdb/stream',
-      chunks: <String>[
-        'event: completed\n'
-            'data: {"success":true,"actors":[{"id":1,"javdb_id":"ActorA1","name":"三上悠亚","alias_name":"三上悠亚 / 鬼头桃菜","profile_image":null,"is_subscribed":false}]}\n\n',
-      ],
+    _enqueueLocalSearch(
+      bundle,
+      actors: <Map<String, dynamic>>[_actorItem()],
     );
     bundle.adapter.enqueueJson(
       method: 'PUT',
@@ -290,31 +255,9 @@ void main() {
   test(
     'applyMovieSubscriptionChange updates matched movie result state',
     () async {
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/search/parse-number',
-        body: <String, dynamic>{
-          'query': 'abp123',
-          'parsed': true,
-          'movie_number': 'ABP-123',
-          'reason': null,
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/movies/search/local',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{
-            'javdb_id': 'MovieA1',
-            'movie_number': 'ABP-123',
-            'title': 'Movie 1',
-            'cover_image': null,
-            'release_date': null,
-            'duration_minutes': 120,
-            'is_subscribed': false,
-            'can_play': true,
-          },
-        ],
+      _enqueueLocalSearch(
+        bundle,
+        movies: <Map<String, dynamic>>[_movieItem()],
       );
 
       await controller.submit('abp123', useOnlineSearch: false);
@@ -328,31 +271,9 @@ void main() {
   );
 
   test('applyMovieSubscriptionChange removes movie when requested', () async {
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/movies/search/parse-number',
-      body: <String, dynamic>{
-        'query': 'abp123',
-        'parsed': true,
-        'movie_number': 'ABP-123',
-        'reason': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'javdb_id': 'MovieA1',
-          'movie_number': 'ABP-123',
-          'title': 'Movie 1',
-          'cover_image': null,
-          'release_date': null,
-          'duration_minutes': 120,
-          'is_subscribed': true,
-          'can_play': true,
-        },
-      ],
+    _enqueueLocalSearch(
+      bundle,
+      movies: <Map<String, dynamic>>[_movieItem(isSubscribed: true)],
     );
 
     await controller.submit('abp123', useOnlineSearch: false);
@@ -394,7 +315,6 @@ void main() {
     expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
     expect(bundle.adapter.hitCount('POST', '/movies/search/javdb/stream'), 1);
     expect(controller.isOnlineSearchActive, isTrue);
-    expect(controller.lastResolvedKind, CatalogSearchKind.movies);
     expect(controller.streamStatus?.message, '在线搜索已完成');
     expect(controller.movieResults.single.movieNumber, 'ABP-123');
     expect(controller.errorMessage, isNull);
@@ -477,7 +397,6 @@ void main() {
 
       expect(bundle.adapter.hitCount('POST', '/actors/search/javdb/stream'), 1);
       expect(controller.isOnlineSearchActive, isTrue);
-      expect(controller.lastResolvedKind, CatalogSearchKind.actors);
       expect(controller.actorResults, isEmpty);
       expect(controller.errorMessage, isNull);
       expect(controller.streamStatus?.message, '在线搜索已完成');
@@ -535,7 +454,7 @@ void main() {
   );
 
   test(
-    'submit cancels stale online search results when a new query starts',
+    'submit cancels stale online search when a new local query starts',
     () async {
       bundle.adapter.enqueueJson(
         method: 'POST',
@@ -554,33 +473,25 @@ void main() {
           'event: search_started\n'
               'data: {"movie_number":"ABP-123"}\n\n',
         ],
+        keepOpen: true,
       );
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/search/parse-number',
-        body: <String, dynamic>{
-          'query': 'mikami',
-          'parsed': false,
-          'movie_number': null,
-          'reason': 'movie_number_not_found',
-        },
-      );
-      bundle.adapter.enqueueSse(
-        method: 'POST',
-        path: '/actors/search/javdb/stream',
-        chunks: <String>[
-          'event: completed\n'
-              'data: {"success":true,"actors":[{"id":1,"javdb_id":"ActorA1","name":"三上悠亚","alias_name":"三上悠亚 / 鬼头桃菜","profile_image":null,"is_subscribed":false}]}\n\n',
-        ],
+      _enqueueLocalSearch(
+        bundle,
+        actors: <Map<String, dynamic>>[_actorItem()],
       );
 
-      await controller.submit('abp123', useOnlineSearch: true);
+      unawaited(controller.submit('abp123', useOnlineSearch: true));
+      await _waitForRequest(bundle, 'POST', '/movies/search/javdb/stream');
+
       await controller.submit('mikami', useOnlineSearch: false);
 
       expect(controller.query, 'mikami');
       expect(controller.activeKind, CatalogSearchKind.actors);
-      expect(bundle.adapter.hitCount('POST', '/actors/search/javdb/stream'), 1);
+      expect(controller.isOnlineSearchActive, isFalse);
       expect(controller.actorResults.single.id, 1);
+      expect(controller.errorMessage, isNull);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/actors'), 1);
     },
   );
 

@@ -37,7 +37,6 @@ class CatalogSearchHarness {
 
   String get query => _state.query;
   CatalogSearchKind get activeKind => _state.activeKind;
-  CatalogSearchKind? get lastResolvedKind => _state.lastResolvedKind;
   bool get isLoading => _state.isLoading;
   bool get isOnlineSearchActive => _state.isOnlineSearchActive;
   String? get errorMessage => _state.errorMessage;

@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
+import 'package:sakuramedia/features/status/data/status_dto.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
@@ -446,5 +447,106 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('getInsights parses storage and collection stats', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/insights',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'media_libraries': <dynamic>[
+          <String, dynamic>{
+            'library_id': 1,
+            'name': '主媒体库',
+            'provider_key': 'local',
+            'file_count': 1420,
+            'total_size_bytes': 6400000000000,
+          },
+          <String, dynamic>{
+            'library_id': 2,
+            'name': '备份库',
+            'provider_key': 'cloud115',
+            'file_count': 700,
+            'total_size_bytes': 2300000000000,
+          },
+        ],
+        'collections': <String, dynamic>{
+          'playlists': <String, dynamic>{'count': 5, 'item_count': 42},
+          'video_collections': <String, dynamic>{'count': 2, 'item_count': 8},
+          'clip_collections': <String, dynamic>{'count': 0, 'item_count': 0},
+          'moment_collections': <String, dynamic>{'count': 1, 'item_count': 3},
+        },
+      },
+    );
+
+    final insights = await statusApi.getInsights();
+
+    expect(insights.mediaLibraries, hasLength(2));
+    expect(insights.mediaLibraries.first.name, '主媒体库');
+    expect(insights.collections.playlists.count, 5);
+    expect(insights.collections.isEmpty, isFalse);
+  });
+
+  test('getInsights defaults missing sections to empty', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/insights',
+      statusCode: 200,
+      body: <String, dynamic>{},
+    );
+
+    final insights = await statusApi.getInsights();
+
+    expect(insights.mediaLibraries, isEmpty);
+    expect(insights.collections.isEmpty, isTrue);
+  });
+
+  test('getWatchTrend sends range and parses buckets', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/watch-trend',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'range': '7d',
+        'granularity': 'day',
+        'watched_movie_count': 3,
+        'buckets': <dynamic>[
+          <String, dynamic>{'period': '2026-09-14', 'count': 0},
+          <String, dynamic>{'period': '2026-09-15', 'count': 2},
+          <String, dynamic>{'period': '2026-09-16', 'count': 1},
+        ],
+      },
+    );
+
+    final trend = await statusApi.getWatchTrend(WatchTrendRange.last7Days);
+
+    expect(trend.range, WatchTrendRange.last7Days);
+    expect(trend.granularity, 'day');
+    expect(trend.watchedMovieCount, 3);
+    expect(trend.buckets, hasLength(3));
+    expect(trend.buckets[1].count, 2);
+    expect(
+      adapter.requests.last.uri.queryParameters['range'],
+      '7d',
+    );
+  });
+
+  test('getWatchTrend falls back to 30d for an unknown range', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/watch-trend',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'range': 'unknown-range',
+        'granularity': 'day',
+        'buckets': <dynamic>[],
+      },
+    );
+
+    final trend = await statusApi.getWatchTrend(WatchTrendRange.all);
+
+    expect(trend.range, WatchTrendRange.last30Days);
+    expect(trend.buckets, isEmpty);
   });
 }

@@ -22,6 +22,7 @@ import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
@@ -111,11 +112,12 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileDiscoverSectionTitle(
+        AppSectionHeader(
           title: '女优上新',
-          totalText: '${paged?.total ?? 0} 部',
+          trailingText: '${paged?.total ?? 0} 部',
           actionKey: const Key('mobile-discover-load-more-follow'),
           actionLabel: '更多',
+          actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileFollowPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -155,11 +157,12 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileDiscoverSectionTitle(
+        AppSectionHeader(
           title: '热门新片',
-          totalText: '${hotActress.total} 部',
+          trailingText: '${hotActress.total} 部',
           actionKey: const Key('mobile-discover-load-more-hot-actress'),
           actionLabel: '更多',
+          actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileHotActressReleasesPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -206,11 +209,12 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileDiscoverSectionTitle(
+        AppSectionHeader(
           title: '今日推荐',
-          totalText: '${daily.total} 部',
+          trailingText: '${daily.total} 部',
           actionKey: const Key('mobile-discover-load-more-daily'),
           actionLabel: '更多',
+          actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileDiscoverMoviesPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -250,11 +254,12 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _MobileDiscoverSectionTitle(
+        AppSectionHeader(
           title: '推荐时刻',
-          totalText: '${moment.total} 个',
+          trailingText: '${moment.total} 个',
           actionKey: const Key('mobile-discover-load-more-moments'),
           actionLabel: '更多',
+          actionSize: AppTextButtonSize.xSmall,
           onActionTap: () => context.push(mobileDiscoverMomentsPath),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -356,59 +361,6 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         showToast('读取结果图片失败，请稍后重试');
       }
     }
-  }
-}
-
-class _MobileDiscoverSectionTitle extends StatelessWidget {
-  const _MobileDiscoverSectionTitle({
-    required this.title,
-    required this.totalText,
-    this.actionKey,
-    this.actionLabel,
-    this.onActionTap,
-  });
-
-  final String title;
-  final String totalText;
-  final Key? actionKey;
-  final String? actionLabel;
-  final VoidCallback? onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(width: context.appSpacing.sm),
-        Text(
-          totalText,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        const Spacer(),
-        if (actionKey != null && actionLabel != null && onActionTap != null)
-          AppTextButton(
-            key: actionKey,
-            label: actionLabel!,
-            size: AppTextButtonSize.xSmall,
-            trailingIcon: const Icon(Icons.chevron_right_rounded),
-            onPressed: onActionTap,
-          ),
-      ],
-    );
   }
 }
 

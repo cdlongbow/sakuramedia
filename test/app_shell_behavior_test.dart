@@ -689,21 +689,6 @@ void main() {
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
       _enqueueOverviewResponses(bundle);
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/movies/search/parse-number',
-        body: <String, dynamic>{
-          'query': 'abp123',
-          'parsed': true,
-          'movie_number': 'ABP-123',
-          'reason': null,
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/movies/search/local',
-        body: <Map<String, dynamic>>[],
-      );
 
       final router = await _pumpDesktopAppWithRouter(
         tester,
@@ -758,7 +743,7 @@ void main() {
     );
     expect(find.byKey(const Key('topbar-back-button')), findsNothing);
     expect(find.text('Desktop Workbench'), findsNothing);
-    expect(find.text('系统信息'), findsOneWidget);
+    expect(find.text('媒体资产'), findsOneWidget);
     expect(find.text('最近添加'), findsOneWidget);
   });
 

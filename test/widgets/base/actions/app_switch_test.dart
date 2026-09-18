@@ -102,4 +102,63 @@ void main() {
 
     expect(decoration.color, AppColors.defaults().borderStrong);
   });
+
+  testWidgets('onMedia variant keeps the on state readable on dark surfaces', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppSwitch(
+            value: true,
+            variant: AppSwitchVariant.onMedia,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.descendant(
+        of: find.byType(AppSwitch),
+        matching: find.byType(AnimatedContainer),
+      ),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+
+    expect(decoration.color, sakuraThemeData.colorScheme.primaryContainer);
+  });
+
+  testWidgets('onMedia variant uses translucent white track when off', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppSwitch(
+            value: false,
+            variant: AppSwitchVariant.onMedia,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.descendant(
+        of: find.byType(AppSwitch),
+        matching: find.byType(AnimatedContainer),
+      ),
+    );
+    final decoration = container.decoration! as BoxDecoration;
+
+    expect(
+      decoration.color,
+      Colors.white.withValues(
+        alpha: AppOverlayTokens.defaults().switchTrackAlpha,
+      ),
+    );
+  });
 }

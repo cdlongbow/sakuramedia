@@ -10,7 +10,6 @@ class CatalogSearchState {
   const CatalogSearchState({
     this.query = '',
     this.activeKind = CatalogSearchKind.movies,
-    this.lastResolvedKind,
     this.isLoading = false,
     this.isOnlineSearchActive = false,
     this.useOnlineSearch = false,
@@ -27,7 +26,6 @@ class CatalogSearchState {
 
   final String query;
   final CatalogSearchKind activeKind;
-  final CatalogSearchKind? lastResolvedKind;
   final bool isLoading;
   final bool isOnlineSearchActive;
   final bool useOnlineSearch;
@@ -48,7 +46,6 @@ class CatalogSearchState {
   CatalogSearchState copyWith({
     String? query,
     CatalogSearchKind? activeKind,
-    Object? lastResolvedKind = _sentinel,
     bool? isLoading,
     bool? isOnlineSearchActive,
     bool? useOnlineSearch,
@@ -63,10 +60,6 @@ class CatalogSearchState {
     return CatalogSearchState(
       query: query ?? this.query,
       activeKind: activeKind ?? this.activeKind,
-      lastResolvedKind:
-          identical(lastResolvedKind, _sentinel)
-              ? this.lastResolvedKind
-              : lastResolvedKind as CatalogSearchKind?,
       isLoading: isLoading ?? this.isLoading,
       isOnlineSearchActive: isOnlineSearchActive ?? this.isOnlineSearchActive,
       useOnlineSearch: useOnlineSearch ?? this.useOnlineSearch,

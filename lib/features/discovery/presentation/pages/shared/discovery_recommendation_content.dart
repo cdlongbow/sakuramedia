@@ -19,7 +19,6 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
@@ -197,17 +196,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
     );
 
     return AppFixedHeaderLayout(
-      header: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppFilterTotalHeader(
-            leading: const SizedBox.shrink(),
-            totalText: '${paged.total} 部',
-            totalKey: Key('$keyPrefix-total'),
-          ),
-          SizedBox(height: headerGap),
-        ],
-      ),
+      header: SizedBox(height: headerGap),
       child: AppPageRefreshScope(
         onRefresh: () => _handleRefresh(context, ref),
         child: enablePullToRefresh
@@ -358,17 +347,7 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     );
 
     return AppFixedHeaderLayout(
-      header: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppFilterTotalHeader(
-            leading: const SizedBox.shrink(),
-            totalText: '${paged.total} 个',
-            totalKey: Key('$keyPrefix-total'),
-          ),
-          SizedBox(height: headerGap),
-        ],
-      ),
+      header: SizedBox(height: headerGap),
       child: AppPageRefreshScope(
         onRefresh: () => _handleRefresh(context, ref),
         child: enablePullToRefresh

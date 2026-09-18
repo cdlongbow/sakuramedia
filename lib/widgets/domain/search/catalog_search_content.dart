@@ -122,18 +122,14 @@ class CatalogSearchContent extends StatelessWidget {
         if (!state.isOnlineSearchActive &&
             state.movieResults.isEmpty &&
             onFallbackToOnlineSearch != null) {
-          return SliverToBoxAdapter(
-            child: _CatalogSearchOnlineFallback(
-              onPressed: onFallbackToOnlineSearch!,
-            ),
-          );
+          return _buildLocalEmptyFallback('本地库未找到匹配影片');
         }
         return MovieSummarySliver(
           items: state.movieResults,
           isLoading: false,
           emptyMessage: state.isOnlineSearchActive
               ? '在线源未找到该番号或未成功入库'
-              : '本地库中没有匹配该番号的影片。',
+              : '本地库中没有匹配该关键词的影片。',
           onMovieTap: onMovieTap,
           onMovieMenuRequest: onMovieMenuRequest,
           onMovieSubscriptionTap: onMovieSubscriptionTap,
@@ -141,16 +137,32 @@ class CatalogSearchContent extends StatelessWidget {
               state.isMovieSubscriptionUpdating(movie.movieNumber),
         );
       case CatalogSearchKind.actors:
+        if (!state.isOnlineSearchActive &&
+            state.actorResults.isEmpty &&
+            onFallbackToOnlineSearch != null) {
+          return _buildLocalEmptyFallback('本地库未找到匹配女优');
+        }
         return ActorSummarySliver(
           items: state.actorResults,
           isLoading: false,
-          emptyMessage: '在线源未找到匹配女优',
+          emptyMessage: state.isOnlineSearchActive
+              ? '在线源未找到匹配女优'
+              : '本地库中没有匹配该关键词的女优。',
           onActorTap: onActorTap,
           onActorSubscriptionTap: onActorSubscriptionTap,
           isActorSubscriptionUpdating: (actor) =>
               state.isActorSubscriptionUpdating(actor.id),
         );
     }
+  }
+
+  Widget _buildLocalEmptyFallback(String message) {
+    return SliverToBoxAdapter(
+      child: _CatalogSearchOnlineFallback(
+        message: message,
+        onPressed: onFallbackToOnlineSearch!,
+      ),
+    );
   }
 }
 
@@ -174,8 +186,12 @@ class _CatalogSearchLoadingIndicator extends StatelessWidget {
 }
 
 class _CatalogSearchOnlineFallback extends StatelessWidget {
-  const _CatalogSearchOnlineFallback({required this.onPressed});
+  const _CatalogSearchOnlineFallback({
+    required this.message,
+    required this.onPressed,
+  });
 
+  final String message;
   final VoidCallback onPressed;
 
   @override
@@ -197,7 +213,7 @@ class _CatalogSearchOnlineFallback extends StatelessWidget {
             ),
             SizedBox(height: spacing.md),
             Text(
-              '本地库未找到匹配影片',
+              message,
               textAlign: TextAlign.center,
               style: resolveAppTextStyle(
                 context,

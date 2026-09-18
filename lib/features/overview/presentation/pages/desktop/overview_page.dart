@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -8,169 +6,86 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
-import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/recently_played_playlist_provider.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/storage_usage_card.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/watch_trend_card.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
-import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
-import 'package:sakuramedia/features/overview/presentation/widgets/overview_stats_strip.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 
-class DesktopOverviewPage extends ConsumerStatefulWidget {
+class DesktopOverviewPage extends ConsumerWidget {
   const DesktopOverviewPage({super.key});
 
-  @override
-  ConsumerState<DesktopOverviewPage> createState() =>
-      _DesktopOverviewPageState();
-}
-
-class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
   static const _latestScope = MovieSummaryScope.latest();
-  late final ScrollController _scrollController;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
-  }
+  /// 宽屏时「观看趋势 + 存储分布」并排；窄窗口堆叠。
+  static const double _twoColumnMinWidth = 960;
 
-  @override
-  void dispose() {
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
-    super.dispose();
-  }
+  /// 预览分区的行数上限（「最近添加」「最近播放」各三行，更多内容进各自页面）。
+  static const int _previewMaxRows = 3;
 
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    final summary = ref.read(movieSummaryProvider(_latestScope)).value;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(movieSummaryProvider(_latestScope).notifier).loadMore());
-  }
-
-  Future<void> _refreshOverview() async {
-    await Future.wait<void>([
-      // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),统计条不闪骨架。
+  Future<void> _refreshOverview(WidgetRef ref) async {
+    final recentPlaylist = ref
+        .read(recentlyPlayedPlaylistProvider)
+        .value;
+    final futures = <Future<void>>[
+      // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),卡片不闪骨架。
       ref.read(overviewSystemInfoProvider.notifier).load(),
       ref.read(movieSummaryProvider(_latestScope).notifier).refresh(),
-    ]);
+    ];
+    if (recentPlaylist != null) {
+      futures.add(
+        ref
+            .read(
+              movieSummaryProvider(
+                MovieSummaryScope.playlist(playlistId: recentPlaylist.id),
+              ).notifier,
+            )
+            .refresh(),
+      );
+    }
+    ref.invalidate(recentlyPlayedPlaylistProvider);
+    await Future.wait<void>(futures);
   }
 
-  Future<void> _toggleMovieSubscription(String movieNumber) async {
+  Future<void> _toggleMovieSubscription(
+    WidgetRef ref,
+    MovieSummaryScope scope,
+    String movieNumber,
+  ) async {
     final result = await ref
-        .read(movieSummaryProvider(_latestScope).notifier)
+        .read(movieSummaryProvider(scope).notifier)
         .toggleSubscription(movieNumber);
-    if (!mounted) {
-      return;
-    }
     showMovieSubscriptionFeedback(result);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final systemInfo = ref.watch(overviewSystemInfoProvider);
-    final moviesAsync = ref.watch(movieSummaryProvider(_latestScope));
-    final movies = moviesAsync.value;
-    final paged = movies?.paged;
-    final stats = systemInfo.status == null
-        ? const <OverviewStatItem>[]
-        : <OverviewStatItem>[
-            OverviewStatItem(
-              id: 'movies-total',
-              label: '影片总数',
-              value: systemInfo.status!.movies.total.toString(),
-            ),
-            OverviewStatItem(
-              id: 'movies-playable',
-              label: '可播放影片',
-              value: systemInfo.status!.movies.playable.toString(),
-            ),
-            OverviewStatItem(
-              id: 'actors-female-total',
-              label: '女优总数',
-              value: systemInfo.status!.actors.femaleTotal.toString(),
-            ),
-            OverviewStatItem(
-              id: 'media-files-total',
-              label: '媒体文件',
-              value: systemInfo.status!.mediaFiles.total.toString(),
-            ),
-            OverviewStatItem(
-              id: 'media-libraries-total',
-              label: '资源库',
-              value: systemInfo.status!.mediaLibraries.total.toString(),
-            ),
-            OverviewStatItem(
-              id: 'media-files-size',
-              label: '媒体总量',
-              value: formatGigabytes(
-                systemInfo.status!.mediaFiles.totalSizeBytes,
-              ),
-            ),
-            OverviewStatItem(
-              id: 'thumbnails-total',
-              label: '缩略图总数',
-              value: systemInfo.status!.thumbnails.total.toString(),
-            ),
-            OverviewStatItem(
-              id: 'thumbnails-pending',
-              label: '待生成缩略图',
-              value: systemInfo.status!.thumbnails.pendingMedia.toString(),
-            ),
-            OverviewStatItem(
-              id: 'embedding-service-health',
-              label: '嵌入服务健康',
-              value: systemInfo.buildEmbeddingServiceHealthValue(),
-              isLoading: systemInfo.isLoadingImageSearchStatus,
-            ),
-            OverviewStatItem(
-              id: 'embedding-service-space',
-              label: '嵌入空间',
-              value: systemInfo.buildEmbeddingServiceSpaceValue(),
-              isLoading: systemInfo.isLoadingImageSearchStatus,
-            ),
-            OverviewStatItem(
-              id: 'image-search-index-space',
-              label: '图搜索索引',
-              value: systemInfo.buildImageSearchIndexSpaceValue(),
-              isLoading: systemInfo.isLoadingImageSearchStatus,
-            ),
-            OverviewStatItem(
-              id: 'embedding-service-indexing-backlog',
-              label: '待索引',
-              value: systemInfo.buildEmbeddingServiceIndexingValue(),
-              isLoading: systemInfo.isLoadingImageSearchStatus,
-            ),
-            OverviewStatItem(
-              id: 'external-data-sources',
-              label: '外部数据源',
-              valueWidget: ExternalDataSourceStatusChips(
-                javdbHealthy: systemInfo.javdbHealthy,
-                isTesting: systemInfo.isTestingMetadataProviders,
-              ),
-              maxWidth: 260,
-              action: _buildExternalDataSourcesAction(context, systemInfo),
-            ),
-          ];
+    final systemInfoNotifier = ref.read(overviewSystemInfoProvider.notifier);
+    final latestAsync = ref.watch(movieSummaryProvider(_latestScope));
+    final latest = latestAsync.value;
+    final recentPlaylist = ref
+        .watch(recentlyPlayedPlaylistProvider)
+        .value;
+    final recentScope = recentPlaylist == null
+        ? null
+        : MovieSummaryScope.playlist(playlistId: recentPlaylist.id);
+    final recentAsync = recentScope == null
+        ? null
+        : ref.watch(movieSummaryProvider(recentScope));
 
     return AppPageRefreshScope(
-      onRefresh: _refreshOverview,
+      onRefresh: () => _refreshOverview(ref),
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: CustomScrollView(
-          controller: _scrollController,
           slivers: [
             SliverMainAxisGroup(
               slivers: [
@@ -181,68 +96,127 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(height: context.appSpacing.md),
+                  child: SizedBox(height: context.appSpacing.lg),
                 ),
                 SliverToBoxAdapter(
-                  child: OverviewStatsStrip(
-                    items: stats,
+                  child: AssetSummaryCard(
+                    status: systemInfo.status,
+                    insights: systemInfo.insights,
+                    pendingIndexCount: pendingIndexCount(
+                      systemInfo.imageSearchStatus,
+                    ),
                     isLoading: systemInfo.isLoadingStatus,
                     errorMessage: systemInfo.statusError,
+                    onRetry: systemInfoNotifier.loadStatus,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.appSpacing.lg),
+                ),
+                SliverToBoxAdapter(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final trendCard = WatchTrendCard(
+                        trend: systemInfo.watchTrend,
+                        range: systemInfo.watchTrendRange,
+                        onRangeChanged: systemInfoNotifier.setWatchTrendRange,
+                        compactSelector: false,
+                        isLoading: systemInfo.isLoadingWatchTrend,
+                        errorMessage: systemInfo.watchTrendError,
+                        onRetry: systemInfoNotifier.loadWatchTrend,
+                      );
+                      final storageCard = StorageUsageCard(
+                        libraries: systemInfo.insights?.mediaLibraries,
+                        isLoading: systemInfo.isLoadingInsights,
+                        errorMessage: systemInfo.insightsError,
+                        onRetry: systemInfoNotifier.loadInsights,
+                      );
+                      if (constraints.maxWidth < _twoColumnMinWidth) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            trendCard,
+                            SizedBox(height: context.appSpacing.lg),
+                            storageCard,
+                          ],
+                        );
+                      }
+                      return IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: trendCard),
+                            SizedBox(width: context.appSpacing.lg),
+                            Expanded(child: storageCard),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(height: context.appSpacing.xxl),
                 ),
                 SliverToBoxAdapter(
-                  child: Text(
-                    '最近添加',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s14,
-                      weight: AppTextWeight.semibold,
-                      tone: AppTextTone.primary,
-                    ),
+                  child: AppSectionHeader(
+                    title: '最近添加',
+                    actionLabel: '更多',
+                    actionKey: const Key('overview-latest-more'),
+                    onActionTap: () => context.pushDesktopLatestMovies(),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(height: context.appSpacing.md),
                 ),
-                SliverMainAxisGroup(
-                  slivers: [
-                    MovieSummarySliver(
-                      items: paged?.items ?? const [],
-                      isLoading: moviesAsync.isLoading && movies == null,
-                      errorMessage: moviesAsync.hasError && movies == null
-                          ? _latestScope.initialLoadErrorText
-                          : null,
-                      onMovieTap: (movie) => context.pushDesktopMovieDetail(
-                        movieNumber: movie.movieNumber,
+                SliverToBoxAdapter(
+                  child: _buildMovieGrid(
+                    context,
+                    ref: ref,
+                    scope: _latestScope,
+                    summary: latest,
+                    isLoading: latestAsync.isLoading && latest == null,
+                    errorMessage: latestAsync.hasError && latest == null
+                        ? _latestScope.initialLoadErrorText
+                        : null,
+                    emptyMessage: '暂无入库影片，去搜索看看吧',
+                  ),
+                ),
+                if (recentPlaylist != null && recentScope != null) ...<Widget>[
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: context.appSpacing.xxl),
+                  ),
+                  SliverToBoxAdapter(
+                    child: AppSectionHeader(
+                      title: '最近播放',
+                      trailingText: '${recentPlaylist!.movieCount} 部',
+                      actionLabel: '更多',
+                      actionKey: const Key('overview-recent-played-more'),
+                      onActionTap: () => context.pushDesktopPlaylistDetail(
+                        playlistId: recentPlaylist!.id,
                         fallbackPath: desktopOverviewPath,
                       ),
-                      onMovieMenuRequest: (movie, globalPosition) =>
-                          requestMovieCollectionMenu(
-                            context,
-                            movie.movieNumber,
-                            globalPosition,
-                            isSubscribed: movie.isSubscribed,
-                          ),
-                      onMovieSubscriptionTap: (movie) =>
-                          _toggleMovieSubscription(movie.movieNumber),
-                      isMovieSubscriptionUpdating: (movie) =>
-                          movies?.isSubscriptionUpdating(movie.movieNumber) ??
-                          false,
-                      emptyMessage: '暂无入库影片，去搜索看看吧',
                     ),
-                    if (_buildMovieLoadMoreFooter(context, movies)
-                        case final footer?)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: context.appSpacing.md),
-                          child: footer,
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: context.appSpacing.md),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildMovieGrid(
+                      context,
+                      ref: ref,
+                      scope: recentScope!,
+                      summary: recentAsync?.value,
+                      isLoading: (recentAsync?.isLoading ?? false) &&
+                          recentAsync?.value == null,
+                      errorMessage:
+                          (recentAsync?.hasError ?? false) &&
+                              recentAsync?.value == null
+                          ? recentScope.initialLoadErrorText
+                          : null,
+                      emptyMessage: '还没有观看记录',
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
@@ -251,114 +225,36 @@ class _DesktopOverviewPageState extends ConsumerState<DesktopOverviewPage> {
     );
   }
 
-  Widget _buildExternalDataSourcesAction(
-    BuildContext context,
-    OverviewSystemInfoState systemInfo,
-  ) {
-    return AppIconButton(
-      key: const Key('overview-external-data-sources-test-button'),
-      tooltip: '检测外部数据源',
-      semanticLabel: '检测外部数据源',
-      size: AppIconButtonSize.mini,
-      onPressed: systemInfo.isTestingMetadataProviders
-          ? null
-          : ref
-                .read(overviewSystemInfoProvider.notifier)
-                .testExternalDataSources,
-      icon: systemInfo.isTestingMetadataProviders
-          ? SizedBox(
-              width: context.appComponentTokens.iconSizeSm,
-              height: context.appComponentTokens.iconSizeSm,
-              child: CircularProgressIndicator.adaptive(
-                strokeWidth:
-                    context.appComponentTokens.movieCardLoaderStrokeWidth,
-              ),
-            )
-          : const Icon(Icons.radar_rounded),
-    );
-  }
-
-  Widget? _buildMovieLoadMoreFooter(
-    BuildContext context,
-    MovieSummaryState? summary,
-  ) {
-    final paged = summary?.paged;
-    if (paged == null || paged.items.isEmpty) {
-      return null;
-    }
-
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-    final componentTokens = context.appComponentTokens;
-
-    if (paged.isLoadingMore) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: spacing.md),
-          child: SizedBox(
-            width: componentTokens.movieCardLoaderSize,
-            height: componentTokens.movieCardLoaderSize,
-            child: CircularProgressIndicator.adaptive(
-              strokeWidth: componentTokens.movieCardLoaderStrokeWidth,
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (paged.loadMoreErrorMessage == null) {
-      return null;
-    }
-
-    return Center(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surfaceMuted,
-          borderRadius: context.appRadius.mdBorder,
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.lg,
-            vertical: spacing.sm,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: componentTokens.iconSizeXl,
-                color: context.appTextPalette.secondary,
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                paged.loadMoreErrorMessage!,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
-              SizedBox(width: spacing.sm),
-              TextButton(
-                onPressed: () => ref
-                    .read(movieSummaryProvider(_latestScope).notifier)
-                    .loadMore(),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: spacing.sm,
-                    vertical: spacing.xs,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text('重试'),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildMovieGrid(
+    BuildContext context, {
+    required WidgetRef ref,
+    required MovieSummaryScope scope,
+    required MovieSummaryState? summary,
+    required bool isLoading,
+    required String? errorMessage,
+    required String emptyMessage,
+  }) {
+    return MovieSummaryGrid(
+      items: summary?.paged.items ?? const [],
+      isLoading: isLoading,
+      errorMessage: errorMessage,
+      onMovieTap: (movie) => context.pushDesktopMovieDetail(
+        movieNumber: movie.movieNumber,
+        fallbackPath: desktopOverviewPath,
       ),
+      onMovieMenuRequest: (movie, globalPosition) => requestMovieCollectionMenu(
+        context,
+        movie.movieNumber,
+        globalPosition,
+        isSubscribed: movie.isSubscribed,
+      ),
+      onMovieSubscriptionTap: (movie) =>
+          _toggleMovieSubscription(ref, scope, movie.movieNumber),
+      isMovieSubscriptionUpdating: (movie) =>
+          summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+      emptyMessage: emptyMessage,
+      placeholderCount: 12,
+      maxRows: _previewMaxRows,
     );
   }
 }

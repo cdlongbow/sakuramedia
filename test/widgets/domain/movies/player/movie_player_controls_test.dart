@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/player/movi
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_quality_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_subtitle_button.dart';
 
@@ -70,20 +71,29 @@ void main() {
           ),
         );
         addTearDown(speedDisplay.dispose);
+        final qualityEnabled = ValueNotifier<bool>(false);
+        addTearDown(qualityEnabled.dispose);
         final controls = buildMoviePlayerMobileBottomControls(
           activeDrawer: null,
           speedDisplayListenable: speedDisplay,
           onSpeedButtonPressed: () {},
           onSubtitleButtonPressed: () {},
+          qualityEnabledListenable: qualityEnabled,
+          onQualityPressed: () {},
         );
 
-        expect(controls, hasLength(7));
+        expect(controls, hasLength(8));
         expect(controls[4].key, isNull);
         expect(
           controls[5].key,
           const Key('movie-player-mobile-subtitle-button'),
         );
-        expect(controls[6], isA<MaterialFullscreenButton>());
+        // 移动控制条宽度紧张：画质开关不带标签。
+        expect(
+          (controls[6] as MoviePlayerQualityButton).label,
+          isNull,
+        );
+        expect(controls[7], isA<MaterialFullscreenButton>());
       },
     );
 
@@ -94,6 +104,8 @@ void main() {
       final isApplying = ValueNotifier<bool>(false);
       addTearDown(subtitleState.dispose);
       addTearDown(isApplying.dispose);
+      final qualityEnabled = ValueNotifier<bool>(false);
+      addTearDown(qualityEnabled.dispose);
 
       final controls = buildMoviePlayerDesktopBottomControls(
         currentRate: 1.0,
@@ -103,14 +115,20 @@ void main() {
         isApplyingListenable: isApplying,
         onSubtitleSelected: (_) async {},
         onSubtitleReloadRequested: () async {},
+        qualityEnabledListenable: qualityEnabled,
+        onQualityPressed: () {},
       );
 
-      expect(controls, hasLength(7));
+      expect(controls, hasLength(8));
       final speedButton = controls[4] as MoviePlayerSpeedButton;
       expect(speedButton, isA<MoviePlayerSpeedButton>());
       expect(speedButton.hasExplicitSelection, isFalse);
       expect(controls[5], isA<MoviePlayerSubtitleButton>());
-      expect(controls[6], isA<MaterialFullscreenButton>());
+      expect(
+        (controls[6] as MoviePlayerQualityButton).label,
+        '画质增强',
+      );
+      expect(controls[7], isA<MaterialFullscreenButton>());
     });
   });
 }

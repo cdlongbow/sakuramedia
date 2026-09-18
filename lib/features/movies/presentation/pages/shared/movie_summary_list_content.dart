@@ -58,23 +58,24 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
     required this.scope,
     required this.surfaceColor,
     required this.contentKey,
-    required this.totalKey,
     required this.sectionSpacing,
     required this.onMovieTap,
     required this.bodyBuilder,
+    this.totalKey,
     this.emptyMessage,
     this.enableRefresh = false,
     this.registerPageRefresh = false,
     this.onRefreshFailure,
     this.headerBuilder,
     this.headerLeading,
+    this.showHeader = true,
     this.useMobileSelectionLayout = false,
   });
 
   final MovieSummaryScope scope;
   final Color surfaceColor;
   final Key contentKey;
-  final Key totalKey;
+  final Key? totalKey;
   final double sectionSpacing;
   final void Function(BuildContext context, String movieNumber) onMovieTap;
   final MovieSummaryListBodyBuilder bodyBuilder;
@@ -84,6 +85,9 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
   final void Function(BuildContext context)? onRefreshFailure;
   final MovieSummaryListHeaderBuilder? headerBuilder;
   final Widget? headerLeading;
+
+  /// 无筛选维度的列表（如女优上新）可以整行不渲染顶栏，把高度留给内容。
+  final bool showHeader;
   final bool useMobileSelectionLayout;
 
   @override
@@ -224,11 +228,13 @@ class _MovieSummaryListContentState
     });
 
     final headerBuilder = widget.headerBuilder;
-    final Widget header;
+    final Widget? header;
     if (selectionMode) {
       header = widget.useMobileSelectionLayout
           ? buildMobileBatchSelectionHeader()
           : buildBatchSelectionToolbar();
+    } else if (!widget.showHeader) {
+      header = null;
     } else if (headerBuilder != null) {
       header = headerBuilder(
         context,
@@ -270,7 +276,7 @@ class _MovieSummaryListContentState
           children: [
             if (!selectionMode && widget.headerLeading != null)
               widget.headerLeading!,
-            header,
+            ?header,
             AppFilterUpdateBar(
               state: paged?.filterUpdate ?? const FilterUpdateState.idle(),
               hasPreviousItems: items.isNotEmpty,

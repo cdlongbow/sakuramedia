@@ -162,18 +162,16 @@ class _PlaybackResumePromptState extends State<PlaybackResumePrompt> {
   }
 }
 
-/// 将续播提示放到播放器控制栏上方；桌面靠左，触摸端居中。
+/// 将续播提示放到播放器控制栏上方，桌面与触摸端统一靠左。
 class PlaybackResumePromptOverlay extends StatelessWidget {
   const PlaybackResumePromptOverlay({
     super.key,
     required this.position,
-    required this.useTouchOptimizedLayout,
     required this.onResume,
     required this.onStartOver,
   });
 
   final Duration position;
-  final bool useTouchOptimizedLayout;
   final VoidCallback onResume;
   final VoidCallback onStartOver;
 
@@ -182,10 +180,7 @@ class PlaybackResumePromptOverlay extends StatelessWidget {
     final overlayTokens = context.appOverlayTokens;
     return SafeArea(
       child: Align(
-        alignment:
-            useTouchOptimizedLayout
-                ? Alignment.bottomCenter
-                : Alignment.bottomLeft,
+        alignment: Alignment.bottomLeft,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             overlayTokens.playerControlBarHorizontalInset,

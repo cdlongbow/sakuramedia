@@ -77,4 +77,43 @@ void main() {
 
     expect(startOverCount, 1);
   });
+
+  testWidgets('overlay anchors the prompt to the bottom-left on touch widths', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Color(0xFF000000)),
+              PlaybackResumePromptOverlay(
+                position: const Duration(minutes: 12, seconds: 34),
+                onResume: () {},
+                onStartOver: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final promptRect = tester.getRect(
+      find.byKey(const Key('playback-resume-prompt')),
+    );
+    const overlayTokens = AppOverlayTokens.defaults();
+    expect(promptRect.left, overlayTokens.playerControlBarHorizontalInset);
+    expect(
+      promptRect.bottom,
+      844 - overlayTokens.playerSeekBarBottomInset - AppSpacing.defaults().xl,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

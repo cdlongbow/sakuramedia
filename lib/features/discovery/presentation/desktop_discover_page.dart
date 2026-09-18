@@ -21,10 +21,10 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
@@ -123,9 +123,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DiscoverSectionTitle(
+        AppSectionHeader(
           title: '女优上新',
-          totalText: '${paged?.total ?? 0} 部',
+          trailingText: '${paged?.total ?? 0} 部',
           actionKey: const Key('desktop-discover-load-more-follow'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopFollowPath),
@@ -170,9 +170,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DiscoverSectionTitle(
+        AppSectionHeader(
           title: '热门新片',
-          totalText: '${hotActress.total} 部',
+          trailingText: '${hotActress.total} 部',
           actionKey: const Key('desktop-discover-load-more-hot-actress'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopHotActressReleasesPath),
@@ -210,9 +210,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DiscoverSectionTitle(
+        AppSectionHeader(
           title: '今日推荐',
-          totalText: '${daily.total} 部',
+          trailingText: '${daily.total} 部',
           actionKey: const Key('desktop-discover-load-more-daily'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopDiscoverMoviesPath),
@@ -257,9 +257,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _DiscoverSectionTitle(
+        AppSectionHeader(
           title: '推荐时刻',
-          totalText: '${moment.total} 个',
+          trailingText: '${moment.total} 个',
           actionKey: const Key('desktop-discover-load-more-moments'),
           actionLabel: '更多',
           onActionTap: () => context.push(desktopDiscoverMomentsPath),
@@ -375,58 +375,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
 }
 
 void _ignoreMomentTap(MomentListItem _) {}
-
-class _DiscoverSectionTitle extends StatelessWidget {
-  const _DiscoverSectionTitle({
-    required this.title,
-    required this.totalText,
-    required this.actionKey,
-    required this.actionLabel,
-    required this.onActionTap,
-  });
-
-  final String title;
-  final String totalText;
-  final Key actionKey;
-  final String actionLabel;
-  final VoidCallback onActionTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(width: context.appSpacing.sm),
-        Text(
-          totalText,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-        const Spacer(),
-        AppTextButton(
-          key: actionKey,
-          label: actionLabel,
-          size: AppTextButtonSize.small,
-          trailingIcon: const Icon(Icons.chevron_right_rounded),
-          onPressed: onActionTap,
-        ),
-      ],
-    );
-  }
-}
 
 class _RetryEmptyState extends StatelessWidget {
   const _RetryEmptyState({required this.message, required this.onRetry});

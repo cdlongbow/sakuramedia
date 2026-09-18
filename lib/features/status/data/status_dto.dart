@@ -374,6 +374,235 @@ class StatusMetadataProviderTestDto {
   }
 }
 
+/// 单个媒体库的用量；各库 [fileCount] 之和恒等于全局媒体文件总数。
+class MediaLibraryUsageDto {
+  const MediaLibraryUsageDto({
+    required this.libraryId,
+    required this.name,
+    required this.providerKey,
+    required this.fileCount,
+    required this.totalSizeBytes,
+  });
+
+  final int libraryId;
+  final String name;
+  final String providerKey;
+  final int fileCount;
+  final int totalSizeBytes;
+
+  factory MediaLibraryUsageDto.fromJson(Map<String, dynamic> json) {
+    return MediaLibraryUsageDto(
+      libraryId: asInt(json['library_id']),
+      name: json['name'] as String? ?? '',
+      providerKey: json['provider_key'] as String? ?? '',
+      fileCount: asInt(json['file_count']),
+      totalSizeBytes: asInt(json['total_size_bytes']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'library_id': libraryId,
+      'name': name,
+      'provider_key': providerKey,
+      'file_count': fileCount,
+      'total_size_bytes': totalSizeBytes,
+    };
+  }
+}
+
+class CollectionSummaryDto {
+  const CollectionSummaryDto({this.count = 0, this.itemCount = 0});
+
+  final int count;
+  final int itemCount;
+
+  factory CollectionSummaryDto.fromJson(Map<String, dynamic> json) {
+    return CollectionSummaryDto(
+      count: asInt(json['count']),
+      itemCount: asInt(json['item_count']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{'count': count, 'item_count': itemCount};
+  }
+}
+
+/// 用户创建的合集资产统计；`playlists` 不含系统「最近播放」列表。
+class CollectionsStatsDto {
+  const CollectionsStatsDto({
+    this.playlists = const CollectionSummaryDto(),
+    this.videoCollections = const CollectionSummaryDto(),
+    this.clipCollections = const CollectionSummaryDto(),
+    this.momentCollections = const CollectionSummaryDto(),
+  });
+
+  final CollectionSummaryDto playlists;
+  final CollectionSummaryDto videoCollections;
+  final CollectionSummaryDto clipCollections;
+  final CollectionSummaryDto momentCollections;
+
+  bool get isEmpty =>
+      playlists.count == 0 &&
+      videoCollections.count == 0 &&
+      clipCollections.count == 0 &&
+      momentCollections.count == 0;
+
+  factory CollectionsStatsDto.fromJson(Map<String, dynamic> json) {
+    return CollectionsStatsDto(
+      playlists: CollectionSummaryDto.fromJson(asMap(json['playlists'])),
+      videoCollections: CollectionSummaryDto.fromJson(
+        asMap(json['video_collections']),
+      ),
+      clipCollections: CollectionSummaryDto.fromJson(
+        asMap(json['clip_collections']),
+      ),
+      momentCollections: CollectionSummaryDto.fromJson(
+        asMap(json['moment_collections']),
+      ),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'playlists': playlists.toJson(),
+      'video_collections': videoCollections.toJson(),
+      'clip_collections': clipCollections.toJson(),
+      'moment_collections': momentCollections.toJson(),
+    };
+  }
+}
+
+class StatusInsightsDto {
+  const StatusInsightsDto({
+    this.mediaLibraries = const <MediaLibraryUsageDto>[],
+    this.collections = const CollectionsStatsDto(),
+  });
+
+  final List<MediaLibraryUsageDto> mediaLibraries;
+  final CollectionsStatsDto collections;
+
+  factory StatusInsightsDto.fromJson(Map<String, dynamic> json) {
+    final libraries = json['media_libraries'];
+    return StatusInsightsDto(
+      mediaLibraries: libraries is List
+          ? libraries
+                .whereType<Map>()
+                .map(
+                  (item) => MediaLibraryUsageDto.fromJson(
+                    item.map(
+                      (key, value) => MapEntry(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList(growable: false)
+          : const <MediaLibraryUsageDto>[],
+      collections: CollectionsStatsDto.fromJson(asMap(json['collections'])),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'media_libraries': mediaLibraries
+          .map((library) => library.toJson())
+          .toList(growable: false),
+      'collections': collections.toJson(),
+    };
+  }
+}
+
+/// 观看趋势时间窗口；粒度由后端随窗口推导（7d/30d/90d 按天，1y/all 按月）。
+enum WatchTrendRange {
+  last7Days('7d', '近 7 天', '7天'),
+  last30Days('30d', '近 30 天', '30天'),
+  last90Days('90d', '近 90 天', '90天'),
+  lastYear('1y', '近一年', '1年'),
+  all('all', '全部时间', '全部');
+
+  const WatchTrendRange(this.apiValue, this.periodLabel, this.shortLabel);
+
+  final String apiValue;
+
+  /// 用于「近 30 天看过 N 部」这类完整描述。
+  final String periodLabel;
+
+  /// 用于分段控件这类窄空间。
+  final String shortLabel;
+}
+
+class WatchTrendBucketDto {
+  const WatchTrendBucketDto({required this.period, required this.count});
+
+  /// 天粒度 `YYYY-MM-DD`；月粒度 `YYYY-MM`。
+  final String period;
+  final int count;
+
+  factory WatchTrendBucketDto.fromJson(Map<String, dynamic> json) {
+    return WatchTrendBucketDto(
+      period: json['period'] as String? ?? '',
+      count: asInt(json['count']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{'period': period, 'count': count};
+  }
+}
+
+/// 观看趋势。
+///
+/// 数据源是「每个媒体最后一次观看时间」的分布，不是完整观看历史——
+/// 更早的记录已被覆盖，文案不要写成「观看历史」。
+class StatusWatchTrendDto {
+  const StatusWatchTrendDto({
+    required this.range,
+    required this.granularity,
+    this.watchedMovieCount = 0,
+    this.buckets = const <WatchTrendBucketDto>[],
+  });
+
+  final WatchTrendRange range;
+
+  /// `day` 或 `month`。
+  final String granularity;
+  final int watchedMovieCount;
+  final List<WatchTrendBucketDto> buckets;
+
+  factory StatusWatchTrendDto.fromJson(Map<String, dynamic> json) {
+    final buckets = json['buckets'];
+    return StatusWatchTrendDto(
+      range: WatchTrendRange.values.firstWhere(
+        (range) => range.apiValue == json['range'],
+        orElse: () => WatchTrendRange.last30Days,
+      ),
+      granularity: json['granularity'] as String? ?? 'day',
+      watchedMovieCount: asInt(json['watched_movie_count']),
+      buckets: buckets is List
+          ? buckets
+                .whereType<Map>()
+                .map(
+                  (item) => WatchTrendBucketDto.fromJson(
+                    item.map(
+                      (key, value) => MapEntry(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList(growable: false)
+          : const <WatchTrendBucketDto>[],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'range': range.apiValue,
+      'granularity': granularity,
+      'watched_movie_count': watchedMovieCount,
+      'buckets': buckets.map((bucket) => bucket.toJson()).toList(growable: false),
+    };
+  }
+}
+
 class StatusDto {
   const StatusDto({
     required this.backendVersion,

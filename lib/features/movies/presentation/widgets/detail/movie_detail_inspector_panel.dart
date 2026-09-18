@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_tab.dart';
@@ -415,21 +416,23 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
       return const Center(child: AppEmptyState(message: '暂无评论'));
     }
 
-    return ListView.separated(
-      controller: _scrollController,
-      key: const Key('movie-detail-review-list'),
-      itemCount: state.items.length + 1,
-      separatorBuilder: (context, index) =>
-          SizedBox(height: context.appSpacing.sm),
-      itemBuilder: (context, index) {
-        if (index < state.items.length) {
-          return _MovieDetailReviewCard(review: state.items[index]);
-        }
-        return _MovieDetailReviewFooter(
-          state: state,
-          onRetryLoadMore: _controller.loadMore,
-        );
-      },
+    return AppSelectableTextScrollConfiguration(
+      child: ListView.separated(
+        controller: _scrollController,
+        key: const Key('movie-detail-review-list'),
+        itemCount: state.items.length + 1,
+        separatorBuilder: (context, index) =>
+            SizedBox(height: context.appSpacing.sm),
+        itemBuilder: (context, index) {
+          if (index < state.items.length) {
+            return _MovieDetailReviewCard(review: state.items[index]);
+          }
+          return _MovieDetailReviewFooter(
+            state: state,
+            onRetryLoadMore: _controller.loadMore,
+          );
+        },
+      ),
     );
   }
 }

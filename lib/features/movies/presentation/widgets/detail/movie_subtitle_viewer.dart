@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.d
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 Future<void> showMovieSubtitleViewer(
@@ -90,19 +91,21 @@ class _MovieSubtitleViewerContentState
     }
 
     final text = _text ?? '';
-    return Scrollbar(
-      child: SingleChildScrollView(
-        key: const Key('movie-subtitle-viewer-scroll'),
-        padding: EdgeInsets.only(right: context.appSpacing.sm),
-        child: SelectableText(
-          text.isEmpty ? '（字幕内容为空）' : text,
-          key: const Key('movie-subtitle-viewer-text'),
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ).copyWith(fontFamily: 'monospace', height: 1.5),
+    return AppSelectableTextScrollConfiguration(
+      child: Scrollbar(
+        child: SingleChildScrollView(
+          key: const Key('movie-subtitle-viewer-scroll'),
+          padding: EdgeInsets.only(right: context.appSpacing.sm),
+          child: SelectableText(
+            text.isEmpty ? '（字幕内容为空）' : text,
+            key: const Key('movie-subtitle-viewer-text'),
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.primary,
+            ).copyWith(fontFamily: 'monospace', height: 1.5),
+          ),
         ),
       ),
     );

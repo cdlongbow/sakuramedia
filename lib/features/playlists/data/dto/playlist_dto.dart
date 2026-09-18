@@ -1,3 +1,11 @@
+/// 播放列表类型：后端按 `kind` 区分系统列表（不可手动增删）与用户列表。
+abstract final class PlaylistKind {
+  static const String custom = 'custom';
+
+  /// 系统「最近播放」，播放影片时由后端自动触达维护。
+  static const String recentlyPlayed = 'recently_played';
+}
+
 class PlaylistDto {
   const PlaylistDto({
     required this.id,

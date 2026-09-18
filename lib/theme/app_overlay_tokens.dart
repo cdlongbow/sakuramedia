@@ -15,6 +15,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     required this.hoverAlpha,
     required this.primaryLabelAlpha,
     required this.mutedLabelAlpha,
+    required this.switchTrackAlpha,
     required this.menuVerticalPadding,
     required this.drawerVerticalPadding,
     required this.menuGap,
@@ -53,6 +54,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       hoverAlpha = 0.08,
       primaryLabelAlpha = 0.94,
       mutedLabelAlpha = 0.85,
+      switchTrackAlpha = 0.28,
       menuVerticalPadding = 6,
       drawerVerticalPadding = 8,
       menuGap = 6,
@@ -89,6 +91,9 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
   final double hoverAlpha;
   final double primaryLabelAlpha;
   final double mutedLabelAlpha;
+
+  /// 媒体浮层上 [AppSwitch] 关闭态轨道的白色透明度。
+  final double switchTrackAlpha;
   final double menuVerticalPadding;
   final double drawerVerticalPadding;
   final double menuGap;
@@ -129,6 +134,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     double? hoverAlpha,
     double? primaryLabelAlpha,
     double? mutedLabelAlpha,
+    double? switchTrackAlpha,
     double? menuVerticalPadding,
     double? drawerVerticalPadding,
     double? menuGap,
@@ -166,6 +172,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       hoverAlpha: hoverAlpha ?? this.hoverAlpha,
       primaryLabelAlpha: primaryLabelAlpha ?? this.primaryLabelAlpha,
       mutedLabelAlpha: mutedLabelAlpha ?? this.mutedLabelAlpha,
+      switchTrackAlpha: switchTrackAlpha ?? this.switchTrackAlpha,
       menuVerticalPadding: menuVerticalPadding ?? this.menuVerticalPadding,
       drawerVerticalPadding:
           drawerVerticalPadding ?? this.drawerVerticalPadding,
@@ -230,6 +237,8 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       primaryLabelAlpha:
           lerpDouble(primaryLabelAlpha, other.primaryLabelAlpha, t)!,
       mutedLabelAlpha: lerpDouble(mutedLabelAlpha, other.mutedLabelAlpha, t)!,
+      switchTrackAlpha:
+          lerpDouble(switchTrackAlpha, other.switchTrackAlpha, t)!,
       menuVerticalPadding:
           lerpDouble(menuVerticalPadding, other.menuVerticalPadding, t)!,
       drawerVerticalPadding:

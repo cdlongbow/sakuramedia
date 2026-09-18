@@ -118,6 +118,7 @@ void main() {
       sort: 'release_date:desc',
       heatMin: 1000,
       heatMax: 5000,
+      query: '温泉 三上',
       page: 1,
       pageSize: 24,
     );
@@ -128,6 +129,7 @@ void main() {
     expect(request.uri.queryParameters['sort'], 'release_date:desc');
     expect(request.uri.queryParameters['heat_min'], '1000');
     expect(request.uri.queryParameters['heat_max'], '5000');
+    expect(request.uri.queryParameters['query'], '温泉 三上');
     expect(request.uri.queryParameters['actor_id'], isNull);
     expect(request.uri.queryParameters['page'], '1');
     expect(request.uri.queryParameters['page_size'], '24');
@@ -455,59 +457,6 @@ void main() {
           (ApiException error) => error.error?.code,
           'error.code',
           'server_error',
-        ),
-      ),
-    );
-  });
-
-  test('searchLocalMovies sends movie number query and parses list', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      statusCode: 200,
-      body: <Map<String, dynamic>>[
-        <String, dynamic>{
-          'javdb_id': 'MovieA1',
-          'movie_number': 'ABP-123',
-          'title': 'Movie 1',
-          'cover_image': null,
-          'release_date': null,
-          'duration_minutes': 120,
-          'is_subscribed': false,
-          'can_play': true,
-        },
-      ],
-    );
-
-    final results = await moviesApi.searchLocalMovies(movieNumber: 'ABP-123');
-
-    final request = adapter.requests.single;
-    expect(request.method, 'GET');
-    expect(request.path, '/movies/search/local');
-    expect(request.uri.queryParameters['movie_number'], 'ABP-123');
-    expect(results.single.movieNumber, 'ABP-123');
-  });
-
-  test('searchLocalMovies converts backend error to ApiException', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/search/local',
-      statusCode: 404,
-      body: <String, dynamic>{
-        'error': <String, dynamic>{
-          'code': 'movie_not_found',
-          'message': '影片不存在',
-        },
-      },
-    );
-
-    expect(
-      () => moviesApi.searchLocalMovies(movieNumber: 'ABP-123'),
-      throwsA(
-        isA<ApiException>().having(
-          (ApiException error) => error.error?.code,
-          'error.code',
-          'movie_not_found',
         ),
       ),
     );

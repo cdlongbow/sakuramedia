@@ -71,7 +71,7 @@ void main() {
     },
   );
 
-  testWidgets('desktop follow page renders list and total count', (
+  testWidgets('desktop follow page renders list without control header', (
     WidgetTester tester,
   ) async {
     bundle.adapter.enqueueJson(
@@ -83,9 +83,8 @@ void main() {
     await _pumpFollowPage(tester, sessionStore: sessionStore, bundle: bundle);
     await tester.pumpAndSettle();
 
-    expect(find.text('女优上新'), findsOneWidget);
-    expect(find.byKey(const Key('desktop-follow-page-total')), findsOneWidget);
-    expect(find.text('2 部'), findsOneWidget);
+    expect(find.text('女优上新'), findsNothing);
+    expect(find.text('2 部'), findsNothing);
     expect(find.byType(MovieSummaryCard), findsNWidgets(2));
     expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
   });

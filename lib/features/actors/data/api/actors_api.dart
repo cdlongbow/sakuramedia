@@ -26,6 +26,7 @@ class ActorsApi {
     int? heightMax,
     List<String> cups = const <String>[],
     String? sort,
+    String? query,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -35,6 +36,9 @@ class ActorsApi {
       'page': page,
       'page_size': pageSize,
     };
+    if (query != null && query.isNotEmpty) {
+      queryParameters['query'] = query;
+    }
     if (sort != null && sort.isNotEmpty) {
       queryParameters['sort'] = sort;
     }

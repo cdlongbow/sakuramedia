@@ -65,6 +65,11 @@ extension AppNavigationActions on BuildContext {
     _pushDesktopRoute(this, route.location, fallbackPath: fallbackPath);
   }
 
+  void pushDesktopLatestMovies() {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    const DesktopLatestMoviesRouteData().push(this);
+  }
+
   void pushDesktopSystemDiagnostics() {
     GoRouter.optionURLReflectsImperativeAPIs = true;
     const DesktopSystemDiagnosticsRouteData().push(this);

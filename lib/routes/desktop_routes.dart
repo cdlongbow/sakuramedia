@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/desktop/moment_collections_page.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/desktop/moment_collection_detail_page.dart';
+import 'package:sakuramedia/features/overview/presentation/pages/desktop/latest_movies_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/system_diagnostics_page.dart';
@@ -339,6 +340,7 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
       path: desktopHotActressReleasesPath,
     ),
     TypedGoRoute<DesktopFollowRouteData>(path: desktopFollowPath),
+    TypedGoRoute<DesktopLatestMoviesRouteData>(path: desktopLatestMoviesPath),
     TypedGoRoute<DesktopVideoCollectionsRouteData>(
       path: desktopVideoCollectionsPath,
     ),
@@ -495,6 +497,19 @@ class DesktopFollowRouteData extends _DesktopShellPageRouteData
   @override
   Widget buildContent(BuildContext context, GoRouterState state) {
     return const DesktopFollowPage();
+  }
+}
+
+class DesktopLatestMoviesRouteData extends _DesktopShellPageRouteData
+    with $DesktopLatestMoviesRouteData {
+  const DesktopLatestMoviesRouteData();
+
+  @override
+  String get pageName => 'desktop-latest-movies';
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    return const DesktopLatestMoviesPage();
   }
 }
 

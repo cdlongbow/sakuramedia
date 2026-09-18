@@ -310,7 +310,6 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
             if (_resumePromptVisible && widget.resumePosition != null)
               PlaybackResumePromptOverlay(
                 position: widget.resumePosition!,
-                useTouchOptimizedLayout: widget.useTouchOptimizedControls,
                 onResume: _resumePlayback,
                 onStartOver: _resolveResumePrompt,
               ),

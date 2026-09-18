@@ -8,12 +8,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.desktopTitleBarHeight,
     required this.desktopMacTrafficLightInsetWidth,
     required this.desktopTitleBarControlGap,
-    required this.overviewStatTileMinWidth,
-    required this.overviewStatTileMaxWidth,
-    required this.overviewStatSkeletonLabelWidth,
-    required this.overviewStatSkeletonLabelHeight,
-    required this.overviewStatSkeletonValueWidth,
-    required this.overviewStatSkeletonValueHeight,
     required this.movieCardTargetWidth,
     required this.movieThumbnailTargetWidth,
     required this.movieCardAspectRatio,
@@ -93,12 +87,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     : desktopTitleBarHeight = 56,
       desktopMacTrafficLightInsetWidth = 52,
       desktopTitleBarControlGap = 8,
-      overviewStatTileMinWidth = 150,
-      overviewStatTileMaxWidth = 190,
-      overviewStatSkeletonLabelWidth = 64,
-      overviewStatSkeletonLabelHeight = 10,
-      overviewStatSkeletonValueWidth = 96,
-      overviewStatSkeletonValueHeight = 22,
       movieCardTargetWidth = 160,
       movieThumbnailTargetWidth = 128,
       movieCardAspectRatio = 0.7,
@@ -177,12 +165,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     : desktopTitleBarHeight = 56,
       desktopMacTrafficLightInsetWidth = 52,
       desktopTitleBarControlGap = 8,
-      overviewStatTileMinWidth = 150,
-      overviewStatTileMaxWidth = 190,
-      overviewStatSkeletonLabelWidth = 64,
-      overviewStatSkeletonLabelHeight = 10,
-      overviewStatSkeletonValueWidth = 96,
-      overviewStatSkeletonValueHeight = 22,
       movieCardTargetWidth = 160,
       movieThumbnailTargetWidth = 128,
       movieCardAspectRatio = 0.7,
@@ -260,12 +242,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   final double desktopTitleBarHeight;
   final double desktopMacTrafficLightInsetWidth;
   final double desktopTitleBarControlGap;
-  final double overviewStatTileMinWidth;
-  final double overviewStatTileMaxWidth;
-  final double overviewStatSkeletonLabelWidth;
-  final double overviewStatSkeletonLabelHeight;
-  final double overviewStatSkeletonValueWidth;
-  final double overviewStatSkeletonValueHeight;
   final double movieCardTargetWidth;
   final double movieThumbnailTargetWidth;
   final double movieCardAspectRatio;
@@ -359,12 +335,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? desktopTitleBarHeight,
     double? desktopMacTrafficLightInsetWidth,
     double? desktopTitleBarControlGap,
-    double? overviewStatTileMinWidth,
-    double? overviewStatTileMaxWidth,
-    double? overviewStatSkeletonLabelWidth,
-    double? overviewStatSkeletonLabelHeight,
-    double? overviewStatSkeletonValueWidth,
-    double? overviewStatSkeletonValueHeight,
     double? movieCardTargetWidth,
     double? movieThumbnailTargetWidth,
     double? movieCardAspectRatio,
@@ -447,20 +417,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
           this.desktopMacTrafficLightInsetWidth,
       desktopTitleBarControlGap:
           desktopTitleBarControlGap ?? this.desktopTitleBarControlGap,
-      overviewStatTileMinWidth:
-          overviewStatTileMinWidth ?? this.overviewStatTileMinWidth,
-      overviewStatTileMaxWidth:
-          overviewStatTileMaxWidth ?? this.overviewStatTileMaxWidth,
-      overviewStatSkeletonLabelWidth:
-          overviewStatSkeletonLabelWidth ?? this.overviewStatSkeletonLabelWidth,
-      overviewStatSkeletonLabelHeight:
-          overviewStatSkeletonLabelHeight ??
-          this.overviewStatSkeletonLabelHeight,
-      overviewStatSkeletonValueWidth:
-          overviewStatSkeletonValueWidth ?? this.overviewStatSkeletonValueWidth,
-      overviewStatSkeletonValueHeight:
-          overviewStatSkeletonValueHeight ??
-          this.overviewStatSkeletonValueHeight,
       movieCardTargetWidth: movieCardTargetWidth ?? this.movieCardTargetWidth,
       movieThumbnailTargetWidth:
           movieThumbnailTargetWidth ?? this.movieThumbnailTargetWidth,
@@ -608,36 +564,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
         other.desktopTitleBarControlGap,
         t,
       )!,
-      overviewStatTileMinWidth: lerpDouble(
-        overviewStatTileMinWidth,
-        other.overviewStatTileMinWidth,
-        t,
-      )!,
-      overviewStatTileMaxWidth: lerpDouble(
-        overviewStatTileMaxWidth,
-        other.overviewStatTileMaxWidth,
-        t,
-      )!,
-      overviewStatSkeletonLabelWidth: lerpDouble(
-        overviewStatSkeletonLabelWidth,
-        other.overviewStatSkeletonLabelWidth,
-        t,
-      )!,
-      overviewStatSkeletonLabelHeight: lerpDouble(
-        overviewStatSkeletonLabelHeight,
-        other.overviewStatSkeletonLabelHeight,
-        t,
-      )!,
-      overviewStatSkeletonValueWidth: lerpDouble(
-        overviewStatSkeletonValueWidth,
-        other.overviewStatSkeletonValueWidth,
-        t,
-      )!,
-      overviewStatSkeletonValueHeight: lerpDouble(
-        overviewStatSkeletonValueHeight,
-        other.overviewStatSkeletonValueHeight,
-        t,
-      )!,
+
       movieCardTargetWidth: lerpDouble(
         movieCardTargetWidth,
         other.movieCardTargetWidth,

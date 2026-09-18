@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,17 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
+
+/// 与应用全局 `kAppScrollDragDevices`（`lib/app/app.dart`）保持一致的指针集合，
+/// 鼠标也在可拖拽滚动之列。不复用该常量是为了不把测试牵连进整个应用装配图。
+const Set<PointerDeviceKind> _appDragDevices = <PointerDeviceKind>{
+  PointerDeviceKind.touch,
+  PointerDeviceKind.mouse,
+  PointerDeviceKind.stylus,
+  PointerDeviceKind.invertedStylus,
+  PointerDeviceKind.trackpad,
+  PointerDeviceKind.unknown,
+};
 
 typedef _FetchMovieReviews =
     Future<List<MovieReviewDto>> Function({
@@ -460,6 +473,71 @@ void main() {
   });
 
   testWidgets(
+    'review content stays mouse-drag selectable while app-wide mouse drag scroll is on',
+    (WidgetTester tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+      try {
+        await _pumpInspectorPanel(
+          tester,
+          panelHeight: 480,
+          platform: TargetPlatform.macOS,
+          useAppScrollConfiguration: true,
+          fetchMovieReviews:
+              ({
+                required String movieNumber,
+                required int page,
+                required int pageSize,
+                required MovieReviewSort sort,
+              }) async => <MovieReviewDto>[
+                for (var index = 0; index < 10; index++)
+                  MovieReviewDto(
+                    id: index,
+                    score: 5,
+                    content:
+                        '这是一条足够长的评论内容，用来验证鼠标拖拽可以正常选中其中的文字。'
+                        '这是一条足够长的评论内容，用来验证鼠标拖拽可以正常选中其中的文字。'
+                        '这是一条足够长的评论内容，用来验证鼠标拖拽可以正常选中其中的文字。',
+                    createdAt: DateTime.parse('2026-03-10T08:00:00Z'),
+                    username: 'tester-$index',
+                    likeCount: 1,
+                    watchCount: 2,
+                  ),
+              ],
+        );
+        await tester.pumpAndSettle();
+
+        final contentFinder = find.byKey(
+          const Key('movie-detail-review-content'),
+        );
+        expect(contentFinder, findsWidgets);
+        final gesture = await tester.startGesture(
+          tester.getTopLeft(contentFinder.first) + const Offset(8, 8),
+          kind: PointerDeviceKind.mouse,
+        );
+        for (var i = 0; i < 30; i++) {
+          await gesture.moveBy(const Offset(0, 1));
+          await tester.pump();
+        }
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        final editable = tester.widget<EditableText>(
+          find.descendant(
+            of: contentFinder.first,
+            matching: find.byType(EditableText),
+          ),
+        );
+        // 回归守卫：应用全局 dragDevices 含 mouse（列表可拖拽滚动）时，鼠标每个
+        // move 事件只走 1px，列表滚动会先接受手势并把选择清空；评论列表必须把
+        // mouse 排除在拖拽滚动之外，鼠标拖拽才能选中文字。
+        expect(editable.controller.selection.isCollapsed, isFalse);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
+
+  testWidgets(
     'movie detail inspector magnet tab shows sort controls and updates direction semantics',
     (WidgetTester tester) async {
       await _pumpInspectorPanel(
@@ -807,6 +885,7 @@ Future<ProviderContainer> _pumpInspectorPanel(
   WidgetTester tester, {
   required double panelHeight,
   TargetPlatform? platform,
+  bool useAppScrollConfiguration = false,
   required _FetchMovieReviews fetchMovieReviews,
   _SearchCandidates? searchCandidates,
   _CreateDownloadRequest? createDownloadRequest,
@@ -857,26 +936,37 @@ Future<ProviderContainer> _pumpInspectorPanel(
           theme: platform == null
               ? sakuraThemeData
               : sakuraThemeData.copyWith(platform: platform),
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 960,
-                height: panelHeight,
-                child: MovieDetailInspectorPanel(
-                  movieNumber: 'ABC-001',
-                  selectedMedia: null,
-                  onClose: () {},
-                  showCloseButton: false,
-                ),
-              ),
-            ),
-          ),
+          home: useAppScrollConfiguration
+              ? ScrollConfiguration(
+                  behavior: const MaterialScrollBehavior().copyWith(
+                    dragDevices: _appDragDevices,
+                  ),
+                  child: _inspectorPanelScaffold(panelHeight: panelHeight),
+                )
+              : _inspectorPanelScaffold(panelHeight: panelHeight),
         ),
       ),
     ),
   );
 
   return container;
+}
+
+Widget _inspectorPanelScaffold({required double panelHeight}) {
+  return Scaffold(
+    body: Center(
+      child: SizedBox(
+        width: 960,
+        height: panelHeight,
+        child: MovieDetailInspectorPanel(
+          movieNumber: 'ABC-001',
+          selectedMedia: null,
+          onClose: () {},
+          showCloseButton: false,
+        ),
+      ),
+    ),
+  );
 }
 
 DownloadTaskDto _emptyDownloadTask({required int clientId}) {

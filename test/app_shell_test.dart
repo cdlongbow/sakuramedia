@@ -30,13 +30,12 @@ void main() {
       expect(find.text('影片'), findsWidgets);
       expect(find.text('女优'), findsWidgets);
       expect(find.text('播放列表'), findsWidgets);
-      expect(find.text('系统信息'), findsOneWidget);
+      expect(find.text('媒体资产'), findsOneWidget);
+      expect(find.text('观看趋势'), findsOneWidget);
+      expect(find.text('存储分布'), findsOneWidget);
       expect(find.text('最近添加'), findsOneWidget);
       expect(find.text('ABC-001'), findsOneWidget);
-      expect(
-        find.byKey(const Key('overview-stat-movies-total')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('overview-asset-movies')), findsOneWidget);
     },
   );
 }

@@ -21,6 +21,8 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -295,14 +297,13 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                 onTextImageSearchTap: _openTextImageSearch,
               ),
               SizedBox(height: spacing.sm),
-              Text(
-                '最近添加',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
+              AppSectionHeader(
+                title: '最近添加',
+                actionLabel: '更多',
+                actionSize: AppTextButtonSize.xSmall,
+                actionKey: const Key('mobile-overview-latest-more'),
+                onActionTap: () =>
+                    const MobileLatestMoviesRouteData().push(context),
               ),
               SizedBox(height: spacing.xs),
               _buildLatestMoviesSection(),

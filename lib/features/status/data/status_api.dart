@@ -28,6 +28,19 @@ class StatusApi {
     return StatusImageSearchDto.fromJson(response);
   }
 
+  Future<StatusInsightsDto> getInsights() async {
+    final response = await _apiClient.get('/status/insights');
+    return StatusInsightsDto.fromJson(response);
+  }
+
+  Future<StatusWatchTrendDto> getWatchTrend(WatchTrendRange range) async {
+    final response = await _apiClient.get(
+      '/status/watch-trend',
+      queryParameters: <String, dynamic>{'range': range.apiValue},
+    );
+    return StatusWatchTrendDto.fromJson(response);
+  }
+
   Future<void> resetImageSearch() => _apiClient.post('/image-search/reset');
 
   Future<String?> checkFrontendUpdate(String currentVersion) =>

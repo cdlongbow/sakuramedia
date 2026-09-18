@@ -414,6 +414,11 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
       factory: $DesktopFollowRouteData._fromState,
     ),
     GoRouteData.$route(
+      path: '/desktop/library/latest',
+      hasOverriddenOnExit: false,
+      factory: $DesktopLatestMoviesRouteData._fromState,
+    ),
+    GoRouteData.$route(
       path: '/desktop/library/video-collections',
       hasOverriddenOnExit: false,
       factory: $DesktopVideoCollectionsRouteData._fromState,
@@ -926,6 +931,27 @@ mixin $DesktopFollowRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/library/follow');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopLatestMoviesRouteData on GoRouteData {
+  static DesktopLatestMoviesRouteData _fromState(GoRouterState state) =>
+      const DesktopLatestMoviesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/library/latest');
 
   @override
   void go(BuildContext context) => context.go(location);

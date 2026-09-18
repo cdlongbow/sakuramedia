@@ -11,6 +11,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 
 /// 可嵌入详情检查器或独立弹窗的影片磁力搜索内容。
 ///
@@ -216,48 +217,52 @@ class MovieMagnetSearchContent extends ConsumerWidget {
       return const Center(child: AppEmptyState(message: '没有找到可用资源'));
     }
 
-    return ListView.separated(
-      itemCount: items.length,
-      separatorBuilder: (context, index) =>
-          SizedBox(height: context.appSpacing.md),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _MovieMagnetCandidateCard(
-          key: Key('movie-detail-magnet-candidate-$index'),
-          candidate: item,
-          isSubmitting: state.submittingCandidateKey == item.submitKey,
-          copyButtonKey: Key('movie-detail-magnet-copy-$index'),
-          submitButtonKey: Key('movie-detail-magnet-submit-$index'),
-          onSubmit: item.hasDownloadSource
-              ? (clientId) async {
-                  try {
-                    final response = await controller.submitCandidate(
-                      item,
-                      clientId: clientId,
-                    );
-                    if (!context.mounted) {
-                      return;
-                    }
-                    var selectedClientName = item.resolvedClientName;
-                    for (final client in item.selectableDownloadClients) {
-                      if (client.id == clientId) {
-                        selectedClientName = client.name;
-                        break;
+    return AppSelectableTextScrollConfiguration(
+      child: ListView.separated(
+        itemCount: items.length,
+        separatorBuilder: (context, index) =>
+            SizedBox(height: context.appSpacing.md),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          return _MovieMagnetCandidateCard(
+            key: Key('movie-detail-magnet-candidate-$index'),
+            candidate: item,
+            isSubmitting: state.submittingCandidateKey == item.submitKey,
+            copyButtonKey: Key('movie-detail-magnet-copy-$index'),
+            submitButtonKey: Key('movie-detail-magnet-submit-$index'),
+            onSubmit: item.hasDownloadSource
+                ? (clientId) async {
+                    try {
+                      final response = await controller.submitCandidate(
+                        item,
+                        clientId: clientId,
+                      );
+                      if (!context.mounted) {
+                        return;
                       }
+                      var selectedClientName = item.resolvedClientName;
+                      for (final client in item.selectableDownloadClients) {
+                        if (client.id == clientId) {
+                          selectedClientName = client.name;
+                          break;
+                        }
+                      }
+                      showToast(
+                        response.created
+                            ? '已提交到 $selectedClientName'
+                            : '下载任务已存在',
+                      );
+                    } catch (error) {
+                      if (!context.mounted) {
+                        return;
+                      }
+                      showToast(apiErrorMessage(error, fallback: '提交下载失败'));
                     }
-                    showToast(
-                      response.created ? '已提交到 $selectedClientName' : '下载任务已存在',
-                    );
-                  } catch (error) {
-                    if (!context.mounted) {
-                      return;
-                    }
-                    showToast(apiErrorMessage(error, fallback: '提交下载失败'));
                   }
-                }
-              : null,
-        );
-      },
+                : null,
+          );
+        },
+      ),
     );
   }
 }

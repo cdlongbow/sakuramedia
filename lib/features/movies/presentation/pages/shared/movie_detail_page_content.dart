@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_clip_strip.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_item_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_ranking_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_similar_movie_strip.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
@@ -420,6 +421,12 @@ class MovieDetailPageContent extends StatelessWidget {
         ),
         if (movie.playlists.isNotEmpty) _buildPlaylistMembership(context),
         ..._buildInlineMetaItems(context, movie, onSeriesTap),
+        if (movie.rankings.isNotEmpty)
+          MovieDetailSection(
+            title: '榜单',
+            titleKey: const Key('movie-rankings-title'),
+            child: MovieRankingList(rankings: movie.rankings),
+          ),
         if (movie.tags.isNotEmpty)
           MovieDetailSection(
             title: '标签',

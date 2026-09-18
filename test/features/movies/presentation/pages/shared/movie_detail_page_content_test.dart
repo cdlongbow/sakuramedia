@@ -129,6 +129,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(find.text('标签'), showTags ? findsOneWidget : findsNothing);
             expect(find.text('演员'), showActors ? findsOneWidget : findsNothing);
+            expect(find.text('榜单'), findsNothing);
             expect(find.text('暂无观看记录'), findsNothing);
             expect(find.textContaining('上次看到'), findsNothing);
             expect(find.byType(MoviePlotGallery), findsNothing);
@@ -180,6 +181,74 @@ void main() {
     );
     expect(find.text('元数据 · 示例来源 · 待 JavDB 收录'), findsOneWidget);
   });
+
+  for (final mobile in [true, false]) {
+    testWidgets(
+      'detail shows ranking placements (mobile: $mobile)',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = mobile
+            ? const Size(360, 760)
+            : const Size(1100, 760);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(tester.view.resetPhysicalSize);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+            home: Scaffold(
+              body: MovieDetailPageContent(
+                movie: _movieDetail(
+                  rankings: const <MovieRankingDto>[
+                    MovieRankingDto(
+                      sourceKey: 'javdb',
+                      sourceName: 'JavDB',
+                      boardKey: 'playback_all',
+                      boardName: '热播',
+                      period: 'daily',
+                      rank: 3,
+                    ),
+                    MovieRankingDto(
+                      sourceKey: 'javdb',
+                      sourceName: 'JavDB',
+                      boardKey: 'top250',
+                      boardName: 'TOP250',
+                      period: '2026',
+                      rank: 28,
+                    ),
+                  ],
+                ),
+                selectedPreviewKey: 'movie-preview',
+                selectedPreviewUrl: null,
+                isCollection: false,
+                isSubscribed: false,
+                isCollectionUpdating: false,
+                isSubscriptionUpdating: false,
+                selectedMediaId: 100,
+                statItems: const <MovieDetailStatItem>[],
+                similarMovies: const <MovieListItemDto>[],
+                isSimilarMoviesLoading: false,
+                bottomInfoBarVariant: mobile
+                    ? MovieDetailBottomInfoBarVariant.mobileFullWidth
+                    : MovieDetailBottomInfoBarVariant.desktopCard,
+                onInspectorTap: _noop,
+                onPlaylistTap: _noop,
+                onCollectionToggle: _noop,
+                onMediaSelect: (_) {},
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('榜单'), findsOneWidget);
+        expect(find.text('热播 · 日榜'), findsOneWidget);
+        expect(find.text('TOP250 · 2026年'), findsOneWidget);
+        expect(find.text('#3'), findsOneWidget);
+        expect(find.text('#28'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   test('movie DTOs accept plugin movies without a JavDB ID', () {
     final json = <String, dynamic>{
@@ -428,6 +497,7 @@ MovieDetailDto _movieDetail({
   List<MoviePlaylistSummaryDto> playlists = const [],
   List<MovieActorDto>? actors,
   List<MovieTagDto>? tags,
+  List<MovieRankingDto> rankings = const [],
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
@@ -495,6 +565,7 @@ MovieDetailDto _movieDetail({
           ),
         ],
     playlists: playlists,
+    rankings: rankings,
   );
 }
 

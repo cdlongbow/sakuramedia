@@ -24,8 +24,6 @@ import 'package:sakuramedia/widgets/domain/movies/player/movie_player_native_sta
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_error_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_rate_coordinator.dart';
-import 'package:sakuramedia/widgets/domain/movies/player/movie_player_quality_comparison_overlay.dart';
-import 'package:sakuramedia/widgets/domain/movies/player/movie_player_quality_coordinator.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_resume_seek_coordinators.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_controller.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_coordinators.dart';
@@ -92,7 +90,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
   late final ValueNotifier<MoviePlayerSubtitleState> _subtitleStateNotifier;
   late final ValueNotifier<bool> _isApplyingSubtitleNotifier;
   late final MoviePlayerPlaybackRateCoordinator _playbackRate;
-  late final MoviePlayerQualityCoordinator _quality;
   late final MoviePlayerMobileDrawerCoordinator _mobileDrawer;
   StreamSubscription<Duration>? _seekSubscription;
   StreamSubscription<void>? _playSubscription;
@@ -152,14 +149,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       setRate: _player.setRate,
       initialRate: _player.state.rate,
     )..addListener(_handlePlaybackRateChanged);
-    _quality = MoviePlayerQualityCoordinator(
-      isPlaying: () => _player.state.playing,
-      pause: _player.pause,
-      play: _player.play,
-      captureFrame: () => _player.screenshot(format: 'image/png'),
-      readProperty: createMediaKitNativePropertyReader(_player),
-      writeProperty: _writeNativeVideoProperty,
-    )..addListener(_handleQualityChanged);
     _mobileDrawer = MoviePlayerMobileDrawerCoordinator()
       ..addListener(_handleMobileDrawerChanged);
     _seekSubscription = widget.surfaceController.seekStream.listen(
@@ -257,8 +246,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     _resumePrompt.dispose();
     _playbackRate.removeListener(_handlePlaybackRateChanged);
     _playbackRate.dispose();
-    _quality.removeListener(_handleQualityChanged);
-    _quality.dispose();
     _mobileDrawer.removeListener(_handleMobileDrawerChanged);
     _mobileDrawer.dispose();
     _subtitleStateNotifier.dispose();
@@ -512,17 +499,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     setState(() {});
   }
 
-  void _handleQualityChanged() {
-    if (!mounted) {
-      return;
-    }
-    setState(() {});
-  }
-
-  Future<void> _handleQualityComparisonCompleted() {
-    return _quality.finishComparison();
-  }
-
   Future<void> _handleMobilePlaybackRateSelected(double rate) async {
     _mobileDrawer.closeDrawer();
     await _playbackRate.selectFromMobile(rate);
@@ -560,8 +536,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
           _mobileDrawer.toggle(MoviePlayerMobileDrawerType.speed),
       onSubtitleButtonPressed: () =>
           _mobileDrawer.toggle(MoviePlayerMobileDrawerType.subtitle),
-      qualityEnabledListenable: _quality,
-      onQualityPressed: () => unawaited(_quality.toggle()),
     );
     final desktopBottomControls = buildMoviePlayerDesktopBottomControls(
       currentRate: _playbackRate.currentRate,
@@ -571,8 +545,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       isApplyingListenable: _isApplyingSubtitleNotifier,
       onSubtitleSelected: _handleSubtitleSelected,
       onSubtitleReloadRequested: _handleSubtitleReloadRequested,
-      qualityEnabledListenable: _quality,
-      onQualityPressed: () => unawaited(_quality.toggle()),
     );
     final backgroundColor = context.appColors.movieDetailHeroBackgroundStart;
     final videoSurface = Video(
@@ -594,11 +566,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       fit: StackFit.expand,
       children: [
         videoSurface,
-        if (_quality.originalFrame != null)
-          MoviePlayerQualityComparisonOverlay(
-            originalFrame: _quality.originalFrame!,
-            onCompleted: () => unawaited(_handleQualityComparisonCompleted()),
-          ),
         if (_resumePrompt.isVisible && widget.resumePosition != null)
           PlaybackResumePromptOverlay(
             position: widget.resumePosition!,

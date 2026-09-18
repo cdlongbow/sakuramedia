@@ -884,6 +884,24 @@ void main() {
             'is_system': false,
           },
         ],
+        'rankings': [
+          <String, dynamic>{
+            'source_key': 'javdb',
+            'source_name': 'JavDB',
+            'board_key': 'playback_all',
+            'board_name': '热播',
+            'period': 'daily',
+            'rank': 3,
+          },
+          <String, dynamic>{
+            'source_key': 'javdb',
+            'source_name': 'JavDB',
+            'board_key': 'top250',
+            'board_name': 'TOP250',
+            'period': '2026',
+            'rank': 28,
+          },
+        ],
         'media_items': [
           <String, dynamic>{
             'media_id': 100,
@@ -1001,6 +1019,12 @@ void main() {
     expect(detail.playlists.first.name, '最近播放');
     expect(detail.playlists.first.isSystem, isTrue);
     expect(detail.playlists.last.kind, 'custom');
+    expect(detail.rankings, hasLength(2));
+    expect(detail.rankings.first.boardName, '热播');
+    expect(detail.rankings.first.periodLabel, '日榜');
+    expect(detail.rankings.first.rank, 3);
+    expect(detail.rankings.last.boardName, 'TOP250');
+    expect(detail.rankings.last.periodLabel, '2026年');
   });
 
   test('getMergedPlayback requests the selected media library', () async {

@@ -45,7 +45,18 @@ String rankingPeriodLabel(String period) {
       return '周榜';
     case 'monthly':
       return '月榜';
-    default:
-      return period;
+    // JavDB TOP250 用固定子榜和年份作为周期。
+    case 'all':
+      return '总榜';
+    case 'censored':
+      return '有码';
+    case 'uncensored':
+      return '无码';
+    case 'fc2':
+      return 'FC2';
   }
+  if (period.length == 4 && int.tryParse(period) != null) {
+    return '$period年';
+  }
+  return period;
 }

@@ -1,4 +1,5 @@
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 
 class MovieDetailDto {
   const MovieDetailDto({
@@ -32,6 +33,7 @@ class MovieDetailDto {
     required this.mediaItems,
     this.mergePlaybackCandidates = const <MovieMergePlaybackCandidateDto>[],
     required this.playlists,
+    this.rankings = const <MovieRankingDto>[],
   });
 
   /// 后端返回的影片整数主键，可用于与订阅等域数据关联。
@@ -66,6 +68,9 @@ class MovieDetailDto {
   final List<MovieMediaItemDto> mediaItems;
   final List<MovieMergePlaybackCandidateDto> mergePlaybackCandidates;
   final List<MoviePlaylistSummaryDto> playlists;
+
+  /// 影片当前在外部榜单上的上榜记录；没有上榜时为空。
+  final List<MovieRankingDto> rankings;
 
   /// DMM 简介与翻译链路已下线，desc/desc_zh 随 API 移除（存量收拢进 [summary]），
   /// 这里保留 getter 只做 trim。
@@ -123,6 +128,10 @@ class MovieDetailDto {
         json['playlists'],
         (item) => MoviePlaylistSummaryDto.fromJson(item),
       ),
+      rankings: _listFromJson(
+        json['rankings'],
+        (item) => MovieRankingDto.fromJson(item),
+      ),
     );
   }
 }
@@ -179,6 +188,38 @@ class MoviePlaylistSummaryDto {
       name: json['name'] as String? ?? '',
       kind: json['kind'] as String? ?? 'custom',
       isSystem: json['is_system'] as bool? ?? false,
+    );
+  }
+}
+
+/// 影片的一条上榜记录：来源 · 榜单 · 周期（日/周/月榜、TOP250 子榜或年份）。
+class MovieRankingDto {
+  const MovieRankingDto({
+    required this.sourceKey,
+    required this.sourceName,
+    required this.boardKey,
+    required this.boardName,
+    required this.period,
+    required this.rank,
+  });
+
+  final String sourceKey;
+  final String sourceName;
+  final String boardKey;
+  final String boardName;
+  final String period;
+  final int rank;
+
+  String get periodLabel => rankingPeriodLabel(period);
+
+  factory MovieRankingDto.fromJson(Map<String, dynamic> json) {
+    return MovieRankingDto(
+      sourceKey: json['source_key'] as String? ?? '',
+      sourceName: json['source_name'] as String? ?? '',
+      boardKey: json['board_key'] as String? ?? '',
+      boardName: json['board_name'] as String? ?? '',
+      period: json['period'] as String? ?? '',
+      rank: _intFromJson(json['rank']) ?? 0,
     );
   }
 }

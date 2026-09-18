@@ -1,5 +1,5 @@
 import 'package:sakuramedia/core/json/json_parse.dart'
-    show asDateTime, asInt, asMap, asMapOrNull, asStringList;
+    show asDateTime, asInt, asIntOrNull, asMap, asMapOrNull, asStringList;
 
 class ActorStatsDto {
   const ActorStatsDto({
@@ -382,13 +382,23 @@ class MediaLibraryUsageDto {
     required this.providerKey,
     required this.fileCount,
     required this.totalSizeBytes,
+    this.spaceTotalBytes,
+    this.spaceUsedBytes,
+    this.spaceFreeBytes,
   });
 
   final int libraryId;
   final String name;
   final String providerKey;
   final int fileCount;
+
+  /// 本库 SakuraMedia 媒体文件合计大小；含失效媒体。
   final int totalSizeBytes;
+
+  /// provider 上报的存储端容量；null 表示提供方不支持或查询失败。
+  final int? spaceTotalBytes;
+  final int? spaceUsedBytes;
+  final int? spaceFreeBytes;
 
   factory MediaLibraryUsageDto.fromJson(Map<String, dynamic> json) {
     return MediaLibraryUsageDto(
@@ -397,6 +407,9 @@ class MediaLibraryUsageDto {
       providerKey: json['provider_key'] as String? ?? '',
       fileCount: asInt(json['file_count']),
       totalSizeBytes: asInt(json['total_size_bytes']),
+      spaceTotalBytes: asIntOrNull(json['space_total_bytes']),
+      spaceUsedBytes: asIntOrNull(json['space_used_bytes']),
+      spaceFreeBytes: asIntOrNull(json['space_free_bytes']),
     );
   }
 
@@ -407,6 +420,9 @@ class MediaLibraryUsageDto {
       'provider_key': providerKey,
       'file_count': fileCount,
       'total_size_bytes': totalSizeBytes,
+      'space_total_bytes': spaceTotalBytes,
+      'space_used_bytes': spaceUsedBytes,
+      'space_free_bytes': spaceFreeBytes,
     };
   }
 }

@@ -128,7 +128,6 @@ services:
   #   container_name: siglip2-embed
   #   restart: unless-stopped
   #   environment:
-  #     EMBEDDING_BACKEND: "cpu"
   #     CPU_CONCURRENCY: "1"
   #     MALLOC_TRIM_THRESHOLD_: "131072"
   #     TEXT_TOWER_ENABLED: "true" # 内存不够可尝试将此项设为false，关于文字搜图降低内存占用

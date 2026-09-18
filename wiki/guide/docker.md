@@ -4,7 +4,7 @@ outline: [2, 4]
 
 # 可选向量服务与 SigLIP2 硬件方案
 
-快速开始中的 CPU 镜像适用于 AMD、Intel 和 ARM64 主机。SigLIP2 镜像已包含模型和运行时，**不需要**下载模型、挂载模型目录或预先缩放图片。
+快速开始中的 CPU 镜像适用于 AMD、Intel 和 ARM64 主机。SigLIP2 镜像已包含模型和运行时，**不需要**下载模型、挂载模型目录或预先缩放图片。服务启动时会按镜像内安装的运行时自动选择推理后端，不需要配置。
 
 后端和嵌入服务在同一个 Compose 项目中时，不需要映射端口；后端默认通过 `http://siglip2-embed:8080` 访问服务。
 
@@ -28,7 +28,6 @@ outline: [2, 4]
     group_add:
       - "${RENDER_GID:-0}"
     environment:
-      EMBEDDING_BACKEND: "intel_gpu"
       CPU_CONCURRENCY: "1"
 ```
 
@@ -45,7 +44,6 @@ outline: [2, 4]
     restart: unless-stopped
     gpus: all
     environment:
-      EMBEDDING_BACKEND: "cuda"
       CPU_CONCURRENCY: "1"
 ```
 

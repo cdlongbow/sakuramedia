@@ -548,7 +548,6 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       height: double.infinity,
       fit: BoxFit.fitWidth,
       fill: backgroundColor,
-      filterQuality: FilterQuality.none,
       controls: resolveMoviePlayerVideoControlsBuilder(
         useTouchOptimizedControls: widget.useTouchOptimizedControls,
       ),

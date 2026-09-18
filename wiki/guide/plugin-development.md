@@ -115,7 +115,7 @@ def register(context: PluginContext) -> PluginRegistration:
 - `movies`：查询影片及关联演员、标签快照，分页遍历并更新受保护字段。
 - `actors`：读取演员身份与资料快照，分页遍历并更新资料字段。
 - `subscriptions`：读取订阅状态、订阅或取消订阅，以及重置订阅搜索状态。
-- `notifications`：创建、幂等创建和解决插件通知。
+- `notifications`：创建、幂等创建和解决插件通知，并按通知 ID 升序增量读取宿主通知。
 - `collections`：按插件自己的 key 管理 playlist、moment 和 clip 合集。
 - `subtitles`：列出影片已登记的字幕，读取原始字节及 SHA256。
 - `media`：按影片、媒体库读取媒体快照，判断是否存在媒体或可播放媒体。
@@ -206,6 +206,8 @@ def update_actor_height(context, actor_id: int, height_cm: int) -> bool:
 `context.subscriptions` 提供 `list()`、`count_by_status()`、`get(movie_id)`、`subscribe(movie_number)`、`unsubscribe(movie_number)` 和 `reset_search(movie_ids=None)`。订阅列表使用页码分页；`reset_search(None)` 重置全部订阅的搜索状态，传入影片 id 集合时只重置指定影片。
 
 `context.notifications` 提供 `create()`、`create_once()` 和 `resolve(dedupe_key)`。幂等键会自动带上当前插件命名空间，插件之间不会互相覆盖；创建结果中的 key 和 `resolve()` 都使用插件自己的原始 key。
+
+`list(after_id=0, limit=100)` 按通知 ID 升序返回 `PluginNotification` 快照，只读且不改变通知的已读状态；`limit` 上限 100。推送类插件应以最后成功处理的通知 ID 作为下次的 `after_id`，进度落在 `data_dir`，宿主不维护投递状态和重试。
 
 `context.collections` 提供 `ensure_playlist()` / `set_playlist_movies()`、`ensure_moment()` / `set_moment_points()` 和 `ensure_clip()` / `set_clip_clips()`。合集通过插件自己的 `key` 管理，设置成员时会替换该合集的全部成员，不能修改其他插件拥有的 key。
 

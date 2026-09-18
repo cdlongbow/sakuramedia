@@ -1,7 +1,78 @@
+import 'dart:ui' as ui;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 
-/// 播放器菜单 / 抽屉里的一行:左右留白 + 中央 label + 右侧勾选槽。
+/// 播放器浮层统一的深色毛玻璃面:模糊 + 染色 + 描边 + 投影。
+///
+/// 播放信息面板、移动端右侧抽屉、桌面倍速/字幕菜单共用同一份透明度与
+/// 模糊半径, 避免各浮层透明度漂移。抽屉类传左圆角与无限高, 菜单用默认
+/// 全圆角并随内容收缩。
+class MoviePlayerGlassSurface extends StatelessWidget {
+  const MoviePlayerGlassSurface({
+    super.key,
+    required this.child,
+    this.width,
+    this.height,
+    this.padding,
+    this.borderRadius,
+  });
+
+  final Widget child;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final BorderRadius? borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final overlayTokens = context.appOverlayTokens;
+    final radius = borderRadius ?? overlayTokens.surfaceBorderRadius;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              alpha: overlayTokens.surfaceShadowAlpha,
+            ),
+            blurRadius: overlayTokens.surfaceShadowBlur,
+            offset: Offset(0, overlayTokens.surfaceShadowOffsetY),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(
+            sigmaX: overlayTokens.glassBlurSigma,
+            sigmaY: overlayTokens.glassBlurSigma,
+          ),
+          child: Container(
+            width: width,
+            height: height,
+            padding: padding,
+            decoration: BoxDecoration(
+              color: colors.movieDetailHeroBackgroundStart.withValues(
+                alpha: overlayTokens.glassSurfaceAlpha,
+              ),
+              borderRadius: radius,
+              border: Border.all(
+                color: context.appTextPalette.onMedia.withValues(
+                  alpha: overlayTokens.surfaceBorderAlpha,
+                ),
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 播放器菜单 / 抽屉里的一行:左侧 label + 右侧勾选槽。
 ///
 /// 四处逐字相同的骨架合并到此:
 ///   - 桌面 speed 菜单项 (movie_player_speed_button)
@@ -58,19 +129,16 @@ class MoviePlayerMenuItemRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(width: overlayTokens.controlSideGap),
-            SizedBox(width: overlayTokens.controlSideGap),
             Expanded(
-              child: Center(
-                child: Text(
-                  label,
-                  key: labelKey,
-                  overflow: overflow,
-                  maxLines: maxLines,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    tone: selected ? AppTextTone.accent : AppTextTone.onMedia,
-                  ),
+              child: Text(
+                label,
+                key: labelKey,
+                overflow: overflow,
+                maxLines: maxLines,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s14,
+                  tone: selected ? AppTextTone.accent : AppTextTone.onMedia,
                 ),
               ),
             ),

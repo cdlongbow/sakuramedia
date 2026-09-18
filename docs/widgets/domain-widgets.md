@@ -14,6 +14,8 @@
 
 包含 `MovieSummaryCard`、`MovieSummaryGrid`、`MovieFilterSections`、`MovieBatchSelection`、`SubscriptionHeartBadge` 和 `MovieMagnetSearchContent` / `showMovieMagnetSearchDialog`。后两者复用影片磁力搜索的候选资源、下载器选择与提交交互；状态由 movies feature 的 Provider 提供。影片详情内部组件仍位于 `features/movies/presentation/widgets/detail/`。
 
+`SubscriptionHeartBadge` 点击时经 `core/platform/haptic_feedback.dart` 播放一次选择触感（iOS / Android），桌面端无副作用。
+
 `MovieSummaryCard` 在左上可播放图标后显示有效媒体的最高分辨率角标：宽度 ≥7680 为 8K，3840 ≤宽度 <7680 为 4K 档；低于 4K、缺失或无效媒体不显示。选择模式及隐藏状态角标时一并隐藏。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
 
 批量取消订阅遇到已有媒体时，未处理清单提供“删除媒体并强制取消订阅”入口。确认后先读取媒体总数，再按顺序删除；弹窗进度条显示已删除数量和当前影片，全部删除后显示批量取消订阅阶段。删除失败会停止。反馈返回最终合并结果，多选状态仅保留未处理番号。

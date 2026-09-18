@@ -938,7 +938,12 @@ class _MoviePlayerPlaybackInfoRow extends StatelessWidget {
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
-              tone: AppTextTone.muted,
+              tone: AppTextTone.onMedia,
+            ).copyWith(
+              // 面板是深色玻璃底，label 用降透明度的白色保持次级层级。
+              color: context.appTextPalette.onMedia.withValues(
+                alpha: context.appOverlayTokens.mutedLabelAlpha,
+              ),
             ),
           ),
         ),

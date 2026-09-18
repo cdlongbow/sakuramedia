@@ -256,26 +256,31 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
                     child: MouseRegion(
                       onEnter: _handleMenuEnter,
                       onExit: _handleMenuExit,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _MoviePlayerSpeedMenu(
-                            currentRate: _displayRate,
-                            hoveredRate: _hoveredRate,
-                            onHoveredRateChanged: (rate) {
-                              if (_hoveredRate == rate) {
-                                return;
-                              }
-                              _hoveredRate = rate;
-                              _overlayEntry?.markNeedsBuild();
-                            },
-                            onRateSelected: _handleRateSelected,
-                          ),
-                          SizedBox(
-                            width: overlayTokens.menuWidthSm,
-                            height: overlayTokens.menuGap,
-                          ),
-                        ],
+                      // OverlayEntry 不在 route 的 Material 子树内, 缺 Material 时
+                      // DefaultTextStyle 会落到 WidgetsApp 的红色兜底样式(黄双下划线)。
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _MoviePlayerSpeedMenu(
+                              currentRate: _displayRate,
+                              hoveredRate: _hoveredRate,
+                              onHoveredRateChanged: (rate) {
+                                if (_hoveredRate == rate) {
+                                  return;
+                                }
+                                _hoveredRate = rate;
+                                _overlayEntry?.markNeedsBuild();
+                              },
+                              onRateSelected: _handleRateSelected,
+                            ),
+                            SizedBox(
+                              width: overlayTokens.menuWidthSm,
+                              height: overlayTokens.menuGap,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -346,34 +351,13 @@ class _MoviePlayerSpeedMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final overlayTokens = context.appOverlayTokens;
 
-    return Container(
+    return MoviePlayerGlassSurface(
       key: const Key('movie-player-speed-menu'),
       width: overlayTokens.menuWidthSm,
       padding: EdgeInsets.symmetric(
         vertical: overlayTokens.menuVerticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: colors.movieDetailHeroBackgroundStart.withValues(
-          alpha: overlayTokens.darkSurfaceAlpha,
-        ),
-        borderRadius: overlayTokens.surfaceBorderRadius,
-        border: Border.all(
-          color: context.appTextPalette.onMedia.withValues(
-            alpha: overlayTokens.surfaceBorderAlpha,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: overlayTokens.surfaceShadowAlpha,
-            ),
-            blurRadius: overlayTokens.surfaceShadowBlur,
-            offset: Offset(0, overlayTokens.surfaceShadowOffsetY),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

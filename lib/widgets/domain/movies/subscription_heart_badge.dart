@@ -1,5 +1,6 @@
 import 'package:expand_tap_area/expand_tap_area.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 
@@ -9,6 +10,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 ///
 /// movie / actor 摘要卡片、影片详情 hero、演员详情（桌面 / 移动）共用。
 /// 移动端 follow 卡片是 IconButton 变体（带水波纹），不在这里。
+/// 点击时播放一次轻触感反馈（移动端），桌面端无副作用。
 class SubscriptionHeartBadge extends StatelessWidget {
   const SubscriptionHeartBadge({
     super.key,
@@ -56,7 +58,10 @@ class SubscriptionHeartBadge extends StatelessWidget {
     }
 
     return ExpandTapWidget(
-      onTap: onTap!,
+      onTap: () {
+        triggerSelectionHaptic();
+        onTap!();
+      },
       tapPadding: EdgeInsets.all(hitPadding),
       // MouseRegion 的命中测试受自身布局尺寸限制，光标仍只在 24 图标区域内显示；
       // 命中区本身由 ExpandTapWidget 外扩，不受影响。

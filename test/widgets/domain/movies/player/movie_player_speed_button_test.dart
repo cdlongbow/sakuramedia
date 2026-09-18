@@ -207,6 +207,26 @@ void main() {
       expect(menuRect.width, sakuraThemeData.appOverlayTokens.menuWidthSm);
       expect(label.style?.fontSize, sakuraThemeData.appTextScale.s14);
     });
+
+    testWidgets('menu labels do not inherit the fallback text style', (
+      WidgetTester tester,
+    ) async {
+      await _pumpHarness(tester);
+
+      await tester.tap(find.byKey(const Key('movie-player-speed-button')));
+      await tester.pumpAndSettle();
+
+      final labelRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byKey(const Key('movie-player-speed-menu-item-label-1_0')),
+          matching: find.byType(RichText),
+        ),
+      );
+
+      // Overlay 菜单缺 Material 时会落到 WidgetsApp 的兜底样式（黄色双下划线）。
+      expect(labelRichText.text.style?.decoration, isNull);
+      expect(labelRichText.text.style?.fontFamily, isNot('monospace'));
+    });
   });
 }
 

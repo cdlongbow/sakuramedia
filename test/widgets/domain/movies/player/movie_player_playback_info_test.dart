@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 
 MoviePlayerPlaybackInfoSnapshot _snapshot({
@@ -164,4 +167,74 @@ void main() {
     expect(find.text('HLS'), findsOneWidget);
     expect(find.textContaining('直链 · demuxer='), findsNothing);
   });
+
+  testWidgets('info drawer keeps its text legible over a bright frame', (
+    tester,
+  ) async {
+    final info = ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
+      _snapshot(
+        fileFormat: 'hls',
+        originalUrl: 'https://backend.example.com/media/1/play/',
+      ),
+    );
+    addTearDown(info.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Colors.white),
+              Builder(
+                builder: (context) => buildMoviePlayerInfoSideDrawerOverlay(
+                  context: context,
+                  isOpen: true,
+                  onDismiss: () {},
+                  infoListenable: info,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final surface = Color.alphaBlend(_drawerSurfaceColor(tester), Colors.white);
+    final valueContrast = _contrastRatio(
+      _textColor(tester, 'backend.example.com'),
+      surface,
+    );
+    final labelContrast = _contrastRatio(
+      _textColor(tester, '网关主机'),
+      surface,
+    );
+    expect(valueContrast, greaterThanOrEqualTo(4.5));
+    expect(labelContrast, greaterThanOrEqualTo(4.5));
+  });
+}
+
+Color _drawerSurfaceColor(WidgetTester tester) {
+  final container = tester.widget<Container>(
+    find
+        .descendant(
+          of: find.byKey(const Key('movie-player-info-side-drawer')),
+          matching: find.byType(Container),
+        )
+        .first,
+  );
+  return (container.decoration! as BoxDecoration).color!;
+}
+
+Color _textColor(WidgetTester tester, String text) {
+  return tester.widget<Text>(find.text(text)).style!.color!;
+}
+
+double _contrastRatio(Color a, Color b) {
+  final luminanceA = a.computeLuminance();
+  final luminanceB = b.computeLuminance();
+  return (math.max(luminanceA, luminanceB) + 0.05) /
+      (math.min(luminanceA, luminanceB) + 0.05);
 }

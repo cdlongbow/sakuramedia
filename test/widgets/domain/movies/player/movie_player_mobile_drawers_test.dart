@@ -301,11 +301,83 @@ void main() {
         );
       },
     );
+
+    testWidgets('mobile speed drawer scrolls on a short player area', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(640, 240);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(const _MoviePlayerMobileDrawerHarness());
+      await tester.tap(
+        find.byKey(const Key('movie-player-mobile-speed-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final drawerFinder = find.byKey(
+        const Key('movie-player-mobile-speed-drawer'),
+      );
+      final drawerRect = tester.getRect(drawerFinder);
+      final lastItemFinder = find.byKey(
+        const Key('movie-player-mobile-speed-drawer-item-0_5'),
+      );
+      expect(tester.getRect(lastItemFinder).bottom, greaterThan(drawerRect.bottom));
+
+      await tester.drag(drawerFinder, const Offset(0, -160));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getRect(lastItemFinder).bottom,
+        lessThanOrEqualTo(drawerRect.bottom),
+      );
+    });
+
+    testWidgets('mobile subtitle drawer scrolls with many options', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(640, 300);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        const _MoviePlayerMobileDrawerHarness(subtitleOptionCount: 12),
+      );
+      await tester.tap(
+        find.byKey(const Key('movie-player-mobile-subtitle-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final drawerFinder = find.byKey(
+        const Key('movie-player-mobile-subtitle-drawer'),
+      );
+      final drawerRect = tester.getRect(drawerFinder);
+      final lastItemFinder = find.byKey(
+        const Key('movie-player-mobile-subtitle-drawer-item-512'),
+      );
+      expect(tester.getRect(lastItemFinder).bottom, greaterThan(drawerRect.bottom));
+
+      await tester.drag(drawerFinder, const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getRect(lastItemFinder).bottom,
+        lessThanOrEqualTo(drawerRect.bottom),
+      );
+    });
   });
 }
 
 class _MoviePlayerMobileDrawerHarness extends StatefulWidget {
-  const _MoviePlayerMobileDrawerHarness();
+  const _MoviePlayerMobileDrawerHarness({this.subtitleOptionCount = 1});
+
+  final int subtitleOptionCount;
 
   @override
   State<_MoviePlayerMobileDrawerHarness> createState() =>
@@ -327,15 +399,17 @@ class _MoviePlayerMobileDrawerHarnessState
     false,
   );
 
-  final MoviePlayerSubtitleState _subtitleState =
-      const MoviePlayerSubtitleState(
-        options: <MoviePlayerSubtitleOption>[
-          MoviePlayerSubtitleOption(
-            subtitleId: 501,
+  late final MoviePlayerSubtitleState _subtitleState =
+      MoviePlayerSubtitleState(
+        options: List<MoviePlayerSubtitleOption>.generate(
+          widget.subtitleOptionCount,
+          (index) => MoviePlayerSubtitleOption(
+            subtitleId: 501 + index,
             label: 'ABC-001.zh.srt',
-            resolvedUrl: 'https://example.com/subtitles/501.srt',
+            resolvedUrl: 'https://example.com/subtitles/${501 + index}.srt',
           ),
-        ],
+          growable: false,
+        ),
         selectedSubtitleId: null,
         isLoading: false,
         fetchStatus: 'succeeded',

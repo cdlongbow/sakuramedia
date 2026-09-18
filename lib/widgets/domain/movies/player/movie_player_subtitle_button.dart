@@ -309,28 +309,33 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
                     child: MouseRegion(
                       onEnter: _handleMenuEnter,
                       onExit: _handleMenuExit,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _MoviePlayerSubtitleMenu(
-                            options: _subtitleState.options,
-                            selectedSubtitleId:
-                                _subtitleState.selectedSubtitleId,
-                            hoveredSubtitleId: _hoveredSubtitleId,
-                            onHoveredSubtitleChanged: (subtitleId) {
-                              if (_hoveredSubtitleId == subtitleId) {
-                                return;
-                              }
-                              _hoveredSubtitleId = subtitleId;
-                              _overlayEntry?.markNeedsBuild();
-                            },
-                            onSubtitleSelected: _handleSubtitleSelected,
-                          ),
-                          SizedBox(
-                            width: overlayTokens.menuWidthMd,
-                            height: overlayTokens.menuGap,
-                          ),
-                        ],
+                      // OverlayEntry 不在 route 的 Material 子树内, 缺 Material 时
+                      // DefaultTextStyle 会落到 WidgetsApp 的红色兜底样式(黄双下划线)。
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _MoviePlayerSubtitleMenu(
+                              options: _subtitleState.options,
+                              selectedSubtitleId:
+                                  _subtitleState.selectedSubtitleId,
+                              hoveredSubtitleId: _hoveredSubtitleId,
+                              onHoveredSubtitleChanged: (subtitleId) {
+                                if (_hoveredSubtitleId == subtitleId) {
+                                  return;
+                                }
+                                _hoveredSubtitleId = subtitleId;
+                                _overlayEntry?.markNeedsBuild();
+                              },
+                              onSubtitleSelected: _handleSubtitleSelected,
+                            ),
+                            SizedBox(
+                              width: overlayTokens.menuWidthMd,
+                              height: overlayTokens.menuGap,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -400,35 +405,14 @@ class _MoviePlayerSubtitleMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final overlayTokens = context.appOverlayTokens;
     final hasOptions = options.isNotEmpty;
 
-    return Container(
+    return MoviePlayerGlassSurface(
       key: const Key('movie-player-subtitle-menu'),
       width: overlayTokens.menuWidthMd,
       padding: EdgeInsets.symmetric(
         vertical: overlayTokens.menuVerticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: colors.movieDetailHeroBackgroundStart.withValues(
-          alpha: overlayTokens.darkSurfaceAlpha,
-        ),
-        borderRadius: overlayTokens.surfaceBorderRadius,
-        border: Border.all(
-          color: context.appTextPalette.onMedia.withValues(
-            alpha: overlayTokens.surfaceBorderAlpha,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: overlayTokens.surfaceShadowAlpha,
-            ),
-            blurRadius: overlayTokens.surfaceShadowBlur,
-            offset: Offset(0, overlayTokens.surfaceShadowOffsetY),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

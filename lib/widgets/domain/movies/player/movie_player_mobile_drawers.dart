@@ -268,36 +268,22 @@ class _MoviePlayerMobileDrawerSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final overlayTokens = context.appOverlayTokens;
-    return Container(
+    return MoviePlayerGlassSurface(
       width: width ?? overlayTokens.playerDrawerWidth,
       height: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.movieDetailHeroBackgroundStart.withValues(
-          alpha: overlayTokens.drawerSurfaceAlpha,
-        ),
-        borderRadius: BorderRadius.horizontal(
-          left: Radius.circular(overlayTokens.surfaceRadius),
-        ),
-        border: Border.all(
-          color: context.appTextPalette.onMedia.withValues(
-            alpha: overlayTokens.surfaceBorderAlpha,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: overlayTokens.surfaceShadowAlpha,
-            ),
-            blurRadius: overlayTokens.surfaceShadowBlur,
-            offset: Offset(0, overlayTokens.surfaceShadowOffsetY),
-          ),
-        ],
-      ),
-      child: child,
+      borderRadius: _moviePlayerDrawerBorderRadius(overlayTokens),
+      // 抽屉高度取播放器可视高度，选项多/播放器矮时列表必须可滚动，
+      // 否则 Column 溢出、末几行会画到面板外。
+      child: SingleChildScrollView(child: child),
     );
   }
+}
+
+BorderRadius _moviePlayerDrawerBorderRadius(AppOverlayTokens overlayTokens) {
+  return BorderRadius.horizontal(
+    left: Radius.circular(overlayTokens.surfaceRadius),
+  );
 }
 
 class _MoviePlayerMobileSpeedDrawer extends StatelessWidget {
@@ -362,39 +348,15 @@ class _MoviePlayerInfoSideDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final overlayTokens = context.appOverlayTokens;
-    return Container(
+    return MoviePlayerGlassSurface(
       width: overlayTokens.playerInfoDrawerWidth,
       height: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surfaceMuted.withValues(
-          alpha: overlayTokens.infoDrawerSurfaceAlpha,
-        ),
-        borderRadius: BorderRadius.horizontal(
-          left: Radius.circular(overlayTokens.surfaceRadius),
-        ),
-        border: Border.all(
-          color: context.appTextPalette.onMedia.withValues(
-            alpha: overlayTokens.infoDrawerSurfaceAlpha / 2,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: overlayTokens.surfaceShadowAlpha,
-            ),
-            blurRadius: overlayTokens.surfaceShadowBlur,
-            offset: Offset(0, overlayTokens.surfaceShadowOffsetY),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(context.appSpacing.md),
-        child: MoviePlayerPlaybackInfoPanel(
-          infoListenable: infoListenable,
-          mediaInfo: mediaInfo,
-        ),
+      borderRadius: _moviePlayerDrawerBorderRadius(overlayTokens),
+      padding: EdgeInsets.all(context.appSpacing.md),
+      child: MoviePlayerPlaybackInfoPanel(
+        infoListenable: infoListenable,
+        mediaInfo: mediaInfo,
       ),
     );
   }

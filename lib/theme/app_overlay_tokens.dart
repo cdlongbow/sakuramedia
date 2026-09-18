@@ -10,9 +10,8 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     required this.surfaceShadowAlpha,
     required this.surfaceShadowBlur,
     required this.surfaceShadowOffsetY,
-    required this.darkSurfaceAlpha,
-    required this.drawerSurfaceAlpha,
-    required this.infoDrawerSurfaceAlpha,
+    required this.glassSurfaceAlpha,
+    required this.glassBlurSigma,
     required this.hoverAlpha,
     required this.primaryLabelAlpha,
     required this.mutedLabelAlpha,
@@ -49,12 +48,11 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       surfaceShadowAlpha = 0.22,
       surfaceShadowBlur = 18,
       surfaceShadowOffsetY = 8,
-      darkSurfaceAlpha = 0.84,
-      drawerSurfaceAlpha = 0.9,
-      infoDrawerSurfaceAlpha = 0.34,
+      glassSurfaceAlpha = 0.6,
+      glassBlurSigma = 30,
       hoverAlpha = 0.08,
       primaryLabelAlpha = 0.94,
-      mutedLabelAlpha = 0.62,
+      mutedLabelAlpha = 0.85,
       menuVerticalPadding = 6,
       drawerVerticalPadding = 8,
       menuGap = 6,
@@ -63,9 +61,9 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       controlMinHeight = 34,
       controlHorizontalPadding = 6,
       controlVerticalPadding = 4,
-      controlSideGap = 18,
+      controlSideGap = 14,
       controlTrailingGap = 14,
-      controlCheckSlotWidth = 28,
+      controlCheckSlotWidth = 24,
       controlCheckIconSize = 18,
       menuWidthSm = 144,
       menuWidthMd = 188,
@@ -86,9 +84,8 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
   final double surfaceShadowAlpha;
   final double surfaceShadowBlur;
   final double surfaceShadowOffsetY;
-  final double darkSurfaceAlpha;
-  final double drawerSurfaceAlpha;
-  final double infoDrawerSurfaceAlpha;
+  final double glassSurfaceAlpha;
+  final double glassBlurSigma;
   final double hoverAlpha;
   final double primaryLabelAlpha;
   final double mutedLabelAlpha;
@@ -127,9 +124,8 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     double? surfaceShadowAlpha,
     double? surfaceShadowBlur,
     double? surfaceShadowOffsetY,
-    double? darkSurfaceAlpha,
-    double? drawerSurfaceAlpha,
-    double? infoDrawerSurfaceAlpha,
+    double? glassSurfaceAlpha,
+    double? glassBlurSigma,
     double? hoverAlpha,
     double? primaryLabelAlpha,
     double? mutedLabelAlpha,
@@ -165,10 +161,8 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       surfaceShadowAlpha: surfaceShadowAlpha ?? this.surfaceShadowAlpha,
       surfaceShadowBlur: surfaceShadowBlur ?? this.surfaceShadowBlur,
       surfaceShadowOffsetY: surfaceShadowOffsetY ?? this.surfaceShadowOffsetY,
-      darkSurfaceAlpha: darkSurfaceAlpha ?? this.darkSurfaceAlpha,
-      drawerSurfaceAlpha: drawerSurfaceAlpha ?? this.drawerSurfaceAlpha,
-      infoDrawerSurfaceAlpha:
-          infoDrawerSurfaceAlpha ?? this.infoDrawerSurfaceAlpha,
+      glassSurfaceAlpha: glassSurfaceAlpha ?? this.glassSurfaceAlpha,
+      glassBlurSigma: glassBlurSigma ?? this.glassBlurSigma,
       hoverAlpha: hoverAlpha ?? this.hoverAlpha,
       primaryLabelAlpha: primaryLabelAlpha ?? this.primaryLabelAlpha,
       mutedLabelAlpha: mutedLabelAlpha ?? this.mutedLabelAlpha,
@@ -229,12 +223,9 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
           lerpDouble(surfaceShadowBlur, other.surfaceShadowBlur, t)!,
       surfaceShadowOffsetY:
           lerpDouble(surfaceShadowOffsetY, other.surfaceShadowOffsetY, t)!,
-      darkSurfaceAlpha:
-          lerpDouble(darkSurfaceAlpha, other.darkSurfaceAlpha, t)!,
-      drawerSurfaceAlpha:
-          lerpDouble(drawerSurfaceAlpha, other.drawerSurfaceAlpha, t)!,
-      infoDrawerSurfaceAlpha:
-          lerpDouble(infoDrawerSurfaceAlpha, other.infoDrawerSurfaceAlpha, t)!,
+      glassSurfaceAlpha:
+          lerpDouble(glassSurfaceAlpha, other.glassSurfaceAlpha, t)!,
+      glassBlurSigma: lerpDouble(glassBlurSigma, other.glassBlurSigma, t)!,
       hoverAlpha: lerpDouble(hoverAlpha, other.hoverAlpha, t)!,
       primaryLabelAlpha:
           lerpDouble(primaryLabelAlpha, other.primaryLabelAlpha, t)!,

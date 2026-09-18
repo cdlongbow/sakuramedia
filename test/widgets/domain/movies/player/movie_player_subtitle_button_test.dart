@@ -458,10 +458,56 @@ void main() {
         findsNothing,
       );
     });
+    testWidgets('menu labels do not inherit the fallback text style', (
+      WidgetTester tester,
+    ) async {
+      final subtitleStateNotifier = ValueNotifier<MoviePlayerSubtitleState>(
+        const MoviePlayerSubtitleState(
+          options: <MoviePlayerSubtitleOption>[
+            MoviePlayerSubtitleOption(
+              subtitleId: 501,
+              label: 'ABC-001.zh.srt',
+              resolvedUrl: 'https://example.com/subtitles/501.srt',
+            ),
+          ],
+          selectedSubtitleId: null,
+          isLoading: false,
+          fetchStatus: 'succeeded',
+          errorMessage: null,
+        ),
+      );
+      final isApplyingNotifier = ValueNotifier<bool>(false);
+      addTearDown(subtitleStateNotifier.dispose);
+      addTearDown(isApplyingNotifier.dispose);
+
+      await _pumpHarness(
+        tester,
+        subtitleStateListenable: subtitleStateNotifier,
+        isApplyingListenable: isApplyingNotifier,
+        onSubtitleSelected: (_) async {},
+      );
+
+      await tester.tap(find.byKey(const Key('movie-player-subtitle-button')));
+      await tester.pumpAndSettle();
+
+      final labelRichText = tester.widget<RichText>(
+        find.descendant(
+          of: find.byKey(
+            const Key('movie-player-subtitle-menu-item-label-501'),
+          ),
+          matching: find.byType(RichText),
+        ),
+      );
+
+      // Overlay 菜单缺 Material 时会落到 WidgetsApp 的兜底样式（黄色双下划线）。
+      expect(labelRichText.text.style?.decoration, isNull);
+      expect(labelRichText.text.style?.fontFamily, isNot('monospace'));
+    });
 
     testWidgets('subtitle button uses text label without tooltip', (
       WidgetTester tester,
     ) async {
+
       final subtitleStateNotifier = ValueNotifier<MoviePlayerSubtitleState>(
         const MoviePlayerSubtitleState(
           options: <MoviePlayerSubtitleOption>[

@@ -40,7 +40,6 @@
 
 - 发现 Bug：[提交 Issue](https://github.com/tinypinglite/sakuramedia/issues)
 - 使用交流或求助：[参与 Discussions](https://github.com/tinypinglite/sakuramedia/discussions)
-- 擅长 Python 或 Flutter，希望开发插件或共同维护项目：[加入 Telegram](https://t.me/+ysbUBDExCsw5N2Jh)（群内不回答使用求助类问题）
 
 - **项目当前处理快速迭代阶段， 如遇问题可尝试将前后端以及各个插件升级到最新版本**
 

@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -111,6 +112,10 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
       itemSpacing: context.appSpacing.md,
       initialErrorMessage: '失效媒体加载失败，请稍后重试',
       emptyMessage: '当前没有失效媒体',
+      skeletonBuilder: (context) => MediaListItemCardSkeletonList(
+        mobile: mobile,
+        itemSpacing: context.appSpacing.md,
+      ),
       initialRetryKey: const Key('invalid-media-initial-retry-button'),
       onReload: () =>
           unawaited(ref.read(invalidMediaProvider.notifier).reload()),

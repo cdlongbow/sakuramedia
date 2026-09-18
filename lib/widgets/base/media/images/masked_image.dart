@@ -16,6 +16,9 @@ import 'package:sakuramedia/theme.dart';
 /// - 由 `Image` widget 消费稳定的 provider，避免走过去 `CachedNetworkImage → OctoImage`
 ///   路径下每次 build 因 `ResizeImage` 无 `==` 覆盖被视为"新图"导致 Image element
 ///   被 `ValueKey(image)` 强制替换、fade 动画 250ms 重放的闪烁问题。
+/// - 首帧到达后由 frameBuilder 里的 `AnimatedSwitcher` 完成「占位 → 图片」切换，
+///   占位随切换结束自动移除；provider identity 稳定，高频 rebuild 不会重放动画，
+///   内存缓存命中（`wasSynchronouslyLoaded`）时直接显示。
 /// 新增可选 `alignment`——直接传给 `Image.alignment`，用于横图裁竖封面时需要 topCenter 等场景。
 class MaskedImage extends ConsumerStatefulWidget {
   const MaskedImage({
@@ -123,10 +126,24 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
           fit: widget.fit,
           alignment: widget.alignment,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (wasSynchronouslyLoaded || frame != null) {
+            if (wasSynchronouslyLoaded) {
               return child;
             }
-            return const _MaskedImagePlaceholder(icon: Icons.image_outlined);
+            return AnimatedSwitcher(
+              duration: _revealFadeDuration,
+              switchInCurve: Curves.easeOut,
+              // 两个 child 必须有不同 key：AnimatedSwitcher 只在 key 变化时保留
+              // 旧 child 做淡出，否则占位会瞬间消失。
+              child: frame == null
+                  ? const _MaskedImagePlaceholder(
+                      key: ValueKey<String>('placeholder'),
+                      icon: Icons.image_outlined,
+                    )
+                  : KeyedSubtree(
+                      key: const ValueKey<String>('image'),
+                      child: child,
+                    ),
+            );
           },
           errorBuilder: (context, error, stackTrace) {
             return const _MaskedImagePlaceholder(
@@ -189,8 +206,12 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
   }
 }
 
+/// 首帧到达后「占位 → 图片」的切换时长。
+const Duration _revealFadeDuration = Duration(milliseconds: 240);
+
+/// 首帧到达前显示占位；`contain` 图片周围不再有底色。
 class _MaskedImagePlaceholder extends StatelessWidget {
-  const _MaskedImagePlaceholder({required this.icon});
+  const _MaskedImagePlaceholder({super.key, required this.icon});
 
   final IconData icon;
 

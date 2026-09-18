@@ -8,7 +8,8 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 
 /// 分页 `AsyncNotifier` 的 Sliver「四态骨架」：
 ///
-/// 1. `asyncState.isLoading && !hasValue` → [AppSectionSkeleton]（首次加载）
+/// 1. `asyncState.isLoading && !hasValue` → 首次加载，[skeletonBuilder] 或
+///    [AppSectionSkeleton]
 /// 2. `asyncState.hasError && !hasValue`  → [AppEmptyState]（首次失败 + 重试）
 /// 3. `paged.items.isEmpty`               → [AppEmptyState]（空态）
 /// 4. 有数据                              → 逐条 [itemBuilder] + 底部
@@ -52,6 +53,7 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     required this.onLoadMore,
     this.initialRetryKey,
     this.skeletonLineCount = 6,
+    this.skeletonBuilder,
     this.footerTopSpacing,
     this.fixedItemExtent,
     this.emptyBuilder,
@@ -67,6 +69,13 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   final VoidCallback onLoadMore;
   final Key? initialRetryKey;
   final int skeletonLineCount;
+
+  /// 首次加载骨架；不传走 [AppSectionSkeleton] + [skeletonLineCount]。
+  ///
+  /// 列表条目是左封面卡等结构明显的卡片时，传入与真实卡同高同形的骨架
+  /// （如 `AppLeftCoverCardSkeletonList`），避免加载完成时列表整片跳变。
+  final WidgetBuilder? skeletonBuilder;
+
   final double? footerTopSpacing;
 
   /// 单个列表内容的固定高度（不含 [itemSpacing]）。
@@ -85,8 +94,11 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (asyncState.isLoading && !asyncState.hasValue) {
+      final builder = skeletonBuilder;
       return SliverToBoxAdapter(
-        child: AppSectionSkeleton(lineCount: skeletonLineCount),
+        child: builder != null
+            ? builder(context)
+            : AppSectionSkeleton(lineCount: skeletonLineCount),
       );
     }
     if (asyncState.hasError && !asyncState.hasValue) {

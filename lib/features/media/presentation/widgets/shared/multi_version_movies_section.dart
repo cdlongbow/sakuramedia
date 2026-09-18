@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -278,6 +279,8 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             itemSpacing: spacing.lg,
             initialErrorMessage: '多版本影片加载失败，请稍后重试',
             emptyMessage: '暂无多版本影片',
+            skeletonBuilder: (context) =>
+                MediaFileGroupCardSkeleton(mobile: mobile),
             initialRetryKey: Key('$keyPrefix-versions-retry'),
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),

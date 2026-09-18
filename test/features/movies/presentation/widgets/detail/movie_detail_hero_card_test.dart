@@ -24,31 +24,10 @@ void main() {
       find.byType(MaskedImage),
     );
     final mainImage = maskedImages.firstWhere(
-      (widget) => widget.url == '/covers/main.jpg',
+      (widget) => widget.url == '/covers/main.jpg' && widget.fit == BoxFit.fitHeight,
     );
 
     expect(mainImage.fit, BoxFit.fitHeight);
-  });
-
-  testWidgets('movie detail hero card uses horizontal-only content padding', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(_buildApp(sessionStore: sessionStore));
-
-    final paddings = tester.widgetList<Padding>(
-      find.descendant(
-        of: find.byType(MovieDetailHeroCard),
-        matching: find.byType(Padding),
-      ),
-    );
-
-    final contentPadding = paddings
-        .map((widget) => widget.padding)
-        .whereType<EdgeInsets>()
-        .firstWhere((padding) => padding.left == 16 && padding.right == 16);
-
-    expect(contentPadding.top, 0);
-    expect(contentPadding.bottom, 0);
   });
 
   testWidgets('movie detail hero card shows subscription as heart icon', (

@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
@@ -216,6 +217,8 @@ class DuplicateMediaSection extends HookConsumerWidget {
             itemSpacing: spacing.lg,
             initialErrorMessage: '重复媒体加载失败，请稍后重试',
             emptyMessage: '当前类型没有发现重复文件。',
+            skeletonBuilder: (context) =>
+                MediaFileGroupCardSkeleton(mobile: mobile),
             initialRetryKey: Key('$keyPrefix-duplicate-initial-retry-button'),
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),

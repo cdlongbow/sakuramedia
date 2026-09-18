@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_browse_p
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/media_browse_filter_toolbar.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -484,6 +485,9 @@ class _MediaListBodySliver extends ConsumerWidget {
           : context.appComponentTokens.mediaManagementRowHeight,
       initialErrorMessage: '媒体列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有媒体记录。调整筛选条件或稍后再试。',
+      skeletonBuilder: (context) => MediaListItemCardSkeletonList(
+        mobile: mobile,
+      ),
       initialRetryKey: Key('$keyPrefix-initial-retry-button'),
       onReload: () =>
           unawaited(ref.read(mediaBrowseProvider.notifier).reload()),

@@ -20,6 +20,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row_skeleton.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
@@ -384,6 +385,7 @@ class _ListBodySliver extends ConsumerWidget {
       initialErrorMessage: '订阅列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有订阅影片。',
       emptyBuilder: (context) => const _EmptyState(),
+      skeletonBuilder: (context) => const MovieSubscriptionListSkeleton(),
       initialRetryKey: const Key('movie-subscriptions-initial-retry-button'),
       onReload: () => unawaited(notifier.reload()),
       onLoadMore: () => unawaited(notifier.loadMore()),

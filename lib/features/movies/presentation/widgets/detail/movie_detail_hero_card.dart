@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
@@ -49,6 +51,7 @@ class MovieDetailHeroCard extends StatelessWidget {
 
     return Container(
       height: height,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -62,14 +65,38 @@ class MovieDetailHeroCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: spacing.lg),
-            child: Center(
-              child: _HeroImageFrame(
-                imageKey: mainImageKey,
-                imageUrl: mainImageUrl,
+          if (mainImageUrl != null && mainImageUrl!.isNotEmpty)
+            Positioned.fill(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ImageFiltered(
+                    imageFilter: ImageFilter.blur(
+                      sigmaX: _HeroImageFrame.backgroundBlurSigma,
+                      sigmaY: _HeroImageFrame.backgroundBlurSigma,
+                    ),
+                    // 模糊会在边缘留下透明回透（露出底下黑底），放大一圈推出可视区。
+                    child: Transform.scale(
+                      scale: 1.1,
+                      child: MaskedImage(
+                        url: mainImageUrl!,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  ColoredBox(
+                    color: Colors.black.withValues(
+                      alpha: _HeroImageFrame.backgroundDimAlpha,
+                    ),
+                  ),
+                ],
               ),
             ),
+          // 内框铺满整个 Hero：加载时占位灰即满幅，完成后前景图居中、
+          // 两侧留白透出底下的全幅模糊，不再有黑边距。
+          _HeroImageFrame(
+            imageKey: mainImageKey,
+            imageUrl: mainImageUrl,
           ),
           Positioned(
             top: spacing.sm,
@@ -232,13 +259,19 @@ class _HeroImageFrame extends StatelessWidget {
   final String imageKey;
   final String? imageUrl;
 
+  /// 背景模糊强度：刚好盖住两侧留白，又不至于把原图颜色糊没。
+  static const double backgroundBlurSigma = 24;
+
+  /// 背景压暗：让前景清晰图和中央播放按钮在亮封面上依然可读。
+  static const double backgroundDimAlpha = 0.35;
+
   @override
   Widget build(BuildContext context) {
     final content = imageUrl == null || imageUrl!.isEmpty
         ? DecoratedBox(
             decoration: BoxDecoration(
               color: context.appColors.movieDetailEmptyBackground,
-              borderRadius: context.appRadius.mdBorder,
+              borderRadius: context.appRadius.lgBorder,
             ),
             child: Center(
               child: Icon(
@@ -249,7 +282,7 @@ class _HeroImageFrame extends StatelessWidget {
             ),
           )
         : ClipRRect(
-            borderRadius: context.appRadius.mdBorder,
+            borderRadius: context.appRadius.lgBorder,
             child: MaskedImage(url: imageUrl!, fit: BoxFit.fitHeight),
           );
 

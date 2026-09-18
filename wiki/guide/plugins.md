@@ -17,6 +17,7 @@ SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。�
 | 115 网盘 Provider | `sakuramedia_115_provider` | 接入 115 网盘，提供目录浏览、影片导入、115 离线下载、302/后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_115_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_115_provider/releases/latest) |
 | 本地存储与 qBittorrent | `sakuramedia_local_provider` | 接入本地媒体目录，提供手动导入、qBittorrent 下载、后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_local_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_local_provider/releases/latest) |
 | 女优资料补全 | `sakuramedia_actor_metadata` | 从 JavDB 和 MinnanoAV 补全本地女优资料，包括生日、身高、三围、罩杯、出生地、血型和性别。 | [源码](https://github.com/tinypinglite/sakuramedia-actor-metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia-actor-metadata/releases/latest) |
+| JavBus 元数据 | `sakuramedia_javbus_metadata` | JavDB 未收录时，按番号从 JavBus 补全影片标题、发行日期、时长、片商、演员、标签、封面和剧照等元数据。 | [源码](https://github.com/tinypinglite/sakuramedia_javbus_metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javbus_metadata/releases/latest) |
 | JavDB 排行榜 | `sakuramedia_javdb_ranking` | 提供 JavDB 热播、高评分、有码、无码、FC2 和 TOP250 榜单，并注册定时同步任务。 | [源码](https://github.com/tinypinglite/sakuramedia_javdb_ranking) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javdb_ranking/releases/latest) |
 | 合集影片判定 | `sakuramedia_judge_collecttion_movie` | 按影片时长和番号前缀自动标记合集影片，不覆盖 App 内的手动判定。 | [源码](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie) · [下载最新版](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie/releases/latest) |
 | SubtitleCat 中文字幕 | `sakuramedia_subtitlecat` | 为已有影片抓取 `zh-CN` 字幕，支持手动抓取单部影片和定时处理已订阅影片。 | [源码](https://github.com/tinypinglite/sakuramedia_subtitlecat) · [下载最新版](https://github.com/tinypinglite/sakuramedia_subtitlecat/releases/latest) |
@@ -24,7 +25,8 @@ SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。�
 ## 怎么选
 
 - 后端镜像不内置插件。首次部署请先安装所需的存储 Provider：「本地存储与 qBittorrent」适合本机或 NAS 挂载目录加 qBittorrent，「115 网盘 Provider」适合 115 离线下载。
-- 排行榜、合集判定、字幕和女优资料补全插件可以按需独立安装，不决定媒体的存储方式。
+- 排行榜、合集判定、字幕、女优资料补全和 JavBus 元数据插件可以按需独立安装，不决定媒体的存储方式。
+- JavBus 元数据只在 JavDB 明确未收录影片时补缺，不会替换 JavDB 作为主数据源。
 - JavDB 排行榜只有 TOP250 需要配置 JavDB 账号，其余榜单无需账号也能同步。
 - SubtitleCat 当前只抓取中文字幕，且影片必须已经存在于 SakuraMedia。
 

@@ -298,6 +298,12 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         summary: _shortenError(apiErrorMessage(error, fallback: '检测请求失败')),
       );
     }
+    if (!status.enabled) return DiagnosticItemState.disabled(
+      kind: DiagnosticItemKind.joyTag,
+      itemKey: _joyTagItemKey,
+      displayName: '嵌入服务',
+      summary: '未启用，可在桌面端高级设置中开启',
+    );
     final elapsed = DateTime.now().difference(started).inMilliseconds;
     if (status.embeddingService.healthy) {
       final spaceId = status.embeddingService.spaceId;

@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -138,6 +139,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
               : '合并播放';
 
           return MovieDetailPageContent(
+            showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
             movie: movie,
             mediaItemsOverride: derived.visibleMediaItems,
             selectedPreviewKey: detailState.selectedPreviewKey,

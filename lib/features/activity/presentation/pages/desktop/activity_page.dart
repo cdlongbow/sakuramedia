@@ -759,7 +759,7 @@ class _ExecutableJobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lastTaskRun = job.lastTaskRun;
-    final canTrigger = job.manualTriggerAllowed && !isTriggering;
+    final canTrigger = job.disabledReason == null && job.manualTriggerAllowed && !isTriggering;
 
     return AppContentCard(
       key: Key('activity-job-${job.taskKey}'),
@@ -774,7 +774,7 @@ class _ExecutableJobCard extends StatelessWidget {
       headerBottomSpacing: context.appSpacing.sm,
       headerTrailing: AppButton(
         key: Key('activity-job-trigger-${job.taskKey}'),
-        label: job.manualTriggerAllowed
+        label: job.disabledReason != null ? '未启用' : job.manualTriggerAllowed
             ? (isTriggering
                   ? '提交中'
                   : job.paramsSchema == null

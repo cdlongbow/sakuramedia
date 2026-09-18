@@ -40,3 +40,23 @@ void invalidateOnSignOut(Ref ref) {
   sessionStore.addListener(handleSessionChanged);
   ref.onDispose(() => sessionStore.removeListener(handleSessionChanged));
 }
+
+/// 「答案取决于当前连的哪台服务器」的 keepAlive provider 失效样板。
+///
+/// 比 [invalidateOnSignOut] 多覆盖两种会话输入变化：baseUrl 切换和重新登录
+/// （`hasSession` false→true）。用于服务器能力探测这类换服务器/换账号后必须
+/// 重取、且重建时可能仍带旧监听者的 provider。
+void invalidateOnSessionChange(Ref ref) {
+  final sessionStore = ref.watch(sessionStoreProvider);
+  var lastIdentity = (sessionStore.baseUrl, sessionStore.hasSession);
+
+  void handleSessionChanged() {
+    final identity = (sessionStore.baseUrl, sessionStore.hasSession);
+    if (identity == lastIdentity) return;
+    lastIdentity = identity;
+    ref.invalidateSelf();
+  }
+
+  sessionStore.addListener(handleSessionChanged);
+  ref.onDispose(() => sessionStore.removeListener(handleSessionChanged));
+}

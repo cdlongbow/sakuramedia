@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
@@ -150,6 +151,12 @@ class MovieDetail extends _$MovieDetail {
     );
 
     try {
+      final capabilities = await ref.read(serverCapabilitiesProvider.future);
+      if (_isDisposed) return;
+      if (!capabilities.movieSimilarity) {
+        state = state.copyWith(similarMovies: const <MovieListItemDto>[]);
+        return;
+      }
       final movies = await ref
           .read(moviesApiProvider)
           .getSimilarMovies(movieNumber: movieNumber, limit: 15);

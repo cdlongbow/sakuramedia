@@ -144,8 +144,12 @@ Map<String, dynamic> _providerTest({
 
 /// 对齐后端 `StatusImageSearchResource`。向量库那一节后端也会返回，但前端不做
 /// 独立诊断项，所以这里不造它。
-Map<String, dynamic> _imageSearchStatus({required bool joyTagHealthy}) {
+Map<String, dynamic> _imageSearchStatus({
+  required bool joyTagHealthy,
+  bool enabled = true,
+}) {
   return <String, dynamic>{
+    'enabled': enabled,
     'healthy': joyTagHealthy,
     'checked_at': '2026-07-11T08:00:00Z',
     'embedding_service': <String, dynamic>{
@@ -168,6 +172,7 @@ Map<String, dynamic> _imageSearchStatus({required bool joyTagHealthy}) {
 void _enqueueIndependentProbes({
   bool javdbHealthy = true,
   bool joyTagHealthy = true,
+  bool joyTagEnabled = true,
 }) {
   _bundle.adapter.enqueueJson(
     method: 'GET',
@@ -177,7 +182,10 @@ void _enqueueIndependentProbes({
   _bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/status/image-search',
-    body: _imageSearchStatus(joyTagHealthy: joyTagHealthy),
+    body: _imageSearchStatus(
+      joyTagHealthy: joyTagHealthy,
+      enabled: joyTagEnabled,
+    ),
   );
 }
 
@@ -500,6 +508,16 @@ void main() {
     expect(joyTag.status, DiagnosticItemStatus.unhealthy);
     // 后端带了 error，比前端硬编码的"模型未就绪"有用。
     expect(joyTag.summary, 'model file not found');
+  });
+
+  test('图搜未启用 → 嵌入服务显示未启用，不算故障', () async {
+    final c = await _runWithProbes(
+      enqueueProbes: () => _enqueueIndependentProbes(joyTagEnabled: false),
+    );
+
+    final joyTag = _find(c, (i) => i.kind == DiagnosticItemKind.joyTag);
+    expect(joyTag.status, DiagnosticItemStatus.disabled);
+    expect(joyTag.summary, contains('未启用'));
   });
 
   test('媒体库列表接口失败 → 不再谎报"还没有配置媒体库"', () async {

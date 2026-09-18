@@ -1,9 +1,11 @@
+import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Consumer, ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/advanced_settings_section.dart';
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
@@ -21,6 +23,44 @@ void main() {
 
     tearDown(() {
       bundle.dispose();
+    });
+
+    testWidgets('optional services preserve addresses and save both disabled switches', (tester) async {
+      final data = _buildAdvancedConfigJson();
+      final values = data['values'] as Map<String, dynamic>;
+      values['qdrant'] = {'enabled': true, 'url': 'http://qdrant:6333', 'api_key': 'test-key'};
+      values['image_search'] = {'enabled': true, 'inference_base_url': 'http://siglip2-embed:8080', 'inference_api_key': ''};
+      bundle.adapter.enqueueJson(method: 'GET', path: '/config', body: data);
+      await _pumpSection(tester, bundle, active: true);
+      expect(find.text('嵌入服务地址'), findsOneWidget);
+      expect(find.text('嵌入服务 API Key（可选）'), findsOneWidget);
+      expect(
+        find.text('按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。'),
+        findsNWidgets(2),
+      );
+      final toggle = find.byKey(const Key('configuration-qdrant-enabled'));
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(find.text('关闭向量服务'), findsOneWidget);
+      await tester.tap(find.text('同时关闭'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<AppSwitch>(toggle).value, isFalse);
+      expect(tester.widget<AppSwitch>(find.byKey(const Key('configuration-image-search-enabled'))).value, isFalse);
+      expect(find.byKey(const Key('configuration-qdrant-url')), findsNothing);
+      values['qdrant']['enabled'] = false;
+      values['image_search']['enabled'] = false;
+      bundle.adapter.enqueueJson(method: 'PATCH', path: '/config', body: {...data, 'restart_required': ['api', 'aps']});
+      final save = find.byKey(const Key('configuration-optional-services-save'));
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      final request = bundle.adapter.requests.lastWhere((r) => r.method == 'PATCH');
+      expect(request.body, {'qdrant': {'enabled': false, 'url': 'http://qdrant:6333', 'api_key': 'test-key'},
+        'image_search': {'enabled': false, 'inference_base_url': 'http://siglip2-embed:8080', 'inference_api_key': ''}});
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('loads lazily only when active', (WidgetTester tester) async {
@@ -323,12 +363,25 @@ Future<void> _pumpSection(
         child: MaterialApp(
           theme: sakuraThemeData,
           home: Scaffold(
-            body: refreshRegistrar == null
-                ? section
-                : AppPageRefreshRegistrarScope(
-                    registrar: refreshRegistrar,
-                    child: section,
-                  ),
+            body: Column(
+              children: [
+                // 模拟真实壳层：侧栏持续 watch 服务器能力，provider 始终 active。
+                Consumer(
+                  builder: (context, ref, child) {
+                    ref.watch(serverCapabilitiesProvider);
+                    return const SizedBox.shrink();
+                  },
+                ),
+                Expanded(
+                  child: refreshRegistrar == null
+                      ? section
+                      : AppPageRefreshRegistrarScope(
+                          registrar: refreshRegistrar,
+                          child: section,
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

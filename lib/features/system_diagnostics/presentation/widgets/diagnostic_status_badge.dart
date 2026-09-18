@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_status_chip.dart';
 
-/// 6 态状态徽章 —— 覆盖单项和大类聚合两种使用场景。
+/// 7 态状态徽章 —— 覆盖单项和大类聚合两种使用场景。
 ///
 /// 这里独立成组件是因为多了 `blocked` 一态，且不需要 chip 的点击/tooltip
 /// 交互。
@@ -38,6 +38,8 @@ class DiagnosticStatusBadge extends StatelessWidget {
     DiagnosticItemStatus status,
   ) {
     switch (status) {
+      case DiagnosticItemStatus.disabled:
+        return AppStatusChipPalette.neutral(context);
       case DiagnosticItemStatus.notTested:
         return AppStatusChipPalette.neutral(context);
       case DiagnosticItemStatus.probing:

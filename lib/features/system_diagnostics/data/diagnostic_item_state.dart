@@ -78,6 +78,22 @@ class DiagnosticItemState {
     );
   }
 
+  /// 对应功能未启用，不跑探测。
+  factory DiagnosticItemState.disabled({
+    required DiagnosticItemKind kind,
+    required String itemKey,
+    required String displayName,
+    String? summary,
+  }) {
+    return DiagnosticItemState(
+      kind: kind,
+      itemKey: itemKey,
+      displayName: displayName,
+      status: DiagnosticItemStatus.disabled,
+      summary: summary,
+    );
+  }
+
   factory DiagnosticItemState.healthy({
     required DiagnosticItemKind kind,
     required String itemKey,

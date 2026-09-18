@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_state.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
@@ -25,6 +26,7 @@ class OverviewSystemInfo extends _$OverviewSystemInfo {
   }
 
   Future<void> load() async {
+    ref.invalidate(serverCapabilitiesProvider);
     await Future.wait<void>([loadStatus(), loadImageSearchStatus()]);
   }
 

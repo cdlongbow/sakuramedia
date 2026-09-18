@@ -407,6 +407,58 @@ void main() {
     },
   );
 
+  testWidgets('movie detail review content can be selected and copied', (
+    WidgetTester tester,
+  ) async {
+    Object? clipboardArguments;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardArguments = call.arguments;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 480,
+      platform: TargetPlatform.android,
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => <MovieReviewDto>[_buildReview(prefix: 'hot')],
+    );
+    await tester.pumpAndSettle();
+
+    final contentFinder = find.byKey(
+      const Key('movie-detail-review-content'),
+    );
+    expect(
+      tester.widget<SelectableText>(contentFinder).data,
+      'hot-review-1',
+    );
+
+    await tester.longPress(contentFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('全选'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('复制'));
+    await tester.pumpAndSettle();
+
+    expect(clipboardArguments, <String, dynamic>{'text': 'hot-review-1'});
+  });
+
   testWidgets(
     'movie detail inspector magnet tab shows sort controls and updates direction semantics',
     (WidgetTester tester) async {
@@ -800,6 +852,8 @@ Future<ProviderContainer> _pumpInspectorPanel(
       container: container,
       child: OKToast(
         child: MaterialApp(
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          supportedLocales: const <Locale>[Locale('zh', 'CN')],
           theme: platform == null
               ? sakuraThemeData
               : sakuraThemeData.copyWith(platform: platform),

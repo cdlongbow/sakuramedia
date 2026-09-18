@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/data/server_capabilities.dart';
 import 'package:sakuramedia/core/format/release_version.dart';
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -13,6 +14,9 @@ class StatusApi {
   static const _releaseCheckTimeout = Duration(seconds: 10);
 
   final ApiClient _apiClient;
+
+  Future<ServerCapabilities> getCapabilities() async =>
+      ServerCapabilities.fromJson(await _apiClient.get('/status/capabilities'));
 
   Future<StatusDto> getStatus() async {
     final response = await _apiClient.get('/status');

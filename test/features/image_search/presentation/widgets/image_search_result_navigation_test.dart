@@ -65,6 +65,8 @@ Future<void> pumpResultPreview(
 }) async {
   final session = SessionStore.inMemory();
   await session.saveBaseUrl('https://api.example.com');
+  await session.saveTokens(accessToken: 'test-token', refreshToken: 'test-refresh',
+    expiresAt: DateTime.now().add(const Duration(hours: 1)));
   final bundle = await createTestApiBundle(session);
   addTearDown(bundle.dispose);
   if (pendingRequests == null) {

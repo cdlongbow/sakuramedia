@@ -108,6 +108,7 @@ class AppSettingCell extends StatelessWidget {
     this.onTap,
     this.titleTone = AppTextTone.primary,
     this.titleWeight = AppTextWeight.regular,
+    this.padding,
   });
 
   final IconData? icon;
@@ -119,6 +120,10 @@ class AppSettingCell extends StatelessWidget {
   final AppTextTone titleTone;
   final AppTextWeight titleWeight;
 
+  /// 行内容内边距；默认按设置行标准内缩。嵌在已有内边距的卡片里时传更小的值，
+  /// 让行内容与同卡片内的表单字段对齐。
+  final EdgeInsetsGeometry? padding;
+
   static const double _kIconBox = 32;
 
   @override
@@ -126,10 +131,9 @@ class AppSettingCell extends StatelessWidget {
     final spacing = context.appSpacing;
 
     final content = Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.lg,
-        vertical: spacing.md,
-      ),
+      padding:
+          padding ??
+          EdgeInsets.symmetric(horizontal: spacing.lg, vertical: spacing.md),
       child: Row(
         children: [
           if (icon != null) ...[

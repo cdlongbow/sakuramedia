@@ -191,6 +191,8 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
 
   String _statusBadgeLabel(DiagnosticItemStatus status) {
     switch (status) {
+      case DiagnosticItemStatus.disabled:
+        return '未启用';
       case DiagnosticItemStatus.notTested:
         return '未检测';
       case DiagnosticItemStatus.probing:

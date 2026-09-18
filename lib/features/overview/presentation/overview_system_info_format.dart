@@ -11,6 +11,7 @@ String formatGigabytes(int bytes) {
 
 extension OverviewSystemInfoFormat on OverviewSystemInfoState {
   String buildEmbeddingServiceHealthValue() {
+    if (imageSearchStatus?.enabled == false) return '未启用';
     if (imageSearchStatus == null) {
       return '不可用';
     }
@@ -18,6 +19,7 @@ extension OverviewSystemInfoFormat on OverviewSystemInfoState {
   }
 
   String buildEmbeddingServiceSpaceValue() {
+    if (imageSearchStatus?.enabled == false) return '未启用';
     final spaceId = imageSearchStatus?.embeddingService.spaceId;
     if (spaceId == null || spaceId.trim().isEmpty) {
       return '未知';
@@ -26,6 +28,7 @@ extension OverviewSystemInfoFormat on OverviewSystemInfoState {
   }
 
   String buildEmbeddingServiceIndexingValue() {
+    if (imageSearchStatus?.enabled == false) return '未启用';
     if (imageSearchStatus == null) {
       return '不可用';
     }
@@ -33,6 +36,7 @@ extension OverviewSystemInfoFormat on OverviewSystemInfoState {
   }
 
   String buildImageSearchIndexSpaceValue() {
+    if (imageSearchStatus?.enabled == false) return '未启用';
     final status = imageSearchStatus;
     if (status == null) {
       return '不可用';

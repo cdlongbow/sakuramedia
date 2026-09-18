@@ -119,6 +119,8 @@ class _MyAppState extends State<MyApp> {
           child: MaterialApp.router(
             title: 'SakuraMedia',
             debugShowCheckedModeBanner: false,
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            supportedLocales: const <Locale>[Locale('zh', 'CN')],
             theme: _platform == AppPlatform.mobile
                 ? sakuraMobileThemeData
                 : sakuraDesktopThemeData,

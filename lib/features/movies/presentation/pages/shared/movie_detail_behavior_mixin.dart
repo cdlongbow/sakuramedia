@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
@@ -506,7 +507,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     bool hasImage,
   ) {
     return <AppImageActionDescriptor>[
-      AppImageActionDescriptor(
+      if (ref.read(imageSearchEnabledProvider)) AppImageActionDescriptor(
         type: AppImageActionType.searchSimilar,
         label: '相似图片',
         icon: Icons.image_search_outlined,

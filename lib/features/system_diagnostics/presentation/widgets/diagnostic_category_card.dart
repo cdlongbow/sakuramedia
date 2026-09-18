@@ -75,6 +75,8 @@ class DiagnosticCategoryCard extends StatelessWidget {
         return '检测中';
       case DiagnosticItemStatus.blocked:
         return '等待前置';
+      case DiagnosticItemStatus.disabled:
+        return '未启用';
       case DiagnosticItemStatus.notTested:
         return '未检测';
     }

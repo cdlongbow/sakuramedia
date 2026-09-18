@@ -224,6 +224,23 @@ void main() {
     expect(updateVersion, isNull);
   });
 
+  test('getCapabilities parses both switches', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/capabilities',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'movie_similarity': true,
+        'image_search': false,
+      },
+    );
+
+    final capabilities = await statusApi.getCapabilities();
+
+    expect(capabilities.movieSimilarity, isTrue);
+    expect(capabilities.imageSearch, isFalse);
+  });
+
   test(
     'getImageSearchStatus parses embedding service and indexing stats',
     () async {

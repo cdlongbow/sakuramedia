@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -286,8 +287,8 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                 ),
                 controller: _searchController,
                 hintText: '如 SSNI-888、三上悠亚',
-                showImageSearchButton: true,
-                showTextImageSearchButton: true,
+                showImageSearchButton: ref.watch(imageSearchEnabledProvider),
+                showTextImageSearchButton: ref.watch(imageSearchEnabledProvider),
                 onSearchTap: _submitSearch,
                 onSubmitted: (_) => _submitSearch(),
                 onImageSearchTap: _openImageSearch,

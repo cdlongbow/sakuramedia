@@ -1,3 +1,5 @@
+import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
+import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -5,13 +7,16 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/config_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/validation/url_validators.dart';
 import 'package:sakuramedia/features/configuration/data/api/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/config_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
@@ -47,6 +52,15 @@ class _DesktopAdvancedSettingsSectionState
   final Set<_AdvancedCardKind> _dirtyCards = <_AdvancedCardKind>{};
   final Set<_AdvancedCardKind> _savingCards = <_AdvancedCardKind>{};
 
+  final _optionalFormKey = GlobalKey<FormState>();
+  final _qdrantUrl = TextEditingController();
+  final _qdrantKey = TextEditingController();
+  final _inferenceUrl = TextEditingController();
+  final _inferenceKey = TextEditingController();
+  bool _hasOptionalServices = false;
+  bool _qdrantEnabled = false;
+  bool _imageSearchEnabled = false;
+
   bool _initialized = false;
   bool _isLoading = false;
   String? _errorMessage;
@@ -79,6 +93,10 @@ class _DesktopAdvancedSettingsSectionState
 
   @override
   void dispose() {
+    _qdrantUrl.dispose();
+    _qdrantKey.dispose();
+    _inferenceUrl.dispose();
+    _inferenceKey.dispose();
     _allowedMinVideoFileSizeController.dispose();
     _workerDefaultConcurrencyController.dispose();
     for (final controller in _cronControllers.values) {
@@ -117,11 +135,127 @@ class _DesktopAdvancedSettingsSectionState
       children: [
         _buildMediaCard(context),
         SizedBox(height: spacing.xl),
+        if (_hasOptionalServices) ...[
+          _buildOptionalServicesCard(context),
+          SizedBox(height: spacing.xl),
+        ],
         _buildSchedulerCard(context),
         SizedBox(height: spacing.xl),
         _buildOtherCard(context),
       ],
     );
+  }
+
+  Widget _buildOptionalServicesCard(BuildContext context) {
+    final spacing = context.appSpacing;
+    final saving = _savingCards.contains(_AdvancedCardKind.optionalServices);
+    return AppContentCard(
+      key: const Key('configuration-optional-services-card'),
+      title: '图搜 / 相似度',
+      padding: EdgeInsets.all(spacing.lg),
+      headerBottomSpacing: spacing.md,
+      headerTrailing: _CardBadges(badges: [
+        const AppBadge(label: '重启容器生效', tone: AppBadgeTone.warning),
+        if (_dirtyCards.contains(_AdvancedCardKind.optionalServices))
+          const AppBadge(label: '未保存', tone: AppBadgeTone.warning),
+      ]),
+      child: Form(key: _optionalFormKey, child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardTip(icon: Icons.info_outline_rounded,
+            message: '保存后重启后端容器生效。关闭功能会保留索引；如需释放内存，请同时停止对应的可选容器。重新启用后可在系统维护中重建图搜索引，在任务中心重算相似影片。'),
+          SizedBox(height: spacing.md),
+          _optionalSwitch(
+            key: const Key('configuration-qdrant-enabled'),
+            title: '启用相似影片与向量服务',
+            subtitle: '使用 Qdrant 提供相似影片，并增强推荐结果',
+            value: _qdrantEnabled,
+            onChanged: saving ? null : _changeQdrantEnabled,
+          ),
+          if (_qdrantEnabled) _buildFieldGrid(context, children: [
+            AppTextField(controller: _qdrantUrl, label: 'Qdrant 地址',
+              hintText: 'http://qdrant:6333',
+              helperText: '按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。',
+              fieldKey: const Key('configuration-qdrant-url'), enabled: !saving,
+              validator: _httpUrlError, onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
+            AppPasswordField(controller: _qdrantKey, label: 'Qdrant API Key（可选）', enabled: !saving,
+              onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
+          ]),
+          SizedBox(height: spacing.md),
+          _optionalSwitch(
+            key: const Key('configuration-image-search-enabled'),
+            title: '启用图片与文字搜图',
+            subtitle: _qdrantEnabled ? '使用嵌入服务生成图片与文字向量，并增强时刻推荐' : '需先启用上方的相似影片与向量服务',
+            value: _imageSearchEnabled,
+            onChanged: saving || !_qdrantEnabled ? null : (value) {
+              setState(() => _imageSearchEnabled = value);
+              _markDirty(_AdvancedCardKind.optionalServices);
+            },
+          ),
+          if (_imageSearchEnabled) _buildFieldGrid(context, children: [
+            AppTextField(controller: _inferenceUrl, label: '嵌入服务地址',
+              hintText: 'http://siglip2-embed:8080',
+              helperText: '按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。',
+              fieldKey: const Key('configuration-inference-url'), enabled: !saving,
+              validator: _httpUrlError, onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
+            AppPasswordField(controller: _inferenceKey, label: '嵌入服务 API Key（可选）', enabled: !saving,
+              onChanged: (_) => _markDirty(_AdvancedCardKind.optionalServices)),
+          ]),
+          SizedBox(height: spacing.lg),
+          _buildActions(context,
+            buttonKey: const Key('configuration-optional-services-save'),
+            isSaving: saving, onSave: _saveOptionalServices),
+        ],
+      )),
+    );
+  }
+
+  Widget _optionalSwitch({required Key key, required String title,
+    required String subtitle, required bool value, required ValueChanged<bool>? onChanged}) {
+    return AppSettingCell(
+      padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
+      title: title,
+      subtitle: subtitle,
+      onTap: onChanged == null ? null : () => onChanged(!value),
+      trailing: AppSwitch(key: key, value: value, onChanged: onChanged),
+    );
+  }
+
+  Future<void> _changeQdrantEnabled(bool value) async {
+    if (!value && _imageSearchEnabled) {
+      final confirmed = await showAppConfirmDialog(context,
+        title: '关闭向量服务', message: '图片与文字搜图依赖 Qdrant，将同时关闭。已有配置与索引会保留，保存并重启后生效。',
+        confirmLabel: '同时关闭');
+      if (!confirmed || !mounted) return;
+    }
+    setState(() {
+      _qdrantEnabled = value;
+      if (!value) _imageSearchEnabled = false;
+    });
+    _markDirty(_AdvancedCardKind.optionalServices);
+  }
+
+  String? _httpUrlError(String? value) {
+    return isValidHttpUrl(value ?? '') ? null : '请输入有效的 HTTP 或 HTTPS 地址';
+  }
+
+  Future<void> _saveOptionalServices() async {
+    if (!(_optionalFormKey.currentState?.validate() ?? false)) return;
+    await _savePartial(_AdvancedCardKind.optionalServices, {
+      'qdrant': {'enabled': _qdrantEnabled, 'url': _qdrantUrl.text.trim(), 'api_key': _qdrantKey.text.trim()},
+      'image_search': {'enabled': _imageSearchEnabled, 'inference_base_url': _inferenceUrl.text.trim(), 'inference_api_key': _inferenceKey.text.trim()},
+    }, (values) => _applyOptionalServices(values.optionalServices));
+  }
+
+  void _applyOptionalServices(OptionalServicesConfigDto? config) {
+    _hasOptionalServices = config != null;
+    if (config == null) return;
+    _qdrantEnabled = config.qdrantEnabled;
+    _imageSearchEnabled = config.imageSearchEnabled;
+    _qdrantUrl.text = config.qdrantUrl;
+    _qdrantKey.text = config.qdrantApiKey;
+    _inferenceUrl.text = config.inferenceUrl;
+    _inferenceKey.text = config.inferenceApiKey;
   }
 
   Widget _buildMediaCard(BuildContext context) {
@@ -380,6 +514,9 @@ class _DesktopAdvancedSettingsSectionState
     if (_isLoading) {
       return;
     }
+    // 打开/刷新高级设置时顺带重探服务器能力：可选服务开关保存并重启容器后，
+    // 无需等概览刷新即可让侧栏与页面入口恢复。
+    _scheduleCapabilitiesRefresh();
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -406,6 +543,17 @@ class _DesktopAdvancedSettingsSectionState
         _errorMessage = apiErrorMessage(error, fallback: '高级设置加载失败');
       });
     }
+  }
+
+  /// `_load` 可能由 `didUpdateWidget` 在 build 阶段触发，而 Riverpod 的
+  /// `invalidate` 会同步对 ProviderScope 调用 `setState`，因此延后到帧结束。
+  void _scheduleCapabilitiesRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(serverCapabilitiesProvider);
+    });
   }
 
   Future<void> _refresh() async {
@@ -530,6 +678,7 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   void _applyResource(ConfigResourceDto resource) {
+    _applyOptionalServices(resource.optionalServices);
     _applyMedia(resource.media);
     _applyScheduler(resource.scheduler);
     _applyLogging(resource.logging);
@@ -601,7 +750,7 @@ class _DesktopAdvancedSettingsSectionState
   }
 }
 
-enum _AdvancedCardKind { media, scheduler, other }
+enum _AdvancedCardKind { media, scheduler, other, optionalServices }
 
 /// 根据 `PATCH /config` 响应里的 `restart_required` 列表拼保存成功后的 toast 文案。
 ///

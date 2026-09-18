@@ -12,12 +12,13 @@ List<AppImageActionDescriptor> buildMediaThumbnailActionDescriptors({
   required MovieMediaThumbnailDto thumbnail,
   required MediaPointDto? point,
   bool canSearchSimilar = true,
+  bool showSearchSimilar = true,
   bool canPlay = true,
   bool canSetCover = false,
 }) {
   final hasMedia = thumbnail.mediaId > 0;
   return <AppImageActionDescriptor>[
-    AppImageActionDescriptor(
+    if (showSearchSimilar) AppImageActionDescriptor(
       type: AppImageActionType.searchSimilar,
       label: '相似图片',
       icon: Icons.image_search_outlined,

@@ -211,6 +211,9 @@ Future<TestApiBundle> createTestApiBundle(SessionStore sessionStore) async {
   final credentialStore = InMemoryCredentialStore();
   final apiClient = ApiClient(sessionStore: sessionStore);
   final adapter = FakeHttpClientAdapter();
+  // 默认模拟升级前服务器；能力测试通过显式响应覆盖。
+  adapter.setFallbackJson(method: 'GET', path: '/status/capabilities',
+    body: const {'movie_similarity': true, 'image_search': true});
   apiClient.rawDio.httpClientAdapter = adapter;
   apiClient.rawRefreshDio.httpClientAdapter = adapter;
 

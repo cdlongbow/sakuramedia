@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
@@ -37,8 +38,9 @@ Future<void> showMoviePlotImageActionMenu({
     presentation: isMobileAppPlatform()
         ? AppImageActionMenuPresentation.bottomDrawer
         : AppImageActionMenuPresentation.popup,
-    actions: const <AppImageActionDescriptor>[
-      AppImageActionDescriptor(
+    actions: <AppImageActionDescriptor>[
+      if (ProviderScope.containerOf(context, listen: false).read(imageSearchEnabledProvider))
+      const AppImageActionDescriptor(
         type: AppImageActionType.searchSimilar,
         label: '相似图片',
         icon: Icons.image_search_outlined,

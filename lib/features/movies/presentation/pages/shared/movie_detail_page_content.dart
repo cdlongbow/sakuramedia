@@ -36,6 +36,7 @@ typedef MovieDetailScrollViewBuilder =
 
 class MovieDetailPageContent extends StatelessWidget {
   const MovieDetailPageContent({
+    this.showSimilarMovies = true,
     super.key,
     required this.movie,
     required this.selectedPreviewKey,
@@ -159,6 +160,8 @@ class MovieDetailPageContent extends StatelessWidget {
 
   /// 播放动作进行中（合并播放探测/拉起外部播放器），透传给 hero 播放按钮显示 loading。
   final bool isPlayLoading;
+
+  final bool showSimilarMovies;
 
   @override
   Widget build(BuildContext context) {
@@ -479,9 +482,9 @@ class MovieDetailPageContent extends StatelessWidget {
               onAddClipToCollection: onAddClipToCollection ?? (_) {},
             ),
           ),
-        if (isSimilarMoviesLoading ||
+        if (showSimilarMovies && (isSimilarMoviesLoading ||
             similarMoviesErrorMessage?.trim().isNotEmpty == true ||
-            similarMovies.isNotEmpty)
+            similarMovies.isNotEmpty))
           MovieDetailSection(
             title: '相似影片',
             titleKey: const Key('movie-similar-movies-title'),

@@ -224,11 +224,14 @@ class ImageSearchIndexingStatsDto {
 
 class StatusImageSearchDto {
   const StatusImageSearchDto({
+    this.enabled = true,
     required this.healthy,
     required this.embeddingService,
     required this.indexing,
     required this.indexSpace,
   });
+
+  final bool enabled;
 
   /// 后端口径是嵌入服务与向量库（Qdrant）的 AND。向量库不单独做诊断项，
   /// 所以这里只透出聚合值，不解析 `image_search_vector_store` 节。
@@ -239,6 +242,7 @@ class StatusImageSearchDto {
 
   factory StatusImageSearchDto.fromJson(Map<String, dynamic> json) {
     return StatusImageSearchDto(
+      enabled: json['enabled'] as bool? ?? true,
       healthy: _asBool(json['healthy']),
       embeddingService: ImageSearchEmbeddingServiceStatsDto.fromJson(
         asMap(json['embedding_service']),
@@ -253,6 +257,7 @@ class StatusImageSearchDto {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'healthy': healthy,
+      'enabled': enabled,
       'embedding_service': embeddingService.toJson(),
       'indexing': indexing.toJson(),
       'index_space': indexSpace.toJson(),

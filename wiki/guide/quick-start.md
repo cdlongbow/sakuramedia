@@ -4,7 +4,7 @@ outline: [2, 4]
 
 # 快速开始
 
-这是一份“先把服务跑起来”的快速指引，覆盖 SakuraMedia 的「搜索 → 订阅 → 下载 → 导入」主流程，以及以图搜图功能。
+这是一份“先把服务跑起来”的快速指引，覆盖 SakuraMedia 的「搜索 → 订阅 → 下载 → 导入」主流程，以及可选的以图搜图功能。
 
 ::: warning 部署后的第一件事
 后端镜像不再内置任何插件。部署并登录后，请先安装所需的存储类插件，再按需安装其他插件；全部安装完成后重启 `sakuramedia` 容器，插件才会加载。未安装存储类插件前无法创建媒体库和下载器。
@@ -21,16 +21,16 @@ outline: [2, 4]
 
 ### 硬件要求
 
-- CPU 建议 4 核，可用内存不少于 4 GB；SigLIP2 嵌入服务和 Qdrant 会消耗额外内存。
+- CPU 建议 4 核，可用内存不少于 2 GB；如果启用以图搜图功能建议可用内存不少于4GB， ARM平台不建议使用以图搜图功能。
 - SSD 用于运行数据（数据库、配置、日志、缓存和图片索引）。
 - 媒体存储空间由所选 provider 管理，容量按实际库规模准备。
 
-### 部署后会有 4 个服务
+### 两个基础服务，两个可选服务
 
 - `sakuramedia`：后端服务，负责媒体管理和任务调度等核心能力。
 - `postgres`：PostgreSQL 数据库，存储业务数据。
-- `siglip2-embed`：以图搜图嵌入服务，负责图片与文本向量化。
-- `qdrant`：图片搜索向量数据库，存储缩略图向量并提供检索。
+- `qdrant`（可选）：向量数据库，支撑相似影片、推荐中的影片相似度信号，以及图搜索引。
+- `siglip2-embed`（可选）：以图搜图嵌入服务，负责图片与文本向量化。
 
 ## 部署后端服务
 
@@ -108,28 +108,30 @@ services:
       # 必须替换为宿主机实际的媒体根目录。
       - /mnt/volume1/media:/mnt/volume1/media
 
-  siglip2-embed:
-    image: tinyping/siglip2-embed-service:cpu
-    container_name: siglip2-embed
-    restart: unless-stopped
-    environment:
-      EMBEDDING_BACKEND: "cpu"
-      CPU_CONCURRENCY: "1"
-      MALLOC_TRIM_THRESHOLD_: "131072"
-
-  qdrant:
-    image: qdrant/qdrant:v1.12.4
-    container_name: qdrant
-    restart: unless-stopped
-    environment:
-      QDRANT__SERVICE__HTTP_PORT: "6333"
-      QDRANT__LOG_LEVEL: "INFO"
-    volumes:
-      - ./sakuramedia-data/image-search-index:/qdrant/storage
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
+  ## 以下两个容器可选，用于实现以图搜图和文字搜图功能
+  # qdrant:
+  #   image: qdrant/qdrant:v1.12.4
+  #   container_name: qdrant
+  #   restart: unless-stopped
+  #   environment:
+  #     QDRANT__SERVICE__HTTP_PORT: "6333"
+  #     QDRANT__LOG_LEVEL: "INFO"
+  #   volumes:
+  #     - ./sakuramedia-data/image-search-index:/qdrant/storage
+  #   ulimits:
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  ## 这里默认用的是CPU来进行图像推理， 如果你有Intel核显或nvidia显卡，阅读这篇内容 https://tinypinglite.github.io/sakuramedia/guide/docker.html
+  # siglip2-embed:
+  #   image: tinyping/siglip2-embed-service:cpu
+  #   container_name: siglip2-embed
+  #   restart: unless-stopped
+  #   environment:
+  #     EMBEDDING_BACKEND: "cpu"
+  #     CPU_CONCURRENCY: "1"
+  #     MALLOC_TRIM_THRESHOLD_: "131072"
+  #     TEXT_TOWER_ENABLED: "true" # 内存不够可尝试将此项设为false，关于文字搜图降低内存占用
 ```
 
 ::: warning JavDB 图片分流
@@ -141,6 +143,9 @@ services:
 ::: tip 数据库
 后端默认按 `postgres` 服务名连接内置 PostgreSQL，照抄示例即可运行。若使用外部 PostgreSQL，再按[配置说明](/guide/config#database)修改 `[database].url`。
 :::
+
+### 以图搜图嵌入服务（可选）
+以图搜图和相似影片功能默认关闭，可在部署后在系统设置 -> 高级设置中开启，此功能需要部署qdrant和siglip2-embed两个服务，建议可用内存大于4G， 且CPU性能够强或有Intel核显/Nvidia显卡。
 
 ### 3. 启动
 
@@ -181,7 +186,7 @@ http://你的IP:38000
 
 #### 5. 用组件诊断验证
 
-在「概览」页运行「组件诊断」，检查媒体库、索引器、JavDB 和 SigLIP2 嵌入服务的连通性。
+在「概览」页运行「组件诊断」，检查媒体库、索引器、JavDB 和 SigLIP2 嵌入服务的连通性。未启用图搜时嵌入服务显示「未启用」；已启用但连接失败才属于异常。
 
 #### 6. 在线搜索影片或女优
 

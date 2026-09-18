@@ -32,6 +32,15 @@ void main() {
     sessionStore.dispose();
   });
 
+  testWidgets('disabled search cannot rebuild its index', (tester) async {
+    _enqueueImageSearchStatus(bundle, enabled: false);
+    await _pumpPage(tester, bundle);
+    final button = tester.widget<AppButton>(find.byKey(const Key('mobile-system-maintenance-image-search-reset')));
+    expect(button.onPressed, isNull);
+    expect(find.text('未启用'), findsOneWidget);
+    expect(bundle.adapter.hitCount('POST', '/image-search/reset'), 0);
+  });
+
   testWidgets('renders image-search maintenance card on mobile', (
     tester,
   ) async {
@@ -183,6 +192,7 @@ Future<void> _pumpPage(WidgetTester tester, TestApiBundle bundle) async {
 
 void _enqueueImageSearchStatus(
   TestApiBundle bundle, {
+  bool enabled = true,
   String state = 'ready',
   String? indexedSpaceId,
   String? currentSpaceId,
@@ -192,6 +202,7 @@ void _enqueueImageSearchStatus(
     method: 'GET',
     path: '/status/image-search',
     body: <String, dynamic>{
+      'enabled': enabled,
       'index_space': <String, dynamic>{
         'state': state,
         'indexed_space_id': indexedSpaceId,

@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -343,6 +344,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
     final action = await showAppImageActionMenu(
       context: context,
       actions: buildMediaThumbnailActionDescriptors(
+        showSearchSimilar: ref.read(imageSearchEnabledProvider),
         thumbnail: thumbnail,
         point: point,
       ),

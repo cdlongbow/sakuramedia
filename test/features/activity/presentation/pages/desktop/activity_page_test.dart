@@ -139,6 +139,86 @@ void main() {
     expect(find.byKey(const Key('activity-job-plugin_job_2')), findsOneWidget);
   });
 
+  testWidgets('disabled optional-service job shows 未启用 and cannot trigger', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <dynamic>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <dynamic>[],
+        'task_runs': <String, dynamic>{
+          'items': const <dynamic>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <dynamic>[],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopActivityPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'task_key': 'image_search_index',
+          'cli_help': '图像搜索索引构建',
+          'manual_trigger_allowed': false,
+          'disabled_reason': '图片与文字搜图未启用',
+        },
+      ],
+    );
+    await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('activity-job-image_search_index')),
+      findsOneWidget,
+    );
+    expect(find.text('未启用'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('activity-job-trigger-image_search_index')),
+    );
+    await tester.pumpAndSettle();
+    expect(bundle.adapter.requests.where((r) => r.method == 'POST'), isEmpty);
+  });
+
   testWidgets('task key filter lists chinese task names but filters by key', (
     tester,
   ) async {

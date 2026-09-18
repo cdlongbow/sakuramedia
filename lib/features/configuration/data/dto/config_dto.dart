@@ -3,12 +3,14 @@ import 'package:sakuramedia/core/json/json_parse.dart';
 /// `GET /config` 返回的整包配置快照。
 class ConfigResourceDto {
   const ConfigResourceDto({
+    this.optionalServices,
     required this.media,
     required this.scheduler,
     required this.downloads,
     required this.logging,
   });
 
+  final OptionalServicesConfigDto? optionalServices;
   final AdvancedMediaConfigDto media;
   final AdvancedSchedulerConfigDto scheduler;
   final AdvancedDownloadsConfigDto downloads;
@@ -17,6 +19,7 @@ class ConfigResourceDto {
   factory ConfigResourceDto.fromJson(Map<String, dynamic> json) {
     final values = _objectAt(json, 'values', '/config response');
     return ConfigResourceDto(
+      optionalServices: OptionalServicesConfigDto.fromJsonOrNull(values),
       media: AdvancedMediaConfigDto.fromJson(
         _objectAt(values, 'media', '/config values'),
       ),
@@ -188,4 +191,54 @@ String _stringAt(
 
 int _intAt(Map<String, dynamic> json, String key, {int fallback = 0}) {
   return asInt(json[key], fallback: fallback);
+}
+
+class OptionalServicesConfigDto {
+  const OptionalServicesConfigDto({required this.qdrantEnabled, required this.imageSearchEnabled,
+    required this.qdrantUrl, required this.qdrantApiKey, required this.inferenceUrl, required this.inferenceApiKey});
+  final bool qdrantEnabled;
+  final bool imageSearchEnabled;
+  final String qdrantUrl;
+  final String qdrantApiKey;
+  final String inferenceUrl;
+  final String inferenceApiKey;
+
+  /// 旧版后端不返回这两个 `enabled` 键，此时不展示可选服务配置卡片。
+  static OptionalServicesConfigDto? fromJsonOrNull(Map<String, dynamic> values) {
+    final qdrant = asMapOrNull(values['qdrant']);
+    final image = asMapOrNull(values['image_search']);
+    if (qdrant == null || image == null ||
+        !qdrant.containsKey('enabled') || !image.containsKey('enabled')) {
+      return null;
+    }
+    return OptionalServicesConfigDto.fromJson(values);
+  }
+
+  factory OptionalServicesConfigDto.fromJson(Map<String, dynamic> values) {
+    final qdrant = asMap(values['qdrant']);
+    final image = asMap(values['image_search']);
+    return OptionalServicesConfigDto(
+      qdrantEnabled: qdrant['enabled'] as bool,
+      imageSearchEnabled: image['enabled'] as bool,
+      qdrantUrl: _stringAt(qdrant, 'url'),
+      qdrantApiKey: _stringAt(qdrant, 'api_key'),
+      inferenceUrl: _stringAt(image, 'inference_base_url'),
+      inferenceApiKey: _stringAt(image, 'inference_api_key'),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'qdrant': <String, dynamic>{
+        'enabled': qdrantEnabled,
+        'url': qdrantUrl,
+        'api_key': qdrantApiKey,
+      },
+      'image_search': <String, dynamic>{
+        'enabled': imageSearchEnabled,
+        'inference_base_url': inferenceUrl,
+        'inference_api_key': inferenceApiKey,
+      },
+    };
+  }
 }

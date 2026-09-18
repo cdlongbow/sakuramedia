@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -147,6 +148,7 @@ class _MovieDetailInspectorPanelState
     final action = await showAppImageActionMenu(
       context: context,
       actions: buildMediaThumbnailActionDescriptors(
+        showSearchSimilar: ref.read(imageSearchEnabledProvider),
         thumbnail: thumbnail,
         point: point,
         canSearchSimilar: widget.onSearchSimilar != null,
@@ -518,8 +520,9 @@ class _MovieDetailReviewCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: context.appSpacing.xs),
-          Text(
+          SelectableText(
             review.content.trim().isEmpty ? '暂无评论内容' : review.content,
+            key: const Key('movie-detail-review-content'),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,

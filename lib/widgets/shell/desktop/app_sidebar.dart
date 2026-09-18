@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
@@ -366,7 +367,7 @@ class AppSidebarGroup extends ConsumerWidget {
   }
 }
 
-class _SidebarSearchSection extends StatefulWidget {
+class _SidebarSearchSection extends ConsumerStatefulWidget {
   const _SidebarSearchSection({
     required this.currentPath,
     required this.isCompact,
@@ -376,10 +377,10 @@ class _SidebarSearchSection extends StatefulWidget {
   final bool isCompact;
 
   @override
-  State<_SidebarSearchSection> createState() => _SidebarSearchSectionState();
+  ConsumerState<_SidebarSearchSection> createState() => _SidebarSearchSectionState();
 }
 
-class _SidebarSearchSectionState extends State<_SidebarSearchSection> {
+class _SidebarSearchSectionState extends ConsumerState<_SidebarSearchSection> {
   late final TextEditingController _controller;
 
   @override
@@ -432,8 +433,8 @@ class _SidebarSearchSectionState extends State<_SidebarSearchSection> {
           controller: _controller,
           hintText: '如 SSNI-888、三上悠亚',
           showSearchButton: false,
-          showImageSearchButton: true,
-          showTextImageSearchButton: true,
+          showImageSearchButton: ref.watch(imageSearchEnabledProvider),
+          showTextImageSearchButton: ref.watch(imageSearchEnabledProvider),
           fillColor: context.appColors.surfaceElevated,
           onSubmitted: (_) => _submit(context),
           onImageSearchTap: () => _pickAndOpenImageSearch(context),

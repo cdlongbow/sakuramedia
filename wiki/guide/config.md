@@ -201,6 +201,7 @@ level = "INFO"
 
 ```toml
 [image_search]
+enabled = false
 inference_base_url = "http://siglip2-embed:8080"
 inference_timeout_seconds = 120.0
 inference_connect_timeout_seconds = 3.0
@@ -213,7 +214,13 @@ search_scan_batch_size = 100
 index_upsert_batch_size = 100
 ```
 
+`enabled` 控制图片／文字搜图、图片向量索引和视觉推荐，需要同时开启 `[qdrant].enabled`。桌面端可在「系统设置 → 高级设置 → 图搜 / 相似度」编辑两个开关、连接地址及 API Key，保存后重启后端容器（API 与 APS）生效。
+
+新部署两个开关默认关闭；旧部署升级时只将缺失开关补为开启，用户已经保存的值不会被覆盖。移动端不提供配置表单，但会根据服务器能力调整入口。
+
 这些字段控制 SigLIP2 嵌入服务连接、搜索会话和 Qdrant 索引批处理。默认地址对应快速开始中的 `siglip2-embed` 服务名；只有把嵌入服务部署到其他主机、修改服务名或开启鉴权时，才需要改连接字段。
+
+文字搜画面还需要 SigLIP2 容器加载文本塔（默认加载）；容器设了 `TEXT_TOWER_ENABLED=false` 时只提供图片向量，文字搜画面不可用，图片搜图不受影响。详见 [SigLIP2 硬件方案](/guide/docker)。
 
 `index_upsert_batch_size` 控制索引任务每轮分别读取的待索引缩略图和剧情图数量。任务会持续处理，直到两类待索引队列为空；该参数只控制单轮读取量，不限制单次任务的总处理量。
 
@@ -221,8 +228,11 @@ index_upsert_batch_size = 100
 
 ```toml
 [qdrant]
+enabled = false
 url = "http://qdrant:6333"
 api_key = ""
 ```
 
 `url` 是 Qdrant HTTP API 地址；compose 部署时使用容器内服务名 `qdrant`。启用 Qdrant 鉴权时填写 `api_key`。
+
+`enabled` 控制相似影片与向量服务。关闭时不连接 Qdrant，推荐跳过影片相似度信号；关闭图搜不影响仅依赖 Qdrant 的相似影片。关闭 Qdrant 时应同时关闭图搜，桌面端会提示并一起保存。开关不会停止或删除 Docker 容器，释放资源需在部署端停容器。

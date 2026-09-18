@@ -26,6 +26,8 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -38,6 +40,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/widgets/add
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
@@ -155,7 +158,13 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   void _scheduleInitialSourceBootstrap({bool initialize = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final capabilities = await ref.read(serverCapabilitiesProvider.future);
+        if (!mounted || !capabilities.imageSearch) return;
+      } catch (_) {
+        return;
+      }
       if (!mounted) {
         return;
       }
@@ -210,6 +219,37 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
+    final capabilities = ref.watch(serverCapabilitiesProvider);
+    if (capabilities.isLoading) return const Center(child: CircularProgressIndicator());
+    Future<void> retryCapabilities() async {
+      ref.invalidate(serverCapabilitiesProvider);
+      _scheduleInitialSourceBootstrap(initialize: true);
+    }
+    if (capabilities.hasError) {
+      return isMobile
+          ? AppMobileSectionError(
+              title: '功能状态加载失败',
+              message: '请检查服务器连接后重试',
+              onRetry: retryCapabilities,
+            )
+          : AppSectionError(
+              title: '功能状态加载失败',
+              message: '请检查服务器连接后重试',
+              onRetry: retryCapabilities,
+            );
+    }
+    if (capabilities.value?.imageSearch == false) {
+      return AppEmptyState(
+        icon: Icons.image_search_outlined,
+        title: '图片与文字搜图未启用',
+        message: isMobile
+            ? '需要管理员在服务器端开启并重启后端容器；桌面客户端可在「系统设置 → 高级设置 → 图搜 / 相似度」中配置。'
+            : '可在「系统设置 → 高级设置 → 图搜 / 相似度」中开启，保存后重启后端容器。',
+        onRetry: () => ref.invalidate(serverCapabilitiesProvider),
+        retryLabel: '重新检测',
+      );
+    }
     final spacing = context.appSpacing;
     final searchState = ref.watch(imageSearchProvider(_scope));
     final loadMoreFooter = searchState.hasSource

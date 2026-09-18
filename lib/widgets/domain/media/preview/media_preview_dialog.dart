@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
@@ -333,7 +334,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
       isLoading: _isLoadingPreviewData,
       loadingItemCount: _loadingActionCount,
       actions: [
-        MediaPreviewActionItem(
+        if (ref.watch(imageSearchEnabledProvider)) MediaPreviewActionItem(
           label: '相似图片',
           icon: Icons.image_search_outlined,
           onTap: _canSearchSimilar ? _handleSearchSimilar : null,

@@ -7,6 +7,8 @@ import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_sta
 
 DiagnosticItemState _item(DiagnosticItemStatus status, {String key = 'k'}) {
   switch (status) {
+    case DiagnosticItemStatus.disabled:
+      return DiagnosticItemState(kind: DiagnosticItemKind.joyTag, itemKey: key, displayName: key, status: status);
     case DiagnosticItemStatus.notTested:
       return DiagnosticItemState.notTested(
         kind: DiagnosticItemKind.mediaLibrary,
@@ -126,6 +128,33 @@ void main() {
           DiagnosticItemStatus.notTested,
         ]).aggregate,
         DiagnosticItemStatus.probing,
+      );
+    });
+
+    test('全 disabled → disabled', () {
+      expect(
+        _cat(<DiagnosticItemStatus>[
+          DiagnosticItemStatus.disabled,
+          DiagnosticItemStatus.disabled,
+        ]).aggregate,
+        DiagnosticItemStatus.disabled,
+      );
+    });
+
+    test('disabled 与其他状态混合时不压低整体状态', () {
+      expect(
+        _cat(<DiagnosticItemStatus>[
+          DiagnosticItemStatus.disabled,
+          DiagnosticItemStatus.healthy,
+        ]).aggregate,
+        DiagnosticItemStatus.healthy,
+      );
+      expect(
+        _cat(<DiagnosticItemStatus>[
+          DiagnosticItemStatus.disabled,
+          DiagnosticItemStatus.unhealthy,
+        ]).aggregate,
+        DiagnosticItemStatus.unhealthy,
       );
     });
   });

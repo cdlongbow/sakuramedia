@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
 void main() {
   testWidgets('渲染分格数字与副文案', (WidgetTester tester) async {
@@ -34,6 +35,92 @@ void main() {
 
     expect(find.text('可播放 1,104'), findsOneWidget);
     expect(find.textContaining('已订阅 87'), findsNothing);
+  });
+
+  testWidgets('加载态宽卡片渲染骨架，高度与数据态接近', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pumpCard(
+      tester,
+      const AssetSummaryCard(
+        status: null,
+        insights: null,
+        pendingIndexCount: 0,
+        isLoading: true,
+      ),
+    );
+
+    expect(find.byType(AppSkeletonBlock), findsWidgets);
+    expect(find.byKey(const Key('overview-asset-movies')), findsNothing);
+    expect(tester.takeException(), isNull);
+    final skeletonHeight = tester
+        .getSize(find.byKey(const Key('overview-asset-summary-card')))
+        .height;
+
+    await _pumpCard(
+      tester,
+      AssetSummaryCard(
+        status: _status(),
+        insights: StatusInsightsDto(
+          collections: CollectionsStatsDto(
+            playlists: const CollectionSummaryDto(count: 5, itemCount: 42),
+            videoCollections: const CollectionSummaryDto(count: 2, itemCount: 8),
+          ),
+        ),
+        pendingIndexCount: 12,
+      ),
+    );
+
+    expect(find.byType(AppSkeletonBlock), findsNothing);
+    final loadedHeight = tester
+        .getSize(find.byKey(const Key('overview-asset-summary-card')))
+        .height;
+    expect((skeletonHeight - loadedHeight).abs(), lessThan(20));
+  });
+
+  testWidgets('加载态窄卡片折成两行两格，高度与数据态接近', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await _pumpCard(
+      tester,
+      const AssetSummaryCard(
+        status: null,
+        insights: null,
+        pendingIndexCount: 0,
+        isLoading: true,
+      ),
+    );
+
+    expect(find.byType(AppSkeletonBlock), findsWidgets);
+    expect(tester.takeException(), isNull);
+    final skeletonHeight = tester
+        .getSize(find.byKey(const Key('overview-asset-summary-card')))
+        .height;
+
+    await _pumpCard(
+      tester,
+      AssetSummaryCard(
+        status: _status(),
+        insights: StatusInsightsDto(
+          collections: CollectionsStatsDto(
+            playlists: const CollectionSummaryDto(count: 5, itemCount: 42),
+            videoCollections: const CollectionSummaryDto(count: 2, itemCount: 8),
+          ),
+        ),
+        pendingIndexCount: 12,
+      ),
+    );
+
+    final loadedHeight = tester
+        .getSize(find.byKey(const Key('overview-asset-summary-card')))
+        .height;
+    expect((skeletonHeight - loadedHeight).abs(), lessThan(20));
   });
 
   testWidgets('没有积压与合集时隐藏两行脚注', (WidgetTester tester) async {

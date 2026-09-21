@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/overview/presentation/overview_system_info_
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// 媒体资产卡：一组分格数字 + 处理积压与合集资产两行脚注。
@@ -39,7 +40,7 @@ class AssetSummaryCard extends StatelessWidget {
 
   Widget _buildBody(BuildContext context) {
     if (isLoading) {
-      return const OverviewCardLoadingBars(rows: 2);
+      return const _AssetSummarySkeleton();
     }
     if (errorMessage != null) {
       return OverviewCardErrorRow(
@@ -109,7 +110,12 @@ class AssetSummaryCard extends StatelessWidget {
           children: <Widget>[
             for (var index = 0; index < rows.length; index += 1) ...<Widget>[
               if (index > 0) SizedBox(height: context.appSpacing.xl),
-              _AssetMetricRow(metrics: rows[index], narrow: narrow),
+              _AssetMetricRow(
+                cells: <Widget>[
+                  for (final metric in rows[index])
+                    _AssetMetricCell(metric: metric, narrow: narrow),
+                ],
+              ),
             ],
             if (backlog.isNotEmpty || collections.isNotEmpty) ...<Widget>[
               Padding(
@@ -199,10 +205,9 @@ class _AssetMetric {
 }
 
 class _AssetMetricRow extends StatelessWidget {
-  const _AssetMetricRow({required this.metrics, required this.narrow});
+  const _AssetMetricRow({required this.cells});
 
-  final List<_AssetMetric> metrics;
-  final bool narrow;
+  final List<Widget> cells;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +216,7 @@ class _AssetMetricRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          for (var index = 0; index < metrics.length; index += 1) ...<Widget>[
+          for (var index = 0; index < cells.length; index += 1) ...<Widget>[
             if (index > 0)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: spacing.lg),
@@ -221,12 +226,7 @@ class _AssetMetricRow extends StatelessWidget {
                   color: context.appColors.divider,
                 ),
               ),
-            Expanded(
-              child: _AssetMetricCell(
-                metric: metrics[index],
-                narrow: narrow,
-              ),
-            ),
+            Expanded(child: cells[index]),
           ],
         ],
       ),
@@ -279,6 +279,109 @@ class _AssetMetricCell extends StatelessWidget {
             tone: AppTextTone.muted,
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// 加载骨架：与真实分格同形——宽卡片一行四格，窄卡片两行两格，复用真实分格的
+/// 格子行；每格用「标签 / 数值 / 副文案」三条灰条占位。脚注区按「积压 + 合集
+/// 两行都在」的完整形态预留，加载完成后内容只会往下收，不会凭空多出一截。
+class _AssetSummarySkeleton extends StatelessWidget {
+  const _AssetSummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < _twoColumnMinWidth;
+        final rows = narrow ? 2 : 1;
+        final cellsPerRow = narrow ? 2 : 4;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            for (var index = 0; index < rows; index += 1) ...<Widget>[
+              if (index > 0) SizedBox(height: context.appSpacing.xl),
+              _AssetMetricRow(
+                cells: List<Widget>.generate(
+                  cellsPerRow,
+                  (_) => const _AssetMetricCellSkeleton(),
+                ),
+              ),
+            ],
+            const _FootnoteSkeleton(),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AssetMetricCellSkeleton extends StatelessWidget {
+  const _AssetMetricCellSkeleton();
+
+  /// 灰条高度对齐真实文字的行高（s12 → 17、s20 → 29），
+  /// 让骨架卡在加载结束后不会有明显的整卡高度收缩。
+  static const double _labelHeight = 17;
+  static const double _valueHeight = 29;
+  static const double _secondaryHeight = 17;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const AppSkeletonBlock(width: 28, height: _labelHeight),
+        SizedBox(height: spacing.sm),
+        const AppSkeletonBlock(width: 76, height: _valueHeight),
+        SizedBox(height: spacing.xs),
+        const AppSkeletonBlock(width: 132, height: _secondaryHeight),
+      ],
+    );
+  }
+}
+
+/// 脚注区骨架：与真实脚注区同结构——通栏分隔线 + 两行「图标 + 文案」。
+/// 真实卡的积压行 / 合集行各自按数据是否为空出现，骨架统一按两行都在预留。
+class _FootnoteSkeleton extends StatelessWidget {
+  const _FootnoteSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: spacing.lg),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: context.appColors.divider,
+          ),
+        ),
+        const _FootnoteLineSkeleton(textWidth: 176),
+        SizedBox(height: spacing.md),
+        const _FootnoteLineSkeleton(textWidth: 196),
+      ],
+    );
+  }
+}
+
+class _FootnoteLineSkeleton extends StatelessWidget {
+  const _FootnoteLineSkeleton({required this.textWidth});
+
+  final double textWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Row(
+      children: <Widget>[
+        const AppSkeletonBlock(width: 16, height: 16),
+        SizedBox(width: spacing.sm),
+        AppSkeletonBlock(width: textWidth, height: 17),
       ],
     );
   }

@@ -90,7 +90,7 @@ void main() {
     expect(componentTokens.desktopTitleBarHeight, 56);
     expect(componentTokens.desktopMacTrafficLightInsetWidth, 52);
     expect(componentTokens.desktopTitleBarControlGap, 8);
-    expect(componentTokens.movieCardTargetWidth, 160);
+    expect(componentTokens.movieCardTargetWidth, 220);
     expect(componentTokens.movieThumbnailTargetWidth, 128);
     expect(componentTokens.movieCardAspectRatio, 0.7);
     expect(componentTokens.iconSizeXs, 16);

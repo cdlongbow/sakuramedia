@@ -315,11 +315,18 @@ Color resolveAppTextToneColor(BuildContext context, AppTextTone tone) {
   return Theme.of(context).appTextPalette.colorFor(tone);
 }
 
+/// 解析出应用文本样式。
+///
+/// [height] 与 [letterSpacing] 默认交给字体自身度量；媒体卡片这类需要精确控制
+/// 行高与字距的场景显式传入。参照 macOS 文本样式表：13pt 行高 16、tracking
+/// −0.08；11pt 行高 14、tracking +0.06；10pt 行高 13、tracking +0.12。
 TextStyle resolveAppTextStyle(
   BuildContext context, {
   required AppTextSize size,
   AppTextWeight weight = AppTextWeight.regular,
   AppTextTone tone = AppTextTone.primary,
+  double? height,
+  double? letterSpacing,
 }) {
   final fontWeight = resolveAppTextWeight(context, weight);
   return TextStyle(
@@ -329,6 +336,8 @@ TextStyle resolveAppTextStyle(
     fontSize: resolveAppTextFontSize(context, size),
     fontWeight: fontWeight,
     color: resolveAppTextToneColor(context, tone),
+    height: height,
+    letterSpacing: letterSpacing,
   );
 }
 

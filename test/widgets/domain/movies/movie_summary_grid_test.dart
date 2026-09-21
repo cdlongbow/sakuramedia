@@ -61,7 +61,7 @@ void main() {
   testWidgets(
     'movie summary grid allows desktop previews to raise column cap',
     (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(2200, 800);
+      tester.view.physicalSize = const Size(2400, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);

@@ -74,6 +74,7 @@ void main() {
                       movie: MovieListItemDto.fromJson({
                         'movie_number': 'TEST',
                         'can_play': true,
+                        'heat': 4321,
                         'media_items': [
                           {'resolution': '${width}x1920'},
                         ],
@@ -111,8 +112,10 @@ void main() {
               final heat = tester.getRect(
                 find.byKey(const Key('movie-summary-card-heat-TEST')),
               );
+              // 左上角一行：订阅心、播放标、清晰度胶囊依次排列。
               expect(quality.left, greaterThan(playable.right));
               expect(quality.top, playable.top);
+              // 卡片只有 120 宽，热度折到下一行，不压住角标。
               expect(quality.overlaps(heat), isFalse);
               expect(playable.overlaps(heat), isFalse);
               final subscription = tester.getRect(

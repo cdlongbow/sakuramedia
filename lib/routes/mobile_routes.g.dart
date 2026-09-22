@@ -19,6 +19,7 @@ List<RouteBase> get $appRoutes => [
   $mobileActivityRouteData,
   $mobileNotificationsRouteData,
   $mobileMediaManagementRouteData,
+  $mobileMovieSubscriptionsRouteData,
   $mobileSettingsDownloadersRouteData,
   $mobileSettingsIndexersRouteData,
   $mobileSettingsPlaylistsRouteData,
@@ -366,10 +367,20 @@ RouteBase get $mobileActivityRouteData => GoRouteData.$route(
 
 mixin $MobileActivityRouteData on GoRouteData {
   static MobileActivityRouteData _fromState(GoRouterState state) =>
-      const MobileActivityRouteData();
+      MobileActivityRouteData(
+        downloadMovieNumber: state.uri.queryParameters['download-movie-number'],
+      );
+
+  MobileActivityRouteData get _self => this as MobileActivityRouteData;
 
   @override
-  String get location => GoRouteData.$location('/mobile/system/activity');
+  String get location => GoRouteData.$location(
+    '/mobile/system/activity',
+    queryParams: {
+      if (_self.downloadMovieNumber != null)
+        'download-movie-number': _self.downloadMovieNumber,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -424,6 +435,34 @@ mixin $MobileMediaManagementRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/mobile/system/media');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileMovieSubscriptionsRouteData => GoRouteData.$route(
+  path: '/mobile/system/movie-subscriptions',
+  hasOverriddenOnExit: false,
+  factory: $MobileMovieSubscriptionsRouteData._fromState,
+);
+
+mixin $MobileMovieSubscriptionsRouteData on GoRouteData {
+  static MobileMovieSubscriptionsRouteData _fromState(GoRouterState state) =>
+      const MobileMovieSubscriptionsRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/mobile/system/movie-subscriptions');
 
   @override
   void go(BuildContext context) => context.go(location);

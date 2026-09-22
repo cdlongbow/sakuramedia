@@ -3,22 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_magnet_search_content.dart';
 
+/// 磁力搜索弹窗。壳由 [showAppAdaptiveModal] 分流：桌面 [AppDesktopDialog]，
+/// 移动底部抽屉；内容 [MovieMagnetSearchContent] 两端共用。
 Future<void> showMovieMagnetSearchDialog({
   required BuildContext context,
   required String movieNumber,
 }) {
-  return showDialog<void>(
+  return showAppAdaptiveModal<void>(
     context: context,
-    builder: (dialogContext) => AppDesktopDialog(
-      dialogKey: const Key('movie-magnet-search-dialog'),
-      contentKey: const Key('movie-magnet-search-dialog-content'),
-      width: dialogContext.appComponentTokens.movieDetailDialogWidth,
-      height: dialogContext.appComponentTokens.movieDetailDialogMinHeight,
-      child: _MovieMagnetSearchDialogBody(movieNumber: movieNumber),
-    ),
+    modalKey: const Key('movie-magnet-search-dialog'),
+    desktopWidth: context.appComponentTokens.movieDetailDialogWidth,
+    desktopHeight: context.appComponentTokens.movieDetailDialogMinHeight,
+    builder: (_) => _MovieMagnetSearchDialogBody(movieNumber: movieNumber),
   );
 }
 

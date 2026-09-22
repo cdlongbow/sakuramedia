@@ -44,6 +44,7 @@ import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlis
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
 import 'package:sakuramedia/features/search/presentation/pages/mobile/catalog_search_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/follow_page.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/tags/presentation/pages/mobile/tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -348,7 +349,11 @@ class MobileMediaImportRouteData extends _MobileSubpageRouteData
 @TypedGoRoute<MobileActivityRouteData>(path: mobileActivityPath)
 class MobileActivityRouteData extends _MobileSubpageRouteData
     with $MobileActivityRouteData {
-  const MobileActivityRouteData();
+  const MobileActivityRouteData({this.downloadMovieNumber});
+
+  /// 打开任务中心后直接定位到「下载任务」tab 并按番号过滤的意图，与桌面任务
+  /// 中心入口同款；走 query 参数，普通入口不携带。
+  final String? downloadMovieNumber;
 
   @override
   String get pageName => 'mobile-activity';
@@ -361,7 +366,8 @@ class MobileActivityRouteData extends _MobileSubpageRouteData
 
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
-    return const MobileActivityPage();
+    // query 解析由生成的 `_fromState` 完成（kebab-case），这里只转发。
+    return MobileActivityPage(initialDownloadMovieNumber: downloadMovieNumber);
   }
 }
 
@@ -402,6 +408,28 @@ class MobileMediaManagementRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobileMediaManagementPage();
+  }
+}
+
+@TypedGoRoute<MobileMovieSubscriptionsRouteData>(
+  path: mobileMovieSubscriptionsPath,
+)
+class MobileMovieSubscriptionsRouteData extends _MobileSubpageRouteData
+    with $MobileMovieSubscriptionsRouteData {
+  const MobileMovieSubscriptionsRouteData();
+
+  @override
+  String get pageName => 'mobile-movie-subscriptions';
+
+  @override
+  String get title => '订阅管理';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileMovieSubscriptionsPage();
   }
 }
 
@@ -1153,6 +1181,13 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         label: '任务中心',
       );
 
+  static const _MobileOverviewDrawerMenuItem _movieSubscriptionsItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'movie-subscriptions',
+        icon: Icons.bookmark_added_outlined,
+        label: '订阅管理',
+      );
+
   static const _MobileOverviewDrawerMenuItem _systemMaintenanceItem =
       _MobileOverviewDrawerMenuItem(
         key: 'system-maintenance',
@@ -1324,6 +1359,10 @@ class _MobileOverviewDrawer extends ConsumerWidget {
                           ),
                           _buildMenuEntry(
                             context: context,
+                            item: _movieSubscriptionsItem,
+                          ),
+                          _buildMenuEntry(
+                            context: context,
                             item: _systemMaintenanceItem,
                           ),
                           _buildMenuEntry(context: context, item: _pluginsItem),
@@ -1437,6 +1476,9 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         return;
       case 'activity':
         const MobileActivityRouteData().push(hostContext);
+        return;
+      case 'movie-subscriptions':
+        const MobileMovieSubscriptionsRouteData().push(hostContext);
         return;
       case 'system-maintenance':
         const MobileSettingsSystemMaintenanceRouteData().push(hostContext);

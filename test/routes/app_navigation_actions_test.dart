@@ -1,11 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_navigation_route_state.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
 import 'package:sakuramedia/routes/desktop_search_route_state.dart';
+import 'package:sakuramedia/routes/mobile_routes.dart';
 
 void main() {
   testWidgets('desktop detail actions keep fallback metadata in route extra', (
@@ -274,6 +276,73 @@ void main() {
       expect((invalidPage as DesktopMoviePlayerPage).fallbackPath, isNull);
     },
   );
+
+  testWidgets('mobile download tasks action carries movie number query', (
+    WidgetTester tester,
+  ) async {
+    late BuildContext actionContext;
+    final router = GoRouter(
+      initialLocation: '/home',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => Builder(
+            builder: (context) {
+              actionContext = context;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+        GoRoute(
+          path: '/mobile/system/activity',
+          builder: (context, state) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    actionContext.goMobileDownloadTasks(movieNumber: 'SSIS-801');
+    await tester.pumpAndSettle();
+
+    expect(
+      router
+          .routeInformationProvider
+          .value
+          .uri
+          .queryParameters['download-movie-number'],
+      'SSIS-801',
+    );
+  });
+
+  testWidgets('mobile activity route passes movie number to page', (
+    WidgetTester tester,
+  ) async {
+    late BuildContext routeContext;
+    late GoRouterState routeState;
+    const activityPath = '/mobile/system/activity';
+    final router = GoRouter(
+      initialLocation: activityPath,
+      routes: <RouteBase>[
+        GoRoute(
+          path: activityPath,
+          builder: (context, state) {
+            routeContext = context;
+            routeState = state;
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    final page = const MobileActivityRouteData(
+      downloadMovieNumber: 'SSIS-801',
+    ).buildSubpage(routeContext, routeState);
+    expect(page, isA<MobileActivityPage>());
+    expect((page as MobileActivityPage).initialDownloadMovieNumber, 'SSIS-801');
+  });
 }
 
 Future<void> _pushAndSettle(

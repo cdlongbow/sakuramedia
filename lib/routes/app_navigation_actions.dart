@@ -84,6 +84,12 @@ extension AppNavigationActions on BuildContext {
     DesktopActivityRouteData(downloadMovieNumber: movieNumber).go(this);
   }
 
+  /// 移动端任务中心同款跳转：定位「下载任务」tab 并按番号过滤。
+  void goMobileDownloadTasks({required String movieNumber}) {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    MobileActivityRouteData(downloadMovieNumber: movieNumber).go(this);
+  }
+
   void pushDesktopMovieSeries({
     required int seriesId,
     String? seriesName,

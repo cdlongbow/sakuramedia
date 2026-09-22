@@ -42,6 +42,8 @@ class DesktopMovieSubscriptionsPage extends ConsumerWidget {
                     movieNumber: movieNumber,
                     fallbackPath: desktopMovieSubscriptionsPath,
                   ),
+              onOpenDownloads: (context, movieNumber) =>
+                  context.goDesktopDownloadTasks(movieNumber: movieNumber),
             ),
           ),
         ],

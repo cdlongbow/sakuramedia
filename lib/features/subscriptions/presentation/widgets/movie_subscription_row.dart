@@ -22,6 +22,7 @@ class MovieSubscriptionRow extends StatelessWidget {
     required this.onSearchMagnet,
     required this.onUnsubscribe,
     this.onDeleteDownloads,
+    required this.mobile,
   });
 
   final MovieSubscriptionListItemDto item;
@@ -33,6 +34,9 @@ class MovieSubscriptionRow extends StatelessWidget {
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
   final VoidCallback? onDeleteDownloads;
+
+  /// 移动端布局：操作图标不挤在信息行尾，另起一行右对齐。
+  final bool mobile;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +81,7 @@ class MovieSubscriptionRow extends StatelessWidget {
             item: item,
             selectionMode: selectionMode,
             isPending: isPending,
+            mobile: mobile,
             onOpenDownloads: onOpenDownloads,
             onSearchMagnet: onSearchMagnet,
             onUnsubscribe: onUnsubscribe,
@@ -297,6 +302,7 @@ class _FooterLine extends StatelessWidget {
     required this.item,
     required this.selectionMode,
     required this.isPending,
+    required this.mobile,
     required this.onOpenDownloads,
     required this.onSearchMagnet,
     required this.onUnsubscribe,
@@ -306,6 +312,7 @@ class _FooterLine extends StatelessWidget {
   final MovieSubscriptionListItemDto item;
   final bool selectionMode;
   final bool isPending;
+  final bool mobile;
   final VoidCallback? onOpenDownloads;
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
@@ -325,7 +332,7 @@ class _FooterLine extends StatelessWidget {
       weight: AppTextWeight.regular,
       tone: AppTextTone.muted,
     );
-    return Row(
+    final factsLine = Row(
       children: [
         Icon(
           Icons.event_outlined,
@@ -341,6 +348,39 @@ class _FooterLine extends StatelessWidget {
             style: mutedStyle,
           ),
         ),
+      ],
+    );
+    // 移动端卡片窄（封面 116），操作图标和 facts 同行会把文字挤没；操作另起
+    // 一行右对齐，四个动作也放得下。
+    if (mobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          factsLine,
+          if (!selectionMode) ...[
+            SizedBox(height: context.appSpacing.sm),
+            if (isPending)
+              const Align(
+                alignment: Alignment.centerRight,
+                child: AppInlineSpinner(),
+              )
+            else
+              Align(
+                alignment: Alignment.centerRight,
+                child: _RowActions(
+                  onOpenDownloads: onOpenDownloads,
+                  onSearchMagnet: onSearchMagnet,
+                  onUnsubscribe: onUnsubscribe,
+                  onDeleteDownloads: onDeleteDownloads,
+                ),
+              ),
+          ],
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: factsLine),
         if (!selectionMode) ...[
           SizedBox(width: context.appSpacing.sm),
           if (isPending)

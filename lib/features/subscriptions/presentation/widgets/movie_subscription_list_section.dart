@@ -21,38 +21,48 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row_skeleton.dart';
-import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_magnet_search_dialog.dart';
 
 /// 订阅管理页的列表主体：顶栏（筛选 / 计数 / 操作）+ 行卡片列表。
 ///
-/// **本页只有桌面端**——订阅管理是运维视图，移动端不提供入口，所以这里不做双端分流：
-/// 筛选走桌面就地浮层，多选态用 [AppSelectionHeaderToolbar] 原地改写整行。真要补移动端
-/// 时，参考 videos / actors 的做法（`onFilterTap` 弹底部抽屉 + `AppListHeader.selection`
-/// + 贴底 `AppSelectionBottomBar`），别在这里留没有调用方的分支。
+/// 双端分流只发生在容器层：筛选桌面走就地浮层、移动走底部抽屉；多选态桌面用
+/// [AppSelectionHeaderToolbar] 原地改写整行，移动用 `AppListHeader.selection`
+/// （顶）+ [AppSelectionBottomBar]（底）。列表体、行卡片、空态完全共用。
 ///
 /// 状态分段签不在这里——它归页面，固定在滚动区之上。
 class MovieSubscriptionListSection extends HookConsumerWidget {
   const MovieSubscriptionListSection({
     super.key,
     required this.onOpenMovie,
+    required this.onOpenDownloads,
+    this.mobile = false,
     this.scrollController,
   });
 
   /// 打开影片详情。桌面 / 移动的详情路由不同，由各自的页面注入——本组件不认路由。
   final void Function(BuildContext context, String movieNumber) onOpenMovie;
+
+  /// 打开该订阅片对应的下载任务列表，同样由页面注入各自的平台路由。
+  final void Function(BuildContext context, String movieNumber) onOpenDownloads;
+
+  /// 移动端布局：底部抽屉筛选 + 贴底批量操作条。
+  final bool mobile;
 
   final ScrollController? scrollController;
 
@@ -64,6 +74,8 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     final spacing = context.appSpacing;
     final ownedScrollController = useScrollController();
     final effectiveScrollController = scrollController ?? ownedScrollController;
+    // 移动端删除下载任务的 loading：顶栏（退出 / 全选）和贴底操作条要同步禁用。
+    final batchDeleting = useState(false);
     useEffect(() {
       void loadMoreIfNeeded() {
         if (!effectiveScrollController.hasClients) return;
@@ -93,8 +105,8 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     final paged = ref.watch(
       managerProvider.select((asyncState) => asyncState.value?.paged),
     );
-    return AppFixedHeaderLayout(
-      header: _ListHeader(),
+    final resultView = AppFixedHeaderLayout(
+      header: _ListHeader(mobile: mobile, batchDeleting: batchDeleting.value),
       child: AppFilterResultLoadingOverlay(
         isLoading: paged?.filterUpdate.isLoading ?? false,
         hasPreviousItems: paged?.items.isNotEmpty ?? false,
@@ -105,10 +117,30 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
             SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
             const SliverToBoxAdapter(child: _queryExplanationTip),
             SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
-            _ListBodySliver(onOpenMovie: onOpenMovie),
+            _ListBodySliver(
+              onOpenMovie: onOpenMovie,
+              onOpenDownloads: onOpenDownloads,
+              mobile: mobile,
+            ),
           ],
         ),
       ),
+    );
+    if (!mobile) return resultView;
+    final selectionMode = ref.watch(
+      managerProvider.select(
+        (asyncState) => asyncState.value?.selectionMode ?? false,
+      ),
+    );
+    if (!selectionMode) return resultView;
+    return Column(
+      children: [
+        Expanded(child: resultView),
+        _MobileSelectionBar(
+          deleting: batchDeleting.value,
+          onDeletingChanged: (value) => batchDeleting.value = value,
+        ),
+      ],
     );
   }
 }
@@ -116,7 +148,10 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
 // --- 顶栏 -------------------------------------------------------------------
 
 class _ListHeader extends ConsumerWidget {
-  const _ListHeader();
+  const _ListHeader({required this.mobile, required this.batchDeleting});
+
+  final bool mobile;
+  final bool batchDeleting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -126,10 +161,13 @@ class _ListHeader extends ConsumerWidget {
     final asyncState = ref.watch(managerProvider);
     final current = asyncState.value;
     if (current != null && current.selectionMode) {
-      return _SelectionHeader(state: current);
+      return mobile
+          ? _MobileSelectionHeader(state: current, batchDeleting: batchDeleting)
+          : _SelectionHeader(state: current);
     }
 
-    final filter = current?.filter ??
+    final filter =
+        current?.filter ??
         MovieSubscriptionFilterState.initial.copyWith(
           status: ref.watch(movieSubscriptionStatusSelectionProvider),
         );
@@ -155,11 +193,16 @@ class _ListHeader extends ConsumerWidget {
 
     return AppListHeader(
       key: const Key('movie-subscriptions-list-header'),
+      onFilterTap: mobile
+          ? () => _openMobileFilterDrawer(context, ref, filter)
+          : null,
       filterButtonKey: const Key('movie-subscriptions-filter-button'),
       filterLabel: filter.triggerLabel,
-      filterPanelKey: const Key('movie-subscriptions-filter-panel'),
-      filterPanelBuilder: buildPanel,
-      filterPanelFooter: panelFooter,
+      filterPanelKey: mobile
+          ? null
+          : const Key('movie-subscriptions-filter-panel'),
+      filterPanelBuilder: mobile ? null : buildPanel,
+      filterPanelFooter: mobile ? null : panelFooter,
       filterUpdate:
           current?.paged.filterUpdate ?? const FilterUpdateState.idle(),
       hasPreviousFilterItems: hasItems,
@@ -184,6 +227,75 @@ class _ListHeader extends ConsumerWidget {
           onPressed: isInitialLoading ? null : () => _refresh(ref),
         ),
       ],
+    );
+  }
+}
+
+/// 移动端筛选底部抽屉：与桌面浮层共用 [MovieSubscriptionFilterSectionGroup] 和
+/// [AppFilterPanelFooter]，只有外壳不同。本地态 + 即时外发，与其它移动抽屉一致。
+Future<void> _openMobileFilterDrawer(
+  BuildContext context,
+  WidgetRef ref,
+  MovieSubscriptionFilterState filter,
+) {
+  final managerProvider = movieSubscriptionManagerProvider(filter.status);
+  return showAppBottomDrawer<void>(
+    context: context,
+    drawerKey: const Key('movie-subscriptions-filter-drawer'),
+    // 内容自适应高度（最多 60% 屏高），避免「搜索 + 排序」的短面板拖一大片空白。
+    maxHeightFactor: 0.6,
+    builder: (_) => _MobileFilterDrawerContent(
+      initial: filter,
+      onChanged: (next) =>
+          unawaited(ref.read(managerProvider.notifier).applyFilterState(next)),
+      scrollViewKey: const Key('movie-subscriptions-filter-scroll-view'),
+    ),
+  );
+}
+
+class _MobileFilterDrawerContent extends StatefulWidget {
+  const _MobileFilterDrawerContent({
+    required this.initial,
+    required this.onChanged,
+    required this.scrollViewKey,
+  });
+
+  final MovieSubscriptionFilterState initial;
+  final ValueChanged<MovieSubscriptionFilterState> onChanged;
+  final Key scrollViewKey;
+
+  @override
+  State<_MobileFilterDrawerContent> createState() =>
+      _MobileFilterDrawerContentState();
+}
+
+class _MobileFilterDrawerContentState
+    extends State<_MobileFilterDrawerContent> {
+  late MovieSubscriptionFilterState _local;
+
+  @override
+  void initState() {
+    super.initState();
+    _local = widget.initial;
+  }
+
+  void _apply(MovieSubscriptionFilterState next) {
+    setState(() => _local = next);
+    widget.onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppMobileFilterDrawerScaffold(
+      scrollViewKey: widget.scrollViewKey,
+      footer: AppFilterPanelFooter(
+        isDefault: _local.isPanelDefault,
+        onReset: () => _apply(_local.resetPanel()),
+      ),
+      child: MovieSubscriptionFilterSectionGroup(
+        filterState: _local,
+        onChanged: _apply,
+      ),
     );
   }
 }
@@ -214,51 +326,6 @@ class _SelectionHeader extends HookConsumerWidget {
     final loadingDownloads = useState(false);
     final busy = state.isBatchRunning || loadingDownloads.value;
 
-    Future<void> deleteDownloads() async {
-      loadingDownloads.value = true;
-      try {
-        final tasks = <DownloadTaskDto>[];
-        final result = await runBatchOperation<String>(
-          context,
-          title: '正在查询下载任务',
-          items: state.selectedMovieNumbers.toList(),
-          action: (number) async {
-            tasks.addAll(await ref.refresh(movieDownloadTasksProvider(number).future));
-          },
-        );
-        if (!context.mounted) return;
-        loadingDownloads.value = false;
-        if (result.failed.isNotEmpty) return;
-        if (tasks.isEmpty) {
-          showToast('所选影片没有下载任务');
-          return;
-        }
-        final api = ref.read(downloadsApiProvider);
-        var removed = 0;
-        await showDownloadTaskDeleteDialog(
-          context,
-          tasks: tasks,
-          showProgress: true,
-          onDelete: (id, deleteFiles) async {
-            await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
-            removed++;
-          },
-        );
-        if (!context.mounted) return;
-        if (removed > 0) {
-          ref.invalidate(downloadTaskCenterProvider);
-          await notifier.refresh();
-          if (context.mounted) showToast('已删除 $removed 个下载任务');
-        }
-      } catch (error) {
-        if (context.mounted) {
-          showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
-        }
-      } finally {
-        if (context.mounted) loadingDownloads.value = false;
-      }
-    }
-
     final loadedCount = state.paged.items.length;
     final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
     final selectAllLabel = allSelected ? '取消全选' : '全选（$loadedCount）';
@@ -275,19 +342,106 @@ class _SelectionHeader extends HookConsumerWidget {
       exitKey: const Key('movie-subscriptions-selection-exit'),
       onExit: busy ? null : notifier.exitSelectionMode,
       actions: _buildBatchActions(
-        context, ref, state,
+        context,
+        ref,
+        state,
+        size: AppButtonSize.small,
         loadingDownloads: loadingDownloads.value,
-        onDeleteDownloads: () => unawaited(deleteDownloads()),
+        onDeleteDownloads: () => unawaited(
+          _deleteSelectedDownloads(
+            context,
+            ref,
+            state,
+            onLoadingChanged: (value) => loadingDownloads.value = value,
+          ),
+        ),
       ),
     );
   }
 }
 
-/// 多选态顶栏里的批量操作。
+/// 移动端多选态顶栏：与 PornBox / 媒体管理的 `AppListHeader.selection` 同一套。
+class _MobileSelectionHeader extends ConsumerWidget {
+  const _MobileSelectionHeader({
+    required this.state,
+    required this.batchDeleting,
+  });
+
+  final MovieSubscriptionManagerState state;
+  final bool batchDeleting;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final managerProvider = movieSubscriptionManagerProvider(
+      ref.watch(movieSubscriptionStatusSelectionProvider),
+    );
+    final notifier = ref.read(managerProvider.notifier);
+    final busy = state.isBatchRunning || batchDeleting;
+    final loadedCount = state.paged.items.length;
+    final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
+
+    return AppListHeader.selection(
+      key: const Key('movie-subscriptions-selection-header'),
+      selectionLabel: '已选 ${state.selectionCount} 部',
+      selectionExitButtonKey: const Key('movie-subscriptions-selection-exit'),
+      onExitSelection: busy ? null : notifier.exitSelectionMode,
+      actionSlots: <Widget>[
+        AppTextButton(
+          key: const Key('movie-subscriptions-select-all-button'),
+          label: allSelected ? '取消全选' : '全选（$loadedCount）',
+          size: AppTextButtonSize.small,
+          onPressed: busy || loadedCount == 0
+              ? null
+              : notifier.toggleSelectAllLoaded,
+        ),
+      ],
+    );
+  }
+}
+
+/// 移动端贴底批量操作条：真正的危险动作放拇指够得到的地方，顶栏只留退出 / 全选。
+class _MobileSelectionBar extends ConsumerWidget {
+  const _MobileSelectionBar({
+    required this.deleting,
+    required this.onDeletingChanged,
+  });
+
+  final bool deleting;
+  final ValueChanged<bool> onDeletingChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final managerProvider = movieSubscriptionManagerProvider(
+      ref.watch(movieSubscriptionStatusSelectionProvider),
+    );
+    final state = ref.watch(managerProvider).value;
+    if (state == null) return const SizedBox.shrink();
+    return AppSelectionBottomBar(
+      actions: _buildBatchActions(
+        context,
+        ref,
+        state,
+        loadingDownloads: deleting,
+        onDeleteDownloads: () => unawaited(
+          _deleteSelectedDownloads(
+            context,
+            ref,
+            state,
+            onLoadingChanged: onDeletingChanged,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 多选态的批量操作按钮。桌面放进 `AppSelectionHeaderToolbar.actions`（small），
+/// 移动贴底 `AppSelectionBottomBar` 用默认 medium 撑满等宽。
 List<Widget> _buildBatchActions(
   BuildContext context,
   WidgetRef ref,
   MovieSubscriptionManagerState state, {
+  AppButtonSize size = AppButtonSize.medium,
   required bool loadingDownloads,
   required VoidCallback onDeleteDownloads,
 }) {
@@ -296,7 +450,7 @@ List<Widget> _buildBatchActions(
     AppButton(
       key: const Key('movie-subscriptions-batch-delete-downloads-button'),
       label: '删除下载任务',
-      size: AppButtonSize.small,
+      size: size,
       variant: AppButtonVariant.danger,
       icon: const Icon(Icons.delete_outline_rounded),
       isLoading: loadingDownloads,
@@ -305,7 +459,7 @@ List<Widget> _buildBatchActions(
     AppButton(
       key: const Key('movie-subscriptions-batch-unsubscribe-button'),
       label: '取消订阅（${state.selectionCount}）',
-      size: AppButtonSize.small,
+      size: size,
       variant: AppButtonVariant.danger,
       icon: const Icon(Icons.bookmark_remove_outlined),
       isLoading: state.isBatchActionRunning(
@@ -316,6 +470,63 @@ List<Widget> _buildBatchActions(
           : () => unawaited(_confirmBatchUnsubscribe(context, ref, state)),
     ),
   ];
+}
+
+/// 批量删除所选影片的下载任务：查询 → 确认 → 逐个删除 → 刷新列表。
+/// 桌面顶栏与移动贴底条的共用实现。
+Future<void> _deleteSelectedDownloads(
+  BuildContext context,
+  WidgetRef ref,
+  MovieSubscriptionManagerState state, {
+  required ValueChanged<bool> onLoadingChanged,
+}) async {
+  onLoadingChanged(true);
+  try {
+    final managerProvider = movieSubscriptionManagerProvider(
+      state.filter.status,
+    );
+    final tasks = <DownloadTaskDto>[];
+    final result = await runBatchOperation<String>(
+      context,
+      title: '正在查询下载任务',
+      items: state.selectedMovieNumbers.toList(),
+      action: (number) async {
+        tasks.addAll(
+          await ref.refresh(movieDownloadTasksProvider(number).future),
+        );
+      },
+    );
+    if (!context.mounted) return;
+    onLoadingChanged(false);
+    if (result.failed.isNotEmpty) return;
+    if (tasks.isEmpty) {
+      showToast('所选影片没有下载任务');
+      return;
+    }
+    final api = ref.read(downloadsApiProvider);
+    var removed = 0;
+    await showDownloadTaskDeleteDialog(
+      context,
+      tasks: tasks,
+      showProgress: true,
+      onDelete: (id, deleteFiles) async {
+        await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
+        removed++;
+      },
+    );
+    if (!context.mounted) return;
+    if (removed > 0) {
+      ref.invalidate(downloadTaskCenterProvider);
+      await ref.read(managerProvider.notifier).refresh();
+      if (context.mounted) showToast('已删除 $removed 个下载任务');
+    }
+  } catch (error) {
+    if (context.mounted) {
+      showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
+    }
+  } finally {
+    if (context.mounted) onLoadingChanged(false);
+  }
 }
 
 Future<void> _confirmBatchUnsubscribe(
@@ -355,9 +566,15 @@ const _queryExplanationTip = AppNoticeCard(
 // --- 列表体 -----------------------------------------------------------------
 
 class _ListBodySliver extends ConsumerWidget {
-  const _ListBodySliver({required this.onOpenMovie});
+  const _ListBodySliver({
+    required this.onOpenMovie,
+    required this.onOpenDownloads,
+    required this.mobile,
+  });
 
   final void Function(BuildContext context, String movieNumber) onOpenMovie;
+  final void Function(BuildContext context, String movieNumber) onOpenDownloads;
+  final bool mobile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -389,8 +606,12 @@ class _ListBodySliver extends ConsumerWidget {
       initialRetryKey: const Key('movie-subscriptions-initial-retry-button'),
       onReload: () => unawaited(notifier.reload()),
       onLoadMore: () => unawaited(notifier.loadMore()),
-      itemBuilder: (context, item, _) =>
-          _RowConsumer(item: item, onOpenMovie: onOpenMovie),
+      itemBuilder: (context, item, _) => _RowConsumer(
+        item: item,
+        mobile: mobile,
+        onOpenMovie: onOpenMovie,
+        onOpenDownloads: onOpenDownloads,
+      ),
     );
   }
 }
@@ -492,10 +713,17 @@ class _EmptyState extends ConsumerWidget {
 
 /// 单行的订阅者：只 watch 自己的选中 / pending 态，避免整表重建。
 class _RowConsumer extends HookConsumerWidget {
-  const _RowConsumer({required this.item, required this.onOpenMovie});
+  const _RowConsumer({
+    required this.item,
+    required this.onOpenMovie,
+    required this.onOpenDownloads,
+    required this.mobile,
+  });
 
   final MovieSubscriptionListItemDto item;
   final void Function(BuildContext context, String movieNumber) onOpenMovie;
+  final void Function(BuildContext context, String movieNumber) onOpenDownloads;
+  final bool mobile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -524,6 +752,7 @@ class _RowConsumer extends HookConsumerWidget {
 
     return MovieSubscriptionRow(
       item: item,
+      mobile: mobile,
       selectionMode: selectionMode,
       isSelected: isSelected,
       isPending: isPending || deleting.value,
@@ -531,7 +760,7 @@ class _RowConsumer extends HookConsumerWidget {
           ? () => notifier.toggleSelection(item.movieNumber)
           : () => onOpenMovie(context, item.movieNumber),
       onOpenDownloads: tasks?.isNotEmpty == true
-          ? () => context.goDesktopDownloadTasks(movieNumber: item.movieNumber)
+          ? () => onOpenDownloads(context, item.movieNumber)
           : null,
       onSearchMagnet: () => showMovieMagnetSearchDialog(
         context: context,

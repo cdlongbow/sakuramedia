@@ -6,8 +6,13 @@ import 'package:sakuramedia/features/activity/presentation/pages/desktop/activit
 /// 任务、下载任务、轮询与手动触发均由跨端的 [DesktopActivityPage] 内容层承载；
 /// 移动路由只提供子页面壳与移动端弹窗形态。
 class MobileActivityPage extends StatelessWidget {
-  const MobileActivityPage({super.key});
+  const MobileActivityPage({super.key, this.initialDownloadMovieNumber});
+
+  /// 打开后定位「下载任务」tab 并按番号过滤，与桌面入口 `downloadMovieNumber` 对称。
+  final String? initialDownloadMovieNumber;
 
   @override
-  Widget build(BuildContext context) => const DesktopActivityPage();
+  Widget build(BuildContext context) => DesktopActivityPage(
+    initialDownloadMovieNumber: initialDownloadMovieNumber,
+  );
 }

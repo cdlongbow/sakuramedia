@@ -106,11 +106,48 @@ void main() {
       isEmpty,
     );
   });
+
+  test('triggerImport posts and refreshes the snapshot to running', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 3)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(bundle, [taskJson(id: 3)]);
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    await controller.startPolling();
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/3/import',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_id': 3,
+        'task_run_id': 9,
+        'status': 'accepted',
+      },
+    );
+    _enqueueTaskPage(
+      bundle,
+      [taskJson(id: 3, importStatus: 'running', importStatusLabel: '导入中')],
+    );
+    await controller.triggerImport(3);
+
+    final posts = bundle.adapter.requests.where(
+      (request) =>
+          request.method == 'POST' && request.path == '/download-tasks/3/import',
+    );
+    expect(posts, hasLength(1));
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.single.task.importStatus, 'running');
+    expect(state.isTaskPending(3), isFalse);
+  });
 }
 
 Map<String, dynamic> taskJson({
   required int id,
   String state = 'downloading',
+  String importStatus = 'pending',
+  String importStatusLabel = '等待导入',
 }) => <String, dynamic>{
   'id': id,
   'client_id': 2,
@@ -119,8 +156,8 @@ Map<String, dynamic> taskJson({
   'remote_id': 'remote-$id',
   'state': state,
   'progress': 0.5,
-  'import_status': 'pending',
-  'import_status_label': '等待导入',
+  'import_status': importStatus,
+  'import_status_label': importStatusLabel,
   'created_at': '2026-07-10T08:00:00Z',
   'updated_at': '2026-07-10T08:01:00Z',
 };

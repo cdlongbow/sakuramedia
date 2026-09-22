@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
@@ -224,5 +225,124 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
+  });
+
+  testWidgets('failed download task offers retrigger import and posts it', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <Map<String, dynamic>>[],
+        'task_runs': <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+      },
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 401,
+            'client_id': 1,
+            'movie_number': 'SSIS-801',
+            'name': 'SSIS-801',
+            'remote_id': 'remote-401',
+            'state': 'completed',
+            'progress': 1.0,
+            'import_status': 'failed',
+            'import_status_label': '导入失败',
+            'created_at': '2026-08-10T12:00:00Z',
+            'updated_at': '2026-08-10T12:00:00Z',
+          },
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: const <Map<String, dynamic>>[],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraMobileThemeData,
+            home: const AppPlatformScope(
+              platform: AppPlatform.mobile,
+              child: Scaffold(body: MobileActivityPage()),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+    await tester.pumpAndSettle();
+
+    // pending/导入中的任务不给入口，只有导入失败/已跳过才显示。
+    expect(
+      find.byKey(const Key('download-task-retrigger-import-401')),
+      findsOneWidget,
+    );
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/401/import',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_id': 401,
+        'task_run_id': 7,
+        'status': 'accepted',
+      },
+    );
+    await tester.tap(
+      find.byKey(const Key('download-task-retrigger-import-401')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      bundle.adapter.hitCount('POST', '/download-tasks/401/import'),
+      1,
+    );
+    expect(find.text('已提交导入任务'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
   });
 }

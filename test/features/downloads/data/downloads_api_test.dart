@@ -315,6 +315,25 @@ void main() {
       },
     );
 
+    test('triggerDownloadTaskImport posts to the task import endpoint', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-tasks/7/import',
+        statusCode: 202,
+        body: {'task_id': 7, 'task_run_id': 42, 'status': 'accepted'},
+      );
+
+      await bundle.downloadsApi.triggerDownloadTaskImport(7);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.path, '/download-tasks/7/import');
+    });
+
     test(
       'createDownloadRequest converts backend error to ApiException',
       () async {

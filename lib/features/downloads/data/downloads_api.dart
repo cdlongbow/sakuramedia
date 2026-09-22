@@ -81,4 +81,9 @@ class DownloadsApi {
       },
     );
   }
+
+  /// 重新触发该下载任务的导入；受理后由后台导入队列执行。
+  Future<void> triggerDownloadTaskImport(int taskId) async {
+    await _apiClient.post('/download-tasks/$taskId/import');
+  }
 }

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
@@ -295,6 +296,17 @@ class _DownloadTaskCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (_canRetriggerImport(task)) ...[
+                AppIconButton(
+                  key: Key('download-task-retrigger-import-${task.id}'),
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: '重新导入',
+                  onPressed: isPending
+                      ? null
+                      : () => unawaited(_triggerImport(context, ref, task.id)),
+                ),
+                SizedBox(width: context.appSpacing.xs),
+              ],
               AppIconButton(
                 key: Key('download-task-delete-${task.id}'),
                 icon: const Icon(Icons.delete_outline_rounded),
@@ -361,6 +373,26 @@ String _shortImportLabel(String status, {required String fallback}) {
     'skipped' => '已跳过',
     _ => fallback,
   };
+}
+
+/// 只有导入已跑完且没成功的任务才给「重新导入」；pending/running 在途、
+/// completed 已入库，都不需要。
+bool _canRetriggerImport(DownloadTaskDto task) =>
+    task.importStatus == 'failed' || task.importStatus == 'skipped';
+
+Future<void> _triggerImport(
+  BuildContext context,
+  WidgetRef ref,
+  int taskId,
+) async {
+  try {
+    await ref.read(downloadTaskCenterProvider.notifier).triggerImport(taskId);
+    if (context.mounted) showToast('已提交导入任务');
+  } catch (error) {
+    if (context.mounted) {
+      showToast(apiErrorMessage(error, fallback: '提交导入失败，请稍后重试'));
+    }
+  }
 }
 
 /// 卡片左侧封面由外层 Positioned 提供固定宽度和全高约束，贴合卡片上下缘。

@@ -272,6 +272,19 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     }
   }
 
+  /// 重新触发下载任务的导入，并立刻拉一次快照让卡片转入「导入中」。
+  Future<void> triggerImport(int taskId) async {
+    final current = state.value;
+    if (current == null || current.isTaskPending(taskId)) return;
+    _addPending(taskId);
+    try {
+      await ref.read(downloadsApiProvider).triggerDownloadTaskImport(taskId);
+      await _pollSnapshot();
+    } finally {
+      _removePending(taskId);
+    }
+  }
+
   Future<void> _loadClientOptionsInBackground() async {
     try {
       final clients = await ref.read(downloadClientsApiProvider).getClients();

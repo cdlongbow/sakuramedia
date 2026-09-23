@@ -195,7 +195,10 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       }
       unawaited(downloadController.startPolling());
     } else if (previousTab == ActivityTab.downloadTasks) {
-      ref.read(downloadTaskCenterProvider.notifier).stopPolling();
+      final downloadController = ref.read(downloadTaskCenterProvider.notifier);
+      downloadController.stopPolling();
+      // 离开下载 tab 顺手退出多选，回来时不再残留选中态。
+      downloadController.exitSelectionMode();
     }
   }
 
@@ -491,57 +494,65 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       ActivityTab.downloadTasks =>
         downloadAsync?.value?.paged.items.isNotEmpty ?? false,
     };
-    return AppPageRefreshScope(
-      onRefresh: _refreshActiveTab,
-      child: AppFixedHeaderLayout(
-        header: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppTabBar(
-              controller: _tabController,
-              tabs: const [
-                Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
-                Tab(key: Key('activity-tab-download-tasks'), text: '下载任务'),
-              ],
-            ),
-            SizedBox(height: context.appSpacing.lg),
-            if (activeTab == ActivityTab.tasks) ...[
-              _TaskFilterBar(controller: _controller),
-              AppFilterUpdateBar(
-                state: _controller.taskFilterUpdate,
-                hasPreviousItems: _controller.taskRuns.isNotEmpty,
-                onRetry: _controller.refreshTaskHistory,
-              ),
-              SizedBox(height: context.appSpacing.lg),
-            ] else
-              buildDownloadTaskHeader(context: context, ref: ref),
-          ],
-        ),
-        child: AppFilterResultLoadingOverlay(
-          isLoading: filterUpdate.isLoading,
-          hasPreviousItems: hasPreviousItems,
-          child: CustomScrollView(
-            controller: _pageScrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  key: const Key('desktop-activity-page'),
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: context.appSpacing.lg),
-                    _ConnectionBanner(
-                      state: _controller.connectionState,
-                      message: _controller.connectionMessage,
-                    ),
-                    SizedBox(height: context.appSpacing.xl),
-                  ],
-                ),
-              ),
-              ..._buildTabSlivers(context),
+    final layout = AppFixedHeaderLayout(
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppTabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
+              Tab(key: Key('activity-tab-download-tasks'), text: '下载任务'),
             ],
           ),
+          SizedBox(height: context.appSpacing.lg),
+          if (activeTab == ActivityTab.tasks) ...[
+            _TaskFilterBar(controller: _controller),
+            AppFilterUpdateBar(
+              state: _controller.taskFilterUpdate,
+              hasPreviousItems: _controller.taskRuns.isNotEmpty,
+              onRetry: _controller.refreshTaskHistory,
+            ),
+            SizedBox(height: context.appSpacing.lg),
+          ] else
+            buildDownloadTaskHeader(context: context, ref: ref),
+        ],
+      ),
+      child: AppFilterResultLoadingOverlay(
+        isLoading: filterUpdate.isLoading,
+        hasPreviousItems: hasPreviousItems,
+        child: CustomScrollView(
+          controller: _pageScrollController,
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                key: const Key('desktop-activity-page'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: context.appSpacing.lg),
+                  _ConnectionBanner(
+                    state: _controller.connectionState,
+                    message: _controller.connectionMessage,
+                  ),
+                  SizedBox(height: context.appSpacing.xl),
+                ],
+              ),
+            ),
+            ..._buildTabSlivers(context),
+          ],
         ),
       ),
+    );
+    return AppPageRefreshScope(
+      onRefresh: _refreshActiveTab,
+      // 下载 tab 的多选态在移动端需要贴底批量操作条；桌面动作在顶栏里。
+      child: activeTab == ActivityTab.downloadTasks
+          ? wrapDownloadTaskSelectionBar(
+              context: context,
+              ref: ref,
+              child: layout,
+            )
+          : layout,
     );
   }
 }

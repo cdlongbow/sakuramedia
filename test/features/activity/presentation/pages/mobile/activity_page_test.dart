@@ -345,4 +345,141 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('mobile selection deletes download tasks from the bottom bar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <Map<String, dynamic>>[],
+        'task_runs': <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+      },
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          _mobileDownloadTaskJson(401),
+          _mobileDownloadTaskJson(402),
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 2,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: const <Map<String, dynamic>>[],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraMobileThemeData,
+            home: const AppPlatformScope(
+              platform: AppPlatform.mobile,
+              child: Scaffold(body: MobileActivityPage()),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('download-tasks-selection-entry')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('download-tasks-selection-header')),
+      findsOneWidget,
+    );
+    // 多选态顶栏不再显示筛选入口，危险动作在贴底条。
+    expect(find.byKey(const Key('mobile-download-filter-button')), findsNothing);
+    await tester.tap(
+      find.byKey(const Key('download-tasks-select-all-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('已选 2 个'), findsOneWidget);
+    expect(
+      find.byKey(const Key('download-tasks-batch-delete-button')),
+      findsOneWidget,
+    );
+
+    for (final id in [401, 402]) {
+      bundle.adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/download-tasks/$id',
+        statusCode: 204,
+      );
+    }
+    await tester.tap(
+      find.byKey(const Key('download-tasks-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('是否删除 2 个下载任务？'), findsOneWidget);
+    await tester.tap(find.text('删除'));
+    await tester.pumpAndSettle();
+
+    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/401'), 1);
+    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/402'), 1);
+    expect(find.byKey(const Key('download-task-401')), findsNothing);
+    expect(
+      find.byKey(const Key('download-tasks-batch-delete-button')),
+      findsNothing,
+    );
+    expect(find.text('已删除 2 个下载任务'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
+
+Map<String, dynamic> _mobileDownloadTaskJson(int id) => <String, dynamic>{
+  'id': id,
+  'client_id': 1,
+  'movie_number': 'ABC-00$id',
+  'name': 'ABC-00$id',
+  'remote_id': 'remote-$id',
+  'state': 'downloading',
+  'progress': 0.5,
+  'import_status': 'pending',
+  'import_status_label': '等待导入',
+  'created_at': '2026-08-10T12:00:00Z',
+  'updated_at': '2026-08-10T12:00:00Z',
+};

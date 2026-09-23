@@ -39,6 +39,8 @@ class DownloadTaskCenterState {
     this.clientOptions = const <DownloadClientOption>[],
     this.clientNames = const <int, String>{},
     this.pendingActionTaskIds = const <int>{},
+    this.selectionMode = false,
+    this.selectedTaskIds = const <int>{},
   });
 
   static final DownloadTaskCenterState initial = DownloadTaskCenterState(
@@ -53,6 +55,16 @@ class DownloadTaskCenterState {
   final Map<int, String> clientNames;
   final Set<int> pendingActionTaskIds;
 
+  /// 多选态：进入后行卡片整卡点击 = 勾选，行内动作与详情跳转让位。
+  final bool selectionMode;
+  final Set<int> selectedTaskIds;
+
+  int get selectionCount => selectedTaskIds.length;
+
+  bool get hasSelection => selectedTaskIds.isNotEmpty;
+
+  bool isSelected(int taskId) => selectedTaskIds.contains(taskId);
+
   bool isTaskPending(int taskId) => pendingActionTaskIds.contains(taskId);
 
   String clientNameOf(int clientId) =>
@@ -65,6 +77,8 @@ class DownloadTaskCenterState {
     List<DownloadClientOption>? clientOptions,
     Map<int, String>? clientNames,
     Set<int>? pendingActionTaskIds,
+    bool? selectionMode,
+    Set<int>? selectedTaskIds,
   }) {
     return DownloadTaskCenterState(
       paged: paged ?? this.paged,
@@ -73,6 +87,8 @@ class DownloadTaskCenterState {
       clientOptions: clientOptions ?? this.clientOptions,
       clientNames: clientNames ?? this.clientNames,
       pendingActionTaskIds: pendingActionTaskIds ?? this.pendingActionTaskIds,
+      selectionMode: selectionMode ?? this.selectionMode,
+      selectedTaskIds: selectedTaskIds ?? this.selectedTaskIds,
     );
   }
 }

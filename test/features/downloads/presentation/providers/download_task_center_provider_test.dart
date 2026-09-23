@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
@@ -109,6 +110,79 @@ void main() {
       container.read(downloadTaskCenterProvider).requireValue.paged.items,
       isEmpty,
     );
+  });
+
+  test('selection toggles rows and select-all covers loaded rows', () async {
+    _enqueueTaskPage(bundle, [
+      taskJson(id: 1),
+      taskJson(id: 2),
+      taskJson(id: 3),
+    ]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    controller.enterSelectionMode();
+    controller.toggleSelection(2);
+
+    var state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.selectionMode, isTrue);
+    expect(state.selectionCount, 1);
+    expect(state.isSelected(2), isTrue);
+    expect(controller.selectedLoadedTasks().map((task) => task.id), [2]);
+
+    controller.toggleSelectAllLoaded();
+    state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.selectedTaskIds, {1, 2, 3});
+
+    controller.toggleSelectAllLoaded();
+    state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.selectedTaskIds, isEmpty);
+
+    controller.exitSelectionMode();
+    state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.selectionMode, isFalse);
+    expect(state.selectedTaskIds, isEmpty);
+  });
+
+  test('applyFilter exits selection mode', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    controller.enterSelectionMode();
+    controller.toggleSelection(1);
+
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    await controller.applyFilter(
+      DownloadTaskFilterState.initial.copyWith(
+        stateFilter: DownloadTaskStateFilter.all,
+      ),
+    );
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.selectionMode, isFalse);
+    expect(state.selectedTaskIds, isEmpty);
+  });
+
+  test('poll prunes selected tasks that left the list', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    controller.enterSelectionMode();
+    controller.toggleSelection(1);
+    controller.toggleSelection(2);
+
+    _enqueueTaskPage(bundle, [taskJson(id: 2)]);
+    await controller.startPolling();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.map((row) => row.task.id), [2]);
+    expect(state.selectedTaskIds, {2});
+    expect(state.selectionMode, isTrue);
   });
 
   test('triggerImport posts and refreshes the snapshot to running', () async {

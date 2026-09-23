@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
+import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
@@ -118,6 +119,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     state = AsyncData(
       current.copyWith(
         filter: next,
+        // 筛选结果整批换掉后旧选中项多半不在列表里，直接退出多选。
+        selectionMode: false,
+        selectedTaskIds: const <int>{},
         paged: current.paged.copyWith(
           isLoadingMore: false,
           loadMoreErrorMessage: null,
@@ -165,8 +169,17 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       final firstPage = await loadInitialPage();
       if (isDisposed || !_filterRequests.isCurrent(requestId)) return;
       final current = state.value;
-      if (current != null)
-        state = AsyncData(current.copyWith(paged: firstPage));
+      if (current != null) {
+        state = AsyncData(
+          current.copyWith(
+            paged: firstPage,
+            selectedTaskIds: _pruneSelection(
+              current.selectedTaskIds,
+              firstPage,
+            ),
+          ),
+        );
+      }
     } catch (error) {
       if (isDisposed || !_filterRequests.isCurrent(requestId)) return;
       final current = state.value;
@@ -266,10 +279,17 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       }
       // 未翻页：快照整体替换，并让飞行中的 loadMore 作废，避免旧页码结果写回。
       invalidateInFlightLoadMore();
+      final nextPaged = PagedListState<DownloadTaskRowState>.fromFirstPage(
+        firstPage,
+      );
       state = AsyncData(
         current.copyWith(
           pollingState: DownloadTaskPollingState.polling,
-          paged: PagedListState<DownloadTaskRowState>.fromFirstPage(firstPage),
+          paged: nextPaged,
+          selectedTaskIds: _pruneSelection(
+            current.selectedTaskIds,
+            nextPaged,
+          ),
         ),
       );
     } catch (_) {
@@ -308,6 +328,54 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     } finally {
       _removePending(taskId);
     }
+  }
+
+  // --- 多选 -----------------------------------------------------------------
+
+  void enterSelectionMode() {
+    final current = state.value;
+    if (current == null || current.selectionMode) return;
+    state = AsyncData(current.copyWith(selectionMode: true));
+  }
+
+  void exitSelectionMode() {
+    final current = state.value;
+    if (current == null || !current.selectionMode) return;
+    state = AsyncData(
+      current.copyWith(selectionMode: false, selectedTaskIds: const <int>{}),
+    );
+  }
+
+  void toggleSelection(int taskId) {
+    final current = state.value;
+    if (current == null) return;
+    final next = Set<int>.of(current.selectedTaskIds);
+    if (!next.remove(taskId)) next.add(taskId);
+    state = AsyncData(current.copyWith(selectedTaskIds: next));
+  }
+
+  /// 全选 / 取消全选**当前已加载**的任务（非叠加所有页）。
+  ///
+  /// 已全选时再点即清空，对应工具条上「全选 ↔ 取消全选」的同一个按钮。
+  void toggleSelectAllLoaded() {
+    final current = state.value;
+    if (current == null) return;
+    final loaded = current.paged.items.map((row) => row.task.id).toSet();
+    final alreadyAll =
+        loaded.isNotEmpty && loaded.every(current.selectedTaskIds.contains);
+    state = AsyncData(
+      current.copyWith(selectedTaskIds: alreadyAll ? const <int>{} : loaded),
+    );
+  }
+
+  /// 当前选中且在列表里的任务，按列表顺序返回，供批量删除使用。
+  List<DownloadTaskDto> selectedLoadedTasks() {
+    final current = state.value;
+    if (current == null) return const <DownloadTaskDto>[];
+    return current.paged.items
+        .where((row) => current.isSelected(row.task.id))
+        .map((row) => row.task)
+        .toList(growable: false);
   }
 
   /// 重新触发下载任务的导入，并立刻拉一次快照让卡片转入「导入中」。
@@ -367,8 +435,10 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         .toList(growable: false);
     if (next.length == current.paged.items.length) return;
     final total = current.paged.total > 0 ? current.paged.total - 1 : 0;
+    final nextSelected = Set<int>.of(current.selectedTaskIds)..remove(taskId);
     state = AsyncData(
       current.copyWith(
+        selectedTaskIds: nextSelected,
         paged: current.paged.copyWith(
           items: List.unmodifiable(next),
           total: total,
@@ -376,6 +446,18 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         ),
       ),
     );
+  }
+
+  /// 轮询整体替换列表后，把选中集合收敛到仍在列表里的任务，避免「已选 N」虚高、
+  /// 批量删除时对已消失的任务发请求。
+  Set<int> _pruneSelection(
+    Set<int> selected,
+    PagedListState<DownloadTaskRowState> paged,
+  ) {
+    if (selected.isEmpty) return selected;
+    final loaded = paged.items.map((row) => row.task.id).toSet();
+    final next = selected.intersection(loaded);
+    return next.length == selected.length ? selected : next;
   }
 
   void _addPending(int taskId) {

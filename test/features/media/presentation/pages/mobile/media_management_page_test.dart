@@ -76,6 +76,54 @@ void main() {
     );
   });
 
+  testWidgets('swiping the content switches tabs', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: [_mediaItemJson(1)]),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/duplicates',
+      body: _mediaPage(items: const []),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('mobile-media-management-row-1')),
+      findsOneWidget,
+    );
+    expect(adapter.hitCount('GET', '/media/duplicates'), 0);
+
+    await tester.drag(
+      find.byKey(const Key('mobile-media-management-tab-view')),
+      const Offset(-400, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('GET', '/media/duplicates'), 1);
+    expect(
+      find.byKey(const Key('mobile-media-management-duplicate-media-section')),
+      findsOneWidget,
+    );
+
+    await tester.drag(
+      find.byKey(const Key('mobile-media-management-tab-view')),
+      const Offset(400, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-media-management-row-1')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('long press exposes batch transfer and delete actions', (
     tester,
   ) async {
@@ -92,7 +140,7 @@ void main() {
     );
 
     await tester.longPress(
-      find.byKey(const Key('mobile-media-management-row-long-press-1')),
+      find.byKey(const Key('mobile-media-management-row-1')),
     );
     await tester.pumpAndSettle();
     expect(
@@ -127,7 +175,9 @@ void main() {
       find.byKey(const Key('mobile-media-management-delete-1')),
       findsOneWidget,
     );
-    await tester.tap(find.byKey(const Key('mobile-media-management-delete-1')));
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-delete-1')),
+    );
     await tester.pumpAndSettle();
 
     expect(
@@ -233,6 +283,56 @@ void main() {
     expect(find.byKey(const Key('invalid-media-delete-1')), findsOneWidget);
   });
 
+  testWidgets('batch deletes selected invalid media on mobile', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: <String, dynamic>{
+        'items': [_invalidMediaJson(1), _invalidMediaJson(2)],
+        'page': 1,
+        'page_size': 20,
+        'total': 2,
+      },
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-tab-maintenance')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const Key('invalid-media-row-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('invalid-media-row-2')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('invalid-media-batch-delete-button')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('invalid-media-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('invalid-media-batch-delete-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    expect(adapter.hitCount('DELETE', '/media/2'), 1);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('mobile filter opens bottom drawer', (tester) async {
     adapter.enqueueJson(
       method: 'GET',
@@ -302,7 +402,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.longPress(
-      find.byKey(const Key('mobile-media-management-row-long-press-1')),
+      find.byKey(const Key('mobile-media-management-row-1')),
     );
     await tester.pumpAndSettle();
     expect(

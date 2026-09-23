@@ -83,4 +83,7 @@ docs/refactor
 # 全量测试的 bundle 入口,由 scripts/test.sh 每次跑测前重新生成(见 tool/gen_test_bundles.dart)
 /test_bundles/
 
+# UI 预览脚本(*_preview.dart)是本地临时验证文件,不入版本库(见 AGENTS.md)
+test/**/*_preview.dart
+
 Podfile.lock

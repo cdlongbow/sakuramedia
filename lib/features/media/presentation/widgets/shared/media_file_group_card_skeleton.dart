@@ -1,13 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_left_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
-/// [MediaFileGroupCard] 的骨架形态：同一分组卡壳（白底、圆角、细边、阴影），
-/// 顶部封面块 + 标题区灰条，底部 [fileCount] 行文件行灰条（每行前保留
-/// `Divider(height: spacing.xl)` 的节奏）。
+/// [MediaFileGroupCard] 的骨架形态：单层卡 + 组头（贴边小缩略图块 + 标题区灰条）
+/// + [fileCount] 行文件行灰条（行尾保留删除图标的占位）。
 ///
-/// 数据到达后每组的文件行数量由真实数据决定，骨架按常见的两行文件占位，
-/// 保证首屏是「分组卡」而不是一组细线。
+/// 与真实组卡同尺寸 token；数据到达后每组的文件行数量由真实数据决定，
+/// 骨架按常见的两行文件占位，保证首屏是「分组卡」而不是一组细线。
 class MediaFileGroupCardSkeleton extends StatelessWidget {
   const MediaFileGroupCardSkeleton({
     super.key,
@@ -22,56 +22,40 @@ class MediaFileGroupCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
-    final coverWidth = mobile
-        ? tokens.movieDetailPlotThumbnailWidth
-        : tokens.downloadTaskCoverWidth;
-    final coverHeight = mobile
-        ? tokens.movieDetailPlotThumbnailHeight
-        : tokens.mediaManagementRowHeight;
 
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
+        borderRadius: context.appRadius.mdBorder,
         border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppSkeletonBlock(
-                width: coverWidth,
-                height: coverHeight,
-                radius: BorderRadius.zero,
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(spacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AppSkeletonBlock(width: 200, height: 16),
-                      SizedBox(height: spacing.sm),
-                      const AppSkeletonBlock(width: 160, height: 16),
-                      SizedBox(height: spacing.sm),
-                      const AppSkeletonBlock(width: 64, height: 20),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          AppLeftCoverCardSkeleton(
+            shell: false,
+            coverWidth: tokens.listGroupHeaderCoverWidth,
+            bodyMinHeight: tokens.listGroupHeaderCoverHeight,
+            bodyPadding: EdgeInsets.all(mobile ? spacing.sm : spacing.md),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppSkeletonBlock(width: 160, height: 16),
+                SizedBox(height: spacing.xs),
+                const AppSkeletonBlock(width: 200, height: 12),
+                SizedBox(height: spacing.sm),
+                const AppSkeletonBlock(width: 64, height: 20),
+              ],
+            ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(spacing.lg, 0, spacing.lg, spacing.lg),
+            padding: EdgeInsets.fromLTRB(spacing.lg, 0, spacing.lg, spacing.md),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var index = 0; index < fileCount; index++)
-                  _FileRowSkeleton(mobile: mobile),
+                  _FileRowSkeleton(index: index),
               ],
             ),
           ),
@@ -82,43 +66,40 @@ class MediaFileGroupCardSkeleton extends StatelessWidget {
 }
 
 class _FileRowSkeleton extends StatelessWidget {
-  const _FileRowSkeleton({required this.mobile});
+  const _FileRowSkeleton({required this.index});
 
-  final bool mobile;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const AppSkeletonBlock(width: 160, height: 20),
-        SizedBox(height: spacing.sm),
-        const AppSkeletonBlock(width: 220, height: 16),
-      ],
-    );
-    const deleteButton = AppSkeletonBlock(width: 88, height: 32);
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Divider(height: spacing.xl, color: context.appColors.divider),
-        if (mobile) ...[
-          content,
-          SizedBox(height: spacing.md),
-          const Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: deleteButton,
-          ),
-        ] else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        if (index > 0)
+          Divider(height: 1, thickness: 1, color: context.appColors.divider),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: spacing.md),
+          child: Row(
             children: [
-              Expanded(child: content),
-              SizedBox(width: spacing.lg),
-              deleteButton,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSkeletonBlock(width: 160, height: 16),
+                    SizedBox(height: spacing.sm),
+                    const AppSkeletonBlock(width: 220, height: 12),
+                  ],
+                ),
+              ),
+              SizedBox(width: spacing.sm),
+              AppSkeletonBlock(
+                width: 28,
+                height: 28,
+                radius: context.appRadius.smBorder,
+              ),
             ],
           ),
+        ),
       ],
     );
   }

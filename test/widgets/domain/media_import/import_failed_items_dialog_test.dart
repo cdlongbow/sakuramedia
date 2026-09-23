@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +10,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/media_import/import_failed_items_dialog.dart';
 
 import '../../../support/test_api_bundle.dart';
@@ -168,6 +173,10 @@ void main() {
 
     expect(find.text('手动匹配元数据'), findsOneWidget);
     expect(find.byKey(const Key('import-metadata-number-field')), findsOneWidget);
+    expect(
+      find.byKey(const Key('import-metadata-search-button')),
+      findsOneWidget,
+    );
 
     await tester.enterText(
       find.byKey(const Key('import-metadata-number-field')),
@@ -177,6 +186,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('JavDB 标题'), findsOneWidget);
+    // 候选封面应为宽图（16:9 左侧缩略图），不是竖条。
+    final coverSize = tester.getSize(
+      find.descendant(
+        of: find.byKey(
+          const Key('import-metadata-candidate-javdb:ABC-001:javdb-001'),
+        ),
+        matching: find.byType(MaskedImage),
+      ),
+    );
+    expect(coverSize.width, greaterThan(coverSize.height));
     expect(
       tester
           .widget<AppButton>(find.byKey(const Key('import-metadata-retry-button')))
@@ -213,6 +232,69 @@ void main() {
     await tester.pump();
     expect(find.text('已导入'), findsOneWidget);
 
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('search field keeps a static icon while searching', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1100, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final bundle = await _createBundle();
+    addTearDown(bundle.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/imports/7/failed-items',
+      body: <Map<String, dynamic>>[_failedItemJson()],
+    );
+    // 搜索请求挂起，停留在加载中状态。
+    final searchCompleter = Completer<ResponseBody>();
+    bundle.adapter.enqueueResponder(
+      method: 'POST',
+      path: '/imports/7/failed-items/failure-1/search',
+      responder: (_, _) => searchCompleter.future,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraDesktopThemeData,
+            home: const _DialogLauncher(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('打开失败文件'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('import-failed-item-match-failure-1')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('import-metadata-number-field')),
+      'SSNI-888',
+    );
+    await tester.tap(find.byKey(const Key('import-metadata-search-button')));
+    await tester.pump();
+
+    // 搜索框后缀保持静态搜索图标，只有结果区中央一个转圈。
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    // 放行挂起的请求，清掉 dio 的接收超时计时器。
+    searchCompleter.complete(
+      ResponseBody.fromString(
+        jsonEncode(_searchResponseJson()),
+        200,
+        headers: <String, List<String>>{
+          Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });

@@ -57,6 +57,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   late final TabController _tabController;
   late final ScrollController _pageScrollController;
   bool _isViewportWorkScheduled = false;
+  Object? _lastViewportSignature;
   ActivityTab? _lastActiveTab = ActivityTab.tasks;
   bool _hasOpenedDownloadTasks = false;
   bool? _isPageVisible;
@@ -202,7 +203,31 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     }
   }
 
+  /// provider 变化时只在「已加载条数 / hasMore / activeTab」真正变化时才重查视口，
+  /// 避免 3 秒轮询 tick 凭空触发下一页自动加载。
   void _handleControllerChanged() {
+    final activity = ref.read(activityCenterProvider).value;
+    if (activity == null) return;
+    final Object signature;
+    switch (activity.activeTab) {
+      case ActivityTab.tasks:
+        signature = Object.hash(
+          ActivityTab.tasks,
+          activity.taskRuns.length,
+          activity.hasMoreTasks,
+        );
+      case ActivityTab.downloadTasks:
+        final download = ref.read(downloadTaskCenterProvider).value;
+        signature = Object.hash(
+          ActivityTab.downloadTasks,
+          download?.paged.items.length ?? 0,
+          download?.paged.hasMore ?? false,
+        );
+    }
+    if (signature == _lastViewportSignature) {
+      return;
+    }
+    _lastViewportSignature = signature;
     _scheduleViewportWork();
   }
 

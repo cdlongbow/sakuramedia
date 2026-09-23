@@ -30,6 +30,7 @@ class _DesktopNotificationsPageState
   static const double _loadMoreTriggerOffset = 300;
 
   final ScrollController _scrollController = ScrollController();
+  Object? _lastAutoLoadSignature;
 
   @override
   void initState() {
@@ -53,6 +54,26 @@ class _DesktopNotificationsPageState
 
   void _handleScroll() {
     _maybeAutoLoadMore();
+  }
+
+  /// 只在「已加载条数 / hasMore / 筛选」变化时补视口，避免每次重建（含轮询 tick）
+  /// 都触发下一页自动加载。滚动事件仍直接走 [_maybeAutoLoadMore]。
+  void _scheduleAutoLoadOnListChange() {
+    final state = ref.read(notificationCenterProvider);
+    final signature = Object.hash(
+      state.notifications.length,
+      state.hasMore,
+      state.filter,
+    );
+    if (signature == _lastAutoLoadSignature) {
+      return;
+    }
+    _lastAutoLoadSignature = signature;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _maybeAutoLoadMore();
+      }
+    });
   }
 
   void _maybeAutoLoadMore() {
@@ -91,11 +112,7 @@ class _DesktopNotificationsPageState
         _scrollController.jumpTo(0);
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _maybeAutoLoadMore();
-      }
-    });
+    _scheduleAutoLoadOnListChange();
     return AppPageRefreshScope(
       onRefresh: ref
           .read(notificationCenterProvider.notifier)

@@ -205,7 +205,49 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(adapter.hitCount('DELETE', '/media/1'), 1);
-    expect(find.byKey(const Key('invalid-media-delete-1')), findsNothing);
+    expect(find.byKey(const Key('invalid-media-row-1')), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('batch deletes selected invalid media', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: _page(
+        total: 2,
+        items: [_invalidMediaJson(1), _invalidMediaJson(2)],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+      switchToMaintenance: true,
+    );
+
+    await tester.tap(find.byKey(const Key('invalid-media-row-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('invalid-media-row-2')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('invalid-media-selection-count')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('invalid-media-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('invalid-media-batch-delete-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    expect(adapter.hitCount('DELETE', '/media/2'), 1);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -361,6 +403,65 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     },
   );
+
+  testWidgets('submits a single-item transfer from the row transfer icon', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(total: 1, items: [_duplicateMediaItemJson(1)]),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media-transfers/candidates',
+      body: <String, dynamic>{
+        'source_library': <String, dynamic>{'id': 1, 'name': '媒体库 A'},
+        'targets': <Map<String, dynamic>>[
+          <String, dynamic>{'id': 9, 'name': '媒体库 B'},
+        ],
+      },
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media-transfers',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 88,
+        'task_key': 'media_storage_transfer',
+        'state': 'pending',
+      },
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(find.byKey(const Key('media-management-transfer-1')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-management-transfer-dialog')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('media-management-transfer-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    final requests = adapter.requests
+        .where((request) => request.method == 'POST')
+        .toList(growable: false);
+    expect(requests[0].body, <String, dynamic>{
+      'media_ids': <int>[1],
+    });
+    expect(requests[1].body, <String, dynamic>{
+      'media_ids': <int>[1],
+      'target_library_id': 9,
+    });
+    await tester.pump(const Duration(seconds: 3));
+  });
 
   testWidgets('retries selected terminal thumbnails from the filtered list', (
     tester,

@@ -17,12 +17,14 @@ class AppLeftCoverCardSkeleton extends StatelessWidget {
     this.bodyMinHeight,
     this.bodyPadding,
     this.body,
+    this.shell = true,
   });
 
   final double coverWidth;
   final double? bodyMinHeight;
   final EdgeInsetsGeometry? bodyPadding;
   final Widget? body;
+  final bool shell;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,7 @@ class AppLeftCoverCardSkeleton extends StatelessWidget {
       coverWidth: coverWidth,
       bodyMinHeight: bodyMinHeight,
       bodyPadding: bodyPadding,
+      shell: shell,
       cover: const AppSkeletonBlock(radius: BorderRadius.zero),
       body: body ?? const _DefaultSkeletonBody(),
     );
@@ -47,6 +50,7 @@ class AppLeftCoverCardSkeletonList extends StatelessWidget {
     this.body,
     this.itemCount = 3,
     this.itemSpacing,
+    this.shell = true,
   });
 
   final double coverWidth;
@@ -55,6 +59,7 @@ class AppLeftCoverCardSkeletonList extends StatelessWidget {
   final Widget? body;
   final int itemCount;
   final double? itemSpacing;
+  final bool shell;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +74,7 @@ class AppLeftCoverCardSkeletonList extends StatelessWidget {
             bodyMinHeight: bodyMinHeight,
             bodyPadding: bodyPadding,
             body: body,
+            shell: shell,
           ),
         ),
       ),

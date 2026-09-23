@@ -28,14 +28,12 @@ class MaskedImage extends ConsumerStatefulWidget {
     this.alignment = Alignment.center,
     this.memCacheWidth,
     this.memCacheHeight,
-    this.borderRadius,
   });
 
   static const int _decodeSizeUpperBound = 1024;
 
   final String url;
   final BoxFit fit;
-  final BorderRadius? borderRadius;
 
   /// 图片在容器内的对齐方式（与 `BoxFit.cover` 组合决定裁哪一侧）。
   /// 竖封面套横框场景常传 `Alignment.topCenter` 露出海报上半部（番号+人脸）。
@@ -129,20 +127,34 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
             if (wasSynchronouslyLoaded) {
               return child;
             }
-            return AnimatedSwitcher(
-              duration: _revealFadeDuration,
-              switchInCurve: Curves.easeOut,
-              // 两个 child 必须有不同 key：AnimatedSwitcher 只在 key 变化时保留
-              // 旧 child 做淡出，否则占位会瞬间消失。
-              child: frame == null
-                  ? const _MaskedImagePlaceholder(
-                      key: ValueKey<String>('placeholder'),
-                      icon: Icons.image_outlined,
-                    )
-                  : KeyedSubtree(
-                      key: const ValueKey<String>('image'),
-                      child: child,
-                    ),
+            // AnimatedSwitcher 默认 layoutBuilder 的 Stack 会给子级 loose
+            // constraints，`Image` 便退回按自身比例布局——`cover` 实际变成
+            // 「contain + 留白」。有界约束下改用 StackFit.expand，让封面真正
+            // 铺满并按 `fit` 裁切。
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final canFill =
+                    constraints.hasBoundedWidth &&
+                    constraints.hasBoundedHeight;
+                return AnimatedSwitcher(
+                  duration: _revealFadeDuration,
+                  switchInCurve: Curves.easeOut,
+                  layoutBuilder: canFill
+                      ? _fillAnimatedSwitcherLayout
+                      : AnimatedSwitcher.defaultLayoutBuilder,
+                  // 两个 child 必须有不同 key：AnimatedSwitcher 只在 key 变化时保留
+                  // 旧 child 做淡出，否则占位会瞬间消失。
+                  child: frame == null
+                      ? const _MaskedImagePlaceholder(
+                          key: ValueKey<String>('placeholder'),
+                          icon: Icons.image_outlined,
+                        )
+                      : KeyedSubtree(
+                          key: const ValueKey<String>('image'),
+                          child: child,
+                        ),
+                );
+              },
             );
           },
           errorBuilder: (context, error, stackTrace) {
@@ -162,15 +174,6 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
           );
         }
 
-        if (widget.borderRadius != null) {
-          return Align(
-            alignment: widget.alignment,
-            child: ClipRRect(
-              borderRadius: widget.borderRadius!,
-              child: imageContent,
-            ),
-          );
-        }
         return imageContent;
       },
     );
@@ -208,6 +211,16 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
 
 /// 首帧到达后「占位 → 图片」的切换时长。
 const Duration _revealFadeDuration = Duration(milliseconds: 240);
+
+/// [AnimatedSwitcher] 在有界约束下的 layoutBuilder：用 `StackFit.expand` 让新旧
+/// child 都铺满，避免默认 Stack 的 loose 约束把 `cover` 退化成「contain + 留白」。
+Widget _fillAnimatedSwitcherLayout(
+  Widget? currentChild,
+  List<Widget> previousChildren,
+) => Stack(
+  fit: StackFit.expand,
+  children: <Widget>[...previousChildren, ?currentChild],
+);
 
 /// 首帧到达前显示占位；`contain` 图片周围不再有底色。
 class _MaskedImagePlaceholder extends StatelessWidget {

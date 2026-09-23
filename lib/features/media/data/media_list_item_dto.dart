@@ -38,7 +38,7 @@ extension MediaThumbnailGenerationStateX on MediaThumbnailGenerationState {
       };
 }
 
-class MediaListItemDto {
+class MediaListItemDto with MovieCoverSelection {
   const MediaListItemDto({
     required this.id,
     required this.kind,
@@ -67,7 +67,9 @@ class MediaListItemDto {
   final String? movieNumber;
   final int? videoItemId;
   final String? title;
+  @override
   final MovieImageDto? coverImage;
+  @override
   final MovieImageDto? thinCoverImage;
   final int? libraryId;
   final String? libraryName;
@@ -109,23 +111,6 @@ class MediaListItemDto {
       }
     }
     return null;
-  }
-
-  String? get preferredCoverUrl {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
-    if (thinUrl != null && thinUrl.isNotEmpty) {
-      return thinUrl;
-    }
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
-    if (coverUrl != null && coverUrl.isNotEmpty) {
-      return coverUrl;
-    }
-    return null;
-  }
-
-  bool get usesThinCover {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
-    return thinUrl != null && thinUrl.isNotEmpty;
   }
 
   factory MediaListItemDto.fromJson(Map<String, dynamic> json) {

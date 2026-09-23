@@ -416,6 +416,20 @@ class ActivityCenter extends _$ActivityCenter
         state = AsyncData(now.copyWith(activeTaskRuns: activeTaskRuns));
         return;
       }
+      if (now.taskNextPage > 2) {
+        // 已翻页：只按 id 就地刷新首页命中的条目，保留已加载的后续页。
+        // 整体替换会把列表截回第一页，移动端在底部滚动时表现为列表塌缩、
+        // 视口回弹闪屏，并让自动加载更多反复重拉第二页。
+        state = AsyncData(
+          now.copyWith(
+            activeTaskRuns: activeTaskRuns,
+            taskRuns: _patchLoadedTasks(now.taskRuns, taskResponse.items),
+            connectionState: ActivityConnectionState.polling,
+            connectionMessage: '每 3 秒同步任务进度',
+          ),
+        );
+        return;
+      }
       state = AsyncData(
         now.copyWith(
           activeTaskRuns: activeTaskRuns,
@@ -473,6 +487,21 @@ class ActivityCenter extends _$ActivityCenter
       (filter.state == null || filter.state == item.state) &&
       (filter.taskKey == null || filter.taskKey == item.taskKey) &&
       (filter.triggerType == null || filter.triggerType == item.triggerType);
+
+  /// 已翻页时的轮询合并：按 id 就地更新已加载条目，不增删条目、不重置
+  /// [ActivityCenterState.taskNextPage] / [ActivityCenterState.hasMoreTasks]。
+  List<TaskRunDto> _patchLoadedTasks(
+    List<TaskRunDto> currentItems,
+    List<TaskRunDto> freshItems,
+  ) {
+    final freshById = <int, TaskRunDto>{
+      for (final item in freshItems) item.id: item,
+    };
+    if (freshById.isEmpty) return currentItems;
+    return <TaskRunDto>[
+      for (final item in currentItems) freshById[item.id] ?? item,
+    ];
+  }
 
   List<TaskRunDto> _appendUniqueTasks(
     List<TaskRunDto> currentItems,

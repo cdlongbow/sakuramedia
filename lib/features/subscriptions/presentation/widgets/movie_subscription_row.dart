@@ -44,8 +44,8 @@ class MovieSubscriptionRow extends StatelessWidget {
     final tokens = context.appComponentTokens;
     return AppLeftCoverCard(
       key: Key('movie-subscription-row-${item.movieNumber}'),
-      coverWidth: tokens.subscriptionRowCoverWidth,
-      bodyMinHeight: tokens.subscriptionRowMinHeight,
+      coverWidth: tokens.listRowCoverWidth,
+      bodyMinHeight: tokens.listRowCoverHeight,
       bodyPadding: EdgeInsets.symmetric(
         horizontal: spacing.lg,
         vertical: spacing.md,
@@ -54,6 +54,7 @@ class MovieSubscriptionRow extends StatelessWidget {
       onTap: onTap,
       cover: _CoverSlot(
         item: item,
+        mobile: mobile,
         selectionMode: selectionMode,
         isSelected: isSelected,
       ),
@@ -96,22 +97,28 @@ class MovieSubscriptionRow extends StatelessWidget {
 class _CoverSlot extends StatelessWidget {
   const _CoverSlot({
     required this.item,
+    required this.mobile,
     required this.selectionMode,
     required this.isSelected,
   });
 
   final MovieSubscriptionListItemDto item;
+  final bool mobile;
   final bool selectionMode;
   final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
-    final url = item.coverImage?.bestAvailableUrl.trim();
+    final url = mobile ? item.preferredCoverUrl : item.wideCoverUrl;
+    // 窄框用窄图、宽框用宽图才裁切；回退到另一方向的图时居中留边。
+    final fit = mobile
+        ? (item.usesThinCover ? BoxFit.cover : BoxFit.contain)
+        : (item.hasWideCover ? BoxFit.cover : BoxFit.contain);
     final image = url != null && url.isNotEmpty
         ? MaskedImage(
             key: Key('movie-subscription-cover-${item.movieNumber}'),
             url: url,
-            fit: BoxFit.cover,
+            fit: fit,
           )
         : Container(
             key: Key('movie-subscription-cover-placeholder-${item.movieNumber}'),

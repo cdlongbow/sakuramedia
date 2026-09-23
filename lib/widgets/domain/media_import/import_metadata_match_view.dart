@@ -11,11 +11,11 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
-import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
 /// 失败文件的人工元数据匹配视图：输入番号 → 选择候选 → 提交重试。
 ///
@@ -139,27 +139,16 @@ class _ImportMetadataMatchViewState
           ],
         ),
         SizedBox(height: spacing.lg),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AppTextField(
-                fieldKey: const Key('import-metadata-number-field'),
-                controller: _numberController,
-                hintText: '输入影片番号，如 ABC-001',
-                textInputAction: TextInputAction.search,
-                onFieldSubmitted: (_) => _search(),
-              ),
-            ),
-            SizedBox(width: spacing.md),
-            AppButton(
-              key: const Key('import-metadata-search-button'),
-              label: '搜索',
-              variant: AppButtonVariant.primary,
-              isLoading: matchState.isLoading,
-              onPressed: matchState.isLoading ? null : _search,
-            ),
-          ],
+        CatalogSearchField(
+          fieldKey: const Key('import-metadata-number-field'),
+          searchButtonKey: const Key('import-metadata-search-button'),
+          controller: _numberController,
+          hintText: '输入影片番号，如 ABC-001',
+          searchButtonTooltip: '搜索番号元数据',
+          isSearching: matchState.isLoading,
+          showSearchingIndicator: false,
+          onSearchTap: matchState.isLoading ? null : _search,
+          onSubmitted: (_) => _search(),
         ),
         SizedBox(height: spacing.lg),
         Expanded(child: _buildResults(context, matchState)),
@@ -219,7 +208,7 @@ class _ImportMetadataMatchViewState
       return const Center(
         child: AppEmptyState(
           icon: Icons.search_rounded,
-          message: '输入影片番号后搜索 JavDB 与已启用插件。',
+          message: '输入影片番号后搜索影片元数据。',
         ),
       );
     }
@@ -271,17 +260,21 @@ class _MetadataCandidateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coverWidth = context.appComponentTokens.importMetadataCandidateCoverWidth;
+    final tokens = context.appComponentTokens;
+    final spacing = context.appSpacing;
     final metaParts = <String>[
       candidate.movieNumber,
       if (candidate.releaseDate case final date? when date.isNotEmpty) date,
       '${candidate.durationMinutes} 分钟',
     ];
     return AppLeftCoverCard(
-      coverWidth: coverWidth,
-      // 竖版封面高度按影片卡比例推导，避免行高不足把海报压扁。
-      bodyMinHeight:
-          coverWidth / context.appComponentTokens.movieCardAspectRatio,
+      coverWidth: tokens.importMetadataCandidateCoverWidth,
+      // 封面为 16:9 宽图，用封面高度兜底最低行高，避免内容行数少时被压扁。
+      bodyMinHeight: tokens.importMetadataCandidateCoverHeight,
+      bodyPadding: EdgeInsets.symmetric(
+        horizontal: spacing.lg,
+        vertical: spacing.sm,
+      ),
       selected: selected,
       onTap: onTap,
       cover: MaskedImage(url: candidate.coverUrl ?? '', fit: BoxFit.cover),

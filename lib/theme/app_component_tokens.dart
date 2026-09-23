@@ -45,11 +45,13 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.subscriptionHeartHitSize,
     required this.downloadTaskCoverWidth,
     required this.importMetadataCandidateCoverWidth,
+    required this.importMetadataCandidateCoverHeight,
     required this.downloadTaskCardMinHeight,
     required this.downloadTaskProgressHeight,
-    required this.mediaManagementRowHeight,
-    required this.subscriptionRowCoverWidth,
-    required this.subscriptionRowMinHeight,
+    required this.listRowCoverWidth,
+    required this.listRowCoverHeight,
+    required this.listGroupHeaderCoverWidth,
+    required this.listGroupHeaderCoverHeight,
     required this.movieDetailHeroHeight,
     required this.movieDetailThinCoverWidth,
     required this.movieDetailPlotThumbnailWidth,
@@ -123,12 +125,16 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardStatusBadgeSize = 24,
       subscriptionHeartHitSize = 44,
       downloadTaskCoverWidth = 220,
-      importMetadataCandidateCoverWidth = 72,
+      importMetadataCandidateCoverWidth = 160,
+      importMetadataCandidateCoverHeight = 90,
       downloadTaskCardMinHeight = 120,
       downloadTaskProgressHeight = 6,
-      mediaManagementRowHeight = 144,
-      subscriptionRowCoverWidth = 168,
-      subscriptionRowMinHeight = 132,
+      // 列表行卡（媒体管理 / 订阅管理）左侧封面：桌面 16:9 宽图，移动窄竖图。
+      listRowCoverWidth = 234,
+      listRowCoverHeight = 132,
+      // 分组卡组头的小缩略图：与行卡区分层级，桌面 16:9、移动略小的 16:9。
+      listGroupHeaderCoverWidth = 120,
+      listGroupHeaderCoverHeight = 68,
       movieDetailHeroHeight = 420,
       movieDetailThinCoverWidth = 180,
       movieDetailPlotThumbnailWidth = 132,
@@ -201,12 +207,14 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardStatusBadgeSize = 24,
       subscriptionHeartHitSize = 44,
       downloadTaskCoverWidth = 96,
-      importMetadataCandidateCoverWidth = 72,
+      importMetadataCandidateCoverWidth = 128,
+      importMetadataCandidateCoverHeight = 72,
       downloadTaskCardMinHeight = 120,
       downloadTaskProgressHeight = 6,
-      mediaManagementRowHeight = 144,
-      subscriptionRowCoverWidth = 116,
-      subscriptionRowMinHeight = 108,
+      listRowCoverWidth = 92,
+      listRowCoverHeight = 132,
+      listGroupHeaderCoverWidth = 96,
+      listGroupHeaderCoverHeight = 54,
       movieDetailHeroHeight = 420,
       movieDetailThinCoverWidth = 180,
       movieDetailPlotThumbnailWidth = 132,
@@ -284,18 +292,21 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   final double subscriptionHeartHitSize;
   final double downloadTaskCoverWidth;
 
-  /// 导入失败项「手动匹配」候选行的竖版封面宽度。
+  /// 导入失败项「手动匹配」候选行的 16:9 宽图封面尺寸。
   final double importMetadataCandidateCoverWidth;
+  final double importMetadataCandidateCoverHeight;
   final double downloadTaskCardMinHeight;
   final double downloadTaskProgressHeight;
-  final double mediaManagementRowHeight;
 
-  /// 订阅管理行卡片的封面宽度。桌面 / 移动分档：移动端整卡才 ~343 逻辑像素，
-  /// 沿用下载任务卡的 220 会把右侧内容挤没。
-  final double subscriptionRowCoverWidth;
+  /// 列表行卡（媒体管理 / 订阅管理）左侧封面尺寸（桌面 / 移动分档）。
+  /// 封面贴左整高、由行卡圆角裁剪；桌面 16:9 宽图、移动窄竖图。
+  final double listRowCoverWidth;
+  final double listRowCoverHeight;
 
-  /// 订阅管理行卡片的最小高度（同时是封面高度，决定封面的裁切比例）。
-  final double subscriptionRowMinHeight;
+  /// 分组卡组头的小缩略图尺寸（桌面 / 移动分档），与行卡封面区分层级。
+  final double listGroupHeaderCoverWidth;
+  final double listGroupHeaderCoverHeight;
+
   final double movieDetailHeroHeight;
   final double movieDetailThinCoverWidth;
   final double movieDetailPlotThumbnailWidth;
@@ -372,11 +383,13 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? subscriptionHeartHitSize,
     double? downloadTaskCoverWidth,
     double? importMetadataCandidateCoverWidth,
+    double? importMetadataCandidateCoverHeight,
     double? downloadTaskCardMinHeight,
     double? downloadTaskProgressHeight,
-    double? mediaManagementRowHeight,
-    double? subscriptionRowCoverWidth,
-    double? subscriptionRowMinHeight,
+    double? listRowCoverWidth,
+    double? listRowCoverHeight,
+    double? listGroupHeaderCoverWidth,
+    double? listGroupHeaderCoverHeight,
     double? movieDetailHeroHeight,
     double? movieDetailThinCoverWidth,
     double? movieDetailPlotThumbnailWidth,
@@ -466,16 +479,19 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       importMetadataCandidateCoverWidth:
           importMetadataCandidateCoverWidth ??
           this.importMetadataCandidateCoverWidth,
+      importMetadataCandidateCoverHeight:
+          importMetadataCandidateCoverHeight ??
+          this.importMetadataCandidateCoverHeight,
       downloadTaskCardMinHeight:
           downloadTaskCardMinHeight ?? this.downloadTaskCardMinHeight,
       downloadTaskProgressHeight:
           downloadTaskProgressHeight ?? this.downloadTaskProgressHeight,
-      mediaManagementRowHeight:
-          mediaManagementRowHeight ?? this.mediaManagementRowHeight,
-      subscriptionRowCoverWidth:
-          subscriptionRowCoverWidth ?? this.subscriptionRowCoverWidth,
-      subscriptionRowMinHeight:
-          subscriptionRowMinHeight ?? this.subscriptionRowMinHeight,
+      listRowCoverWidth: listRowCoverWidth ?? this.listRowCoverWidth,
+      listRowCoverHeight: listRowCoverHeight ?? this.listRowCoverHeight,
+      listGroupHeaderCoverWidth:
+          listGroupHeaderCoverWidth ?? this.listGroupHeaderCoverWidth,
+      listGroupHeaderCoverHeight:
+          listGroupHeaderCoverHeight ?? this.listGroupHeaderCoverHeight,
       movieDetailHeroHeight:
           movieDetailHeroHeight ?? this.movieDetailHeroHeight,
       movieDetailThinCoverWidth:
@@ -670,6 +686,11 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
         other.importMetadataCandidateCoverWidth,
         t,
       )!,
+      importMetadataCandidateCoverHeight: lerpDouble(
+        importMetadataCandidateCoverHeight,
+        other.importMetadataCandidateCoverHeight,
+        t,
+      )!,
       downloadTaskCardMinHeight: lerpDouble(
         downloadTaskCardMinHeight,
         other.downloadTaskCardMinHeight,
@@ -680,19 +701,24 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
         other.downloadTaskProgressHeight,
         t,
       )!,
-      mediaManagementRowHeight: lerpDouble(
-        mediaManagementRowHeight,
-        other.mediaManagementRowHeight,
+      listRowCoverWidth: lerpDouble(
+        listRowCoverWidth,
+        other.listRowCoverWidth,
         t,
       )!,
-      subscriptionRowCoverWidth: lerpDouble(
-        subscriptionRowCoverWidth,
-        other.subscriptionRowCoverWidth,
+      listRowCoverHeight: lerpDouble(
+        listRowCoverHeight,
+        other.listRowCoverHeight,
         t,
       )!,
-      subscriptionRowMinHeight: lerpDouble(
-        subscriptionRowMinHeight,
-        other.subscriptionRowMinHeight,
+      listGroupHeaderCoverWidth: lerpDouble(
+        listGroupHeaderCoverWidth,
+        other.listGroupHeaderCoverWidth,
+        t,
+      )!,
+      listGroupHeaderCoverHeight: lerpDouble(
+        listGroupHeaderCoverHeight,
+        other.listGroupHeaderCoverHeight,
         t,
       )!,
       movieDetailHeroHeight: lerpDouble(

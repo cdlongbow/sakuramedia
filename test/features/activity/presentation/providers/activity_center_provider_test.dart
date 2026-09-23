@@ -130,6 +130,76 @@ void main() {
     expect(state.taskRuns.single.id, 12);
   });
 
+  test('polling keeps loaded pages and patches rows in place', () async {
+    final subscription = container.listen(activityCenterProvider, (_, __) {});
+    addTearDown(subscription.close);
+
+    final firstPage = <Map<String, dynamic>>[
+      for (var id = 1; id <= 20; id++)
+        _taskRunJson(id: id, state: 'completed', progressCurrent: 1),
+    ];
+    final secondPage = <Map<String, dynamic>>[
+      for (var id = 21; id <= 40; id++)
+        _taskRunJson(id: id, state: 'completed', progressCurrent: 1),
+    ];
+    _enqueueJobs(bundle);
+    _enqueueBootstrapPage(bundle, items: firstPage, total: 40);
+    await container.read(activityCenterProvider.future);
+
+    final controller = container.read(activityCenterProvider.notifier);
+    controller.pausePolling();
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': secondPage,
+        'page': 2,
+        'page_size': 20,
+        'total': 40,
+      },
+    );
+    await controller.loadMoreTasks();
+
+    var state = container.read(activityCenterProvider).requireValue;
+    expect(state.taskRuns, hasLength(40));
+    expect(state.taskNextPage, 3);
+    expect(state.hasMoreTasks, isFalse);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          for (var id = 1; id <= 20; id++)
+            _taskRunJson(
+              id: id,
+              state: 'completed',
+              progressCurrent: id == 1 ? 99 : 1,
+            ),
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 40,
+      },
+    );
+    _enqueueActiveTasks(bundle, id: 999);
+    await controller.resumePolling();
+
+    state = container.read(activityCenterProvider).requireValue;
+    expect(state.taskRuns, hasLength(40));
+    expect(
+      state.taskRuns.map((task) => task.id).toSet(),
+      <int>{for (var id = 1; id <= 40; id++) id},
+    );
+    expect(state.taskNextPage, 3);
+    expect(state.hasMoreTasks, isFalse);
+    expect(
+      state.taskRuns.firstWhere((task) => task.id == 1).progressCurrent,
+      99,
+    );
+  });
+
   test('polling keeps a long-running task outside the history page', () async {
     final subscription = container.listen(activityCenterProvider, (_, __) {});
     addTearDown(subscription.close);
@@ -242,6 +312,33 @@ void _enqueueBootstrap(
         'page': 1,
         'page_size': 20,
         'total': 1,
+      },
+    },
+  );
+}
+
+void _enqueueBootstrapPage(
+  TestApiBundle bundle, {
+  required List<Map<String, dynamic>> items,
+  required int total,
+}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/system/activity/bootstrap',
+    body: <String, dynamic>{
+      'notifications': <String, dynamic>{
+        'items': const <dynamic>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+      'unread_count': 0,
+      'active_task_runs': const <dynamic>[],
+      'task_runs': <String, dynamic>{
+        'items': items,
+        'page': 1,
+        'page_size': 20,
+        'total': total,
       },
     },
   );

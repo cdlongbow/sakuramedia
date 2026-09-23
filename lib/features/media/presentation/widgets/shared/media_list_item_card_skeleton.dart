@@ -3,11 +3,10 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_left_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
-/// [MediaListItemCard] 的骨架列表：封面宽度与最小高度和真实卡取自同一组
-/// token，桌面固定行高、移动流式行高都能与加载后的列表对齐。
+/// [MediaListItemCard] 的骨架列表：复用 [AppLeftCoverCardSkeletonList] 的卡片壳，
+/// 封面宽度 / 最小高度取自同一组 `listRowCover*` token，数据到达时列表不整片跳变。
 ///
-/// 移动端真实卡在底部有整宽的删除按钮，骨架补一个全宽占位行，避免卡片
-/// 下部整片空白。
+/// 右侧内容行对齐真实卡的行结构（标题 / 副标题 / 元数据 / 文件名）。
 class MediaListItemCardSkeletonList extends StatelessWidget {
   const MediaListItemCardSkeletonList({
     super.key,
@@ -20,45 +19,38 @@ class MediaListItemCardSkeletonList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
     return AppLeftCoverCardSkeletonList(
-      coverWidth: mobile
-          ? tokens.mobileFollowMovieThinCoverWidth
-          : tokens.downloadTaskCoverWidth,
-      bodyMinHeight: mobile
-          ? tokens.mobileFollowMovieCardHeight
-          : tokens.mediaManagementRowHeight,
+      coverWidth: tokens.listRowCoverWidth,
+      bodyMinHeight: tokens.listRowCoverHeight,
       bodyPadding: EdgeInsets.symmetric(
-        horizontal: spacing.lg,
-        vertical: spacing.md,
+        horizontal: context.appSpacing.lg,
+        vertical: context.appSpacing.md,
       ),
       itemSpacing: itemSpacing,
-      body: mobile ? const _MobileCardSkeletonBody() : null,
+      body: const _MediaCardSkeletonBody(),
     );
   }
 }
 
-class _MobileCardSkeletonBody extends StatelessWidget {
-  const _MobileCardSkeletonBody();
+class _MediaCardSkeletonBody extends StatelessWidget {
+  const _MediaCardSkeletonBody();
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const AppSkeletonBlock(width: 120, height: 16),
+        const AppSkeletonBlock(width: 160, height: 16),
         SizedBox(height: spacing.sm),
-        const AppSkeletonBlock(width: 180, height: 12),
+        const AppSkeletonBlock(width: 220, height: 12),
         SizedBox(height: spacing.xs),
-        const AppSkeletonBlock(width: 140, height: 12),
+        const AppSkeletonBlock(width: 200, height: 12),
         SizedBox(height: spacing.sm),
-        const AppSkeletonBlock(width: 100, height: 12),
-        SizedBox(height: spacing.md),
-        const AppSkeletonBlock(width: double.infinity, height: 36),
+        const AppSkeletonBlock(width: 140, height: 12),
       ],
     );
   }
 }
-

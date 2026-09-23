@@ -5,14 +5,14 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_section.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 
 import '../../../../support/test_api_bundle.dart';
 
 void main() {
-  testWidgets('长媒体列表固定行高虚拟化并支持底部直接跳回顶部', (tester) async {
+  testWidgets('长媒体列表惰性虚拟化并支持底部直接跳回顶部', (tester) async {
     final sessionStore = SessionStore.inMemory();
     await sessionStore.saveBaseUrl('https://api.example.com');
     final bundle = await createTestApiBundle(sessionStore);
@@ -75,15 +75,15 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('共 120 条'), findsOneWidget);
-    expect(find.byType(SliverFixedExtentList), findsOneWidget);
+    expect(find.byType(SliverList), findsOneWidget);
     expect(
-      find.byType(AppLeftCoverCard).evaluate().length,
+      find.byType(MediaListItemCard).evaluate().length,
       lessThan(itemCount),
-      reason: '固定尺寸 Sliver 应只挂载视口附近的媒体卡片',
+      reason: '惰性 Sliver 应只挂载视口附近的媒体卡片',
     );
     expect(
       tester.getSize(find.byKey(const Key('media-management-row-1'))).height,
-      144,
+      greaterThanOrEqualTo(132),
     );
     expect(find.byKey(const Key('media-management-row-120')), findsNothing);
 
@@ -108,8 +108,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       scrollController.position.maxScrollExtent,
-      greaterThan(itemCount * 140),
-      reason: '累计页写入后，固定尺寸 Sliver 应同步扩展可滚动范围',
+      greaterThan(itemCount * 100),
+      reason: '累计页写入后，惰性 Sliver 应同步扩展可滚动范围',
     );
 
     scrollController.jumpTo(scrollController.position.maxScrollExtent);
@@ -119,7 +119,7 @@ void main() {
     expect(
       find.byKey(const Key('media-management-row-1')),
       findsNothing,
-      reason: '离开缓存区的首项应被固定尺寸 Sliver 回收',
+      reason: '离开缓存区的首项应被惰性 Sliver 回收',
     );
 
     scrollController.jumpTo(0);

@@ -298,13 +298,25 @@ class NotificationCenter extends _$NotificationCenter {
       if (!ref.mounted) return;
       if (state.filter == filter && state.filterUpdate.isIdle) {
         final items = _sortNotifications(notifications.items);
-        _nextPage = notifications.page + 1;
-        state = state.copyWith(
-          notifications: items,
-          hasMore: items.length < notifications.total,
-          loadMoreErrorMessage: null,
-          refreshErrorMessage: null,
-        );
+        if (_nextPage > 2) {
+          // 已翻页：只按 id 就地刷新首页命中的条目，保留已加载的后续页。
+          // 整体替换会把列表截回第一页并重置 _nextPage，页面在底部滚动时表现为
+          // 列表塌缩、视口回弹闪屏，并让自动加载更多反复重拉第二页。
+          state = state.copyWith(
+            notifications: _patchLoadedNotifications(
+              state.notifications,
+              items,
+            ),
+          );
+        } else {
+          _nextPage = notifications.page + 1;
+          state = state.copyWith(
+            notifications: items,
+            hasMore: items.length < notifications.total,
+            loadMoreErrorMessage: null,
+            refreshErrorMessage: null,
+          );
+        }
       }
       state = state.copyWith(
         unreadCount: unread.total,
@@ -371,6 +383,21 @@ class NotificationCenter extends _$NotificationCenter {
       if (item.id == id) return item;
     }
     return null;
+  }
+
+  /// 已翻页时的轮询合并：按 id 就地更新已加载条目，不增删条目、不重置
+  /// [_nextPage] / [NotificationCenterState.hasMore]。
+  List<ActivityNotificationDto> _patchLoadedNotifications(
+    List<ActivityNotificationDto> currentItems,
+    List<ActivityNotificationDto> freshItems,
+  ) {
+    final freshById = <int, ActivityNotificationDto>{
+      for (final item in freshItems) item.id: item,
+    };
+    if (freshById.isEmpty) return currentItems;
+    return <ActivityNotificationDto>[
+      for (final item in currentItems) freshById[item.id] ?? item,
+    ];
   }
 
   List<ActivityNotificationDto> _sortNotifications(

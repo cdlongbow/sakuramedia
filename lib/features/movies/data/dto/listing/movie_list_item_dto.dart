@@ -47,6 +47,46 @@ class MovieImageDto {
   }
 }
 
+/// 「主封面 + 窄封面」两图选择逻辑：列表行卡在桌面用宽图、移动用窄图；
+/// 用图与框方向一致才裁切（`cover`），回退到另一方向的图时居中留边（`contain`）。
+///
+/// 供 `MediaListItemDto` / `MovieSubscriptionListItemDto` 等带
+/// `coverImage` + `thinCoverImage` 的 DTO 复用，避免同一段选择逻辑复制多份。
+mixin MovieCoverSelection {
+  MovieImageDto? get coverImage;
+  MovieImageDto? get thinCoverImage;
+
+  bool get usesThinCover {
+    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    return thinUrl != null && thinUrl.isNotEmpty;
+  }
+
+  bool get hasWideCover {
+    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    return coverUrl != null && coverUrl.isNotEmpty;
+  }
+
+  /// 窄图优先（移动端行卡用），缺失时退回宽图。
+  String? get preferredCoverUrl {
+    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    if (thinUrl != null && thinUrl.isNotEmpty) {
+      return thinUrl;
+    }
+    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    return coverUrl != null && coverUrl.isNotEmpty ? coverUrl : null;
+  }
+
+  /// 宽图优先（桌面行卡用），缺失时退回窄图。
+  String? get wideCoverUrl {
+    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    if (coverUrl != null && coverUrl.isNotEmpty) {
+      return coverUrl;
+    }
+    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    return thinUrl != null && thinUrl.isNotEmpty ? thinUrl : null;
+  }
+}
+
 class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   const MovieListItemDto({
     this.id = 0,

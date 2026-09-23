@@ -60,6 +60,8 @@ class MediaListSection extends StatelessWidget {
     this.onExitSelection,
     this.onDeleteItem,
     this.deletingItemId,
+    this.onTransferItem,
+    this.transferringItemId,
     this.onRetryThumbnails,
     this.retryingThumbnailMediaId,
   });
@@ -109,6 +111,12 @@ class MediaListSection extends StatelessWidget {
   /// 当前正在删除的媒体 ID，用于只显示对应卡片的 loading。
   final ValueListenable<int?>? deletingItemId;
 
+  /// 单项迁移入口；不传时不显示卡片级迁移按钮。
+  final Future<void> Function(MediaListItemDto item)? onTransferItem;
+
+  /// 当前正在迁移的媒体 ID，用于只显示对应卡片的 loading。
+  final ValueListenable<int?>? transferringItemId;
+
   /// 单项缩略图重试入口；不传时不显示卡片级重试按钮。
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
 
@@ -133,6 +141,8 @@ class MediaListSection extends StatelessWidget {
           isResettingThumbnails: isResettingThumbnails,
           onDeleteItem: onDeleteItem,
           deletingItemId: deletingItemId,
+          onTransferItem: onTransferItem,
+          transferringItemId: transferringItemId,
           onRetryThumbnails: onRetryThumbnails,
           retryingThumbnailMediaId: retryingThumbnailMediaId,
         ),
@@ -445,6 +455,8 @@ class _MediaListBodySliver extends ConsumerWidget {
     required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onTransferItem,
+    required this.transferringItemId,
     required this.onRetryThumbnails,
     required this.retryingThumbnailMediaId,
   });
@@ -460,6 +472,8 @@ class _MediaListBodySliver extends ConsumerWidget {
   final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onTransferItem;
+  final ValueListenable<int?>? transferringItemId;
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
   final ValueListenable<int?>? retryingThumbnailMediaId;
 
@@ -480,9 +494,6 @@ class _MediaListBodySliver extends ConsumerWidget {
       asyncState: asyncPaged,
       pagedOf: (state) => state,
       itemSpacing: context.appSpacing.sm,
-      fixedItemExtent: mobile
-          ? null
-          : context.appComponentTokens.mediaManagementRowHeight,
       initialErrorMessage: '媒体列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有媒体记录。调整筛选条件或稍后再试。',
       skeletonBuilder: (context) => MediaListItemCardSkeletonList(
@@ -505,6 +516,8 @@ class _MediaListBodySliver extends ConsumerWidget {
               isResettingThumbnails: isResettingThumbnails,
               onDeleteItem: onDeleteItem,
               deletingItemId: deletingItemId,
+              onTransferItem: onTransferItem,
+              transferringItemId: transferringItemId,
               onRetryThumbnails: onRetryThumbnails,
               retryingThumbnailMediaId: retryingThumbnailMediaId,
             )
@@ -517,6 +530,8 @@ class _MediaListBodySliver extends ConsumerWidget {
               isResettingThumbnails: isResettingThumbnails,
               onDeleteItem: onDeleteItem,
               deletingItemId: deletingItemId,
+              onTransferItem: onTransferItem,
+              transferringItemId: transferringItemId,
               onRetryThumbnails: onRetryThumbnails,
               retryingThumbnailMediaId: retryingThumbnailMediaId,
             ),
@@ -537,6 +552,8 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
     required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onTransferItem,
+    required this.transferringItemId,
     required this.onRetryThumbnails,
     required this.retryingThumbnailMediaId,
   });
@@ -552,6 +569,8 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
   final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onTransferItem;
+  final ValueListenable<int?>? transferringItemId;
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
   final ValueListenable<int?>? retryingThumbnailMediaId;
 
@@ -572,12 +591,19 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    Widget buildCard(int? deletingId, int? retryingId) {
+    Widget buildCard(int? deletingId, int? transferringId, int? retryingId) {
       final isRetryable =
           !selectionMode &&
           item.thumbnailGenerationState ==
               MediaThumbnailGenerationState.terminal;
       final isRetrying = retryingId == item.id;
+      final busy =
+          isDeleting ||
+          isTransferring ||
+          isResettingThumbnails ||
+          deletingId != null ||
+          transferringId != null ||
+          retryingId != null;
       return MediaListItemCard(
         keyPrefix: keyPrefix,
         item: item,
@@ -600,34 +626,33 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
             ? null
             : () => unawaited(onDeleteItem!(item)),
         isDeleting: deletingId == item.id,
-        canDelete:
-            !isDeleting &&
-            !isTransferring &&
-            !isResettingThumbnails &&
-            retryingId == null &&
-            deletingId == null,
+        canDelete: !busy,
+        onTransfer: selectionMode || onTransferItem == null
+            ? null
+            : () => unawaited(onTransferItem!(item)),
+        isTransferring: transferringId == item.id,
+        canTransfer: !busy,
         onRetryThumbnails: isRetryable && onRetryThumbnails != null
             ? () => unawaited(onRetryThumbnails!(item))
             : null,
         isRetryingThumbnails: isRetrying,
-        canRetryThumbnails:
-            isRetryable &&
-            !isDeleting &&
-            !isTransferring &&
-            !isResettingThumbnails &&
-            retryingId == null,
+        canRetryThumbnails: isRetryable && !busy,
       );
     }
 
     final listenables = <Listenable>[
       ?deletingItemId,
+      ?transferringItemId,
       ?retryingThumbnailMediaId,
     ];
-    if (listenables.isEmpty) return buildCard(null, null);
+    if (listenables.isEmpty) return buildCard(null, null, null);
     return ListenableBuilder(
       listenable: Listenable.merge(listenables),
-      builder: (context, child) =>
-          buildCard(deletingItemId?.value, retryingThumbnailMediaId?.value),
+      builder: (context, child) => buildCard(
+        deletingItemId?.value,
+        transferringItemId?.value,
+        retryingThumbnailMediaId?.value,
+      ),
     );
   }
 }
@@ -719,6 +744,8 @@ class _MediaRowConsumer extends ConsumerWidget {
     required this.isResettingThumbnails,
     required this.onDeleteItem,
     required this.deletingItemId,
+    required this.onTransferItem,
+    required this.transferringItemId,
     required this.onRetryThumbnails,
     required this.retryingThumbnailMediaId,
   });
@@ -732,6 +759,8 @@ class _MediaRowConsumer extends ConsumerWidget {
   final bool isResettingThumbnails;
   final Future<void> Function(MediaListItemDto item)? onDeleteItem;
   final ValueListenable<int?>? deletingItemId;
+  final Future<void> Function(MediaListItemDto item)? onTransferItem;
+  final ValueListenable<int?>? transferringItemId;
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
   final ValueListenable<int?>? retryingThumbnailMediaId;
 
@@ -752,11 +781,18 @@ class _MediaRowConsumer extends ConsumerWidget {
         ? null
         : librariesById[item.libraryId];
 
-    Widget buildCard(int? deletingId, int? retryingId) {
+    Widget buildCard(int? deletingId, int? transferringId, int? retryingId) {
       final isRetryable =
           item.thumbnailGenerationState ==
           MediaThumbnailGenerationState.terminal;
       final isRetrying = retryingId == item.id;
+      final busy =
+          isDeleting ||
+          isTransferring ||
+          isResettingThumbnails ||
+          deletingId != null ||
+          transferringId != null ||
+          retryingId != null;
       return MediaListItemCard(
         keyPrefix: keyPrefix,
         item: item,
@@ -770,35 +806,34 @@ class _MediaRowConsumer extends ConsumerWidget {
             ? null
             : () => unawaited(onDeleteItem!(item)),
         isDeleting: deletingId == item.id,
-        canDelete:
-            !isDeleting &&
-            !isTransferring &&
-            !isResettingThumbnails &&
-            retryingId == null &&
-            deletingId == null,
+        canDelete: !busy,
+        onTransfer: onTransferItem == null
+            ? null
+            : () => unawaited(onTransferItem!(item)),
+        isTransferring: transferringId == item.id,
+        canTransfer: !busy,
         onRetryThumbnails: isRetryable && onRetryThumbnails != null
             ? () => unawaited(onRetryThumbnails!(item))
             : null,
         isRetryingThumbnails: isRetrying,
-        canRetryThumbnails:
-            isRetryable &&
-            !isDeleting &&
-            !isTransferring &&
-            !isResettingThumbnails &&
-            retryingId == null,
+        canRetryThumbnails: isRetryable && !busy,
         showUpdatedAt: true,
       );
     }
 
     final listenables = <Listenable>[
       ?deletingItemId,
+      ?transferringItemId,
       ?retryingThumbnailMediaId,
     ];
-    if (listenables.isEmpty) return buildCard(null, null);
+    if (listenables.isEmpty) return buildCard(null, null, null);
     return ListenableBuilder(
       listenable: Listenable.merge(listenables),
-      builder: (context, child) =>
-          buildCard(deletingItemId?.value, retryingThumbnailMediaId?.value),
+      builder: (context, child) => buildCard(
+        deletingItemId?.value,
+        transferringItemId?.value,
+        retryingThumbnailMediaId?.value,
+      ),
     );
   }
 }

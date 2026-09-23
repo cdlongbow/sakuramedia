@@ -587,6 +587,10 @@ void main() {
       find.byKey(const Key('image-search-text-source-field')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const Key('image-search-text-source-search-button')),
+      findsOneWidget,
+    );
     expect(bundle.adapter.hitCount('POST', '/image-search/text-sessions'), 0);
 
     await tester.enterText(

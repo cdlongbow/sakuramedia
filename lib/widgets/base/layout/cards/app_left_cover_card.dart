@@ -28,6 +28,8 @@ class AppLeftCoverCard extends StatelessWidget {
     this.bodyPadding,
     this.selected = false,
     this.onTap,
+    this.onLongPress,
+    this.shell = true,
   });
 
   /// 左侧封面 slot——直接铺在 `(coverWidth × 卡片高度)` 内，圆角由外层裁剪。
@@ -50,6 +52,13 @@ class AppLeftCoverCard extends StatelessWidget {
 
   /// 整卡点击回调；`null` 时不套 InkWell（整卡不可点）。
   final VoidCallback? onTap;
+
+  /// 整卡长按回调（移动端进入多选等）。非空时同样套 InkWell，按下即有水波纹反馈。
+  final VoidCallback? onLongPress;
+
+  /// 是否绘制自带卡片壳（白底、圆角、细边）。`false` 时只出「贴边封面 + 内容」
+  /// 布局，供调用方在自有卡片壳内复用（如分组卡组头）。
+  final bool shell;
 
   @override
   Widget build(BuildContext context) {
@@ -78,24 +87,27 @@ class AppLeftCoverCard extends StatelessWidget {
       child: cover,
     );
 
-    Widget card = Container(
-      width: double.infinity,
-      // clipAntiAlias 让内容按 borderRadius 裁剪：封面直接贴到左边框内侧，无缝隙。
-      // border 由 decoration 绘制在容器外围，clip 区域是 border 内侧——封面不会
-      // 覆盖 border。
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: radius,
-        border: Border.all(
-          color: selected ? colors.selectionBorder : colors.borderSubtle,
+    Widget layout = Stack(children: [rightContent, leftCover]);
+    if (shell) {
+      layout = Container(
+        width: double.infinity,
+        // clipAntiAlias 让内容按 borderRadius 裁剪：封面直接贴到左边框内侧，无缝隙。
+        // border 由 decoration 绘制在容器外围，clip 区域是 border 内侧——封面不会
+        // 覆盖 border。
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: colors.surfaceCard,
+          borderRadius: radius,
+          border: Border.all(
+            color: selected ? colors.selectionBorder : colors.borderSubtle,
+          ),
         ),
-      ),
-      child: Stack(children: [rightContent, leftCover]),
-    );
+        child: layout,
+      );
+    }
 
-    if (onTap != null) {
-      card = AppClickable(
+    if (onTap != null || onLongPress != null) {
+      layout = AppClickable(
         enabled: true,
         child: Material(
           color: Colors.transparent,
@@ -103,11 +115,12 @@ class AppLeftCoverCard extends StatelessWidget {
             mouseCursor: SystemMouseCursors.click,
             borderRadius: radius,
             onTap: onTap,
-            child: card,
+            onLongPress: onLongPress,
+            child: layout,
           ),
         ),
       );
     }
-    return card;
+    return layout;
   }
 }

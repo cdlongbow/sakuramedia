@@ -3,13 +3,14 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 
 /// `GET /movie-subscriptions` 的单条订阅影片。
-class MovieSubscriptionListItemDto {
+class MovieSubscriptionListItemDto with MovieCoverSelection {
   const MovieSubscriptionListItemDto({
     required this.movieId,
     required this.movieNumber,
     required this.title,
     required this.status,
     this.coverImage,
+    this.thinCoverImage,
     this.releaseDate,
     this.subscribedAt,
     this.isFresh = false,
@@ -25,7 +26,10 @@ class MovieSubscriptionListItemDto {
   final int movieId;
   final String movieNumber;
   final String title;
+  @override
   final MovieImageDto? coverImage;
+  @override
+  final MovieImageDto? thinCoverImage;
   final String? releaseDate;
   final DateTime? subscribedAt;
   final MovieSubscriptionStatus status;
@@ -40,11 +44,15 @@ class MovieSubscriptionListItemDto {
 
   factory MovieSubscriptionListItemDto.fromJson(Map<String, dynamic> json) {
     final coverImage = asMapOrNull(json['cover_image']);
+    final thinCoverImage = asMapOrNull(json['thin_cover_image']);
     return MovieSubscriptionListItemDto(
       movieId: asInt(json['movie_id']),
       movieNumber: asStringOrNull(json['movie_number']) ?? '',
       title: asStringOrNull(json['title']) ?? '',
       coverImage: coverImage == null ? null : MovieImageDto.fromJson(coverImage),
+      thinCoverImage: thinCoverImage == null
+          ? null
+          : MovieImageDto.fromJson(thinCoverImage),
       releaseDate: asStringOrNull(json['release_date'], trim: true),
       subscribedAt: asDateTime(json['subscribed_at']),
       status: MovieSubscriptionStatusX.fromWire(json['status']),
@@ -67,5 +75,4 @@ class MovieSubscriptionListItemDto {
       status == MovieSubscriptionStatus.missing ||
       status == MovieSubscriptionStatus.exhausted ||
       status == MovieSubscriptionStatus.failed;
-
 }

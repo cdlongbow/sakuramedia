@@ -13,11 +13,15 @@ class MediaListItemPathLine extends StatelessWidget {
     required this.keyPrefix,
     required this.item,
     this.showUpdatedAt = false,
+    this.trailing,
   });
 
   final String keyPrefix;
   final MediaListItemDto item;
   final bool showUpdatedAt;
+
+  /// 行尾动作（如媒体卡的行内「重试缩略图」）。
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -51,15 +55,16 @@ class MediaListItemPathLine extends StatelessWidget {
         ),
         if (updatedLabel != null) ...[
           SizedBox(width: spacing.md),
-          Flexible(
-            child: Text(
-              '更新 $updatedLabel',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: mutedTextStyle,
-            ),
+          // 不用 Flexible：否则会和文件名行的 Expanded 平分剩余空间，
+          // 把行尾动作顶不到最右边（末尾留一段空白）。
+          Text(
+            '更新 $updatedLabel',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: mutedTextStyle,
           ),
         ],
+        if (trailing != null) ...[SizedBox(width: spacing.sm), trailing!],
       ],
     );
   }

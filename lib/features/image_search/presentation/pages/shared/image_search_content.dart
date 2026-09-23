@@ -28,7 +28,6 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
@@ -39,6 +38,7 @@ import 'package:sakuramedia/features/image_search/presentation/widgets/image_sea
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 
@@ -555,36 +555,21 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   Widget _buildTextSearchInput(BuildContext context) {
-    final spacing = context.appSpacing;
     final textQuery = _searchState.textQuery;
     if (textQuery != null &&
         textQuery.isNotEmpty &&
         _textController.text != textQuery) {
       _textController.text = textQuery;
     }
-    final textField = AppTextField(
+    return CatalogSearchField(
       fieldKey: const Key('image-search-text-source-field'),
+      searchButtonKey: const Key('image-search-text-source-search-button'),
       controller: _textController,
       hintText: '例如：长发、白色连衣裙、海边',
-      prefix: const Icon(Icons.text_fields_rounded),
-      textInputAction: TextInputAction.search,
-      onFieldSubmitted: (_) => _searchText(),
-    );
-    final searchButton = AppButton(
-      key: const Key('image-search-text-source-search-button'),
-      label: '搜图',
-      icon: const Icon(Icons.search_rounded),
-      variant: AppButtonVariant.primary,
-      isLoading: _searchState.isSearching,
-      onPressed: _searchState.isSearching ? null : _searchText,
-    );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: textField),
-        SizedBox(width: spacing.sm),
-        searchButton,
-      ],
+      searchButtonTooltip: '搜图',
+      isSearching: _searchState.isSearching,
+      onSearchTap: _searchText,
+      onSubmitted: (_) => _searchText(),
     );
   }
 

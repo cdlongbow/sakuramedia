@@ -55,9 +55,8 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     this.skeletonLineCount = 6,
     this.skeletonBuilder,
     this.footerTopSpacing,
-    this.fixedItemExtent,
     this.emptyBuilder,
-  }) : assert(fixedItemExtent == null || fixedItemExtent > 0);
+  });
 
   final AsyncValue<S> asyncState;
   final PagedListState<T> Function(S state) pagedOf;
@@ -77,12 +76,6 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   final WidgetBuilder? skeletonBuilder;
 
   final double? footerTopSpacing;
-
-  /// 单个列表内容的固定高度（不含 [itemSpacing]）。
-  ///
-  /// 传值后使用 [SliverFixedExtentList]，滚动条大跨度跳转时可以直接通过索引计算
-  /// scroll offset，不必为已经离开视口的行做 dead-reckoning 测量。
-  final double? fixedItemExtent;
 
   /// 自定义空态；不传走 [AppEmptyState] + [emptyMessage]。
   ///
@@ -137,18 +130,13 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
       ),
       childCount: items.length,
     );
-    final itemSliver = fixedItemExtent == null
-        ? SliverList(delegate: delegate)
-        : SliverFixedExtentList(
-            itemExtent: fixedItemExtent! + itemSpacing,
-            delegate: delegate,
-          );
+    final itemSliver = SliverList(delegate: delegate);
 
     if (!showFooter) {
       return itemSliver;
     }
 
-    // footer 高度并不固定，必须与固定尺寸 item sliver 分开，避免破坏滚动范围估算。
+    // footer 高度不固定，单独放进 SliverMainAxisGroup，不与列表共用同一 sliver。
     return SliverMainAxisGroup(
       slivers: [
         itemSliver,

@@ -15,8 +15,8 @@ class MovieSubscriptionListSkeleton extends StatelessWidget {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
     return AppLeftCoverCardSkeletonList(
-      coverWidth: tokens.subscriptionRowCoverWidth,
-      bodyMinHeight: tokens.subscriptionRowMinHeight,
+      coverWidth: tokens.listRowCoverWidth,
+      bodyMinHeight: tokens.listRowCoverHeight,
       bodyPadding: EdgeInsets.symmetric(
         horizontal: spacing.lg,
         vertical: spacing.md,

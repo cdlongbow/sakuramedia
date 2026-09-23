@@ -51,7 +51,7 @@ moments feature 负责。已有时刻通过 `pointId` 执行删除和合集操�
 ## playlists and search
 
 - `lib/widgets/domain/playlists/`：`PlaylistBannerCard`、`PlaylistManagementCard`。
-- `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。`CatalogSearchContent` 固定搜索框和影片/女优页签，流式进度卡与结果一起滚动。
+- `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。`CatalogSearchContent` 固定搜索框和影片/女优页签，流式进度卡与结果一起滚动。`CatalogSearchField` 的后缀搜索图标可用 `isSearching` 切到转圈并禁用点击、用 `searchButtonTooltip` 定制文案；需要「输入框 + 搜索」统一外观时用它，不要再另拼输入框和独立按钮。
 
 ## media import and batch
 

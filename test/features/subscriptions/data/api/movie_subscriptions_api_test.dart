@@ -104,6 +104,13 @@ void main() {
               'medium': '/covers/7-medium.jpg',
               'large': '/covers/7-large.jpg',
             },
+            'thin_cover_image': <String, dynamic>{
+              'id': 8,
+              'origin': '/covers/8-origin.jpg',
+              'small': '/covers/8-small.jpg',
+              'medium': '/covers/8-medium.jpg',
+              'large': '/covers/8-large.jpg',
+            },
             'release_date': '2019-05-01',
             'subscribed_at': '2026-01-02T03:04:05',
             'status': 'missing',
@@ -128,6 +135,11 @@ void main() {
     expect(item.movieNumber, 'ABP-123');
     expect(item.displayTitle, 'Original Title');
     expect(item.coverImage?.bestAvailableUrl, '/covers/7-large.jpg');
+    expect(item.thinCoverImage?.bestAvailableUrl, '/covers/8-large.jpg');
+    expect(item.preferredCoverUrl, '/covers/8-large.jpg');
+    expect(item.wideCoverUrl, '/covers/7-large.jpg');
+    expect(item.usesThinCover, isTrue);
+    expect(item.hasWideCover, isTrue);
     expect(item.releaseDate, '2019-05-01');
     expect(item.status, MovieSubscriptionStatus.missing);
     expect(item.isFresh, isFalse);

@@ -118,10 +118,14 @@ void main() {
     expect(componentTokens.movieCardStatusBadgeSize, 24);
     expect(componentTokens.subscriptionHeartHitSize, 44);
     expect(componentTokens.downloadTaskCoverWidth, 220);
-    expect(componentTokens.importMetadataCandidateCoverWidth, 72);
+    expect(componentTokens.importMetadataCandidateCoverWidth, 160);
+    expect(componentTokens.importMetadataCandidateCoverHeight, 90);
     expect(componentTokens.downloadTaskCardMinHeight, 120);
     expect(componentTokens.downloadTaskProgressHeight, 6);
-    expect(componentTokens.mediaManagementRowHeight, 144);
+    expect(componentTokens.listRowCoverWidth, 234);
+    expect(componentTokens.listRowCoverHeight, 132);
+    expect(componentTokens.listGroupHeaderCoverWidth, 120);
+    expect(componentTokens.listGroupHeaderCoverHeight, 68);
     expect(componentTokens.movieDetailSectionGap, 16);
     expect(componentTokens.movieDetailSectionTitleGap, 8);
     expect(componentTokens.movieDetailPillHorizontalPadding, 5);
@@ -202,6 +206,10 @@ void main() {
     expect(sakuraMobileThemeData.appComponentTokens.downloadTaskCoverWidth, 96);
     expect(
       sakuraMobileThemeData.appComponentTokens.importMetadataCandidateCoverWidth,
+      128,
+    );
+    expect(
+      sakuraMobileThemeData.appComponentTokens.importMetadataCandidateCoverHeight,
       72,
     );
     expect(sakuraMobileThemeData.appComponentTokens.switchTrackWidth, 44);

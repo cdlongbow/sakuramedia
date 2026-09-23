@@ -220,4 +220,51 @@ void main() {
 
     expect(latestValue, 'mikami');
   });
+
+  testWidgets('catalog search field replaces the icon with a spinner while searching', (
+    WidgetTester tester,
+  ) async {
+    var tapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Material(
+          child: CatalogSearchField(
+            controller: TextEditingController(),
+            hintText: '找影片',
+            isSearching: true,
+            onSearchTap: () => tapped = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsNothing);
+
+    await tester.tap(find.byType(CircularProgressIndicator));
+    await tester.pump();
+    expect(tapped, isFalse);
+  });
+
+  testWidgets('catalog search field uses a custom search button tooltip', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Material(
+          child: CatalogSearchField(
+            controller: TextEditingController(),
+            hintText: '找影片',
+            searchButtonTooltip: '搜图',
+            onSearchTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byTooltip('搜图'), findsOneWidget);
+  });
 }

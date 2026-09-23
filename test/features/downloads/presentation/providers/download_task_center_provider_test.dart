@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
@@ -141,10 +145,180 @@ void main() {
     expect(state.paged.items.single.task.importStatus, 'running');
     expect(state.isTaskPending(3), isFalse);
   });
+
+  test('loadMore stops when the next page brings no new rows', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(bundle, const [], page: 2, total: 4);
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    await controller.loadMore();
+
+    var state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.map((row) => row.task.id), [1, 2]);
+    expect(state.paged.isLoadingMore, isFalse);
+    expect(state.paged.hasMore, isFalse);
+
+    await controller.loadMore();
+    expect(_downloadTaskRequestCount(bundle), 2);
+    state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.hasMore, isFalse);
+  });
+
+  test('loadMore ignores rows already present in the list', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(
+      bundle,
+      [taskJson(id: 2), taskJson(id: 3)],
+      page: 2,
+      total: 4,
+    );
+    await container.read(downloadTaskCenterProvider.notifier).loadMore();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.map((row) => row.task.id), [1, 2, 3]);
+    expect(state.paged.hasMore, isTrue);
+  });
+
+  test('poll keeps loaded pages and patches rows in place', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(
+      bundle,
+      [taskJson(id: 3), taskJson(id: 4)],
+      page: 2,
+      total: 4,
+    );
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    await controller.loadMore();
+
+    _enqueueTaskPage(
+      bundle,
+      [taskJson(id: 1, progress: 0.9), taskJson(id: 2)],
+      total: 4,
+    );
+    await controller.startPolling();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.map((row) => row.task.id), [1, 2, 3, 4]);
+    expect(state.paged.currentPage, 2);
+    expect(state.paged.hasMore, isFalse);
+    expect(state.paged.items.first.progress, 0.9);
+    expect(state.paged.items[1].progress, 0.5);
+    expect(state.pollingState, DownloadTaskPollingState.polling);
+  });
+
+  test('poll keeps pagination while a later page is in flight', () async {
+    final firstPage = [for (var id = 1; id <= 20; id++) taskJson(id: id)];
+    final secondPage = [for (var id = 21; id <= 40; id++) taskJson(id: id)];
+    final thirdPage = [for (var id = 41; id <= 45; id++) taskJson(id: id)];
+    _enqueueTaskPage(bundle, firstPage, total: 45);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(bundle, secondPage, page: 2, total: 45);
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    await controller.loadMore();
+
+    final gate = Completer<void>();
+    _enqueueDeferredTaskPage(
+      bundle,
+      gate: gate,
+      body: _taskPageJson(thirdPage, page: 3, total: 45),
+    );
+    final inFlight = controller.loadMore();
+    await _waitForDownloadTaskRequests(bundle, 3);
+
+    _enqueueTaskPage(bundle, firstPage, total: 45);
+    await controller.startPolling();
+
+    gate.complete();
+    await inFlight;
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(
+      state.paged.items.map((row) => row.task.id),
+      [for (var id = 1; id <= 45; id++) id],
+    );
+    expect(state.paged.currentPage, 3);
+    expect(state.paged.hasMore, isFalse);
+    expect(state.paged.isLoadingMore, isFalse);
+
+    await controller.loadMore();
+    expect(_downloadTaskRequestCount(bundle), 4);
+  });
+
+  test(
+    'poll discards an in-flight loadMore while still on the first page',
+    () async {
+      _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+      _enqueueClients(bundle);
+      await container.read(downloadTaskCenterProvider.future);
+
+      final gate = Completer<void>();
+      _enqueueDeferredTaskPage(
+        bundle,
+        gate: gate,
+        body: _taskPageJson(
+          [taskJson(id: 3), taskJson(id: 4)],
+          page: 2,
+          total: 4,
+        ),
+      );
+      final controller = container.read(downloadTaskCenterProvider.notifier);
+      final inFlight = controller.loadMore();
+      await _waitForDownloadTaskRequests(bundle, 2);
+
+      _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+      await controller.startPolling();
+
+      gate.complete();
+      await inFlight;
+
+      final state = container.read(downloadTaskCenterProvider).requireValue;
+      expect(state.paged.items.map((row) => row.task.id), [1, 2]);
+      expect(state.paged.currentPage, 1);
+      expect(state.paged.isLoadingMore, isFalse);
+    },
+  );
+
+  test('loadMore completes after the provider is invalidated while watched', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final subscription = container.listen(downloadTaskCenterProvider, (_, _) {});
+
+    _enqueueTaskPage(bundle, [taskJson(id: 1), taskJson(id: 2)], total: 4);
+    _enqueueClients(bundle);
+    container.invalidate(downloadTaskCenterProvider);
+    await container.read(downloadTaskCenterProvider.future);
+
+    _enqueueTaskPage(
+      bundle,
+      [taskJson(id: 3), taskJson(id: 4)],
+      page: 2,
+      total: 4,
+    );
+    await container.read(downloadTaskCenterProvider.notifier).loadMore();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.map((row) => row.task.id), [1, 2, 3, 4]);
+    expect(state.paged.isLoadingMore, isFalse);
+
+    subscription.close();
+  });
 }
 
 Map<String, dynamic> taskJson({
   required int id,
+  double progress = 0.5,
   String state = 'downloading',
   String importStatus = 'pending',
   String importStatusLabel = '等待导入',
@@ -155,12 +329,57 @@ Map<String, dynamic> taskJson({
   'name': 'ABC-00$id',
   'remote_id': 'remote-$id',
   'state': state,
-  'progress': 0.5,
+  'progress': progress,
   'import_status': importStatus,
   'import_status_label': importStatusLabel,
   'created_at': '2026-07-10T08:00:00Z',
   'updated_at': '2026-07-10T08:01:00Z',
 };
+
+Map<String, dynamic> _taskPageJson(
+  List<Map<String, dynamic>> items, {
+  required int page,
+  required int total,
+}) => <String, dynamic>{
+  'items': items,
+  'page': page,
+  'page_size': 20,
+  'total': total,
+};
+
+void _enqueueDeferredTaskPage(
+  TestApiBundle bundle, {
+  required Completer<void> gate,
+  required Map<String, dynamic> body,
+}) {
+  bundle.adapter.enqueueResponder(
+    method: 'GET',
+    path: '/download-tasks',
+    responder: (_, _) async {
+      await gate.future;
+      return ResponseBody.fromString(
+        jsonEncode(body),
+        200,
+        headers: const <String, List<String>>{
+          Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+        },
+      );
+    },
+  );
+}
+
+int _downloadTaskRequestCount(TestApiBundle bundle) => bundle.adapter.requests
+    .where((request) => request.path == '/download-tasks')
+    .length;
+
+Future<void> _waitForDownloadTaskRequests(
+  TestApiBundle bundle,
+  int count,
+) async {
+  for (var i = 0; i < 50 && _downloadTaskRequestCount(bundle) < count; i++) {
+    await pumpEventQueue(times: 1);
+  }
+}
 
 void _enqueueTaskPage(
   TestApiBundle bundle,

@@ -49,6 +49,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   ) => s.copyWith(paged: paged);
 
   @override
+  Object? itemKeyOf(DownloadTaskRowState item) => item.task.id;
+
+  @override
   Future<PaginatedResponseDto<DownloadTaskRowState>> fetchPage(
     int page,
     int pageSize,
@@ -83,7 +86,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     attachDisposeGuard();
     ref.onDispose(() {
       _pollTimer?.cancel();
-      _filterRequests.dispose();
+      // cancel 而不是 dispose：provider 重建（invalidate）也会执行这里注册的
+      // onDispose，dispose 会把协调器永久标记为已销毁，重建后的筛选请求再也写不回。
+      _filterRequests.cancel();
     });
     unawaited(_loadClientOptionsInBackground());
     final paged = await loadInitialPage();
@@ -247,6 +252,20 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
       }
       final current = state.value;
       if (current == null || !current.paged.filterUpdate.isIdle) return;
+      if (current.paged.currentPage > 1) {
+        // 已翻页：只按 task id 就地刷新首页条目的进度/状态，保留已加载的后续页。
+        // 整体替换会把列表截回第一页，并与飞行中的 loadMore 错位——它的响应会
+        // 带着旧页码写回，导致 currentPage 越界后反复请求空页、底部转圈不消失。
+        state = AsyncData(
+          current.copyWith(
+            pollingState: DownloadTaskPollingState.polling,
+            paged: _patchLoadedRows(current.paged, firstPage),
+          ),
+        );
+        return;
+      }
+      // 未翻页：快照整体替换，并让飞行中的 loadMore 作废，避免旧页码结果写回。
+      invalidateInFlightLoadMore();
       state = AsyncData(
         current.copyWith(
           pollingState: DownloadTaskPollingState.polling,
@@ -256,6 +275,25 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     } catch (_) {
       // 保留最近一次列表快照，下一轮或手动刷新继续尝试。
     }
+  }
+
+  /// 已翻页时的轮询合并：按 task id 就地更新已加载条目的进度/状态，
+  /// 不增删条目、不重置 currentPage/hasMore/total，避免打断用户分页。
+  PagedListState<DownloadTaskRowState> _patchLoadedRows(
+    PagedListState<DownloadTaskRowState> current,
+    PaginatedResponseDto<DownloadTaskRowState> firstPage,
+  ) {
+    final freshById = <int, DownloadTaskRowState>{
+      for (final row in firstPage.items) row.task.id: row,
+    };
+    if (freshById.isEmpty) return current;
+    final patched = <DownloadTaskRowState>[
+      for (final row in current.items) freshById[row.task.id] ?? row,
+    ];
+    return current.copyWith(
+      items: List<DownloadTaskRowState>.unmodifiable(patched),
+      syncedAt: firstPage.syncedAt,
+    );
   }
 
   Future<void> deleteTask(int taskId, {required bool deleteFiles}) async {

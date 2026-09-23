@@ -258,6 +258,76 @@ void main() {
       expect(call, 1);
     });
 
+    test('loadMore stops when a page brings no new rows', () async {
+      // 越界空页（轮询/数据变动后页码错位）不能把 hasMore 留在 true：
+      // 否则滚动触发会无限请求下一页，底部转圈反复重启。
+      var call = 0;
+      final container = _makeContainer((page, size) async {
+        call += 1;
+        if (page == 1) return _page(page: 1, items: [1, 2, 3], total: 6);
+        return _page(page: page, items: const [], total: 6);
+      });
+      addTearDown(container.dispose);
+
+      await container.read(_plainProvider.future);
+      await container.read(_plainProvider.notifier).loadMore();
+
+      final s = container.read(_plainProvider).requireValue;
+      expect(s.items, [1, 2, 3]);
+      expect(s.hasMore, isFalse);
+      expect(s.isLoadingMore, isFalse);
+      expect(call, 2);
+
+      await container.read(_plainProvider.notifier).loadMore();
+      expect(call, 2);
+    });
+
+    test('loadMore ignores rows already present in the list', () async {
+      final container = _makeContainer((page, size) async {
+        if (page == 1) return _page(page: 1, items: [1, 2, 3], total: 6);
+        if (page == 2) return _page(page: 2, items: [3, 4, 5], total: 6);
+        return _page(page: 3, items: [6], total: 6);
+      });
+      addTearDown(container.dispose);
+
+      await container.read(_plainProvider.future);
+      final notifier = container.read(_plainProvider.notifier);
+      await notifier.loadMore();
+      await notifier.loadMore();
+
+      final s = container.read(_plainProvider).requireValue;
+      expect(s.items, [1, 2, 3, 4, 5, 6]);
+      expect(s.hasMore, isFalse);
+    });
+
+    test('invalidate while watched keeps loadMore writable', () async {
+      // Riverpod 在 element 存活期间复用 notifier 实例；重建时
+      // attachDisposeGuard 必须复位 _disposed，否则 loadMore 回来后不再写回，
+      // isLoadingMore 永远停在 true（底部转圈不消失）。
+      var page1Version = 0;
+      final container = _makeContainer((page, size) async {
+        if (page == 1) {
+          page1Version += 1;
+          return _page(page: 1, items: [page1Version], total: 2);
+        }
+        return _page(page: 2, items: [99], total: 2);
+      });
+      addTearDown(container.dispose);
+
+      await container.read(_plainProvider.future);
+      final subscription = container.listen(_plainProvider, (_, _) {});
+
+      container.invalidate(_plainProvider);
+      await container.read(_plainProvider.future);
+
+      await container.read(_plainProvider.notifier).loadMore();
+
+      final s = container.read(_plainProvider).requireValue;
+      expect(s.items, [2, 99]);
+      expect(s.isLoadingMore, isFalse);
+      subscription.close();
+    });
+
     test(
       'loadMore failure preserves items + sets loadMoreErrorMessage',
       () async {

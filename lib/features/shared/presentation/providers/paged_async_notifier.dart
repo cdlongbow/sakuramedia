@@ -353,9 +353,24 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
   @protected
   S applyPaged(S state, PagedListState<T> paged);
 
+  /// [loadMore] 合并分页结果时的条目身份键，用于去重。
+  ///
+  /// 条目自带稳定 `==` 时用默认实现即可；条目是每次响应新建的包装对象时，
+  /// 子类应覆写为稳定业务 id，避免轮询/重试/页码漂移造成重复行。
+  @protected
+  Object? itemKeyOf(T item) => item;
+
   /// 必须在 `build()` 首行调用；防 dispose 后 `state = ...` 静默失败或抛错。
+  ///
+  /// Riverpod 在 element 存活期间复用同一个 notifier 实例：`ref.invalidate`
+  /// 触发的重建会执行上一轮 build 注册的 `ref.onDispose`，但不会新建实例。
+  /// 因此这里在每次 build 时复位 [_disposed] 并推进 [_generation]：既避免重建后
+  /// notifier 被永久判死（`loadMore` 卡在 loading、轮询/筛选全部短路），也让
+  /// 重建前飞出的 `loadMore` 结果作废。
   @protected
   void attachDisposeGuard() {
+    _disposed = false;
+    _generation++;
     ref.onDispose(() => _disposed = true);
   }
 
@@ -467,10 +482,20 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
       // 整体覆盖会把补丁抹掉、让数据短暂回退。失败分支一直是这么写的，这里对齐。
       final currentAfter = state.value ?? current;
       final pagedAfter = pagedOf(currentAfter);
+      final seenKeys = <Object?>{
+        for (final item in pagedAfter.items) itemKeyOf(item),
+      };
+      final appended = <T>[
+        for (final item in response.items)
+          if (seenKeys.add(itemKeyOf(item))) item,
+      ];
       final merged = List<T>.unmodifiable(<T>[
         ...pagedAfter.items,
-        ...response.items,
+        ...appended,
       ]);
+      // 一页没有带来任何新条目说明已经翻到底（或数据变动后页码已越界）：
+      // 必须停掉 hasMore。否则每次状态写回都会再次触发 loadMore，形成
+      // 「越界空页 → 继续请求」的无限循环，底部转圈会一直重启。
       state = AsyncData(
         applyPaged(
           currentAfter,
@@ -479,7 +504,7 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
             currentPage: response.page,
             total: response.total,
             syncedAt: response.syncedAt,
-            hasMore: merged.length < response.total,
+            hasMore: appended.isNotEmpty && merged.length < response.total,
             isLoadingMore: false,
             loadMoreErrorMessage: null,
           ),
@@ -561,7 +586,9 @@ mixin FilterablePagedAsyncNotifierMixin<S, T, F>
   void _ensureFilterDisposeGuard() {
     if (_filterDisposeAttached) return;
     _filterDisposeAttached = true;
-    ref.onDispose(_filterRequests.dispose);
+    // 用 cancel 而不是 dispose：provider 重建（invalidate）也会执行这里注册的
+    // onDispose，dispose 会把协调器永久标记为已销毁，重建后的筛选请求再也写不回。
+    ref.onDispose(_filterRequests.cancel);
   }
 
   /// 应用新筛选状态。值对象相等则短路；变化时先同步更新 State，再尾随

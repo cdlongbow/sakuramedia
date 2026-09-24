@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 enum AppIconButtonSize { mini, compact, regular }
 
@@ -68,37 +68,28 @@ class AppIconButton extends StatelessWidget {
       ),
     };
 
-    Widget child = AppClickable(
-      enabled: onPressed != null,
-      child: Semantics(
-        button: true,
-        label: semanticLabel,
-        child: Material(
-          color: resolvedBackgroundColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: resolvedBorderRadius,
-            side: BorderSide(color: resolvedBorderColor),
-          ),
-          child: InkWell(
-            mouseCursor: onPressed != null
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
-            key: _buttonKey,
-            onTap: onPressed,
-            borderRadius: resolvedBorderRadius,
-            child: SizedBox(
-              width: buttonDimension,
-              height: buttonDimension,
-              child: Padding(
-                padding: resolvedPadding,
-                child: Center(
-                  child: IconTheme(
-                    data: IconThemeData(
-                      size: iconSize,
-                      color: resolvedIconColor,
-                    ),
-                    child: icon,
-                  ),
+    Widget child = Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Material(
+        color: resolvedBackgroundColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: resolvedBorderRadius,
+          side: BorderSide(color: resolvedBorderColor),
+        ),
+        child: AppInteractiveSurface(
+          key: _buttonKey,
+          enabled: onPressed != null,
+          onTap: onPressed,
+          child: SizedBox(
+            width: buttonDimension,
+            height: buttonDimension,
+            child: Padding(
+              padding: resolvedPadding,
+              child: Center(
+                child: IconTheme(
+                  data: IconThemeData(size: iconSize, color: resolvedIconColor),
+                  child: icon,
                 ),
               ),
             ),

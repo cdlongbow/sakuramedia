@@ -82,7 +82,6 @@ void main() {
   });
 
   testWidgets('filterEnabled 为 false 时筛选入口不响应点击，外观不变', (tester) async {
-    final colors = sakuraThemeData.extension<AppColors>()!;
     var taps = 0;
     await tester.pumpWidget(
       wrap(
@@ -100,7 +99,7 @@ void main() {
 
     expect(taps, 0);
 
-    // 只是暂时不响应，不是另一种视觉状态。
+    // 只是暂时不响应，不是另一种视觉状态：常驻态本来就无底色。
     final container = tester.widget<Container>(
       find
           .descendant(
@@ -109,7 +108,7 @@ void main() {
           )
           .first,
     );
-    expect((container.decoration! as BoxDecoration).color, colors.surfaceMuted);
+    expect(container.decoration, isNull);
   });
 
   testWidgets('筛选入口带摘要时显示摘要与下拉箭头', (tester) async {
@@ -145,9 +144,7 @@ void main() {
   });
 
   testWidgets('筛选入口外观不随筛选是否生效而变化', (tester) async {
-    final colors = sakuraThemeData.extension<AppColors>()!;
-
-    Future<BoxDecoration> decorationFor(String label) async {
+    Future<BoxDecoration?> decorationFor(String label) async {
       await tester.pumpWidget(
         wrap(
           AppListHeader(
@@ -165,16 +162,17 @@ void main() {
             )
             .first,
       );
-      return container.decoration! as BoxDecoration;
+      return container.decoration as BoxDecoration?;
     }
 
     // 入口是常驻操作，默认态与「已筛选」态必须长得一模一样：变色会让同一个
     // 按钮看起来像两个不同控件。当前筛选值由标签文字本身表达。
+    // 常驻态无底色，交互反馈只有按下时由 AppInteractiveSurface 整体变淡。
     final idle = await decorationFor('全部');
     final filtered = await decorationFor('已订阅');
 
-    expect(idle.color, colors.surfaceMuted);
-    expect(filtered.color, colors.surfaceMuted);
+    expect(idle, isNull);
+    expect(filtered, isNull);
   });
 
   testWidgets('信息插槽不提供点击能力，操作插槽可以触发', (tester) async {

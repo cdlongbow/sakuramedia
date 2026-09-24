@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/config/app_image_config.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -101,7 +101,7 @@ class _MoviePlotThumbnailState extends State<MoviePlotThumbnail> {
       return null;
     }
 
-    return CachedNetworkImageProvider(resolvedUrl);
+    return buildRemoteImageProvider(resolvedUrl);
   }
 
   int? _resolveDecodeHeight() {
@@ -121,20 +121,20 @@ class _MoviePlotThumbnailState extends State<MoviePlotThumbnail> {
     }
 
     final stream = provider.resolve(createLocalImageConfiguration(context));
-    final listener = ImageStreamListener((
-      ImageInfo imageInfo,
-      bool synchronousCall,
-    ) {
-      final width = imageInfo.image.width.toDouble();
-      final height = imageInfo.image.height.toDouble();
-      if (!mounted || width <= 0 || height <= 0) {
-        return;
-      }
+    final listener = ImageStreamListener(
+      (ImageInfo imageInfo, bool synchronousCall) {
+        final width = imageInfo.image.width.toDouble();
+        final height = imageInfo.image.height.toDouble();
+        if (!mounted || width <= 0 || height <= 0) {
+          return;
+        }
 
-      setState(() {
-        _aspectRatio = width / height;
-      });
-    });
+        setState(() {
+          _aspectRatio = width / height;
+        });
+      },
+      onError: (Object error, StackTrace? stackTrace) {},
+    );
 
     stream.addListener(listener);
     _imageStream = stream;

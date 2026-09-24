@@ -8,12 +8,16 @@ class AppNavItem {
     required this.path,
     required this.icon,
     required this.description,
+    this.activeIcon,
   });
 
   final String name;
   final String label;
   final String path;
   final IconData icon;
+
+  /// 选中态使用的实心图标；`null` 时回退到 [icon]。
+  final IconData? activeIcon;
   final String description;
 }
 

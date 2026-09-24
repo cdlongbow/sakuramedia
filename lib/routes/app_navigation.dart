@@ -36,6 +36,7 @@ const List<_NavSeed> _mobileNavSeeds = [
         slug: 'overview',
         label: '概览',
         icon: Icons.pix_outlined,
+        activeIcon: Icons.pix,
         description: '移动端首页骨架与后续动态入口。',
       ),
     ],
@@ -49,6 +50,7 @@ const List<_NavSeed> _mobileNavSeeds = [
         slug: 'library/movies',
         label: '影片',
         icon: Icons.movie_outlined,
+        activeIcon: Icons.movie,
         description: '移动端影片列表与后续详情入口。',
       ),
     ],
@@ -62,6 +64,7 @@ const List<_NavSeed> _mobileNavSeeds = [
         slug: 'library/actors',
         label: '女优',
         icon: Icons.face_4_outlined,
+        activeIcon: Icons.face_4,
         description: '移动端女优列表与后续详情入口。',
       ),
     ],
@@ -75,6 +78,7 @@ const List<_NavSeed> _mobileNavSeeds = [
         slug: 'rankings',
         label: '榜单',
         icon: Icons.local_fire_department_outlined,
+        activeIcon: Icons.local_fire_department,
         description: '移动端榜单骨架与后续推荐入口。',
       ),
     ],
@@ -88,6 +92,7 @@ const List<_NavSeed> _mobileNavSeeds = [
         slug: 'pornbox',
         label: 'PornBox',
         icon: Icons.video_library_outlined,
+        activeIcon: Icons.video_library,
         description: '移动端 PornBox 视频列表、合集与播放入口。',
       ),
     ],
@@ -359,6 +364,7 @@ List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
     required String slug,
     required String label,
     required IconData icon,
+    IconData? activeIcon,
     required String description,
   }) {
     return AppNavItem(
@@ -366,6 +372,7 @@ List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
       label: label,
       path: '$prefix/$slug',
       icon: icon,
+      activeIcon: activeIcon,
       description: description,
     );
   }
@@ -389,6 +396,7 @@ List<AppNavGroup> navGroupsForPlatform(AppPlatform platform) {
                   slug: seedItem.slug,
                   label: seedItem.label,
                   icon: seedItem.icon,
+                  activeIcon: seedItem.activeIcon,
                   description: seedItem.description,
                 ),
               )
@@ -456,10 +464,14 @@ class _NavItemSeed {
     required this.label,
     required this.icon,
     required this.description,
+    this.activeIcon,
   });
 
   final String slug;
   final String label;
   final IconData icon;
   final String description;
+
+  /// 选中态使用的实心图标；`null` 时回退到 [icon]。
+  final IconData? activeIcon;
 }

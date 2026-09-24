@@ -50,6 +50,7 @@ dependencies:
   material_ui: ^1.2.0
   cupertino_ui: ^1.0.2
   cached_network_image: ^4.0.0
+  flutter_cache_manager: ^3.4.2
   photo_view: ^0.15.0
   media_kit: 1.2.6
   media_kit_video: 2.0.1
@@ -69,6 +70,7 @@ dependencies:
   marionette_flutter: ^0.6.0
   flutter_staggered_grid_view: ^0.7.0
   flutter_acrylic: 1.1.4
+  animate_do: ^5.1.0
 
 dev_dependencies:
   flutter_test:

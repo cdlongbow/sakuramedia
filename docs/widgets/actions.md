@@ -18,11 +18,17 @@
 
 图标操作按钮，支持 `mini`、`compact`、`regular` 尺寸。必须提供可理解的 tooltip 或等价语义。
 
+## `AppInteractiveSurface`
+
+路径：`lib/widgets/base/interaction/app_interactive_surface.dart`
+
+全项目统一的可点表面，所有可点元素都应经过它，不要再手写 `InkWell`。默认无水波纹、无 hover / 按下底色，按下整块透明度降到 `0.7`（整体变淡）；`onTap` / `onLongPress` / `onSecondaryTap` 都走这一层手势，可同时配合 `semanticLabel`。禁用时只负责不响应，视觉禁用（降透明度、换前景色）由调用方决定。完整交互基线见 `docs/interaction-design.md`。
+
 ## `AppClickable`
 
 路径：`lib/widgets/base/interaction/app_clickable.dart`
 
-只为没有内置鼠标指针的自定义点击区域提供鼠标指针，不负责点击回调。使用自定义 `GestureDetector` 时在外层包 `AppClickable`；使用 `InkWell` 时直接设置它的 `mouseCursor`，因为内层 `InkWell` 会覆盖外层指针。调用方必须根据实际交互状态传入 `enabled`；禁用区域使用系统默认箭头指针。
+只为没有内置鼠标指针的自定义点击区域提供鼠标指针，不负责点击回调和按下反馈。**需要点击反馈时用 `AppInteractiveSurface`**；只有确实要自行实现手势（例如自定义 `GestureDetector` 的拖拽 / 多指逻辑）时才在它外层包 `AppClickable`。调用方必须根据实际交互状态传入 `enabled`；禁用区域使用系统默认箭头指针。
 
 ## `AppInlineActionButton`
 
@@ -40,4 +46,4 @@
 
 按钮尺寸、圆角、颜色和文字样式由主题 token 控制。已有 `Key` 或 `labelKey` 属于测试和可访问性契约，修改前检查对应测试。
 
-鼠标游标统一约定：标准 Material 按钮、弹出菜单项、复选框和单选框由 `lib/theme.dart` 统一配置；自定义 `InkWell` 直接设置 `mouseCursor`，自定义 `GestureDetector` 外包 `AppClickable`。新增可点击组件时按这个规则处理，不要只给 `InkWell` 外层再套 `MouseRegion`。
+鼠标游标统一约定：可点区域一律优先用 `AppInteractiveSurface` 承载点击、鼠标指针与按下反馈；标准 Material 按钮、弹出菜单项、复选框和单选框由 `lib/theme.dart` 统一配置；确需自行实现手势的自定义 `GestureDetector` 才外包 `AppClickable`。不要再手写 `InkWell`，也不要给 `InkWell` 外层再套 `MouseRegion`。

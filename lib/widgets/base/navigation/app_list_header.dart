@@ -231,9 +231,11 @@ class AppListHeader extends StatelessWidget {
   }
 }
 
-/// [AppListHeader] 的标准只读信息胶囊。
+/// [AppListHeader] 的标准只读信息位（总数、更新时间…）。
 ///
-/// 它没有点击回调，刻意与右侧操作保持语义和视觉差异。
+/// 它没有点击回调，刻意与筛选入口/操作保持语义和视觉差异：**纯文字、无底色、
+/// 无交互态**——底色与 hover/按下反馈是"可点"的信号，只读信息不该有；
+/// 这样"能点/不能点"一眼可分。
 class AppListHeaderInfo extends StatelessWidget {
   const AppListHeaderInfo({super.key, required this.label, this.icon});
 
@@ -244,41 +246,34 @@ class AppListHeaderInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final foreground = context.appTextPalette.secondary;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        // 与 AppFilterEntryButton 同一档圆角，整条顶栏的胶囊看起来是一套。
-        borderRadius: context.appRadius.smBorder,
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.sm,
+        vertical: spacing.xs,
       ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: spacing.sm,
-          vertical: spacing.xs,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: context.appComponentTokens.iconSizeXs,
-                color: foreground,
-              ),
-              SizedBox(width: spacing.xs),
-            ],
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.secondary,
-              ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: context.appComponentTokens.iconSizeXs,
+              color: foreground,
             ),
+            SizedBox(width: spacing.xs),
           ],
-        ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.secondary,
+            ),
+          ),
+        ],
       ),
     );
   }

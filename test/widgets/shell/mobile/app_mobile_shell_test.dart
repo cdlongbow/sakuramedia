@@ -251,4 +251,189 @@ void main() {
       '/mobile/library/actors',
     );
   });
+
+  testWidgets('mobile shell pulses the active icon only when switching tabs', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_ShellHarness(navGroups: navGroups));
+    await tester.pumpAndSettle();
+
+    const pulseKey = Key('mobile-nav-active-icon-pulse');
+    // 首屏当前 tab 不做动效。
+    expect(find.byKey(pulseKey), findsNothing);
+
+    await tester.tap(find.text('影片'));
+    await tester.pump();
+    expect(find.byKey(pulseKey), findsOneWidget);
+
+    // 动效前半段先缩小（缩放 < 1.0）。
+    await tester.pump(const Duration(milliseconds: 40));
+    final shrinking = tester.widget<Transform>(
+      find
+          .descendant(of: find.byKey(pulseKey), matching: find.byType(Transform))
+          .first,
+    );
+    expect(shrinking.transform.entry(0, 0), lessThan(1.0));
+
+    await tester.pumpAndSettle();
+    final settled = tester.widget<Transform>(
+      find
+          .descendant(of: find.byKey(pulseKey), matching: find.byType(Transform))
+          .first,
+    );
+    expect(settled.transform.entry(0, 0), moreOrLessEquals(1.0, epsilon: 0.001));
+  });
+
+  testWidgets('mobile shell skips the icon pulse when animations are disabled', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _ShellHarness(navGroups: navGroups, disableAnimations: true),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('影片'));
+    await tester.pump();
+    expect(
+      find.byKey(const Key('mobile-nav-active-icon-pulse')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('mobile shell fires selection haptic only on tab change', (
+    tester,
+  ) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        calls.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await tester.pumpWidget(_ShellHarness(navGroups: navGroups));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('影片'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.map((call) => '${call.method}:${call.arguments}'),
+      contains('HapticFeedback.vibrate:HapticFeedbackType.selectionClick'),
+    );
+
+    calls.clear();
+    // 重复点当前 tab 不再触发触感。
+    await tester.tap(find.text('影片'));
+    await tester.pumpAndSettle();
+    expect(
+      calls.where((call) => call.method == 'HapticFeedback.vibrate'),
+      isEmpty,
+    );
+  });
+
+  testWidgets('mobile shell uses the filled activeIcon for the selected tab', (
+    tester,
+  ) async {
+    const groups = [
+      AppNavGroup(
+        id: 'overview',
+        label: '概览',
+        icon: Icons.pix_outlined,
+        isCollapsible: false,
+        items: [
+          AppNavItem(
+            name: 'mobile-overview',
+            label: '概览',
+            path: '/mobile/overview',
+            icon: Icons.pix_outlined,
+            activeIcon: Icons.pix,
+            description: 'overview',
+          ),
+        ],
+      ),
+      AppNavGroup(
+        id: 'movies',
+        label: '影片',
+        icon: Icons.movie_outlined,
+        isCollapsible: false,
+        items: [
+          AppNavItem(
+            name: 'mobile-library/movies',
+            label: '影片',
+            path: '/mobile/library/movies',
+            icon: Icons.movie_outlined,
+            activeIcon: Icons.movie,
+            description: 'movies',
+          ),
+        ],
+      ),
+    ];
+
+    await tester.pumpWidget(_ShellHarness(navGroups: groups));
+    await tester.pumpAndSettle();
+
+    CupertinoTabBar bar() =>
+        tester.widget<CupertinoTabBar>(find.byType(CupertinoTabBar));
+    Icon iconOf(Widget w) => w as Icon;
+
+    // 未选中一律用线框图标，选中用实心 activeIcon。
+    expect(iconOf(bar().items[0].icon).icon, Icons.pix_outlined);
+    expect(iconOf(bar().items[1].icon).icon, Icons.movie_outlined);
+    expect(iconOf(bar().items[0].activeIcon!).icon, Icons.pix);
+    expect(iconOf(bar().items[1].activeIcon!).icon, Icons.movie);
+
+    await tester.tap(find.text('影片'));
+    await tester.pumpAndSettle();
+    expect(bar().currentIndex, 1);
+  });
+}
+
+/// 用可变下标驱动 [AppMobileShell]，模拟真实路由切换 tab 的场景。
+class _ShellHarness extends StatefulWidget {
+  const _ShellHarness({required this.navGroups, this.disableAnimations = false});
+
+  final List<AppNavGroup> navGroups;
+  final bool disableAnimations;
+
+  @override
+  State<_ShellHarness> createState() => _ShellHarnessState();
+}
+
+class _ShellHarnessState extends State<_ShellHarness> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.navGroups
+        .expand((group) => group.items)
+        .toList(growable: false);
+    return MaterialApp(
+      theme: sakuraThemeData,
+      home: Builder(
+        builder: (context) {
+          Widget shell = AppMobileShell(
+            currentPath: items[_index].path,
+            navGroups: widget.navGroups,
+            currentIndex: _index,
+            onDestinationSelected: (index) => setState(() => _index = index),
+            child: const SizedBox.shrink(),
+          );
+          if (widget.disableAnimations) {
+            shell = MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: shell,
+            );
+          }
+          return shell;
+        },
+      ),
+    );
+  }
 }

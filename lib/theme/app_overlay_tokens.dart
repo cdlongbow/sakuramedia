@@ -13,6 +13,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     required this.glassSurfaceAlpha,
     required this.glassBlurSigma,
     required this.hoverAlpha,
+    required this.pressAlpha,
     required this.primaryLabelAlpha,
     required this.mutedLabelAlpha,
     required this.switchTrackAlpha,
@@ -52,6 +53,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       glassSurfaceAlpha = 0.6,
       glassBlurSigma = 30,
       hoverAlpha = 0.08,
+      pressAlpha = 0.12,
       primaryLabelAlpha = 0.94,
       mutedLabelAlpha = 0.85,
       switchTrackAlpha = 0.28,
@@ -88,7 +90,16 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
   final double surfaceShadowOffsetY;
   final double glassSurfaceAlpha;
   final double glassBlurSigma;
+
+  /// hover 叠色透明度，目前由主题给 Material 内置控件兜底，以及登录页、
+  /// 下拉选择、播放器浮层等自绘 hover 使用。自研可点组件（AppInteractiveSurface）
+  /// 不做 hover 底色。
   final double hoverAlpha;
+
+  /// 按下态叠加的中性色透明度，主题用它给 Material 内置控件的 overlayColor
+  /// 兜底；自研可点组件的按下反馈是整体变淡，见 `app_interactive_surface.dart`。
+  final double pressAlpha;
+
   final double primaryLabelAlpha;
   final double mutedLabelAlpha;
 
@@ -132,6 +143,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
     double? glassSurfaceAlpha,
     double? glassBlurSigma,
     double? hoverAlpha,
+    double? pressAlpha,
     double? primaryLabelAlpha,
     double? mutedLabelAlpha,
     double? switchTrackAlpha,
@@ -170,6 +182,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
       glassSurfaceAlpha: glassSurfaceAlpha ?? this.glassSurfaceAlpha,
       glassBlurSigma: glassBlurSigma ?? this.glassBlurSigma,
       hoverAlpha: hoverAlpha ?? this.hoverAlpha,
+      pressAlpha: pressAlpha ?? this.pressAlpha,
       primaryLabelAlpha: primaryLabelAlpha ?? this.primaryLabelAlpha,
       mutedLabelAlpha: mutedLabelAlpha ?? this.mutedLabelAlpha,
       switchTrackAlpha: switchTrackAlpha ?? this.switchTrackAlpha,
@@ -234,6 +247,7 @@ class AppOverlayTokens extends ThemeExtension<AppOverlayTokens> {
           lerpDouble(glassSurfaceAlpha, other.glassSurfaceAlpha, t)!,
       glassBlurSigma: lerpDouble(glassBlurSigma, other.glassBlurSigma, t)!,
       hoverAlpha: lerpDouble(hoverAlpha, other.hoverAlpha, t)!,
+      pressAlpha: lerpDouble(pressAlpha, other.pressAlpha, t)!,
       primaryLabelAlpha:
           lerpDouble(primaryLabelAlpha, other.primaryLabelAlpha, t)!,
       mutedLabelAlpha: lerpDouble(mutedLabelAlpha, other.mutedLabelAlpha, t)!,

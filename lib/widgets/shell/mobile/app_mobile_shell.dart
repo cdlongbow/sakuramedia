@@ -1,11 +1,18 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/theme.dart';
 
-class AppMobileShell extends StatelessWidget {
+/// 切换 tab 时选中 icon 的「先缩小再放大」时长。
+///
+/// `Pulse(from: 1.0, to: 0.6)` 的序列是 `1.0 → 0.6 → 1.0`，透明度不变。
+const Duration _kNavIconPulseDuration = Duration(milliseconds: 480);
+
+class AppMobileShell extends StatefulWidget {
   const AppMobileShell({
     super.key,
     required this.currentPath,
@@ -28,20 +35,37 @@ class AppMobileShell extends StatelessWidget {
   static void _noopDestinationSelected(int _) {}
 
   @override
+  State<AppMobileShell> createState() => _AppMobileShellState();
+}
+
+class _AppMobileShellState extends State<AppMobileShell> {
+  /// 上一次构建时的选中下标。
+  ///
+  /// 只在「下标发生变化的那一帧」给新选中项播放 icon 动效：首次构建时为
+  /// null，所有 icon 都静态，避免 App 启动时当前 tab 无端弹一下。
+  int? _previousIndex;
+
+  @override
   Widget build(BuildContext context) {
-    final navItems = navGroups
+    final navItems = widget.navGroups
         .expand((group) => group.items)
         .toList(growable: false);
     final resolvedCurrentIndex =
-        currentIndex ?? _resolveCurrentIndex(currentPath, navItems);
+        widget.currentIndex ??
+        _resolveCurrentIndex(widget.currentPath, navItems);
+    final animateIndex =
+        _previousIndex != null && _previousIndex != resolvedCurrentIndex
+        ? resolvedCurrentIndex
+        : null;
+    final animateNavIcons = !MediaQuery.disableAnimationsOf(context);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    final shell = AnnotatedRegion<SystemUiOverlayStyle>(
       value: _mobileSystemOverlayStyle(context),
       child: Scaffold(
         backgroundColor: context.appColors.surfaceCard,
-        drawer: drawer,
+        drawer: widget.drawer,
         drawerEnableOpenDragGesture:
-            drawer != null && drawerEnableOpenDragGesture,
+            widget.drawer != null && widget.drawerEnableOpenDragGesture,
         drawerEdgeDragWidth: _resolveDrawerEdgeDragWidth(context),
         body: SafeArea(
           key: const Key('mobile-shell-body-safe-area'),
@@ -49,7 +73,7 @@ class AppMobileShell extends StatelessWidget {
           child: Padding(
             key: const Key('mobile-shell-body-padding'),
             padding: AppPageInsets.compactStandard,
-            child: child,
+            child: widget.child,
           ),
         ),
         bottomNavigationBar: SafeArea(
@@ -68,18 +92,47 @@ class AppMobileShell extends StatelessWidget {
               inactiveColor: context.appTextPalette.secondary,
               currentIndex: resolvedCurrentIndex,
               items: navItems
+                  .asMap()
+                  .entries
                   .map(
-                    (item) => BottomNavigationBarItem(
-                      icon: Icon(item.icon),
-                      label: item.label,
+                    (entry) => BottomNavigationBarItem(
+                      icon: Icon(entry.value.icon),
+                      activeIcon: _buildActiveIcon(
+                        entry.value.activeIcon ?? entry.value.icon,
+                        animate:
+                            animateNavIcons && animateIndex == entry.key,
+                      ),
+                      label: entry.value.label,
                     ),
                   )
                   .toList(growable: false),
-              onTap: (index) => _handleDestinationTap(context, navItems, index),
+              onTap: (index) => _handleDestinationTap(
+                context,
+                navItems,
+                resolvedCurrentIndex,
+                index,
+              ),
             ),
           ),
         ),
       ),
+    );
+
+    _previousIndex = resolvedCurrentIndex;
+    return shell;
+  }
+
+  Widget _buildActiveIcon(IconData icon, {required bool animate}) {
+    if (!animate) {
+      return Icon(icon);
+    }
+    return Pulse(
+      key: const Key('mobile-nav-active-icon-pulse'),
+      from: 1.0,
+      to: 0.6,
+      duration: _kNavIconPulseDuration,
+      curve: Curves.easeOut,
+      child: Icon(icon),
     );
   }
 
@@ -90,7 +143,7 @@ class AppMobileShell extends StatelessWidget {
   /// 因设备/ROM 而异(只在 Android Q+ 非零),运行时从 MediaQuery 读,再往内侧
   /// 补一段 app 独占的可用带——外侧归系统返回,内侧归抽屉。
   double? _resolveDrawerEdgeDragWidth(BuildContext context) {
-    if (drawer == null || !drawerEnableOpenDragGesture) {
+    if (widget.drawer == null || !widget.drawerEnableOpenDragGesture) {
       return null;
     }
     return MediaQuery.systemGestureInsetsOf(context).left +
@@ -100,10 +153,16 @@ class AppMobileShell extends StatelessWidget {
   void _handleDestinationTap(
     BuildContext context,
     List<AppNavItem> navItems,
+    int currentIndex,
     int index,
   ) {
-    if (onDestinationSelected != _noopDestinationSelected) {
-      onDestinationSelected(index);
+    // 只在真正切换 tab 时给触感，重复点当前 tab 不震。
+    if (index != currentIndex) {
+      triggerSelectionHaptic();
+    }
+    if (widget.onDestinationSelected !=
+        AppMobileShell._noopDestinationSelected) {
+      widget.onDestinationSelected(index);
       return;
     }
     // 在未接入 StatefulShellRoute 的场景下，回退到传统的 go 导航。

@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -453,7 +453,7 @@ class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
     if (resolvedUrl == null) {
       return null;
     }
-    return CachedNetworkImageProvider(resolvedUrl);
+    return buildRemoteImageProvider(resolvedUrl);
   }
 
   void _startImageMenuLongPress(PointerDownEvent event) {
@@ -1010,7 +1010,7 @@ class _AppPinchToFullscreenImageState
     if (resolvedUrl == null) {
       return null;
     }
-    return CachedNetworkImageProvider(resolvedUrl);
+    return buildRemoteImageProvider(resolvedUrl);
   }
 
   void _listenToImageStream(ImageProvider<Object>? provider) {
@@ -1021,25 +1021,25 @@ class _AppPinchToFullscreenImageState
     }
 
     final stream = provider.resolve(createLocalImageConfiguration(context));
-    final listener = ImageStreamListener((
-      ImageInfo imageInfo,
-      bool synchronousCall,
-    ) {
-      final width = imageInfo.image.width.toDouble();
-      final height = imageInfo.image.height.toDouble();
-      if (!mounted || width <= 0 || height <= 0) {
-        return;
-      }
+    final listener = ImageStreamListener(
+      (ImageInfo imageInfo, bool synchronousCall) {
+        final width = imageInfo.image.width.toDouble();
+        final height = imageInfo.image.height.toDouble();
+        if (!mounted || width <= 0 || height <= 0) {
+          return;
+        }
 
-      final aspectRatio = width / height;
-      if (_resolvedAspectRatio == aspectRatio) {
-        return;
-      }
+        final aspectRatio = width / height;
+        if (_resolvedAspectRatio == aspectRatio) {
+          return;
+        }
 
-      setState(() {
-        _resolvedAspectRatio = aspectRatio;
-      });
-    });
+        setState(() {
+          _resolvedAspectRatio = aspectRatio;
+        });
+      },
+      onError: (Object error, StackTrace? stackTrace) {},
+    );
 
     stream.addListener(listener);
     _imageStream = stream;

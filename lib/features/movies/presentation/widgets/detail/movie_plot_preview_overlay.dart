@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -568,7 +568,7 @@ class _PreviewMainImageActionTargetState
       return;
     }
 
-    final nextProvider = CachedNetworkImageProvider(resolvedUrl);
+    final nextProvider = buildRemoteImageProvider(resolvedUrl);
     if (_resolvedImageProvider == nextProvider) {
       return;
     }
@@ -582,24 +582,24 @@ class _PreviewMainImageActionTargetState
     _stopListeningToImageStream();
 
     final stream = provider.resolve(createLocalImageConfiguration(context));
-    final listener = ImageStreamListener((
-      ImageInfo imageInfo,
-      bool synchronousCall,
-    ) {
-      final width = imageInfo.image.width.toDouble();
-      final height = imageInfo.image.height.toDouble();
-      if (!mounted || width <= 0 || height <= 0) {
-        return;
-      }
+    final listener = ImageStreamListener(
+      (ImageInfo imageInfo, bool synchronousCall) {
+        final width = imageInfo.image.width.toDouble();
+        final height = imageInfo.image.height.toDouble();
+        if (!mounted || width <= 0 || height <= 0) {
+          return;
+        }
 
-      final nextAspectRatio = width / height;
-      if (_imageAspectRatio == nextAspectRatio) {
-        return;
-      }
-      setState(() {
-        _imageAspectRatio = nextAspectRatio;
-      });
-    });
+        final nextAspectRatio = width / height;
+        if (_imageAspectRatio == nextAspectRatio) {
+          return;
+        }
+        setState(() {
+          _imageAspectRatio = nextAspectRatio;
+        });
+      },
+      onError: (Object error, StackTrace? stackTrace) {},
+    );
 
     stream.addListener(listener);
     _imageStream = stream;

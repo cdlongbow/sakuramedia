@@ -106,6 +106,12 @@ void main() {
       reason: '回归场景需要先累计加载多页，再执行滚动条大跨度反向跳转',
     );
     await tester.pumpAndSettle();
+    // SliverList 的滚动范围按"已布局 child 的平均高度 × childCount"估算，
+    // childCount 变化后需要一次 relayout 才会重算。真实场景 loadMore 由滚动
+    // 触发、滚动本身就是 relayout；这里显式跳一次滚动位置来模拟，不再依赖
+    // 交互反馈动画的副作用（水波纹已全项目移除）。
+    scrollController.jumpTo(1);
+    await tester.pump();
     expect(
       scrollController.position.maxScrollExtent,
       greaterThan(itemCount * 100),

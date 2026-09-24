@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/config/app_image_config.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -66,7 +66,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
     }
     _resolvedUrl = resolvedUrl;
     _baseProvider =
-        resolvedUrl == null ? null : CachedNetworkImageProvider(resolvedUrl);
+        resolvedUrl == null ? null : buildRemoteImageProvider(resolvedUrl);
     // decodeHint 关联的派生 provider 需要跟着重算。
     _wrappedProvider = null;
     _lastDecodeWidth = null;

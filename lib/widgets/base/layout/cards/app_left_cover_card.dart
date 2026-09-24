@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 /// 「封面贴左」样式的白底列表卡片外壳，供跨 feature 复用。
 ///
@@ -11,11 +11,12 @@ import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 /// - 视觉：`surfaceCard` 白底 + `mdBorder` 圆角 + `borderSubtle` 细边；选中态
 ///   切 `selectionBorder`（品牌樱酒红 `#6B2D2A`，**只换颜色不改宽度**，避免 1↔2
 ///   像素的 layout 跳动）。
-/// - 可选整卡点击：`onTap` 非空时套 `Material + InkWell`，水波纹由 clipAntiAlias
-///   自然裁剪；`onTap` 为空时不套（整卡不可点，交互留给 slot 内的按钮/子 InkWell）。
+/// - 可选整卡点击：`onTap`/`onLongPress` 非空时套 [AppInteractiveSurface]，
+///   反馈统一走"整块加深"（无涟漪），形状跟随卡片圆角；为空时不套
+///   （整卡不可点，交互留给 slot 内的按钮）。
 ///
 /// 封面本身的独立可点（比如"点封面 → 跳详情"）由调用方在 [cover] slot 内自行
-/// 用 `InkWell` 包装——内层 InkWell 拦截手势不冒泡到外层，两层交互天然分离。
+/// 包装——内层手势拦截不冒泡到外层，两层交互天然分离。
 ///
 /// 现有调用点：`_MediaRow`（媒体管理）、`_DownloadTaskCard`（下载任务）。
 class AppLeftCoverCard extends StatelessWidget {
@@ -53,7 +54,7 @@ class AppLeftCoverCard extends StatelessWidget {
   /// 整卡点击回调；`null` 时不套 InkWell（整卡不可点）。
   final VoidCallback? onTap;
 
-  /// 整卡长按回调（移动端进入多选等）。非空时同样套 InkWell，按下即有水波纹反馈。
+  /// 整卡长按回调（移动端进入多选等）。非空时同样套交互表面，按下有反馈。
   final VoidCallback? onLongPress;
 
   /// 是否绘制自带卡片壳（白底、圆角、细边）。`false` 时只出「贴边封面 + 内容」
@@ -107,18 +108,10 @@ class AppLeftCoverCard extends StatelessWidget {
     }
 
     if (onTap != null || onLongPress != null) {
-      layout = AppClickable(
-        enabled: true,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: SystemMouseCursors.click,
-            borderRadius: radius,
-            onTap: onTap,
-            onLongPress: onLongPress,
-            child: layout,
-          ),
-        ),
+      layout = AppInteractiveSurface(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: layout,
       );
     }
     return layout;

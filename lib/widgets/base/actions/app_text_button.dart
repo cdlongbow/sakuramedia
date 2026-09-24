@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 enum AppTextButtonSize { medium, small, xSmall, xxSmall, xxxSmall }
 
@@ -97,69 +97,54 @@ class AppTextButton extends StatelessWidget {
       tone: tone,
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 
-    return AppClickable(
-      enabled: _isEnabled,
-      child: Opacity(
-        opacity: _isEnabled ? 1 : 0.56,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: _isEnabled
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
+    return Opacity(
+      opacity: _isEnabled ? 1 : 0.56,
+      child: AppInteractiveSurface(
+        enabled: _isEnabled,
+        onTap: onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: horizontal),
+          decoration: BoxDecoration(
+            color: _isEnabled
+                ? backgroundColor
+                : disabledColor.withValues(alpha: 0.32),
             borderRadius: borderRadius,
-            onTap: _isEnabled ? onPressed : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              height: height,
-              padding: EdgeInsets.symmetric(horizontal: horizontal),
-              decoration: BoxDecoration(
-                color: _isEnabled
-                    ? backgroundColor
-                    : disabledColor.withValues(alpha: 0.32),
-                borderRadius: borderRadius,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null)
-                    IconTheme(
-                      data: IconThemeData(
-                        size: iconSize,
-                        color: _isEnabled
-                            ? foregroundColor
-                            : colors.borderStrong,
-                      ),
-                      child: icon!,
-                    ),
-                  if (icon != null) SizedBox(width: gap),
-                  Flexible(
-                    child: Text(
-                      key: labelKey,
-                      label,
-                      overflow: TextOverflow.ellipsis,
-                      style: labelStyle.copyWith(
-                        color: _isEnabled
-                            ? foregroundColor
-                            : colors.borderStrong,
-                      ),
-                    ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null)
+                IconTheme(
+                  data: IconThemeData(
+                    size: iconSize,
+                    color: _isEnabled ? foregroundColor : colors.borderStrong,
                   ),
-                  if (trailingIcon != null) ...[
-                    SizedBox(width: gap),
-                    IconTheme(
-                      data: IconThemeData(
-                        size: iconSize,
-                        color: _isEnabled
-                            ? foregroundColor
-                            : colors.borderStrong,
-                      ),
-                      child: trailingIcon!,
-                    ),
-                  ],
-                ],
+                  child: icon!,
+                ),
+              if (icon != null) SizedBox(width: gap),
+              Flexible(
+                child: Text(
+                  key: labelKey,
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle.copyWith(
+                    color: _isEnabled ? foregroundColor : colors.borderStrong,
+                  ),
+                ),
               ),
-            ),
+              if (trailingIcon != null) ...[
+                SizedBox(width: gap),
+                IconTheme(
+                  data: IconThemeData(
+                    size: iconSize,
+                    color: _isEnabled ? foregroundColor : colors.borderStrong,
+                  ),
+                  child: trailingIcon!,
+                ),
+              ],
+            ],
           ),
         ),
       ),

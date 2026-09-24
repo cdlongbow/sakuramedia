@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/actions/movie_inspector_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
@@ -241,18 +242,11 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
 
     final Widget interactiveCard;
     if (widget.selectionMode) {
-      interactiveCard = Material(
-        color: Colors.transparent,
-        borderRadius: context.appRadius.mdBorder,
-        child: InkWell(
-          mouseCursor: widget.onSelectedChanged != null
-              ? SystemMouseCursors.click
-              : SystemMouseCursors.basic,
-          key: Key('movie-summary-card-checkbox-${movie.movieNumber}'),
-          borderRadius: context.appRadius.mdBorder,
-          onTap: () => widget.onSelectedChanged?.call(!widget.isSelected),
-          child: card,
-        ),
+      interactiveCard = AppInteractiveSurface(
+        key: Key('movie-summary-card-checkbox-${movie.movieNumber}'),
+        enabled: widget.onSelectedChanged != null,
+        onTap: () => widget.onSelectedChanged?.call(!widget.isSelected),
+        child: card,
       );
     } else if (widget.onTap == null && widget.onRequestMenu == null) {
       interactiveCard = card;

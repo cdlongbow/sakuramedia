@@ -48,9 +48,6 @@ const _desktopTextPalette = AppTextPalette.defaults();
 const _mobileTextScale = AppTextScale.mobile();
 const _mobileTextWeights = AppTextWeights.mobile();
 const _mobileTextPalette = AppTextPalette.mobile();
-const _appClickableButtonStyle = ButtonStyle(
-  mouseCursor: WidgetStateMouseCursor.clickable,
-);
 
 final sakuraDesktopThemeData = _buildSakuraThemeData(
   componentTokens: const AppComponentTokens.defaults(),
@@ -78,8 +75,44 @@ ThemeData _buildSakuraThemeData({
   required AppTextWeights textWeights,
   required AppTextPalette textPalette,
 }) {
+  // 这里只给直接使用的 Material 内置控件兜底：关掉 InkRipple / InkSparkle，
+  // 并保留 hover 8% / 按下 12% 的叠色。自研可点组件不走这套（无 hover 底色、
+  // 按下整体变淡，见 `AppInteractiveSurface`）；内置控件的 MD 交互样式待清理。
+  const overlayTokens = AppOverlayTokens.defaults();
+  final neutralOverlay = textPalette.primary;
+  final hoverOverlay = neutralOverlay.withValues(
+    alpha: overlayTokens.hoverAlpha,
+  );
+  final pressOverlay = neutralOverlay.withValues(
+    alpha: overlayTokens.pressAlpha,
+  );
+
+  Color? resolveInteractionOverlay(Set<WidgetState> states) {
+    if (states.contains(WidgetState.pressed)) {
+      return pressOverlay;
+    }
+    if (states.contains(WidgetState.hovered)) {
+      return hoverOverlay;
+    }
+    if (states.contains(WidgetState.focused)) {
+      return pressOverlay;
+    }
+    return null;
+  }
+
+  final interactiveButtonStyle = ButtonStyle(
+    mouseCursor: WidgetStateMouseCursor.clickable,
+    overlayColor: WidgetStateProperty.resolveWith(resolveInteractionOverlay),
+    splashFactory: NoSplash.splashFactory,
+  );
+
   return ThemeData(brightness: Brightness.light, useMaterial3: true).copyWith(
     scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+    splashFactory: NoSplash.splashFactory,
+    splashColor: Colors.transparent,
+    highlightColor: pressOverlay,
+    hoverColor: hoverOverlay,
+    focusColor: pressOverlay,
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
       primary: Color(0xFF6B2D2A),
@@ -117,23 +150,17 @@ ThemeData _buildSakuraThemeData({
               ? kAppWindowsFontFamily
               : null,
         ),
-    elevatedButtonTheme: const ElevatedButtonThemeData(
-      style: _appClickableButtonStyle,
-    ),
-    filledButtonTheme: const FilledButtonThemeData(
-      style: _appClickableButtonStyle,
-    ),
-    iconButtonTheme: const IconButtonThemeData(style: _appClickableButtonStyle),
-    outlinedButtonTheme: const OutlinedButtonThemeData(
-      style: _appClickableButtonStyle,
-    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: interactiveButtonStyle),
+    filledButtonTheme: FilledButtonThemeData(style: interactiveButtonStyle),
+    iconButtonTheme: IconButtonThemeData(style: interactiveButtonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: interactiveButtonStyle),
     popupMenuTheme: const PopupMenuThemeData(
       mouseCursor: WidgetStateMouseCursor.clickable,
     ),
     radioTheme: const RadioThemeData(
       mouseCursor: WidgetStateMouseCursor.clickable,
     ),
-    textButtonTheme: const TextButtonThemeData(style: _appClickableButtonStyle),
+    textButtonTheme: TextButtonThemeData(style: interactiveButtonStyle),
     checkboxTheme: const CheckboxThemeData(
       mouseCursor: WidgetStateMouseCursor.clickable,
     ),

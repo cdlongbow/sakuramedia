@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 enum AppButtonVariant { primary, secondary, ghost, danger }
 
@@ -118,79 +118,62 @@ class AppButton extends StatelessWidget {
       tone: tone,
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 
-    return AppClickable(
-      enabled: _isEnabled,
-      child: Opacity(
-        opacity: _isEnabled ? 1 : 0.56,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: _isEnabled
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
+    return Opacity(
+      opacity: _isEnabled ? 1 : 0.56,
+      child: AppInteractiveSurface(
+        enabled: _isEnabled,
+        onTap: onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          height: height,
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(horizontal: horizontal),
+          decoration: BoxDecoration(
+            color: _isEnabled ? backgroundColor : disabledColor,
             borderRadius: borderRadius,
-            onTap: _isEnabled ? onPressed : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              height: height,
-              alignment: Alignment.center,
-              padding: EdgeInsets.symmetric(horizontal: horizontal),
-              decoration: BoxDecoration(
-                color: _isEnabled ? backgroundColor : disabledColor,
-                borderRadius: borderRadius,
-                border: Border.all(
-                  color: _isEnabled ? borderColor : disabledColor,
+            border: Border.all(
+              color: _isEnabled ? borderColor : disabledColor,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isLoading)
+                SizedBox(
+                  width: iconSize,
+                  height: iconSize,
+                  child: CircularProgressIndicator.adaptive(
+                    backgroundColor: switch (Theme.of(context).platform) {
+                      TargetPlatform.iOS ||
+                      TargetPlatform.macOS => foregroundColor,
+                      _ => null,
+                    },
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                  ),
+                )
+              else if (icon != null)
+                IconTheme(
+                  data: IconThemeData(size: iconSize, color: foregroundColor),
+                  child: icon!,
+                ),
+              if (isLoading || icon != null) SizedBox(width: gap),
+              Flexible(
+                child: Text(
+                  key: labelKey,
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: labelStyle,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isLoading)
-                    SizedBox(
-                      width: iconSize,
-                      height: iconSize,
-                      child: CircularProgressIndicator.adaptive(
-                        backgroundColor: switch (Theme.of(context).platform) {
-                          TargetPlatform.iOS ||
-                          TargetPlatform.macOS => foregroundColor,
-                          _ => null,
-                        },
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          foregroundColor,
-                        ),
-                      ),
-                    )
-                  else if (icon != null)
-                    IconTheme(
-                      data: IconThemeData(
-                        size: iconSize,
-                        color: foregroundColor,
-                      ),
-                      child: icon!,
-                    ),
-                  if (isLoading || icon != null) SizedBox(width: gap),
-                  Flexible(
-                    child: Text(
-                      key: labelKey,
-                      label,
-                      overflow: TextOverflow.ellipsis,
-                      style: labelStyle,
-                    ),
-                  ),
-                  if (trailingIcon != null) ...[
-                    SizedBox(width: gap),
-                    IconTheme(
-                      data: IconThemeData(
-                        size: iconSize,
-                        color: foregroundColor,
-                      ),
-                      child: trailingIcon!,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+              if (trailingIcon != null) ...[
+                SizedBox(width: gap),
+                IconTheme(
+                  data: IconThemeData(size: iconSize, color: foregroundColor),
+                  child: trailingIcon!,
+                ),
+              ],
+            ],
           ),
         ),
       ),

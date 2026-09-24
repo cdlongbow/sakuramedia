@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -938,7 +938,7 @@ class _AdaptiveFitThumbnailImageState
       // 与 MaskedImage 的 null 处理一致：不测量，由 MaskedImage 自渲占位。
       return null;
     }
-    final base = CachedNetworkImageProvider(resolvedUrl);
+    final base = buildRemoteImageProvider(resolvedUrl);
     // 镜像 CachedNetworkImage 传入 memCacheWidth/Height 时的内部 ResizeImage 包装，
     // 用相同尺寸 → 与 MaskedImage 共享同一解码缓存键。
     if (widget.memCacheWidth == null && widget.memCacheHeight == null) {
@@ -958,18 +958,21 @@ class _AdaptiveFitThumbnailImageState
       return;
     }
     final stream = provider.resolve(createLocalImageConfiguration(context));
-    final listener = ImageStreamListener((ImageInfo info, bool _) {
-      final width = info.image.width.toDouble();
-      final height = info.image.height.toDouble();
-      if (!mounted || width <= 0 || height <= 0) {
-        return;
-      }
-      final ratio = width / height;
-      if (_aspectRatio == ratio) {
-        return;
-      }
-      setState(() => _aspectRatio = ratio);
-    });
+    final listener = ImageStreamListener(
+      (ImageInfo info, bool _) {
+        final width = info.image.width.toDouble();
+        final height = info.image.height.toDouble();
+        if (!mounted || width <= 0 || height <= 0) {
+          return;
+        }
+        final ratio = width / height;
+        if (_aspectRatio == ratio) {
+          return;
+        }
+        setState(() => _aspectRatio = ratio);
+      },
+      onError: (Object error, StackTrace? stackTrace) {},
+    );
     stream.addListener(listener);
     _imageStream = stream;
     _imageStreamListener = listener;

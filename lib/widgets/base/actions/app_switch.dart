@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 /// 开关的配色变体。
 enum AppSwitchVariant {
@@ -64,38 +64,29 @@ class AppSwitch extends StatelessWidget {
       toggled: value,
       enabled: enabled,
       button: true,
-      child: AppClickable(
+      child: AppInteractiveSurface(
         enabled: enabled,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: enabled
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
+        onTap: enabled ? () => onChanged!(!value) : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          width: trackWidth,
+          height: trackHeight,
+          padding: EdgeInsets.all(thumbInset),
+          decoration: BoxDecoration(
+            color: trackColor,
             borderRadius: context.appRadius.pillBorder,
-            onTap: enabled ? () => onChanged!(!value) : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              curve: Curves.easeOut,
-              width: trackWidth,
-              height: trackHeight,
-              padding: EdgeInsets.all(thumbInset),
+          ),
+          child: AnimatedAlign(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: thumbDiameter,
+              height: thumbDiameter,
               decoration: BoxDecoration(
-                color: trackColor,
-                borderRadius: context.appRadius.pillBorder,
-              ),
-              child: AnimatedAlign(
-                duration: const Duration(milliseconds: 120),
-                curve: Curves.easeOut,
-                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  width: thumbDiameter,
-                  height: thumbDiameter,
-                  decoration: BoxDecoration(
-                    color: thumbColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+                color: thumbColor,
+                shape: BoxShape.circle,
               ),
             ),
           ),

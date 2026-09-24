@@ -162,6 +162,9 @@ void main() {
         find.byKey(const Key('movie-subscriptions-refresh-button')),
       );
       await tester.pumpAndSettle();
+      // 刷新后的新行会拉起 /download-tasks。水波纹移除后 tap 不再产生涟漪
+      // 动画，pumpAndSettle 的帧数变少，需显式 pump 一帧让该请求落地。
+      await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('ABP-201'), findsOneWidget);
       expect(_listRequests(adapter).length, 5);
       expect(tester.takeException(), isNull);

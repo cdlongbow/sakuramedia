@@ -56,10 +56,12 @@ void main() {
     );
 
     final material = tester.widget<Material>(
-      find.descendant(
-        of: find.byType(AppIconButton),
-        matching: find.byType(Material),
-      ),
+      find
+          .descendant(
+            of: find.byType(AppIconButton),
+            matching: find.byType(Material),
+          )
+          .first,
     );
     final shape = material.shape! as RoundedRectangleBorder;
     final iconTheme = tester.widget<IconTheme>(
@@ -92,10 +94,12 @@ void main() {
     );
 
     final material = tester.widget<Material>(
-      find.descendant(
-        of: find.byType(AppIconButton),
-        matching: find.byType(Material),
-      ),
+      find
+          .descendant(
+            of: find.byType(AppIconButton),
+            matching: find.byType(Material),
+          )
+          .first,
     );
     final shape = material.shape! as RoundedRectangleBorder;
     final iconTheme = tester.widget<IconTheme>(

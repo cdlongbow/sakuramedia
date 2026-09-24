@@ -637,7 +637,7 @@ void main() {
   );
 
   testWidgets(
-    'movie summary card plays selection haptic on card-level heart tap',
+    'movie summary card plays confirm haptic on card-level heart tap',
     (WidgetTester tester) async {
       final calls = <MethodCall>[];
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(

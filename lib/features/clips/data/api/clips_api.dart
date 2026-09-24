@@ -38,13 +38,18 @@ class ClipsApi {
     int page = 1,
     int pageSize = 20,
     String sort = 'created_at:desc',
+    String? keyword,
+    int? excludeCollectionId,
   }) async {
+    final normalizedKeyword = keyword?.trim() ?? '';
     final response = await _apiClient.get(
       '/media-clips',
       queryParameters: <String, dynamic>{
         'page': page,
         'page_size': pageSize,
         'sort': sort,
+        if (normalizedKeyword.isNotEmpty) 'keyword': normalizedKeyword,
+        'exclude_collection_id': ?excludeCollectionId,
       },
     );
     return PaginatedResponseDto<MediaClipDto>.fromJson(

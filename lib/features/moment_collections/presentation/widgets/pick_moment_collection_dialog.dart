@@ -7,41 +7,29 @@ import 'package:sakuramedia/features/moment_collections/presentation/widgets/mom
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
-
-enum PickMomentCollectionPresentation { dialog, bottomDrawer }
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 /// 批量加入合集时选择一个目标合集。实际成员写入由调用方执行。
 Future<MomentCollectionDto?> showPickMomentCollectionDialog(
   BuildContext context, {
-  PickMomentCollectionPresentation presentation =
-      PickMomentCollectionPresentation.dialog,
+  int? excludedCollectionId,
 }) {
-  switch (presentation) {
-    case PickMomentCollectionPresentation.dialog:
-      return showDialog<MomentCollectionDto>(
-        context: context,
-        builder: (_) => const _PickMomentCollectionDialog(),
-      );
-    case PickMomentCollectionPresentation.bottomDrawer:
-      return showAppBottomDrawer<MomentCollectionDto>(
-        context: context,
-        drawerKey: const Key('pick-moment-collection-bottom-sheet'),
-        maxHeightFactor: 0.7,
-        builder: (_) => const _PickMomentCollectionDialog(
-          presentation: PickMomentCollectionPresentation.bottomDrawer,
-        ),
-      );
-  }
+  return showAppAdaptiveModal<MomentCollectionDto>(
+    context: context,
+    drawerKey: const Key('pick-moment-collection-bottom-sheet'),
+    desktopWidth: 420,
+    mobileMaxHeightFactor: 0.7,
+    builder: (_) => _PickMomentCollectionDialog(
+      excludedCollectionId: excludedCollectionId,
+    ),
+  );
 }
 
 class _PickMomentCollectionDialog extends ConsumerStatefulWidget {
-  const _PickMomentCollectionDialog({
-    this.presentation = PickMomentCollectionPresentation.dialog,
-  });
+  const _PickMomentCollectionDialog({this.excludedCollectionId});
 
-  final PickMomentCollectionPresentation presentation;
+  /// 从合集详情页发起「移到另一合集」时传入当前合集 id，列表会把它过滤掉。
+  final int? excludedCollectionId;
 
   @override
   ConsumerState<_PickMomentCollectionDialog> createState() =>
@@ -51,15 +39,10 @@ class _PickMomentCollectionDialog extends ConsumerStatefulWidget {
 class _PickMomentCollectionDialogState
     extends ConsumerState<_PickMomentCollectionDialog> {
   bool get _isBottomDrawer =>
-      widget.presentation == PickMomentCollectionPresentation.bottomDrawer;
+      AppAdaptiveModalShellScope.maybeIsDrawer(context);
 
   Future<void> _createAndPick() async {
-    final created = await showMomentCollectionEditor(
-      context,
-      presentation: _isBottomDrawer
-          ? MomentCollectionEditPresentation.bottomDrawer
-          : MomentCollectionEditPresentation.dialog,
-    );
+    final created = await showMomentCollectionEditor(context);
     if (created != null && mounted) {
       Navigator.of(context).pop(created);
     }
@@ -68,9 +51,7 @@ class _PickMomentCollectionDialogState
   @override
   Widget build(BuildContext context) {
     final collectionsAsync = ref.watch(momentCollectionsOverviewProvider);
-    final content = _buildContent(context, collectionsAsync);
-    if (_isBottomDrawer) return content;
-    return AppDesktopDialog(width: 420, child: content);
+    return _buildContent(context, collectionsAsync);
   }
 
   Widget _buildContent(
@@ -134,7 +115,15 @@ class _PickMomentCollectionDialogState
         message: apiErrorMessage(collectionsAsync.error!, fallback: '合集加载失败'),
       );
     }
-    final collections = collectionsAsync.value ?? const <MomentCollectionDto>[];
+    final allCollections =
+        collectionsAsync.value ?? const <MomentCollectionDto>[];
+    final excluded = widget.excludedCollectionId;
+    final collections =
+        excluded == null
+            ? allCollections
+            : allCollections
+                .where((collection) => collection.id != excluded)
+                .toList(growable: false);
     if (collections.isEmpty) {
       return const AppEmptyState(message: '暂无合集，点击下方新建');
     }

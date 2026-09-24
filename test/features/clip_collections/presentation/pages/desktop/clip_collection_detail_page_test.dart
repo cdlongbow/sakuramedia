@@ -209,4 +209,22 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('桌面点按成员弹动作弹层，不再直接开播', (WidgetTester tester) async {
+    enqueueInitialLoad();
+    await pumpPage(tester);
+
+    await tester.tap(find.byKey(const ValueKey<int>(1)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('clip-actions-dialog')), findsOneWidget);
+    expect(find.byKey(const Key('clip-action-play')), findsOneWidget);
+    expect(find.byKey(const Key('clip-action-movie')), findsOneWidget);
+    expect(
+      find.byKey(const Key('clip-action-remove-from-collection')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('clip-action-delete')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

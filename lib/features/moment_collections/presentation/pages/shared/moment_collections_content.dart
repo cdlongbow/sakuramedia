@@ -14,9 +14,12 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/domain/collections/collection_cover_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
+/// 时刻合集列表内容：桌面网格页 / 移动子页两套壳共用同一份取数与卡片逻辑。
 class MomentCollectionsContent extends ConsumerWidget {
   const MomentCollectionsContent({
     super.key,
@@ -37,16 +40,21 @@ class MomentCollectionsContent extends ConsumerWidget {
       }
     });
     final async = ref.watch(momentCollectionsOverviewProvider);
-    final body = _buildBody(context, ref, async);
     if (isMobile) {
       return ColoredBox(
         key: const Key('mobile-moment-collections-page'),
         color: context.appColors.surfaceCard,
         child: Column(
           children: [
-            Expanded(child: body),
-            Padding(
+            Expanded(child: _buildMobileBody(context, ref, async)),
+            Container(
               padding: EdgeInsets.all(context.appSpacing.md),
+              decoration: BoxDecoration(
+                color: context.appColors.surfaceCard,
+                border: Border(
+                  top: BorderSide(color: context.appColors.divider),
+                ),
+              ),
               child: SizedBox(
                 width: double.infinity,
                 child: AppButton(
@@ -62,88 +70,147 @@ class MomentCollectionsContent extends ConsumerWidget {
         ),
       );
     }
-    return ColoredBox(
-      color: context.appColors.surfaceElevated,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '时刻合集',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s18,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
+    return AppPageRefreshScope(
+      onRefresh: ref.read(momentCollectionsOverviewProvider.notifier).refresh,
+      child: ColoredBox(
+        color: context.appColors.surfaceElevated,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '时刻合集',
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s18,
+                    weight: AppTextWeight.semibold,
+                    tone: AppTextTone.primary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              AppTextButton(
-                key: const Key('moment-collections-create-button'),
-                label: '新建合集',
-                size: AppTextButtonSize.small,
-                onPressed: () => _edit(context, ref),
-              ),
-            ],
-          ),
-          SizedBox(height: context.appSpacing.lg),
-          Expanded(child: body),
-        ],
+                const Spacer(),
+                AppTextButton(
+                  key: const Key('moment-collections-create-button'),
+                  label: '新建合集',
+                  size: AppTextButtonSize.small,
+                  onPressed: () => _edit(context, ref),
+                ),
+              ],
+            ),
+            SizedBox(height: context.appSpacing.lg),
+            Expanded(child: _buildDesktopBody(context, ref, async)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBody(
+  Widget _buildDesktopBody(
     BuildContext context,
     WidgetRef ref,
     AsyncValue<List<MomentCollectionDto>> async,
   ) {
-    final collections = async.value ?? const <MomentCollectionDto>[];
+    final spacing = context.appSpacing;
     if (async.isLoading && async.value == null) {
-      return const Center(child: CircularProgressIndicator.adaptive());
-    }
-    if (async.hasError && collections.isEmpty) {
-      return AppEmptyState(
-        message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
-        retryKey: const Key('moment-collections-retry-button'),
-        onRetry: () =>
-            ref.read(momentCollectionsOverviewProvider.notifier).refresh(),
+      return GridView.builder(
+        key: const Key('moment-collections-loading'),
+        padding: EdgeInsets.only(bottom: spacing.lg),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 240,
+          mainAxisSpacing: spacing.md,
+          crossAxisSpacing: spacing.md,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: 8,
+        itemBuilder: (_, _) => const CollectionCardSkeleton(),
       );
     }
-    if (collections.isEmpty) {
-      return const AppEmptyState(message: '还没有时刻合集，创建一个开始整理吧');
+    if (async.hasError && async.value == null) {
+      return AppEmptyState(
+        message: apiErrorMessage(
+          async.error!,
+          fallback: '合集暂时无法加载，请稍后重试',
+        ),
+      );
     }
-    final grid = SliverGrid(
+    final collections = async.value ?? const <MomentCollectionDto>[];
+    if (collections.isEmpty) {
+      return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
+    }
+    return GridView.builder(
+      key: const Key('moment-collections-grid'),
+      padding: EdgeInsets.only(bottom: spacing.lg),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: isMobile ? 200 : 240,
-        mainAxisSpacing: context.appSpacing.md,
-        crossAxisSpacing: context.appSpacing.md,
+        maxCrossAxisExtent: 240,
+        mainAxisSpacing: spacing.md,
+        crossAxisSpacing: spacing.md,
         childAspectRatio: 1.2,
       ),
-      delegate: SliverChildBuilderDelegate((context, index) {
+      itemCount: collections.length,
+      itemBuilder: (context, index) {
         final collection = collections[index];
-        return CollectionCoverCard(
-          tapKey: Key('moment-collection-card-${collection.id}'),
-          menuKey: Key('moment-collection-more-${collection.id}'),
-          title: collection.name,
-          count: collection.pointCount,
-          coverUrl: collection.coverImage?.bestAvailableUrl,
-          placeholderIcon: Icons.bookmarks_outlined,
+        return CollectionCard.moment(
+          collection: collection,
           onTap: () => onOpenDetail(collection.id),
           onEdit: () => _edit(context, ref, collection: collection),
           onDelete: () => _delete(context, ref, collection),
         );
-      }, childCount: collections.length),
+      },
     );
+  }
+
+  Widget _buildMobileBody(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<MomentCollectionDto>> async,
+  ) {
+    if (async.isLoading && async.value == null) {
+      return const AppMobileSkeletonList(
+        key: Key('mobile-moment-collections-loading'),
+      );
+    }
+    final spacing = context.appSpacing;
+    final collections = async.value ?? const <MomentCollectionDto>[];
     return AppAdaptiveRefreshScrollView(
       key: const Key('moment-collections-scroll'),
       onRefresh: ref.read(momentCollectionsOverviewProvider.notifier).refresh,
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.only(bottom: context.appSpacing.lg),
-          sliver: grid,
-        ),
+      slivers: <Widget>[
+        if (async.hasError && collections.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(
+              message: apiErrorMessage(
+                async.error!,
+                fallback: '合集暂时无法加载，请稍后重试',
+              ),
+            ),
+          )
+        else if (collections.isEmpty)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+          )
+        else
+          SliverPadding(
+            padding: EdgeInsets.symmetric(vertical: spacing.md),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
+                mainAxisSpacing: spacing.md,
+                crossAxisSpacing: spacing.sm,
+                childAspectRatio: 1.25,
+              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final collection = collections[index];
+                return CollectionCard.moment(
+                  collection: collection,
+                  onTap: () => onOpenDetail(collection.id),
+                  onEdit: () => _edit(context, ref, collection: collection),
+                  onDelete: () => _delete(context, ref, collection),
+                );
+              }, childCount: collections.length),
+            ),
+          ),
       ],
     );
   }
@@ -156,15 +223,12 @@ class MomentCollectionsContent extends ConsumerWidget {
     final result = await showMomentCollectionEditor(
       context,
       collection: collection,
-      presentation: isMobile
-          ? MomentCollectionEditPresentation.bottomDrawer
-          : MomentCollectionEditPresentation.dialog,
     );
     if (result == null) return;
     final notifier = ref.read(momentCollectionsOverviewProvider.notifier);
     if (collection == null) {
       notifier.insertCollection(result);
-      showToast('已创建时刻合集');
+      showToast('已创建合集');
     } else {
       notifier.replaceCollection(result);
       showToast('已保存');
@@ -176,14 +240,17 @@ class MomentCollectionsContent extends ConsumerWidget {
     WidgetRef ref,
     MomentCollectionDto collection,
   ) async {
+    final name =
+        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除时刻合集',
-      message: '确认删除“${collection.name}”？合集中的时刻不会被删除。',
+      title: '删除合集',
+      message: '确认删除$name？只会删除合集本身，合集内的时刻不会被删除。',
       danger: true,
       confirmLabel: '删除',
+      confirmKey: const Key('moment-collection-delete-confirm-button'),
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       await ref
           .read(momentCollectionsApiProvider)
@@ -191,7 +258,7 @@ class MomentCollectionsContent extends ConsumerWidget {
       ref
           .read(momentCollectionsOverviewProvider.notifier)
           .removeCollection(collection.id);
-      showToast('已删除时刻合集');
+      showToast('已删除合集');
     } catch (error) {
       showToast(apiErrorMessage(error, fallback: '删除失败，请重试'));
     }

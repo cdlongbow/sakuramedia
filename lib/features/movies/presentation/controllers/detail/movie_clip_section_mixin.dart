@@ -4,12 +4,12 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/domain/clips/clip_player_dialog.dart';
 
 /// 影片详情页「切片」区块的交互动作集合，供桌面 / 移动两端详情页 `with` 复用，
 /// 避免播放 / 改名 / 删除 / 加入合集这套 handler 在两端逐行重复。
@@ -23,8 +23,12 @@ mixin MovieClipSectionMixin<T extends ConsumerStatefulWidget>
   /// 子类暴露本页的影片番号（用于取对应 provider 实例）。
   String get movieNumber;
 
-  void playMovieClip(MediaClipDto clip) {
-    showClipPlayerDialog(context, streamUrl: clip.streamUrl, title: clip.title);
+  Future<void> playMovieClip(MediaClipDto clip) {
+    return launchClipPlayback(
+      context,
+      streamUrl: clip.streamUrl,
+      title: clip.title,
+    );
   }
 
   Future<void> renameMovieClip(MediaClipDto clip) async {

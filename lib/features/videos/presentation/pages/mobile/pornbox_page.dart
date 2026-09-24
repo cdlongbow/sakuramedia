@@ -11,7 +11,6 @@ import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
@@ -36,6 +35,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -268,15 +268,16 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (selected.isEmpty) {
       return;
     }
-    final confirmed = await showMobileClipConfirmDrawer(
+    final confirmed = await showAppConfirmDialog(
       context,
       title: '删除视频',
       message: '确认删除选中的 ${selected.length} 个视频？该操作不可恢复。',
+      danger: true,
       confirmLabel: '删除',
-      drawerKey: const Key('mobile-videos-batch-delete-drawer'),
-      confirmButtonKey: const Key('mobile-videos-batch-delete-confirm-button'),
+      dialogKey: const Key('mobile-videos-batch-delete-drawer'),
+      confirmKey: const Key('mobile-videos-batch-delete-confirm-button'),
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     final api = ref.read(videosApiProvider);
@@ -454,7 +455,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   ) {
     final spacing = context.appSpacing;
     if (async.hasError && collections.isEmpty) {
-      return _HintBox(
+      return CollectionHintBox(
         message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
@@ -467,7 +468,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
       );
     }
     if (collections.isEmpty) {
-      return const _HintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
+      return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
     }
     return SizedBox(
       // CollectionCoverCard 内容下限：16:9 封面 + sm padding + s14 标题 + 边框 ≈ 105，
@@ -747,35 +748,6 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
           onPressed: hasSelection ? _batchDelete : null,
         ),
       ],
-    );
-  }
-}
-
-class _HintBox extends StatelessWidget {
-  const _HintBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: context.appSpacing.md),
-      padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
-      ),
     );
   }
 }

@@ -14,6 +14,7 @@
 - `AppSkeletonBlock`、`AppMobileSkeletonCard`、`AppMobileSkeletonList`：移动页面和局部占位。
 - `AppCoverCardSkeleton`：封面网格占位。
 - `AppLeftCoverCardSkeleton`、`AppLeftCoverCardSkeletonList`：左封面卡列表占位，复用 `AppLeftCoverCard` 的壳与尺寸 token；真实卡行内有固定结构（如底部操作行）时由调用方传 `body`。
+- `AppPickerOptionSkeletonList`：选择器选项行的首屏骨架（复选框位 + 72×16:9 封面 + 两行文案），与选择器选项行同形。
 - `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading，随平台自适应。
 - `AppFilterUpdateBar`：筛选请求更新中的行内反馈。
 

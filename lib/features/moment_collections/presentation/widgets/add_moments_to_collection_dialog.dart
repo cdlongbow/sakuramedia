@@ -4,71 +4,84 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_picker_option_skeleton_list.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_header.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
-/// 在合集详情里弹出「添加切片」选择器：默认只看未加入，勾选即时加入 / 移出。
+/// 时刻选择器的内容类型：后端 `kind` 支持 jav / video / all。
+enum _MomentKindOption {
+  all(label: '全部', apiValue: 'all'),
+  jav(label: 'JAV', apiValue: 'jav'),
+  video(label: '视频', apiValue: 'video');
+
+  const _MomentKindOption({required this.label, required this.apiValue});
+
+  final String label;
+  final String apiValue;
+}
+
+/// 在合集详情里弹出「添加时刻」选择器：默认只看未加入，勾选即时加入 / 移出。
 ///
 /// 关闭方式不固定（X / 点遮罩 / 抽屉「完成」），不依赖返回值；调用方关闭后刷新
 /// 合集详情即可。桌面端用居中弹窗，移动端用底部抽屉（`auto` 读 `AppPlatformScope`）。
-Future<void> showAddClipsToCollectionDialog(
+Future<void> showAddMomentsToCollectionDialog(
   BuildContext context, {
   required int collectionId,
-  required Set<int> memberClipIds,
+  required Set<int> memberPointIds,
 }) {
   return showAppAdaptiveModal<void>(
     context: context,
-    dialogKey: const Key('add-clips-to-collection-dialog'),
-    drawerKey: const Key('add-clips-to-collection-bottom-sheet'),
+    dialogKey: const Key('add-moments-to-collection-dialog'),
+    drawerKey: const Key('add-moments-to-collection-bottom-sheet'),
     desktopWidth: context.appComponentTokens.playlistDialogWidth,
     mobileHeightFactor: 0.8,
-    builder: (_) => AddClipsToCollectionDialog(
+    builder: (_) => AddMomentsToCollectionDialog(
       collectionId: collectionId,
-      memberClipIds: memberClipIds,
+      memberPointIds: memberPointIds,
     ),
   );
 }
 
-class AddClipsToCollectionDialog extends ConsumerStatefulWidget {
-  const AddClipsToCollectionDialog({
+class AddMomentsToCollectionDialog extends ConsumerStatefulWidget {
+  const AddMomentsToCollectionDialog({
     super.key,
     required this.collectionId,
-    required this.memberClipIds,
+    required this.memberPointIds,
   });
 
   final int collectionId;
-  final Set<int> memberClipIds;
+  final Set<int> memberPointIds;
 
   @override
-  ConsumerState<AddClipsToCollectionDialog> createState() =>
-      _AddClipsToCollectionDialogState();
+  ConsumerState<AddMomentsToCollectionDialog> createState() =>
+      _AddMomentsToCollectionDialogState();
 }
 
-class _AddClipsToCollectionDialogState
-    extends ConsumerState<AddClipsToCollectionDialog> {
+class _AddMomentsToCollectionDialogState
+    extends ConsumerState<AddMomentsToCollectionDialog> {
   static const int _pageSize = 24;
   static const Duration _searchDebounce = Duration(milliseconds: 300);
 
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  final List<MediaClipDto> _clips = <MediaClipDto>[];
+  final List<MediaPointListItemDto> _points = <MediaPointListItemDto>[];
   late final Set<int> _memberIds;
   final Set<int> _updatingIds = <int>{};
   Timer? _searchTimer;
   bool _isLoading = true;
   bool _isLoadingMore = false;
   bool _onlyUnadded = true;
+  _MomentKindOption _kind = _MomentKindOption.all;
   String _keyword = '';
   int _nextOffset = 0;
   int _total = 0;
@@ -82,7 +95,7 @@ class _AddClipsToCollectionDialogState
   @override
   void initState() {
     super.initState();
-    _memberIds = <int>{...widget.memberClipIds};
+    _memberIds = <int>{...widget.memberPointIds};
     _scrollController.addListener(_onScroll);
     _loadInitial();
   }
@@ -120,7 +133,7 @@ class _AddClipsToCollectionDialogState
         return;
       }
       setState(() {
-        _clips
+        _points
           ..clear()
           ..addAll(result.items);
         _nextOffset = result.items.length;
@@ -132,7 +145,7 @@ class _AddClipsToCollectionDialogState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '切片加载失败');
+        _errorMessage = apiErrorMessage(error, fallback: '时刻加载失败');
         _isLoading = false;
       });
     }
@@ -154,20 +167,20 @@ class _AddClipsToCollectionDialogState
         return;
       }
       setState(() {
-        final loadedIds = _clips.map((clip) => clip.clipId).toSet();
+        final loadedIds = _points.map((point) => point.pointId).toSet();
         final incoming = result.items
             .skip(skip)
-            .where((clip) => !loadedIds.contains(clip.clipId));
-        _clips.addAll(incoming);
+            .where((point) => !loadedIds.contains(point.pointId));
+        _points.addAll(incoming);
         _nextOffset += math.max(0, result.items.length - skip);
         _total = result.total;
       });
     } catch (error) {
       // 已有数据时保持静默、下次滚动可重试；列表为空说明是「加入后自动续拉」，
       // 必须落错误态，否则空列表会反复触发续拉、请求打不停。
-      if (mounted && seq == _requestSeq && _clips.isEmpty) {
+      if (mounted && seq == _requestSeq && _points.isEmpty) {
         setState(() {
-          _errorMessage = apiErrorMessage(error, fallback: '切片加载失败');
+          _errorMessage = apiErrorMessage(error, fallback: '时刻加载失败');
         });
       }
     } finally {
@@ -177,12 +190,15 @@ class _AddClipsToCollectionDialogState
     }
   }
 
-  Future<PaginatedResponseDto<MediaClipDto>> _fetch({required int page}) {
+  Future<PaginatedResponseDto<MediaPointListItemDto>> _fetch({
+    required int page,
+  }) {
     return ref
-        .read(clipsApiProvider)
-        .getMyClips(
+        .read(mediaApiProvider)
+        .getGlobalMediaPoints(
           page: page,
           pageSize: _pageSize,
+          kind: _kind.apiValue,
           keyword: _keyword.isEmpty ? null : _keyword,
           excludeCollectionId: _onlyUnadded ? widget.collectionId : null,
         );
@@ -198,6 +214,14 @@ class _AddClipsToCollectionDialogState
       setState(() => _keyword = next);
       _loadInitial();
     });
+  }
+
+  void _selectKind(_MomentKindOption kind) {
+    if (kind == _kind) {
+      return;
+    }
+    setState(() => _kind = kind);
+    _loadInitial();
   }
 
   void _setOnlyUnadded(bool value) {
@@ -217,29 +241,21 @@ class _AddClipsToCollectionDialogState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppPickerHeader(
-          title: '添加切片',
-          countLabel: _isLoading && _clips.isEmpty
+          title: '添加时刻',
+          countLabel: _isLoading && _points.isEmpty
               ? null
               : _onlyUnadded
               ? '已加入 ${_memberIds.length} · 可添加 $_total'
               : '已加入 ${_memberIds.length} · 共 $_total',
-          countKey: const Key('add-clips-count'),
+          countKey: const Key('add-moments-count'),
           searchController: _searchController,
-          searchFieldKey: const Key('add-clips-search-field'),
+          searchFieldKey: const Key('add-moments-search-field'),
           searchHintText: '搜番号 / 标题',
-          clearSearchKey: const Key('add-clips-search-clear'),
+          clearSearchKey: const Key('add-moments-search-clear'),
           onSearchChanged: _onSearchChanged,
-          chips: <Widget>[
-            AppTextButton(
-              key: const Key('add-clips-only-unadded-chip'),
-              label: '仅看未加入',
-              size: AppTextButtonSize.xSmall,
-              isSelected: _onlyUnadded,
-              onPressed: () => _setOnlyUnadded(!_onlyUnadded),
-            ),
-          ],
+          chips: _buildFilterChips(context),
           onDone: _isDrawer ? () => Navigator.of(context).pop() : null,
-          doneKey: const Key('add-clips-done-button'),
+          doneKey: const Key('add-moments-done-button'),
         ),
         SizedBox(height: spacing.lg),
         // 抽屉高度固定，列表占满剩余空间；弹窗按内容收缩。
@@ -248,23 +264,49 @@ class _AddClipsToCollectionDialogState
     );
   }
 
+  List<Widget> _buildFilterChips(BuildContext context) {
+    return <Widget>[
+      AppTextButton(
+        key: const Key('add-moments-only-unadded-chip'),
+        label: '仅看未加入',
+        size: AppTextButtonSize.xSmall,
+        isSelected: _onlyUnadded,
+        onPressed: () => _setOnlyUnadded(!_onlyUnadded),
+      ),
+      Container(
+        width: 1,
+        height: context.appComponentTokens.buttonHeightXs,
+        color: context.appColors.divider,
+      ),
+      for (final kind in _MomentKindOption.values)
+        AppTextButton(
+          key: Key('add-moments-kind-${kind.apiValue}'),
+          label: kind.label,
+          size: AppTextButtonSize.xSmall,
+          isSelected: _kind == kind,
+          onPressed: () => _selectKind(kind),
+        ),
+    ];
+  }
+
   Widget _buildBody(BuildContext context) {
-    if (_isLoading && _clips.isEmpty) {
+    if (_isLoading && _points.isEmpty) {
       return Padding(
         padding: EdgeInsets.only(top: context.appSpacing.xs),
-        child: AppPickerOptionSkeletonList(key: Key('add-clips-loading')),
+        child: AppPickerOptionSkeletonList(key: Key('add-moments-loading')),
       );
     }
     if (_errorMessage != null) {
       return AppEmptyState(
-        key: const Key('add-clips-error'),
+        key: const Key('add-moments-error'),
         icon: Icons.cloud_off_rounded,
         message: _errorMessage!,
         onRetry: _loadInitial,
       );
     }
-    if (_clips.isEmpty) {
+    if (_points.isEmpty) {
       if (_hasMore) {
+        // 已加载项被「加入后移除」清空但服务端还有候选，继续取下一页。
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _loadMore();
@@ -280,14 +322,14 @@ class _AddClipsToCollectionDialogState
 
     final spacing = context.appSpacing;
     final list = ListView.separated(
-      key: const Key('add-clips-list'),
+      key: const Key('add-moments-list'),
       controller: _scrollController,
       // 抽屉里由外层 Expanded 限高，无需 shrinkWrap；弹窗里靠 shrinkWrap + 限高。
       shrinkWrap: !_isDrawer,
-      itemCount: _clips.length + (_hasMore ? 1 : 0),
+      itemCount: _points.length + (_hasMore ? 1 : 0),
       separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
       itemBuilder: (context, index) {
-        if (index >= _clips.length) {
+        if (index >= _points.length) {
           return const Padding(
             padding: EdgeInsets.all(12),
             child: Center(
@@ -299,7 +341,7 @@ class _AddClipsToCollectionDialogState
             ),
           );
         }
-        return _buildClipOption(context, _clips[index]);
+        return _buildPointOption(context, _points[index]);
       },
     );
     if (_isDrawer) {
@@ -314,84 +356,88 @@ class _AddClipsToCollectionDialogState
   Widget _buildEmptyState(BuildContext context) {
     if (_keyword.isNotEmpty) {
       return const AppEmptyState(
-        key: Key('add-clips-empty-search'),
+        key: Key('add-moments-empty-search'),
         icon: Icons.search_off_rounded,
-        title: '没有匹配的切片',
+        title: '没有匹配的时刻',
         message: '换个番号或关键词试试',
+      );
+    }
+    if (_kind != _MomentKindOption.all) {
+      return AppEmptyState(
+        key: const Key('add-moments-empty-kind'),
+        icon: Icons.search_off_rounded,
+        title: '这组内容里没有时刻',
+        message: '试试其他的内容类型',
       );
     }
     if (_onlyUnadded) {
       return AppEmptyState(
-        key: const Key('add-clips-empty-all-added'),
+        key: const Key('add-moments-empty-all-added'),
         icon: Icons.playlist_add_check_rounded,
         title: '可添加的都已加入',
-        message: '这个合集已经收齐了，切到「全部」可以管理已加入的切片',
+        message: '这个合集已经收齐了，切到「全部」可以管理已加入的时刻',
         retryLabel: '查看全部',
-        retryKey: const Key('add-clips-show-all-button'),
+        retryKey: const Key('add-moments-show-all-button'),
         onRetry: () => _setOnlyUnadded(false),
       );
     }
     return const AppEmptyState(
-      key: Key('add-clips-empty-library'),
-      icon: Icons.movie_creation_outlined,
-      title: '还没有切片',
+      key: Key('add-moments-empty-library'),
+      icon: Icons.bookmark_border_rounded,
+      title: '还没有时刻',
       message: '去播放器圈选生成吧',
     );
   }
 
-  Widget _buildClipOption(BuildContext context, MediaClipDto clip) {
-    final selected = _memberIds.contains(clip.clipId);
+  Widget _buildPointOption(BuildContext context, MediaPointListItemDto point) {
+    final selected = _memberIds.contains(point.pointId);
     final isAnyUpdating = _updatingIds.isNotEmpty;
-    final coverUrl = clip.coverImage?.bestAvailableUrl;
-    final title = clip.title.trim();
-    final metaParts = <String>[
-      if (clip.movieNumber != null && clip.movieNumber!.isNotEmpty)
-        clip.movieNumber!
-      else
-        '无番号',
-      formatMediaTimecode(clip.durationSeconds),
-    ];
+    final coverUrl = point.image?.bestAvailableUrl;
+    final title =
+        point.movieNumber?.isNotEmpty == true
+            ? point.movieNumber!
+            : (point.isVideo ? '视频 #${point.videoItemId}' : '时刻 #${point.pointId}');
 
     return AppPickerOptionTile.cover(
       selected: selected,
       enabled: !isAnyUpdating,
-      onTap: () => _toggle(clip),
-      title: title.isEmpty ? '未命名切片' : title,
-      subtitle: metaParts.join(' · '),
+      onTap: () => _toggle(point),
+      title: title,
+      subtitle: formatMediaTimecode(point.offsetSeconds),
       coverUrl: coverUrl,
-      optionKey: Key('add-clips-option-${clip.clipId}'),
-      checkboxKey: Key('add-clips-checkbox-${clip.clipId}'),
+      optionKey: Key('add-moments-option-${point.pointId}'),
+      checkboxKey: Key('add-moments-checkbox-${point.pointId}'),
     );
   }
 
-  Future<void> _toggle(MediaClipDto clip) async {
+  Future<void> _toggle(MediaPointListItemDto point) async {
     if (_updatingIds.isNotEmpty) {
       return;
     }
-    final api = ref.read(clipCollectionsApiProvider);
-    final isMember = _memberIds.contains(clip.clipId);
+    final api = ref.read(momentCollectionsApiProvider);
+    final isMember = _memberIds.contains(point.pointId);
     setState(() {
-      _updatingIds.add(clip.clipId);
+      _updatingIds.add(point.pointId);
       if (isMember) {
-        _memberIds.remove(clip.clipId);
+        _memberIds.remove(point.pointId);
       } else {
-        _memberIds.add(clip.clipId);
+        _memberIds.add(point.pointId);
       }
     });
     try {
       if (isMember) {
-        await api.removeClipFromCollection(
+        await api.removePoint(
           collectionId: widget.collectionId,
-          clipId: clip.clipId,
+          pointId: point.pointId,
         );
         if (!mounted) {
           return;
         }
         showToast('已移出');
       } else {
-        await api.addClipToCollection(
+        await api.addPoint(
           collectionId: widget.collectionId,
-          clipId: clip.clipId,
+          pointId: point.pointId,
         );
         if (!mounted) {
           return;
@@ -400,7 +446,7 @@ class _AddClipsToCollectionDialogState
           // 仅未加入视图里"加入即出池"：本地移出的这一条同时从服务端过滤集消失，
           // 已消费游标和总数都要回退，否则下一页会从错位处开始、漏掉边界项。
           if (_onlyUnadded) {
-            _clips.removeWhere((item) => item.clipId == clip.clipId);
+            _points.removeWhere((item) => item.pointId == point.pointId);
             _total = math.max(0, _total - 1);
             _nextOffset = math.max(0, _nextOffset - 1);
           }
@@ -413,9 +459,9 @@ class _AddClipsToCollectionDialogState
       }
       setState(() {
         if (isMember) {
-          _memberIds.add(clip.clipId);
+          _memberIds.add(point.pointId);
         } else {
-          _memberIds.remove(clip.clipId);
+          _memberIds.remove(point.pointId);
         }
       });
       showToast(
@@ -423,7 +469,7 @@ class _AddClipsToCollectionDialogState
       );
     } finally {
       if (mounted) {
-        setState(() => _updatingIds.remove(clip.clipId));
+        setState(() => _updatingIds.remove(point.pointId));
       }
     }
   }

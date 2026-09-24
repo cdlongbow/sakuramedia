@@ -36,7 +36,7 @@ import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
-import 'package:sakuramedia/widgets/domain/collections/collection_cover_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
@@ -390,7 +390,7 @@ class MomentsContent extends HookConsumerWidget {
     final itemWidth = isMobile ? 168.0 : 210.0;
     final itemSpacing = isMobile ? spacing.sm : spacing.md;
     if (collectionsAsync.hasError && collections.isEmpty) {
-      return _MomentCollectionsHintBox(
+      return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
           fallback: '合集暂时无法加载，请稍后重试',
@@ -406,7 +406,7 @@ class MomentsContent extends HookConsumerWidget {
       );
     }
     if (collections.isEmpty) {
-      return const _MomentCollectionsHintBox(
+      return const CollectionHintBox(
         message: '还没有合集，点「新建」把喜欢的时刻攒成一个合集吧',
       );
     }
@@ -421,12 +421,8 @@ class MomentsContent extends HookConsumerWidget {
           final collection = collections[index];
           return SizedBox(
             width: itemWidth,
-            child: CollectionCoverCard(
-              tapKey: Key('moment-collection-card-${collection.id}'),
-              title: collection.name,
-              count: collection.pointCount,
-              coverUrl: collection.coverImage?.bestAvailableUrl,
-              placeholderIcon: Icons.bookmarks_outlined,
+            child: CollectionCard.moment(
+              collection: collection,
               onTap: () => onOpenCollectionDetail?.call(collection.id),
             ),
           );
@@ -436,12 +432,7 @@ class MomentsContent extends HookConsumerWidget {
   }
 
   Future<void> _createCollection(BuildContext context, WidgetRef ref) async {
-    final created = await showMomentCollectionEditor(
-      context,
-      presentation: useMobileFilterDrawer
-          ? MomentCollectionEditPresentation.bottomDrawer
-          : MomentCollectionEditPresentation.dialog,
-    );
+    final created = await showMomentCollectionEditor(context);
     if (!context.mounted || created == null) {
       return;
     }
@@ -760,7 +751,6 @@ class MomentsContent extends HookConsumerWidget {
         await showAddToMomentCollectionDialog(
           context,
           pointId: item.pointId,
-          useBottomDrawer: useMobileFilterDrawer,
         );
     }
   }
@@ -776,12 +766,7 @@ class MomentsContent extends HookConsumerWidget {
         .where((item) => selectedPointIds.contains(item.pointId))
         .toList(growable: false);
     if (selected.isEmpty) return;
-    final target = await showPickMomentCollectionDialog(
-      context,
-      presentation: useMobileFilterDrawer
-          ? PickMomentCollectionPresentation.bottomDrawer
-          : PickMomentCollectionPresentation.dialog,
-    );
+    final target = await showPickMomentCollectionDialog(context);
     if (!context.mounted || target == null) return;
     final result = await runBatchOperation<MomentListItem>(
       context,
@@ -889,33 +874,5 @@ class MomentsContent extends HookConsumerWidget {
       return;
     }
     onOpenMovieDetail?.call(context, item);
-  }
-}
-
-class _MomentCollectionsHintBox extends StatelessWidget {
-  const _MomentCollectionsHintBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
-      ),
-    );
   }
 }

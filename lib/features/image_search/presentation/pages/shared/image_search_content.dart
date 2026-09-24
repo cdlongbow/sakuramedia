@@ -1198,7 +1198,6 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       pointId: existingPoint?.pointId,
       mediaId: existingPoint == null ? item.mediaId : null,
       thumbnailId: existingPoint == null ? item.thumbnailId : null,
-      useBottomDrawer: AppPlatformScope.maybeOf(context) == AppPlatform.mobile,
     );
   }
 }

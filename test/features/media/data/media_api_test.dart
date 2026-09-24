@@ -210,6 +210,36 @@ void main() {
     },
   );
 
+  test('getGlobalMediaPoints passes keyword and exclude_collection_id', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-points',
+      body: <String, dynamic>{
+        'items': <dynamic>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+
+    await mediaApi.getGlobalMediaPoints(
+      page: 1,
+      pageSize: 24,
+      kind: 'all',
+      keyword: '  日落  ',
+      excludeCollectionId: 7,
+    );
+
+    expect(adapter.requests.single.uri.queryParameters, <String, String>{
+      'page': '1',
+      'page_size': '24',
+      'sort': 'created_at:desc',
+      'kind': 'all',
+      'keyword': '日落',
+      'exclude_collection_id': '7',
+    });
+  });
+
   test('getInvalidMedia maps pagination and movie cover images', () async {
     adapter.enqueueJson(
       method: 'GET',

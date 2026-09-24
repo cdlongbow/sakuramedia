@@ -8,11 +8,11 @@ import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_d
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -187,17 +187,16 @@ class _MobileClipCollectionsPageState
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
     final name =
         collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
-    final confirmed = await showMobileClipConfirmDrawer(
+    final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',
-      message: '确认删除$name？合集内的切片不会被删除。',
+      message: '确认删除$name？只会删除合集本身，合集内的切片不会被删除。',
+      danger: true,
       confirmLabel: '删除',
-      drawerKey: const Key('mobile-clip-collection-delete-drawer'),
-      confirmButtonKey: const Key(
-        'mobile-clip-collection-delete-confirm-button',
-      ),
+      dialogKey: const Key('mobile-clip-collection-delete-drawer'),
+      confirmKey: const Key('mobile-clip-collection-delete-confirm-button'),
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     try {

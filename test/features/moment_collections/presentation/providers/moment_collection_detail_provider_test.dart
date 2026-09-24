@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/api/moment_collections_api.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_detail_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
@@ -51,6 +53,7 @@ void main() {
         momentCollectionsApiProvider.overrideWithValue(
           MomentCollectionsApi(apiClient: apiClient),
         ),
+        mediaApiProvider.overrideWithValue(MediaApi(apiClient: apiClient)),
       ],
       retry: (_, _) => null,
     );
@@ -145,6 +148,28 @@ void main() {
         .requireValue;
     expect(state.points.map((point) => point.pointId), <int>[10, 12]);
     expect(state.collection.pointCount, 2);
+  });
+
+  test('删除时刻本体走媒体时刻接口并更新本地计数', () async {
+    enqueueLoad();
+    keepAlive();
+    await container.read(momentCollectionDetailProvider(7).future);
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/media-points/11',
+      statusCode: 204,
+    );
+
+    await container
+        .read(momentCollectionDetailProvider(7).notifier)
+        .deletePoint(11);
+
+    final state = container
+        .read(momentCollectionDetailProvider(7))
+        .requireValue;
+    expect(state.points.map((point) => point.pointId), <int>[10, 12]);
+    expect(state.collection.pointCount, 2);
+    expect(adapter.hitCount('DELETE', '/media-points/11'), 1);
   });
 
   test('移出失败会回滚本地成员和计数', () async {

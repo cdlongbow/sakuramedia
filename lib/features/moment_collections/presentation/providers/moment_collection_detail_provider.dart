@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
@@ -78,6 +79,18 @@ class MomentCollectionDetail extends _$MomentCollectionDetail
       action: () => ref
           .read(momentCollectionsApiProvider)
           .removePoint(collectionId: collectionId, pointId: pointId),
+    );
+  }
+
+  /// 删除时刻标记本体（硬删，并由后端从所有合集级联移除）；乐观更新，失败时回滚
+  /// 并 rethrow。与 [removePoint]（仅解除本合集关联）语义不同。
+  Future<void> deletePoint(int pointId) async {
+    if (state.value == null) return;
+    await withOptimisticPatch<void>(
+      key: _mutationKey,
+      apply: (current) => _dropPoint(current, pointId),
+      action: () =>
+          ref.read(mediaApiProvider).deleteMediaPointById(pointId: pointId),
     );
   }
 

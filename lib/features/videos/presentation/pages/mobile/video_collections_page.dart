@@ -4,7 +4,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
@@ -13,6 +12,7 @@ import 'package:sakuramedia/features/videos/presentation/widgets/collections/cre
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -192,17 +192,16 @@ class _MobileVideoCollectionsPageState
   Future<void> _deleteCollection(VideoCollectionDto collection) async {
     final name =
         collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
-    final confirmed = await showMobileClipConfirmDrawer(
+    final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',
       message: '确认删除$name？合集内的视频不会被删除。',
+      danger: true,
       confirmLabel: '删除',
-      drawerKey: const Key('mobile-video-collection-delete-drawer'),
-      confirmButtonKey: const Key(
-        'mobile-video-collection-delete-confirm-button',
-      ),
+      dialogKey: const Key('mobile-video-collection-delete-drawer'),
+      confirmKey: const Key('mobile-video-collection-delete-confirm-button'),
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     try {

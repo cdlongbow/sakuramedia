@@ -17,21 +17,51 @@ enum AppAdaptiveModalVariant {
   drawer,
 }
 
+/// 让弹层内容感知自己落在哪种壳里的信箱。
+///
+/// 少数弹层的 body 布局依赖壳体（抽屉里撑满、弹窗里按内容收缩），例如选择器
+/// 的列表。没有壳信息时按 `false`（弹窗）处理，与直接调用 [showDialog] 一致。
+class AppAdaptiveModalShellScope extends InheritedWidget {
+  const AppAdaptiveModalShellScope({
+    super.key,
+    required this.isDrawer,
+    required super.child,
+  });
+
+  final bool isDrawer;
+
+  static bool maybeIsDrawer(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<AppAdaptiveModalShellScope>()
+            ?.isDrawer ??
+        false;
+  }
+
+  @override
+  bool updateShouldNotify(AppAdaptiveModalShellScope oldWidget) {
+    return isDrawer != oldWidget.isDrawer;
+  }
+}
+
 /// 平台自适应的通用弹窗壳。
 ///
 /// - `mobile` → [showAppBottomDrawer]（`mobileHeightFactor` / `mobileMaxHeightFactor`）；
 /// - 其余 → [showDialog] + [AppDesktopDialog]（`desktopWidth` / `desktopHeight`）。
 ///
-/// [builder] 在两端共用；`modalKey` 透传为 drawer 分支的 `drawerKey`、dialog
-/// 分支的 `dialogKey`，供测试锚点。
+/// [builder] 在两端共用，并被 [AppAdaptiveModalShellScope] 包裹，body 可用
+/// `AppAdaptiveModalShellScope.maybeIsDrawer(context)` 感知当前壳体；`modalKey`
+/// 透传为 drawer 分支的 `drawerKey`、dialog 分支的 `dialogKey`，需要两端各用
+/// 不同测试锚点时再传 [dialogKey] / [drawerKey]（优先级高于 `modalKey`）。
 ///
-/// 收敛此前三处手写「`AppPlatform == mobile ? drawer : dialog`」dispatch
+/// 收敛此前多处手写「`AppPlatform == mobile ? drawer : dialog`」dispatch
 /// （配置页的 Provider 表单 / directory_picker_dialog）。
 /// [showAppConfirmDialog] 走的是同类模式的专用版；一般表单/流程弹窗用这个。
 Future<T?> showAppAdaptiveModal<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   Key? modalKey,
+  Key? dialogKey,
+  Key? drawerKey,
   double? desktopWidth,
   double? desktopHeight,
   double mobileHeightFactor = 0.9,
@@ -45,23 +75,29 @@ Future<T?> showAppAdaptiveModal<T>({
   if (resolved == AppAdaptiveModalVariant.drawer) {
     return showAppBottomDrawer<T>(
       context: context,
-      drawerKey: modalKey,
+      drawerKey: drawerKey ?? modalKey,
       heightFactor: mobileHeightFactor,
       maxHeightFactor: mobileMaxHeightFactor,
       enableDrag: enableDrag,
       isDismissible: barrierDismissible,
-      builder: builder,
+      builder: (drawerContext) => AppAdaptiveModalShellScope(
+        isDrawer: true,
+        child: builder(drawerContext),
+      ),
     );
   }
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
     builder: (dialogContext) => AppDesktopDialog(
-      dialogKey: modalKey,
+      dialogKey: dialogKey ?? modalKey,
       width: desktopWidth ?? dialogContext.appLayoutTokens.dialogWidthMd,
       height: desktopHeight,
       showCloseButton: showDesktopCloseButton,
-      child: builder(dialogContext),
+      child: AppAdaptiveModalShellScope(
+        isDrawer: false,
+        child: builder(dialogContext),
+      ),
     ),
   );
 }

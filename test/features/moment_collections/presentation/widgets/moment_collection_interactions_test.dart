@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/moment_collections/presentation/widgets/add
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
@@ -90,7 +91,7 @@ void main() {
     );
   }
 
-  testWidgets('加入合集时在同一弹窗内新建并自动选中', (WidgetTester tester) async {
+  testWidgets('加入合集弹层里新建合集后自动加入', (WidgetTester tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1100, 760);
     addTearDown(tester.view.reset);
@@ -114,7 +115,6 @@ void main() {
             onPressed: () => showAddToMomentCollectionDialog(
               context,
               pointId: 12,
-              useBottomDrawer: false,
             ),
             child: const Text('打开'),
           ),
@@ -128,10 +128,10 @@ void main() {
     await tester.tap(find.byTooltip('新建合集'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppDesktopDialog), findsOneWidget);
-    expect(find.text('新建时刻合集'), findsOneWidget);
-    expect(find.text('合集名称'), findsOneWidget);
-    expect(find.text('描述（可选）'), findsOneWidget);
+    // 新建合集走上层编辑器弹窗，不再是同一弹窗内替换内容。
+    expect(find.byType(AppDesktopDialog), findsNWidgets(2));
+    expect(find.text('新建合集'), findsOneWidget);
+    expect(find.byKey(const Key('moment-collection-name-field')), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('moment-collection-name-field')),
@@ -153,7 +153,7 @@ void main() {
 
     expect(find.byType(AppDesktopDialog), findsOneWidget);
     expect(find.text('加入合集'), findsOneWidget);
-    expect(find.text('新建时刻合集'), findsNothing);
+    expect(find.text('新建合集'), findsNothing);
     final checkbox = tester.widget<Checkbox>(
       find.descendant(
         of: find.byKey(const Key('add-to-moment-collection-8')),
@@ -192,7 +192,6 @@ void main() {
               context,
               mediaId: 34,
               thumbnailId: 56,
-              useBottomDrawer: false,
             ),
             child: const Text('打开'),
           ),
@@ -215,17 +214,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('合集列表错误后可重试并恢复内容', (WidgetTester tester) async {
+  testWidgets('合集列表加载失败只展示错误文案，不提供重试按钮', (WidgetTester tester) async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/moment-collections',
       statusCode: 500,
       body: const <String, dynamic>{'detail': 'temporary failure'},
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections',
-      body: <Map<String, dynamic>>[_collectionJson()],
     );
 
     await pumpPage(
@@ -234,12 +228,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final retry = find.byKey(const Key('moment-collections-retry-button'));
-    expect(retry, findsOneWidget);
-    await tester.tap(retry);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('moment-collection-card-7')), findsOneWidget);
+    expect(
+      find.byKey(const Key('moment-collections-retry-button')),
+      findsNothing,
+    );
+    expect(find.byType(AppEmptyState), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -286,27 +279,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('合集详情错误后可重试，并提示拖动把手排序', (WidgetTester tester) async {
+  testWidgets('合集详情加载失败只展示错误文案，不提供重试按钮', (WidgetTester tester) async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/moment-collections/7',
       statusCode: 500,
       body: const <String, dynamic>{'detail': 'temporary failure'},
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections/7/points',
-      body: <String, dynamic>{
-        'items': <Map<String, dynamic>>[_pointJson()],
-        'page': 1,
-        'page_size': 50,
-        'total': 1,
-      },
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections/7',
-      body: _collectionJson(pointCount: 1),
     );
     adapter.enqueueJson(
       method: 'GET',
@@ -325,15 +303,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final retry = find.byKey(
-      const Key('moment-collection-detail-retry-button'),
+    expect(
+      find.byKey(const Key('moment-collection-detail-retry-button')),
+      findsNothing,
     );
-    expect(retry, findsOneWidget);
-    await tester.tap(retry);
-    await tester.pumpAndSettle();
-
-    expect(find.text('1 个时刻 · 拖动右侧把手调整顺序'), findsOneWidget);
-    expect(find.textContaining('长按拖动'), findsNothing);
+    expect(find.byType(AppEmptyState), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

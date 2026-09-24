@@ -196,7 +196,7 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
 
   if (currentPath.startsWith('$desktopMomentCollectionsPath/')) {
     return DesktopTopBarConfig(
-      title: '时刻合集',
+      title: '合集详情',
       fallbackPath:
           _fallbackPathFromExtra(routeExtra, currentPath: currentPath) ??
           desktopMomentCollectionsPath,

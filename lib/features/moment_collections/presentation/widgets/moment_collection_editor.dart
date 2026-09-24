@@ -7,42 +7,26 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
-enum MomentCollectionEditPresentation { dialog, bottomDrawer }
-
+/// 新建 / 编辑合集：桌面走居中弹窗，移动走底部抽屉（`auto` 读 `AppPlatformScope`）。
 Future<MomentCollectionDto?> showMomentCollectionEditor(
   BuildContext context, {
   MomentCollectionDto? collection,
-  required MomentCollectionEditPresentation presentation,
 }) {
-  return switch (presentation) {
-    MomentCollectionEditPresentation.dialog => showDialog<MomentCollectionDto>(
-      context: context,
-      builder: (dialogContext) => AppDesktopDialog(
-        width: dialogContext.appComponentTokens.playlistDialogWidth,
-        child: MomentCollectionEditor(
-          collection: collection,
-          onCancel: () => Navigator.of(dialogContext).pop(),
-          onSaved: (result) => Navigator.of(dialogContext).pop(result),
-        ),
+  return showAppAdaptiveModal<MomentCollectionDto>(
+    context: context,
+    drawerKey: const Key('moment-collection-editor-drawer'),
+    desktopWidth: context.appComponentTokens.playlistDialogWidth,
+    mobileMaxHeightFactor: 0.62,
+    builder: (modalContext) => SingleChildScrollView(
+      child: MomentCollectionEditor(
+        collection: collection,
+        onCancel: () => Navigator.of(modalContext).pop(),
+        onSaved: (result) => Navigator.of(modalContext).pop(result),
       ),
     ),
-    MomentCollectionEditPresentation.bottomDrawer =>
-      showAppBottomDrawer<MomentCollectionDto>(
-        context: context,
-        drawerKey: const Key('moment-collection-editor-drawer'),
-        maxHeightFactor: 0.62,
-        builder: (drawerContext) => SingleChildScrollView(
-          child: MomentCollectionEditor(
-            collection: collection,
-            onCancel: () => Navigator.of(drawerContext).pop(),
-            onSaved: (result) => Navigator.of(drawerContext).pop(result),
-          ),
-        ),
-      ),
-  };
+  );
 }
 
 class MomentCollectionEditor extends ConsumerStatefulWidget {
@@ -101,19 +85,18 @@ class _MomentCollectionEditorState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isEditing ? '编辑时刻合集' : '新建时刻合集',
+            _isEditing ? '编辑合集' : '新建合集',
             style: resolveAppTextStyle(
               context,
-              size: AppTextSize.s16,
-              weight: AppTextWeight.semibold,
-              tone: AppTextTone.primary,
+              size: AppTextSize.s14,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.secondary,
             ),
           ),
           SizedBox(height: spacing.md),
           AppTextField(
             fieldKey: const Key('moment-collection-name-field'),
             controller: _nameController,
-            label: '合集名称',
             hintText: '例如：周末回看',
             enabled: !_isSubmitting,
             validator: (value) =>
@@ -123,8 +106,7 @@ class _MomentCollectionEditorState
           AppTextField(
             fieldKey: const Key('moment-collection-description-field'),
             controller: _descriptionController,
-            label: '描述（可选）',
-            hintText: '例如：按场景或时间整理',
+            hintText: '描述可选',
             enabled: !_isSubmitting,
           ),
           SizedBox(height: spacing.md),

@@ -26,13 +26,13 @@
 
 路径：`lib/widgets/domain/clips/`
 
-包含 `ClipGridCard`、`ClipCoverCard`、`ClipCoverOverlays`、`ClipSelectionStatusBar` 和 `ClipPlayerDialog`。切片创建、删除和重命名动作由 clips feature 负责。
+包含 `ClipGridCard`、`ClipCoverCard`、`ClipCoverOverlays`、`ClipSelectionStatusBar` 和 `ClipActionsPanel`。`ClipActionsPanel` 提供切片操作面板（封面 + 标题 + 横向操作格），移动端走底部抽屉、桌面端走居中弹窗；切片创建、删除和重命名动作由 clips feature 负责，切片播放统一走 clips feature 的 `launchClipPlayback`（桌面轻量弹窗 / 移动全屏页）。
 
 ## collections
 
 路径：`lib/widgets/domain/collections/`
 
-包含 `CollectionCard`、`CollectionCoverCard`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成。
+包含 `CollectionCard`（`.clip` / `.video` / `.moment` 命名构造）、`CollectionCoverCard`、`CollectionHintBox`、`CollectionDetailSkeleton`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成；`CollectionHintBox` 是合集横滑区空态/加载失败的共用提示条。
 
 ## media and preview
 

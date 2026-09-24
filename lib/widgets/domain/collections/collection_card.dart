@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
@@ -7,10 +8,10 @@ import 'package:sakuramedia/widgets/domain/collections/collection_cover_card.dar
 
 /// 合集封面卡：16:9 封面 + 名称 + 计数角标，右上角可选「···」菜单（编辑 / 删除）。
 ///
-/// 切片合集与视频合集结构完全一致，仅在 DTO、计数字段、占位图标、封面 `fit` 与 key
-/// 前缀上有差异，此前由 `ClipCollectionCard` / `VideoCollectionCard` 两个近乎相同的
-/// 薄适配层承载，现统一为本卡片的 [CollectionCard.clip] / [CollectionCard.video]
-/// 两个命名构造，各自把差异封装在一处。底层渲染仍复用 [CollectionCoverCard]。
+/// 切片 / 视频 / 时刻合集结构完全一致，仅在 DTO、计数字段、占位图标、封面 `fit` 与
+/// key 前缀上有差异，统一为本卡片的 [CollectionCard.clip] / [CollectionCard.video] /
+/// [CollectionCard.moment] 命名构造，各自把差异封装在一处。底层渲染仍复用
+/// [CollectionCoverCard]。
 ///
 /// 用于合集主页横滑区（仅 [onTap]）与合集列表网格（带 [onEdit] / [onDelete]）。
 /// 卡片宽度由调用方通过外层约束（如 `SizedBox(width: ...)`）控制。
@@ -46,6 +47,29 @@ class CollectionCard extends StatelessWidget {
       coverUrl: collection.coverImage?.bestAvailableUrl,
       coverFit: BoxFit.contain,
       placeholderIcon: Icons.video_collection_outlined,
+      onTap: onTap,
+      onEdit: onEdit,
+      onDelete: onDelete,
+    );
+  }
+
+  /// 时刻合集卡。缩略图为 16:9 横图，故 `fit: cover` 铺满。
+  factory CollectionCard.moment({
+    Key? key,
+    required MomentCollectionDto collection,
+    required VoidCallback onTap,
+    VoidCallback? onEdit,
+    VoidCallback? onDelete,
+  }) {
+    return CollectionCard._(
+      key: key,
+      tapKey: Key('moment-collection-card-${collection.id}'),
+      menuKey: Key('moment-collection-more-${collection.id}'),
+      title: collection.name,
+      count: collection.pointCount,
+      coverUrl: collection.coverImage?.bestAvailableUrl,
+      coverFit: BoxFit.cover,
+      placeholderIcon: Icons.bookmarks_outlined,
       onTap: onTap,
       onEdit: onEdit,
       onDelete: onDelete,

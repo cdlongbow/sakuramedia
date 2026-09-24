@@ -106,6 +106,34 @@ void main() {
     });
   });
 
+  test('getMyClips passes keyword and exclude_collection_id', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-clips',
+      body: <String, dynamic>{
+        'items': <dynamic>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+
+    await clipsApi.getMyClips(
+      page: 1,
+      pageSize: 24,
+      keyword: ' 天台 ',
+      excludeCollectionId: 7,
+    );
+
+    expect(adapter.requests.single.uri.queryParameters, <String, String>{
+      'page': '1',
+      'page_size': '24',
+      'sort': 'created_at:desc',
+      'keyword': '天台',
+      'exclude_collection_id': '7',
+    });
+  });
+
   test(
     'getClipDetail maps GET /media-clips/{clip_id} with detail fields',
     () async {

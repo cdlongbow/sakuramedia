@@ -3,14 +3,13 @@ import 'package:sakuramedia/features/clip_collections/presentation/pages/shared/
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 
 export 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_detail_content.dart'
     show ClipCollectionDetailLayout;
@@ -47,7 +46,7 @@ class MobileClipCollectionDetailPage extends StatelessWidget {
         );
       },
       onMemberTap: (context, clip, actions) {
-        showMobileClipActionsSheet(
+        showClipActionsSheet(
           context,
           clip: clip,
           onPlay: () => actions.playSingle(context, clip),
@@ -56,26 +55,11 @@ class MobileClipCollectionDetailPage extends StatelessWidget {
           onDelete: () => actions.delete(clip),
         );
       },
-      playSingle: (context, clip) async {
-        if (await tryLaunchExternalClipPlayback(
+      playSingle: (context, clip) {
+        return launchClipPlayback(
           context,
           streamUrl: clip.streamUrl,
           title: clip.title,
-        )) {
-          return;
-        }
-        if (!context.mounted) {
-          return;
-        }
-        // 用根 Navigator 推全屏页，覆盖底部导航；切片自带 streamUrl 直接传入。
-        Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute<void>(
-            builder:
-                (_) => MobileClipPlayerPage(
-                  streamUrl: clip.streamUrl,
-                  title: clip.title,
-                ),
-          ),
         );
       },
       onOpenMovie: (context, clip) {
@@ -117,7 +101,6 @@ class MobileClipCollectionDetailPage extends StatelessWidget {
           context,
           collectionId: collectionId,
           memberClipIds: memberClipIds,
-          presentation: ClipCollectionEditPresentation.bottomDrawer,
         );
       },
     );

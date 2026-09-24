@@ -21,11 +21,12 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_view_mode_toggle_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -408,16 +409,10 @@ class _VideoCollectionDetailContentState
             key: Key('${widget.keyPrefix}-enter-selection-button'),
             onPressed: enterSelection,
           ),
-        AppIconButton(
-          key: Key('${widget.keyPrefix}-layout-toggle'),
-          tooltip: _layout == CollectionDetailLayout.list ? '网格视图' : '列表视图',
+        AppViewModeToggleButton(
+          buttonKey: Key('${widget.keyPrefix}-layout-toggle'),
+          isList: _layout == CollectionDetailLayout.list,
           onPressed: _toggleLayout,
-          icon: Icon(
-            _layout == CollectionDetailLayout.list
-                ? Icons.grid_view_rounded
-                : Icons.view_agenda_outlined,
-            size: context.appComponentTokens.iconSizeSm,
-          ),
         ),
       ],
     );
@@ -656,12 +651,13 @@ class _VideoCollectionDetailContentState
     final columnCap = _isMobile ? 6 : 8;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
         // 列数按目标宽 180 自动算，与原 maxCrossAxisExtent 一致。
-        final rawColumns = ((width + spacing) / (180 + spacing)).floor();
-        final columns = rawColumns < 2
-            ? 2
-            : (rawColumns > columnCap ? columnCap : rawColumns);
+        final columns = resolveGridColumnCount(
+          width: constraints.maxWidth,
+          spacing: spacing,
+          targetWidth: 180,
+          maxColumns: columnCap,
+        );
         return MasonryGridView.count(
           controller: _itemsScrollController,
           key: Key('${widget.keyPrefix}-detail-grid'),

@@ -11,6 +11,7 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
 
 /// 「加入合集」选择器的呈现形态：桌面弹窗 / 移动端底部抽屉。
 enum AddToClipCollectionPresentation { dialog, bottomDrawer }
@@ -60,7 +61,6 @@ class AddToClipCollectionDialog extends ConsumerStatefulWidget {
 
 class _AddToClipCollectionDialogState
     extends ConsumerState<AddToClipCollectionDialog> {
-  static const double _checkboxScale = 0.85;
 
   List<ClipCollectionDto> _collections = const <ClipCollectionDto>[];
   final Set<int> _selectedIds = <int>{};
@@ -203,62 +203,16 @@ class _AddToClipCollectionDialogState
         itemBuilder: (context, index) {
           final collection = _collections[index];
           final selected = _selectedIds.contains(collection.id);
-          return InkWell(
-            mouseCursor: isAnyUpdating
-                ? SystemMouseCursors.basic
-                : SystemMouseCursors.click,
-            key: Key('add-to-clip-collection-option-${collection.id}'),
-            borderRadius: context.appRadius.xsBorder,
-            onTap: isAnyUpdating ? null : () => _toggle(collection),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: spacing.md),
-              decoration: BoxDecoration(
-                color: context.appColors.surfaceMuted,
-                borderRadius: context.appRadius.xsBorder,
-                border: Border.all(
-                  color: selected
-                      ? Theme.of(context).colorScheme.primary
-                      : context.appColors.borderSubtle,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Transform.scale(
-                    scale: _checkboxScale,
-                    child: Checkbox(
-                      key: Key(
-                        'add-to-clip-collection-checkbox-${collection.id}',
-                      ),
-                      value: selected,
-                      onChanged: isAnyUpdating
-                          ? null
-                          : (_) => _toggle(collection),
-                    ),
-                  ),
-                  SizedBox(width: spacing.sm),
-                  Expanded(
-                    child: Text(
-                      collection.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        tone: AppTextTone.secondary,
-                      ),
-                    ),
-                  ),
-                  if (collection.clipCount > 0)
-                    Text(
-                      '${collection.clipCount}',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s12,
-                        tone: AppTextTone.muted,
-                      ),
-                    ),
-                ],
-              ),
+          return AppPickerOptionTile.text(
+            selected: selected,
+            enabled: !isAnyUpdating,
+            onTap: () => _toggle(collection),
+            title: collection.name,
+            trailingText:
+                collection.clipCount > 0 ? '${collection.clipCount}' : null,
+            optionKey: Key('add-to-clip-collection-option-${collection.id}'),
+            checkboxKey: Key(
+              'add-to-clip-collection-checkbox-${collection.id}',
             ),
           );
         },

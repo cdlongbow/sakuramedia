@@ -13,30 +13,26 @@ import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 Future<void> showAddToMomentCollectionDialog(
   BuildContext context, {
   int? pointId,
   int? mediaId,
   int? thumbnailId,
-  required bool useBottomDrawer,
 }) {
-  final dialog = AddToMomentCollectionDialog(
-    pointId: pointId,
-    mediaId: mediaId,
-    thumbnailId: thumbnailId,
-    useBottomDrawer: useBottomDrawer,
+  return showAppAdaptiveModal<void>(
+    context: context,
+    drawerKey: const Key('add-to-moment-collection-drawer'),
+    desktopWidth: context.appComponentTokens.playlistDialogWidth,
+    mobileMaxHeightFactor: 0.7,
+    builder: (_) => AddToMomentCollectionDialog(
+      pointId: pointId,
+      mediaId: mediaId,
+      thumbnailId: thumbnailId,
+    ),
   );
-  return useBottomDrawer
-      ? showAppBottomDrawer<void>(
-          context: context,
-          drawerKey: const Key('add-to-moment-collection-drawer'),
-          maxHeightFactor: 0.7,
-          builder: (_) => dialog,
-        )
-      : showDialog<void>(context: context, builder: (_) => dialog);
 }
 
 class AddToMomentCollectionDialog extends ConsumerStatefulWidget {
@@ -45,7 +41,6 @@ class AddToMomentCollectionDialog extends ConsumerStatefulWidget {
     this.pointId,
     this.mediaId,
     this.thumbnailId,
-    required this.useBottomDrawer,
   }) : assert(
          pointId != null || (mediaId != null && thumbnailId != null),
          'pointId or mediaId + thumbnailId is required',
@@ -56,7 +51,6 @@ class AddToMomentCollectionDialog extends ConsumerStatefulWidget {
   final int? pointId;
   final int? mediaId;
   final int? thumbnailId;
-  final bool useBottomDrawer;
 
   @override
   ConsumerState<AddToMomentCollectionDialog> createState() =>
@@ -65,11 +59,11 @@ class AddToMomentCollectionDialog extends ConsumerStatefulWidget {
 
 class _AddToMomentCollectionDialogState
     extends ConsumerState<AddToMomentCollectionDialog> {
+
   List<MomentCollectionDto> _collections = const [];
   final Set<int> _selectedIds = <int>{};
   bool _isLoading = true;
   bool _isUpdating = false;
-  bool _isCreating = false;
   String? _error;
   int? _pointId;
 
@@ -113,96 +107,107 @@ class _AddToMomentCollectionDialogState
     }
   }
 
+  bool get _isDrawer => AppAdaptiveModalShellScope.maybeIsDrawer(context);
+
   @override
   Widget build(BuildContext context) {
-    final content = _isCreating
-        ? MomentCollectionEditor(
-            onCancel: _cancelCreate,
-            onSaved: _finishCreate,
-          )
-        : _buildContent(context);
-    return widget.useBottomDrawer
-        ? content
-        : AppDesktopDialog(
-            width: context.appComponentTokens.playlistDialogWidth,
-            child: content,
-          );
+    final maxListHeight = _isDrawer
+        ? MediaQuery.sizeOf(context).height * 0.5
+        : 320.0;
+    return _buildContent(context, maxListHeight: maxListHeight);
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(
+    BuildContext context, {
+    required double maxListHeight,
+  }) {
     final spacing = context.appSpacing;
-    return AbsorbPointer(
-      absorbing: _isUpdating,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AbsorbPointer(
+          absorbing: _isUpdating,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  '加入合集',
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s16,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.primary,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '加入合集',
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s16,
+                        weight: AppTextWeight.medium,
+                        tone: AppTextTone.secondary,
+                      ),
+                    ),
                   ),
-                ),
+                  AppIconButton(
+                    key: const Key('add-to-moment-collection-create-button'),
+                    tooltip: '新建合集',
+                    onPressed: _isLoading || _isUpdating
+                        ? null
+                        : _createCollection,
+                    icon: const Icon(Icons.add_rounded),
+                  ),
+                ],
               ),
-              AppIconButton(
-                tooltip: '新建合集',
-                icon: const Icon(Icons.add_rounded),
-                onPressed: _isLoading || _isUpdating ? null : _createCollection,
-              ),
+              SizedBox(height: spacing.lg),
+              _buildList(context, maxListHeight: maxListHeight),
             ],
           ),
-          SizedBox(height: spacing.md),
-          _buildList(context),
-        ],
-      ),
+        ),
+        if (_isUpdating)
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+          ),
+      ],
     );
   }
 
-  Widget _buildList(BuildContext context) {
+  Widget _buildList(
+    BuildContext context, {
+    required double maxListHeight,
+  }) {
     if (_isLoading) {
       return const SizedBox(
-        height: 180,
+        key: Key('add-to-moment-collection-loading'),
+        height: 160,
         child: Center(child: CircularProgressIndicator.adaptive()),
       );
     }
     if (_error != null) {
-      return SizedBox(height: 180, child: AppEmptyState(message: _error!));
+      return SizedBox(height: 160, child: AppEmptyState(message: _error!));
     }
     if (_collections.isEmpty) {
       return const SizedBox(
-        height: 180,
+        height: 160,
         child: Center(child: Text('还没有合集，点右上角「+」新建')),
       );
     }
+    final spacing = context.appSpacing;
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: widget.useBottomDrawer ? 320 : 280,
-      ),
+      constraints: BoxConstraints(maxHeight: maxListHeight),
       child: ListView.separated(
+        key: const Key('add-to-moment-collection-list'),
         shrinkWrap: true,
         itemCount: _collections.length,
-        separatorBuilder: (_, _) => SizedBox(height: context.appSpacing.xs),
+        separatorBuilder: (_, _) => SizedBox(height: spacing.sm),
         itemBuilder: (context, index) {
           final collection = _collections[index];
           final selected = _selectedIds.contains(collection.id);
-          return CheckboxListTile(
-            key: Key('add-to-moment-collection-${collection.id}'),
-            value: selected,
-            title: Text(
-              collection.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text('${collection.pointCount} 个时刻'),
-            controlAffinity: ListTileControlAffinity.leading,
-            contentPadding: EdgeInsets.zero,
-            onChanged: (_) => _toggle(collection, selected),
+          return AppPickerOptionTile.text(
+            selected: selected,
+            enabled: !_isUpdating,
+            onTap: () => _toggle(collection, selected),
+            title: collection.name,
+            trailingText:
+                collection.pointCount > 0 ? '${collection.pointCount}' : null,
+            optionKey: Key('add-to-moment-collection-${collection.id}'),
           );
         },
       ),
@@ -273,16 +278,15 @@ class _AddToMomentCollectionDialogState
     }
   }
 
-  void _createCollection() => setState(() => _isCreating = true);
-
-  void _cancelCreate() => setState(() => _isCreating = false);
-
-  void _finishCreate(MomentCollectionDto collection) {
+  Future<void> _createCollection() async {
+    final created = await showMomentCollectionEditor(context);
+    if (!mounted || created == null) {
+      return;
+    }
     setState(() {
-      _collections = <MomentCollectionDto>[collection, ..._collections];
+      _collections = <MomentCollectionDto>[created, ..._collections];
       _error = null;
-      _isCreating = false;
     });
-    unawaited(_toggle(collection, false));
+    unawaited(_toggle(created, false));
   }
 }

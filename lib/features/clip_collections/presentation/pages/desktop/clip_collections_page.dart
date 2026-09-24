@@ -7,12 +7,12 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/widgets/clip_collection_delete_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -181,11 +181,17 @@ class _DesktopClipCollectionsPageState
   }
 
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
-    final confirmed = await showClipCollectionDeleteDialog(
+    final name =
+        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+    final confirmed = await showAppConfirmDialog(
       context,
-      collection: collection,
+      title: '删除合集',
+      message: '确认删除$name？只会删除合集本身，合集内的切片不会被删除。',
+      danger: true,
+      confirmLabel: '删除',
+      confirmKey: const Key('clip-collection-delete-confirm-button'),
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     try {

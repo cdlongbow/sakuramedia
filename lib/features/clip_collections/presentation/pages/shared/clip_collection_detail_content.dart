@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,8 +20,10 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_view_mode_toggle_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -126,7 +127,7 @@ class ClipCollectionDetailContent extends ConsumerStatefulWidget {
   )?
   onMemberTap;
 
-  /// 单集播放（桌面 `showClipPlayerDialog` / 移动全屏页），由壳实现。
+  /// 单集播放（统一走 `launchClipPlayback`：桌面轻量弹窗 / 移动全屏页），由壳实现。
   final ClipPlaySingle? playSingle;
 
   /// 「来源影片」（桌面 push / 移动 push 路由），由壳实现。
@@ -362,32 +363,20 @@ class _ClipCollectionDetailContentState
           ),
         if (hasClips)
           if (_isMobile)
-            AppIconButton(
-              key: Key('${widget.keyPrefix}-layout-toggle'),
-              tooltip: _layout == ClipCollectionDetailLayout.list ? '网格视图' : '列表视图',
+            AppViewModeToggleButton(
+              buttonKey: Key('${widget.keyPrefix}-layout-toggle'),
+              isList: _layout == ClipCollectionDetailLayout.list,
               onPressed: _toggleLayout,
-              icon: Icon(
-                _layout == ClipCollectionDetailLayout.list
-                    ? Icons.grid_view_rounded
-                    : Icons.view_agenda_outlined,
-                size: context.appComponentTokens.iconSizeSm,
-              ),
             )
           else ...[
             AppSelectionEntryButton(
               key: Key('${widget.keyPrefix}-enter-selection-button'),
               onPressed: enterSelection,
             ),
-            AppIconButton(
-              key: Key('${widget.keyPrefix}-layout-toggle'),
-              tooltip: _layout == ClipCollectionDetailLayout.list ? '网格视图' : '列表视图',
+            AppViewModeToggleButton(
+              buttonKey: Key('${widget.keyPrefix}-layout-toggle'),
+              isList: _layout == ClipCollectionDetailLayout.list,
               onPressed: _toggleLayout,
-              icon: Icon(
-                _layout == ClipCollectionDetailLayout.list
-                    ? Icons.grid_view_rounded
-                    : Icons.view_agenda_outlined,
-                size: context.appComponentTokens.iconSizeSm,
-              ),
             ),
           ],
         if (_isMobile)
@@ -601,7 +590,12 @@ class _ClipCollectionDetailContentState
     final spacing = context.appSpacing;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = _resolveColumnCount(constraints.maxWidth, spacing.md);
+        final columns = resolveGridColumnCount(
+          width: constraints.maxWidth,
+          spacing: spacing.md,
+          targetWidth: 280,
+          maxColumns: 4,
+        );
         final grid = GridView.builder(
           key: Key('${widget.keyPrefix}-detail-grid'),
           padding: _isMobile
@@ -663,11 +657,6 @@ class _ClipCollectionDetailContentState
         return grid;
       },
     );
-  }
-
-  int _resolveColumnCount(double width, double spacing) {
-    final columns = ((width + spacing) / (280 + spacing)).floor();
-    return math.max(2, math.min(4, columns));
   }
 
   // --------------------------------------------------------- 单条动作

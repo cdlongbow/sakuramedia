@@ -32,6 +32,7 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 
@@ -463,7 +464,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     List<VideoCollectionDto> collections,
   ) {
     if (async.hasError && collections.isEmpty) {
-      return _HintBox(
+      return CollectionHintBox(
         message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
@@ -476,7 +477,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       );
     }
     if (collections.isEmpty) {
-      return const _HintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
+      return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
     }
     return SizedBox(
       height: 172,
@@ -498,34 +499,6 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _HintBox extends StatelessWidget {
-  const _HintBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
       ),
     );
   }

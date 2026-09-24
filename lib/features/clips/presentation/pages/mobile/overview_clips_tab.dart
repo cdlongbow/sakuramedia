@@ -13,9 +13,6 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_t
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_actions_sheet.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_confirm_drawer.dart';
-import 'package:sakuramedia/features/clips/presentation/pages/mobile/clip_player_page.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
@@ -35,8 +32,10 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 
 /// 概览页「切片」tab：上方「切片合集」横滑区 + 下方「全部切片」网格。
 ///
@@ -228,7 +227,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   ) {
     final spacing = context.appSpacing;
     if (collectionsAsync.hasError && collections.isEmpty) {
-      return _HintBox(
+      return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
           fallback: '合集暂时无法加载，请稍后重试',
@@ -244,7 +243,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       );
     }
     if (collections.isEmpty) {
-      return const _HintBox(message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧');
+      return const CollectionHintBox(
+        message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧',
+      );
     }
     return SizedBox(
       height: 148,
@@ -584,7 +585,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   void _openClipSheet(MediaClipDto clip) {
     final movieNumber = clip.movieNumber;
-    showMobileClipActionsSheet(
+    showClipActionsSheet(
       context,
       clip: clip,
       onPlay: () => _playClip(clip),
@@ -597,24 +598,11 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     );
   }
 
-  Future<void> _playClip(MediaClipDto clip) async {
-    if (await tryLaunchExternalClipPlayback(
+  Future<void> _playClip(MediaClipDto clip) {
+    return launchClipPlayback(
       context,
       streamUrl: clip.streamUrl,
       title: clip.title,
-    )) {
-      return;
-    }
-    if (!mounted) {
-      return;
-    }
-    // 用根 Navigator 推全屏页，覆盖底部导航；切片很短，直接传 streamUrl 即可，
-    // 无需经 go_router 把签名地址放进 URL。
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            MobileClipPlayerPage(streamUrl: clip.streamUrl, title: clip.title),
-      ),
     );
   }
 
@@ -748,15 +736,16 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (selected.isEmpty) {
       return;
     }
-    final confirmed = await showMobileClipConfirmDrawer(
+    final confirmed = await showAppConfirmDialog(
       context,
       title: '删除切片',
       message: '确认删除选中的 ${selected.length} 个切片？切片文件会被一并删除，该操作不可恢复。',
+      danger: true,
       confirmLabel: '删除',
-      drawerKey: const Key('mobile-clips-batch-delete-drawer'),
-      confirmButtonKey: const Key('mobile-clips-batch-delete-confirm-button'),
+      dialogKey: const Key('mobile-clips-batch-delete-drawer'),
+      confirmKey: const Key('mobile-clips-batch-delete-confirm-button'),
     );
-    if (!mounted || confirmed != true) {
+    if (!mounted || !confirmed) {
       return;
     }
     final api = ref.read(clipsApiProvider);
@@ -775,33 +764,5 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     }
     _showBatchToast('删除', result);
     exitSelection();
-  }
-}
-
-class _HintBox extends StatelessWidget {
-  const _HintBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
-      ),
-    );
   }
 }

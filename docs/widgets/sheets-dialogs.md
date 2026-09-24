@@ -3,7 +3,7 @@
 ## 桌面对话框
 
 - `AppDesktopDialog`：`lib/widgets/base/overlays/app_desktop_dialog.dart`，统一桌面弹窗宽度、标题区、内容区和动作区。
-- `showAppAdaptiveModal<T>`：`app_adaptive_modal.dart`，需要按平台选择弹层形态时使用。
+- `showAppAdaptiveModal<T>`：`app_adaptive_modal.dart`，需要按平台选择弹层形态时使用；`dialogKey` / `drawerKey` 可分别指定两端测试锚点，`builder` 会被 `AppAdaptiveModalShellScope` 包住，body 可用 `maybeIsDrawer(context)` 感知壳体。
 
 ## 移动抽屉和表单
 
@@ -15,5 +15,7 @@
 
 - `showAppCardContextMenu<T>` / `AppCardContextMenuItem<T>`：`app_card_context_menu.dart`，右键或长按后的卡片菜单。
 - `AppFilterPopover` / `AppFilterPanelFooter`：`app_filter_popover.dart`，桌面筛选浮层和统一底部动作。
+
+合集成员选择器（添加切片 / 添加时刻）在弹层头部收口「搜索 + 仅看未加入 + 类型筛选 + 计数」，加入后即时出池；具体实现见各 feature 的 `add_*_to_collection_dialog.dart`。
 
 弹层关闭、导航和 API 操作的顺序由调用页面决定。弹层组件不要直接承担 feature 数据加载，除非该组件本身就是明确的跨域媒体预览组件。

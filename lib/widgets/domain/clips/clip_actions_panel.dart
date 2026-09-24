@@ -1,49 +1,23 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/widgets/domain/media/media_duration_badge.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/domain/media/media_center_play_button.dart';
+import 'package:sakuramedia/widgets/domain/media/media_duration_badge.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_action_grid.dart';
 
-/// 移动端切片操作抽屉：点击切片卡 / 行任意位置后从底部弹出。
+/// 切片操作面板：封面预览 + 标题/元信息 + 横向操作格。
 ///
-/// 仿「时刻」预览弹窗的结构（封面预览 + 横向操作格），但更轻——切片的封面 / 番号 /
-/// 时长 / 大小本地都有，无需额外请求。动作按调用方传入的回调动态展示：
-/// 「全部切片」用 加入合集 / 重命名 / 删除，「合集详情」用 移出合集。点选后先关闭
-/// 抽屉再执行（重命名 / 加入合集 / 删除会弹各自的抽屉或确认，避免抽屉叠抽屉）。
-Future<void> showMobileClipActionsSheet(
-  BuildContext context, {
-  required MediaClipDto clip,
-  required VoidCallback onPlay,
-  VoidCallback? onOpenMovie,
-  VoidCallback? onAddToCollection,
-  VoidCallback? onRename,
-  VoidCallback? onDelete,
-  VoidCallback? onRemoveFromCollection,
-}) {
-  return showAppBottomDrawer<void>(
-    context: context,
-    drawerKey: const Key('mobile-clip-actions-sheet'),
-    maxHeightFactor: 0.62,
-    builder:
-        (_) => MobileClipActionsSheet(
-          clip: clip,
-          onPlay: onPlay,
-          onOpenMovie: onOpenMovie,
-          onAddToCollection: onAddToCollection,
-          onRename: onRename,
-          onDelete: onDelete,
-          onRemoveFromCollection: onRemoveFromCollection,
-        ),
-  );
-}
-
-class MobileClipActionsSheet extends StatelessWidget {
-  const MobileClipActionsSheet({
+/// 移动端点击切片卡 / 行后从底部弹出（[showClipActionsSheet]），桌面端点击合集成员
+/// 后居中弹窗（[showClipActionsDialog]）。封面 / 番号 / 时长 / 大小本地都有，无需
+/// 额外请求。动作按调用方传入的回调动态展示。
+class ClipActionsPanel extends StatelessWidget {
+  const ClipActionsPanel({
     super.key,
     required this.clip,
+    required this.keyPrefix,
     required this.onPlay,
     this.onOpenMovie,
     this.onAddToCollection,
@@ -53,6 +27,7 @@ class MobileClipActionsSheet extends StatelessWidget {
   });
 
   final MediaClipDto clip;
+  final String keyPrefix;
   final VoidCallback onPlay;
   final VoidCallback? onOpenMovie;
   final VoidCallback? onAddToCollection;
@@ -60,7 +35,7 @@ class MobileClipActionsSheet extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onRemoveFromCollection;
 
-  // 先关闭抽屉再执行动作，避免抽屉叠抽屉。
+  // 先关闭弹层再执行动作，避免弹层叠弹层。
   void _run(BuildContext context, VoidCallback action) {
     Navigator.of(context).pop();
     action();
@@ -69,42 +44,42 @@ class MobileClipActionsSheet extends StatelessWidget {
   List<MediaPreviewActionItem> _buildActions(BuildContext context) {
     return <MediaPreviewActionItem>[
       MediaPreviewActionItem(
-        key: const Key('mobile-clip-action-play'),
+        key: Key('$keyPrefix-action-play'),
         label: '播放',
         icon: Icons.play_circle_outline_rounded,
         onTap: () => _run(context, onPlay),
       ),
       if (onOpenMovie != null)
         MediaPreviewActionItem(
-          key: const Key('mobile-clip-action-movie'),
+          key: Key('$keyPrefix-action-movie'),
           label: '影片',
           icon: Icons.movie_outlined,
           onTap: () => _run(context, onOpenMovie!),
         ),
       if (onAddToCollection != null)
         MediaPreviewActionItem(
-          key: const Key('mobile-clip-action-add-to-collection'),
+          key: Key('$keyPrefix-action-add-to-collection'),
           label: '加入合集',
           icon: Icons.playlist_add_rounded,
           onTap: () => _run(context, onAddToCollection!),
         ),
       if (onRename != null)
         MediaPreviewActionItem(
-          key: const Key('mobile-clip-action-rename'),
+          key: Key('$keyPrefix-action-rename'),
           label: '重命名',
           icon: Icons.edit_outlined,
           onTap: () => _run(context, onRename!),
         ),
       if (onRemoveFromCollection != null)
         MediaPreviewActionItem(
-          key: const Key('mobile-clip-action-remove-from-collection'),
+          key: Key('$keyPrefix-action-remove-from-collection'),
           label: '移出合集',
           icon: Icons.playlist_remove_rounded,
           onTap: () => _run(context, onRemoveFromCollection!),
         ),
       if (onDelete != null)
         MediaPreviewActionItem(
-          key: const Key('mobile-clip-action-delete'),
+          key: Key('$keyPrefix-action-delete'),
           label: '删除',
           icon: Icons.delete_outline_rounded,
           onTap: () => _run(context, onDelete!),
@@ -170,7 +145,7 @@ class MobileClipActionsSheet extends StatelessWidget {
           ),
           SizedBox(height: spacing.lg),
           MediaPreviewActionGrid(
-            gridKey: const Key('mobile-clip-actions-grid'),
+            gridKey: Key('$keyPrefix-actions-grid'),
             layout: MediaPreviewActionGridLayout.horizontalScroll,
             spacing: spacing.xs,
             tileWidth: 64,
@@ -180,4 +155,64 @@ class MobileClipActionsSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 移动端切片操作抽屉：点击切片卡 / 行任意位置后从底部弹出。
+Future<void> showClipActionsSheet(
+  BuildContext context, {
+  required MediaClipDto clip,
+  required VoidCallback onPlay,
+  VoidCallback? onOpenMovie,
+  VoidCallback? onAddToCollection,
+  VoidCallback? onRename,
+  VoidCallback? onDelete,
+  VoidCallback? onRemoveFromCollection,
+}) {
+  return showAppBottomDrawer<void>(
+    context: context,
+    drawerKey: const Key('mobile-clip-actions-sheet'),
+    maxHeightFactor: 0.62,
+    builder:
+        (_) => ClipActionsPanel(
+          clip: clip,
+          keyPrefix: 'mobile-clip',
+          onPlay: onPlay,
+          onOpenMovie: onOpenMovie,
+          onAddToCollection: onAddToCollection,
+          onRename: onRename,
+          onDelete: onDelete,
+          onRemoveFromCollection: onRemoveFromCollection,
+        ),
+  );
+}
+
+/// 桌面端切片操作弹窗：点击合集成员后居中弹出，替代「点按直接播放」。
+Future<void> showClipActionsDialog(
+  BuildContext context, {
+  required MediaClipDto clip,
+  required VoidCallback onPlay,
+  VoidCallback? onOpenMovie,
+  VoidCallback? onAddToCollection,
+  VoidCallback? onRename,
+  VoidCallback? onDelete,
+  VoidCallback? onRemoveFromCollection,
+}) {
+  return showDialog<void>(
+    context: context,
+    builder:
+        (dialogContext) => AppDesktopDialog(
+          dialogKey: const Key('clip-actions-dialog'),
+          width: dialogContext.appComponentTokens.playlistDialogWidth,
+          child: ClipActionsPanel(
+            clip: clip,
+            keyPrefix: 'clip',
+            onPlay: onPlay,
+            onOpenMovie: onOpenMovie,
+            onAddToCollection: onAddToCollection,
+            onRename: onRename,
+            onDelete: onDelete,
+            onRemoveFromCollection: onRemoveFromCollection,
+          ),
+        ),
+  );
 }

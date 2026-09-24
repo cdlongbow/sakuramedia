@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_t
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
@@ -33,8 +34,8 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
-import 'package:sakuramedia/widgets/domain/clips/clip_player_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 
 /// 切片首页：上方「切片合集」横滑区 + 下方「全部切片」网格（悬停预览、加入合集）。
 ///
@@ -226,7 +227,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     List<ClipCollectionDto> collections,
   ) {
     if (collectionsAsync.hasError && collections.isEmpty) {
-      return _HintBox(
+      return CollectionHintBox(
         message: apiErrorMessage(
           collectionsAsync.error!,
           fallback: '合集暂时无法加载，请稍后重试',
@@ -242,7 +243,9 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       );
     }
     if (collections.isEmpty) {
-      return const _HintBox(message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧');
+      return const CollectionHintBox(
+        message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧',
+      );
     }
     final spacing = context.appSpacing;
     return SizedBox(
@@ -541,7 +544,13 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   // ----------------------------------------------------------- 单条动作
 
   void _playClip(MediaClipDto clip) {
-    showClipPlayerDialog(context, streamUrl: clip.streamUrl, title: clip.title);
+    unawaited(
+      launchClipPlayback(
+        context,
+        streamUrl: clip.streamUrl,
+        title: clip.title,
+      ),
+    );
   }
 
   void _openMovie(String movieNumber) {
@@ -708,33 +717,5 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     }
     _showBatchToast('删除', result);
     exitSelection();
-  }
-}
-
-class _HintBox extends StatelessWidget {
-  const _HintBox({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
-      ),
-    );
   }
 }

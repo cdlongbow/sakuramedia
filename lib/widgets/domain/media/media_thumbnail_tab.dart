@@ -5,7 +5,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/media/images/thumbnail_grid_column_resolver.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_selection_status_bar.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 
@@ -43,7 +43,7 @@ class MediaThumbnailTab extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final autoColumns = resolveThumbnailGridColumnCount(
+        final autoColumns = resolveGridColumnCount(
           width: constraints.maxWidth,
           spacing: context.appSpacing.sm,
           targetWidth: context.appComponentTokens.movieThumbnailTargetWidth,

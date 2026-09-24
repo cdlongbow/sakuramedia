@@ -74,6 +74,8 @@ class MediaApi {
     int pageSize = 20,
     String sort = 'created_at:desc',
     String? kind,
+    String? keyword,
+    int? excludeCollectionId,
   }) async {
     final queryParameters = <String, dynamic>{
       'page': page,
@@ -82,6 +84,13 @@ class MediaApi {
     };
     if (kind != null && kind.isNotEmpty) {
       queryParameters['kind'] = kind;
+    }
+    final normalizedKeyword = keyword?.trim() ?? '';
+    if (normalizedKeyword.isNotEmpty) {
+      queryParameters['keyword'] = normalizedKeyword;
+    }
+    if (excludeCollectionId != null) {
+      queryParameters['exclude_collection_id'] = excludeCollectionId;
     }
     final response = await _apiClient.get(
       '/media-points',

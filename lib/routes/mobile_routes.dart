@@ -823,7 +823,7 @@ class MobileMomentCollectionDetailRouteData extends _MobileSubpageRouteData
   String get pageName => 'mobile-moment-collection-detail';
 
   @override
-  String get title => '时刻合集';
+  String get title => '合集';
 
   @override
   String get defaultLocation => mobileMomentCollectionsPath;

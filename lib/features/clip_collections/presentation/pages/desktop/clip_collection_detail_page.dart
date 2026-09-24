@@ -2,13 +2,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_detail_content.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
+import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
-import 'package:sakuramedia/widgets/domain/clips/clip_player_dialog.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_detail_skeleton.dart';
 
 export 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_detail_content.dart'
     show ClipCollectionDetailLayout;
@@ -33,7 +34,11 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
       hoistTitleToSubpageShell: false,
       enableReorder: true,
       defaultLayout: ClipCollectionDetailLayout.grid,
-      loadingBuilder: (_) => const _DesktopClipCollectionDetailLoadingState(),
+      loadingBuilder:
+          (_) => const CollectionDetailSkeleton(
+            contentKey: Key('clip-collection-detail-loading'),
+            gridKey: Key('clip-collection-detail-skeleton-grid'),
+          ),
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppButton(
           key: const Key('clip-collection-play-all-button'),
@@ -43,22 +48,23 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
         );
       },
       onMemberTap: (context, clip, actions) {
-        actions.playSingle(context, clip);
+        showClipActionsDialog(
+          context,
+          clip: clip,
+          onPlay: () => actions.playSingle(context, clip),
+          onOpenMovie: _openMovieCallback(context, clip),
+          onRemoveFromCollection: () => actions.remove(clip),
+          onDelete: () => actions.delete(clip),
+        );
       },
-      playSingle: (context, clip) async {
-        showClipPlayerDialog(
+      playSingle: (context, clip) {
+        return launchClipPlayback(
           context,
           streamUrl: clip.streamUrl,
           title: clip.title,
         );
       },
-      onOpenMovie: (context, clip) {
-        final movieNumber = clip.movieNumber;
-        if (movieNumber == null || movieNumber.isEmpty) {
-          return;
-        }
-        context.pushDesktopMovieDetail(movieNumber: movieNumber);
-      },
+      onOpenMovie: (context, clip) => _pushMovie(context, clip),
       confirm: (
         context, {
         required title,
@@ -90,62 +96,20 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
       },
     );
   }
-}
 
-class _DesktopClipCollectionDetailLoadingState extends StatelessWidget {
-  const _DesktopClipCollectionDetailLoadingState();
+  VoidCallback? _openMovieCallback(BuildContext context, MediaClipDto clip) {
+    final movieNumber = clip.movieNumber;
+    if (movieNumber == null || movieNumber.isEmpty) {
+      return null;
+    }
+    return () => _pushMovie(context, clip);
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Column(
-      key: const Key('clip-collection-detail-loading'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const AppSkeletonBlock(width: 196, height: 24),
-            const Spacer(),
-            AppSkeletonBlock(
-              width: 84,
-              height: context.appComponentTokens.buttonHeightSm,
-              radius: context.appRadius.pillBorder,
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.md),
-        Row(
-          children: [
-            AppSkeletonBlock(
-              width: 96,
-              height: context.appComponentTokens.buttonHeightXs,
-              radius: context.appRadius.pillBorder,
-            ),
-            SizedBox(width: spacing.sm),
-            const AppSkeletonBlock(width: 68, height: 14),
-            const Spacer(),
-            AppSkeletonBlock(
-              width: context.appComponentTokens.buttonHeightSm,
-              height: context.appComponentTokens.buttonHeightSm,
-              radius: context.appRadius.mdBorder,
-            ),
-          ],
-        ),
-        SizedBox(height: spacing.md),
-        Expanded(
-          child: GridView.builder(
-            key: const Key('clip-collection-detail-skeleton-grid'),
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 280,
-              mainAxisSpacing: spacing.md,
-              crossAxisSpacing: spacing.md,
-              childAspectRatio: 16 / 9,
-            ),
-            itemCount: 8,
-            itemBuilder: (_, _) => const AppCoverCardSkeleton(),
-          ),
-        ),
-      ],
-    );
+  void _pushMovie(BuildContext context, MediaClipDto clip) {
+    final movieNumber = clip.movieNumber;
+    if (movieNumber == null || movieNumber.isEmpty) {
+      return;
+    }
+    context.pushDesktopMovieDetail(movieNumber: movieNumber);
   }
 }

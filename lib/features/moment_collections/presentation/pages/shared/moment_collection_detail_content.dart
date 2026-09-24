@@ -11,8 +11,10 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_moments_to_collection_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/pick_moment_collection_dialog.dart';
+import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -30,9 +32,6 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_detail_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
-import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
-import 'package:sakuramedia/widgets/domain/media/quick_play_dialog.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
 /// 时刻合集详情排布方式：网格（侧重浏览，默认）或纵向列表（可拖序）。
@@ -90,10 +89,9 @@ class _MomentCollectionDetailContentState
 
   void _toggleLayout() {
     setState(() {
-      _layout =
-          _layout == MomentCollectionDetailLayout.list
-              ? MomentCollectionDetailLayout.grid
-              : MomentCollectionDetailLayout.list;
+      _layout = _layout == MomentCollectionDetailLayout.list
+          ? MomentCollectionDetailLayout.grid
+          : MomentCollectionDetailLayout.list;
     });
   }
 
@@ -153,7 +151,10 @@ class _MomentCollectionDetailContentState
     }
     return AppPageRefreshScope(
       onRefresh: ref.read(_providerRef.notifier).refresh,
-      child: ColoredBox(color: context.appColors.surfaceElevated, child: content),
+      child: ColoredBox(
+        color: context.appColors.surfaceElevated,
+        child: content,
+      ),
     );
   }
 
@@ -227,10 +228,7 @@ class _MomentCollectionDetailContentState
     final hasPoints = state.points.isNotEmpty;
     return AppListHeader(
       informationSlots: [
-        AppListHeaderInfo(
-          key: Key('$_keyPrefix-total'),
-          label: '$count 个时刻',
-        ),
+        AppListHeaderInfo(key: Key('$_keyPrefix-total'), label: '$count 个时刻'),
       ],
       actionSlots: [
         if (_isMobile)
@@ -365,15 +363,10 @@ class _MomentCollectionDetailContentState
 
   // --------------------------------------------------------- body
 
-  Widget _buildPoints(
-    BuildContext context,
-    MomentCollectionDetailState state,
-  ) {
+  Widget _buildPoints(BuildContext context, MomentCollectionDetailState state) {
     if (state.points.isEmpty) {
       return AppEmptyState(
-        message: _isMobile
-            ? '合集还没有时刻，点右上角「添加」加入吧'
-            : '合集还没有时刻，去「时刻」里加入吧',
+        message: _isMobile ? '合集还没有时刻，点右上角「添加」加入吧' : '合集还没有时刻，去「时刻」里加入吧',
       );
     }
     return _layout == MomentCollectionDetailLayout.grid
@@ -381,10 +374,7 @@ class _MomentCollectionDetailContentState
         : _buildList(context, state);
   }
 
-  Widget _buildList(
-    BuildContext context,
-    MomentCollectionDetailState state,
-  ) {
+  Widget _buildList(BuildContext context, MomentCollectionDetailState state) {
     final points = state.points;
     // 选择模式下禁用拖拽重排，退化为普通列表，避免与多选交互冲突（仅桌面）。
     final canReorder = !_isMobile && !selectionMode;
@@ -403,10 +393,9 @@ class _MomentCollectionDetailContentState
             '${item.mediaId <= 0 ? '来源已删除 · ' : ''}'
             '${formatMediaTimecode(item.offsetSeconds)}',
         isHovered: _isMobile ? false : isHovered,
-        onTap:
-            selectionMode
-                ? () => toggleSelect(point.pointId)
-                : () => _preview(context, item),
+        onTap: selectionMode
+            ? () => toggleSelect(point.pointId)
+            : () => _preview(context, item),
         menuKey: Key('$_keyPrefix-menu-${point.pointId}'),
         dragHandleKey: Key('$_keyPrefix-reorder-handle-${point.pointId}'),
         onOpenSource: _isMobile ? null : _openMovieCallback(item),
@@ -431,13 +420,12 @@ class _MomentCollectionDetailContentState
         itemBuilder: (context, index) {
           final point = points[index];
           return GestureDetector(
-            onLongPress:
-                selectionMode
-                    ? null
-                    : () {
-                      enterSelection();
-                      toggleSelect(point.pointId);
-                    },
+            onLongPress: selectionMode
+                ? null
+                : () {
+                    enterSelection();
+                    toggleSelect(point.pointId);
+                  },
             child: buildRow(index, isHovered: false),
           );
         },
@@ -449,8 +437,8 @@ class _MomentCollectionDetailContentState
       return ListView.separated(
         key: Key('$_keyPrefix-detail-list'),
         itemCount: points.length,
-        separatorBuilder:
-            (context, _) => SizedBox(height: context.appSpacing.sm),
+        separatorBuilder: (context, _) =>
+            SizedBox(height: context.appSpacing.sm),
         itemBuilder: (context, index) => buildRow(index, isHovered: false),
       );
     }
@@ -462,9 +450,8 @@ class _MomentCollectionDetailContentState
       onReorder: _onReorder,
       // 默认 proxyDecorator 会给拖动项叠加带阴影的 Material（主题色偏粉），
       // 这里换成无阴影透明包装，去掉拖动时的粉色投影。
-      proxyDecorator:
-          (child, index, animation) =>
-              Material(type: MaterialType.transparency, child: child),
+      proxyDecorator: (child, index, animation) =>
+          Material(type: MaterialType.transparency, child: child),
       itemBuilder: (context, index) {
         final point = points[index];
         return Padding(
@@ -484,10 +471,7 @@ class _MomentCollectionDetailContentState
     );
   }
 
-  Widget _buildGrid(
-    BuildContext context,
-    MomentCollectionDetailState state,
-  ) {
+  Widget _buildGrid(BuildContext context, MomentCollectionDetailState state) {
     final points = state.points;
     final spacing = context.appSpacing;
     return LayoutBuilder(
@@ -515,13 +499,12 @@ class _MomentCollectionDetailContentState
             final item = point.toMomentListItem();
             if (_isMobile) {
               return GestureDetector(
-                onLongPress:
-                    selectionMode
-                        ? null
-                        : () {
-                          enterSelection();
-                          toggleSelect(point.pointId);
-                        },
+                onLongPress: selectionMode
+                    ? null
+                    : () {
+                        enterSelection();
+                        toggleSelect(point.pointId);
+                      },
                 child: _buildGridCard(point, item, context),
               );
             }
@@ -544,10 +527,9 @@ class _MomentCollectionDetailContentState
       title: item.displayLabel,
       subtitle: formatMediaTimecode(item.offsetSeconds),
       overlayCaption: true,
-      onTap:
-          selectionMode
-              ? () => toggleSelect(point.pointId)
-              : () => _preview(context, item),
+      onTap: selectionMode
+          ? () => toggleSelect(point.pointId)
+          : () => _preview(context, item),
       menuKey: Key('$_keyPrefix-grid-menu-${point.pointId}'),
       onOpenSource: _isMobile ? null : _openMovieCallback(item),
       openSourceLabel: '影片',
@@ -577,36 +559,21 @@ class _MomentCollectionDetailContentState
     );
   }
 
-  Future<void> _preview(BuildContext context, MomentListItem item) async {
-    final action = await showMomentPreviewOverlay(
+  Future<void> _preview(BuildContext context, MomentListItem item) {
+    return showMomentPreviewFlow(
       context: context,
       item: item,
-      pointId: item.pointId,
-      presentation: MediaPreviewPresentation.auto,
+      fallbackPath: _isMobile
+          ? '$mobileMomentCollectionsPath/${widget.collectionId}'
+          : '$desktopMomentCollectionsPath/${widget.collectionId}',
+      drawerKey: _isMobile
+          ? const Key('mobile-moment-collection-preview-bottom-sheet')
+          : null,
       onPointRemoved: () {
         ref.read(_providerRef.notifier).refresh();
         _mutationBroadcaster.reportChanged(widget.collectionId);
       },
-      closeOnPointRemoved: true,
     );
-    if (!context.mounted || action != MediaPreviewAction.play) return;
-    if (item.isVideo) {
-      await showVideoQuickPlayDialog(
-        context,
-        videoId: item.videoItemId!,
-        title: item.displayLabel,
-      );
-      return;
-    }
-    final movieNumber = item.movieNumber;
-    if (movieNumber != null && movieNumber.isNotEmpty) {
-      await launchMoviePlayback(
-        context,
-        movieNumber: movieNumber,
-        mediaId: item.mediaId,
-        positionSeconds: item.offsetSeconds,
-      );
-    }
   }
 
   Future<void> _removePoint(MomentCollectionPointDto point) async {
@@ -634,7 +601,8 @@ class _MomentCollectionDetailContentState
       confirmLabel: _isMobile ? '删除' : '确认',
       confirmKey: Key('$_keyPrefix-delete-confirm-button'),
       drawerKey: _isMobile ? Key('$_keyPrefix-delete-drawer') : null,
-      onConfirm: () => ref.read(_providerRef.notifier).deletePoint(point.pointId),
+      onConfirm: () =>
+          ref.read(_providerRef.notifier).deletePoint(point.pointId),
     );
     if (!mounted || !confirmed) {
       return;

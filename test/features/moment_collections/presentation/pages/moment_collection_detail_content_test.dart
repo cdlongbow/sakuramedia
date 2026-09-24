@@ -1,11 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/api/moment_collections_api.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/shared/moment_collection_detail_content.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
@@ -28,16 +32,40 @@ Map<String, dynamic> _collectionJson({
   'updated_at': '2026-09-10T11:00:00Z',
 };
 
-Map<String, dynamic> _pointJson(int pointId, int position) => <String, dynamic>{
+Map<String, dynamic> _pointJson(
+  int pointId,
+  int position, {
+  bool withImage = false,
+}) => <String, dynamic>{
   'point_id': pointId,
   'media_id': 100 + pointId,
   'movie_number': 'ABC-0$pointId',
   'video_item_id': null,
   'thumbnail_id': 200 + pointId,
   'offset_seconds': pointId * 10,
-  'image': null,
+  'image': withImage
+      ? <String, dynamic>{
+          'id': pointId,
+          'origin': '/thumb-$pointId.webp',
+          'small': '/thumb-$pointId.webp',
+          'medium': '/thumb-$pointId.webp',
+          'large': '/thumb-$pointId.webp',
+        }
+      : null,
   'position': position,
 };
+
+void _enqueueMovieDetail(FakeHttpClientAdapter adapter, String movieNumber) {
+  adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies/$movieNumber',
+    body: <String, dynamic>{
+      'movie_number': movieNumber,
+      'title': 'Movie 1',
+      'can_play': true,
+    },
+  );
+}
 
 Map<String, dynamic> _mediaPointJson(int pointId) => <String, dynamic>{
   'point_id': pointId,
@@ -67,6 +95,14 @@ void main() {
     );
     apiClient = ApiClient(sessionStore: sessionStore);
     adapter = FakeHttpClientAdapter();
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/status/capabilities',
+      body: const <String, dynamic>{
+        'movie_similarity': true,
+        'image_search': true,
+      },
+    );
     apiClient.rawDio.httpClientAdapter = adapter;
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
   });
@@ -75,7 +111,7 @@ void main() {
     apiClient.dispose();
   });
 
-  void enqueueInitialLoad({int total = 2}) {
+  void enqueueInitialLoad({int total = 2, bool withImage = false}) {
     adapter.enqueueJson(
       method: 'GET',
       path: '/moment-collections/7',
@@ -86,7 +122,8 @@ void main() {
       path: '/moment-collections/7/points',
       body: <String, dynamic>{
         'items': <Map<String, dynamic>>[
-          for (var i = 0; i < total; i++) _pointJson(10 + i, i),
+          for (var i = 0; i < total; i++)
+            _pointJson(10 + i, i, withImage: withImage),
         ],
         'page': 1,
         'page_size': 50,
@@ -98,11 +135,13 @@ void main() {
   Widget buildApp(Widget home) {
     return ProviderScope(
       overrides: [
+        apiClientProvider.overrideWithValue(apiClient),
         sessionStoreProvider.overrideWithValue(sessionStore),
         momentCollectionsApiProvider.overrideWithValue(
           MomentCollectionsApi(apiClient: apiClient),
         ),
         mediaApiProvider.overrideWithValue(MediaApi(apiClient: apiClient)),
+        moviesApiProvider.overrideWithValue(MoviesApi(apiClient: apiClient)),
       ],
       child: OKToast(
         child: MaterialApp(theme: sakuraThemeData, home: home),
@@ -121,10 +160,7 @@ void main() {
     await tester.pumpWidget(
       buildApp(
         const Scaffold(
-          body: MomentCollectionDetailContent(
-            collectionId: 7,
-            isMobile: false,
-          ),
+          body: MomentCollectionDetailContent(collectionId: 7, isMobile: false),
         ),
       ),
     );
@@ -141,12 +177,15 @@ void main() {
 
     await tester.pumpWidget(
       buildApp(
-        const AppMobileSubpageShell(
-          title: '合集',
-          defaultLocation: '/mobile/library/moment-collections',
-          child: MomentCollectionDetailContent(
-            collectionId: 7,
-            isMobile: true,
+        const AppPlatformScope(
+          platform: AppPlatform.mobile,
+          child: AppMobileSubpageShell(
+            title: '合集',
+            defaultLocation: '/mobile/library/moment-collections',
+            child: MomentCollectionDetailContent(
+              collectionId: 7,
+              isMobile: true,
+            ),
           ),
         ),
       ),
@@ -171,9 +210,7 @@ void main() {
     );
     expect(find.text('2 个时刻'), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const Key('moment-collection-layout-toggle')),
-    );
+    await tester.tap(find.byKey(const Key('moment-collection-layout-toggle')));
     await tester.pumpAndSettle();
 
     expect(
@@ -268,6 +305,85 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('mobile-subpage-title'))).data,
       '周末回看',
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面合集详情点开时刻预览与时刻列表同款（含加入合集）', (WidgetTester tester) async {
+    enqueueInitialLoad(total: 1, withImage: true);
+    _enqueueMovieDetail(adapter, 'ABC-010');
+    await pumpDesktop(tester);
+
+    await tester.tap(find.byKey(const ValueKey<int>(10)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('image-search-result-preview-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('相似图片'), findsOneWidget);
+    expect(find.text('保存'), findsOneWidget);
+    expect(find.text('删除标记'), findsOneWidget);
+    expect(find.text('加入合集'), findsOneWidget);
+    // 内联导航与时刻列表一致：不再显示独立「播放 / 影片详情」按钮。
+    expect(find.text('播放'), findsNothing);
+    expect(find.text('影片详情'), findsNothing);
+    expect(
+      find.byKey(const Key('image-search-result-preview-movie-info-section')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面合集详情预览点加入合集打开合集选择弹层', (WidgetTester tester) async {
+    enqueueInitialLoad(total: 1, withImage: true);
+    _enqueueMovieDetail(adapter, 'ABC-010');
+    await pumpDesktop(tester);
+
+    await tester.tap(find.byKey(const ValueKey<int>(10)));
+    await tester.pumpAndSettle();
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/moment-collections',
+      body: <Map<String, dynamic>>[_collectionJson()],
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-points/10/collections',
+      body: const <Map<String, dynamic>>[],
+    );
+
+    await tester.tap(find.text('加入合集'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('add-to-moment-collection-list')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-to-moment-collection-list')),
+        matching: find.text('周末回看'),
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('移动合集详情点开时刻预览为底部抽屉且含加入合集', (WidgetTester tester) async {
+    enqueueInitialLoad(total: 1, withImage: true);
+    _enqueueMovieDetail(adapter, 'ABC-010');
+    await pumpMobile(tester);
+
+    await tester.tap(find.byKey(const ValueKey<int>(10)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-moment-collection-preview-bottom-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('加入合集'), findsOneWidget);
+    expect(find.text('播放'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

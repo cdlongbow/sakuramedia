@@ -10,9 +10,9 @@ import 'package:sakuramedia/features/moment_collections/presentation/providers/m
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
-import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/pick_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_filter_sections.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_provider.dart';
@@ -34,19 +34,16 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 
 /// 时刻列表共享实现（桌面 / 移动双端壳收敛的 content 层）。
 ///
 /// 平台差异全部收在壳注入的参数与回调里：
 /// - Key 三件套（keyPrefix / rootKey / previewDrawerKey）由壳传参、本层产出；
-/// - 图搜、演员、视频播放、影片播放、影片详情等导航分支收为壳注入的回调组；
-/// - 预览弹层统一走 [MediaPreviewPresentation.auto]（读 `AppPlatformScope` 分派）；
+/// - 预览关闭后的导航（图搜、演员、视频/影片播放、影片详情）统一走
+///   [showMomentPreviewFlow]，由 `isMobile` + `previewFallbackPath` 表达平台差异；
 /// - 滚动容器（下拉刷新 vs 裸 CustomScrollView）与筛选面板容器（底部抽屉 vs 就地浮层）
 ///   由 `enablePullToRefresh` / `useMobileFilterDrawer` 两个壳参数表达。
 class MomentsContent extends HookConsumerWidget {
@@ -54,14 +51,10 @@ class MomentsContent extends HookConsumerWidget {
     super.key,
     required this.keyPrefix,
     required this.rootKey,
+    required this.previewFallbackPath,
     this.previewDrawerKey,
     this.enablePullToRefresh = false,
     this.useMobileFilterDrawer = false,
-    this.onSearchSimilar,
-    this.onOpenVideo,
-    this.onOpenPlayer,
-    this.onOpenMovieDetail,
-    this.onOpenActorDetail,
     this.onOpenCollections,
     this.onOpenCollectionDetail,
   });
@@ -72,6 +65,9 @@ class MomentsContent extends HookConsumerWidget {
   /// 列表根 Key：桌面 `moments-page`，移动 `mobile-overview-moments-tab`。
   final Key rootKey;
 
+  /// 预览关闭后的图搜 / 影片详情 / 演员详情 / 应用内播放器的兜底路径。
+  final String previewFallbackPath;
+
   /// 预览弹层落底部抽屉时的 drawerKey（移动端）；桌面不传。
   final Key? previewDrawerKey;
 
@@ -81,22 +77,6 @@ class MomentsContent extends HookConsumerWidget {
 
   /// 顶栏筛选入口点开什么：`true` 弹底部抽屉（移动端），`false` 就地展开浮层（桌面端）。
   final bool useMobileFilterDrawer;
-
-  /// 图搜导航回调（壳注入：桌面走 launcher / 移动走 draft store 中转）。
-  final Future<void> Function(BuildContext context, MomentListItem item)?
-  onSearchSimilar;
-
-  /// 视频时刻播放回调（壳注入：桌面快播弹窗 / 移动 push 全屏页）。
-  final void Function(BuildContext context, MomentListItem item)? onOpenVideo;
-
-  /// 影片时刻播放回调（壳注入：桌面 push 播放器 / 移动 launchMoviePlayback）。
-  final void Function(BuildContext context, MomentListItem item)? onOpenPlayer;
-
-  /// 影片详情导航回调（壳注入：桌面 push 详情 / 移动 push 移动详情）。
-  final void Function(BuildContext context, MomentListItem item)?
-  onOpenMovieDetail;
-
-  final void Function(BuildContext context, int actorId)? onOpenActorDetail;
 
   final VoidCallback? onOpenCollections;
   final ValueChanged<int>? onOpenCollectionDetail;
@@ -406,9 +386,7 @@ class MomentsContent extends HookConsumerWidget {
       );
     }
     if (collections.isEmpty) {
-      return const CollectionHintBox(
-        message: '还没有合集，点「新建」把喜欢的时刻攒成一个合集吧',
-      );
+      return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的时刻攒成一个合集吧');
     }
     return SizedBox(
       height: height,
@@ -718,41 +696,14 @@ class MomentsContent extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     MomentListItem item,
-  ) async {
-    int? selectedActorId;
-    final action = await showMomentPreviewOverlay(
+  ) {
+    return showMomentPreviewFlow(
       context: context,
       item: item,
-      pointId: item.pointId,
-      presentation: MediaPreviewPresentation.auto,
+      fallbackPath: previewFallbackPath,
       drawerKey: previewDrawerKey,
       onPointRemoved: () => unawaited(_refreshAfterPointDelete(ref)),
-      closeOnPointRemoved: true,
-      allowAddToCollection: true,
-      useInlineNavigation: true,
-      onActorSelected: (actorId) => selectedActorId = actorId,
     );
-    if (!context.mounted) {
-      return;
-    }
-    if (selectedActorId != null) {
-      onOpenActorDetail?.call(context, selectedActorId!);
-      return;
-    }
-    if (action == null) return;
-    switch (action) {
-      case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(context, item);
-      case MediaPreviewAction.play:
-        _openPlayerForMoment(context, item);
-      case MediaPreviewAction.openMovieDetail:
-        _openMovieDetailForMoment(context, item);
-      case MediaPreviewAction.addToCollection:
-        await showAddToMomentCollectionDialog(
-          context,
-          pointId: item.pointId,
-        );
-    }
   }
 
   Future<void> _batchAddToCollection(
@@ -838,41 +789,5 @@ class MomentsContent extends HookConsumerWidget {
   Future<void> _refreshAfterPointDelete(WidgetRef ref) async {
     await ref.read(momentsProvider.notifier).reload();
     await ref.read(momentCollectionsOverviewProvider.notifier).refresh();
-  }
-
-  Future<void> _searchSimilarFromMoment(
-    BuildContext context,
-    MomentListItem item,
-  ) async {
-    final imageUrl = resolveMomentImageUrl(item);
-    if (imageUrl.isEmpty) {
-      return;
-    }
-    final handler = onSearchSimilar;
-    if (handler == null) {
-      return;
-    }
-    try {
-      await handler(context, item);
-    } catch (_) {
-      if (context.mounted) {
-        showToast('读取结果图片失败，请稍后重试');
-      }
-    }
-  }
-
-  void _openPlayerForMoment(BuildContext context, MomentListItem item) {
-    if (item.isVideo) {
-      onOpenVideo?.call(context, item);
-      return;
-    }
-    onOpenPlayer?.call(context, item);
-  }
-
-  void _openMovieDetailForMoment(BuildContext context, MomentListItem item) {
-    if (item.isVideo) {
-      return;
-    }
-    onOpenMovieDetail?.call(context, item);
   }
 }

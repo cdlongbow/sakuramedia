@@ -41,6 +41,7 @@
 
 - 发现 Bug：[提交 Issue](https://github.com/tinypinglite/sakuramedia/issues)
 - 使用交流或求助：[参与 Discussions](https://github.com/tinypinglite/sakuramedia/discussions)
+- 敏感问题（涉及 APP 截图、影片截图等不宜公开的内容）：[加入 Telegram 群](https://t.me/+ysbUBDExCsw5N2Jh)
 
 - **项目当前处理快速迭代阶段， 如遇问题可尝试将前后端以及各个插件升级到最新版本**
 

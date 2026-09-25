@@ -210,9 +210,17 @@ void main() {
           externalArgs = call.arguments as Map;
           return true;
         });
+        final platformCalls = <MethodCall>[];
+        messenger.setMockMethodCallHandler(SystemChannels.platform, (
+          call,
+        ) async {
+          platformCalls.add(call);
+          return null;
+        });
         addTearDown(() {
           messenger.setMockMethodCallHandler(videoChannel, null);
           messenger.setMockMethodCallHandler(externalChannel, null);
+          messenger.setMockMethodCallHandler(SystemChannels.platform, null);
         });
         final session = SessionStore.inMemory();
         await session.saveBaseUrl('https://api.example.com');
@@ -455,6 +463,22 @@ void main() {
           await videoState.enterFullscreen();
           await tester.pumpAndSettle();
           if (mobile) {
+            expect(
+              platformCalls
+                  .where(
+                    (call) =>
+                        call.method == 'SystemChrome.setPreferredOrientations',
+                  )
+                  .last
+                  .arguments,
+              <String>[
+                'DeviceOrientation.portraitUp',
+                'DeviceOrientation.landscapeLeft',
+                'DeviceOrientation.landscapeRight',
+              ],
+            );
+          }
+          if (mobile) {
             surface().bottomControls
                 .whereType<MaterialCustomButton>()
                 .single
@@ -477,6 +501,21 @@ void main() {
           expect(native.state.playlist.index, 0);
           await videoState.exitFullscreen();
           await tester.pumpAndSettle();
+          if (mobile) {
+            expect(
+              platformCalls
+                  .where(
+                    (call) =>
+                        call.method == 'SystemChrome.setPreferredOrientations',
+                  )
+                  .last
+                  .arguments,
+              <String>[
+                'DeviceOrientation.landscapeLeft',
+                'DeviceOrientation.landscapeRight',
+              ],
+            );
+          }
           native.select(0, const Duration(seconds: 590));
           await tester.pumpAndSettle();
           native.select(1, const Duration(seconds: 35));

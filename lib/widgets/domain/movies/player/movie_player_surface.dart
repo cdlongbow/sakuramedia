@@ -14,6 +14,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_screen_orientation.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
@@ -529,6 +530,12 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       onBackPressed: widget.onBackPressed,
       onInfoPressed: _toggleInfoSideDrawer,
     );
+    // 全屏路由内拿不到页面级浮层（信息侧栏 / 倍速 / 字幕抽屉都挂在页面 Stack 上），
+    // 这些按钮在全屏里点了没反应，全屏态直接去掉。
+    final fullscreenTopControls = buildMoviePlayerTopControls(
+      movieNumber: widget.movieNumber,
+      onBackPressed: widget.onBackPressed,
+    );
     final mobileBottomControls = buildMoviePlayerMobileBottomControls(
       activeDrawer: _mobileDrawer.activeDrawer,
       speedDisplayListenable: _playbackRate.mobileSpeedDisplay,
@@ -536,6 +543,15 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
           _mobileDrawer.toggle(MoviePlayerMobileDrawerType.speed),
       onSubtitleButtonPressed: () =>
           _mobileDrawer.toggle(MoviePlayerMobileDrawerType.subtitle),
+    );
+    final mobileFullscreenBottomControls = buildMoviePlayerMobileBottomControls(
+      activeDrawer: _mobileDrawer.activeDrawer,
+      speedDisplayListenable: _playbackRate.mobileSpeedDisplay,
+      onSpeedButtonPressed: () =>
+          _mobileDrawer.toggle(MoviePlayerMobileDrawerType.speed),
+      onSubtitleButtonPressed: () =>
+          _mobileDrawer.toggle(MoviePlayerMobileDrawerType.subtitle),
+      includeDrawerButtons: false,
     );
     final desktopBottomControls = buildMoviePlayerDesktopBottomControls(
       currentRate: _playbackRate.currentRate,
@@ -560,7 +576,15 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
         if (!_player.state.playing) {
           await _player.play();
         }
+        if (widget.useTouchOptimizedControls) {
+          await enterPlayerFullscreenOrientation();
+        }
       },
+      // 移动端退出全屏恢复页面横屏+沉浸，避免 media_kit 默认回调
+      // （清方向锁 + 恢复系统栏）把播放页的分栏方向与沉浸态一起拆掉。
+      onExitFullscreen: widget.useTouchOptimizedControls
+          ? lockPlayerPageLandscape
+          : defaultExitNativeFullscreen,
     );
     final playerContent = Stack(
       fit: StackFit.expand,
@@ -597,8 +621,8 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       normal: _mobileControlsTheme(theme, topControls, mobileBottomControls),
       fullscreen: _mobileControlsTheme(
         theme,
-        topControls,
-        mobileBottomControls,
+        fullscreenTopControls,
+        mobileFullscreenBottomControls,
       ),
       child: MaterialDesktopVideoControlsTheme(
         normal: _desktopControlsTheme(

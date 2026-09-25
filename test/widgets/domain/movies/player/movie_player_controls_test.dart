@@ -87,6 +87,34 @@ void main() {
       },
     );
 
+    test('mobile fullscreen controls hide dead drawer buttons', () {
+      final speedDisplay = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
+        const MoviePlayerMobileSpeedDisplayState(
+          rate: 1.0,
+          hasExplicitSelection: false,
+        ),
+      );
+      addTearDown(speedDisplay.dispose);
+      final controls = buildMoviePlayerMobileBottomControls(
+        activeDrawer: null,
+        speedDisplayListenable: speedDisplay,
+        onSpeedButtonPressed: () {},
+        onSubtitleButtonPressed: () {},
+        includeDrawerButtons: false,
+      );
+
+      expect(controls, hasLength(5));
+      expect(
+        controls.where(
+          (control) =>
+              control.key == const Key('movie-player-mobile-speed-button') ||
+              control.key == const Key('movie-player-mobile-subtitle-button'),
+        ),
+        isEmpty,
+      );
+      expect(controls[4], isA<MaterialFullscreenButton>());
+    });
+
     test('desktop bottom controls place speed before subtitle button', () {
       final subtitleState = ValueNotifier<MoviePlayerSubtitleState>(
         MoviePlayerSubtitleState.empty,

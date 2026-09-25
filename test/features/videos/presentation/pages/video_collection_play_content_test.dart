@@ -48,6 +48,20 @@ void main() {
           null,
         ),
       );
+      final platformCalls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          platformCalls.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
       final session = SessionStore.inMemory();
       await session.saveBaseUrl('https://api.example.com');
       await session.saveTokens(
@@ -186,6 +200,22 @@ void main() {
           .state<VideoState>(find.byType(Video).first)
           .enterFullscreen();
       await tester.pumpAndSettle();
+      if (mobile) {
+        expect(
+          platformCalls
+              .where(
+                (call) =>
+                    call.method == 'SystemChrome.setPreferredOrientations',
+              )
+              .last
+              .arguments,
+          <String>[
+            'DeviceOrientation.portraitUp',
+            'DeviceOrientation.landscapeLeft',
+            'DeviceOrientation.landscapeRight',
+          ],
+        );
+      }
       await openEpisodes();
       await tester.pumpAndSettle();
       expect(find.text('选集 · 2'), findsOneWidget);

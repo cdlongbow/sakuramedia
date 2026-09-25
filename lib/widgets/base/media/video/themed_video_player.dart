@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_screen_orientation.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 
@@ -301,6 +302,14 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
                 controls: resolveMoviePlayerVideoControlsBuilder(
                   useTouchOptimizedControls: widget.useTouchOptimizedControls,
                 ),
+                // 移动端全屏方向由播放页自己管：进入跟随系统传感器、退出恢复
+                // 页面横屏+沉浸；桌面保持 media_kit 默认（原生窗口全屏）。
+                onEnterFullscreen: widget.useTouchOptimizedControls
+                    ? enterPlayerFullscreenOrientation
+                    : defaultEnterNativeFullscreen,
+                onExitFullscreen: widget.useTouchOptimizedControls
+                    ? lockPlayerPageLandscape
+                    : defaultExitNativeFullscreen,
               ),
             ),
             if (!_initialFrameReady)

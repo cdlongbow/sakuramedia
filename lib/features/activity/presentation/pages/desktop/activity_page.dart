@@ -864,6 +864,7 @@ class _ExecutableJobsDialog extends ConsumerWidget {
       loading: () => AppSkeletonizer(
         enabled: true,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final job in jobMetadataPlaceholders()) ...[
@@ -895,7 +896,9 @@ class _ExecutableJobsDialog extends ConsumerWidget {
       children: [
         const _ExecutableJobsDialogHeader(),
         SizedBox(height: context.appSpacing.lg),
-        body,
+        // 弹窗可用高度有限：body 必须按剩余空间收缩，内部的列表再在剩余空间里滚动，
+        // 不能按屏幕高度比例硬编码列表上限（会顶穿弹窗自身的边距和固定 chrome）。
+        Flexible(child: body),
       ],
     );
   }
@@ -968,16 +971,14 @@ class _ExecutableJobsDialogContentState
               })
               .toList(growable: false);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (state.isLoadingJobs && jobs.isEmpty)
           // loading 用占位任务渲染真实任务卡，由 [AppSkeletonizer] 灰化。
-          AppSkeletonizer(
-            enabled: true,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.68,
-              ),
+          Flexible(
+            child: AppSkeletonizer(
+              enabled: true,
               child: ListView.separated(
                 key: const Key('activity-executable-jobs-loading-list'),
                 shrinkWrap: true,
@@ -1033,10 +1034,7 @@ class _ExecutableJobsDialogContentState
             ),
           ),
           SizedBox(height: spacing.md),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * 0.68,
-            ),
+          Flexible(
             child: ListView.separated(
               key: const Key('activity-executable-jobs-list'),
               shrinkWrap: true,

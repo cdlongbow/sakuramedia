@@ -667,6 +667,68 @@ void main() {
     expect(find.text('已删除 3 个下载任务'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('executable jobs dialog fits short window and list scrolls to end', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 540);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    _enqueueActivityBootstrap(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: <Map<String, dynamic>>[
+        for (var index = 1; index <= 8; index++)
+          <String, dynamic>{
+            'task_key': 'job_$index',
+            'plugin_id': 'plugin_a',
+            'cli_help': '插件任务 $index',
+            'manual_trigger_allowed': true,
+          },
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopActivityPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final listFinder = find.byKey(const Key('activity-executable-jobs-list'));
+    expect(listFinder, findsOneWidget);
+    expect(find.byKey(const Key('activity-job-job_1')), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('activity-job-job_8')),
+      120,
+      scrollable: find.descendant(
+        of: listFinder,
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.byKey(const Key('activity-job-job_8')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 void _enqueueActivityBootstrap(TestApiBundle bundle) {

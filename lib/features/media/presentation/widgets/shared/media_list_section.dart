@@ -175,6 +175,9 @@ class MediaListSection extends StatelessWidget {
             onExitSelection: onExitSelection,
           ),
           child: AppFilterResultLoadingOverlay(
+            surfaceColor: mobile
+                ? context.appColors.surfaceCard
+                : context.appColors.surfaceElevated,
             isLoading: paged?.filterUpdate.isLoading ?? false,
             hasPreviousItems: paged?.items.isNotEmpty ?? false,
             child: scrollView,

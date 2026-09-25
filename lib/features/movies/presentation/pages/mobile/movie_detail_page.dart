@@ -110,6 +110,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             return AppSkeletonizer(
               enabled: true,
               child: MovieDetailPageContent(
+                surfaceColor: context.appColors.surfaceCard,
                 movie: movieDetailPlaceholder(),
                 selectedPreviewKey: '',
                 selectedPreviewUrl: null,
@@ -164,6 +165,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
               : '合并播放';
 
           return MovieDetailPageContent(
+            surfaceColor: context.appColors.surfaceCard,
             showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
             movie: movie,
             mediaItemsOverride: derived.visibleMediaItems,

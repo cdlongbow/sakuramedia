@@ -136,26 +136,68 @@ class _MyAppState extends State<MyApp> {
 }
 
 /// 主题装配层：读外观偏好，构建明暗主题并同步平台窗口外观。
-class _SakuraApp extends ConsumerWidget {
+class _SakuraApp extends ConsumerStatefulWidget {
   const _SakuraApp({required this.platform, required this.router});
 
   final AppPlatform platform;
   final GoRouter router;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SakuraApp> createState() => _SakuraAppState();
+}
+
+class _SakuraAppState extends ConsumerState<_SakuraApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Brightness get _platformBrightness =>
+      WidgetsBinding.instance.platformDispatcher.platformBrightness;
+
+  @override
+  void didChangePlatformBrightness() {
+    // 只有跟随系统才需要响应：同步 toast 样式与原生窗口外观；
+    // 固定明/暗模式不随系统切换变化。
+    if (ref.read(appearanceProvider).themeMode != ThemeMode.system) {
+      return;
+    }
+    unawaited(applyDesktopWindowBrightness(_platformBrightness));
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final appearance = ref.watch(appearanceProvider);
+    final effective = effectiveBrightness(appearance, _platformBrightness);
+
     ref.listen(appearanceProvider, (previous, next) {
-      if (previous?.brightness != next.brightness) {
-        unawaited(applyDesktopWindowBrightness(next.brightness));
+      if (previous == null) {
+        return;
+      }
+      final previousBrightness = effectiveBrightness(
+        previous,
+        _platformBrightness,
+      );
+      final nextBrightness = effectiveBrightness(next, _platformBrightness);
+      if (previousBrightness != nextBrightness) {
+        unawaited(applyDesktopWindowBrightness(nextBrightness));
       }
     });
 
     final themeColor = appearance.themeColor;
-    final lightTheme = platform == AppPlatform.mobile
+    final lightTheme = widget.platform == AppPlatform.mobile
         ? buildSakuraMobileThemeData(themeColor: themeColor)
         : buildSakuraDesktopThemeData(themeColor: themeColor);
-    final darkTheme = platform == AppPlatform.mobile
+    final darkTheme = widget.platform == AppPlatform.mobile
         ? buildSakuraMobileThemeData(
             themeColor: themeColor,
             brightness: Brightness.dark,
@@ -166,8 +208,8 @@ class _SakuraApp extends ConsumerWidget {
           );
 
     return OKToast(
-      textStyle: appToastTextStyleFor(appearance.brightness),
-      backgroundColor: appToastBackgroundColorFor(appearance.brightness),
+      textStyle: appToastTextStyleFor(effective),
+      backgroundColor: appToastBackgroundColorFor(effective),
       child: MaterialApp.router(
         title: 'SakuraMedia',
         debugShowCheckedModeBanner: false,
@@ -175,10 +217,8 @@ class _SakuraApp extends ConsumerWidget {
         supportedLocales: const <Locale>[Locale('zh', 'CN')],
         theme: lightTheme,
         darkTheme: darkTheme,
-        themeMode: appearance.brightness == Brightness.dark
-            ? ThemeMode.dark
-            : ThemeMode.light,
-        routerConfig: router,
+        themeMode: appearance.themeMode,
+        routerConfig: widget.router,
         builder: (context, child) {
           final content = AppImageFullscreenHost(
             child: ScrollConfiguration(

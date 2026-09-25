@@ -31,9 +31,13 @@ Future<void> bootstrapDesktopWindow() async {
 
   final restored = await _readPersistedWindowState();
   final appearance = await _readPersistedAppearance();
+  final effective = effectiveBrightness(
+    appearance,
+    WidgetsBinding.instance.platformDispatcher.platformBrightness,
+  );
   final initialColors = AppColors.of(
     themeColor: appearance.themeColor,
-    brightness: appearance.brightness,
+    brightness: effective,
   );
 
   final windowOptions = WindowOptions(
@@ -63,10 +67,10 @@ Future<void> bootstrapDesktopWindow() async {
       );
       // Apply after window_manager's frame setup: Acrylic extends the DWM
       // backdrop across the client area, visible through the sidebar only.
-      await _applyWindowsBackdrop(appearance.brightness);
+      await _applyWindowsBackdrop(effective);
     }
     if (isMacOS) {
-      await _applyMacAppearance(appearance.brightness);
+      await _applyMacAppearance(effective);
     }
     if (restored.maximized) {
       await windowManager.maximize();

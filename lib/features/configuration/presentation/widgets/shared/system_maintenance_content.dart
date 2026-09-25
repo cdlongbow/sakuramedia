@@ -105,7 +105,7 @@ class _SystemMaintenanceContentState
     if (_isMobile) {
       return ColoredBox(
         key: const Key('mobile-settings-system-maintenance'),
-        color: context.appColors.surfacePage,
+        color: context.appColors.surfaceCard,
         child: AppAdaptiveRefreshScrollView(
           onRefresh: _load,
           physics: const AlwaysScrollableScrollPhysics(),

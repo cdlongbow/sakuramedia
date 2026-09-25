@@ -16,12 +16,15 @@ class AppFilterResultLoadingOverlay extends StatefulWidget {
     required this.child,
     this.protectedHeaderKey,
     this.scrollController,
+    this.surfaceColor,
     this.indicatorDelay = const Duration(milliseconds: 150),
   });
 
   final bool isLoading;
   final bool hasPreviousItems;
   final Widget child;
+
+  final Color? surfaceColor;
 
   /// 吸顶页的控制栏和主滚动控制器，用于把加载遮罩裁剪在控制栏下方。
   final GlobalKey? protectedHeaderKey;
@@ -129,6 +132,7 @@ class _AppFilterResultLoadingOverlayState
                     liveRegion: true,
                     child: _FilterResultLoadingIndicator(
                       obscureContent: !widget.hasPreviousItems,
+                      surfaceColor: widget.surfaceColor,
                     ),
                   ),
                 ),
@@ -141,9 +145,13 @@ class _AppFilterResultLoadingOverlayState
 }
 
 class _FilterResultLoadingIndicator extends StatelessWidget {
-  const _FilterResultLoadingIndicator({required this.obscureContent});
+  const _FilterResultLoadingIndicator({
+    required this.obscureContent,
+    this.surfaceColor,
+  });
 
   final bool obscureContent;
+  final Color? surfaceColor;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +161,7 @@ class _FilterResultLoadingIndicator extends StatelessWidget {
 
     return ColoredBox(
       color: obscureContent
-          ? colors.surfaceElevated.withValues(alpha: 0.96)
+          ? (surfaceColor ?? colors.surfaceElevated).withValues(alpha: 0.96)
           : Colors.transparent,
       child: Center(
         child: DecoratedBox(

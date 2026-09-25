@@ -113,6 +113,8 @@ class _AppCoverHoverInfoState extends State<AppCoverHoverInfo> {
                         duration: duration,
                         switchInCurve: Curves.easeOutCubic,
                         switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, animation) =>
+                            FadeTransition(opacity: animation, child: child),
                         child: KeyedSubtree(
                           key: ValueKey<bool>(expanded),
                           child: expanded ? const SizedBox.shrink() : collapsed,

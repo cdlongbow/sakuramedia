@@ -82,7 +82,7 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
 
     return ColoredBox(
       key: const Key('mobile-settings-plugins'),
-      color: colors.surfacePage,
+      color: colors.surfaceCard,
       child: Column(
         children: [
           Expanded(

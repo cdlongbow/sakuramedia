@@ -142,6 +142,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
           ],
         ),
         child: AppFilterResultLoadingOverlay(
+          surfaceColor: context.appColors.surfaceCard,
           isLoading: paged?.filterUpdate.isLoading ?? false,
           hasPreviousItems: items.isNotEmpty,
           child: AppAdaptiveRefreshScrollView(

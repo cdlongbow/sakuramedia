@@ -15,6 +15,7 @@ import 'package:sakuramedia/widgets/domain/search/catalog_search_stream_status_c
 class CatalogSearchContent extends StatelessWidget {
   const CatalogSearchContent({
     super.key,
+    required this.surfaceColor,
     required this.state,
     required this.textController,
     required this.tabController,
@@ -32,6 +33,7 @@ class CatalogSearchContent extends StatelessWidget {
     this.onFallbackToOnlineSearch,
   });
 
+  final Color surfaceColor;
   final CatalogSearchState state;
   final TextEditingController textController;
   final TabController tabController;
@@ -56,7 +58,7 @@ class CatalogSearchContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: context.appColors.surfaceElevated,
+      color: surfaceColor,
       child: AppFixedHeaderLayout(
         header: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

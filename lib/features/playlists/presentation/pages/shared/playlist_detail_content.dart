@@ -48,12 +48,14 @@ class PlaylistDetailContent extends ConsumerStatefulWidget {
   const PlaylistDetailContent({
     super.key,
     required this.playlistId,
+    required this.surfaceColor,
     required this.onMovieTap,
     required this.fallbackPath,
     this.enablePullToRefresh = false,
   });
 
   final int playlistId;
+  final Color surfaceColor;
   final ValueChanged<MovieListItemDto> onMovieTap;
 
   /// 深链进入时没有可 pop 的上一页，删除成功后回到该列表页。
@@ -182,7 +184,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
             ),
             AppPinnedListHeader(
               key: _listHeaderKey,
-              color: context.appColors.surfaceElevated,
+              color: widget.surfaceColor,
               child: Padding(
                 padding: EdgeInsets.only(bottom: context.appSpacing.sm),
                 child: selectionMode
@@ -260,6 +262,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           }
 
           return AppFilterResultLoadingOverlay(
+            surfaceColor: widget.surfaceColor,
             protectedHeaderKey: _listHeaderKey,
             scrollController: _scrollController,
             isLoading: paged?.filterUpdate.isLoading ?? false,

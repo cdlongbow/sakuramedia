@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_filter_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/pages/shared/image_search_content.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';
+import 'package:sakuramedia/theme.dart';
 
 /// 桌面画面搜索壳：结果动作走桌面默认（push 桌面路由、预览用对话框），
 /// 全部实现在共享的 [ImageSearchContent]。
@@ -30,6 +31,7 @@ class DesktopImageSearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ImageSearchContent(
+      surfaceColor: context.appColors.surfaceElevated,
       fallbackPath: fallbackPath,
       initialFileName: initialFileName,
       initialFileBytes: initialFileBytes,

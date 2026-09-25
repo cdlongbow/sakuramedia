@@ -111,6 +111,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             return AppSkeletonizer(
               enabled: true,
               child: MovieDetailPageContent(
+                surfaceColor: context.appColors.surfaceElevated,
                 movie: movieDetailPlaceholder(),
                 selectedPreviewKey: '',
                 selectedPreviewUrl: null,
@@ -164,6 +165,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
               ? '合并播放 · ${mergePlaybackCandidates.single.segmentCount} 段'
               : '合并播放';
           return MovieDetailPageContent(
+            surfaceColor: context.appColors.surfaceElevated,
             showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
             movie: movie,
             mediaItemsOverride: derived.visibleMediaItems,

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,16 +10,38 @@ import 'package:sakuramedia/theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('默认外观为浅色 + 酒红', () {
+  test('默认外观为跟随系统 + 绛红', () {
     final container = ProviderContainer(retry: (_, _) => null);
     addTearDown(container.dispose);
 
     final appearance = container.read(appearanceProvider);
-    expect(appearance.brightness, Brightness.light);
-    expect(appearance.themeColor.id, AppThemeColor.burgundyId);
+    expect(appearance.themeMode, ThemeMode.system);
+    expect(appearance.themeColor.id, AppThemeColor.crimsonId);
   });
 
-  test('切换明暗模式与主题色会更新状态并写入存储', () async {
+  test('effectiveBrightness 按模式解析平台亮度', () {
+    AppearanceSettings settings(ThemeMode mode) =>
+        AppearanceSettings(themeMode: mode, themeColor: AppThemeColor.crimson);
+
+    expect(
+      effectiveBrightness(settings(ThemeMode.system), Brightness.dark),
+      Brightness.dark,
+    );
+    expect(
+      effectiveBrightness(settings(ThemeMode.system), Brightness.light),
+      Brightness.light,
+    );
+    expect(
+      effectiveBrightness(settings(ThemeMode.light), Brightness.dark),
+      Brightness.light,
+    );
+    expect(
+      effectiveBrightness(settings(ThemeMode.dark), Brightness.light),
+      Brightness.dark,
+    );
+  });
+
+  test('切换主题模式与主题色会更新状态并写入存储', () async {
     final store = InMemoryAppearanceStore();
     final container = ProviderContainer(
       retry: (_, _) => null,
@@ -29,50 +51,69 @@ void main() {
 
     await container
         .read(appearanceProvider.notifier)
-        .setBrightness(Brightness.dark);
-    expect(container.read(appearanceProvider).brightness, Brightness.dark);
-    expect(store.read().brightness, Brightness.dark);
+        .setThemeMode(ThemeMode.dark);
+    expect(container.read(appearanceProvider).themeMode, ThemeMode.dark);
+    expect(store.read().themeMode, ThemeMode.dark);
 
     await container
         .read(appearanceProvider.notifier)
-        .setThemeColor(AppThemeColor.burgundy);
+        .setThemeColor(AppThemeColor.silhouette);
     expect(
       container.read(appearanceProvider).themeColor.id,
-      AppThemeColor.burgundyId,
+      AppThemeColor.silhouetteId,
     );
+    expect(store.read().themeColor.id, AppThemeColor.silhouetteId);
   });
 
-  test('SharedPreferences 实现落盘并回读明暗模式', () async {
+  test('SharedPreferences 实现落盘并回读主题模式', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final store = SharedPreferencesAppearanceStore(
       await SharedPreferences.getInstance(),
     );
-    expect(store.read().brightness, Brightness.light);
+    expect(store.read().themeMode, ThemeMode.system);
 
     await store.save(
       const AppearanceSettings(
-        brightness: Brightness.dark,
-        themeColor: AppThemeColor.burgundy,
+        themeMode: ThemeMode.dark,
+        themeColor: AppThemeColor.silhouette,
       ),
     );
 
     final reloaded = SharedPreferencesAppearanceStore(
       await SharedPreferences.getInstance(),
     );
-    expect(reloaded.read().brightness, Brightness.dark);
-    expect(reloaded.read().themeColor.id, AppThemeColor.burgundyId);
+    expect(reloaded.read().themeMode, ThemeMode.dark);
+    expect(reloaded.read().themeColor.id, AppThemeColor.silhouetteId);
   });
 
-  test('未知主题色 id 回退到酒红', () async {
+  test('旧值 light/dark 兼容，未知主题模式回退跟随系统', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      SharedPreferencesAppearanceStore.themeModeKey: 'light',
+    });
+    var store = SharedPreferencesAppearanceStore(
+      await SharedPreferences.getInstance(),
+    );
+    expect(store.read().themeMode, ThemeMode.light);
+
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      SharedPreferencesAppearanceStore.themeModeKey: 'not-a-mode',
+    });
+    store = SharedPreferencesAppearanceStore(
+      await SharedPreferences.getInstance(),
+    );
+    expect(store.read().themeMode, ThemeMode.system);
+  });
+
+  test('未知主题色 id 回退到绛红', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       SharedPreferencesAppearanceStore.themeColorKey: 'not-a-color',
-      SharedPreferencesAppearanceStore.brightnessKey: 'dark',
+      SharedPreferencesAppearanceStore.themeModeKey: 'dark',
     });
     final store = SharedPreferencesAppearanceStore(
       await SharedPreferences.getInstance(),
     );
 
-    expect(store.read().themeColor.id, AppThemeColor.burgundyId);
-    expect(store.read().brightness, Brightness.dark);
+    expect(store.read().themeColor.id, AppThemeColor.crimsonId);
+    expect(store.read().themeMode, ThemeMode.dark);
   });
 }

@@ -109,6 +109,9 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     final resultView = AppFixedHeaderLayout(
       header: _ListHeader(mobile: mobile, batchDeleting: batchDeleting.value),
       child: AppFilterResultLoadingOverlay(
+        surfaceColor: mobile
+            ? context.appColors.surfaceCard
+            : context.appColors.surfaceElevated,
         isLoading: paged?.filterUpdate.isLoading ?? false,
         hasPreviousItems: paged?.items.isNotEmpty ?? false,
         child: CustomScrollView(

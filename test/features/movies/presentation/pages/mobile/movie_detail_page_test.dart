@@ -5,6 +5,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
@@ -69,6 +70,13 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Movie 1'), findsOneWidget);
+    final content = tester.widget<MovieDetailPageContent>(
+      find.byType(MovieDetailPageContent),
+    );
+    expect(
+      content.surfaceColor,
+      sakuraMobileThemeData.appColors.surfaceCard,
+    );
     expect(tester.takeException(), isNull);
   });
 

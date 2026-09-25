@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/search/presentation/providers/catalog_searc
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
+import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_content.dart';
 
 class CatalogSearchPage extends ConsumerStatefulWidget {
@@ -129,6 +130,7 @@ class _CatalogSearchPageState extends ConsumerState<CatalogSearchPage>
       },
     );
     return CatalogSearchContent(
+      surfaceColor: context.appColors.surfaceElevated,
       state: searchState,
       textController: _textController,
       tabController: _tabController,

@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/image_search/presentation/providers/image_s
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
+import 'package:sakuramedia/theme.dart';
 
 /// 移动画面搜索壳：结果动作全部落到移动路由（相似图搜经 draft store 中转、
 /// 播放 / 详情 push 移动子页），预览用底部抽屉；共享实现在 [ImageSearchContent]。
@@ -88,6 +89,7 @@ class MobileImageSearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ImageSearchContent(
+      surfaceColor: context.appColors.surfaceCard,
       initialFileName: initialFileName,
       initialFileBytes: initialFileBytes,
       initialMimeType: initialMimeType,

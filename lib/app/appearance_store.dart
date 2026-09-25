@@ -2,31 +2,43 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/theme/app_theme_color.dart';
 
-/// 外观偏好：明暗模式 + 主题色。
+/// 外观偏好：主题模式（跟随系统/浅色/深色） + 主题色。
 @immutable
 class AppearanceSettings {
   const AppearanceSettings({
-    required this.brightness,
+    required this.themeMode,
     required this.themeColor,
   });
 
   static const AppearanceSettings defaults = AppearanceSettings(
-    brightness: Brightness.light,
-    themeColor: AppThemeColor.burgundy,
+    themeMode: ThemeMode.system,
+    themeColor: AppThemeColor.crimson,
   );
 
-  final Brightness brightness;
+  final ThemeMode themeMode;
   final AppThemeColor themeColor;
 
   AppearanceSettings copyWith({
-    Brightness? brightness,
+    ThemeMode? themeMode,
     AppThemeColor? themeColor,
   }) {
     return AppearanceSettings(
-      brightness: brightness ?? this.brightness,
+      themeMode: themeMode ?? this.themeMode,
       themeColor: themeColor ?? this.themeColor,
     );
   }
+}
+
+/// 解析当前生效的明暗：跟随系统时取平台亮度，否则取显式模式。
+Brightness effectiveBrightness(
+  AppearanceSettings settings,
+  Brightness platformBrightness,
+) {
+  return switch (settings.themeMode) {
+    ThemeMode.light => Brightness.light,
+    ThemeMode.dark => Brightness.dark,
+    ThemeMode.system => platformBrightness,
+  };
 }
 
 abstract class AppearanceStore {
@@ -37,7 +49,8 @@ abstract class AppearanceStore {
 class SharedPreferencesAppearanceStore implements AppearanceStore {
   SharedPreferencesAppearanceStore(this._preferences);
 
-  static const String brightnessKey = 'appearance.brightness';
+  /// 历史 key 名保留；值域已扩展为 `system/light/dark`，老用户偏好不丢。
+  static const String themeModeKey = 'appearance.brightness';
   static const String themeColorKey = 'appearance.theme_color';
 
   final SharedPreferences _preferences;
@@ -50,9 +63,7 @@ class SharedPreferencesAppearanceStore implements AppearanceStore {
   @override
   AppearanceSettings read() {
     return AppearanceSettings(
-      brightness: _preferences.getString(brightnessKey) == 'dark'
-          ? Brightness.dark
-          : Brightness.light,
+      themeMode: _themeModeFromId(_preferences.getString(themeModeKey)),
       themeColor: AppThemeColor.fromId(_preferences.getString(themeColorKey)),
     );
   }
@@ -60,15 +71,20 @@ class SharedPreferencesAppearanceStore implements AppearanceStore {
   @override
   Future<void> save(AppearanceSettings settings) async {
     try {
-      await _preferences.setString(
-        brightnessKey,
-        settings.brightness == Brightness.dark ? 'dark' : 'light',
-      );
+      await _preferences.setString(themeModeKey, settings.themeMode.name);
       await _preferences.setString(themeColorKey, settings.themeColor.id);
     } catch (_) {
       // 持久化失败不阻塞切换。
     }
   }
+}
+
+ThemeMode _themeModeFromId(String? id) {
+  return switch (id) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
 }
 
 class InMemoryAppearanceStore implements AppearanceStore {

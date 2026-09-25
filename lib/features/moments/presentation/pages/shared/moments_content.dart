@@ -231,6 +231,9 @@ class MomentsContent extends HookConsumerWidget {
     );
 
     final page = AppFilterResultLoadingOverlay(
+      surfaceColor: useMobileFilterDrawer
+          ? context.appColors.surfaceCard
+          : context.appColors.surfaceElevated,
       protectedHeaderKey: listHeaderKey,
       scrollController: scrollController,
       isLoading: paged.filterUpdate.isLoading,

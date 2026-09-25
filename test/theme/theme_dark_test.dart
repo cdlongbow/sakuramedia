@@ -123,6 +123,62 @@ void main() {
     expect(dark.appColors.surfacePage, const Color(0xFF121212));
   });
 
+  test('every theme color keeps key contrast pairs in both modes', () {
+    for (final themeColor in AppThemeColor.values) {
+      for (final brightness in Brightness.values) {
+        final theme = buildSakuraDesktopThemeData(
+          themeColor: themeColor,
+          brightness: brightness,
+        );
+        final colors = theme.appColors;
+        final textPalette = theme.appTextPalette;
+        final scheme = theme.colorScheme;
+        final label = '${themeColor.id}/${brightness.name}';
+
+        expect(
+          _contrast(scheme.onPrimary, scheme.primary),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onPrimary / primary',
+        );
+        expect(
+          _contrast(scheme.onPrimaryContainer, scheme.primaryContainer),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onPrimaryContainer / primaryContainer',
+        );
+        expect(
+          _contrast(scheme.onSecondary, scheme.secondary),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onSecondary / secondary',
+        );
+        expect(
+          _contrast(scheme.onSecondaryContainer, scheme.secondaryContainer),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onSecondaryContainer / secondaryContainer',
+        );
+        expect(
+          _contrast(scheme.onTertiary, scheme.tertiary),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onTertiary / tertiary',
+        );
+        expect(
+          _contrast(scheme.onTertiaryContainer, scheme.tertiaryContainer),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label onTertiaryContainer / tertiaryContainer',
+        );
+        expect(
+          _contrast(textPalette.accent, colors.surfacePage),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label 主题强调色 / 页面底',
+        );
+        expect(
+          _contrast(textPalette.accent, colors.surfaceCard),
+          greaterThanOrEqualTo(4.5),
+          reason: '$label 主题强调色 / 卡片',
+        );
+      }
+    }
+  });
+
   test('key text and brand pairs meet contrast targets in both modes', () {
     for (final brightness in Brightness.values) {
       final theme = buildSakuraDesktopThemeData(brightness: brightness);

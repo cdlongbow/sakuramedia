@@ -373,6 +373,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
           SizedBox(height: context.appSpacing.sm),
           Expanded(
             child: AppFilterResultLoadingOverlay(
+              surfaceColor: context.appColors.surfaceCard,
               isLoading: state.filterUpdate.isLoading,
               hasPreviousItems: state.items.isNotEmpty,
               child: _buildContent(context, state),

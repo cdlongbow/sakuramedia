@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
@@ -62,6 +63,10 @@ void main() {
 
     expect(find.text('Movie 1'), findsOneWidget);
     expect(find.text('ABC-001'), findsWidgets);
+    final content = tester.widget<MovieDetailPageContent>(
+      find.byType(MovieDetailPageContent),
+    );
+    expect(content.surfaceColor, sakuraThemeData.appColors.surfaceElevated);
     expect(tester.takeException(), isNull);
   });
 

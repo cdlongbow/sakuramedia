@@ -16,6 +16,7 @@ class DesktopPlaylistDetailPage extends StatelessWidget {
       color: context.appColors.surfaceElevated,
       child: PlaylistDetailContent(
         playlistId: playlistId,
+        surfaceColor: context.appColors.surfaceElevated,
         fallbackPath: desktopPlaylistsPath,
         enablePullToRefresh: false,
         onMovieTap: (movie) => context.pushDesktopMovieDetail(

@@ -49,6 +49,7 @@ void main() {
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: movie,
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'preview',
             selectedPreviewUrl: null,
             isCollection: false,
@@ -103,6 +104,7 @@ void main() {
                       actors: showActors ? null : const [],
                       tags: showTags ? null : const [],
                     ),
+                    surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                     selectedPreviewKey: 'movie-preview',
                     selectedPreviewUrl: null,
                     isCollection: false,
@@ -161,6 +163,7 @@ void main() {
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(javdbId: null, metadataSourceName: '示例来源'),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
             isCollection: false,
@@ -217,6 +220,7 @@ void main() {
                     ),
                   ],
                 ),
+                surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                 selectedPreviewKey: 'movie-preview',
                 selectedPreviewUrl: null,
                 isCollection: false,
@@ -286,6 +290,7 @@ void main() {
             home: Scaffold(
               body: MovieDetailPageContent(
                 movie: _movieDetail(seriesId: 7, seriesName: seriesName),
+                surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                 selectedPreviewKey: 'movie-preview',
                 selectedPreviewUrl: null,
                 isCollection: false,
@@ -342,6 +347,7 @@ void main() {
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
             isCollection: false,
@@ -375,6 +381,7 @@ void main() {
           home: Scaffold(
             body: MovieDetailPageContent(
               movie: _movieDetail(),
+              surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
               selectedPreviewKey: 'movie-preview',
               selectedPreviewUrl: null,
               isCollection: false,
@@ -444,6 +451,7 @@ void main() {
         home: Scaffold(
           body: MovieDetailPageContent(
             movie: _movieDetail(),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
             isCollection: false,

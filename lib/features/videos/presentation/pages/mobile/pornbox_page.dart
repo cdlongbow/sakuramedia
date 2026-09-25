@@ -346,6 +346,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         children: [
           Expanded(
             child: AppFilterResultLoadingOverlay(
+              surfaceColor: context.appColors.surfaceCard,
               protectedHeaderKey: _listHeaderKey,
               scrollController: _scrollController,
               isLoading: paged.filterUpdate.isLoading,

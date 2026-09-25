@@ -206,6 +206,7 @@ class _VideoCollectionDetailContentState
               ),
               Expanded(
                 child: AppFilterResultLoadingOverlay(
+                  surfaceColor: widget.surfaceColor,
                   isLoading: displayState.filterUpdate.isLoading,
                   hasPreviousItems: displayState.items.isNotEmpty,
                   child: _buildBody(context, displayState),

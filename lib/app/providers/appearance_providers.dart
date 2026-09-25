@@ -15,11 +15,11 @@ class Appearance extends _$Appearance {
   @override
   AppearanceSettings build() => ref.watch(appearanceStoreProvider).read();
 
-  Future<void> setBrightness(Brightness brightness) async {
-    if (state.brightness == brightness) {
+  Future<void> setThemeMode(ThemeMode themeMode) async {
+    if (state.themeMode == themeMode) {
       return;
     }
-    await _save(state.copyWith(brightness: brightness));
+    await _save(state.copyWith(themeMode: themeMode));
   }
 
   Future<void> setThemeColor(AppThemeColor themeColor) async {

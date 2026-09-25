@@ -142,7 +142,7 @@ void main() {
         platformOverride: AppPlatform.desktop,
         appearanceStore: InMemoryAppearanceStore(
           const AppearanceSettings(
-            brightness: Brightness.dark,
+            themeMode: ThemeMode.dark,
             themeColor: AppThemeColor.burgundy,
           ),
         ),
@@ -153,6 +153,31 @@ void main() {
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(materialApp.themeMode, ThemeMode.dark);
     expect(materialApp.darkTheme?.appColors.surfacePage, const Color(0xFF121212));
+  });
+
+  testWidgets('MyApp keeps system mode and follows platform brightness', (
+    WidgetTester tester,
+  ) async {
+    tester.binding.platformDispatcher.platformBrightnessTestValue =
+        Brightness.dark;
+    addTearDown(
+      tester.binding.platformDispatcher.clearPlatformBrightnessTestValue,
+    );
+
+    await tester.pumpWidget(
+      MyApp(
+        platformOverride: AppPlatform.desktop,
+        appearanceStore: InMemoryAppearanceStore(
+          AppearanceSettings.defaults,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.themeMode, ThemeMode.system);
+    final resolvedTheme = tester.widget<Theme>(find.byType(Theme).first);
+    expect(resolvedTheme.data.brightness, Brightness.dark);
   });
 
   testWidgets('移动主要路由在真实组合根下都能建起来（provider 接线冒烟）', (WidgetTester tester) async {

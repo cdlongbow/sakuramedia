@@ -148,6 +148,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                 ],
               ),
               child: AppFilterResultLoadingOverlay(
+                surfaceColor: context.appColors.surfaceCard,
                 isLoading: summary.paged.filterUpdate.isLoading,
                 hasPreviousItems: summary.paged.items.isNotEmpty,
                 child: _buildScrollView(context, summary),

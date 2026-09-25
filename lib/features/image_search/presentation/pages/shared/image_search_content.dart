@@ -51,6 +51,7 @@ enum ImageSearchResultPreviewPresentation { dialog, bottomDrawer }
 class ImageSearchContent extends ConsumerStatefulWidget {
   const ImageSearchContent({
     super.key,
+    required this.surfaceColor,
     this.fallbackPath,
     this.initialFileName,
     this.initialFileBytes,
@@ -67,6 +68,7 @@ class ImageSearchContent extends ConsumerStatefulWidget {
         ImageSearchResultPreviewPresentation.dialog,
   });
 
+  final Color surfaceColor;
   final String? fallbackPath;
   final String? initialFileName;
   final Uint8List? initialFileBytes;
@@ -263,7 +265,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     return AppPageRefreshScope(
       onRefresh: _handleTopBarRefresh,
       child: Material(
-        color: context.appColors.surfaceElevated,
+        color: widget.surfaceColor,
         child: CustomScrollView(
           key: PageStorageKey<String>('image-search-scroll:${_scope.cacheKey}'),
           controller: _scrollController,

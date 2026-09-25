@@ -15,7 +15,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
     final spacing = context.appSpacing;
     final appearance = ref.watch(appearanceProvider);
     final controller = ref.read(appearanceProvider.notifier);
-    final isDark = appearance.brightness == Brightness.dark;
+    final themeMode = appearance.themeMode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,19 +41,32 @@ class AppearanceSettingsContent extends ConsumerWidget {
         AppSettingsGroup(
           children: [
             AppSettingCell(
+              key: const Key('appearance-mode-system'),
+              icon: Icons.brightness_auto_outlined,
+              title: '跟随系统',
+              trailing: themeMode == ThemeMode.system
+                  ? const _SelectionCheckMark()
+                  : null,
+              onTap: () =>
+                  unawaited(controller.setThemeMode(ThemeMode.system)),
+            ),
+            AppSettingCell(
               key: const Key('appearance-mode-light'),
               icon: Icons.light_mode_outlined,
               title: '浅色',
-              trailing: isDark ? null : const _SelectionCheckMark(),
-              onTap: () =>
-                  unawaited(controller.setBrightness(Brightness.light)),
+              trailing: themeMode == ThemeMode.light
+                  ? const _SelectionCheckMark()
+                  : null,
+              onTap: () => unawaited(controller.setThemeMode(ThemeMode.light)),
             ),
             AppSettingCell(
               key: const Key('appearance-mode-dark'),
               icon: Icons.dark_mode_outlined,
               title: '深色',
-              trailing: isDark ? const _SelectionCheckMark() : null,
-              onTap: () => unawaited(controller.setBrightness(Brightness.dark)),
+              trailing: themeMode == ThemeMode.dark
+                  ? const _SelectionCheckMark()
+                  : null,
+              onTap: () => unawaited(controller.setThemeMode(ThemeMode.dark)),
             ),
           ],
         ),
@@ -79,7 +92,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
                   children: [
                     _ThemeColorSwatch(
                       color: themeColor
-                          .forBrightness(appearance.brightness)
+                          .forBrightness(Theme.of(context).brightness)
                           .primary,
                     ),
                     if (appearance.themeColor.id == themeColor.id) ...[

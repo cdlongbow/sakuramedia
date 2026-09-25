@@ -470,6 +470,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                   );
 
             return AppFilterResultLoadingOverlay(
+              surfaceColor: widget.surfaceColor,
               protectedHeaderKey: _listHeaderKey,
               scrollController: _scrollController,
               isLoading: movies?.paged.filterUpdate.isLoading ?? false,

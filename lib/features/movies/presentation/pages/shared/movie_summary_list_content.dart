@@ -300,6 +300,7 @@ class _MovieSummaryListContentState
           ],
         ),
         child: AppFilterResultLoadingOverlay(
+          surfaceColor: widget.surfaceColor,
           isLoading: paged?.filterUpdate.isLoading ?? false,
           hasPreviousItems: items.isNotEmpty,
           child: widget.bodyBuilder(

@@ -38,6 +38,7 @@ class MovieDetailPageContent extends StatelessWidget {
   const MovieDetailPageContent({
     this.showSimilarMovies = true,
     super.key,
+    required this.surfaceColor,
     required this.movie,
     required this.selectedPreviewKey,
     required this.selectedPreviewUrl,
@@ -95,6 +96,7 @@ class MovieDetailPageContent extends StatelessWidget {
   });
 
   final MovieDetailDto movie;
+  final Color surfaceColor;
   final List<MovieMediaItemDto>? mediaItemsOverride;
   final String selectedPreviewKey;
   final String? selectedPreviewUrl;
@@ -172,7 +174,7 @@ class MovieDetailPageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: context.appColors.surfaceCard,
+      color: surfaceColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewportHeight = _resolveViewportHeight(context, constraints);

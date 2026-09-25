@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
+import 'package:sakuramedia/features/account/presentation/account_placeholders.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 
@@ -164,10 +166,6 @@ class _MobileChangeUsernamePageState
   Widget _buildBody(BuildContext context, AccountProfileState state) {
     final spacing = context.appSpacing;
 
-    if (state.isLoading && state.account == null) {
-      return const _MobileUsernameLoadingSection();
-    }
-
     if (state.errorMessage != null && state.account == null) {
       return _MobileUsernameErrorSection(
         message: state.errorMessage!,
@@ -176,70 +174,57 @@ class _MobileChangeUsernamePageState
     }
 
     final account = state.account;
-    return Form(
-      key: _formKey,
-      autovalidateMode: _autovalidateMode,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const AppNoticeCard(
-            key: Key('mobile-username-notice-card'),
-            leadingIcon: Icons.info_outline_rounded,
-            description: '用户名会用于登录和账号识别，保存后当前登录态保持不变。',
-          ),
-          SizedBox(height: spacing.md),
-          if (account != null) ...[
-            _AccountSummaryCard(account: account),
+    final showSkeleton = state.isLoading && account == null;
+    final displayAccount = showSkeleton ? accountPlaceholder() : account;
+    // loading 用占位账号渲染真实卡片与表单壳，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: showSkeleton,
+      child: Form(
+        key: _formKey,
+        autovalidateMode: _autovalidateMode,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppNoticeCard(
+              key: Key('mobile-username-notice-card'),
+              leadingIcon: Icons.info_outline_rounded,
+              description: '用户名会用于登录和账号识别，保存后当前登录态保持不变。',
+            ),
             SizedBox(height: spacing.md),
-          ],
-          _FormCard(
-            children: [
-              AppTextField(
-                fieldKey: const Key('mobile-username-field'),
-                controller: _usernameController,
-                focusNode: _usernameFocusNode,
-                label: '用户名',
-                hintText: '请输入新的用户名',
-                enabled: !state.isSaving,
-                validator: _validateUsername,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _submit(),
-              ),
-              if (state.errorMessage != null && account != null) ...[
-                SizedBox(height: spacing.sm),
-                Text(
-                  state.errorMessage!,
-                  key: const Key('mobile-username-error-text'),
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    tone: AppTextTone.error,
-                  ),
-                ),
-              ],
+            if (displayAccount != null) ...[
+              _AccountSummaryCard(account: displayAccount),
+              SizedBox(height: spacing.md),
             ],
-          ),
-        ],
+            _FormCard(
+              children: [
+                AppTextField(
+                  fieldKey: const Key('mobile-username-field'),
+                  controller: _usernameController,
+                  focusNode: _usernameFocusNode,
+                  label: '用户名',
+                  hintText: '请输入新的用户名',
+                  enabled: !state.isSaving,
+                  validator: _validateUsername,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
+                ),
+                if (state.errorMessage != null && account != null) ...[
+                  SizedBox(height: spacing.sm),
+                  Text(
+                    state.errorMessage!,
+                    key: const Key('mobile-username-error-text'),
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      tone: AppTextTone.error,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
-    );
-  }
-}
-
-class _MobileUsernameLoadingSection extends StatelessWidget {
-  const _MobileUsernameLoadingSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SkeletonBlock(height: 92, borderRadius: context.appRadius.mdBorder),
-        SizedBox(height: spacing.md),
-        _SkeletonBlock(height: 112, borderRadius: context.appRadius.lgBorder),
-        SizedBox(height: spacing.md),
-        _SkeletonBlock(height: 92, borderRadius: context.appRadius.lgBorder),
-      ],
     );
   }
 }
@@ -361,24 +346,6 @@ class _FormCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
-      ),
-    );
-  }
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({required this.height, required this.borderRadius});
-
-  final double height;
-  final BorderRadiusGeometry borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: borderRadius,
       ),
     );
   }

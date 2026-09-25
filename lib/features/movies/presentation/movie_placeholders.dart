@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -20,6 +21,22 @@ List<MovieListItemDto> movieListItemPlaceholders({int count = 8}) {
       isSubscribed: false,
       canPlay: false,
       javdbId: null,
+    ),
+    growable: false,
+  );
+}
+
+List<MovieReviewDto> movieReviewPlaceholders({int count = 3}) {
+  return List<MovieReviewDto>.generate(
+    count,
+    (index) => MovieReviewDto(
+      id: -1 - index,
+      score: 4,
+      content: BoneMock.paragraph,
+      createdAt: DateTime(2026, 1, 1),
+      username: BoneMock.words(1),
+      likeCount: 3,
+      watchCount: 12,
     ),
     growable: false,
   );

@@ -14,8 +14,10 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DesktopPlaylistsPage extends ConsumerStatefulWidget {
   const DesktopPlaylistsPage({super.key});
@@ -123,11 +125,10 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
             key: Key('playlist-banner-card-${playlist.id}'),
             title: playlist.name,
             coverImageUrl: state.coverUrlFor(playlist.id),
-            onTap:
-                () => context.pushDesktopPlaylistDetail(
-                  playlistId: playlist.id,
-                  fallbackPath: desktopPlaylistsPath,
-                ),
+            onTap: () => context.pushDesktopPlaylistDetail(
+              playlistId: playlist.id,
+              fallbackPath: desktopPlaylistsPath,
+            ),
           ),
         ],
       );
@@ -157,11 +158,10 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
                   key: Key('playlist-banner-card-${playlist.id}'),
                   title: playlist.name,
                   coverImageUrl: state.coverUrlFor(playlist.id),
-                  onTap:
-                      () => context.pushDesktopPlaylistDetail(
-                        playlistId: playlist.id,
-                        fallbackPath: desktopPlaylistsPath,
-                      ),
+                  onTap: () => context.pushDesktopPlaylistDetail(
+                    playlistId: playlist.id,
+                    fallbackPath: desktopPlaylistsPath,
+                  ),
                 ),
                 Positioned(
                   right: context.appSpacing.sm,
@@ -233,32 +233,39 @@ class _DesktopPlaylistsLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    return ColoredBox(
-      color: context.appColors.surfaceElevated,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const AppSkeletonBlock(width: 88, height: 22),
-              const Spacer(),
-              AppSkeletonBlock(
-                width: 108,
-                height: context.appComponentTokens.buttonHeightSm,
-                radius: context.appRadius.pillBorder,
-              ),
-            ],
-          ),
-          SizedBox(height: spacing.lg),
-          Expanded(
-            child: ListView.separated(
-              key: const Key('playlists-page-loading'),
-              itemCount: 18,
-              separatorBuilder: (_, _) => SizedBox(height: spacing.sm),
-              itemBuilder: (_, _) => const PlaylistBannerCardSkeleton(),
+    // loading 用占位播放列表渲染真实横幅，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: ColoredBox(
+        color: context.appColors.surfaceElevated,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const AppSkeletonBlock(width: 88, height: 22),
+                const Spacer(),
+                AppSkeletonBlock(
+                  width: 108,
+                  height: context.appComponentTokens.buttonHeightSm,
+                  radius: context.appRadius.pillBorder,
+                ),
+              ],
             ),
-          ),
-        ],
+            SizedBox(height: spacing.lg),
+            Expanded(
+              child: ListView.separated(
+                key: const Key('playlists-page-loading'),
+                itemCount: 6,
+                separatorBuilder: (_, _) => SizedBox(height: spacing.sm),
+                itemBuilder: (_, _) => PlaylistBannerCard(
+                  title: BoneMock.words(2),
+                  coverImageUrl: null,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

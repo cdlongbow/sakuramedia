@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provid
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
+import 'package:sakuramedia/features/account/presentation/account_placeholders.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_provider.dart';
 import 'package:sakuramedia/features/account/presentation/providers/account_profile_state.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -13,7 +14,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -44,8 +45,8 @@ class _AccountSecuritySectionState
   @override
   void initState() {
     super.initState();
-    _usernameController =
-        TextEditingController()..addListener(_handleUsernameChanged);
+    _usernameController = TextEditingController()
+      ..addListener(_handleUsernameChanged);
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -123,10 +124,9 @@ class _AccountSecuritySectionState
       final accountApi = ref.read(accountApiProvider);
       final authApi = ref.read(authApiProvider);
       final cachedAccount = ref.read(accountProfileProvider).account;
-      final username =
-          (cachedAccount?.username.trim().isNotEmpty ?? false)
-              ? cachedAccount!.username.trim()
-              : (await accountApi.getAccount()).username.trim();
+      final username = (cachedAccount?.username.trim().isNotEmpty ?? false)
+          ? cachedAccount!.username.trim()
+          : (await accountApi.getAccount()).username.trim();
 
       await accountApi.changePassword(
         currentPassword: _currentPasswordController.text.trim(),
@@ -244,79 +244,81 @@ class _AccountSecuritySectionState
   ) {
     final spacing = context.appSpacing;
     final account = profileState.account;
-    final canSubmitUsername = !profileState.isLoading &&
-        !profileState.isSaving &&
-        account != null;
+    final showSkeleton = profileState.isLoading && account == null;
+    final displayAccount = showSkeleton ? accountPlaceholder() : account;
+    final canSubmitUsername =
+        !profileState.isLoading && !profileState.isSaving && account != null;
 
     return AppContentCard(
       title: '账号资料',
       padding: EdgeInsets.all(spacing.lg),
       headerBottomSpacing: spacing.md,
-      child: Form(
-        key: _profileFormKey,
-        autovalidateMode:
-            _hasAttemptedUsernameSubmit
-                ? AutovalidateMode.onUserInteraction
-                : AutovalidateMode.disabled,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (profileState.isLoading && account == null)
-              const _AccountProfileLoadingBlock()
-            else if (profileState.errorMessage != null && account == null)
-              _AccountProfileErrorBlock(
-                message: profileState.errorMessage!,
-                onRetry: () =>
-                    ref.read(accountProfileProvider.notifier).load(),
-              )
-            else ...[
-              Text(
-                '用户名用于登录和账号识别，保存后当前登录态保持不变。',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.muted,
-                ),
-              ),
-              if (account != null) ...[
-                SizedBox(height: spacing.lg),
-                _AccountProfileSummary(account: account),
-              ],
-              SizedBox(height: spacing.lg),
-              AppTextField(
-                fieldKey: const Key('configuration-username-field'),
-                controller: _usernameController,
-                label: '用户名',
-                hintText: '请输入新的用户名',
-                enabled: !profileState.isSaving,
-                validator: _validateUsername,
-              ),
-              if (profileState.errorMessage != null && account != null) ...[
-                SizedBox(height: spacing.sm),
+      // loading 用占位账号渲染真实资料卡与表单壳，由 [AppSkeletonizer] 灰化。
+      child: AppSkeletonizer(
+        enabled: showSkeleton,
+        child: Form(
+          key: _profileFormKey,
+          autovalidateMode: _hasAttemptedUsernameSubmit
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (profileState.errorMessage != null && account == null)
+                _AccountProfileErrorBlock(
+                  message: profileState.errorMessage!,
+                  onRetry: () =>
+                      ref.read(accountProfileProvider.notifier).load(),
+                )
+              else ...[
                 Text(
-                  profileState.errorMessage!,
-                  key: const Key('configuration-username-error-text'),
+                  '用户名用于登录和账号识别，保存后当前登录态保持不变。',
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
-                    tone: AppTextTone.error,
+                    weight: AppTextWeight.regular,
+                    tone: AppTextTone.muted,
+                  ),
+                ),
+                if (displayAccount != null) ...[
+                  SizedBox(height: spacing.lg),
+                  _AccountProfileSummary(account: displayAccount),
+                ],
+                SizedBox(height: spacing.lg),
+                AppTextField(
+                  fieldKey: const Key('configuration-username-field'),
+                  controller: _usernameController,
+                  label: '用户名',
+                  hintText: '请输入新的用户名',
+                  enabled: !profileState.isSaving,
+                  validator: _validateUsername,
+                ),
+                if (profileState.errorMessage != null && account != null) ...[
+                  SizedBox(height: spacing.sm),
+                  Text(
+                    profileState.errorMessage!,
+                    key: const Key('configuration-username-error-text'),
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      tone: AppTextTone.error,
+                    ),
+                  ),
+                ],
+                SizedBox(height: spacing.lg),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AppButton(
+                    key: const Key('configuration-username-submit-button'),
+                    onPressed: canSubmitUsername ? _submitUsername : null,
+                    label: '保存用户名',
+                    variant: AppButtonVariant.primary,
+                    isLoading: profileState.isSaving,
                   ),
                 ),
               ],
-              SizedBox(height: spacing.lg),
-              Align(
-                alignment: Alignment.centerRight,
-                child: AppButton(
-                  key: const Key('configuration-username-submit-button'),
-                  onPressed: canSubmitUsername ? _submitUsername : null,
-                  label: '保存用户名',
-                  variant: AppButtonVariant.primary,
-                  isLoading: profileState.isSaving,
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -386,22 +388,6 @@ class _AccountSecuritySectionState
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AccountProfileLoadingBlock extends StatelessWidget {
-  const _AccountProfileLoadingBlock();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const AppSkeletonBlock(width: double.infinity, height: 48),
-        SizedBox(height: context.appSpacing.md),
-        const AppSkeletonBlock(width: double.infinity, height: 44),
-      ],
     );
   }
 }

@@ -20,10 +20,11 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row.dart';
-import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row_skeleton.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/subscription_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
@@ -602,7 +603,31 @@ class _ListBodySliver extends ConsumerWidget {
       initialErrorMessage: '订阅列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有订阅影片。',
       emptyBuilder: (context) => const _EmptyState(),
-      skeletonBuilder: (context) => const MovieSubscriptionListSkeleton(),
+      // loading 用占位订阅渲染真实行，由 [AppSkeletonizer] 灰化。
+      skeletonBuilder: (context) {
+        final placeholders = movieSubscriptionListItemPlaceholders();
+        return AppSkeletonizer(
+          enabled: true,
+          child: Column(
+            children: [
+              for (var index = 0; index < placeholders.length; index++) ...[
+                if (index > 0) SizedBox(height: context.appSpacing.sm),
+                MovieSubscriptionRow(
+                  item: placeholders[index],
+                  selectionMode: false,
+                  isSelected: false,
+                  isPending: false,
+                  onTap: () {},
+                  onOpenDownloads: null,
+                  onSearchMagnet: () {},
+                  onUnsubscribe: () {},
+                  mobile: mobile,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
       initialRetryKey: const Key('movie-subscriptions-initial-retry-button'),
       onReload: () => unawaited(notifier.reload()),
       onLoadMore: () => unawaited(notifier.loadMore()),

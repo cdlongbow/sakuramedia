@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
 void main() {
   testWidgets('渲染分格数字与副文案', (WidgetTester tester) async {
@@ -11,7 +11,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await _pumpCard(tester, AssetSummaryCard(status: _status(), insights: null, pendingIndexCount: 0));
+    await _pumpCard(
+      tester,
+      AssetSummaryCard(status: _status(), insights: null, pendingIndexCount: 0),
+    );
 
     expect(find.byKey(const Key('overview-asset-movies')), findsOneWidget);
     expect(find.text('1,286'), findsOneWidget);
@@ -53,8 +56,14 @@ void main() {
       ),
     );
 
-    expect(find.byType(AppSkeletonBlock), findsWidgets);
-    expect(find.byKey(const Key('overview-asset-movies')), findsNothing);
+    // 加载态渲染的是真实分格（占位数据），由 AppSkeletonizer 灰化。
+    expect(find.byKey(const Key('overview-asset-movies')), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is AppSkeletonizer && widget.enabled,
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     final skeletonHeight = tester
         .getSize(find.byKey(const Key('overview-asset-summary-card')))
@@ -67,14 +76,22 @@ void main() {
         insights: StatusInsightsDto(
           collections: CollectionsStatsDto(
             playlists: const CollectionSummaryDto(count: 5, itemCount: 42),
-            videoCollections: const CollectionSummaryDto(count: 2, itemCount: 8),
+            videoCollections: const CollectionSummaryDto(
+              count: 2,
+              itemCount: 8,
+            ),
           ),
         ),
         pendingIndexCount: 12,
       ),
     );
 
-    expect(find.byType(AppSkeletonBlock), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is AppSkeletonizer && widget.enabled,
+      ),
+      findsNothing,
+    );
     final loadedHeight = tester
         .getSize(find.byKey(const Key('overview-asset-summary-card')))
         .height;
@@ -97,7 +114,12 @@ void main() {
       ),
     );
 
-    expect(find.byType(AppSkeletonBlock), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is AppSkeletonizer && widget.enabled,
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     final skeletonHeight = tester
         .getSize(find.byKey(const Key('overview-asset-summary-card')))
@@ -110,7 +132,10 @@ void main() {
         insights: StatusInsightsDto(
           collections: CollectionsStatsDto(
             playlists: const CollectionSummaryDto(count: 5, itemCount: 42),
-            videoCollections: const CollectionSummaryDto(count: 2, itemCount: 8),
+            videoCollections: const CollectionSummaryDto(
+              count: 2,
+              itemCount: 8,
+            ),
           ),
         ),
         pendingIndexCount: 12,
@@ -152,7 +177,10 @@ void main() {
         insights: StatusInsightsDto(
           collections: CollectionsStatsDto(
             playlists: const CollectionSummaryDto(count: 5, itemCount: 42),
-            videoCollections: const CollectionSummaryDto(count: 2, itemCount: 8),
+            videoCollections: const CollectionSummaryDto(
+              count: 2,
+              itemCount: 8,
+            ),
           ),
         ),
         pendingIndexCount: 12,

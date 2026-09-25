@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
@@ -14,7 +15,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_picker_option_skeleton_list.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_header.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
 
@@ -250,10 +251,7 @@ class _AddClipsToCollectionDialogState
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading && _clips.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(top: context.appSpacing.xs),
-        child: AppPickerOptionSkeletonList(key: Key('add-clips-loading')),
-      );
+      return _buildLoadingOptions(context, key: const Key('add-clips-loading'));
     }
     if (_errorMessage != null) {
       return AppEmptyState(
@@ -270,10 +268,7 @@ class _AddClipsToCollectionDialogState
             _loadMore();
           }
         });
-        return Padding(
-          padding: EdgeInsets.only(top: context.appSpacing.xs),
-          child: const AppPickerOptionSkeletonList(),
-        );
+        return _buildLoadingOptions(context);
       }
       return _buildEmptyState(context);
     }
@@ -336,6 +331,26 @@ class _AddClipsToCollectionDialogState
       icon: Icons.movie_creation_outlined,
       title: '还没有切片',
       message: '去播放器圈选生成吧',
+    );
+  }
+
+  Widget _buildLoadingOptions(BuildContext context, {Key? key}) {
+    final placeholders = clipPlaceholders();
+    // loading 用占位切片渲染真实选项行，由 [AppSkeletonizer] 灰化。
+    return Padding(
+      padding: EdgeInsets.only(top: context.appSpacing.xs),
+      child: AppSkeletonizer(
+        key: key,
+        enabled: true,
+        child: Column(
+          children: [
+            for (var index = 0; index < placeholders.length; index++) ...[
+              if (index > 0) SizedBox(height: context.appSpacing.sm),
+              _buildClipOption(context, placeholders[index]),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

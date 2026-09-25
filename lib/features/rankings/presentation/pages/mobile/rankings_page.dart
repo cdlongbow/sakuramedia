@@ -10,6 +10,7 @@ import 'package:sakuramedia/core/format/synced_at_label.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/rankings/presentation/pages/mobile/ranking_filter_drawer.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_provider.dart';
+import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -22,6 +23,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_stat
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranked_movie_summary_grid.dart';
@@ -177,34 +179,40 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
               const SliverToBoxAdapter(child: AppEmptyState(message: '暂无可用排行榜'))
             else if (!summary.paged.filterUpdate.hasFailed ||
                 summary.paged.items.isNotEmpty)
-              RankedMovieSummarySliver(
-                items: summary.paged.items,
-                isLoading:
+              AppSkeletonizer.sliver(
+                enabled:
                     summary.filters.isLoading && summary.paged.items.isEmpty,
-                errorMessage: summary.initialErrorMessage,
-                onMovieTap: (movie) => context.pushMobileMovieDetail(
-                  movieNumber: movie.movieNumber,
+                child: RankedMovieSummarySliver(
+                  items:
+                      summary.filters.isLoading && summary.paged.items.isEmpty
+                      ? rankedMoviePlaceholders(count: 24)
+                      : summary.paged.items,
+                  isLoading: false,
+                  errorMessage: summary.initialErrorMessage,
+                  onMovieTap: (movie) => context.pushMobileMovieDetail(
+                    movieNumber: movie.movieNumber,
+                  ),
+                  onMovieMenuRequest: (movie, globalPosition) =>
+                      requestMovieCollectionMenu(
+                        context,
+                        movie.movieNumber,
+                        globalPosition,
+                        isSubscribed: movie.isSubscribed,
+                        onEnterSelection: () {
+                          enterSelection();
+                          toggleSelect(movie.movieNumber);
+                        },
+                      ),
+                  onMovieSubscriptionTap: (movie) =>
+                      _toggleMovieSubscription(movie.movieNumber),
+                  isMovieSubscriptionUpdating: (movie) =>
+                      summary.isSubscriptionUpdating(movie.movieNumber),
+                  emptyMessage: '暂无榜单数据',
+                  selectionMode: selectionMode,
+                  isMovieSelected: (movie) => isSelected(movie.movieNumber),
+                  onMovieSelectedChanged: (movie, _) =>
+                      toggleSelect(movie.movieNumber),
                 ),
-                onMovieMenuRequest: (movie, globalPosition) =>
-                    requestMovieCollectionMenu(
-                      context,
-                      movie.movieNumber,
-                      globalPosition,
-                      isSubscribed: movie.isSubscribed,
-                      onEnterSelection: () {
-                        enterSelection();
-                        toggleSelect(movie.movieNumber);
-                      },
-                    ),
-                onMovieSubscriptionTap: (movie) =>
-                    _toggleMovieSubscription(movie.movieNumber),
-                isMovieSubscriptionUpdating: (movie) =>
-                    summary.isSubscriptionUpdating(movie.movieNumber),
-                emptyMessage: '暂无榜单数据',
-                selectionMode: selectionMode,
-                isMovieSelected: (movie) => isSelected(movie.movieNumber),
-                onMovieSelectedChanged: (movie, _) =>
-                    toggleSelect(movie.movieNumber),
               ),
             if (showFooter)
               SliverToBoxAdapter(

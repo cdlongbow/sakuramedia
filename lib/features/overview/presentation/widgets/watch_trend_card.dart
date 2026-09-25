@@ -5,7 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// 观看趋势卡：时间窗口分段 + 自绘柱状图。
@@ -69,66 +71,68 @@ class WatchTrendCard extends StatelessWidget {
       );
     }
 
-    final current = trend;
+    final showSkeleton = isLoading && trend == null;
+    final current = showSkeleton
+        ? statusWatchTrendPlaceholder(range: range)
+        : trend;
     final buckets = current?.buckets ?? const <WatchTrendBucketDto>[];
     final watchedCount = current?.watchedMovieCount ?? 0;
-    final hasData = !isLoading && buckets.isNotEmpty && watchedCount > 0;
+    final hasData = buckets.isNotEmpty && watchedCount > 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        // 摘要行在加载中用同字号的占位文本，保证切换窗口时卡片高度不抖。
-        Text(
-          isLoading
-              ? '正在加载…'
-              : '${range.periodLabel}看过 ${formatCount(watchedCount)} 部',
-          key: const Key('overview-watch-trend-summary'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
+    // loading 用占位数据渲染真实图表，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: showSkeleton,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            '${range.periodLabel}看过 ${formatCount(watchedCount)} 部',
+            key: const Key('overview-watch-trend-summary'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s12,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.secondary,
+            ),
           ),
-        ),
-        SizedBox(height: context.appSpacing.lg),
-        SizedBox(
-          height: _chartAreaHeight,
-          child: isLoading
-              ? const _TrendChartPlaceholder()
-              : hasData
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Expanded(
-                      child: _TrendBarChart(
-                        buckets: buckets,
-                        range: current!.range,
+          SizedBox(height: context.appSpacing.lg),
+          SizedBox(
+            height: _chartAreaHeight,
+            child: hasData
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Expanded(
+                        child: _TrendBarChart(
+                          buckets: buckets,
+                          range: current!.range,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: context.appSpacing.sm),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: _TrendValueAxis.width + context.appSpacing.xs,
+                      SizedBox(height: context.appSpacing.sm),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: _TrendValueAxis.width + context.appSpacing.xs,
+                        ),
+                        child: _TrendAxisLabels(buckets: buckets),
                       ),
-                      child: _TrendAxisLabels(buckets: buckets),
-                    ),
-                  ],
-                )
-              : Center(
-                  child: Text(
-                    '该区间暂无观看记录',
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s12,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.muted,
+                    ],
+                  )
+                : Center(
+                    child: Text(
+                      '该区间暂无观看记录',
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s12,
+                        weight: AppTextWeight.regular,
+                        tone: AppTextTone.muted,
+                      ),
                     ),
                   ),
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -233,20 +237,6 @@ class _RangeChip extends StatelessWidget {
   }
 }
 
-class _TrendChartPlaceholder extends StatelessWidget {
-  const _TrendChartPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-    );
-  }
-}
-
 class _TrendBarChart extends StatelessWidget {
   const _TrendBarChart({required this.buckets, required this.range});
 
@@ -255,7 +245,9 @@ class _TrendBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final counts = buckets.map((bucket) => bucket.count).toList(growable: false);
+    final counts = buckets
+        .map((bucket) => bucket.count)
+        .toList(growable: false);
     final axisMax = _niceAxisMax(counts.reduce(math.max));
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -301,6 +293,7 @@ int _niceAxisMax(int maxCount) {
 }
 
 /// 纵轴刻度：顶部为量程上限（与最高柱齐平的那条线），底部为 0。
+
 class _TrendValueAxis extends StatelessWidget {
   const _TrendValueAxis({required this.maxValue});
 

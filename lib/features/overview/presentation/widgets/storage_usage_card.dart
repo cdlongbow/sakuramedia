@@ -3,7 +3,9 @@ import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// 存储分布卡：各媒体库的文件数，以及存储端的占用构成。
@@ -35,8 +37,12 @@ class StorageUsageCard extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context) {
-    if (isLoading) {
-      return const OverviewCardLoadingBars(rows: 4);
+    if (isLoading && libraries == null) {
+      // loading 用占位媒体库渲染真实长条，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: _buildLoaded(context, mediaLibraryUsagePlaceholders()),
+      );
     }
     if (errorMessage != null) {
       return OverviewCardErrorRow(
@@ -58,7 +64,10 @@ class StorageUsageCard extends StatelessWidget {
         ),
       );
     }
+    return _buildLoaded(context, items);
+  }
 
+  Widget _buildLoaded(BuildContext context, List<MediaLibraryUsageDto> items) {
     final totalBytes = items.fold<int>(
       0,
       (sum, library) => sum + library.totalSizeBytes,
@@ -182,9 +191,7 @@ class _StorageUsageBar extends StatelessWidget {
               FractionallySizedBox(
                 alignment: Alignment.centerLeft,
                 widthFactor: ratio.clamp(0, 1),
-                child: ColoredBox(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                child: ColoredBox(color: Theme.of(context).colorScheme.primary),
               )
             else
               Row(

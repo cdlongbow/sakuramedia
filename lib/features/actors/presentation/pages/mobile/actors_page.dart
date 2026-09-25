@@ -9,6 +9,7 @@ import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
+import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
@@ -16,6 +17,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -153,20 +155,25 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                 slivers: [
                   if (!(paged?.filterUpdate.hasFailed ?? false) ||
                       items.isNotEmpty)
-                    ActorSummarySliver(
-                      items: items,
-                      isLoading: isInitialLoading,
-                      errorMessage: initialErrorMessage,
-                      onActorTap: (actor) => MobileActorDetailRouteData(
-                        actorId: actor.id,
-                      ).push(context),
-                      onActorSubscriptionTap: (actor) =>
-                          _toggleActorSubscription(actor.id),
-                      isActorSubscriptionUpdating: (actor) =>
-                          summary?.isSubscriptionUpdating(actor.id) ?? false,
-                      emptyMessage: filter.isDefault
-                          ? '暂无女优，去搜索看看吧'
-                          : '当前筛选条件下暂无匹配女优',
+                    AppSkeletonizer.sliver(
+                      enabled: isInitialLoading,
+                      child: ActorSummarySliver(
+                        items: isInitialLoading
+                            ? actorListItemPlaceholders(count: 24)
+                            : items,
+                        isLoading: false,
+                        errorMessage: initialErrorMessage,
+                        onActorTap: (actor) => MobileActorDetailRouteData(
+                          actorId: actor.id,
+                        ).push(context),
+                        onActorSubscriptionTap: (actor) =>
+                            _toggleActorSubscription(actor.id),
+                        isActorSubscriptionUpdating: (actor) =>
+                            summary?.isSubscriptionUpdating(actor.id) ?? false,
+                        emptyMessage: filter.isDefault
+                            ? '暂无女优，去搜索看看吧'
+                            : '当前筛选条件下暂无匹配女优',
+                      ),
                     ),
                   if (showFooter)
                     SliverToBoxAdapter(

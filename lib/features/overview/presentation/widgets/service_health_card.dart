@@ -1,9 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
-import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
@@ -31,70 +32,68 @@ class ServiceHealthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return AppContentCard(
+    final showSkeleton = isLoading && imageSearchStatus == null;
+    final status = showSkeleton
+        ? imageSearchStatusPlaceholder()
+        : imageSearchStatus;
+    final requiresRebuild = status?.indexSpace.requiresRebuild ?? false;
+    final isRebuilding =
+        isRebuildingIndex || (status?.indexSpace.isRebuilding ?? false);
+
+    // loading 用占位状态渲染真实行，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: showSkeleton,
+      child: AppContentCard(
         key: const Key('mobile-service-health-card'),
         title: '服务健康',
         padding: EdgeInsets.all(context.appSpacing.lg),
-        headerBottomSpacing: context.appSpacing.md,
-        child: const OverviewCardLoadingBars(rows: 3),
-      );
-    }
-
-    final requiresRebuild = imageSearchStatus?.indexSpace.requiresRebuild ?? false;
-    final isRebuilding =
-        isRebuildingIndex || (imageSearchStatus?.indexSpace.isRebuilding ?? false);
-
-    return AppContentCard(
-      key: const Key('mobile-service-health-card'),
-      title: '服务健康',
-      padding: EdgeInsets.all(context.appSpacing.lg),
-      headerBottomSpacing: context.appSpacing.xs,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _HealthRow(
-            label: '嵌入服务',
-            value: embeddingServiceHealthLabel(imageSearchStatus),
-            valueTone: embeddingServiceHealthTone(imageSearchStatus),
-            rowKey: const Key('mobile-service-health-embedding'),
-          ),
-          const _HealthDivider(),
-          _HealthRow(
-            label: '图搜索索引',
-            value: imageSearchIndexSpaceLabel(imageSearchStatus),
-            valueTone: imageSearchIndexSpaceTone(imageSearchStatus),
-            rowKey: const Key('mobile-service-health-index'),
-            action: requiresRebuild || isRebuilding
-                ? AppButton(
-                    key: const Key('mobile-service-health-rebuild-button'),
-                    label: isRebuilding ? '重建中' : '重建',
-                    size: AppButtonSize.small,
-                    isLoading: isRebuilding,
-                    onPressed: isRebuilding ? null : onRebuildIndex,
-                  )
-                : null,
-          ),
-          const _HealthDivider(),
-          _HealthRow(
-            label: '外部数据源',
-            rowKey: const Key('mobile-service-health-external'),
-            valueWidget: ExternalDataSourceStatusChips(
-              javdbHealthy: javdbHealthy,
-              isTesting: isTestingExternalDataSources,
-              keyPrefix: 'mobile-service-health',
+        headerBottomSpacing: context.appSpacing.xs,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            _HealthRow(
+              label: '嵌入服务',
+              value: embeddingServiceHealthLabel(status),
+              valueTone: embeddingServiceHealthTone(status),
+              rowKey: const Key('mobile-service-health-embedding'),
             ),
-            action: AppButton(
-              key: const Key('mobile-service-health-test-button'),
-              label: isTestingExternalDataSources ? '检测中' : '检测',
-              size: AppButtonSize.small,
-              isLoading: isTestingExternalDataSources,
-              onPressed: isTestingExternalDataSources
-                  ? null
-                  : onTestExternalDataSources,
+            const _HealthDivider(),
+            _HealthRow(
+              label: '图搜索索引',
+              value: imageSearchIndexSpaceLabel(status),
+              valueTone: imageSearchIndexSpaceTone(status),
+              rowKey: const Key('mobile-service-health-index'),
+              action: requiresRebuild || isRebuilding
+                  ? AppButton(
+                      key: const Key('mobile-service-health-rebuild-button'),
+                      label: isRebuilding ? '重建中' : '重建',
+                      size: AppButtonSize.small,
+                      isLoading: isRebuilding,
+                      onPressed: isRebuilding ? null : onRebuildIndex,
+                    )
+                  : null,
             ),
-          ),
-        ],
+            const _HealthDivider(),
+            _HealthRow(
+              label: '外部数据源',
+              rowKey: const Key('mobile-service-health-external'),
+              valueWidget: ExternalDataSourceStatusChips(
+                javdbHealthy: javdbHealthy,
+                isTesting: isTestingExternalDataSources,
+                keyPrefix: 'mobile-service-health',
+              ),
+              action: AppButton(
+                key: const Key('mobile-service-health-test-button'),
+                label: isTestingExternalDataSources ? '检测中' : '检测',
+                size: AppButtonSize.small,
+                isLoading: isTestingExternalDataSources,
+                onPressed: isTestingExternalDataSources
+                    ? null
+                    : onTestExternalDataSources,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,10 +162,6 @@ class _HealthDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: context.appColors.divider,
-    );
+    return Divider(height: 1, thickness: 1, color: context.appColors.divider);
   }
 }

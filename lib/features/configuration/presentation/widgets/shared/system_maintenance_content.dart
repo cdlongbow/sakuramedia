@@ -7,8 +7,8 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
-import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -413,7 +413,9 @@ class _SystemMaintenanceContentState
       key: key,
       label: _imageSearchStatus?.enabled == false ? '未启用' : label,
       variant: variant,
-      onPressed: isRebuilding || _imageSearchStatus?.enabled != true ? null : _confirmImageSearchReset,
+      onPressed: isRebuilding || _imageSearchStatus?.enabled != true
+          ? null
+          : _confirmImageSearchReset,
     );
   }
 

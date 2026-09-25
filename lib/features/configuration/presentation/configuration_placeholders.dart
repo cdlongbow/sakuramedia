@@ -2,7 +2,6 @@ import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
-import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 /// 配置页加载态占位数据：真实 DTO + [BoneMock] 文案，供 `AppSkeletonizer`
@@ -61,25 +60,5 @@ List<IndexerEntryDto> indexerPlaceholders({int count = 3}) {
       downloadClients: const <IndexerBoundClientDto>[],
     ),
     growable: false,
-  );
-}
-
-/// 系统维护页加载态占位图搜索状态：健康、无待处理，让真实卡片以常态渲染。
-StatusImageSearchDto imageSearchStatusPlaceholder() {
-  return const StatusImageSearchDto(
-    healthy: true,
-    embeddingService: ImageSearchEmbeddingServiceStatsDto(
-      healthy: true,
-      endpoint: 'http://embedding.example.com',
-      dimension: 512,
-    ),
-    indexing: ImageSearchIndexingStatsDto(
-      pendingThumbnails: 0,
-      failedThumbnails: 0,
-    ),
-    indexSpace: ImageSearchIndexSpaceStatsDto(
-      state: 'ready',
-      indexedSpaceId: 'space',
-    ),
   );
 }

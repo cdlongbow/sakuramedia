@@ -199,11 +199,12 @@ void main() {
       final expectedCount = _expectedSkeletonCount(listHeight);
 
       expect(expectedCount, greaterThanOrEqualTo(3));
-      expect(_reviewSkeletonFinder(), findsNWidgets(expectedCount));
       expect(
         tester.widget<ListView>(find.byType(ListView)).semanticChildCount,
         expectedCount,
       );
+      // 懒构建只铺设视口内的占位评论卡，数量由真实卡片高度决定。
+      expect(_reviewSkeletonFinder(), findsWidgets);
     },
   );
 
@@ -236,11 +237,11 @@ void main() {
       final expectedCount = _expectedSkeletonCount(listHeight);
 
       expect(expectedCount, greaterThan(3));
-      expect(_reviewSkeletonFinder(), findsNWidgets(expectedCount));
       expect(
         tester.widget<ListView>(find.byType(ListView)).semanticChildCount,
         expectedCount,
       );
+      expect(_reviewSkeletonFinder(), findsWidgets);
     },
   );
 
@@ -454,13 +455,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final contentFinder = find.byKey(
-      const Key('movie-detail-review-content'),
-    );
-    expect(
-      tester.widget<SelectableText>(contentFinder).data,
-      'hot-review-1',
-    );
+    final contentFinder = find.byKey(const Key('movie-detail-review-content'));
+    expect(tester.widget<SelectableText>(contentFinder).data, 'hot-review-1');
 
     await tester.longPress(contentFinder);
     await tester.pumpAndSettle();

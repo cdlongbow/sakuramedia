@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -479,23 +480,18 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   }
 
   Widget _buildPlaylistsSkeleton() {
-    final colors = context.appColors;
-    final radius = context.appRadius;
-    final height = context.appComponentTokens.playlistBannerHeight;
-
-    return Column(
-      children: List<Widget>.generate(6, (index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: context.appSpacing.sm),
-          child: Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: colors.surfaceMuted,
-              borderRadius: radius.lgBorder,
-            ),
-          ),
-        );
-      }),
+    final spacing = context.appSpacing;
+    // loading 用占位播放列表渲染真实横幅，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: Column(
+        children: [
+          for (var index = 0; index < 6; index++) ...[
+            if (index > 0) SizedBox(height: spacing.sm),
+            PlaylistBannerCard(title: BoneMock.words(2), coverImageUrl: null),
+          ],
+        ],
+      ),
     );
   }
 

@@ -2,10 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/data/tag_list_item_dto.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
+import 'package:sakuramedia/features/tags/presentation/tag_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
 /// 标签多选区：搜索框 + 已选标签 chips + 热门/搜索结果标签云。
@@ -165,20 +166,11 @@ class _TagSelectorPanelState extends State<TagSelectorPanel> {
   }
 
   Widget _buildLoading(BuildContext context) {
-    final spacing = context.appSpacing;
-    const widths = <double>[88, 116, 76, 132, 98, 108, 82, 124, 92, 112];
-    return Wrap(
+    // loading 用占位标签渲染真实药丸，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
       key: const Key('tags-selector-skeleton'),
-      spacing: spacing.sm,
-      runSpacing: spacing.sm,
-      children: [
-        for (final width in widths)
-          AppSkeletonBlock(
-            width: width,
-            height: context.appComponentTokens.buttonHeightXs,
-            radius: context.appRadius.pillBorder,
-          ),
-      ],
+      enabled: true,
+      child: _buildCloudWrap(context, tagListItemPlaceholders()),
     );
   }
 

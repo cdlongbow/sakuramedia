@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_review_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_thumbnail_provider.dart';
@@ -21,6 +22,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
@@ -624,50 +626,21 @@ class _MovieDetailReviewLoadingList extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final itemCount = _resolveSkeletonCount(context, constraints);
-        return ListView.separated(
-          itemCount: itemCount,
-          separatorBuilder: (context, index) =>
-              SizedBox(height: context.appSpacing.sm),
-          itemBuilder: (context, index) {
-            return Container(
+        final placeholders = movieReviewPlaceholders(count: itemCount);
+        // loading 用占位评论渲染真实卡片，由 [AppSkeletonizer] 灰化。
+        return AppSkeletonizer(
+          enabled: true,
+          child: ListView.separated(
+            itemCount: itemCount,
+            separatorBuilder: (context, index) =>
+                SizedBox(height: context.appSpacing.sm),
+            itemBuilder: (context, index) => KeyedSubtree(
               key: Key('movie-detail-review-skeleton-$index'),
-              padding: EdgeInsets.all(context.appSpacing.md),
-              decoration: BoxDecoration(
-                color: context.appColors.surfaceMuted,
-                borderRadius: context.appRadius.mdBorder,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _ReviewSkeletonLine(width: 232),
-                  SizedBox(height: context.appSpacing.xs),
-                  _ReviewSkeletonLine(width: double.infinity),
-                  SizedBox(height: context.appSpacing.xs),
-                  _ReviewSkeletonLine(width: 296),
-                ],
-              ),
-            );
-          },
+              child: _MovieDetailReviewCard(review: placeholders[index]),
+            ),
+          ),
         );
       },
-    );
-  }
-}
-
-class _ReviewSkeletonLine extends StatelessWidget {
-  const _ReviewSkeletonLine({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 12,
-      decoration: BoxDecoration(
-        color: context.appColors.borderSubtle,
-        borderRadius: context.appRadius.smBorder,
-      ),
     );
   }
 }

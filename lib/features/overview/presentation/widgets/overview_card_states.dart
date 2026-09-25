@@ -43,37 +43,3 @@ class OverviewCardErrorRow extends StatelessWidget {
     );
   }
 }
-
-/// 概览卡片的通用骨架：若干条灰色圆角条。
-class OverviewCardLoadingBars extends StatelessWidget {
-  const OverviewCardLoadingBars({super.key, this.rows = 3, this.lastRowFraction = 0.6});
-
-  final int rows;
-
-  /// 最后一条的宽度占比，让骨架看起来像真实内容而不是整齐的输入框。
-  final double lastRowFraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        for (var index = 0; index < rows; index += 1) ...<Widget>[
-          if (index > 0) SizedBox(height: spacing.md),
-          FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: index == rows - 1 ? lastRowFraction : 1,
-            child: Container(
-              height: spacing.md,
-              decoration: BoxDecoration(
-                color: context.appColors.borderSubtle,
-                borderRadius: context.appRadius.pillBorder,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}

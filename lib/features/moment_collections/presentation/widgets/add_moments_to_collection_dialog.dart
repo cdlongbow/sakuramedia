@@ -9,11 +9,12 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_picker_option_skeleton_list.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_header.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -291,9 +292,9 @@ class _AddMomentsToCollectionDialogState
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading && _points.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.only(top: context.appSpacing.xs),
-        child: AppPickerOptionSkeletonList(key: Key('add-moments-loading')),
+      return _buildLoadingOptions(
+        context,
+        key: const Key('add-moments-loading'),
       );
     }
     if (_errorMessage != null) {
@@ -312,10 +313,7 @@ class _AddMomentsToCollectionDialogState
             _loadMore();
           }
         });
-        return Padding(
-          padding: EdgeInsets.only(top: context.appSpacing.xs),
-          child: const AppPickerOptionSkeletonList(),
-        );
+        return _buildLoadingOptions(context);
       }
       return _buildEmptyState(context);
     }
@@ -389,14 +387,33 @@ class _AddMomentsToCollectionDialogState
     );
   }
 
+  Widget _buildLoadingOptions(BuildContext context, {Key? key}) {
+    final placeholders = mediaPointListItemPlaceholders();
+    // loading 用占位时刻渲染真实选项行，由 [AppSkeletonizer] 灰化。
+    return Padding(
+      padding: EdgeInsets.only(top: context.appSpacing.xs),
+      child: AppSkeletonizer(
+        key: key,
+        enabled: true,
+        child: Column(
+          children: [
+            for (var index = 0; index < placeholders.length; index++) ...[
+              if (index > 0) SizedBox(height: context.appSpacing.sm),
+              _buildPointOption(context, placeholders[index]),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPointOption(BuildContext context, MediaPointListItemDto point) {
     final selected = _memberIds.contains(point.pointId);
     final isAnyUpdating = _updatingIds.isNotEmpty;
     final coverUrl = point.image?.bestAvailableUrl;
-    final title =
-        point.movieNumber?.isNotEmpty == true
-            ? point.movieNumber!
-            : (point.isVideo ? '视频 #${point.videoItemId}' : '时刻 #${point.pointId}');
+    final title = point.movieNumber?.isNotEmpty == true
+        ? point.movieNumber!
+        : (point.isVideo ? '视频 #${point.videoItemId}' : '时刻 #${point.pointId}');
 
     return AppPickerOptionTile.cover(
       selected: selected,

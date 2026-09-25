@@ -4,22 +4,30 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_mutation_events_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
+import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_detail_action_menu.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_drawer.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
@@ -40,11 +48,15 @@ class PlaylistDetailContent extends ConsumerStatefulWidget {
     super.key,
     required this.playlistId,
     required this.onMovieTap,
+    required this.fallbackPath,
     this.enablePullToRefresh = false,
   });
 
   final int playlistId;
   final ValueChanged<MovieListItemDto> onMovieTap;
+
+  /// 深链进入时没有可 pop 的上一页，删除成功后回到该列表页。
+  final String fallbackPath;
   final bool enablePullToRefresh;
 
   @override
@@ -58,6 +70,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
         MovieBatchSelectionMixin<PlaylistDetailContent> {
   late final ScrollController _scrollController;
   final _listHeaderKey = GlobalKey();
+  bool _isBannerHovered = false;
 
   MovieSummaryScope get _scope =>
       MovieSummaryScope.playlist(playlistId: widget.playlistId);
@@ -137,14 +150,48 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           if (playlist == null) {
             return const SizedBox.shrink();
           }
+          final canManage = playlist.isMutable || playlist.isDeletable;
           final footer = _buildLoadMoreFooter(context, movies);
           final slivers = <Widget>[
             SliverToBoxAdapter(
-              child: PlaylistBannerCard(
-                key: Key('playlist-banner-card-${playlist.id}'),
-                title: playlist.name,
-                coverImageUrl:
-                    paged?.items.firstOrNull?.coverImage?.bestAvailableUrl,
+              child: MouseRegion(
+                onEnter: (_) => _setBannerHovered(true),
+                onExit: (_) => _setBannerHovered(false),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onLongPressStart: canManage
+                      ? (details) => unawaited(
+                          _openActionMenu(playlist, details.globalPosition),
+                        )
+                      : null,
+                  onSecondaryTapDown: canManage
+                      ? (details) => unawaited(
+                          _openActionMenu(playlist, details.globalPosition),
+                        )
+                      : null,
+                  child: Stack(
+                    children: [
+                      PlaylistBannerCard(
+                        key: Key('playlist-banner-card-${playlist.id}'),
+                        title: playlist.name,
+                        coverImageUrl: paged
+                            ?.items
+                            .firstOrNull
+                            ?.coverImage
+                            ?.bestAvailableUrl,
+                      ),
+                      if (canManage && !_isMobile && _isBannerHovered)
+                        Positioned(
+                          top: context.appSpacing.sm,
+                          right: context.appSpacing.sm,
+                          child: _PlaylistDetailMoreButton(
+                            onTap: (position) =>
+                                unawaited(_openActionMenu(playlist, position)),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
             AppPinnedListHeader(
@@ -165,7 +212,6 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                   items: moviesAsync.isLoading && movies == null
                       ? movieListItemPlaceholders(count: 24)
                       : paged?.items ?? const [],
-                  isLoading: false,
                   errorMessage: moviesAsync.hasError && movies == null
                       ? _scope.initialLoadErrorText
                       : null,
@@ -247,6 +293,76 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
         showToast('刷新失败');
       }
     }
+  }
+
+  bool get _isMobile => AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
+
+  void _setBannerHovered(bool hovered) {
+    if (_isBannerHovered == hovered) {
+      return;
+    }
+    setState(() => _isBannerHovered = hovered);
+  }
+
+  Future<void> _openActionMenu(PlaylistDto playlist, Offset position) async {
+    final action = await showPlaylistDetailActionMenu(
+      context: context,
+      playlist: playlist,
+      position: position,
+    );
+    if (!mounted || action == null) {
+      return;
+    }
+    switch (action) {
+      case PlaylistDetailActionType.edit:
+        await _editPlaylist(playlist);
+      case PlaylistDetailActionType.delete:
+        await _deletePlaylist(playlist);
+    }
+  }
+
+  Future<void> _editPlaylist(PlaylistDto playlist) async {
+    final updated = await showEditPlaylistDialog(
+      context,
+      playlist: playlist,
+      presentation: _isMobile
+          ? EditPlaylistDialogPresentation.bottomDrawer
+          : EditPlaylistDialogPresentation.dialog,
+    );
+    if (!mounted || updated == null) {
+      return;
+    }
+    ref
+        .read(playlistDetailProvider(widget.playlistId).notifier)
+        .applyUpdated(updated);
+    ref.read(playlistMutationEventsProvider.notifier).reportUpdated(updated);
+  }
+
+  Future<void> _deletePlaylist(PlaylistDto playlist) async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: '删除播放列表',
+      message: '确认删除播放列表“${playlist.name}”？该操作不可恢复。',
+      danger: true,
+      confirmLabel: '删除',
+      dialogKey: const Key('playlist-detail-delete-confirm'),
+      confirmKey: const Key('playlist-detail-delete-confirm-button'),
+      failureFallback: '删除播放列表失败',
+      onConfirm: () =>
+          ref.read(playlistsApiProvider).deletePlaylist(playlist.id),
+    );
+    if (!confirmed || !mounted) {
+      return;
+    }
+    ref
+        .read(playlistMutationEventsProvider.notifier)
+        .reportDeleted(playlist.id);
+    showToast('播放列表已删除');
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go(widget.fallbackPath);
   }
 
   /// 列表顶栏：与影片 / 女优列表共用同一条 `AppListHeader`。
@@ -394,7 +510,6 @@ class _PlaylistDetailLoadingContent extends StatelessWidget {
           ),
           MovieSummarySliver(
             items: movieListItemPlaceholders(count: 12),
-            isLoading: false,
             onMovieTap: _ignoreMovieTap,
           ),
         ],
@@ -404,3 +519,32 @@ class _PlaylistDetailLoadingContent extends StatelessWidget {
 }
 
 void _ignoreMovieTap(MovieListItemDto _) {}
+
+/// 横幅右上角「···」：桌面 hover 横幅时显示，点击弹锚点菜单。
+class _PlaylistDetailMoreButton extends StatelessWidget {
+  const _PlaylistDetailMoreButton({required this.onTap});
+
+  final ValueChanged<Offset> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Builder(
+      builder: (buttonContext) => AppIconButton(
+        key: const Key('playlist-detail-more-actions-button'),
+        size: AppIconButtonSize.mini,
+        tooltip: '播放列表操作',
+        semanticLabel: '播放列表操作',
+        borderRadius: context.appRadius.pillBorder,
+        backgroundColor: colors.mediaOverlayStrong,
+        borderColor: colors.borderSubtle.withValues(alpha: 0.42),
+        iconColor: context.appTextPalette.onMedia,
+        icon: const Icon(Icons.more_horiz_rounded),
+        onPressed: () {
+          final box = buttonContext.findRenderObject()! as RenderBox;
+          onTap(box.localToGlobal(Offset(box.size.width, box.size.height)));
+        },
+      ),
+    );
+  }
+}

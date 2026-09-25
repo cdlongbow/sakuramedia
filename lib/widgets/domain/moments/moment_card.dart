@@ -1,5 +1,4 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
@@ -92,13 +91,6 @@ class MomentCard extends StatelessWidget {
   /// 悬停展开内容：单行「标签 + 类型 · 时刻位置（来源已删除时补提示）」，
   /// 播放主按钮靠右。
   Widget _buildHoverInfo(BuildContext context) {
-    final kindLabel = item.isVideo ? '视频' : 'JAV';
-    final meta = StringBuffer(
-      '$kindLabel · ${formatMediaTimecode(item.offsetSeconds)}',
-    );
-    if (item.mediaId <= 0) {
-      meta.write(' · 来源已删除');
-    }
     final play = onPlay;
     // 与时刻预览的播放入口对齐：来源媒体已删除（mediaId<=0）时不提供播放，
     // 避免播到该影片的其它媒体。
@@ -106,7 +98,7 @@ class MomentCard extends StatelessWidget {
     return AppCoverHoverInfoRow(
       key: Key('moment-card-info-${item.pointId}'),
       label: item.displayLabel,
-      meta: meta.toString(),
+      meta: item.hoverMeta,
       action: canPlay
           ? AppCoverHoverPlayButton(
               key: Key('moment-card-play-${item.pointId}'),

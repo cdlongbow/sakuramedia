@@ -22,20 +22,18 @@ Future<PlaylistDto?> showCreatePlaylistDialog(
     case CreatePlaylistDialogPresentation.dialog:
       return showDialog<PlaylistDto>(
         context: context,
-        builder:
-            (dialogContext) => const CreatePlaylistDialog(
-              presentation: CreatePlaylistDialogPresentation.dialog,
-            ),
+        builder: (dialogContext) => const CreatePlaylistDialog(
+          presentation: CreatePlaylistDialogPresentation.dialog,
+        ),
       );
     case CreatePlaylistDialogPresentation.bottomDrawer:
       return showAppBottomDrawer<PlaylistDto>(
         context: context,
         drawerKey: const Key('create-playlist-bottom-sheet'),
         heightFactor: 0.7,
-        builder:
-            (sheetContext) => const CreatePlaylistDialog(
-              presentation: CreatePlaylistDialogPresentation.bottomDrawer,
-            ),
+        builder: (sheetContext) => const CreatePlaylistDialog(
+          presentation: CreatePlaylistDialogPresentation.bottomDrawer,
+        ),
       );
   }
 }
@@ -100,9 +98,8 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
             fieldKey: const Key('create-playlist-name-field'),
             controller: _nameController,
             hintText: '例如：稍后再看',
-            validator:
-                (value) =>
-                    value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
+            validator: (value) =>
+                value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
@@ -116,8 +113,9 @@ class _CreatePlaylistDialogState extends ConsumerState<CreatePlaylistDialog> {
               Expanded(
                 child: AppButton(
                   label: '取消',
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
                 ),
               ),
               SizedBox(width: spacing.md),

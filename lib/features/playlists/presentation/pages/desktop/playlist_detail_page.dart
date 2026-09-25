@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/shared/playlist_detail_content.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 
 class DesktopPlaylistDetailPage extends StatelessWidget {
@@ -15,12 +16,12 @@ class DesktopPlaylistDetailPage extends StatelessWidget {
       color: context.appColors.surfaceElevated,
       child: PlaylistDetailContent(
         playlistId: playlistId,
+        fallbackPath: desktopPlaylistsPath,
         enablePullToRefresh: false,
-        onMovieTap:
-            (movie) => context.pushDesktopMovieDetail(
-              movieNumber: movie.movieNumber,
-              fallbackPath: buildDesktopPlaylistDetailRoutePath(playlistId),
-            ),
+        onMovieTap: (movie) => context.pushDesktopMovieDetail(
+          movieNumber: movie.movieNumber,
+          fallbackPath: buildDesktopPlaylistDetailRoutePath(playlistId),
+        ),
       ),
     );
   }

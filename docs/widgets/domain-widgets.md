@@ -32,7 +32,7 @@
 
 路径：`lib/widgets/domain/collections/`
 
-包含 `CollectionCard`（`.clip` / `.video` / `.moment` 命名构造）、`CollectionCoverCard`、`CollectionHintBox`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成；`CollectionHintBox` 是合集横滑区空态/加载失败的共用提示条。
+包含 `CollectionCard`（`.clip` / `.video` / `.moment` 命名构造）、`CollectionCoverCard`、`CollectionHintBox`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成；`CollectionHintBox` 是合集横滑区空态/加载失败的共用提示条。`CollectionMemberCard` 的 `clipOverlay` 桌面悬停披露由切片合集详情与时刻合集详情成员网格共用：收起态只留封面，悬停渐显标题/副信息与播放键；时刻来源媒体已删除时隐藏播放键。
 
 ## media and preview
 
@@ -53,7 +53,7 @@ moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；
 
 ## playlists and search
 
-- `lib/widgets/domain/playlists/`：`PlaylistBannerCard`、`PlaylistManagementCard`。
+- `lib/widgets/domain/playlists/`：`PlaylistBannerCard`。
 - `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。`CatalogSearchContent` 固定搜索框和影片/女优页签，流式进度卡与结果一起滚动。`CatalogSearchField` 的后缀搜索图标可用 `isSearching` 切到转圈并禁用点击、用 `searchButtonTooltip` 定制文案；需要「输入框 + 搜索」统一外观时用它，不要再另拼输入框和独立按钮。
 
 ## media import and batch

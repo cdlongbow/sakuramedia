@@ -68,7 +68,7 @@ final class PlaylistDetailProvider
   }
 }
 
-String _$playlistDetailHash() => r'cd1cc8bc32730b2899e825316bed8c2613f11330';
+String _$playlistDetailHash() => r'098b933b043ffb2e6fdd3063d7c66626bfbaaf5b';
 
 /// 播放列表元信息（详情页头部横幅、总数展示）。
 ///

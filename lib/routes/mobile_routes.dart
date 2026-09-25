@@ -40,7 +40,6 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_play
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/latest_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/system_overview_page.dart';
-import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlists_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
 import 'package:sakuramedia/features/search/presentation/pages/mobile/catalog_search_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/follow_page.dart';
@@ -472,28 +471,6 @@ class MobileSettingsIndexersRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobileIndexersPage();
-  }
-}
-
-@TypedGoRoute<MobileSettingsPlaylistsRouteData>(
-  path: mobileSettingsPlaylistsPath,
-)
-class MobileSettingsPlaylistsRouteData extends _MobileSubpageRouteData
-    with $MobileSettingsPlaylistsRouteData {
-  const MobileSettingsPlaylistsRouteData();
-
-  @override
-  String get pageName => 'mobile-settings-playlists';
-
-  @override
-  String get title => '播放列表';
-
-  @override
-  String get defaultLocation => mobileOverviewPath;
-
-  @override
-  Widget buildSubpage(BuildContext context, GoRouterState state) {
-    return const MobilePlaylistsPage();
   }
 }
 
@@ -1153,13 +1130,6 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         ),
       ];
 
-  static const _MobileOverviewDrawerMenuItem _playlistsItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'playlists',
-        icon: Icons.playlist_play_outlined,
-        label: '播放列表',
-      );
-
   static const _MobileOverviewDrawerMenuItem _mediaManagementItem =
       _MobileOverviewDrawerMenuItem(
         key: 'media-management',
@@ -1371,18 +1341,6 @@ class _MobileOverviewDrawer extends ConsumerWidget {
                       SizedBox(height: spacing.md),
                       _MobileOverviewDrawerSection(
                         key: const Key(
-                          'mobile-overview-drawer-playlists-section',
-                        ),
-                        items: <Widget>[
-                          _buildMenuEntry(
-                            context: context,
-                            item: _playlistsItem,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: spacing.md),
-                      _MobileOverviewDrawerSection(
-                        key: const Key(
                           'mobile-overview-drawer-account-section',
                         ),
                         items: <Widget>[
@@ -1485,9 +1443,6 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         return;
       case 'plugins':
         const MobileSettingsPluginsRouteData().push(hostContext);
-        return;
-      case 'playlists':
-        const MobileSettingsPlaylistsRouteData().push(hostContext);
         return;
       case 'external-player':
         const MobileSettingsExternalPlayerRouteData().push(hostContext);

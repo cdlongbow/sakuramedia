@@ -162,25 +162,29 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     }
   }
 
+  /// 播放：外部播放器优先（能唤起时交给系统），否则进入应用内 PornBox 单视频播放页。
+  /// 卡片悬停播放键与动作弹窗的「播放」共用这一入口。
+  Future<void> _playVideo(VideoItemListItemDto video) async {
+    if (await tryLaunchExternalVideoPlayback(
+      context,
+      videoId: video.id,
+      title: video.preferredTitle,
+    )) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    context.pushDesktopVideoPlayer(videoId: video.id);
+  }
+
   /// 点视频卡：弹桌面版动作弹窗（对齐移动端 sheet）。用户在弹窗里选「播放」
   /// 后进入 PornBox 单视频播放页；「加入合集」/「删除」都是本页原有的入口。
   void _openActionsDialog(VideoItemListItemDto video) {
     showDesktopVideoActionsDialog(
       context,
       video: video,
-      onPlay: () async {
-        if (await tryLaunchExternalVideoPlayback(
-          context,
-          videoId: video.id,
-          title: video.preferredTitle,
-        )) {
-          return;
-        }
-        if (!mounted) {
-          return;
-        }
-        context.pushDesktopVideoPlayer(videoId: video.id);
-      },
+      onPlay: () => unawaited(_playVideo(video)),
       onThumbnails: () => context.pushDesktopVideoThumbnails(videoId: video.id),
       onAddToCollection: () => _addToCollection(video),
       onDelete: () => _deleteVideo(video),
@@ -356,6 +360,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 totalKey: const Key('videos-page-total'),
                 sectionSpacing: context.appSpacing.lg,
                 onVideoTap: _openActionsDialog,
+                onVideoPlay: (video) => unawaited(_playVideo(video)),
                 selectionMode: selectionMode,
                 selectedIds: selectedIds,
                 onVideoToggleSelect: (video) => toggleSelect(video.id),

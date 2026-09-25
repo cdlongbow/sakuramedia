@@ -1,23 +1,33 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/core/format/file_size.dart';
+import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
-import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
-/// 非 JAV 视频列表卡片：封面 + 标题，中部播放按钮。
+/// 非 JAV 视频列表卡片：整卡即封面，收起态不铺任何文字。
+///
+/// 与 `MovieSummaryCard` / `ClipGridCard` 同属一套「封面即卡片」范式：桌面端指针
+/// 悬停时底部渐显压暗层，标题、时长/大小与靠左的播放键自下而上淡入；触摸端没有
+/// hover（移动端靠点击弹动作抽屉、长按多选），停在收起态。悬停展开/收起与封面推近
+/// 由 [AppCoverHoverInfo] 提供——与 JAV 影片卡同为 180ms ease-out，系统开启
+/// 「减弱动态效果」时退化为瞬时切换。
 ///
 /// 加入合集 / 跳到合集 / 删除等动作走桌面动作弹窗（`showDesktopVideoActionsDialog`）
 /// 或移动端 sheet（`showMobileVideoActionsSheet`）——由 onTap 回调统一承载，卡片
 /// 本身不再挂右键 / 长按上下文菜单。
 ///
-/// 与 `MovieSummaryCard` 平行，但去掉订阅/热度/番号等 JAV 概念，主键为 [VideoItemListItemDto.id]。
+/// 与 [MovieListItemDto] 平行，但去掉订阅/热度/番号等 JAV 概念，主键为
+/// [VideoItemListItemDto.id]。
 class VideoSummaryCard extends StatelessWidget {
   const VideoSummaryCard({
     super.key,
     required this.video,
     this.onTap,
+    this.onPlay,
     this.selectionMode = false,
     this.isSelected = false,
     this.onSelectedChanged,
@@ -28,7 +38,11 @@ class VideoSummaryCard extends StatelessWidget {
   /// 点击卡片：桌面走动作弹窗、移动走 sheet；两端弹窗内承载播放/加入合集/删除等。
   final VoidCallback? onTap;
 
-  /// 选择模式:整卡点击改为切换选中,隐藏播放浮层,叠加勾选标记。
+  /// 悬停面板里的播放主按钮回调；为 `null` 或 [VideoItemListItemDto.canPlay]
+  /// 为 false 时不显示按钮。
+  final VoidCallback? onPlay;
+
+  /// 选择模式:整卡点击改为切换选中,不展开悬停面板,叠加勾选标记。
   final bool selectionMode;
 
   /// 当前是否被选中（仅 [selectionMode] 下有意义）。
@@ -40,105 +54,116 @@ class VideoSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final spacing = context.appSpacing;
+    final selected = selectionMode && isSelected;
+    final interactive = selectionMode
+        ? onSelectedChanged != null
+        : onTap != null;
 
-    final borderColor = selectionMode && isSelected
-        ? colors.selectionBorder
-        : colors.borderSubtle;
-
-    final card = Container(
+    return Material(
       key: Key('video-summary-card-${video.id}'),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
+      color: Colors.transparent,
+      child: InkWell(
+        key: selectionMode
+            ? Key('video-summary-card-select-${video.id}')
+            : Key('video-summary-card-tap-${video.id}'),
+        mouseCursor: interactive
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         borderRadius: context.appRadius.lgBorder,
-        border: Border.all(
-          color: borderColor,
-          width: selectionMode && isSelected ? 2 : 1,
-        ),
-        boxShadow: context.appShadows.card,
-      ),
-      clipBehavior: Clip.antiAlias,
-      // 卡片整体由瀑布流网格按封面真实比例分配高度，不再固定 AspectRatio。
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _VideoCover(videoId: video.id, coverImage: video.coverImage),
-          const AppCoverBottomShade(),
-          // 选择模式：整卡点击切换选中；非选择模式：整卡点击播放（落在浮层之下，避免吃掉菜单点击）。
-          if (selectionMode)
-            Positioned.fill(
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  mouseCursor: onSelectedChanged != null
-                      ? SystemMouseCursors.click
-                      : SystemMouseCursors.basic,
-                  key: Key('video-summary-card-select-${video.id}'),
-                  onTap: () => onSelectedChanged?.call(!isSelected),
-                ),
-              ),
-            )
-          else if (onTap != null)
-            Positioned.fill(
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  mouseCursor: SystemMouseCursors.click,
-                  key: Key('video-summary-card-tap-${video.id}'),
-                  onTap: onTap,
-                ),
-              ),
+        onTap: selectionMode
+            ? () => onSelectedChanged?.call(!isSelected)
+            : onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surfaceCard,
+            borderRadius: context.appRadius.lgBorder,
+            border: Border.all(
+              color: selected ? colors.selectionBorder : colors.borderSubtle,
+              width: selected ? 2 : 1,
             ),
-          if (!selectionMode) const _PlayOverlay(),
-          Positioned(
-            left: spacing.md,
-            right: spacing.md,
-            bottom: spacing.md,
-            child: IgnorePointer(
-              child: Text(
-                video.preferredTitle,
-                key: Key('video-summary-card-title-${video.id}'),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.onMedia,
+            boxShadow: context.appShadows.card,
+          ),
+          child: ClipRRect(
+            borderRadius: context.appRadius.lgBorder,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AppCoverHoverInfo(
+                  enabled: !selectionMode,
+                  cover: _VideoCover(
+                    videoId: video.id,
+                    coverImage: video.coverImage,
+                  ),
+                  infoBuilder: (context) => _buildHoverInfo(context),
                 ),
-              ),
+                if (selectionMode)
+                  Positioned(
+                    top: context.appSpacing.xs,
+                    left: context.appSpacing.xs,
+                    child: IgnorePointer(
+                      child: SelectionCheckBadge(isSelected: isSelected),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (selectionMode)
-            Positioned(
-              top: spacing.xs,
-              left: spacing.xs,
-              child: IgnorePointer(
-                child: SelectionCheckBadge(isSelected: isSelected),
-              ),
-            ),
-        ],
-      ),
-    );
-
-    return card;
-  }
-}
-
-class _PlayOverlay extends StatelessWidget {
-  const _PlayOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Center(
-        child: Icon(
-          Icons.play_circle_outline_rounded,
-          color: Colors.white.withValues(alpha: 0.92),
-          size: context.appComponentTokens.iconSize4xl,
         ),
       ),
     );
+  }
+
+  /// 悬停展开内容（JAV 影片卡同款多行）：标题、时长/大小与播放主按钮。
+  Widget _buildHoverInfo(BuildContext context) {
+    final spacing = context.appSpacing;
+    final play = onPlay;
+    final canPlay = play != null && video.canPlay;
+    final meta = _metaLine();
+    return Column(
+      key: Key('video-summary-card-info-${video.id}'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          video.preferredTitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: resolveCoverOverlayTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.semibold,
+          ),
+        ),
+        if (meta != null) ...[
+          SizedBox(height: spacing.xs / 2),
+          Text(
+            meta,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: resolveCoverOverlayTextStyle(
+              context,
+              size: AppTextSize.s10,
+              opacity: 0.72,
+            ),
+          ),
+        ],
+        if (canPlay) ...[
+          SizedBox(height: spacing.sm),
+          AppCoverHoverPlayButton(
+            key: Key('video-summary-card-play-${video.id}'),
+            onTap: play,
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// 副信息行：时长 · 大小；两者都缺时返回 `null`（不渲染该行）。
+  String? _metaLine() {
+    final parts = <String>[
+      if (video.durationSeconds > 0) formatMediaTimecode(video.durationSeconds),
+      if (video.fileSizeBytes > 0) formatFileSize(video.fileSizeBytes),
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
   }
 }
 

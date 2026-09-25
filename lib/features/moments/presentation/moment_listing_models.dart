@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 /// moments 列表的值类型集合(原与 `PagedMomentController` 同文件,控制器迁
@@ -94,5 +95,16 @@ class MomentListItem {
       return '视频 #$videoId';
     }
     return '时刻 #$pointId';
+  }
+
+  /// 卡片悬停面板的副信息：`JAV / 视频 · 时刻位置`；来源媒体已删除（[mediaId]
+  /// <= 0）时补提示，与预览里的播放入口语义一致。
+  String get hoverMeta {
+    final kind = isVideo ? '视频' : 'JAV';
+    final buffer = StringBuffer('$kind · ${formatMediaTimecode(offsetSeconds)}');
+    if (mediaId <= 0) {
+      buffer.write(' · 来源已删除');
+    }
+    return buffer.toString();
   }
 }

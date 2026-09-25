@@ -9,15 +9,14 @@ part of 'playlists_overview_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-/// 创建 / 编辑 / 删除的就地补丁。
+/// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
 ///
-/// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-/// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-/// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+/// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+/// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
 ///
 /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
 /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-/// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+/// provider），scope 只留 orderScopeKey 一个业务参数。
 ///
 /// **reorder 保持 fire-and-forget 语义**（原 controller
 /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -27,15 +26,14 @@ part of 'playlists_overview_provider.dart';
 final playlistsOverviewProvider = PlaylistsOverviewFamily._();
 
 /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-/// 创建 / 编辑 / 删除的就地补丁。
+/// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
 ///
-/// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-/// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-/// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+/// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+/// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
 ///
 /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
 /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-/// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+/// provider），scope 只留 orderScopeKey 一个业务参数。
 ///
 /// **reorder 保持 fire-and-forget 语义**（原 controller
 /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -43,15 +41,14 @@ final playlistsOverviewProvider = PlaylistsOverviewFamily._();
 final class PlaylistsOverviewProvider
     extends $AsyncNotifierProvider<PlaylistsOverview, PlaylistsOverviewState> {
   /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-  /// 创建 / 编辑 / 删除的就地补丁。
+  /// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
   ///
-  /// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-  /// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-  /// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+  /// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+  /// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
   ///
   /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
   /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-  /// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+  /// provider），scope 只留 orderScopeKey 一个业务参数。
   ///
   /// **reorder 保持 fire-and-forget 语义**（原 controller
   /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -92,18 +89,17 @@ final class PlaylistsOverviewProvider
   }
 }
 
-String _$playlistsOverviewHash() => r'07cb9c3343999f8457e639b372c20a2e49ca018b';
+String _$playlistsOverviewHash() => r'0f10b4c888cd60ea60e069bdd7989ef8179f2b21';
 
 /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-/// 创建 / 编辑 / 删除的就地补丁。
+/// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
 ///
-/// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-/// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-/// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+/// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+/// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
 ///
 /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
 /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-/// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+/// provider），scope 只留 orderScopeKey 一个业务参数。
 ///
 /// **reorder 保持 fire-and-forget 语义**（原 controller
 /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -128,15 +124,14 @@ final class PlaylistsOverviewFamily extends $Family
       );
 
   /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-  /// 创建 / 编辑 / 删除的就地补丁。
+  /// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
   ///
-  /// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-  /// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-  /// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+  /// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+  /// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
   ///
   /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
   /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-  /// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+  /// provider），scope 只留 orderScopeKey 一个业务参数。
   ///
   /// **reorder 保持 fire-and-forget 语义**（原 controller
   /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -150,15 +145,14 @@ final class PlaylistsOverviewFamily extends $Family
 }
 
 /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-/// 创建 / 编辑 / 删除的就地补丁。
+/// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
 ///
-/// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-/// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-/// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+/// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+/// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
 ///
 /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
 /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-/// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+/// provider），scope 只留 orderScopeKey 一个业务参数。
 ///
 /// **reorder 保持 fire-and-forget 语义**（原 controller
 /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入

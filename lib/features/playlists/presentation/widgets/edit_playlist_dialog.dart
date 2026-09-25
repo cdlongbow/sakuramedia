@@ -27,22 +27,20 @@ Future<PlaylistDto?> showEditPlaylistDialog(
     case EditPlaylistDialogPresentation.dialog:
       return showDialog<PlaylistDto>(
         context: context,
-        builder:
-            (dialogContext) => EditPlaylistDialog(
-              playlist: playlist,
-              presentation: EditPlaylistDialogPresentation.dialog,
-            ),
+        builder: (dialogContext) => EditPlaylistDialog(
+          playlist: playlist,
+          presentation: EditPlaylistDialogPresentation.dialog,
+        ),
       );
     case EditPlaylistDialogPresentation.bottomDrawer:
       return showAppBottomDrawer<PlaylistDto>(
         context: context,
-        drawerKey: const Key('mobile-playlist-edit-drawer'),
+        drawerKey: const Key('playlist-edit-drawer'),
         heightFactor: 0.62,
-        builder:
-            (sheetContext) => EditPlaylistDialog(
-              playlist: playlist,
-              presentation: EditPlaylistDialogPresentation.bottomDrawer,
-            ),
+        builder: (sheetContext) => EditPlaylistDialog(
+          playlist: playlist,
+          presentation: EditPlaylistDialogPresentation.bottomDrawer,
+        ),
       );
   }
 }
@@ -71,23 +69,15 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
   bool get _isDialog =>
       widget.presentation == EditPlaylistDialogPresentation.dialog;
 
-  Key get _nameFieldKey =>
-      _isDialog
-          ? const Key('configuration-playlist-name-field')
-          : const Key('mobile-playlist-name-field');
+  static const Key _nameFieldKey = Key('playlist-edit-name-field');
+  static const Key _descriptionFieldKey = Key(
+    'playlist-edit-description-field',
+  );
+  static const Key _submitKey = Key('playlist-edit-submit-button');
 
-  Key get _descriptionFieldKey =>
-      _isDialog
-          ? const Key('configuration-playlist-description-field')
-          : const Key('mobile-playlist-description-field');
-
-  Key? get _submitKey =>
-      _isDialog ? null : const Key('mobile-playlist-submit-button');
-
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -152,9 +142,8 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
             hintText: '例如：稍后再看',
             enabled: !_isSubmitting,
             autovalidateMode: _autovalidateMode,
-            validator:
-                (value) =>
-                    value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
+            validator: (value) =>
+                value == null || value.trim().isEmpty ? '请输入播放列表名称' : null,
           ),
           SizedBox(height: spacing.sm),
           AppTextField(
@@ -172,8 +161,9 @@ class _EditPlaylistDialogState extends ConsumerState<EditPlaylistDialog> {
               Expanded(
                 child: AppButton(
                   label: '取消',
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
                 ),
               ),
               SizedBox(width: spacing.md),

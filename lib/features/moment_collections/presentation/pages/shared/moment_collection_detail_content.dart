@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
@@ -41,7 +43,8 @@ enum MomentCollectionDetailLayout { grid, list }
 ///
 /// 交互范式对齐切片合集详情：桌面标题块 + [AppListHeader] + 内联批量操作；
 /// 移动端合集名上报返回栏、长按进多选、批量动作走贴底条；双端默认网格，
-/// 桌面列表布局支持拖序。成员点击统一弹时刻预览层。
+/// 桌面列表布局支持拖序。成员点击统一弹时刻预览层；桌面网格卡悬停渐显
+/// 信息与播放键（来源媒体已删除时隐藏播放）。
 class MomentCollectionDetailContent extends ConsumerStatefulWidget {
   const MomentCollectionDetailContent({
     super.key,
@@ -67,6 +70,10 @@ class _MomentCollectionDetailContentState
 
   String get _keyPrefix =>
       _isMobile ? 'mobile-moment-collection' : 'moment-collection';
+
+  String get _fallbackPath => _isMobile
+      ? '$mobileMomentCollectionsPath/${widget.collectionId}'
+      : '$desktopMomentCollectionsPath/${widget.collectionId}';
 
   MomentCollectionDetailProvider get _providerRef =>
       momentCollectionDetailProvider(widget.collectionId);
@@ -519,13 +526,31 @@ class _MomentCollectionDetailContentState
     MomentListItem item,
     BuildContext context,
   ) {
+    // 桌面网格走悬停披露：收起态只留封面，悬停渐显信息与播放键；移动端没有
+    // hover，保持标题常显，信息与播放入口走点击后的预览层。
+    final canPlay = item.mediaId > 0;
     return CollectionMemberCard(
       key: ValueKey<int>(point.pointId),
       coverUrl: item.image?.bestAvailableUrl,
       coverAspectRatio: 16 / 9,
       title: item.displayLabel,
-      subtitle: formatMediaTimecode(item.offsetSeconds),
-      overlayCaption: true,
+      subtitle: _isMobile
+          ? formatMediaTimecode(item.offsetSeconds)
+          : item.hoverMeta,
+      overlayCaption: _isMobile,
+      clipOverlay: !_isMobile,
+      onPlay: canPlay && !_isMobile
+          ? () => unawaited(
+              playMomentItem(
+                context: context,
+                item: item,
+                fallbackPath: _fallbackPath,
+              ),
+            )
+          : null,
+      playButtonKey: _isMobile
+          ? null
+          : Key('$_keyPrefix-grid-play-${point.pointId}'),
       onTap: selectionMode
           ? () => toggleSelect(point.pointId)
           : () => _preview(context, item),
@@ -562,9 +587,7 @@ class _MomentCollectionDetailContentState
     return showMomentPreviewFlow(
       context: context,
       item: item,
-      fallbackPath: _isMobile
-          ? '$mobileMomentCollectionsPath/${widget.collectionId}'
-          : '$desktopMomentCollectionsPath/${widget.collectionId}',
+      fallbackPath: _fallbackPath,
       drawerKey: _isMobile
           ? const Key('mobile-moment-collection-preview-bottom-sheet')
           : null,

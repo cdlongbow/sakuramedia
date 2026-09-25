@@ -126,7 +126,6 @@ class CatalogSearchContent extends StatelessWidget {
         }
         return MovieSummarySliver(
           items: state.movieResults,
-          isLoading: false,
           emptyMessage: state.isOnlineSearchActive
               ? '在线源未找到该番号或未成功入库'
               : '本地库中没有匹配该关键词的影片。',
@@ -144,7 +143,6 @@ class CatalogSearchContent extends StatelessWidget {
         }
         return ActorSummarySliver(
           items: state.actorResults,
-          isLoading: false,
           emptyMessage: state.isOnlineSearchActive
               ? '在线源未找到匹配女优'
               : '本地库中没有匹配该关键词的女优。',

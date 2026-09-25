@@ -54,7 +54,6 @@ void main() {
           'configuration-tab-media-libraries',
           'configuration-tab-downloads',
           'configuration-tab-indexers',
-          'configuration-tab-playlists',
           'configuration-tab-blacklisted-movies',
           'configuration-tab-advanced',
           'configuration-tab-plugins',
@@ -435,7 +434,16 @@ void main() {
     ) async {
       _enqueueMediaLibraries(bundle);
       _enqueueAdvancedConfig(bundle);
-      _enqueuePlaylists(bundle, playlists: const []);
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 24,
+          'total': 0,
+        },
+      );
 
       await _pumpPage(tester, bundle, sessionStore: sessionStore);
       await _openConfigurationTab(
@@ -447,283 +455,35 @@ void main() {
         find.byKey(const Key('configuration-advanced-min-video-size-field')),
         '257',
       );
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
+      await tester.tap(
+        find.byKey(const Key('configuration-tab-blacklisted-movies')),
+      );
       await tester.pumpAndSettle();
 
       expect(
         find.byKey(const Key('configuration-advanced-leave-confirm-dialog')),
         findsOneWidget,
       );
-      expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 0);
 
       await tester.tap(
         find.byKey(const Key('configuration-advanced-leave-cancel-button')),
       );
       await tester.pumpAndSettle();
       expect(find.text('高级设置'), findsWidgets);
-      expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 0);
 
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
+      await tester.tap(
+        find.byKey(const Key('configuration-tab-blacklisted-movies')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(
         find.byKey(const Key('configuration-advanced-leave-confirm-button')),
       );
       await tester.pumpAndSettle();
 
-      expect(bundle.adapter.hitCount('GET', '/playlists'), 1);
-      expect(find.text('还没有自定义播放列表'), findsOneWidget);
-    });
-
-    testWidgets('loads playlists lazily and hides system playlists', (
-      WidgetTester tester,
-    ) async {
-      _enqueueMediaLibraries(bundle);
-      _enqueuePlaylists(
-        bundle,
-        playlists: const [
-          {
-            'id': 1,
-            'name': '最近播放',
-            'kind': 'recently_played',
-            'description': '系统自动维护的最近播放影片列表',
-            'is_system': true,
-            'is_mutable': false,
-            'is_deletable': false,
-            'movie_count': 1,
-            'created_at': '2026-03-12T10:00:00Z',
-            'updated_at': '2026-03-12T10:00:00Z',
-          },
-          {
-            'id': 2,
-            'name': '我的收藏',
-            'kind': 'custom',
-            'description': 'Favorite movies',
-            'is_system': false,
-            'is_mutable': true,
-            'is_deletable': true,
-            'movie_count': 2,
-            'created_at': '2026-03-12T10:10:00Z',
-            'updated_at': '2026-03-12T11:20:00Z',
-          },
-        ],
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
-
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
-      await tester.pumpAndSettle();
-
-      expect(bundle.adapter.hitCount('GET', '/playlists'), 1);
-      final request = bundle.adapter.requests.firstWhere(
-        (item) => item.method == 'GET' && item.path == '/playlists',
-      );
-      expect(request.uri.queryParameters['include_system'], 'false');
-      expect(
-        find.byKey(const Key('desktop-playlist-management-card-2')),
-        findsOneWidget,
-      );
-      expect(find.text('最近播放'), findsNothing);
-    });
-
-    testWidgets('creates playlist from configuration playlists tab', (
-      WidgetTester tester,
-    ) async {
-      _enqueueMediaLibraries(bundle);
-      _enqueuePlaylists(bundle, playlists: const []);
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/playlists',
-        statusCode: 201,
-        body: {
-          'id': 3,
-          'name': '稍后再看',
-          'kind': 'custom',
-          'description': 'Need watch later',
-          'is_system': false,
-          'is_mutable': true,
-          'is_deletable': true,
-          'movie_count': 0,
-          'created_at': '2026-03-12T10:10:00Z',
-          'updated_at': '2026-03-12T10:10:00Z',
-        },
-      );
-      _enqueuePlaylists(
-        bundle,
-        playlists: const [
-          {
-            'id': 3,
-            'name': '稍后再看',
-            'kind': 'custom',
-            'description': 'Need watch later',
-            'is_system': false,
-            'is_mutable': true,
-            'is_deletable': true,
-            'movie_count': 0,
-            'created_at': '2026-03-12T10:10:00Z',
-            'updated_at': '2026-03-12T10:10:00Z',
-          },
-        ],
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('configuration-playlist-create-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('create-playlist-name-field')),
-        '稍后再看',
-      );
-      await tester.enterText(
-        find.byKey(const Key('create-playlist-description-field')),
-        'Need watch later',
-      );
-      await tester.tap(find.byKey(const Key('create-playlist-submit-button')));
-      await tester.pumpAndSettle();
-
-      final request = bundle.adapter.requests.firstWhere(
-        (item) => item.method == 'POST' && item.path == '/playlists',
-      );
-      expect(request.body['name'], '稍后再看');
-      expect(request.body['description'], 'Need watch later');
-      expect(
-        find.byKey(const Key('desktop-playlist-management-card-3')),
-        findsOneWidget,
-      );
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets('edits playlist from configuration playlists tab', (
-      WidgetTester tester,
-    ) async {
-      _enqueueMediaLibraries(bundle);
-      _enqueuePlaylists(
-        bundle,
-        playlists: const [
-          {
-            'id': 2,
-            'name': '我的收藏',
-            'kind': 'custom',
-            'description': 'Favorite movies',
-            'is_system': false,
-            'is_mutable': true,
-            'is_deletable': true,
-            'movie_count': 2,
-            'created_at': '2026-03-12T10:10:00Z',
-            'updated_at': '2026-03-12T11:20:00Z',
-          },
-        ],
-      );
-      bundle.adapter.enqueueJson(
-        method: 'PATCH',
-        path: '/playlists/2',
-        body: {
-          'id': 2,
-          'name': '收藏补完',
-          'kind': 'custom',
-          'description': 'Updated',
-          'is_system': false,
-          'is_mutable': true,
-          'is_deletable': true,
-          'movie_count': 2,
-          'created_at': '2026-03-12T10:10:00Z',
-          'updated_at': '2026-03-12T11:30:00Z',
-        },
-      );
-      _enqueuePlaylists(
-        bundle,
-        playlists: const [
-          {
-            'id': 2,
-            'name': '收藏补完',
-            'kind': 'custom',
-            'description': 'Updated',
-            'is_system': false,
-            'is_mutable': true,
-            'is_deletable': true,
-            'movie_count': 2,
-            'created_at': '2026-03-12T10:10:00Z',
-            'updated_at': '2026-03-12T11:30:00Z',
-          },
-        ],
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('desktop-playlist-edit-2')));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('configuration-playlist-name-field')),
-        '收藏补完',
-      );
-      await tester.enterText(
-        find.byKey(const Key('configuration-playlist-description-field')),
-        'Updated',
-      );
-      await tester.ensureVisible(find.text('保存').last);
-      await tester.tap(find.text('保存').last);
-      await tester.pumpAndSettle();
-
-      final request = bundle.adapter.requests.firstWhere(
-        (item) => item.method == 'PATCH' && item.path == '/playlists/2',
-      );
-      expect(request.body['name'], '收藏补完');
-      expect(request.body['description'], 'Updated');
-      expect(
-        find.byKey(const Key('desktop-playlist-management-card-2')),
-        findsOneWidget,
-      );
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets('deletes playlist from configuration playlists tab', (
-      WidgetTester tester,
-    ) async {
-      _enqueueMediaLibraries(bundle);
-      _enqueuePlaylists(
-        bundle,
-        playlists: const [
-          {
-            'id': 2,
-            'name': '我的收藏',
-            'kind': 'custom',
-            'description': 'Favorite movies',
-            'is_system': false,
-            'is_mutable': true,
-            'is_deletable': true,
-            'movie_count': 2,
-            'created_at': '2026-03-12T10:10:00Z',
-            'updated_at': '2026-03-12T11:20:00Z',
-          },
-        ],
-      );
-      bundle.adapter.enqueueJson(
-        method: 'DELETE',
-        path: '/playlists/2',
-        statusCode: 204,
-      );
-      _enqueuePlaylists(bundle, playlists: const []);
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('desktop-playlist-delete-2')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('删除').last);
-      await tester.pumpAndSettle();
-
-      expect(bundle.adapter.hitCount('DELETE', '/playlists/2'), 1);
-      expect(find.text('我的收藏'), findsNothing);
-      expect(find.text('还没有自定义播放列表'), findsOneWidget);
-      await tester.pump(const Duration(seconds: 3));
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(find.text('还没有屏蔽任何影片'), findsOneWidget);
     });
 
     testWidgets(
@@ -2157,35 +1917,6 @@ void _enqueueIndexerSettings(
           .toList(growable: false),
     },
   );
-}
-
-void _enqueuePlaylists(
-  TestApiBundle bundle, {
-  required List<Map<String, Object?>> playlists,
-}) {
-  bundle.adapter.enqueueJson(
-    method: 'GET',
-    path: '/playlists',
-    body: playlists,
-  );
-  // 桌面 playlists section 用 PlaylistsOverviewController 时会为每个
-  // movieCount>0 的 playlist 拉取首张影片作封面预览。
-  for (final playlist in playlists) {
-    final id = playlist['id'];
-    final movieCount = playlist['movie_count'];
-    if (id is int && movieCount is int && movieCount > 0) {
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/playlists/$id/movies',
-        body: <String, dynamic>{
-          'items': const <Map<String, dynamic>>[],
-          'page': 1,
-          'page_size': 1,
-          'total': 0,
-        },
-      );
-    }
-  }
 }
 
 void _enqueueAdvancedConfig(TestApiBundle bundle) {

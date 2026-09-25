@@ -67,11 +67,6 @@ const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
         pageKey: Key('mobile-settings-plugins'),
       ),
       _MobileSettingsRouteCase(
-        path: mobileSettingsPlaylistsPath,
-        title: '播放列表',
-        pageKey: Key('mobile-settings-playlists'),
-      ),
-      _MobileSettingsRouteCase(
         path: mobileSettingsSystemMaintenancePath,
         title: '系统维护',
         pageKey: Key('mobile-settings-system-maintenance'),
@@ -1319,12 +1314,6 @@ void main() {
         );
       } else if (routeCase.path == mobileSettingsSystemMaintenancePath) {
         _enqueueMobileSystemMaintenanceResponses(bundle);
-      } else if (routeCase.path == mobileSettingsPlaylistsPath) {
-        bundle.adapter.enqueueJson(
-          method: 'GET',
-          path: '/playlists',
-          body: const <Map<String, dynamic>>[],
-        );
       } else if (routeCase.path == mobileSettingsUsernamePath) {
         _enqueueAccountProfile(bundle);
       } else if (routeCase.path == mobileMediaManagementPath) {

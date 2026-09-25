@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_mutation_events_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_order_store_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
@@ -12,15 +13,14 @@ import 'package:sakuramedia/features/shared/presentation/providers/async_notifie
 part 'playlists_overview_provider.g.dart';
 
 /// 播放列表概览：加载全量列表 + 后台逐个填首图，支持拖排序（可选持久化）、
-/// 创建 / 编辑 / 删除的就地补丁。
+/// 创建 / 编辑 / 删除的就地补丁，并监听跨页变更广播同步其他入口。
 ///
-/// autoDispose family([PlaylistsOverviewScope])：4 个消费入口（桌面/移动
-/// playlists 独立页、configuration 管理 section、overview 移动骨架）按 scope
-/// 定位实例，orderScopeKey=null 表不持久化顺序（configuration / mobile 独立页）。
+/// autoDispose family([PlaylistsOverviewScope])：桌面/移动列表页按 baseUrl
+/// scope 定位实例、共享拖排顺序；orderScopeKey=null 表不持久化顺序。
 ///
 /// 迁移前对应：`PlaylistsOverviewController`（5 个构造参数：3 个 API 闭包 +
 /// orderStore + orderScopeKey）——本 provider 内联所有依赖（API/Store 各自
-/// provider），scope 只留 orderScopeKey + includeSystem 两个业务参数。
+/// provider），scope 只留 orderScopeKey 一个业务参数。
 ///
 /// **reorder 保持 fire-and-forget 语义**（原 controller
 /// `unawaited(_savePlaylistOrder(...))`）——UI 侧无回滚需求，改成 await 会引入
@@ -33,7 +33,23 @@ class PlaylistsOverview extends _$PlaylistsOverview
   @override
   Future<PlaylistsOverviewState> build(PlaylistsOverviewScope scope) async {
     attachDisposeGuard();
-    final playlists = await _loadAndApplyPlaylists(scope);
+    ref.listen(playlistMutationEventsProvider, (_, next) {
+      final change = next.value;
+      if (change == null) return;
+      switch (change.kind) {
+        case PlaylistMutationKind.updated:
+          final playlist = change.playlist;
+          if (playlist != null) {
+            replacePlaylist(playlist);
+          }
+        case PlaylistMutationKind.deleted:
+          final playlistId = change.deletedId;
+          if (playlistId != null) {
+            removePlaylist(playlistId);
+          }
+      }
+    });
+    final playlists = await _loadAndApplyPlaylists();
     final coverFetchGeneration = ++_coverFetchGeneration;
     // 首次加载没有旧封面；后续刷新会保留仍有效的旧封面，避免卡片回退到占位。
     unawaited(_startCoverUrlFetches(playlists, coverFetchGeneration));
@@ -48,7 +64,7 @@ class PlaylistsOverview extends _$PlaylistsOverview
   /// 向上抛——4 个调用点都按「抛出即失败」契约处理（桌面壳 `_runRefresh` 兜底
   /// toast、移动页/概览骨架自行 catch + toast、configuration 对账刻意静默）。
   Future<void> refresh() async {
-    final playlists = await _loadAndApplyPlaylists(scope);
+    final playlists = await _loadAndApplyPlaylists();
     if (isDisposed) return;
     final current = state.value;
     final coverFetchGeneration = ++_coverFetchGeneration;
@@ -95,10 +111,9 @@ class PlaylistsOverview extends _$PlaylistsOverview
     required String name,
     String? description,
   }) async {
-    final playlist = await ref.read(playlistsApiProvider).createPlaylist(
-          name: name,
-          description: description,
-        );
+    final playlist = await ref
+        .read(playlistsApiProvider)
+        .createPlaylist(name: name, description: description);
     if (!isDisposed) {
       insertPlaylist(playlist);
     }
@@ -148,12 +163,8 @@ class PlaylistsOverview extends _$PlaylistsOverview
     unawaited(_savePlaylistOrder(playlists));
   }
 
-  Future<List<PlaylistDto>> _loadAndApplyPlaylists(
-    PlaylistsOverviewScope scope,
-  ) async {
-    final playlists = await ref
-        .read(playlistsApiProvider)
-        .getPlaylists(includeSystem: scope.includeSystem);
+  Future<List<PlaylistDto>> _loadAndApplyPlaylists() async {
+    final playlists = await ref.read(playlistsApiProvider).getPlaylists();
     return _applyStoredOrder(playlists);
   }
 
@@ -190,8 +201,9 @@ class PlaylistsOverview extends _$PlaylistsOverview
         ordered.add(playlist);
       }
 
-      final normalizedOrder =
-          ordered.map((playlist) => playlist.id).toList(growable: false);
+      final normalizedOrder = ordered
+          .map((playlist) => playlist.id)
+          .toList(growable: false);
       if (!listEquals(storedOrder, normalizedOrder)) {
         await store.savePlaylistOrder(
           scopeKey: scopeKey,

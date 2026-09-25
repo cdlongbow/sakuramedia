@@ -36,14 +36,19 @@ class PlaylistDetail extends _$PlaylistDetail
       state = AsyncError(error, stack);
     }
   }
+
+  /// 编辑成功后由详情页就地更新，避免重新请求。
+  void applyUpdated(PlaylistDto playlist) {
+    if (isDisposed) return;
+    state = AsyncData(playlist);
+  }
 }
 
 /// 把详情加载错误翻译成用户可读文案。保留原 [PlaylistDetailController] 的特化：
 /// `404` / `playlist_not_found` → 「未找到该播放列表」；其余通用文案。
 String playlistDetailErrorMessage(Object error) {
   if (error is ApiException &&
-      (error.statusCode == 404 ||
-          error.error?.code == 'playlist_not_found')) {
+      (error.statusCode == 404 || error.error?.code == 'playlist_not_found')) {
     return '未找到该播放列表';
   }
   return '播放列表详情暂时无法加载，请稍后重试';

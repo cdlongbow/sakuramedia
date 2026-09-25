@@ -9,6 +9,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_mutation_events_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlist_order_store_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
@@ -19,10 +20,7 @@ import '../../../../support/fake_http_client_adapter.dart';
 const PlaylistsOverviewScope _scopeWithOrder = PlaylistsOverviewScope(
   orderScopeKey: 'test',
 );
-const PlaylistsOverviewScope _scopeNoOrder = PlaylistsOverviewScope(
-  orderScopeKey: null,
-  includeSystem: false,
-);
+const PlaylistsOverviewScope _scopeNoOrder = PlaylistsOverviewScope();
 
 void main() {
   late SessionStore sessionStore;
@@ -86,7 +84,7 @@ void main() {
         'updated_at': '2026-01-01T00:00:00Z',
       };
 
-  test('build fetches playlists and passes includeSystem flag', () async {
+  test('build fetches playlists including system lists', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/playlists',
@@ -104,7 +102,7 @@ void main() {
     expect(state.playlists.map((p) => p.id), <int>[1, 2]);
     expect(
       adapter.requests.single.uri.queryParameters['include_system'],
-      'false',
+      'true',
     );
   });
 
@@ -228,6 +226,35 @@ void main() {
 
     // 未持久化任何 scope 的顺序。
     expect(orderStore.snapshot, isEmpty);
+  });
+
+  test('mutation broadcast patches updated and deleted entries in place', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: <Map<String, dynamic>>[
+        _playlistJson(id: 10, name: 'A'),
+        _playlistJson(id: 11, name: 'B'),
+      ],
+    );
+
+    keepAlive(_scopeWithOrder);
+    await container.read(playlistsOverviewProvider(_scopeWithOrder).future);
+
+    final events = container.read(playlistMutationEventsProvider.notifier);
+    events.reportUpdated(
+      PlaylistDto.fromJson(_playlistJson(id: 11, name: 'B2')),
+    );
+    var state = container
+        .read(playlistsOverviewProvider(_scopeWithOrder))
+        .requireValue;
+    expect(state.playlists.map((p) => p.name), <String>['A', 'B2']);
+
+    events.reportDeleted(10);
+    state = container
+        .read(playlistsOverviewProvider(_scopeWithOrder))
+        .requireValue;
+    expect(state.playlists.map((p) => p.id), <int>[11]);
   });
 
   test(

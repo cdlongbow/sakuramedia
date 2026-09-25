@@ -4,7 +4,6 @@ import 'package:sakuramedia/features/configuration/presentation/pages/desktop/ad
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/download_clients_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/indexer_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/media_libraries_section.dart';
-import 'package:sakuramedia/features/configuration/presentation/pages/desktop/playlists_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/system_maintenance_section.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/widgets/external_player_settings_content.dart';
@@ -68,14 +67,6 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
           icon: Icons.travel_explore_outlined,
         ),
         builder: (active) => IndexerSettingsSection(active: active),
-      ),
-      _ConfigurationTab(
-        category: const _ConfigurationCategory(
-          itemKey: Key('configuration-tab-playlists'),
-          label: '播放列表',
-          icon: Icons.playlist_play_outlined,
-        ),
-        builder: (active) => PlaylistsSection(active: active),
       ),
       if (const ExternalPlayerChannel().isSupported)
         _ConfigurationTab(

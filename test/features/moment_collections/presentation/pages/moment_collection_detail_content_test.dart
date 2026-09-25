@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/app/app_platform.dart';
@@ -36,9 +37,10 @@ Map<String, dynamic> _pointJson(
   int pointId,
   int position, {
   bool withImage = false,
+  int? mediaId,
 }) => <String, dynamic>{
   'point_id': pointId,
-  'media_id': 100 + pointId,
+  'media_id': mediaId ?? 100 + pointId,
   'movie_number': 'ABC-0$pointId',
   'video_item_id': null,
   'thumbnail_id': 200 + pointId,
@@ -193,6 +195,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> hoverGridCard(WidgetTester tester, int pointId) async {
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.byKey(ValueKey<int>(pointId))));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('桌面默认网格，可切换列表并显示拖拽把手', (WidgetTester tester) async {
     enqueueInitialLoad();
     await pumpDesktop(tester);
@@ -220,6 +230,68 @@ void main() {
     expect(
       find.byKey(const Key('moment-collection-reorder-handle-10')),
       findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面网格收起态不铺文字，悬停渐显信息与播放键', (WidgetTester tester) async {
+    enqueueInitialLoad(total: 1);
+    await pumpDesktop(tester);
+
+    expect(find.text('ABC-010'), findsNothing);
+    expect(find.byKey(const Key('moment-collection-grid-play-10')), findsNothing);
+
+    await hoverGridCard(tester, 10);
+
+    expect(find.textContaining('ABC-010', findRichText: true), findsOneWidget);
+    expect(
+      find.textContaining('JAV · 01:40', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('moment-collection-grid-play-10')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面网格来源已删除的时刻不显示悬停播放键', (
+    WidgetTester tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/moment-collections/7',
+      body: _collectionJson(pointCount: 1),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/moment-collections/7/points',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[_pointJson(10, 0, mediaId: 0)],
+        'page': 1,
+        'page_size': 50,
+        'total': 1,
+      },
+    );
+    await pumpDesktop(tester);
+    await hoverGridCard(tester, 10);
+
+    expect(
+      find.textContaining('来源已删除', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('moment-collection-grid-play-10')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('移动端网格保持标题常显且没有悬停播放键', (WidgetTester tester) async {
+    enqueueInitialLoad(total: 1);
+    await pumpMobile(tester);
+
+    expect(find.text('ABC-010'), findsOneWidget);
+    expect(
+      find.byKey(const Key('mobile-moment-collection-grid-play-10')),
+      findsNothing,
     );
     expect(tester.takeException(), isNull);
   });

@@ -5,6 +5,18 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
+const MovieListItemDto _movie = MovieListItemDto(
+  javdbId: 'test-javdb-id',
+  movieNumber: 'ABP-123',
+  title: 'Test Movie',
+  coverImage: null,
+  releaseDate: null,
+  durationMinutes: 0,
+  heat: 0,
+  canPlay: false,
+  isSubscribed: false,
+);
+
 void main() {
   testWidgets('movie summary grid uses spacing token for grid gaps', (
     WidgetTester tester,
@@ -15,7 +27,7 @@ void main() {
         home: const Scaffold(
           body: SizedBox(
             width: 960,
-            child: MovieSummaryGrid(items: [], isLoading: true),
+            child: MovieSummaryGrid(items: [_movie]),
           ),
         ),
       ),
@@ -40,7 +52,7 @@ void main() {
         home: const Scaffold(
           body: SizedBox(
             width: 960,
-            child: MovieSummaryGrid(items: [], isLoading: true),
+            child: MovieSummaryGrid(items: [_movie]),
           ),
         ),
       ),
@@ -70,12 +82,7 @@ void main() {
         MaterialApp(
           theme: sakuraThemeData,
           home: const Scaffold(
-            body: MovieSummaryGrid(
-              items: [],
-              isLoading: true,
-              placeholderCount: 24,
-              maxColumns: 10,
-            ),
+            body: MovieSummaryGrid(items: [_movie], maxColumns: 10),
           ),
         ),
       );
@@ -92,22 +99,10 @@ void main() {
   testWidgets('movie summary card uses component token aspect ratio', (
     WidgetTester tester,
   ) async {
-    const movie = MovieListItemDto(
-      javdbId: 'test-javdb-id',
-      movieNumber: 'ABP-123',
-      title: 'Test Movie',
-      coverImage: null,
-      releaseDate: null,
-      durationMinutes: 0,
-      heat: 0,
-      canPlay: false,
-      isSubscribed: false,
-    );
-
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraThemeData,
-        home: const Scaffold(body: MovieSummaryCard(movie: movie)),
+        home: const Scaffold(body: MovieSummaryCard(movie: _movie)),
       ),
     );
 

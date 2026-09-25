@@ -1,6 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_card.dart';
 
@@ -10,8 +9,6 @@ class MomentGrid extends StatelessWidget {
     required this.items,
     required this.onItemTap,
     this.onItemPlay,
-    this.isLoading = false,
-    this.placeholderCount = 8,
     this.maxRows,
     this.maxColumns = 4,
     this.selectionMode = false,
@@ -25,9 +22,6 @@ class MomentGrid extends StatelessWidget {
 
   /// 卡片悬停面板里的播放回调（跳播到该时刻）；不传则 hover 不显示播放键。
   final ValueChanged<MomentListItem>? onItemPlay;
-
-  final bool isLoading;
-  final int placeholderCount;
 
   /// 首页等预览区可限制为固定行数；列表页保持不传以展示全部项目。
   final int? maxRows;
@@ -44,9 +38,6 @@ class MomentGrid extends StatelessWidget {
     return AppAdaptiveCardGrid<MomentListItem>(
       gridKey: const Key('moment-grid'),
       items: items,
-      isLoading: isLoading,
-      placeholderCount: placeholderCount,
-      skeletonBuilder: (_, __) => const AppCoverCardSkeleton(),
       targetColumnWidth: 280,
       minColumns: 2,
       maxColumns: maxColumns,
@@ -74,8 +65,6 @@ class MomentSliver extends StatelessWidget {
     required this.items,
     required this.onItemTap,
     this.onItemPlay,
-    this.isLoading = false,
-    this.placeholderCount = 8,
     this.selectionMode = false,
     this.isSelected,
     this.onSelectedChanged,
@@ -88,8 +77,6 @@ class MomentSliver extends StatelessWidget {
   /// 卡片悬停面板里的播放回调（跳播到该时刻）；不传则 hover 不显示播放键。
   final ValueChanged<MomentListItem>? onItemPlay;
 
-  final bool isLoading;
-  final int placeholderCount;
   final bool selectionMode;
   final bool Function(MomentListItem item)? isSelected;
   final ValueChanged<MomentListItem>? onSelectedChanged;
@@ -100,9 +87,6 @@ class MomentSliver extends StatelessWidget {
     return AppAdaptiveCardSliver<MomentListItem>(
       gridKey: const Key('moment-grid'),
       items: items,
-      isLoading: isLoading,
-      placeholderCount: placeholderCount,
-      skeletonBuilder: (_, __) => const AppCoverCardSkeleton(),
       targetColumnWidth: 280,
       minColumns: 2,
       maxColumns: 4,

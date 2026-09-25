@@ -256,7 +256,6 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                                   summary.paged.items.isEmpty
                               ? rankedMoviePlaceholders(count: 24)
                               : summary.paged.items,
-                          isLoading: false,
                           errorMessage: summary.initialErrorMessage,
                           onMovieTap: (movie) => context.pushDesktopMovieDetail(
                             movieNumber: movie.movieNumber,

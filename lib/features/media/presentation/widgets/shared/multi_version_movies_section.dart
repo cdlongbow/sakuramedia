@@ -16,15 +16,16 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
+import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 
 class MultiVersionMoviesSection extends HookConsumerWidget {
@@ -194,6 +195,26 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       },
     );
 
+    Widget buildGroup(BuildContext context, MultiVersionMovieDto group) {
+      return MediaFileGroupCard(
+        key: Key('$keyPrefix-version-group-${group.movieNumber}'),
+        items: group.mediaItems,
+        countLabel: '${group.mediaCount} 个版本',
+        headerKey: Key('$keyPrefix-version-movie-${group.movieNumber}'),
+        deleteLabel: '删除此版本',
+        keyPrefix: '$keyPrefix-version',
+        mobile: mobile,
+        onOpen: () => onOpenMovieDetail(context, group.movieNumber),
+        onDelete: (item) => unawaited(deleteVersion(group, item)),
+        selectedIds: selectionMode.value ? selectedIds.value : null,
+        onToggle: (item) {
+          final next = {...selectedIds.value};
+          if (!next.remove(item.id)) next.add(item.id);
+          selectedIds.value = next;
+        },
+      );
+    }
+
     final content = AppFixedHeaderLayout(
       header: selectionMode.value
           ? AppSelectionHeaderToolbar(
@@ -279,28 +300,28 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             itemSpacing: spacing.lg,
             initialErrorMessage: '多版本影片加载失败，请稍后重试',
             emptyMessage: '暂无多版本影片',
-            skeletonBuilder: (context) =>
-                MediaFileGroupCardSkeleton(mobile: mobile),
+            // loading 用占位分组渲染真实组卡，由 [AppSkeletonizer] 灰化。
+            skeletonBuilder: (context) {
+              final placeholders = multiVersionMoviePlaceholders();
+              return AppSkeletonizer(
+                enabled: true,
+                child: Column(
+                  children: [
+                    for (var index = 0;
+                        index < placeholders.length;
+                        index++) ...[
+                      if (index > 0) SizedBox(height: spacing.lg),
+                      buildGroup(context, placeholders[index]),
+                    ],
+                  ],
+                ),
+              );
+            },
             initialRetryKey: Key('$keyPrefix-versions-retry'),
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),
-            itemBuilder: (context, group, index) => MediaFileGroupCard(
-              key: Key('$keyPrefix-version-group-${group.movieNumber}'),
-              items: group.mediaItems,
-              countLabel: '${group.mediaCount} 个版本',
-              headerKey: Key('$keyPrefix-version-movie-${group.movieNumber}'),
-              deleteLabel: '删除此版本',
-              keyPrefix: '$keyPrefix-version',
-              mobile: mobile,
-              onOpen: () => onOpenMovieDetail(context, group.movieNumber),
-              onDelete: (item) => unawaited(deleteVersion(group, item)),
-              selectedIds: selectionMode.value ? selectedIds.value : null,
-              onToggle: (item) {
-                final next = {...selectedIds.value};
-                if (!next.remove(item.id)) next.add(item.id);
-                selectedIds.value = next;
-              },
-            ),
+            itemBuilder: (context, group, index) =>
+                buildGroup(context, group),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.xxl)),
         ],

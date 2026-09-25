@@ -6,10 +6,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/media/data/duplicate_media_group_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
@@ -18,6 +18,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
@@ -160,6 +161,86 @@ class DuplicateMediaSection extends HookConsumerWidget {
       }
     }
 
+    Widget buildGroup(BuildContext context, DuplicateMediaGroupDto group) {
+      if (group.mediaItems.isEmpty) return const SizedBox.shrink();
+      final first = group.mediaItems.first;
+      return MediaFileGroupCard(
+        key: Key('$keyPrefix-duplicate-group-${first.id}'),
+        items: group.mediaItems,
+        countLabel: '${group.mediaCount} 个副本',
+        headerKey: Key('$keyPrefix-duplicate-cover-tap-${first.id}'),
+        deleteLabel: '删除此项',
+        keyPrefix: '$keyPrefix-duplicate',
+        mobile: mobile,
+        onOpen:
+            first.isJav &&
+                first.movieNumber != null &&
+                onOpenMovieDetail != null
+            ? () => onOpenMovieDetail!(context, first.movieNumber!)
+            : null,
+        onDelete: (item) => unawaited(deleteMedia(group, item)),
+        selectedIds: selectionMode.value ? selectedIds.value : null,
+        onToggle: (item) {
+          final next = {...selectedIds.value};
+          if (!next.remove(item.id)) next.add(item.id);
+          selectedIds.value = next;
+        },
+        itemSupplement: (item) {
+          if (item.displayHeading == first.displayHeading &&
+              (!item.isVideo || item.collections.isEmpty)) {
+            return null;
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (item.displayHeading != first.displayHeading)
+                if (item.isJav &&
+                    item.movieNumber != null &&
+                    onOpenMovieDetail != null)
+                  AppTextButton(
+                    label: item.displayHeading,
+                    onPressed: () =>
+                        onOpenMovieDetail!(context, item.movieNumber!),
+                  )
+                else
+                  Text(
+                    item.displayHeading,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      weight: AppTextWeight.medium,
+                      tone: AppTextTone.secondary,
+                    ),
+                  ),
+              if (item.isVideo && item.collections.isNotEmpty) ...[
+                Text(
+                  '所属合集',
+                  key: Key(
+                    'duplicate-media-collections-title-${item.id}',
+                  ),
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s12,
+                    weight: AppTextWeight.medium,
+                    tone: AppTextTone.secondary,
+                  ),
+                ),
+                SizedBox(height: spacing.xs),
+                VideoCollectionChips(
+                  collections: item.collections,
+                  onCollectionTap: (collection) =>
+                      onOpenVideoCollectionDetail(
+                        context,
+                        collection.id,
+                      ),
+                ),
+              ],
+            ],
+          );
+        },
+      );
+    }
+
     final content = AppFixedHeaderLayout(
       header: selectionMode.value
           ? AppSelectionHeaderToolbar(
@@ -217,90 +298,27 @@ class DuplicateMediaSection extends HookConsumerWidget {
             itemSpacing: spacing.lg,
             initialErrorMessage: '重复媒体加载失败，请稍后重试',
             emptyMessage: '当前类型没有发现重复文件。',
-            skeletonBuilder: (context) =>
-                MediaFileGroupCardSkeleton(mobile: mobile),
+            // loading 用占位分组渲染真实组卡，由 [AppSkeletonizer] 灰化。
+            skeletonBuilder: (context) {
+              final placeholders = duplicateMediaGroupPlaceholders();
+              return AppSkeletonizer(
+                enabled: true,
+                child: Column(
+                  children: [
+                    for (var index = 0;
+                        index < placeholders.length;
+                        index++) ...[
+                      if (index > 0) SizedBox(height: spacing.lg),
+                      buildGroup(context, placeholders[index]),
+                    ],
+                  ],
+                ),
+              );
+            },
             initialRetryKey: Key('$keyPrefix-duplicate-initial-retry-button'),
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),
-            itemBuilder: (context, group, index) {
-              if (group.mediaItems.isEmpty) return const SizedBox.shrink();
-              final first = group.mediaItems.first;
-              return MediaFileGroupCard(
-                key: Key('$keyPrefix-duplicate-group-${first.id}'),
-                items: group.mediaItems,
-                countLabel: '${group.mediaCount} 个副本',
-                headerKey: Key('$keyPrefix-duplicate-cover-tap-${first.id}'),
-                deleteLabel: '删除此项',
-                keyPrefix: '$keyPrefix-duplicate',
-                mobile: mobile,
-                onOpen:
-                    first.isJav &&
-                        first.movieNumber != null &&
-                        onOpenMovieDetail != null
-                    ? () => onOpenMovieDetail!(context, first.movieNumber!)
-                    : null,
-                onDelete: (item) => unawaited(deleteMedia(group, item)),
-                selectedIds: selectionMode.value ? selectedIds.value : null,
-                onToggle: (item) {
-                  final next = {...selectedIds.value};
-                  if (!next.remove(item.id)) next.add(item.id);
-                  selectedIds.value = next;
-                },
-                itemSupplement: (item) {
-                  if (item.displayHeading == first.displayHeading &&
-                      (!item.isVideo || item.collections.isEmpty)) {
-                    return null;
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (item.displayHeading != first.displayHeading)
-                        if (item.isJav &&
-                            item.movieNumber != null &&
-                            onOpenMovieDetail != null)
-                          AppTextButton(
-                            label: item.displayHeading,
-                            onPressed: () =>
-                                onOpenMovieDetail!(context, item.movieNumber!),
-                          )
-                        else
-                          Text(
-                            item.displayHeading,
-                            style: resolveAppTextStyle(
-                              context,
-                              size: AppTextSize.s12,
-                              weight: AppTextWeight.medium,
-                              tone: AppTextTone.secondary,
-                            ),
-                          ),
-                      if (item.isVideo && item.collections.isNotEmpty) ...[
-                        Text(
-                          '所属合集',
-                          key: Key(
-                            'duplicate-media-collections-title-${item.id}',
-                          ),
-                          style: resolveAppTextStyle(
-                            context,
-                            size: AppTextSize.s12,
-                            weight: AppTextWeight.medium,
-                            tone: AppTextTone.secondary,
-                          ),
-                        ),
-                        SizedBox(height: spacing.xs),
-                        VideoCollectionChips(
-                          collections: item.collections,
-                          onCollectionTap: (collection) =>
-                              onOpenVideoCollectionDetail(
-                                context,
-                                collection.id,
-                              ),
-                        ),
-                      ],
-                    ],
-                  );
-                },
-              );
-            },
+            itemBuilder: (context, group, index) => buildGroup(context, group),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.xxl)),
         ],

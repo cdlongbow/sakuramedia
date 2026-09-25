@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
@@ -635,61 +634,16 @@ class _MovieInlineMetaRow extends StatelessWidget {
   }
 }
 
-class MovieDetailLoadingSkeleton extends StatelessWidget {
-  const MovieDetailLoadingSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final heroHeight = _resolveViewportHeight(context, constraints) * 0.3;
-        final availableWidth = _resolveViewportWidth(context, constraints);
-        final titleWidth = math.min(240.0, availableWidth * 0.56);
-        final movieNumberWidth = math.min(180.0, availableWidth * 0.4);
-        final summaryWidth = math.min(520.0, availableWidth * 0.82);
-        final labelWidth = math.min(120.0, availableWidth * 0.3);
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                key: const Key('movie-detail-loading-skeleton'),
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _SkeletonBlock(height: 28, width: titleWidth),
-                  SizedBox(height: context.appSpacing.lg),
-                  _SkeletonBlock(height: heroHeight),
-                  SizedBox(height: context.appSpacing.lg),
-                  _SkeletonBlock(
-                    height: context
-                        .appComponentTokens
-                        .movieDetailPlotThumbnailHeight,
-                  ),
-                  SizedBox(
-                    height: context.appComponentTokens.movieDetailSectionGap,
-                  ),
-                  _SkeletonBlock(height: 18, width: movieNumberWidth),
-                  SizedBox(height: context.appSpacing.xs),
-                  _SkeletonBlock(height: 16, width: summaryWidth),
-                  SizedBox(height: context.appSpacing.xs),
-                  _SkeletonBlock(height: 18, width: summaryWidth),
-                  SizedBox(height: context.appSpacing.xxl),
-                  _SkeletonBlock(height: 18, width: labelWidth),
-                  SizedBox(height: context.appSpacing.md),
-                  const _SkeletonBlock(height: 64),
-                  SizedBox(height: context.appSpacing.lg),
-                  _SkeletonBlock(height: 18, width: labelWidth),
-                  SizedBox(height: context.appSpacing.md),
-                  const _SkeletonBlock(height: 96),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
+double _resolveViewportHeight(
+  BuildContext context,
+  BoxConstraints constraints,
+) {
+  if (constraints.hasBoundedHeight && constraints.maxHeight.isFinite) {
+    return constraints.maxHeight;
   }
+  return MediaQuery.sizeOf(context).height;
 }
+
 
 class MovieDetailErrorState extends StatelessWidget {
   const MovieDetailErrorState({
@@ -711,42 +665,6 @@ class MovieDetailErrorState extends StatelessWidget {
       ],
     );
   }
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  const _SkeletonBlock({required this.height, this.width});
-
-  final double height;
-  final double? width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width ?? double.infinity,
-      height: height,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-    );
-  }
-}
-
-double _resolveViewportHeight(
-  BuildContext context,
-  BoxConstraints constraints,
-) {
-  if (constraints.hasBoundedHeight && constraints.maxHeight.isFinite) {
-    return constraints.maxHeight;
-  }
-  return MediaQuery.sizeOf(context).height;
-}
-
-double _resolveViewportWidth(BuildContext context, BoxConstraints constraints) {
-  if (constraints.hasBoundedWidth && constraints.maxWidth.isFinite) {
-    return constraints.maxWidth;
-  }
-  return MediaQuery.sizeOf(context).width;
 }
 
 List<MovieDetailStatItem> buildMovieDetailStatItems(

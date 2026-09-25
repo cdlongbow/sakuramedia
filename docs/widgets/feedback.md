@@ -20,10 +20,11 @@
 - 占位数据约定：用真实 DTO 构造、文案取 `BoneMock`、封面 / 图片 URL 传 `null`
   不触发网络请求；每个 feature 的占位工厂放在 `presentation/<feature>_placeholders.dart`。
   加载态渲染真实组件后，`ignorePointers` 会屏蔽交互，回调不会被触发。
-- 手写骨架组件（`AppCoverCardSkeleton`、`AppLeftCoverCardSkeleton`、
-  `MediaListItemCardSkeletonList` 等）是迁移前的历史存量；**新页面不要再新增**，
-  存量页面在收尾中继续迁移到 `AppSkeletonizer`。分页列表的
-  `SliverPagedAsyncSection.skeletonBuilder` 也应优先传「占位数据 + 真实卡片」。
+- 首屏骨架不再使用手写骨架组件；`SliverPagedAsyncSection.skeletonBuilder` 传
+  「占位数据 + 真实卡片」并用 `AppSkeletonizer` 灰化。`AppSkeletonBlock` 仅作为
+  无真实对应物的小面积占位原子（如加载态工具条的两条灰线）保留，必须包在
+  `AppSkeletonizer` 内。卡片的内部加载能力（`isLoading` / `skeletonBuilder`）
+  已从网格组件移除：加载由调用方用占位数据处理。
 - `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading，随平台自适应。
 - `AppFilterUpdateBar`：筛选请求更新中的行内反馈。
 

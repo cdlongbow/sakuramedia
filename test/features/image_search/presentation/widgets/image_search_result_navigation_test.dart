@@ -9,6 +9,8 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_result_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/domain/media/preview/media_preview_action_grid.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import '../../../../support/test_api_bundle.dart';
 
@@ -225,62 +227,33 @@ void main() {
         );
 
         expect(find.text('影片详情'), findsNothing);
-        expect(
-          find.byKey(const Key('media-preview-action-skeleton-0')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('media-preview-action-skeleton-1')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('media-preview-action-skeleton-2')),
-          findsOneWidget,
-        );
+        // 加载态渲染占位动作格与占位影片信息（真实布局 + AppSkeletonizer）。
+        expect(find.byType(MediaPreviewActionTile), findsNWidgets(3));
         expect(
           find.byKey(
-            const Key('image-search-result-preview-movie-info-skeleton'),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(
-            const Key('image-search-result-preview-movie-cover-skeleton'),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(
-            const Key('image-search-result-preview-actor-skeleton-0'),
+            const Key('image-search-result-preview-movie-info-section'),
           ),
           findsOneWidget,
         );
 
         pendingRequests.completeMovieDetail();
         await tester.pump();
-        expect(
-          find.byKey(const Key('media-preview-action-skeleton-0')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(
-            const Key('image-search-result-preview-movie-info-skeleton'),
-          ),
-          findsOneWidget,
-        );
+        expect(find.byType(MediaPreviewActionTile), findsNWidgets(3));
         expect(find.text('相似图片'), findsNothing);
 
         pendingRequests.completeMediaPoints();
         await tester.pumpAndSettle();
         expect(
-          find.byKey(const Key('media-preview-action-skeleton-0')),
+          find.byWidgetPredicate(
+            (widget) => widget is AppSkeletonizer && widget.enabled,
+          ),
           findsNothing,
         );
         expect(
           find.byKey(
-            const Key('image-search-result-preview-movie-info-skeleton'),
+            const Key('image-search-result-preview-movie-info-section'),
           ),
-          findsNothing,
+          findsOneWidget,
         );
         expect(find.text('相似图片'), findsOneWidget);
         expect(find.text('影片详情'), findsNothing);

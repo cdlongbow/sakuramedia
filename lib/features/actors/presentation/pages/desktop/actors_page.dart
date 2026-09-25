@@ -162,7 +162,6 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                           items: isInitialLoading
                               ? actorListItemPlaceholders(count: 24)
                               : items,
-                          isLoading: false,
                           errorMessage: initialErrorMessage,
                           onActorTap: (actor) => context.pushDesktopActorDetail(
                             actorId: actor.id,

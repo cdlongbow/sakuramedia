@@ -7,10 +7,10 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -18,6 +18,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -306,10 +307,28 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
       itemSpacing: context.appSpacing.md,
       initialErrorMessage: '失效媒体加载失败，请稍后重试',
       emptyMessage: '当前没有失效媒体',
-      skeletonBuilder: (context) => MediaListItemCardSkeletonList(
-        mobile: mobile,
-        itemSpacing: context.appSpacing.md,
-      ),
+      // loading 用占位媒体渲染真实行，由 [AppSkeletonizer] 灰化。
+      skeletonBuilder: (context) {
+        final placeholders = invalidMediaPlaceholders();
+        return AppSkeletonizer(
+          enabled: true,
+          child: Column(
+            children: [
+              for (var index = 0; index < placeholders.length; index++) ...[
+                if (index > 0) SizedBox(height: context.appSpacing.md),
+                _InvalidMediaRowConsumer(
+                  item: placeholders[index],
+                  mobile: mobile,
+                  selectionMode: false,
+                  selected: false,
+                  onToggleSelect: () {},
+                  onEnterSelection: () {},
+                ),
+              ],
+            ],
+          ),
+        );
+      },
       initialRetryKey: const Key('invalid-media-initial-retry-button'),
       onReload: () =>
           unawaited(ref.read(invalidMediaProvider.notifier).reload()),

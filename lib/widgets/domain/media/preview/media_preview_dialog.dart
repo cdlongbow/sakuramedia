@@ -10,11 +10,12 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_avatar.dart';
@@ -501,8 +502,12 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   }
 
   Widget _buildMovieInfoSection(BuildContext context) {
-    if (_isLoadingMovieDetail) {
-      return const _MediaPreviewMovieInfoSkeleton();
+    if (_isLoadingMovieDetail && _movieDetail == null) {
+      // loading 用占位影片渲染真实信息区，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: _buildMovieInfo(context, movieDetailPlaceholder()),
+      );
     }
     if (_movieDetailErrorMessage != null) {
       return AppEmptyState(
@@ -515,6 +520,10 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     if (movie == null) {
       return const SizedBox.shrink();
     }
+    return _buildMovieInfo(context, movie);
+  }
+
+  Widget _buildMovieInfo(BuildContext context, MovieDetailDto movie) {
     final spacing = context.appSpacing;
     return Column(
       key: const Key('image-search-result-preview-movie-info-section'),
@@ -708,95 +717,6 @@ class _MediaPreviewSectionDivider extends StatelessWidget {
       height: 1,
       thickness: 1,
       color: context.appColors.borderSubtle.withValues(alpha: 0.72),
-    );
-  }
-}
-
-class _MediaPreviewMovieInfoSkeleton extends StatelessWidget {
-  const _MediaPreviewMovieInfoSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final tokens = context.appComponentTokens;
-    final actorItemHeight =
-        tokens.movieDetailActorAvatarSize +
-        spacing.xs +
-        spacing.lg +
-        spacing.sm;
-
-    return Column(
-      key: const Key('image-search-result-preview-movie-info-skeleton'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _MediaPreviewSectionDivider(
-          key: const Key('image-search-result-preview-movie-info-divider-top'),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: spacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              AppSkeletonBlock(
-                key: const Key(
-                  'image-search-result-preview-movie-cover-skeleton',
-                ),
-                width: 88,
-                height: 80,
-                radius: context.appRadius.mdBorder,
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: SizedBox(
-                  height: actorItemHeight,
-                  child: ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(
-                      context,
-                    ).copyWith(scrollbars: false),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (var index = 0; index < 3; index++) ...[
-                            if (index > 0) SizedBox(width: spacing.sm),
-                            SizedBox(
-                              width: tokens.movieDetailActorCardWidth,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AppSkeletonBlock(
-                                    key: Key(
-                                      'image-search-result-preview-actor-skeleton-$index',
-                                    ),
-                                    width: tokens.movieDetailActorAvatarSize,
-                                    height: tokens.movieDetailActorAvatarSize,
-                                    radius: context.appRadius.pillBorder,
-                                  ),
-                                  SizedBox(height: spacing.sm),
-                                  AppSkeletonBlock(
-                                    width:
-                                        tokens.movieDetailActorCardWidth * 0.65,
-                                    height: context.appTextScale.s12,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        _MediaPreviewSectionDivider(
-          key: const Key(
-            'image-search-result-preview-movie-info-divider-bottom',
-          ),
-        ),
-      ],
     );
   }
 }

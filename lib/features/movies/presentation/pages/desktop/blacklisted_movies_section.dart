@@ -148,7 +148,6 @@ class _BlacklistedMoviesSectionState
         SizedBox(height: spacing.lg),
         MovieSummaryGrid(
           items: paged.items,
-          isLoading: false,
           emptyMessage: '还没有屏蔽任何影片',
           onMovieTap: (movie) => context.pushDesktopMovieDetail(
             movieNumber: movie.movieNumber,

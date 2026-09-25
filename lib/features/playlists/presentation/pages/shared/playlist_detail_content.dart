@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_fil
 import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
@@ -369,7 +370,12 @@ class _PlaylistDetailLoadingContent extends StatelessWidget {
       child: CustomScrollView(
         key: const Key('playlist-detail-loading'),
         slivers: [
-          const SliverToBoxAdapter(child: PlaylistBannerCardSkeleton()),
+          SliverToBoxAdapter(
+            child: PlaylistBannerCard(
+              title: BoneMock.words(2),
+              coverImageUrl: null,
+            ),
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.only(bottom: spacing.sm),

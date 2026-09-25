@@ -511,7 +511,6 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                           items: moviesAsync.isLoading && movies == null
                               ? movieListItemPlaceholders(count: 24)
                               : movies?.paged.items ?? const [],
-                          isLoading: false,
                           errorMessage: moviesAsync.hasError && movies == null
                               ? _scope.initialLoadErrorText
                               : null,

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
 enum MediaPreviewActionGridLayout { wrap, fixedColumns, horizontalScroll }
 
@@ -49,7 +50,11 @@ class MediaPreviewActionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolvedSpacing = spacing ?? context.appSpacing.md;
     if (isLoading) {
-      return _buildLoadingState(context, resolvedSpacing);
+      // loading 用占位动作渲染真实动作格，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: _buildLayout(context, resolvedSpacing, _placeholderActions()),
+      );
     }
 
     final visibleActions = actions
@@ -59,6 +64,25 @@ class MediaPreviewActionGrid extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    return _buildLayout(context, resolvedSpacing, visibleActions);
+  }
+
+  List<MediaPreviewActionItem> _placeholderActions() {
+    return List<MediaPreviewActionItem>.generate(
+      loadingItemCount,
+      (index) => MediaPreviewActionItem(
+        label: BoneMock.words(1),
+        icon: Icons.photo_library_outlined,
+      ),
+      growable: false,
+    );
+  }
+
+  Widget _buildLayout(
+    BuildContext context,
+    double resolvedSpacing,
+    List<MediaPreviewActionItem> items,
+  ) {
     return switch (layout) {
       MediaPreviewActionGridLayout.wrap => Wrap(
         key: gridKey,
@@ -67,7 +91,7 @@ class MediaPreviewActionGrid extends StatelessWidget {
         spacing: resolvedSpacing,
         runSpacing: resolvedSpacing,
         children: [
-          for (final action in visibleActions)
+          for (final action in items)
             SizedBox(
               width: tileWidth,
               child: MediaPreviewActionTile(item: action),
@@ -78,7 +102,7 @@ class MediaPreviewActionGrid extends StatelessWidget {
         key: gridKey,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: visibleActions.length,
+        itemCount: items.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
           crossAxisSpacing: resolvedSpacing,
@@ -86,7 +110,7 @@ class MediaPreviewActionGrid extends StatelessWidget {
           childAspectRatio: 1.5,
         ),
         itemBuilder: (context, index) =>
-            MediaPreviewActionTile(item: visibleActions[index]),
+            MediaPreviewActionTile(item: items[index]),
       ),
       MediaPreviewActionGridLayout.horizontalScroll => ScrollConfiguration(
         key: gridKey,
@@ -95,11 +119,11 @@ class MediaPreviewActionGrid extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              for (var index = 0; index < visibleActions.length; index++) ...[
+              for (var index = 0; index < items.length; index++) ...[
                 if (index > 0) SizedBox(width: resolvedSpacing),
                 ConstrainedBox(
                   constraints: BoxConstraints(minWidth: tileWidth),
-                  child: MediaPreviewActionTile(item: visibleActions[index]),
+                  child: MediaPreviewActionTile(item: items[index]),
                 ),
               ],
             ],
@@ -107,87 +131,6 @@ class MediaPreviewActionGrid extends StatelessWidget {
         ),
       ),
     };
-  }
-
-  Widget _buildLoadingState(BuildContext context, double resolvedSpacing) {
-    if (loadingItemCount == 0) {
-      return const SizedBox.shrink();
-    }
-
-    final skeletons = List<Widget>.generate(
-      loadingItemCount,
-      (index) => _MediaPreviewActionSkeleton(index: index),
-      growable: false,
-    );
-
-    return switch (layout) {
-      MediaPreviewActionGridLayout.wrap => Wrap(
-        key: gridKey,
-        alignment: WrapAlignment.start,
-        runAlignment: WrapAlignment.start,
-        spacing: resolvedSpacing,
-        runSpacing: resolvedSpacing,
-        children: [
-          for (final skeleton in skeletons)
-            SizedBox(width: tileWidth, child: skeleton),
-        ],
-      ),
-      MediaPreviewActionGridLayout.fixedColumns => GridView.builder(
-        key: gridKey,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: skeletons.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: resolvedSpacing,
-          mainAxisSpacing: resolvedSpacing,
-          childAspectRatio: 1.5,
-        ),
-        itemBuilder: (context, index) => skeletons[index],
-      ),
-      MediaPreviewActionGridLayout.horizontalScroll => ScrollConfiguration(
-        key: gridKey,
-        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (var index = 0; index < skeletons.length; index++) ...[
-                if (index > 0) SizedBox(width: resolvedSpacing),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: tileWidth),
-                  child: skeletons[index],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    };
-  }
-}
-
-class _MediaPreviewActionSkeleton extends StatelessWidget {
-  const _MediaPreviewActionSkeleton({required this.index});
-
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Column(
-      key: Key('media-preview-action-skeleton-$index'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AppSkeletonBlock(
-          width: 40,
-          height: 40,
-          radius: context.appRadius.pillBorder,
-        ),
-        SizedBox(height: spacing.xs),
-        const AppSkeletonBlock(width: 40, height: 12),
-      ],
-    );
   }
 }
 

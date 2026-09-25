@@ -258,9 +258,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
         items: isLoading
             ? movieListItemPlaceholders(count: placeholderCount)
             : paged.items.map(movieOf).toList(growable: false),
-        isLoading: false,
         emptyMessage: emptyMessage,
-        placeholderCount: placeholderCount,
         secondaryLabelForMovie: secondaryLabels.isEmpty
             ? null
             : (movie) => secondaryLabels[movie.movieNumber],
@@ -401,7 +399,6 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
         enabled: true,
         child: MomentSliver(
           items: momentListPlaceholders(count: pageSize),
-          isLoading: false,
           onItemTap: _ignoreMomentTap,
         ),
       );

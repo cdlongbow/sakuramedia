@@ -13,10 +13,12 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
+import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_merge_playback_candidates.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_clip_section_mixin.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_behavior_mixin.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
@@ -30,6 +32,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -104,7 +107,29 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       child: Builder(
         builder: (context) {
           if (detailState.isLoading) {
-            return const MovieDetailLoadingSkeleton();
+            // loading 用占位影片渲染真实详情布局，由 [AppSkeletonizer] 灰化。
+            return AppSkeletonizer(
+              enabled: true,
+              child: MovieDetailPageContent(
+                movie: movieDetailPlaceholder(),
+                selectedPreviewKey: '',
+                selectedPreviewUrl: null,
+                isCollection: false,
+                isSubscribed: false,
+                isCollectionUpdating: false,
+                isSubscriptionUpdating: false,
+                selectedMediaId: null,
+                statItems: const [],
+                similarMovies: movieListItemPlaceholders(count: 4),
+                isSimilarMoviesLoading: false,
+                onInspectorTap: () {},
+                onPlaylistTap: () {},
+                onCollectionToggle: null,
+                onMediaSelect: (_) {},
+                clips: clipPlaceholders(count: 4),
+                subtitleItems: movieSubtitlePlaceholders(),
+              ),
+            );
           }
 
           if (detailState.errorMessage != null || detailState.movie == null) {

@@ -8,7 +8,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 /// 布局模式：等宽 tile(固定 aspect ratio) vs 瀑布流(逐 tile aspect)。
 enum AppAdaptiveCardGridLayout { fixedAspect, masonry }
 
-/// 自适应四态卡片网格：**骨架 → 错误 → 空态 → 内容**。
+/// 自适应三态卡片网格：**错误 → 空态 → 内容**。
 ///
 /// 消除 movies / actors / rankings / videos 四份网格的 copy-paste:
 /// - 列数按 `((width + spacing) / (targetWidth + spacing)).floor()` 计算,
@@ -16,7 +16,7 @@ enum AppAdaptiveCardGridLayout { fixedAspect, masonry }
 /// - `layout: fixedAspect` 走 [GridView] + [childAspectRatio]；
 /// - `layout: masonry` 走 [MasonryGridView] + [tileAspect]（每 tile 自算高度）。
 ///
-/// 骨架卡由 caller 提供 [skeletonBuilder]（各域视觉差异较大,不统一）。
+/// 首屏加载由 caller 用占位数据渲染真实卡片并外包 `AppSkeletonizer`，
 /// 内容 tile 走 [itemBuilder]，泛型 [T] 由 caller 决定。
 ///
 /// 本组件只适合固定少量、嵌入其它滚动区的预览内容。累计分页页面必须使用
@@ -26,12 +26,9 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
     super.key,
     this.gridKey,
     required this.items,
-    required this.isLoading,
     required this.itemBuilder,
-    required this.skeletonBuilder,
     this.errorMessage,
     this.emptyMessage = '当前没有可展示的数据。',
-    this.placeholderCount = 8,
     this.targetColumnWidth,
     this.minColumns = 2,
     this.maxColumns = 6,
@@ -50,13 +47,10 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
   final Key? gridKey;
 
   final List<T> items;
-  final bool isLoading;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
-  final Widget Function(BuildContext context, int index) skeletonBuilder;
 
   final String? errorMessage;
   final String emptyMessage;
-  final int placeholderCount;
 
   /// 目标列宽,列公式的 target。null → `context.appComponentTokens.movieCardTargetWidth`。
   final double? targetColumnWidth;
@@ -82,14 +76,6 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return _buildGrid(
-        context: context,
-        itemCount: placeholderCount,
-        tileBuilder: (ctx, index) => skeletonBuilder(ctx, index),
-      );
-    }
-
     if (errorMessage != null) {
       return AppEmptyState(message: errorMessage!);
     }
@@ -167,19 +153,16 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
 /// [AppAdaptiveCardGrid] 的 Sliver 版本，供累计分页页面直接放入
 /// [CustomScrollView.slivers]。
 ///
-/// 四态与非 Sliver 版本一致，但内容通过 [SliverChildBuilderDelegate] 按视口构建；
+/// 三态与非 Sliver 版本一致，但内容通过 [SliverChildBuilderDelegate] 按视口构建；
 /// 固定比例使用 [SliverGrid]，瀑布流使用 [SliverMasonryGrid]。
 class AppAdaptiveCardSliver<T> extends StatelessWidget {
   const AppAdaptiveCardSliver({
     super.key,
     this.gridKey,
     required this.items,
-    required this.isLoading,
     required this.itemBuilder,
-    required this.skeletonBuilder,
     this.errorMessage,
     this.emptyMessage = '当前没有可展示的数据。',
-    this.placeholderCount = 8,
     this.targetColumnWidth,
     this.minColumns = 2,
     this.maxColumns = 6,
@@ -194,12 +177,9 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
 
   final Key? gridKey;
   final List<T> items;
-  final bool isLoading;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
-  final Widget Function(BuildContext context, int index) skeletonBuilder;
   final String? errorMessage;
   final String emptyMessage;
-  final int placeholderCount;
   final double? targetColumnWidth;
   final int minColumns;
   final int maxColumns;
@@ -213,11 +193,11 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
     if (errorMessage != null) {
       return SliverToBoxAdapter(child: AppEmptyState(message: errorMessage!));
     }
-    if (!isLoading && items.isEmpty) {
+    if (items.isEmpty) {
       return SliverToBoxAdapter(child: AppEmptyState(message: emptyMessage));
     }
 
-    final itemCount = isLoading ? placeholderCount : items.length;
+    final itemCount = items.length;
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final spacing = context.appSpacing.md;
@@ -232,7 +212,6 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
           maxColumns: maxColumns,
         );
         Widget buildTile(BuildContext context, int index) {
-          if (isLoading) return skeletonBuilder(context, index);
           return itemBuilder(context, items[index], index);
         }
 
@@ -262,7 +241,7 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
               childCount: itemCount,
               itemBuilder:
                   (context, index) => AspectRatio(
-                    aspectRatio: isLoading ? 1 : tileAspect!(index),
+                    aspectRatio: tileAspect!(index),
                     child: buildTile(context, index),
                   ),
             );

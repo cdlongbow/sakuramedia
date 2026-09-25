@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/actors/data/dto/actor_detail_dto.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -16,4 +17,9 @@ List<ActorListItemDto> actorListItemPlaceholders({int count = 8}) {
     ),
     growable: false,
   );
+}
+
+/// 女优详情加载态占位：详情头 + 影片网格同形渲染，由 `AppSkeletonizer` 灰化。
+ActorDetailDto actorDetailPlaceholder() {
+  return ActorDetailDto(summary: actorListItemPlaceholders(count: 1).single);
 }

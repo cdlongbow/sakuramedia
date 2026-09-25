@@ -8,11 +8,11 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
+import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/media_browse_filter_toolbar.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
-import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card_skeleton.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -20,6 +20,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -487,6 +488,38 @@ class _MediaListBodySliver extends ConsumerWidget {
       ),
     );
 
+    Widget buildRow(BuildContext context, MediaListItemDto item) => mobile
+        ? _MediaMobileRowConsumer(
+            keyPrefix: keyPrefix,
+            item: item,
+            selectionMode: selectionMode,
+            onEnterSelection: onEnterSelection,
+            onOpenMovieDetail: onOpenMovieDetail,
+            isDeleting: isDeleting,
+            isTransferring: isTransferring,
+            isResettingThumbnails: isResettingThumbnails,
+            onDeleteItem: onDeleteItem,
+            deletingItemId: deletingItemId,
+            onTransferItem: onTransferItem,
+            transferringItemId: transferringItemId,
+            onRetryThumbnails: onRetryThumbnails,
+            retryingThumbnailMediaId: retryingThumbnailMediaId,
+          )
+        : _MediaRowConsumer(
+            keyPrefix: keyPrefix,
+            item: item,
+            onOpenMovieDetail: onOpenMovieDetail,
+            isDeleting: isDeleting,
+            isTransferring: isTransferring,
+            isResettingThumbnails: isResettingThumbnails,
+            onDeleteItem: onDeleteItem,
+            deletingItemId: deletingItemId,
+            onTransferItem: onTransferItem,
+            transferringItemId: transferringItemId,
+            onRetryThumbnails: onRetryThumbnails,
+            retryingThumbnailMediaId: retryingThumbnailMediaId,
+          );
+
     return SliverPagedAsyncSection<
       PagedListState<MediaListItemDto>,
       MediaListItemDto
@@ -496,45 +529,27 @@ class _MediaListBodySliver extends ConsumerWidget {
       itemSpacing: context.appSpacing.sm,
       initialErrorMessage: '媒体列表加载失败，请稍后重试',
       emptyMessage: '当前筛选下没有媒体记录。调整筛选条件或稍后再试。',
-      skeletonBuilder: (context) => MediaListItemCardSkeletonList(
-        mobile: mobile,
-      ),
+      // loading 用占位媒体渲染真实行，由 [AppSkeletonizer] 灰化。
+      skeletonBuilder: (context) {
+        final placeholders = mediaListItemPlaceholders();
+        return AppSkeletonizer(
+          enabled: true,
+          child: Column(
+            children: [
+              for (var index = 0; index < placeholders.length; index++) ...[
+                if (index > 0) SizedBox(height: context.appSpacing.sm),
+                buildRow(context, placeholders[index]),
+              ],
+            ],
+          ),
+        );
+      },
       initialRetryKey: Key('$keyPrefix-initial-retry-button'),
       onReload: () =>
           unawaited(ref.read(mediaBrowseProvider.notifier).reload()),
       onLoadMore: () =>
           unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
-      itemBuilder: (context, item, _) => mobile
-          ? _MediaMobileRowConsumer(
-              keyPrefix: keyPrefix,
-              item: item,
-              selectionMode: selectionMode,
-              onEnterSelection: onEnterSelection,
-              onOpenMovieDetail: onOpenMovieDetail,
-              isDeleting: isDeleting,
-              isTransferring: isTransferring,
-              isResettingThumbnails: isResettingThumbnails,
-              onDeleteItem: onDeleteItem,
-              deletingItemId: deletingItemId,
-              onTransferItem: onTransferItem,
-              transferringItemId: transferringItemId,
-              onRetryThumbnails: onRetryThumbnails,
-              retryingThumbnailMediaId: retryingThumbnailMediaId,
-            )
-          : _MediaRowConsumer(
-              keyPrefix: keyPrefix,
-              item: item,
-              onOpenMovieDetail: onOpenMovieDetail,
-              isDeleting: isDeleting,
-              isTransferring: isTransferring,
-              isResettingThumbnails: isResettingThumbnails,
-              onDeleteItem: onDeleteItem,
-              deletingItemId: deletingItemId,
-              onTransferItem: onTransferItem,
-              transferringItemId: transferringItemId,
-              onRetryThumbnails: onRetryThumbnails,
-              retryingThumbnailMediaId: retryingThumbnailMediaId,
-            ),
+      itemBuilder: (context, item, _) => buildRow(context, item),
     );
   }
 }

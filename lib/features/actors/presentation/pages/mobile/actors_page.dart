@@ -161,7 +161,6 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                         items: isInitialLoading
                             ? actorListItemPlaceholders(count: 24)
                             : items,
-                        isLoading: false,
                         errorMessage: initialErrorMessage,
                         onActorTap: (actor) => MobileActorDetailRouteData(
                           actorId: actor.id,

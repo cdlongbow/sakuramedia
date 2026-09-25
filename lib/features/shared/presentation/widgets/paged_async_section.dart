@@ -3,13 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 
 /// 分页 `AsyncNotifier` 的 Sliver「四态骨架」：
 ///
-/// 1. `asyncState.isLoading && !hasValue` → 首次加载，[skeletonBuilder] 或
-///    [AppSectionSkeleton]
+/// 1. `asyncState.isLoading && !hasValue` → 首次加载，[skeletonBuilder]
 /// 2. `asyncState.hasError && !hasValue`  → [AppEmptyState]（首次失败 + 重试）
 /// 3. `paged.items.isEmpty`               → [AppEmptyState]（空态）
 /// 4. 有数据                              → 逐条 [itemBuilder] + 底部
@@ -52,8 +50,7 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     required this.onReload,
     required this.onLoadMore,
     this.initialRetryKey,
-    this.skeletonLineCount = 6,
-    this.skeletonBuilder,
+    required this.skeletonBuilder,
     this.footerTopSpacing,
     this.emptyBuilder,
   });
@@ -67,13 +64,10 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   final VoidCallback onReload;
   final VoidCallback onLoadMore;
   final Key? initialRetryKey;
-  final int skeletonLineCount;
 
-  /// 首次加载骨架；不传走 [AppSectionSkeleton] + [skeletonLineCount]。
-  ///
-  /// 列表条目是左封面卡等结构明显的卡片时，传入与真实卡同高同形的骨架
-  /// （如 `AppLeftCoverCardSkeletonList`），避免加载完成时列表整片跳变。
-  final WidgetBuilder? skeletonBuilder;
+  /// 首次加载骨架：传「占位数据 + 真实卡片」并用 `AppSkeletonizer` 灰化，
+  /// 保证与数据到位后的列表同形。
+  final WidgetBuilder skeletonBuilder;
 
   final double? footerTopSpacing;
 
@@ -87,12 +81,7 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (asyncState.isLoading && !asyncState.hasValue) {
-      final builder = skeletonBuilder;
-      return SliverToBoxAdapter(
-        child: builder != null
-            ? builder(context)
-            : AppSectionSkeleton(lineCount: skeletonLineCount),
-      );
+      return SliverToBoxAdapter(child: skeletonBuilder(context));
     }
     if (asyncState.hasError && !asyncState.hasValue) {
       return SliverToBoxAdapter(

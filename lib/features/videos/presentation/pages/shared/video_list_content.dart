@@ -29,6 +29,7 @@ class VideoListContent extends StatelessWidget {
     required this.onLoadMore,
     required this.onRetryFilter,
     required this.onVideoTap,
+    this.onVideoPlay,
     this.selectionMode = false,
     this.selectedIds = const <int>{},
     this.onVideoToggleSelect,
@@ -49,6 +50,9 @@ class VideoListContent extends StatelessWidget {
   final VoidCallback onLoadMore;
   final VoidCallback onRetryFilter;
   final ValueChanged<VideoItemListItemDto> onVideoTap;
+
+  /// 悬停面板播放键的回调；为 `null` 时卡片不显示播放键。
+  final ValueChanged<VideoItemListItemDto>? onVideoPlay;
 
   /// 选择模式：网格切换为多选交互。
   final bool selectionMode;
@@ -133,9 +137,9 @@ class VideoListContent extends StatelessWidget {
               items: isInitialLoading
                   ? videoSummaryPlaceholders(count: 18)
                   : paged.items,
-              isLoading: false,
               errorMessage: initialErrorMessage,
               onVideoTap: onVideoTap,
+              onVideoPlay: onVideoPlay,
               selectionMode: selectionMode,
               selectedIds: selectedIds,
               onVideoToggleSelect: onVideoToggleSelect,

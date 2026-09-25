@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
 class PlaylistBannerCard extends StatelessWidget {
@@ -111,27 +110,3 @@ class PlaylistBannerCard extends StatelessWidget {
 }
 
 /// 播放列表横幅骨架，保持真实横幅的高度、圆角和阴影，供列表与详情首屏共用。
-class PlaylistBannerCardSkeleton extends StatelessWidget {
-  const PlaylistBannerCardSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Container(
-      height: context.appComponentTokens.playlistBannerHeight,
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child: Center(
-        child: AppSkeletonBlock(
-          width: 160,
-          height: 20,
-          radius: context.appRadius.smBorder,
-        ),
-      ),
-    );
-  }
-}

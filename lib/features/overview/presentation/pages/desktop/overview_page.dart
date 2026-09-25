@@ -239,7 +239,6 @@ class DesktopOverviewPage extends ConsumerWidget {
         items: isLoading
             ? movieListItemPlaceholders(count: 12)
             : summary?.paged.items ?? const [],
-        isLoading: false,
         errorMessage: errorMessage,
         onMovieTap: (movie) => context.pushDesktopMovieDetail(
           movieNumber: movie.movieNumber,
@@ -257,7 +256,6 @@ class DesktopOverviewPage extends ConsumerWidget {
         isMovieSubscriptionUpdating: (movie) =>
             summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
         emptyMessage: emptyMessage,
-        placeholderCount: 12,
         maxRows: _previewMaxRows,
       ),
     );

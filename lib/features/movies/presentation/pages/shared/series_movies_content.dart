@@ -337,7 +337,6 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         items: isInitialLoading
             ? movieListItemPlaceholders(count: 24)
             : summary?.paged.items ?? const [],
-        isLoading: false,
         onMovieTap: (movie) => widget.onMovieTap(context, movie.movieNumber),
         onMovieMenuRequest: (movie, globalPosition) {
           unawaited(

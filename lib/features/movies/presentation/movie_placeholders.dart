@@ -1,3 +1,4 @@
+import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
@@ -23,6 +24,38 @@ List<MovieListItemDto> movieListItemPlaceholders({int count = 8}) {
       javdbId: null,
     ),
     growable: false,
+  );
+}
+
+/// 影片详情页加载态占位：真实 DTO + [BoneMock] 文案，封面 / 图集 / 演职员
+/// 一律为空，不触发网络请求；供详情页渲染真实布局后由 `AppSkeletonizer` 灰化。
+MovieDetailDto movieDetailPlaceholder() {
+  return MovieDetailDto(
+    javdbId: null,
+    movieNumber: 'ABC-001',
+    title: BoneMock.words(3),
+    seriesName: '',
+    makerName: '',
+    directorName: '',
+    coverImage: null,
+    releaseDate: null,
+    durationMinutes: 120,
+    score: 4.5,
+    heat: 0,
+    watchedCount: 0,
+    wantWatchCount: 0,
+    commentCount: 0,
+    scoreNumber: 10,
+    isCollection: false,
+    isSubscribed: false,
+    canPlay: false,
+    summary: BoneMock.paragraph,
+    thinCoverImage: null,
+    plotImages: const <MovieImageDto>[],
+    actors: const <MovieActorDto>[],
+    tags: const <MovieTagDto>[],
+    mediaItems: const <MovieMediaItemDto>[],
+    playlists: const <MoviePlaylistSummaryDto>[],
   );
 }
 

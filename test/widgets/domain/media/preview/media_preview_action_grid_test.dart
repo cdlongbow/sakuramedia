@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_action_grid.dart';
 
 void main() {
@@ -179,16 +180,12 @@ void main() {
     );
 
     expect(find.text('影片详情'), findsNothing);
+    // 加载态渲染 loadingItemCount 个真实动作格（占位文案），由 AppSkeletonizer 灰化。
+    expect(find.byType(MediaPreviewActionTile), findsNWidgets(3));
     expect(
-      find.byKey(const Key('media-preview-action-skeleton-0')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('media-preview-action-skeleton-1')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('media-preview-action-skeleton-2')),
+      find.byWidgetPredicate(
+        (widget) => widget is AppSkeletonizer && widget.enabled,
+      ),
       findsOneWidget,
     );
   });

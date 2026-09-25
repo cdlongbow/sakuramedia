@@ -187,7 +187,6 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                       summary.filters.isLoading && summary.paged.items.isEmpty
                       ? rankedMoviePlaceholders(count: 24)
                       : summary.paged.items,
-                  isLoading: false,
                   errorMessage: summary.initialErrorMessage,
                   onMovieTap: (movie) => context.pushMobileMovieDetail(
                     movieNumber: movie.movieNumber,

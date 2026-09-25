@@ -141,7 +141,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             items: isLoading
                 ? movieListItemPlaceholders(count: _previewPageSize)
                 : paged?.items ?? const [],
-            isLoading: false,
             errorMessage: followAsync.hasError && follow == null
                 ? _followScope.initialLoadErrorText
                 : null,
@@ -158,7 +157,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             isMovieSubscriptionUpdating: (movie) =>
                 follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
             emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
-            placeholderCount: _previewPageSize,
             maxRows: 2,
             maxColumns: 10,
           ),
@@ -195,7 +193,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
                 : hotActress.items
                       .map((item) => item.movie)
                       .toList(growable: false),
-            isLoading: false,
             errorMessage: hotActress.errorMessage,
             onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
             onMovieMenuRequest: (movie, globalPosition) =>
@@ -208,7 +205,6 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
             useDefaultSubscriptionActions: true,
             emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
-            placeholderCount: _previewPageSize,
             maxRows: 2,
             maxColumns: 10,
           ),
@@ -254,9 +250,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
         items: isLoading
             ? movieListItemPlaceholders(count: _previewPageSize)
             : daily.items.map((item) => item.movie).toList(growable: false),
-        isLoading: false,
         emptyMessage: '暂无每日推荐，去搜索看看吧',
-        placeholderCount: _previewPageSize,
         maxRows: 2,
         maxColumns: 10,
         onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),

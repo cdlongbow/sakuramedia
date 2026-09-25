@@ -101,7 +101,6 @@ class _DesktopFollowPageState extends ConsumerState<DesktopFollowPage> {
                     items: isInitialLoading
                         ? movieListItemPlaceholders(count: 24)
                         : items,
-                    isLoading: false,
                     errorMessage: initialErrorMessage,
                     onMovieTap: (movie) => context.pushDesktopMovieDetail(
                       movieNumber: movie.movieNumber,

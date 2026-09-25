@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
-import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
@@ -14,7 +12,6 @@ class MovieSummaryGrid extends ConsumerWidget {
   const MovieSummaryGrid({
     super.key,
     required this.items,
-    required this.isLoading,
     this.errorMessage,
     this.onMovieTap,
     this.onMovieMenuRequest,
@@ -23,7 +20,6 @@ class MovieSummaryGrid extends ConsumerWidget {
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
     this.emptyMessage = '当前没有可展示的影片数据。',
-    this.placeholderCount = 8,
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
@@ -32,7 +28,6 @@ class MovieSummaryGrid extends ConsumerWidget {
   });
 
   final List<MovieListItemDto> items;
-  final bool isLoading;
   final String? errorMessage;
   final ValueChanged<MovieListItemDto>? onMovieTap;
   final void Function(MovieListItemDto movie, Offset globalPosition)?
@@ -44,7 +39,6 @@ class MovieSummaryGrid extends ConsumerWidget {
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
   final String emptyMessage;
-  final int placeholderCount;
 
   /// 选择模式开关：向 [MovieSummaryCard] 透传，卡片进入多选态。
   final bool selectionMode;
@@ -68,17 +62,10 @@ class MovieSummaryGrid extends ConsumerWidget {
     return AppAdaptiveCardGrid<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
-      isLoading: isLoading,
       errorMessage: errorMessage,
       emptyMessage: emptyMessage,
-      placeholderCount: placeholderCount,
       maxRows: maxRows,
       maxColumns: maxColumns,
-      skeletonBuilder: (context, index) => AppCoverCardSkeleton(
-        key: Key('movie-summary-card-skeleton-$index'),
-        posterKey: Key('movie-summary-card-skeleton-poster-$index'),
-        aspectRatio: context.appComponentTokens.movieCardAspectRatio,
-      ),
       itemBuilder: (context, movie, index) => MovieSummaryCard(
         movie: movie,
         onTap: onMovieTap == null ? null : () => onMovieTap!(movie),
@@ -111,7 +98,6 @@ class MovieSummarySliver extends ConsumerWidget {
   const MovieSummarySliver({
     super.key,
     required this.items,
-    required this.isLoading,
     this.errorMessage,
     this.onMovieTap,
     this.onMovieMenuRequest,
@@ -120,14 +106,12 @@ class MovieSummarySliver extends ConsumerWidget {
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
     this.emptyMessage = '当前没有可展示的影片数据。',
-    this.placeholderCount = 8,
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
   });
 
   final List<MovieListItemDto> items;
-  final bool isLoading;
   final String? errorMessage;
   final ValueChanged<MovieListItemDto>? onMovieTap;
   final void Function(MovieListItemDto movie, Offset globalPosition)?
@@ -139,7 +123,6 @@ class MovieSummarySliver extends ConsumerWidget {
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
   final String emptyMessage;
-  final int placeholderCount;
 
   final bool selectionMode;
   final bool Function(MovieListItemDto movie)? isMovieSelected;
@@ -156,15 +139,8 @@ class MovieSummarySliver extends ConsumerWidget {
     return AppAdaptiveCardSliver<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
-      isLoading: isLoading,
       errorMessage: errorMessage,
       emptyMessage: emptyMessage,
-      placeholderCount: placeholderCount,
-      skeletonBuilder: (context, index) => AppCoverCardSkeleton(
-        key: Key('movie-summary-card-skeleton-$index'),
-        posterKey: Key('movie-summary-card-skeleton-poster-$index'),
-        aspectRatio: context.appComponentTokens.movieCardAspectRatio,
-      ),
       itemBuilder: (context, movie, index) => MovieSummaryCard(
         movie: movie,
         onTap: onMovieTap == null ? null : () => onMovieTap!(movie),

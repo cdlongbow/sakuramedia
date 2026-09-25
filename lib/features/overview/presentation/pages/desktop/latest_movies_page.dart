@@ -110,7 +110,6 @@ class _DesktopLatestMoviesPageState
                     enabled: isLoading,
                     child: MovieSummarySliver(
                       items: items,
-                      isLoading: false,
                       errorMessage: moviesAsync.hasError && summary == null
                           ? _scope.initialLoadErrorText
                           : null,

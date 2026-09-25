@@ -307,9 +307,7 @@ class _MovieSummaryListContentState
                       items: isInitialLoading
                           ? movieListItemPlaceholders(count: 24)
                           : items,
-                      isLoading: false,
                       errorMessage: initialErrorMessage,
-                      placeholderCount: 24,
                       onMovieTap: (movie) =>
                           widget.onMovieTap(context, movie.movieNumber),
                       onMovieMenuRequest: (movie, globalPosition) {

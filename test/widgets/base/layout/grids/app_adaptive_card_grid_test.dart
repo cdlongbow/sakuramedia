@@ -25,12 +25,10 @@ void main() {
                 child: AppAdaptiveCardGrid<int>(
                   gridKey: const Key('single-row-adaptive-grid'),
                   items: List<int>.generate(8, (index) => index),
-                  isLoading: false,
                   targetColumnWidth: 280,
                   maxColumns: 4,
                   maxRows: 2,
                   childAspectRatio: 2,
-                  skeletonBuilder: (_, __) => const SizedBox.shrink(),
                   itemBuilder: (_, item, __) =>
                       SizedBox(key: Key('single-row-adaptive-grid-item-$item')),
                 ),
@@ -84,11 +82,9 @@ void main() {
               AppAdaptiveCardSliver<int>(
                 gridKey: const Key('adaptive-card-sliver'),
                 items: items,
-                isLoading: false,
                 minColumns: 4,
                 maxColumns: 4,
                 childAspectRatio: 1,
-                skeletonBuilder: (context, index) => const SizedBox.shrink(),
                 itemBuilder: (context, item, index) => SizedBox(
                   key: Key('adaptive-grid-item-$item'),
                   child: Text('$item'),

@@ -1,6 +1,5 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/staggered_layout.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_card.dart';
@@ -15,38 +14,34 @@ class VideoSummarySliver extends StatelessWidget {
   const VideoSummarySliver({
     super.key,
     required this.items,
-    required this.isLoading,
     this.errorMessage,
     this.onVideoTap,
+    this.onVideoPlay,
     this.selectionMode = false,
     this.selectedIds = const <int>{},
     this.onVideoToggleSelect,
     this.emptyMessage = '当前没有可展示的视频数据。',
-    this.placeholderCount = 8,
   });
 
   final List<VideoItemListItemDto> items;
-  final bool isLoading;
   final String? errorMessage;
   final ValueChanged<VideoItemListItemDto>? onVideoTap;
+
+  /// 悬停面板播放键的回调；为 `null` 时卡片不显示播放键。
+  final ValueChanged<VideoItemListItemDto>? onVideoPlay;
+
   final bool selectionMode;
   final Set<int> selectedIds;
   final ValueChanged<VideoItemListItemDto>? onVideoToggleSelect;
   final String emptyMessage;
-  final int placeholderCount;
 
   @override
   Widget build(BuildContext context) {
     return AppAdaptiveCardSliver<VideoItemListItemDto>(
-      gridKey:
-          isLoading
-              ? const Key('video-summary-grid-skeleton')
-              : const Key('video-summary-grid'),
+      gridKey: const Key('video-summary-grid'),
       items: items,
-      isLoading: isLoading,
       errorMessage: errorMessage,
       emptyMessage: emptyMessage,
-      placeholderCount: placeholderCount,
       layout: AppAdaptiveCardGridLayout.masonry,
       tileAspect:
           (index) =>
@@ -56,14 +51,11 @@ class VideoSummarySliver extends StatelessWidget {
                     items[index].coverHeight,
                   )
                   : kStaggeredFallbackAspect,
-      skeletonBuilder:
-          (context, index) => AppCoverCardSkeleton(
-            key: Key('video-summary-card-skeleton-$index'),
-          ),
       itemBuilder:
           (context, video, index) => VideoSummaryCard(
             video: video,
             onTap: onVideoTap == null ? null : () => onVideoTap!(video),
+            onPlay: onVideoPlay == null ? null : () => onVideoPlay!(video),
             selectionMode: selectionMode,
             isSelected: selectedIds.contains(video.id),
             onSelectedChanged:

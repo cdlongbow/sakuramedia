@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/actors/presentation/providers/actor_mutatio
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -87,7 +88,7 @@ void main() {
             subscriptionStatus: ActorSubscriptionStatus.unsubscribed,
             gender: ActorGender.female,
             sortField: ActorSortField.name,
-            sortDirection: ActorSortDirection.asc,
+            sortDirection: SortDirection.asc,
           ),
         );
 

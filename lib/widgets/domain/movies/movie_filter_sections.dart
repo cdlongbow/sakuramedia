@@ -98,11 +98,14 @@ class MovieFilterSectionGroup extends StatelessWidget {
           ),
         ],
         SizedBox(height: context.appSpacing.lg),
-        MovieSortSection(
-          filterState: filterState,
-          onSortFieldChanged: (value) =>
+        FilterSortSection<MovieSortField>(
+          fields: MovieSortField.values,
+          selectedField: filterState.sortField,
+          fieldLabelBuilder: (value) => value.label,
+          onFieldChanged: (value) =>
               onChanged(filterState.copyWith(sortField: value)),
-          onSortDirectionChanged: (value) =>
+          selectedDirection: filterState.sortDirection,
+          onDirectionChanged: (value) =>
               onChanged(filterState.copyWith(sortDirection: value)),
         ),
       ],
@@ -125,12 +128,13 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
   final String title;
   final bool enabled;
   final List<T> options;
-  final T selectedValue;
+
+  /// 可为空：`null` 表示「全选 / 默认」没有任何选项被选中（如榜单周期未选）。
+  final T? selectedValue;
   final String Function(T value) labelBuilder;
   final ValueChanged<T> onSelected;
 
-  /// 给每个选项 chip 生成稳定 Key（测试锚点）。语义对齐
-  /// `RankingFilterChoiceSection.optionKeyBuilder`；不传则不挂 Key。
+  /// 给每个选项 chip 生成稳定 Key（测试锚点）。不传则不挂 Key。
   final Key Function(T value)? optionKeyBuilder;
 
   @override
@@ -547,17 +551,24 @@ class _MovieYearChoice {
   final String label;
 }
 
-class MovieSortSection extends StatelessWidget {
-  const MovieSortSection({
+/// 排序方式分节：字段 chips + 升降序 chips，影片 / 女优等列表共用。
+class FilterSortSection<F> extends StatelessWidget {
+  const FilterSortSection({
     super.key,
-    required this.filterState,
-    required this.onSortFieldChanged,
-    required this.onSortDirectionChanged,
+    required this.fields,
+    required this.selectedField,
+    required this.fieldLabelBuilder,
+    required this.onFieldChanged,
+    required this.selectedDirection,
+    required this.onDirectionChanged,
   });
 
-  final MovieFilterState filterState;
-  final ValueChanged<MovieSortField> onSortFieldChanged;
-  final ValueChanged<SortDirection> onSortDirectionChanged;
+  final List<F> fields;
+  final F selectedField;
+  final String Function(F field) fieldLabelBuilder;
+  final ValueChanged<F> onFieldChanged;
+  final SortDirection selectedDirection;
+  final ValueChanged<SortDirection> onDirectionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -577,13 +588,13 @@ class MovieSortSection extends StatelessWidget {
         Wrap(
           spacing: context.appSpacing.sm,
           runSpacing: context.appSpacing.sm,
-          children: MovieSortField.values
+          children: fields
               .map(
                 (value) => AppTextButton(
-                  label: value.label,
+                  label: fieldLabelBuilder(value),
                   size: AppTextButtonSize.xSmall,
-                  isSelected: value == filterState.sortField,
-                  onPressed: () => onSortFieldChanged(value),
+                  isSelected: value == selectedField,
+                  onPressed: () => onFieldChanged(value),
                 ),
               )
               .toList(growable: false),
@@ -591,13 +602,14 @@ class MovieSortSection extends StatelessWidget {
         SizedBox(height: context.appSpacing.md),
         Wrap(
           spacing: context.appSpacing.sm,
+          runSpacing: context.appSpacing.sm,
           children: SortDirection.values
               .map(
                 (value) => AppTextButton(
                   label: value.label,
                   size: AppTextButtonSize.xSmall,
-                  isSelected: value == filterState.sortDirection,
-                  onPressed: () => onSortDirectionChanged(value),
+                  isSelected: value == selectedDirection,
+                  onPressed: () => onDirectionChanged(value),
                 ),
               )
               .toList(growable: false),

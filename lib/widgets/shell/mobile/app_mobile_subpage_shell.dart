@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 让子页面把「真实标题」报给外层返回栏的信箱。
 ///
@@ -77,7 +78,7 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         key: const Key('mobile-subpage-system-overlay'),
-        value: _mobileSystemOverlayStyle(context),
+        value: resolveMobileSystemOverlayStyle(context),
         child: ColoredBox(
           key: const Key('mobile-subpage-root-surface'),
           color: context.appColors.surfaceCard,
@@ -164,19 +165,5 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   void _goToDefault(GoRouter? router, String location) {
     // 子页面优先交给路由系统处理；在纯组件宿主下没有 GoRouter 时保持静默。
     router?.go(location);
-  }
-
-  SystemUiOverlayStyle _mobileSystemOverlayStyle(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SystemUiOverlayStyle(
-      statusBarColor: context.appColors.surfaceCard,
-      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-      systemNavigationBarColor: context.appColors.surfaceCard,
-      systemNavigationBarIconBrightness: isDark
-          ? Brightness.light
-          : Brightness.dark,
-      systemNavigationBarDividerColor: context.appColors.divider,
-    );
   }
 }

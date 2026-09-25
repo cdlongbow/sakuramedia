@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 
 /// 移动端筛选底部抽屉的通用壳层：可滚动内容区 + 可选 footer。
 ///
@@ -47,6 +48,66 @@ class AppMobileFilterDrawerScaffold extends StatelessWidget {
             child: footerWidget,
           ),
       ],
+    );
+  }
+}
+
+/// 移动端筛选抽屉的通用内容：持有筛选状态的本地副本、就地反映选中态并即时向外
+/// 应用（不是「等确定的草稿」），footer 里带重置。
+///
+/// 各 feature 的 `showMobileXxxFilterDrawer` 只需负责弹层参数、Key 和内容构建，
+/// 不再各写一份同构的 StatefulWidget。
+class AppMobileFilterDrawer<T> extends StatefulWidget {
+  const AppMobileFilterDrawer({
+    super.key,
+    required this.current,
+    required this.initial,
+    required this.onChanged,
+    required this.isDefault,
+    required this.scrollViewKey,
+    required this.contentBuilder,
+  });
+
+  final T current;
+
+  /// 重置按钮恢复到的状态。
+  final T initial;
+  final ValueChanged<T> onChanged;
+  final bool Function(T value) isDefault;
+  final Key scrollViewKey;
+
+  /// 构建筛选内容；[onApply] 就地更新本地副本并向外应用。
+  final Widget Function(BuildContext context, T local, ValueChanged<T> onApply)
+  contentBuilder;
+
+  @override
+  State<AppMobileFilterDrawer<T>> createState() =>
+      _AppMobileFilterDrawerState<T>();
+}
+
+class _AppMobileFilterDrawerState<T> extends State<AppMobileFilterDrawer<T>> {
+  late T _local;
+
+  @override
+  void initState() {
+    super.initState();
+    _local = widget.current;
+  }
+
+  void _apply(T next) {
+    setState(() => _local = next);
+    widget.onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppMobileFilterDrawerScaffold(
+      scrollViewKey: widget.scrollViewKey,
+      footer: AppFilterPanelFooter(
+        isDefault: widget.isDefault(_local),
+        onReset: () => _apply(widget.initial),
+      ),
+      child: widget.contentBuilder(context, _local, _apply),
     );
   }
 }

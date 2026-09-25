@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 /// 榜单筛选 section 锚点——chip 点击后定位到对应 section。
 enum RankingFilterAnchor { source, board, period, sort }
@@ -75,7 +76,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
       children: [
         KeyedSubtree(
           key: sectionKeys?.source,
-          child: RankingFilterChoiceSection<RankingSourceDto>(
+          child: MovieFilterChoiceSection<RankingSourceDto>(
             title: '来源',
             options: sources,
             selectedValue: selectedSource,
@@ -88,7 +89,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
         SizedBox(height: context.appSpacing.lg),
         KeyedSubtree(
           key: sectionKeys?.board,
-          child: RankingFilterChoiceSection<RankingBoardDto>(
+          child: MovieFilterChoiceSection<RankingBoardDto>(
             title: '榜单',
             options: boards,
             selectedValue: selectedBoard,
@@ -101,7 +102,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
         SizedBox(height: context.appSpacing.lg),
         KeyedSubtree(
           key: sectionKeys?.period,
-          child: RankingFilterChoiceSection<String>(
+          child: MovieFilterChoiceSection<String>(
             title: '周期',
             options: selectedBoard?.supportedPeriods ?? const <String>[],
             selectedValue: selectedPeriod,
@@ -118,59 +119,6 @@ class RankingFilterSectionGroup extends StatelessWidget {
             selectedSortDirection: selectedSortDirection,
             onSortChanged: onSortChanged,
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class RankingFilterChoiceSection<T> extends StatelessWidget {
-  const RankingFilterChoiceSection({
-    super.key,
-    required this.title,
-    required this.options,
-    required this.selectedValue,
-    required this.optionKeyBuilder,
-    required this.labelBuilder,
-    required this.onSelected,
-  });
-
-  final String title;
-  final List<T> options;
-  final T? selectedValue;
-  final Key Function(T value) optionKeyBuilder;
-  final String Function(T value) labelBuilder;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: options
-              .map(
-                (value) => AppTextButton(
-                  key: optionKeyBuilder(value),
-                  label: labelBuilder(value),
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == selectedValue,
-                  onPressed: () => onSelected(value),
-                ),
-              )
-              .toList(growable: false),
         ),
       ],
     );

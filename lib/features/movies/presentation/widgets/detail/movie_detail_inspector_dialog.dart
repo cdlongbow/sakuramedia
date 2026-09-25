@@ -28,8 +28,6 @@ Future<void> showMovieDetailInspectorDialog({
         child: MovieDetailInspectorPanel(
           movieNumber: movieNumber,
           selectedMedia: selectedMedia,
-          onClose: () => Navigator.of(dialogContext).pop(),
-          showCloseButton: false,
           onSearchSimilar: (thumbnail, imageUrl, fileName) async {
             if (!context.mounted || !dialogContext.mounted) {
               return;
@@ -95,11 +93,10 @@ Future<void> showMobileMovieDetailInspectorBottomSheet({
     drawerKey: const Key('movie-detail-inspector-bottom-sheet'),
     maxHeightFactor: 0.7,
     ignoreTopSafeArea: true,
-    builder: (sheetContext) {
+    builder: (_) {
       return MovieDetailInspectorPanel(
         movieNumber: movieNumber,
         selectedMedia: selectedMedia,
-        onClose: () => Navigator.of(sheetContext).pop(),
         thumbnailPreviewPresentation: MoviePlotPreviewPresentation.bottomDrawer,
         onSearchSimilar: onSearchSimilar,
         onPlay: onPlay,

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 enum ActorSubscriptionStatus { all, subscribed, unsubscribed }
 
@@ -73,27 +74,13 @@ extension ActorSortFieldX on ActorSortField {
   };
 }
 
-enum ActorSortDirection { asc, desc }
-
-extension ActorSortDirectionX on ActorSortDirection {
-  String get apiValue => switch (this) {
-    ActorSortDirection.asc => 'asc',
-    ActorSortDirection.desc => 'desc',
-  };
-
-  String get label => switch (this) {
-    ActorSortDirection.asc => '升序',
-    ActorSortDirection.desc => '降序',
-  };
-}
-
 @immutable
 class ActorFilterState {
   const ActorFilterState({
     this.subscriptionStatus = ActorSubscriptionStatus.subscribed,
     this.gender = ActorGender.all,
     this.sortField = ActorSortField.subscribedAt,
-    this.sortDirection = ActorSortDirection.desc,
+    this.sortDirection = SortDirection.desc,
     this.ageMin,
     this.ageMax,
     this.heightMin,
@@ -104,7 +91,7 @@ class ActorFilterState {
   final ActorSubscriptionStatus subscriptionStatus;
   final ActorGender gender;
   final ActorSortField sortField;
-  final ActorSortDirection sortDirection;
+  final SortDirection sortDirection;
   final int? ageMin;
   final int? ageMax;
   final int? heightMin;
@@ -117,7 +104,7 @@ class ActorFilterState {
       subscriptionStatus == ActorSubscriptionStatus.subscribed &&
       gender == ActorGender.all &&
       sortField == ActorSortField.subscribedAt &&
-      sortDirection == ActorSortDirection.desc &&
+      sortDirection == SortDirection.desc &&
       ageMin == null &&
       ageMax == null &&
       heightMin == null &&
@@ -135,7 +122,7 @@ class ActorFilterState {
     ActorSubscriptionStatus? subscriptionStatus,
     ActorGender? gender,
     ActorSortField? sortField,
-    ActorSortDirection? sortDirection,
+    SortDirection? sortDirection,
     Object? ageMin = _unset,
     Object? ageMax = _unset,
     Object? heightMin = _unset,

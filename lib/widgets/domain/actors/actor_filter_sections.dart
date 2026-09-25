@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/actors/presentation/controllers/listing/act
 import 'package:sakuramedia/features/actors/presentation/providers/actor_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 /// 演员筛选所有 section 的纵向 Column。
 ///
@@ -31,7 +32,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ActorFilterChoiceSection<ActorSubscriptionStatus>(
+        MovieFilterChoiceSection<ActorSubscriptionStatus>(
           title: '订阅筛选',
           options: ActorSubscriptionStatus.values,
           selectedValue: filterState.subscriptionStatus,
@@ -40,7 +41,7 @@ class ActorFilterSectionGroup extends ConsumerWidget {
               onChanged(filterState.copyWith(subscriptionStatus: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
-        ActorFilterChoiceSection<ActorGender>(
+        MovieFilterChoiceSection<ActorGender>(
           title: '性别筛选',
           options: ActorGender.values,
           selectedValue: filterState.gender,
@@ -65,11 +66,14 @@ class ActorFilterSectionGroup extends ConsumerWidget {
           ),
         ),
         SizedBox(height: context.appSpacing.lg),
-        ActorSortSection(
-          filterState: filterState,
-          onSortFieldChanged: (value) =>
+        FilterSortSection<ActorSortField>(
+          fields: ActorSortField.values,
+          selectedField: filterState.sortField,
+          fieldLabelBuilder: (value) => value.label,
+          onFieldChanged: (value) =>
               onChanged(filterState.copyWith(sortField: value)),
-          onSortDirectionChanged: (value) =>
+          selectedDirection: filterState.sortDirection,
+          onDirectionChanged: (value) =>
               onChanged(filterState.copyWith(sortDirection: value)),
         ),
       ],
@@ -405,117 +409,6 @@ class ActorCupFilterSection extends StatelessWidget {
                 )
                 .toList(growable: false),
           ),
-      ],
-    );
-  }
-}
-
-class ActorFilterChoiceSection<T> extends StatelessWidget {
-  const ActorFilterChoiceSection({
-    super.key,
-    required this.title,
-    required this.options,
-    required this.selectedValue,
-    required this.labelBuilder,
-    required this.onSelected,
-  });
-
-  final String title;
-  final List<T> options;
-  final T selectedValue;
-  final String Function(T value) labelBuilder;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: options
-              .map(
-                (option) => AppTextButton(
-                  label: labelBuilder(option),
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: option == selectedValue,
-                  onPressed: () => onSelected(option),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-class ActorSortSection extends StatelessWidget {
-  const ActorSortSection({
-    super.key,
-    required this.filterState,
-    required this.onSortFieldChanged,
-    required this.onSortDirectionChanged,
-  });
-
-  final ActorFilterState filterState;
-  final ValueChanged<ActorSortField> onSortFieldChanged;
-  final ValueChanged<ActorSortDirection> onSortDirectionChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '排序方式',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: ActorSortField.values
-              .map(
-                (value) => AppTextButton(
-                  label: value.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == filterState.sortField,
-                  onPressed: () => onSortFieldChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        SizedBox(height: context.appSpacing.md),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: ActorSortDirection.values
-              .map(
-                (value) => AppTextButton(
-                  label: value.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == filterState.sortDirection,
-                  onPressed: () => onSortDirectionChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
       ],
     );
   }

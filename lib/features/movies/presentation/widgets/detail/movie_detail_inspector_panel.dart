@@ -38,8 +38,6 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
     super.key,
     required this.movieNumber,
     required this.selectedMedia,
-    required this.onClose,
-    this.showCloseButton = true,
     this.thumbnailPreviewPresentation = MoviePlotPreviewPresentation.dialog,
     this.onSearchSimilar,
     this.onPlay,
@@ -47,8 +45,6 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
 
   final String movieNumber;
   final MovieMediaItemDto? selectedMedia;
-  final VoidCallback onClose;
-  final bool showCloseButton;
   final MoviePlotPreviewPresentation thumbnailPreviewPresentation;
   final Future<void> Function(
     MovieMediaThumbnailDto thumbnail,
@@ -241,12 +237,6 @@ class _MovieDetailInspectorPanelState
                 ],
               ),
             ),
-            // if (widget.showCloseButton)
-            //   AppIconButton(
-            //     tooltip: '关闭',
-            //     onPressed: widget.onClose,
-            //     icon: const Icon(Icons.close_rounded),
-            //   ),
           ],
         ),
         Expanded(

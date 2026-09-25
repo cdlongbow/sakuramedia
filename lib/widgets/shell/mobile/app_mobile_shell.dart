@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 切换 tab 时选中 icon 的「先缩小再放大」时长。
 ///
@@ -60,7 +61,7 @@ class _AppMobileShellState extends State<AppMobileShell> {
     final animateNavIcons = !MediaQuery.disableAnimationsOf(context);
 
     final shell = AnnotatedRegion<SystemUiOverlayStyle>(
-      value: _mobileSystemOverlayStyle(context),
+      value: resolveMobileSystemOverlayStyle(context),
       child: Scaffold(
         backgroundColor: context.appColors.surfaceCard,
         drawer: widget.drawer,
@@ -181,19 +182,5 @@ class _AppMobileShellState extends State<AppMobileShell> {
       }
     }
     return 0;
-  }
-
-  SystemUiOverlayStyle _mobileSystemOverlayStyle(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return SystemUiOverlayStyle(
-      statusBarColor: context.appColors.surfaceCard,
-      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-      systemNavigationBarColor: context.appColors.surfaceCard,
-      systemNavigationBarIconBrightness: isDark
-          ? Brightness.light
-          : Brightness.dark,
-      systemNavigationBarDividerColor: context.appColors.divider,
-    );
   }
 }

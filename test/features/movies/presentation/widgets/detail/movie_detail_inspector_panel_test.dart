@@ -957,8 +957,6 @@ Widget _inspectorPanelScaffold({required double panelHeight}) {
         child: MovieDetailInspectorPanel(
           movieNumber: 'ABC-001',
           selectedMedia: null,
-          onClose: () {},
-          showCloseButton: false,
         ),
       ),
     ),

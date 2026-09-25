@@ -16,8 +16,8 @@ import 'package:sakuramedia/features/rankings/presentation/providers/ranking_sum
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -137,7 +137,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                   SizedBox(height: context.appSpacing.md),
                   if (summary.filters.errorMessage != null &&
                       summary.paged.filterUpdate.isIdle) ...[
-                    _FilterErrorBanner(
+                    AppInlineErrorBanner(
                       message: summary.filters.errorMessage!,
                       onRetry: () => ref
                           .read(rankingSummaryProvider(_scope).notifier)
@@ -301,51 +301,4 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
   }
 }
 
-class _FilterErrorBanner extends StatelessWidget {
-  const _FilterErrorBanner({required this.message, required this.onRetry});
 
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(context.appSpacing.md),
-        child: Row(
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: context.appComponentTokens.iconSizeXl,
-              color: context.appTextPalette.secondary,
-            ),
-            SizedBox(width: context.appSpacing.sm),
-            Expanded(
-              child: Text(
-                message,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.secondary,
-                ),
-              ),
-            ),
-            SizedBox(width: context.appSpacing.sm),
-            AppButton(
-              label: '重试',
-              size: AppButtonSize.xSmall,
-              variant: AppButtonVariant.secondary,
-              onPressed: () => unawaited(onRetry()),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

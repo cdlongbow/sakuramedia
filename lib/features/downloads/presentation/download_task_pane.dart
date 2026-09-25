@@ -35,7 +35,6 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 /// 构建「下载任务」Tab 的 sliver 列表。
 ///
@@ -359,7 +358,7 @@ class _DownloadTaskCard extends ConsumerWidget {
         : wideCoverUrl;
 
     // 骨架态整卡收敛成一块 shimmer 圆角块：进度条 / 状态角标不再透出自有颜色。
-    return Skeleton.unite(
+    return AppSkeletonUnite(
       borderRadius: context.appRadius.mdBorder,
       child: AppLeftCoverCard(
         key: Key('download-task-${task.id}'),

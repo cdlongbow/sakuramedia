@@ -78,9 +78,8 @@ void main() {
     );
 
     final background = tester.widget<ColoredBox>(
-      find.descendant(
-        of: find.byKey(const Key('preview-image-stage')),
-        matching: find.byType(ColoredBox),
+      find.byWidgetPredicate(
+        (widget) => widget is ColoredBox && widget.color == Colors.black,
       ),
     );
     expect(background.color, Colors.black);

@@ -14,6 +14,7 @@ class ClipCoverCard extends StatelessWidget {
     this.selectionMode = false,
     this.isSelected = false,
     this.onSelectedChanged,
+    this.onLongPress,
   });
 
   final MediaClipDto clip;
@@ -21,6 +22,7 @@ class ClipCoverCard extends StatelessWidget {
   final bool selectionMode;
   final bool isSelected;
   final ValueChanged<bool>? onSelectedChanged;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +33,7 @@ class ClipCoverCard extends StatelessWidget {
       selectionMode: selectionMode,
       isSelected: isSelected,
       onSelectedChanged: onSelectedChanged,
+      onLongPress: onLongPress,
     );
   }
 }

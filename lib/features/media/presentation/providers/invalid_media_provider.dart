@@ -1,11 +1,13 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
+import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_state.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 
 part 'invalid_media_provider.g.dart';
 
@@ -55,10 +57,20 @@ class InvalidMedia extends _$InvalidMedia
     if (current.deletingMediaId != null) {
       throw StateError('media deletion already running');
     }
+    final items = current.paged.items;
+    final deletedIndex = items.indexWhere((item) => item.id == mediaId);
+    final videoItemId = deletedIndex >= 0
+        ? items[deletedIndex].videoItemId
+        : null;
     state = AsyncData(current.copyWith(deletingMediaId: mediaId));
     try {
       await ref.read(mediaApiProvider).deleteMedia(mediaId: mediaId);
       if (isDisposed) return;
+      // 非 JAV 媒体删除会同步删除视频条目并级联清理合集成员，通知 videos 域就地补丁。
+      reportDeletedVideoItem(
+        videoItemId,
+        ref.read(videoMutationEventsProvider.notifier).reportDeleted,
+      );
       final now = state.value;
       if (now == null) return;
       state = AsyncData(_withMediaRemoved(now, mediaId));

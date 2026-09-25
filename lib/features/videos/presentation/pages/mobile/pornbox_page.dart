@@ -10,6 +10,7 @@ import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/add_to_video_collection_dialog.dart';
@@ -354,10 +355,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                 controller: _scrollController,
                 onRefresh: _refresh,
                 slivers: <Widget>[
-                  if (!selectionMode)
-                    SliverToBoxAdapter(
-                      child: _buildCollectionsSection(context),
-                    ),
+                  SliverToBoxAdapter(child: _buildCollectionsSection(context)),
                   AppPinnedListHeader(
                     key: _listHeaderKey,
                     color: context.appColors.surfaceCard,
@@ -484,12 +482,16 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
             final collection = display[index];
             return SizedBox(
               width: 116, // L2 收紧：132 → 116
-              child: CollectionCard.video(
-                key: Key('mobile-video-collection-card-${collection.id}'),
-                collection: collection,
-                onTap: () => MobileVideoCollectionDetailRouteData(
-                  collectionId: collection.id,
-                ).push(context),
+              // 卡片按内容自然高度渲染，避免被固定行高拉伸后在标题下方留白。
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: CollectionCard.video(
+                  key: Key('mobile-video-collection-card-${collection.id}'),
+                  collection: collection,
+                  onTap: () => MobileVideoCollectionDetailRouteData(
+                    collectionId: collection.id,
+                  ).push(context),
+                ),
               ),
             );
           },
@@ -597,22 +599,23 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         itemBuilder: (context, video, index) {
           // Builder 是为了拿到**这一张卡自己**的 RenderBox，长按浮层要盖住它。
           return Builder(
-            builder: (cardContext) => GestureDetector(
-              onLongPressStart: selectionMode
-                  ? null
-                  : (details) => _openCardMenu(
-                      cardContext,
-                      video,
-                      details.globalPosition,
-                    ),
-              child: VideoSummaryCard(
+            builder: (cardContext) {
+              final card = VideoSummaryCard(
                 video: video,
                 onTap: selectionMode ? null : () => _openSheet(video),
                 selectionMode: selectionMode,
                 isSelected: isSelected(video.id),
                 onSelectedChanged: (_) => toggleSelect(video.id),
-              ),
-            ),
+              );
+              if (selectionMode) {
+                return card;
+              }
+              return AppContextMenuTrigger(
+                onRequestMenu: (position) =>
+                    _openCardMenu(cardContext, video, position),
+                child: card,
+              );
+            },
           );
         },
       ),

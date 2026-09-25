@@ -105,7 +105,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
     // baseUrl 细粒度订阅（登录切后端时精准重建）；url/decodeHint 的缓存策略不变。
     _rebuildBaseProviderIfNeeded(ref.watch(baseUrlProvider));
     if (_baseProvider == null) {
-      return const _MaskedImagePlaceholder(icon: Icons.image_outlined);
+      return const _MaskedImagePlaceholder();
     }
 
     return LayoutBuilder(
@@ -116,7 +116,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
           widget.memCacheHeight ?? decodeHint.height,
         );
         if (provider == null) {
-          return const _MaskedImagePlaceholder(icon: Icons.image_outlined);
+          return const _MaskedImagePlaceholder();
         }
 
         Widget imageContent = Image(
@@ -147,7 +147,6 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
                   child: frame == null
                       ? const _MaskedImagePlaceholder(
                           key: ValueKey<String>('placeholder'),
-                          icon: Icons.image_outlined,
                         )
                       : KeyedSubtree(
                           key: const ValueKey<String>('image'),
@@ -158,9 +157,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
             );
           },
           errorBuilder: (context, error, stackTrace) {
-            return const _MaskedImagePlaceholder(
-              icon: Icons.broken_image_outlined,
-            );
+            return const _MaskedImagePlaceholder();
           },
         );
 
@@ -222,26 +219,16 @@ Widget _fillAnimatedSwitcherLayout(
   children: <Widget>[...previousChildren, ?currentChild],
 );
 
-/// 首帧到达前显示占位；`contain` 图片周围不再有底色。
+/// 首帧 / 缺图 / 加载失败的统一占位：muted 纯色块，不带居中图标
+/// （纯图片卡的占位与骨架统一为纯块，图标会被 skeletonizer 画成实心方块）。
 class _MaskedImagePlaceholder extends StatelessWidget {
-  const _MaskedImagePlaceholder({super.key, required this.icon});
-
-  final IconData icon;
+  const _MaskedImagePlaceholder({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final componentTokens = context.appComponentTokens;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.surfaceMuted),
-      child: Center(
-        child: Icon(
-          icon,
-          size: componentTokens.iconSize3xl,
-          color: context.appTextPalette.muted,
-        ),
-      ),
+    return ColoredBox(
+      color: context.appColors.surfaceMuted,
+      child: const Center(),
     );
   }
 }

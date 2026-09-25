@@ -17,6 +17,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -45,23 +46,21 @@ class _DesktopClipCollectionsPageState
       if (!mounted) {
         return;
       }
-      unawaited(
-        ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(clipCollectionsOverviewProvider.notifier).refresh());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<ClipMutationChange>>(
-      clipMutationEventsProvider,
-      (previous, next) {
-        final change = next.value;
-        if (change != null) {
-          _onMutation(change);
-        }
-      },
-    );
+    ref.listen<AsyncValue<ClipMutationChange>>(clipMutationEventsProvider, (
+      previous,
+      next,
+    ) {
+      final change = next.value;
+      if (change != null) {
+        _onMutation(change);
+      }
+    });
 
     final async = ref.watch(clipCollectionsOverviewProvider);
     final notifier = ref.read(clipCollectionsOverviewProvider.notifier);
@@ -108,10 +107,7 @@ class _DesktopClipCollectionsPageState
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '合集暂时无法加载，请稍后重试',
-        ),
+        message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
       );
     }
     final collections = isLoading
@@ -124,37 +120,22 @@ class _DesktopClipCollectionsPageState
     final spacing = context.appSpacing;
     return AppSkeletonizer(
       enabled: isLoading,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return GridView.builder(
-            key: const Key('clip-collections-grid'),
-            padding: EdgeInsets.only(bottom: spacing.lg),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: resolveAppCardGridColumnCount(
-                context,
-                width: constraints.maxWidth,
-                spacing: spacing.md,
-              ),
-              mainAxisSpacing: spacing.md,
-              crossAxisSpacing: spacing.md,
-              childAspectRatio: 1.2,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: spacing.lg),
+        child: AppAdaptiveCardWrap<ClipCollectionDto>(
+          key: const Key('clip-collections-grid'),
+          items: collections,
+          orientation: AppCardGridOrientation.landscape,
+          itemBuilder: (context, collection, _) => CollectionCard.clip(
+            key: Key('clip-collection-card-${collection.id}'),
+            collection: collection,
+            onTap: () => context.pushDesktopClipCollectionDetail(
+              collectionId: collection.id,
             ),
-            itemCount: collections.length,
-            itemBuilder: (context, index) {
-              final collection = collections[index];
-              return CollectionCard.clip(
-                key: Key('clip-collection-card-${collection.id}'),
-                collection: collection,
-                onTap:
-                    () => context.pushDesktopClipCollectionDetail(
-                      collectionId: collection.id,
-                    ),
-                onEdit: () => _editCollection(collection),
-                onDelete: () => _deleteCollection(collection),
-              );
-            },
-          );
-        },
+            onEdit: () => _editCollection(collection),
+            onDelete: () => _deleteCollection(collection),
+          ),
+        ),
       ),
     );
   }
@@ -164,7 +145,9 @@ class _DesktopClipCollectionsPageState
     if (!mounted || created == null) {
       return;
     }
-    ref.read(clipCollectionsOverviewProvider.notifier).insertCollection(created);
+    ref
+        .read(clipCollectionsOverviewProvider.notifier)
+        .insertCollection(created);
     showToast('已创建合集');
   }
 
@@ -183,8 +166,9 @@ class _DesktopClipCollectionsPageState
   }
 
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
-    final name =
-        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+    final name = collection.name.trim().isEmpty
+        ? '该合集'
+        : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',

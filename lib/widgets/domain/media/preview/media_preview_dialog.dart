@@ -570,29 +570,21 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
                         fallbackAspectRatio: 0.72,
                       ),
               ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: movie.actors.isEmpty
-                    ? Text(
-                        movie.title,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s18,
-                          weight: AppTextWeight.semibold,
-                          tone: AppTextTone.primary,
-                        ),
-                      )
-                    : _MovieActorStrip(
-                        actors: movie.actors,
-                        controller: _actorScrollController,
-                        onActorTap: widget.onActorSelected == null
-                            ? null
-                            : (actorId) {
-                                widget.onActorSelected!(actorId);
-                                Navigator.of(context).pop();
-                              },
-                      ),
-              ),
+              if (movie.actors.isNotEmpty) ...[
+                SizedBox(width: spacing.sm),
+                Expanded(
+                  child: _MovieActorStrip(
+                    actors: movie.actors,
+                    controller: _actorScrollController,
+                    onActorTap: widget.onActorSelected == null
+                        ? null
+                        : (actorId) {
+                            widget.onActorSelected!(actorId);
+                            Navigator.of(context).pop();
+                          },
+                  ),
+                ),
+              ],
             ],
           ),
         ),

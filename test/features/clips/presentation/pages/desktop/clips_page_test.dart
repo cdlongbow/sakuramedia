@@ -12,6 +12,8 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_overview
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -95,6 +97,71 @@ void main() {
     expect(find.byKey(const Key('clip-action-delete')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('进入选择原地改写操作行，合集区与网格位置不变', (
+    WidgetTester tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 900);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          clipsOverviewProvider.overrideWith(_PopulatedClipsOverview.new),
+          clipCollectionsOverviewProvider.overrideWith(
+            _PopulatedClipCollectionsOverview.new,
+          ),
+        ],
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopClipsPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final headerHeight = tester.getSize(find.byType(AppListHeader)).height;
+    final cardTop = tester
+        .getTopLeft(find.byKey(const Key('clip-grid-card-1')))
+        .dy;
+
+    await tester.tap(find.byKey(const Key('clips-enter-selection-button')));
+    await tester.pumpAndSettle();
+
+    // 常规顶栏被替换掉，而不是在它下方再加一行。
+    expect(find.byType(AppListHeader), findsNothing);
+    expect(find.byType(AppSelectionHeaderToolbar), findsOneWidget);
+    expect(find.byKey(const Key('clips-select-all-button')), findsOneWidget);
+    expect(
+      find.byKey(const Key('clips-batch-add-collection-button')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('clips-batch-delete-button')), findsOneWidget);
+    // 选择态不再显示排序。
+    expect(find.byKey(const Key('clips-sort-latest')), findsNothing);
+
+    // 进出多选不跳版：操作行等高，合集区与网格位置不变。
+    expect(
+      tester.getSize(find.byType(AppSelectionHeaderToolbar)).height,
+      headerHeight,
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('clip-grid-card-1'))).dy,
+      closeTo(cardTop, 0.1),
+    );
+    expect(find.byKey(const Key('clips-collections-row')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('clips-exit-selection-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppListHeader), findsOneWidget);
+    expect(find.byType(AppSelectionHeaderToolbar), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _LoadingClipsOverview extends ClipsOverview {
@@ -139,4 +206,21 @@ class _EmptyClipCollectionsOverview extends ClipCollectionsOverview {
   @override
   Future<List<ClipCollectionDto>> build() async =>
       const <ClipCollectionDto>[];
+}
+
+class _PopulatedClipCollectionsOverview extends ClipCollectionsOverview {
+  @override
+  Future<List<ClipCollectionDto>> build() async {
+    return const <ClipCollectionDto>[
+      ClipCollectionDto(
+        id: 7,
+        name: '我的合集',
+        description: '',
+        clipCount: 1,
+        coverImage: null,
+        createdAt: null,
+        updatedAt: null,
+      ),
+    ];
+  }
 }

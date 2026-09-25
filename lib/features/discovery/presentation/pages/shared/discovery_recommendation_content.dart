@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dt
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_recommendation_feeds_provider.dart';
+import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
@@ -24,9 +25,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 /// 推荐影片列表共享实现（桌面 / 移动双端壳收敛的 content 层）。
@@ -291,9 +290,8 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
 /// 推荐时刻列表共享实现（桌面 / 移动双端壳收敛的 content 层）。
 ///
 /// 平台差异收在壳参数里：`pageSize` / `keyPrefix` / `headerGap` / `backgroundColor` /
-/// `basePath` / `previewDrawerKey` / 下拉刷新开关，以及图搜跳转回调
-/// `onSearchSimilar`（桌面 launcher / 移动 draft store 中转）。预览弹层统一走
-/// [MediaPreviewPresentation.auto]（读 `AppPlatformScope` 分派）。
+/// `fallbackPath` / `previewDrawerKey` / 下拉刷新开关。预览与悬停动作统一走
+/// [showMomentPreviewFlow] 的推荐模式（推荐 ID 不当真实时刻 ID 用）。
 class DiscoveryMomentsContent extends HookConsumerWidget {
   const DiscoveryMomentsContent({
     super.key,
@@ -301,23 +299,21 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     required this.keyPrefix,
     required this.headerGap,
     required this.backgroundColor,
-    required this.basePath,
+    required this.fallbackPath,
     this.previewDrawerKey,
     this.enablePullToRefresh = false,
-    this.onSearchSimilar,
   });
 
   final int pageSize;
   final String keyPrefix;
   final double headerGap;
   final Color backgroundColor;
-  final String basePath;
+
+  /// 预览关闭后的图搜 / 播放 / 影片详情 / 演员详情兜底路径。
+  final String fallbackPath;
+
   final Key? previewDrawerKey;
   final bool enablePullToRefresh;
-
-  /// 图搜导航回调（壳注入：桌面走 launcher / 移动走 draft store 中转）。
-  final Future<void> Function(BuildContext context, MomentListItem item)?
-  onSearchSimilar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -425,86 +421,35 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: (item) => _openMomentPreview(context, item),
-      onItemPlay: (item) => _openPlayerForMoment(context, item),
+      onItemPlay: (item) => unawaited(
+        playMomentItem(context: context, item: item, fallbackPath: fallbackPath),
+      ),
+      onItemOpenMovie: (item) => openMomentSourceMovie(
+        context: context,
+        item: item,
+        fallbackPath: fallbackPath,
+      ),
+      onItemAddToCollection: (item) => unawaited(
+        addMomentItemToCollection(
+          context,
+          item: item,
+          isRecommendation: true,
+        ),
+      ),
     );
   }
 
   Future<void> _openMomentPreview(
     BuildContext context,
     MomentListItem item,
-  ) async {
-    final action = await showMomentPreviewOverlay(
+  ) {
+    return showMomentPreviewFlow(
       context: context,
       item: item,
-      presentation: MediaPreviewPresentation.auto,
+      fallbackPath: fallbackPath,
       drawerKey: previewDrawerKey,
+      isRecommendation: true,
     );
-    if (!context.mounted || action == null) {
-      return;
-    }
-    switch (action) {
-      case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(context, item);
-      case MediaPreviewAction.addToCollection:
-        return;
-      case MediaPreviewAction.play:
-        _openPlayerForMoment(context, item);
-      case MediaPreviewAction.openMovieDetail:
-        _openMovieDetailForMoment(context, item);
-    }
-  }
-
-  Future<void> _searchSimilarFromMoment(
-    BuildContext context,
-    MomentListItem item,
-  ) async {
-    final handler = onSearchSimilar;
-    if (handler == null) {
-      return;
-    }
-    await handler(context, item);
-  }
-
-  void _openPlayerForMoment(BuildContext context, MomentListItem item) {
-    final movieNumber = item.movieNumber;
-    if (movieNumber == null || movieNumber.isEmpty) {
-      // discovery 推荐时刻仅 JAV，番号必有；视频时刻不会进入此列表。
-      return;
-    }
-    final path = _moviePlayerPath(
-      movieNumber,
-      mediaId: item.mediaId > 0 ? item.mediaId : null,
-      positionSeconds: item.offsetSeconds,
-    );
-    context.push(path);
-  }
-
-  void _openMovieDetailForMoment(BuildContext context, MomentListItem item) {
-    final movieNumber = item.movieNumber;
-    if (movieNumber == null || movieNumber.isEmpty) {
-      return;
-    }
-    context.push(_movieDetailPath(movieNumber));
-  }
-
-  String _movieDetailPath(String movieNumber) {
-    final encoded = Uri.encodeComponent(movieNumber);
-    return '$basePath/$encoded';
-  }
-
-  String _moviePlayerPath(
-    String movieNumber, {
-    int? mediaId,
-    int? positionSeconds,
-  }) {
-    final encoded = Uri.encodeComponent(movieNumber);
-    return Uri(
-      path: '$basePath/$encoded/player',
-      queryParameters: <String, String>{
-        if (mediaId != null) 'mediaId': '$mediaId',
-        if (positionSeconds != null) 'positionSeconds': '$positionSeconds',
-      },
-    ).toString();
   }
 }
 

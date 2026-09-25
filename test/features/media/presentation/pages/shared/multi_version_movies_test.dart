@@ -89,6 +89,26 @@ void main() {
         expect(find.textContaining('· 2160p'), findsOneWidget);
         expect(find.text('失效'), findsOneWidget);
         expect(find.textContaining('本地影视库'), findsNWidgets(2));
+        final firstRow = tester.getSize(
+          find.byKey(const Key('test-version-row-1')),
+        );
+        final secondRow = tester.getSize(
+          find.byKey(const Key('test-version-row-2')),
+        );
+        expect(firstRow.height, secondRow.height);
+        expect(firstRow.height, lessThan(80));
+        final filenameTooltip = tester.widget<Tooltip>(
+          find
+              .ancestor(
+                of: find.byKey(const Key('test-version-file-1')),
+                matching: find.byType(Tooltip),
+              )
+              .first,
+        );
+        expect(
+          filenameTooltip.message,
+          'DEMO-001.uncensored.2160p.HEVC.60fps.10bit.DDP5.1.ReleaseGroup.LongName.mp4',
+        );
         for (var round = 0; round < 2; round++) {
           await tester.tap(find.byKey(const Key('test-tab-list')));
           await tester.pumpAndSettle();
@@ -258,7 +278,9 @@ Map<String, dynamic> _group({int count = 2}) => {
       'movie_number': 'DEMO-001',
       'title': '用于展示的影片名称',
       'library_id': 1,
-      'file_name': 'DEMO-001.${i + 1}.2160p.HEVC.mp4',
+      'file_name': i == 0
+          ? 'DEMO-001.uncensored.2160p.HEVC.60fps.10bit.DDP5.1.ReleaseGroup.LongName.mp4'
+          : 'DEMO-001.2.1080p.mp4',
       'file_size_bytes': i == 0 ? 8589934592 : 3221225472,
       'duration_seconds': 7200,
       'resolution': i == 0 ? '2160p' : '1080p',

@@ -17,7 +17,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
-import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -117,10 +117,7 @@ class MomentCollectionsContent extends ConsumerWidget {
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '合集暂时无法加载，请稍后重试',
-        ),
+        message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
       );
     }
     final collections = isLoading
@@ -131,33 +128,19 @@ class MomentCollectionsContent extends ConsumerWidget {
     }
     return AppSkeletonizer(
       enabled: isLoading,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return GridView.builder(
-            key: const Key('moment-collections-grid'),
-            padding: EdgeInsets.only(bottom: spacing.lg),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: resolveAppCardGridColumnCount(
-                context,
-                width: constraints.maxWidth,
-                spacing: spacing.md,
-              ),
-              mainAxisSpacing: spacing.md,
-              crossAxisSpacing: spacing.md,
-              childAspectRatio: 1.2,
-            ),
-            itemCount: collections.length,
-            itemBuilder: (context, index) {
-              final collection = collections[index];
-              return CollectionCard.moment(
-                collection: collection,
-                onTap: () => onOpenDetail(collection.id),
-                onEdit: () => _edit(context, ref, collection: collection),
-                onDelete: () => _delete(context, ref, collection),
-              );
-            },
-          );
-        },
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: spacing.lg),
+        child: AppAdaptiveCardWrap<MomentCollectionDto>(
+          key: const Key('moment-collections-grid'),
+          items: collections,
+          orientation: AppCardGridOrientation.landscape,
+          itemBuilder: (context, collection, _) => CollectionCard.moment(
+            collection: collection,
+            onTap: () => onOpenDetail(collection.id),
+            onEdit: () => _edit(context, ref, collection: collection),
+            onDelete: () => _delete(context, ref, collection),
+          ),
+        ),
       ),
     );
   }
@@ -196,18 +179,20 @@ class MomentCollectionsContent extends ConsumerWidget {
           else
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: AppAdaptiveCardSliver<MomentCollectionDto>(
-                gridKey: const Key('mobile-moment-collections-grid'),
-                items: collections,
-                childAspectRatio: 1.25,
-                itemBuilder: (context, collection, index) {
-                  return CollectionCard.moment(
-                    collection: collection,
-                    onTap: () => onOpenDetail(collection.id),
-                    onEdit: () => _edit(context, ref, collection: collection),
-                    onDelete: () => _delete(context, ref, collection),
-                  );
-                },
+              sliver: SliverToBoxAdapter(
+                child: AppAdaptiveCardWrap<MomentCollectionDto>(
+                  key: const Key('mobile-moment-collections-grid'),
+                  items: collections,
+                  orientation: AppCardGridOrientation.landscape,
+                  itemBuilder: (context, collection, _) =>
+                      CollectionCard.moment(
+                        collection: collection,
+                        onTap: () => onOpenDetail(collection.id),
+                        onEdit: () =>
+                            _edit(context, ref, collection: collection),
+                        onDelete: () => _delete(context, ref, collection),
+                      ),
+                ),
               ),
             ),
         ],
@@ -240,8 +225,9 @@ class MomentCollectionsContent extends ConsumerWidget {
     WidgetRef ref,
     MomentCollectionDto collection,
   ) async {
-    final name =
-        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+    final name = collection.name.trim().isEmpty
+        ? '该合集'
+        : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',

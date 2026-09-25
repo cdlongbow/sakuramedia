@@ -47,7 +47,7 @@ class MomentGrid extends StatelessWidget {
     return AppAdaptiveCardGrid<MomentListItem>(
       gridKey: const Key('moment-grid'),
       items: items,
-      childAspectRatio: 16 / 10,
+      childAspectRatio: 16 / 9,
       maxRows: maxRows,
       itemBuilder: (context, item, _) => MomentCard(
         item: item,
@@ -112,7 +112,7 @@ class MomentSliver extends StatelessWidget {
     return AppAdaptiveCardSliver<MomentListItem>(
       gridKey: const Key('moment-grid'),
       items: items,
-      childAspectRatio: 16 / 10,
+      childAspectRatio: 16 / 9,
       itemBuilder: (context, item, _) => MomentCard(
         item: item,
         onTap: () => onItemTap(item),

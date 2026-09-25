@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class PlaylistBannerCard extends StatelessWidget {
   const PlaylistBannerCard({
@@ -21,6 +21,7 @@ class PlaylistBannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final spacing = context.appSpacing;
+    final radius = context.appRadius.lgBorder;
     final Widget blurredBackground;
     if (coverImageUrl != null && coverImageUrl!.trim().isNotEmpty) {
       blurredBackground = MaskedImage(url: coverImageUrl!, fit: BoxFit.cover);
@@ -44,13 +45,14 @@ class PlaylistBannerCard extends StatelessWidget {
     final card = Container(
       height: context.appComponentTokens.playlistBannerHeight,
       decoration: BoxDecoration(
-        borderRadius: context.appRadius.lgBorder,
+        borderRadius: radius,
         border: Border.all(color: colors.borderSubtle),
         boxShadow: context.appShadows.card,
       ),
       clipBehavior: Clip.antiAlias,
       // 骨架态整条横幅收敛成一块 shimmer 圆角块（非骨架态原样渲染）。
-      child: Skeleton.unite(
+      child: AppSkeletonUnite(
+        borderRadius: radius,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -104,7 +106,7 @@ class PlaylistBannerCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           mouseCursor: SystemMouseCursors.click,
-          borderRadius: context.appRadius.lgBorder,
+          borderRadius: radius,
           onTap: onTap,
           child: card,
         ),

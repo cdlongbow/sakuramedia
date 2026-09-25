@@ -186,25 +186,30 @@ class DuplicateMediaSection extends HookConsumerWidget {
           selectedIds.value = next;
         },
         itemSupplement: (item) {
-          if (item.displayHeading == first.displayHeading &&
-              (!item.isVideo || item.collections.isEmpty)) {
+          final headingDiffers = item.displayHeading != first.displayHeading;
+          final showCollections = item.isVideo && item.collections.isNotEmpty;
+          if (!headingDiffers && !showCollections) {
             return null;
           }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (item.displayHeading != first.displayHeading)
+              if (headingDiffers)
                 if (item.isJav &&
                     item.movieNumber != null &&
                     onOpenMovieDetail != null)
                   AppTextButton(
                     label: item.displayHeading,
+                    size: AppTextButtonSize.xxSmall,
                     onPressed: () =>
                         onOpenMovieDetail!(context, item.movieNumber!),
                   )
                 else
                   Text(
                     item.displayHeading,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -212,29 +217,14 @@ class DuplicateMediaSection extends HookConsumerWidget {
                       tone: AppTextTone.secondary,
                     ),
                   ),
-              if (item.isVideo && item.collections.isNotEmpty) ...[
-                Text(
-                  '所属合集',
-                  key: Key(
-                    'duplicate-media-collections-title-${item.id}',
-                  ),
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.medium,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-                SizedBox(height: spacing.xs),
+              if (headingDiffers && showCollections)
+                SizedBox(width: spacing.sm),
+              if (showCollections)
                 VideoCollectionChips(
                   collections: item.collections,
                   onCollectionTap: (collection) =>
-                      onOpenVideoCollectionDetail(
-                        context,
-                        collection.id,
-                      ),
+                      onOpenVideoCollectionDetail(context, collection.id),
                 ),
-              ],
             ],
           );
         },

@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
+import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -15,28 +17,33 @@ import 'package:sakuramedia/widgets/domain/media/quick_play_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 
-/// 时刻预览统一流程：全部时刻列表与时刻合集详情都走这里。
+/// 时刻预览统一流程：全部时刻列表、时刻合集详情与发现推荐时刻都走这里。
 ///
 /// 预览层固定按「内联导航 + 可加入合集 + 演员可点」配置，关闭后由本函数统一
 /// 分发相似图片 / 加入合集 / 播放 / 影片详情 / 演员详情，避免各入口各写一套
 /// 回执处理导致同一弹层行为不一致。平台分支与预览形态一致，读
-/// `AppPlatformScope`（查不到按桌面）。发现推荐时刻有自己的动作集，不走这里。
+/// `AppPlatformScope`（查不到按桌面）。
+///
+/// [isRecommendation] 用于发现推荐时刻：推荐条目的 `pointId` 是推荐 ID，
+/// 预览层改按 mediaId + thumbnailId 反查真实标记，加入合集也走同一反查。
 Future<void> showMomentPreviewFlow({
   required BuildContext context,
   required MomentListItem item,
   required String fallbackPath,
   Key? drawerKey,
-  required VoidCallback onPointRemoved,
+  VoidCallback? onPointRemoved,
+  bool isRecommendation = false,
 }) async {
   int? selectedActorId;
   final action = await showMomentPreviewOverlay(
     context: context,
     item: item,
-    pointId: item.pointId,
+    pointId: isRecommendation ? null : item.pointId,
     presentation: MediaPreviewPresentation.auto,
     drawerKey: drawerKey,
     onPointRemoved: onPointRemoved,
-    closeOnPointRemoved: true,
+    // 推荐条目删除标记后卡片仍在，保留预览层让用户可重新添加。
+    closeOnPointRemoved: !isRecommendation,
     allowAddToCollection: true,
     useInlineNavigation: true,
     onActorSelected: (actorId) => selectedActorId = actorId,
@@ -59,7 +66,11 @@ Future<void> showMomentPreviewFlow({
     case MediaPreviewAction.searchSimilar:
       await _searchSimilar(context, item, isMobile, fallbackPath);
     case MediaPreviewAction.addToCollection:
-      await showAddToMomentCollectionDialog(context, pointId: item.pointId);
+      await addMomentItemToCollection(
+        context,
+        item: item,
+        isRecommendation: isRecommendation,
+      );
     case MediaPreviewAction.play:
       await playMomentItem(
         context: context,
@@ -75,6 +86,55 @@ Future<void> showMomentPreviewFlow({
     case null:
       return;
   }
+}
+
+/// 时刻「加入合集」统一入口：悬停动作行与预览回执共用。
+///
+/// 真实时刻直接用它自己的 `pointId`；推荐条目的 `pointId` 是推荐 ID，先用
+/// mediaId + thumbnailId 反查真实标记，查不到时不打开选择器（避免把推荐 ID
+/// 当真实时刻写入合集）。
+Future<void> addMomentItemToCollection(
+  BuildContext context, {
+  required MomentListItem item,
+  bool isRecommendation = false,
+}) async {
+  int? pointId = item.pointId;
+  if (isRecommendation) {
+    try {
+      pointId = await _resolveRealPointId(context, item);
+    } catch (_) {
+      if (context.mounted) {
+        showToast('时刻信息加载失败，请稍后重试');
+      }
+      return;
+    }
+    if (!context.mounted) {
+      return;
+    }
+    if (pointId == null) {
+      showToast('该时刻已不存在，无法加入合集');
+      return;
+    }
+  }
+  await showAddToMomentCollectionDialog(context, pointId: pointId);
+}
+
+Future<int?> _resolveRealPointId(
+  BuildContext context,
+  MomentListItem item,
+) async {
+  if (item.mediaId <= 0) {
+    return null;
+  }
+  final points = await ProviderScope.containerOf(context, listen: false)
+      .read(mediaApiProvider)
+      .getMediaPoints(mediaId: item.mediaId);
+  for (final point in points) {
+    if (point.thumbnailId == item.thumbnailId) {
+      return point.pointId;
+    }
+  }
+  return null;
 }
 
 /// 打开时刻来源影片详情：预览回执、时刻列表与合集详情的悬停「影片」都走这里。

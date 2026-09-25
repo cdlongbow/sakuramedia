@@ -16,7 +16,8 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -45,23 +46,21 @@ class _MobileVideoCollectionsPageState
       if (!mounted) {
         return;
       }
-      unawaited(
-        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<VideoMutationChange>>(
-      videoMutationEventsProvider,
-      (previous, next) {
-        final change = next.value;
-        if (change != null) {
-          _onMutation(change);
-        }
-      },
-    );
+    ref.listen<AsyncValue<VideoMutationChange>>(videoMutationEventsProvider, (
+      previous,
+      next,
+    ) {
+      final change = next.value;
+      if (change != null) {
+        _onMutation(change);
+      }
+    });
 
     final spacing = context.appSpacing;
     final colors = context.appColors;
@@ -111,8 +110,7 @@ class _MobileVideoCollectionsPageState
       enabled: isLoading,
       child: AppAdaptiveRefreshScrollView(
         key: const Key('mobile-video-collections-scroll'),
-        onRefresh:
-            ref.read(videoCollectionsOverviewProvider.notifier).refresh,
+        onRefresh: ref.read(videoCollectionsOverviewProvider.notifier).refresh,
         slivers: <Widget>[
           if (async.hasError && collections.isEmpty)
             SliverFillRemaining(
@@ -133,25 +131,21 @@ class _MobileVideoCollectionsPageState
             SliverPadding(
               // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: AppAdaptiveCardSliver<VideoCollectionDto>(
-                gridKey: const Key('mobile-video-collections-grid'),
-                items: collections,
-                // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
-                // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
-                // 贴合内容，对齐桌面合集卡的紧凑观感（此前 0.78 会留 ~80px 底部空白）。
-                childAspectRatio: 1.25,
-                itemBuilder: (context, collection, index) {
-                  return CollectionCard.video(
+              sliver: SliverToBoxAdapter(
+                child: AppAdaptiveCardWrap<VideoCollectionDto>(
+                  key: const Key('mobile-video-collections-grid'),
+                  items: collections,
+                  orientation: AppCardGridOrientation.landscape,
+                  itemBuilder: (context, collection, _) => CollectionCard.video(
                     key: Key('mobile-video-collection-card-${collection.id}'),
                     collection: collection,
-                    onTap:
-                        () => MobileVideoCollectionDetailRouteData(
-                          collectionId: collection.id,
-                        ).push(context),
+                    onTap: () => MobileVideoCollectionDetailRouteData(
+                      collectionId: collection.id,
+                    ).push(context),
                     onEdit: () => _editCollection(collection),
                     onDelete: () => _deleteCollection(collection),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
         ],
@@ -189,8 +183,9 @@ class _MobileVideoCollectionsPageState
   }
 
   Future<void> _deleteCollection(VideoCollectionDto collection) async {
-    final name =
-        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+    final name = collection.name.trim().isEmpty
+        ? '该合集'
+        : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',

@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
+import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
@@ -632,6 +633,7 @@ class _PreviewMainImageActionTargetState
       return;
     }
 
+    triggerSelectionHaptic();
     callback(widget.fullscreenGalleryIndex, globalPosition);
   }
 

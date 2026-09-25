@@ -11,6 +11,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 ///   `PagedLoadController` 常用值一致）。
 /// - [enabled]：false 时不绑 listener（例如 tab 页非活跃时避免误触发 loadMore）。
 /// - [keys]：额外依赖列表——变化会重新绑定 listener（例如切 tab 后想切换目标）。
+///
+/// 除滚动监听外，每次构建后还会在布局完成时补查一次视口：内容不足一屏时
+/// `maxScrollExtent == 0`，滚动事件永远不会发生，只靠 listener 会漏掉分页。
+/// 补查严格限于「没占满屏幕」，不影响接近底部的现有触发语义。
 ScrollController usePagedLoadMoreScroll({
   required VoidCallback onReachBottom,
   ScrollController? external,
@@ -23,6 +27,19 @@ ScrollController usePagedLoadMoreScroll({
 
   final callback = useRef<VoidCallback>(onReachBottom);
   callback.value = onReachBottom;
+
+  // 每次构建调度一次（回调是 one-shot，开销可忽略）：数据到达、翻页追加和
+  // 刷新替换都会重建，因而都能覆盖；[loadMore] 自身会对重复触发短路。
+  if (enabled) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.hasClients) {
+        return;
+      }
+      if (controller.position.maxScrollExtent <= 0) {
+        callback.value();
+      }
+    });
+  }
 
   useEffect(() {
     if (!enabled) {

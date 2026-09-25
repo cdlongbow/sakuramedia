@@ -9,11 +9,10 @@ import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.da
 import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
-import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
+import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
-import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
@@ -28,10 +27,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
-import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 class DesktopDiscoverPage extends ConsumerStatefulWidget {
@@ -324,6 +320,8 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           .toList(growable: false),
       onItemTap: _openMomentPreview,
       onItemPlay: _openPlayerForMoment,
+      onItemOpenMovie: _openMovieDetailForMoment,
+      onItemAddToCollection: _addToCollection,
       maxRows: 2,
     );
   }
@@ -335,66 +333,36 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     );
   }
 
-  Future<void> _openMomentPreview(MomentListItem item) async {
-    final action = await showMomentPreviewOverlay(
+  Future<void> _openMomentPreview(MomentListItem item) {
+    return showMomentPreviewFlow(
       context: context,
       item: item,
-      presentation: MediaPreviewPresentation.dialog,
-    );
-    if (!mounted || action == null) {
-      return;
-    }
-    switch (action) {
-      case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(item);
-      case MediaPreviewAction.addToCollection:
-        return;
-      case MediaPreviewAction.play:
-        _openPlayerForMoment(item);
-      case MediaPreviewAction.openMovieDetail:
-        _openMovieDetailForMoment(item);
-    }
-  }
-
-  Future<bool> _searchSimilarFromMoment(MomentListItem item) async {
-    final imageUrl = resolveMomentImageUrl(item);
-    if (imageUrl.isEmpty) {
-      return false;
-    }
-    await launchDesktopImageSearchFromUrl(
-      context,
-      imageUrl: imageUrl,
       fallbackPath: desktopDiscoverPath,
-      fileName: buildMomentImageFileName(item, imageUrl),
+      isRecommendation: true,
     );
-    return true;
   }
 
   void _openPlayerForMoment(MomentListItem item) {
-    final movieNumber = item.movieNumber;
-    if (movieNumber == null || movieNumber.isEmpty) {
-      // discovery 推荐时刻当前后端只返 JAV，理论上 movieNumber 必然存在；兜底防御。
-      return;
-    }
     unawaited(
-      launchMoviePlayback(
-        context,
-        movieNumber: movieNumber,
-        mediaId: item.mediaId > 0 ? item.mediaId : null,
-        positionSeconds: item.offsetSeconds,
-        inAppFallbackPath: desktopDiscoverPath,
+      playMomentItem(
+        context: context,
+        item: item,
+        fallbackPath: desktopDiscoverPath,
       ),
     );
   }
 
   void _openMovieDetailForMoment(MomentListItem item) {
-    final movieNumber = item.movieNumber;
-    if (movieNumber == null || movieNumber.isEmpty) {
-      return;
-    }
-    context.pushDesktopMovieDetail(
-      movieNumber: movieNumber,
+    openMomentSourceMovie(
+      context: context,
+      item: item,
       fallbackPath: desktopDiscoverPath,
+    );
+  }
+
+  void _addToCollection(MomentListItem item) {
+    unawaited(
+      addMomentItemToCollection(context, item: item, isRecommendation: true),
     );
   }
 }

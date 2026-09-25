@@ -17,6 +17,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -26,9 +27,7 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final created = await showVideoCollectionDialog(context);
     if (created != null) {
-      unawaited(
-        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     }
   }
 
@@ -42,9 +41,7 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
       existing: collection,
     );
     if (updated != null) {
-      unawaited(
-        ref.read(videoCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     }
   }
 
@@ -64,7 +61,9 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
       return;
     }
     try {
-      await ref.read(videoCollectionsApiProvider).deleteCollection(collection.id);
+      await ref
+          .read(videoCollectionsApiProvider)
+          .deleteCollection(collection.id);
       await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
       if (context.mounted) {
         showToast('已删除');
@@ -121,10 +120,7 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
-        message: apiErrorMessage(
-          async.error!,
-          fallback: '合集加载失败，请稍后重试',
-        ),
+        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
     final collections = isLoading
@@ -135,37 +131,16 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
     }
     return AppSkeletonizer(
       enabled: isLoading,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final spacing = context.appSpacing.md;
-          final columns = resolveAppCardGridColumnCount(
-            context,
-            width: constraints.maxWidth,
-            spacing: spacing,
-          );
-          // 卡片保持自身内容高度，只按统一列数切宽度，不用固定比例网格。
-          final cardWidth =
-              (constraints.maxWidth - spacing * (columns - 1)) / columns;
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: [
-              for (final collection in collections)
-                SizedBox(
-                  width: cardWidth,
-                  child: CollectionCard.video(
-                    collection: collection,
-                    onTap:
-                        () => context.go(
-                          '$desktopVideoCollectionsPath/${collection.id}',
-                        ),
-                    onEdit: () => _edit(context, ref, collection),
-                    onDelete: () => _delete(context, ref, collection),
-                  ),
-                ),
-            ],
-          );
-        },
+      child: AppAdaptiveCardWrap<VideoCollectionDto>(
+        items: collections,
+        orientation: AppCardGridOrientation.landscape,
+        itemBuilder: (context, collection, _) => CollectionCard.video(
+          collection: collection,
+          onTap: () =>
+              context.go('$desktopVideoCollectionsPath/${collection.id}'),
+          onEdit: () => _edit(context, ref, collection),
+          onDelete: () => _delete(context, ref, collection),
+        ),
       ),
     );
   }

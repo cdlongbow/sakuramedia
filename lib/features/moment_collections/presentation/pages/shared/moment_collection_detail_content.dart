@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
@@ -96,8 +95,9 @@ class _MomentCollectionDetailContentState
         }
         // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
         // 骨架与数据到位后的首屏严格同形。
-        final displayState =
-            isLoading ? momentCollectionDetailPlaceholder() : state!;
+        final displayState = isLoading
+            ? momentCollectionDetailPlaceholder()
+            : state!;
         return AppSkeletonizer(
           enabled: isLoading,
           child: Column(
@@ -344,6 +344,7 @@ class _MomentCollectionDetailContentState
           context,
           width: constraints.maxWidth,
           spacing: spacing.md,
+          orientation: AppCardGridOrientation.landscape,
         );
         return GridView.builder(
           key: Key('$_keyPrefix-detail-grid'),
@@ -360,18 +361,17 @@ class _MomentCollectionDetailContentState
           itemBuilder: (context, index) {
             final point = points[index];
             final item = point.toMomentListItem();
-            if (_isMobile) {
-              return GestureDetector(
-                onLongPress: selectionMode
-                    ? null
-                    : () {
-                        enterSelection();
-                        toggleSelect(point.pointId);
-                      },
-                child: _buildGridCard(point, item, context),
-              );
-            }
-            return _buildGridCard(point, item, context);
+            return _buildGridCard(
+              point,
+              item,
+              context,
+              onLongPress: _isMobile && !selectionMode
+                  ? () {
+                      enterSelection();
+                      toggleSelect(point.pointId);
+                    }
+                  : null,
+            );
           },
         );
       },
@@ -381,21 +381,18 @@ class _MomentCollectionDetailContentState
   Widget _buildGridCard(
     MomentCollectionPointDto point,
     MomentListItem item,
-    BuildContext context,
-  ) {
-    // 桌面网格走悬停披露：收起态只留封面，悬停渐显信息与动作行；移动端没有
-    // hover，保持标题常显，信息与播放入口走点击后的预览层。
+    BuildContext context, {
+    VoidCallback? onLongPress,
+  }) {
+    // 网格统一走「整卡即封面 + 桌面悬停披露」：收起态只留封面，悬停渐显信息与
+    // 动作行；移动端没有 hover，收起态同样不铺文字，信息与播放入口走点击后的预览层。
     final canPlay = item.mediaId > 0;
     return CollectionMemberCard(
       key: ValueKey<int>(point.pointId),
       coverUrl: item.image?.bestAvailableUrl,
       coverAspectRatio: 16 / 9,
       title: item.displayLabel,
-      subtitle: _isMobile
-          ? formatMediaTimecode(item.offsetSeconds)
-          : item.hoverMeta,
-      overlayCaption: _isMobile,
-      clipOverlay: !_isMobile,
+      subtitle: item.hoverMeta,
       onPlay: canPlay && !_isMobile
           ? () => unawaited(
               playMomentItem(
@@ -421,6 +418,7 @@ class _MomentCollectionDetailContentState
       deleteButtonKey: Key('$_keyPrefix-grid-delete-${point.pointId}'),
       deleteLabel: '删除时刻',
       selectionMode: selectionMode,
+      onLongPress: onLongPress,
       isSelected: isSelected(point.pointId),
     );
   }

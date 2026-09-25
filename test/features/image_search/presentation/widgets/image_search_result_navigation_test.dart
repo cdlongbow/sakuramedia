@@ -60,6 +60,7 @@ Future<void> pumpResultPreview(
   WidgetTester tester, {
   required MediaPreviewPresentation presentation,
   bool failDetail = false,
+  bool noActors = false,
   PendingPreviewRequests? pendingRequests,
   bool settle = true,
   ValueChanged<int>? onActorSelected,
@@ -79,10 +80,11 @@ Future<void> pumpResultPreview(
       body: {
         'movie_number': 'ABC-001',
         'title': '测试影片',
-        'actors': [
-          {'id': 7, 'name': '测试演员', 'gender': 1},
-          {'id': 0, 'name': '未知演员'},
-        ],
+        if (!noActors)
+          'actors': [
+            {'id': 7, 'name': '测试演员', 'gender': 1},
+            {'id': 0, 'name': '未知演员'},
+          ],
       },
     );
     bundle.adapter.enqueueJson(
@@ -202,6 +204,29 @@ void main() {
         expect(find.byType(MediaPreviewDialog), findsNothing);
       },
     );
+    testWidgets('$presentation movie without actors drops title fallback', (
+      tester,
+    ) async {
+      await pumpResultPreview(
+        tester,
+        presentation: presentation,
+        noActors: true,
+      );
+      expect(
+        find.byKey(const Key('image-search-result-preview-movie-info-section')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('image-search-result-preview-movie-cover')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('image-search-result-preview-actor-strip')),
+        findsNothing,
+      );
+      expect(find.text('测试影片'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
     testWidgets('$presentation central play still returns play action', (
       tester,
     ) async {

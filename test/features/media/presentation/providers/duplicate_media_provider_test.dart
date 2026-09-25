@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -112,6 +113,35 @@ void main() {
       expect(adapter.hitCount('DELETE', '/media/1'), 1);
     },
   );
+
+  test('deleting a PornBox duplicate broadcasts deleted video', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/duplicates',
+      body: _duplicatePage(
+        page: 1,
+        total: 1,
+        groups: [
+          _videoDuplicateGroup([11, 22], [101, 202]),
+        ],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/11', statusCode: 204);
+
+    final events = <VideoMutationChange>[];
+    container.listen(videoMutationEventsProvider, (_, next) {
+      final change = next.value;
+      if (change != null) events.add(change);
+    });
+
+    final provider = duplicateMediaProvider(MediaListItemKind.video);
+    await container.read(provider.future);
+    await container.read(provider.notifier).deleteDuplicateMedia(mediaId: 11);
+
+    expect(events, hasLength(1));
+    expect(events.single.kind, VideoMutationKind.deleted);
+    expect(events.single.videoId, 101);
+  });
 }
 
 Map<String, dynamic> _duplicatePage({
@@ -133,6 +163,25 @@ Map<String, dynamic> _duplicateGroup(int groupId, List<int> mediaIds) {
     'media_count': mediaIds.length,
     'media_items': [
       for (final mediaId in mediaIds) _mediaItem(mediaId, groupId),
+    ],
+  };
+}
+
+Map<String, dynamic> _videoDuplicateGroup(
+  List<int> mediaIds,
+  List<int> videoItemIds,
+) {
+  return <String, dynamic>{
+    'kind': 'video',
+    'media_count': mediaIds.length,
+    'media_items': [
+      for (var i = 0; i < mediaIds.length; i++)
+        <String, dynamic>{
+          ..._mediaItem(mediaIds[i], 1),
+          'kind': 'video',
+          'movie_number': null,
+          'video_item_id': videoItemIds[i],
+        },
     ],
   };
 }

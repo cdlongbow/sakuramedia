@@ -2,9 +2,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 /// 时刻卡：整卡即封面，收起态不铺任何文字；桌面端指针悬停时底部渐显单行
 /// 「番号 / 视频号 + 内容类型 · 时刻位置」与靠右的播放按钮。
@@ -47,59 +47,24 @@ class MomentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = selectionMode && isSelected;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: (selectionMode ? onSelectedChanged != null : onTap != null)
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        key: Key('moment-card-${item.pointId}'),
-        borderRadius: context.appRadius.lgBorder,
-        onTap: selectionMode
-            ? () => onSelectedChanged?.call(!isSelected)
-            : onTap,
-        onLongPress: onLongPress,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.appColors.surfaceCard,
-            borderRadius: context.appRadius.lgBorder,
-            border: Border.all(
-              color: selected
-                  ? context.appColors.selectionBorder
-                  : context.appColors.borderSubtle,
-              width: selected ? 2 : 1,
-            ),
-            boxShadow: context.appShadows.card,
-          ),
-          child: ClipRRect(
-            borderRadius: context.appRadius.lgBorder,
-            // 骨架态整卡收敛成一块 shimmer 圆角块（非骨架态原样渲染）。
-            child: Skeleton.unite(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  AppCoverHoverInfo(
-                    enabled: !selectionMode,
-                    cover: MaskedImage(
-                      url: item.image?.bestAvailableUrl ?? '',
-                      fit: BoxFit.cover,
-                    ),
-                    infoBuilder: (context) => _buildHoverInfo(context),
-                  ),
-                  if (selectionMode)
-                    Positioned(
-                      top: context.appSpacing.xs,
-                      left: context.appSpacing.xs,
-                      child: IgnorePointer(
-                        child: SelectionCheckBadge(isSelected: isSelected),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+    final handleTap = selectionMode
+        ? onSelectedChanged == null
+              ? null
+              : () => onSelectedChanged!(!isSelected)
+        : onTap;
+    return AppInteractiveSurface(
+      key: Key('moment-card-${item.pointId}'),
+      onTap: handleTap,
+      onLongPress: onLongPress,
+      child: AppCoverCard(
+        hoverEnabled: !selectionMode,
+        selectionMode: selectionMode,
+        isSelected: isSelected,
+        cover: MaskedImage(
+          url: item.image?.bestAvailableUrl ?? '',
+          fit: BoxFit.cover,
         ),
+        infoBuilder: (context) => _buildHoverInfo(context),
       ),
     );
   }

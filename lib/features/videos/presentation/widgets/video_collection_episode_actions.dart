@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_episode_queue_item.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
@@ -99,46 +100,41 @@ class VideoEpisodeQueueItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final onContextActions = this.onContextActions;
     final onMoreActions = this.onMoreActions;
-    return GestureDetector(
-      onSecondaryTapDown: onContextActions == null
-          ? null
-          : (details) => onContextActions(details.globalPosition),
-      onLongPressStart: onContextActions == null
-          ? null
-          : (details) => onContextActions(details.globalPosition),
-      child: CollectionEpisodeQueueItem(
-        itemKey: Key('video-collection-play-queue-item-${video.id}'),
-        coverUrl: video.coverImage?.bestAvailableUrl,
-        coverStyle: CollectionQueueCoverStyle.containOnMuted,
-        title: video.preferredTitle,
-        subtitle: '第 ${index + 1} 集',
-        isCurrent: isCurrent,
-        onTap: onPlay,
-        trailing: Builder(
-          builder: (buttonContext) => AppIconButton(
-            key: Key('video-episode-more-${video.id}'),
-            size: AppIconButtonSize.regular,
-            tooltip: '选集操作',
-            icon: isBusy
-                ? SizedBox.square(
-                    dimension: context.appComponentTokens.iconSizeSm,
-                    child: const CircularProgressIndicator.adaptive(
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.more_horiz_rounded),
-            onPressed: onMoreActions == null
-                ? null
-                : () {
-                    final box =
-                        buttonContext.findRenderObject()! as RenderBox;
-                    onMoreActions(
-                      box.localToGlobal(Offset(box.size.width, box.size.height)),
-                    );
-                  },
-          ),
+    final item = CollectionEpisodeQueueItem(
+      itemKey: Key('video-collection-play-queue-item-${video.id}'),
+      coverUrl: video.coverImage?.bestAvailableUrl,
+      coverStyle: CollectionQueueCoverStyle.containOnMuted,
+      title: video.preferredTitle,
+      subtitle: '第 ${index + 1} 集',
+      isCurrent: isCurrent,
+      onTap: onPlay,
+      trailing: Builder(
+        builder: (buttonContext) => AppIconButton(
+          key: Key('video-episode-more-${video.id}'),
+          size: AppIconButtonSize.regular,
+          tooltip: '选集操作',
+          icon: isBusy
+              ? SizedBox.square(
+                  dimension: context.appComponentTokens.iconSizeSm,
+                  child: const CircularProgressIndicator.adaptive(
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.more_horiz_rounded),
+          onPressed: onMoreActions == null
+              ? null
+              : () {
+                  final box = buttonContext.findRenderObject()! as RenderBox;
+                  onMoreActions(
+                    box.localToGlobal(Offset(box.size.width, box.size.height)),
+                  );
+                },
         ),
       ),
     );
+    if (onContextActions == null) {
+      return item;
+    }
+    return AppContextMenuTrigger(onRequestMenu: onContextActions, child: item);
   }
 }

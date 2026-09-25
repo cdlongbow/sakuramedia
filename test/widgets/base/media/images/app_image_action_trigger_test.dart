@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
@@ -34,6 +35,21 @@ void main() {
   testWidgets('image action trigger opens menu on long press start', (
     WidgetTester tester,
   ) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall call) async {
+        calls.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
     Offset? menuPosition;
 
     await tester.pumpWidget(
@@ -54,6 +70,10 @@ void main() {
 
     expect(menuPosition, isNotNull);
     expect(menuPosition, equals(center));
+    expect(
+      calls.map((call) => '${call.method}:${call.arguments}'),
+      contains('HapticFeedback.vibrate:HapticFeedbackType.selectionClick'),
+    );
   });
 
   testWidgets('image action trigger opens menu on secondary tap', (

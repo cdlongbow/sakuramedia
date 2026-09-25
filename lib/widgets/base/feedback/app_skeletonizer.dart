@@ -12,8 +12,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 ///   [SolidColorEffect]，避免持续动画；
 /// - 加载态默认屏蔽子树指针事件（`ignorePointers`），占位渲染期间的交互回调
 ///   不会触发；品牌底色元素用 `Skeleton.shade` 随骨架灰化；
-/// - 共享卡片内部用 `Skeleton.unite` 把整卡收敛成一块 shimmer 圆角块，卡内角标 /
+/// - 共享卡片内部用 [AppSkeletonUnite] 把整卡收敛成一块 shimmer 圆角块，卡内角标 /
 ///   文字骨块不再单独透出，卡片边框 / 阴影留在 unite 外层；非骨架态原样渲染；
+///   合并骨块必须显式传卡片自身圆角，不要直接调用 `Skeleton.unite`；
 /// - 加载态对屏幕阅读器隐藏占位内容（占位文案用 `BoneMock`，不是真实数据）。
 ///
 /// [AppSkeletonizer.sliver] 用于把骨架网格直接放进 `CustomScrollView` 的
@@ -62,5 +63,35 @@ class AppSkeletonizer extends StatelessWidget {
       textBoneBorderRadius: textBoneBorderRadius,
       child: ExcludeSemantics(excluding: enabled, child: child),
     );
+  }
+}
+
+/// 卡片级骨架合并的统一入口：`Skeleton.unite` 的强制圆角版本。
+///
+/// 为什么不能直接用 `Skeleton.unite`：skeletonizer 合并骨块时**不保留原布局的
+/// 圆角**，而是取合并区内「最大后代」的圆角
+/// （`UnitingCanvas.borderRadius`，只有 `drawRRect` / `drawCircle` /
+/// `drawParagraph` 会更新它）。卡片里的药丸角标用 `appRadius.pillBorder`
+/// （半径 999），一旦它成为最大后代，整张卡会被画成椭圆 / 胶囊——影片卡的热度
+/// 胶囊就是这样把 shimmer 亮斑变成椭圆的。
+///
+/// 这里强制显式声明 [borderRadius]（取卡片外层 `DecoratedBox` / `ClipRRect`
+/// 同一个圆角 token），合并骨块便始终与卡片同形，不受卡内元素影响；
+/// 未启用骨架化时 `Skeleton.unite` 原样渲染子树，与直接使用无行为差异。
+class AppSkeletonUnite extends StatelessWidget {
+  const AppSkeletonUnite({
+    super.key,
+    required this.borderRadius,
+    required this.child,
+  });
+
+  /// 合并骨块圆角，应与卡片外层装饰 / 裁剪使用同一个 `appRadius` token。
+  final BorderRadiusGeometry borderRadius;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeleton.unite(borderRadius: borderRadius, child: child);
   }
 }

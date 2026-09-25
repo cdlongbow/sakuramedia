@@ -1,11 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 enum _ClipCardAction { openMovie, addToCollection, rename, delete }
 
@@ -29,6 +30,7 @@ class ClipGridCard extends StatelessWidget {
     this.selectionMode = false,
     this.isSelected = false,
     this.onSelectedChanged,
+    this.onLongPress,
     this.tapKey,
   });
 
@@ -52,6 +54,10 @@ class ClipGridCard extends StatelessWidget {
   final bool isSelected;
   final ValueChanged<bool>? onSelectedChanged;
 
+  /// 整卡长按（移动端进入多选）；走 [AppInteractiveSurface] 的统一触感，
+  /// 调用方不要再自己包 `GestureDetector`。
+  final VoidCallback? onLongPress;
+
   /// InkWell Key,测试锚点。桌面 grid 传 `clip-grid-card-tap-<id>`,
   /// 移动 cover 薄壳传 `clip-cover-card-<id>`。
   final Key? tapKey;
@@ -66,71 +72,33 @@ class ClipGridCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final coverUrl = clip.coverImage?.bestAvailableUrl;
-    final selected = selectionMode && isSelected;
+    final handleTap = selectionMode
+        ? onSelectedChanged == null
+              ? null
+              : () => onSelectedChanged!(!isSelected)
+        : onTap;
 
-    final card = Material(
-      color: colors.surfaceCard,
-      borderRadius: context.appRadius.mdBorder,
-      child: InkWell(
-        mouseCursor: selectionMode && onSelectedChanged == null
-            ? SystemMouseCursors.basic
-            : SystemMouseCursors.click,
-        key: tapKey,
-        borderRadius: context.appRadius.mdBorder,
-        onTap: selectionMode
-            ? () => onSelectedChanged?.call(!isSelected)
-            : onTap,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: context.appRadius.mdBorder,
-            border: Border.all(
-              color: selected ? colors.selectionBorder : colors.borderSubtle,
-              width: selected ? 2 : 1,
-            ),
-            boxShadow: context.appShadows.card,
-          ),
-          child: ClipRRect(
-            borderRadius: context.appRadius.mdBorder,
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              // 骨架态整卡收敛成一块 shimmer 圆角块（非骨架态原样渲染）。
-              child: Skeleton.unite(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    AppCoverHoverInfo(
-                      enabled: !selectionMode,
-                      cover: coverUrl != null && coverUrl.isNotEmpty
-                          ? MaskedImage(url: coverUrl, fit: BoxFit.cover)
-                          : ColoredBox(color: colors.surfaceMuted),
-                      infoBuilder: (context) => _buildHoverInfo(context),
-                    ),
-                    if (selectionMode)
-                      Positioned(
-                        top: context.appSpacing.xs,
-                        left: context.appSpacing.xs,
-                        child: IgnorePointer(
-                          child: SelectionCheckBadge(isSelected: isSelected),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+    final card = AppInteractiveSurface(
+      key: tapKey,
+      onTap: handleTap,
+      onLongPress: onLongPress,
+      child: AppCoverCard(
+        coverAspectRatio: 16 / 9,
+        hoverEnabled: !selectionMode,
+        selectionMode: selectionMode,
+        isSelected: isSelected,
+        cover: coverUrl != null && coverUrl.isNotEmpty
+            ? MaskedImage(url: coverUrl, fit: BoxFit.cover)
+            : ColoredBox(color: colors.surfaceMuted),
+        infoBuilder: (context) => _buildHoverInfo(context),
       ),
     );
 
     if (selectionMode || !_hasMenu) {
       return card;
     }
-    return GestureDetector(
-      behavior: HitTestBehavior.deferToChild,
-      onSecondaryTapDown: (details) =>
-          _showContextMenu(context, details.globalPosition),
-      onLongPressStart: (details) =>
-          _showContextMenu(context, details.globalPosition),
+    return AppContextMenuTrigger(
+      onRequestMenu: (position) => _showContextMenu(context, position),
       child: card,
     );
   }
@@ -212,20 +180,14 @@ class ClipGridCard extends StatelessWidget {
       globalPosition: globalPosition,
       items: [
         if (openMovie != null)
-          const AppMenuItem(
-            value: _ClipCardAction.openMovie,
-            label: '影片',
-          ),
+          const AppMenuItem(value: _ClipCardAction.openMovie, label: '影片'),
         if (addToCollection != null)
           const AppMenuItem(
             value: _ClipCardAction.addToCollection,
             label: '加入合集',
           ),
         if (rename != null)
-          const AppMenuItem(
-            value: _ClipCardAction.rename,
-            label: '重命名',
-          ),
+          const AppMenuItem(value: _ClipCardAction.rename, label: '重命名'),
         if (delete != null)
           const AppMenuItem(
             value: _ClipCardAction.delete,

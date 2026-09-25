@@ -2,10 +2,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/duplicate_media_group_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/session_scoped_invalidation.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 
 part 'duplicate_media_provider.g.dart';
 
@@ -69,6 +71,11 @@ class DuplicateMedia extends _$DuplicateMedia
       (group) => group.mediaItems.any((item) => item.id == mediaId),
     );
     if (groupIndex < 0) return;
+
+    // 非 JAV 媒体删除会同步删除视频条目并级联清理合集成员，通知 videos 域就地补丁。
+    reportDeletedVideoItems([
+      now.items[groupIndex].mediaItems.firstWhere((item) => item.id == mediaId),
+    ], ref.read(videoMutationEventsProvider.notifier).reportDeleted);
 
     final group = now.items[groupIndex];
     final remainingItems = group.mediaItems

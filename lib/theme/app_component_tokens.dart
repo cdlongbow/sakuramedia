@@ -4,11 +4,13 @@ import 'package:material_ui/material_ui.dart';
 
 @immutable
 class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
-  /// 全站卡片网格统一规格：目标列宽与列数上限。
+  /// 全站卡片网格统一规格：按卡片朝向区分的三档目标列宽与列数上限。
   ///
-  /// 列表页、合集列表和合集详情都从这里取值（桌面/移动两套构造器共用）。调整
-  /// 卡片密度时只改这两个常量，界面其余部分不需要再动。
-  static const double defaultCardGridTargetWidth = 220;
+  /// 卡片列表页、合集列表和合集详情都从这里取值（桌面/移动两套构造器共用）。
+  /// 调整卡片密度时只改这三个目标列宽常量，界面其余部分不需要再动。
+  static const double defaultCardGridPortraitTargetWidth = 240;
+  static const double defaultCardGridMixedTargetWidth = 320;
+  static const double defaultCardGridLandscapeTargetWidth = 320;
   static const int defaultCardGridMaxColumns = 8;
 
   const AppComponentTokens({
@@ -18,7 +20,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.movieCardTargetWidth,
     required this.movieThumbnailTargetWidth,
     required this.movieCardAspectRatio,
-    required this.cardGridTargetWidth,
+    required this.cardGridPortraitTargetWidth,
+    required this.cardGridMixedTargetWidth,
+    required this.cardGridLandscapeTargetWidth,
     required this.cardGridMaxColumns,
     required this.iconSizeXs,
     required this.iconSize2xs,
@@ -101,7 +105,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardTargetWidth = 220,
       movieThumbnailTargetWidth = 128,
       movieCardAspectRatio = 0.7,
-      cardGridTargetWidth = defaultCardGridTargetWidth,
+      cardGridPortraitTargetWidth = defaultCardGridPortraitTargetWidth,
+      cardGridMixedTargetWidth = defaultCardGridMixedTargetWidth,
+      cardGridLandscapeTargetWidth = defaultCardGridLandscapeTargetWidth,
       cardGridMaxColumns = defaultCardGridMaxColumns,
       iconSizeXs = 16,
       iconSize2xs = 14,
@@ -185,7 +191,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieCardTargetWidth = 220,
       movieThumbnailTargetWidth = 128,
       movieCardAspectRatio = 0.7,
-      cardGridTargetWidth = defaultCardGridTargetWidth,
+      cardGridPortraitTargetWidth = defaultCardGridPortraitTargetWidth,
+      cardGridMixedTargetWidth = defaultCardGridMixedTargetWidth,
+      cardGridLandscapeTargetWidth = defaultCardGridLandscapeTargetWidth,
       cardGridMaxColumns = defaultCardGridMaxColumns,
       iconSizeXs = 16,
       iconSize2xs = 14,
@@ -267,8 +275,14 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   final double movieThumbnailTargetWidth;
   final double movieCardAspectRatio;
 
-  /// 卡片网格（列表页 / 合集列表 / 合集详情）统一目标列宽。
-  final double cardGridTargetWidth;
+  /// 卡片网格（列表页 / 合集列表 / 合集详情）统一目标列宽，按卡片朝向分档。
+  ///
+  /// - [cardGridPortraitTargetWidth]：整页竖图卡片（影片海报、女优等）。
+  /// - [cardGridMixedTargetWidth]：横竖混排、布局前无法判定朝向的网格。
+  /// - [cardGridLandscapeTargetWidth]：整页横图卡片（16:9 切片 / 时刻 / 图搜等）。
+  final double cardGridPortraitTargetWidth;
+  final double cardGridMixedTargetWidth;
+  final double cardGridLandscapeTargetWidth;
 
   /// 卡片网格统一列数上限。
   final int cardGridMaxColumns;
@@ -368,7 +382,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? movieCardTargetWidth,
     double? movieThumbnailTargetWidth,
     double? movieCardAspectRatio,
-    double? cardGridTargetWidth,
+    double? cardGridPortraitTargetWidth,
+    double? cardGridMixedTargetWidth,
+    double? cardGridLandscapeTargetWidth,
     int? cardGridMaxColumns,
     double? iconSizeXs,
     double? iconSize2xs,
@@ -455,7 +471,12 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieThumbnailTargetWidth:
           movieThumbnailTargetWidth ?? this.movieThumbnailTargetWidth,
       movieCardAspectRatio: movieCardAspectRatio ?? this.movieCardAspectRatio,
-      cardGridTargetWidth: cardGridTargetWidth ?? this.cardGridTargetWidth,
+      cardGridPortraitTargetWidth:
+          cardGridPortraitTargetWidth ?? this.cardGridPortraitTargetWidth,
+      cardGridMixedTargetWidth:
+          cardGridMixedTargetWidth ?? this.cardGridMixedTargetWidth,
+      cardGridLandscapeTargetWidth:
+          cardGridLandscapeTargetWidth ?? this.cardGridLandscapeTargetWidth,
       cardGridMaxColumns: cardGridMaxColumns ?? this.cardGridMaxColumns,
       iconSizeXs: iconSizeXs ?? this.iconSizeXs,
       iconSize2xs: iconSize2xs ?? this.iconSize2xs,
@@ -619,9 +640,19 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
         other.movieCardAspectRatio,
         t,
       )!,
-      cardGridTargetWidth: lerpDouble(
-        cardGridTargetWidth,
-        other.cardGridTargetWidth,
+      cardGridPortraitTargetWidth: lerpDouble(
+        cardGridPortraitTargetWidth,
+        other.cardGridPortraitTargetWidth,
+        t,
+      )!,
+      cardGridMixedTargetWidth: lerpDouble(
+        cardGridMixedTargetWidth,
+        other.cardGridMixedTargetWidth,
+        t,
+      )!,
+      cardGridLandscapeTargetWidth: lerpDouble(
+        cardGridLandscapeTargetWidth,
+        other.cardGridLandscapeTargetWidth,
         t,
       )!,
       cardGridMaxColumns: lerpDouble(

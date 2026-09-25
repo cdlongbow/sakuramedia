@@ -4,12 +4,12 @@ import 'package:sakuramedia/features/moment_collections/data/dto/moment_collecti
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_cover_card.dart';
 
-/// 合集封面卡：16:9 封面 + 名称 + 计数角标，右上角可选「···」菜单（编辑 / 删除）。
+/// 合集封面卡：16:9 封面 + 名称 + 计数角标，「编辑 / 删除」走右键 / 长按菜单。
 ///
-/// 切片 / 视频 / 时刻合集结构完全一致，仅在 DTO、计数字段、占位图标、封面 `fit` 与
-/// key 前缀上有差异，统一为本卡片的 [CollectionCard.clip] / [CollectionCard.video] /
-/// [CollectionCard.moment] 命名构造，各自把差异封装在一处。底层渲染仍复用
-/// [CollectionCoverCard]。
+/// 切片 / 视频 / 时刻合集结构完全一致，仅在 DTO、计数字段、占位与计数角标图标、
+/// 封面 `fit` 与 key 前缀上有差异，统一为本卡片的 [CollectionCard.clip] /
+/// [CollectionCard.video] / [CollectionCard.moment] 命名构造，各自把差异封装在一处。
+/// 底层渲染仍复用 [CollectionCoverCard]。
 ///
 /// 用于合集主页横滑区（仅 [onTap]）与合集列表网格（带 [onEdit] / [onDelete]）。
 /// 卡片宽度由调用方通过外层约束（如 `SizedBox(width: ...)`）控制。
@@ -20,6 +20,7 @@ class CollectionCard extends StatelessWidget {
     required this.menuKey,
     required this.title,
     required this.count,
+    required this.countIcon,
     required this.coverUrl,
     required this.coverFit,
     required this.placeholderIcon,
@@ -42,6 +43,7 @@ class CollectionCard extends StatelessWidget {
       menuKey: Key('video-collection-more-${collection.id}'),
       title: collection.name,
       count: collection.itemCount,
+      countIcon: Icons.video_collection_rounded,
       coverUrl: collection.coverImage?.bestAvailableUrl,
       coverFit: BoxFit.contain,
       placeholderIcon: Icons.video_collection_outlined,
@@ -65,6 +67,7 @@ class CollectionCard extends StatelessWidget {
       menuKey: Key('moment-collection-more-${collection.id}'),
       title: collection.name,
       count: collection.pointCount,
+      countIcon: Icons.bookmarks_rounded,
       coverUrl: collection.coverImage?.bestAvailableUrl,
       coverFit: BoxFit.cover,
       placeholderIcon: Icons.bookmarks_outlined,
@@ -88,6 +91,7 @@ class CollectionCard extends StatelessWidget {
       menuKey: Key('clip-collection-more-${collection.id}'),
       title: collection.name,
       count: collection.clipCount,
+      countIcon: Icons.video_library_rounded,
       coverUrl: collection.coverImage?.bestAvailableUrl,
       coverFit: BoxFit.cover,
       placeholderIcon: Icons.video_library_outlined,
@@ -101,6 +105,7 @@ class CollectionCard extends StatelessWidget {
   final Key menuKey;
   final String title;
   final int count;
+  final IconData countIcon;
   final String? coverUrl;
   final BoxFit coverFit;
   final IconData placeholderIcon;
@@ -115,6 +120,7 @@ class CollectionCard extends StatelessWidget {
       menuKey: menuKey,
       title: title,
       count: count,
+      countIcon: countIcon,
       coverUrl: coverUrl,
       coverFit: coverFit,
       placeholderIcon: placeholderIcon,

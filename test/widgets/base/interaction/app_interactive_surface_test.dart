@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
@@ -11,6 +12,7 @@ void main() {
     WidgetTester tester, {
     bool enabled = true,
     VoidCallback? onTap,
+    VoidCallback? onLongPress,
   }) {
     return tester.pumpWidget(
       MaterialApp(
@@ -20,6 +22,7 @@ void main() {
             child: AppInteractiveSurface(
               enabled: enabled,
               onTap: enabled ? (onTap ?? () {}) : null,
+              onLongPress: enabled ? onLongPress : null,
               child: const SizedBox(
                 width: 96,
                 height: 32,
@@ -102,5 +105,46 @@ void main() {
     await tester.pump();
     expect(taps, 0);
     expect(surfaceOpacity(tester).opacity, 1);
+  });
+
+  testWidgets('长按触发轻触感并回调，普通点击不震', (tester) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall call) async {
+        calls.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    var longPresses = 0;
+    await pumpSurface(tester, onLongPress: () => longPresses += 1);
+
+    final center = tester.getCenter(find.byType(AppInteractiveSurface));
+    final gesture = await tester.startGesture(center);
+    await tester.pump(kLongPressTimeout);
+    await gesture.up();
+    await tester.pump();
+
+    expect(longPresses, 1);
+    expect(
+      calls.map((call) => '${call.method}:${call.arguments}'),
+      contains('HapticFeedback.vibrate:HapticFeedbackType.selectionClick'),
+    );
+
+    calls.clear();
+    await tester.tap(find.byType(AppInteractiveSurface));
+    await tester.pump();
+
+    expect(
+      calls.where((call) => call.method == 'HapticFeedback.vibrate'),
+      isEmpty,
+    );
   });
 }

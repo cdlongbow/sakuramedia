@@ -5,9 +5,9 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 /// 非 JAV 视频列表卡片：整卡即封面，收起态不铺任何文字。
 ///
@@ -66,63 +66,25 @@ class VideoSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final selected = selectionMode && isSelected;
-    final interactive = selectionMode
-        ? onSelectedChanged != null
-        : onTap != null;
+    final handleTap = selectionMode
+        ? onSelectedChanged == null
+              ? null
+              : () => onSelectedChanged!(!isSelected)
+        : onTap;
 
-    return Material(
+    return KeyedSubtree(
       key: Key('video-summary-card-${video.id}'),
-      color: Colors.transparent,
-      child: InkWell(
+      child: AppInteractiveSurface(
         key: selectionMode
             ? Key('video-summary-card-select-${video.id}')
             : Key('video-summary-card-tap-${video.id}'),
-        mouseCursor: interactive
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        borderRadius: context.appRadius.lgBorder,
-        onTap: selectionMode
-            ? () => onSelectedChanged?.call(!isSelected)
-            : onTap,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.surfaceCard,
-            borderRadius: context.appRadius.lgBorder,
-            border: Border.all(
-              color: selected ? colors.selectionBorder : colors.borderSubtle,
-              width: selected ? 2 : 1,
-            ),
-            boxShadow: context.appShadows.card,
-          ),
-          child: ClipRRect(
-            borderRadius: context.appRadius.lgBorder,
-            // 骨架态整卡收敛成一块 shimmer 圆角块（非骨架态原样渲染）。
-            child: Skeleton.unite(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  AppCoverHoverInfo(
-                    enabled: !selectionMode,
-                    cover: _VideoCover(
-                      videoId: video.id,
-                      coverImage: video.coverImage,
-                    ),
-                    infoBuilder: (context) => _buildHoverInfo(context),
-                  ),
-                  if (selectionMode)
-                    Positioned(
-                      top: context.appSpacing.xs,
-                      left: context.appSpacing.xs,
-                      child: IgnorePointer(
-                        child: SelectionCheckBadge(isSelected: isSelected),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+        onTap: handleTap,
+        child: AppCoverCard(
+          hoverEnabled: !selectionMode,
+          selectionMode: selectionMode,
+          isSelected: isSelected,
+          cover: _VideoCover(videoId: video.id, coverImage: video.coverImage),
+          infoBuilder: (context) => _buildHoverInfo(context),
         ),
       ),
     );
@@ -201,7 +163,6 @@ class _VideoCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final componentTokens = context.appComponentTokens;
     final coverUrl = coverImage?.bestAvailableUrl.trim();
 
     if (coverUrl != null && coverUrl.isNotEmpty) {
@@ -210,27 +171,10 @@ class _VideoCover extends StatelessWidget {
       return MaskedImage(url: coverUrl, fit: BoxFit.cover);
     }
 
-    return DecoratedBox(
+    // 纯图片卡缺图态统一为 muted 纯色块：不带渐变 / 居中图标。
+    return ColoredBox(
       key: Key('video-summary-card-placeholder-$videoId'),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.surfaceMuted,
-            Theme.of(
-              context,
-            ).colorScheme.primaryContainer.withValues(alpha: 0.38),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.video_library_outlined,
-          size: componentTokens.iconSize3xl,
-          color: context.appTextPalette.muted,
-        ),
-      ),
+      color: colors.surfaceMuted,
     );
   }
 }

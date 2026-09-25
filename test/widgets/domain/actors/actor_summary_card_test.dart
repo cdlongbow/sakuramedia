@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -123,4 +124,60 @@ void main() {
       );
     },
   );
+
+  testWidgets('actor summary card reveals subscription action on hover', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    var subscribed = 0;
+    var tapped = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: ActorSummaryCard(
+            actor: const ActorListItemDto(
+              id: 4,
+              javdbId: 'Actor4',
+              name: '深田咏美',
+              aliasName: '',
+              profileImage: null,
+              isSubscribed: false,
+            ),
+            onTap: () => tapped++,
+            onSubscriptionTap: () => subscribed++,
+          ),
+        ),
+      ),
+    );
+
+    // 收起态：姓名常显，悬停动作不在树里。
+    expect(find.text('深田咏美'), findsOneWidget);
+    expect(
+      find.byKey(const Key('actor-summary-card-subscription-action-4')),
+      findsNothing,
+    );
+
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const Key('actor-summary-card-4'))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('actor-summary-card-subscription-action-4')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('actor-summary-card-subscription-action-4')),
+    );
+    await tester.pump();
+    expect(subscribed, 1);
+    expect(tapped, 0);
+    expect(tester.takeException(), isNull);
+  });
 }

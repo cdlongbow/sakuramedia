@@ -10,7 +10,6 @@ import 'package:sakuramedia/features/moment_collections/presentation/moment_coll
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
-import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/pick_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
@@ -400,9 +399,13 @@ class MomentsContent extends HookConsumerWidget {
             final collection = display[index];
             return SizedBox(
               width: itemWidth,
-              child: CollectionCard.moment(
-                collection: collection,
-                onTap: () => onOpenCollectionDetail?.call(collection.id),
+              // 卡片按内容自然高度渲染，避免被固定行高拉伸后在标题下方留白。
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: CollectionCard.moment(
+                  collection: collection,
+                  onTap: () => onOpenCollectionDetail?.call(collection.id),
+                ),
               ),
             );
           },
@@ -702,7 +705,7 @@ class MomentsContent extends HookConsumerWidget {
           fallbackPath: previewFallbackPath,
         ),
         onItemAddToCollection: (item) => unawaited(
-          showAddToMomentCollectionDialog(context, pointId: item.pointId),
+          addMomentItemToCollection(context, item: item),
         ),
         onItemDelete: (item) => unawaited(_deleteItem(context, ref, item)),
         selectionMode: selectionMode,

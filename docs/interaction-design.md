@@ -18,7 +18,14 @@
 桌面与移动使用同一套组件与 token，不做平台差异。
 
 已接入 `AppInteractiveSurface`：`AppButton`、`AppTextButton`、`AppIconButton`、
-`AppSwitch`、`AppFilterEntryButton`、`AppLeftCoverCard`、`MovieSummaryCard`（多选态）。
+`AppSwitch`、`AppFilterEntryButton`、`AppLeftCoverCard`、`ActorSummaryCard`、
+封面网格卡（切片 / 时刻 / 视频 / 合集成员 / 合集封面 / 图片搜索）与
+`MovieSummaryCard`（多选态；普通点击经 `AppImageActionTrigger`，按下反馈与其一致）。
+封面悬停动作按钮（`AppCoverHoverActionButton`）同样走它。
+
+长按进入多选 / 弹菜单统一由交互层补一次选择触感，调用方不要再手写
+`triggerSelectionHaptic()`：整卡长按走 `AppInteractiveSurface.onLongPress`，
+带全局坐标的右键 / 长按菜单走 `AppContextMenuTrigger`（`app_context_menu_trigger.dart`）。
 
 ## 待清理（与基线不一致的存量）
 

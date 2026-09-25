@@ -292,11 +292,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('移动端网格保持标题常显且没有悬停播放键', (WidgetTester tester) async {
+  testWidgets('移动端网格收起态不铺文字且没有悬停播放键', (WidgetTester tester) async {
     enqueueInitialLoad(total: 1);
     await pumpMobile(tester);
 
-    expect(find.text('ABC-010'), findsOneWidget);
+    expect(find.textContaining('ABC-010', findRichText: true), findsNothing);
+    expect(find.textContaining('01:40', findRichText: true), findsNothing);
     expect(
       find.byKey(const Key('mobile-moment-collection-grid-play-10')),
       findsNothing,

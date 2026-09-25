@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -85,6 +86,33 @@ void main() {
     expect(state.deletingMediaId, isNull);
     expect(adapter.hitCount('DELETE', '/media/1'), 1);
   });
+
+  test('deleting an invalid PornBox media broadcasts deleted video', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: _invalidMediaPage(
+        total: 1,
+        items: [_invalidMediaJson(1, videoItemId: 101)],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+
+    final events = <VideoMutationChange>[];
+    container.listen(videoMutationEventsProvider, (_, next) {
+      final change = next.value;
+      if (change != null) events.add(change);
+    });
+
+    await container.read(invalidMediaProvider.future);
+    await container
+        .read(invalidMediaProvider.notifier)
+        .deleteInvalidMedia(mediaId: 1);
+
+    expect(events, hasLength(1));
+    expect(events.single.kind, VideoMutationKind.deleted);
+    expect(events.single.videoId, 101);
+  });
 }
 
 Map<String, dynamic> _invalidMediaPage({
@@ -101,11 +129,11 @@ Map<String, dynamic> _invalidMediaPage({
   };
 }
 
-Map<String, dynamic> _invalidMediaJson(int id) {
+Map<String, dynamic> _invalidMediaJson(int id, {int? videoItemId}) {
   return <String, dynamic>{
     'id': id,
-    'movie_number': 'ABC-$id',
-    'video_item_id': null,
+    'movie_number': videoItemId == null ? 'ABC-$id' : null,
+    'video_item_id': videoItemId,
     'movie_title': 'Movie $id',
     'cover_image': null,
     'thin_cover_image': null,

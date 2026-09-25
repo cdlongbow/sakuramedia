@@ -10,6 +10,10 @@ class ImageSearchResultSliver extends StatelessWidget {
     required this.items,
     required this.onItemTap,
     this.onItemMenuRequested,
+    this.onItemSearchSimilar,
+    this.onItemSaveToLocal,
+    this.onItemPlay,
+    this.onItemMovieDetail,
   });
 
   final List<ImageSearchResultItemDto> items;
@@ -17,12 +21,18 @@ class ImageSearchResultSliver extends StatelessWidget {
   final void Function(ImageSearchResultItemDto item, Offset globalPosition)?
   onItemMenuRequested;
 
+  /// 悬停动作行的回调；为 `null` 时对应按钮不显示。
+  final ValueChanged<ImageSearchResultItemDto>? onItemSearchSimilar;
+  final ValueChanged<ImageSearchResultItemDto>? onItemSaveToLocal;
+  final ValueChanged<ImageSearchResultItemDto>? onItemPlay;
+  final ValueChanged<ImageSearchResultItemDto>? onItemMovieDetail;
+
   @override
   Widget build(BuildContext context) {
     return AppAdaptiveCardSliver<ImageSearchResultItemDto>(
       gridKey: const Key('desktop-image-search-result-grid'),
       items: items,
-      childAspectRatio: 16 / 10,
+      childAspectRatio: 16 / 9,
       itemBuilder:
           (context, item, index) => ImageSearchResultCard(
             item: item,
@@ -32,6 +42,19 @@ class ImageSearchResultSliver extends StatelessWidget {
                     ? null
                     : (globalPosition) =>
                         onItemMenuRequested!(item, globalPosition),
+            onSearchSimilar:
+                onItemSearchSimilar == null
+                    ? null
+                    : () => onItemSearchSimilar!(item),
+            onSaveToLocal:
+                onItemSaveToLocal == null
+                    ? null
+                    : () => onItemSaveToLocal!(item),
+            onPlay: onItemPlay == null ? null : () => onItemPlay!(item),
+            onMovieDetail:
+                onItemMovieDetail == null
+                    ? null
+                    : () => onItemMovieDetail!(item),
           ),
     );
   }

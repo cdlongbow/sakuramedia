@@ -93,7 +93,6 @@ void main() {
     expect(componentTokens.movieCardTargetWidth, 220);
     expect(componentTokens.movieThumbnailTargetWidth, 128);
     expect(componentTokens.movieCardAspectRatio, 0.7);
-    expect(componentTokens.cardGridTargetWidth, 220);
     expect(componentTokens.cardGridMaxColumns, 8);
     expect(componentTokens.iconSizeXs, 16);
     expect(componentTokens.iconSize2xs, 14);
@@ -226,7 +225,6 @@ void main() {
       sakuraMobileThemeData.appComponentTokens.mobileFollowMovieCardHeight,
       158,
     );
-    expect(sakuraMobileThemeData.appComponentTokens.cardGridTargetWidth, 220);
     expect(sakuraMobileThemeData.appComponentTokens.cardGridMaxColumns, 8);
   });
 }

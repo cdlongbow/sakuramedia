@@ -35,26 +35,26 @@ import 'package:sakuramedia/widgets/domain/collections/collection_member_views.d
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-typedef ClipPlaySingle = Future<void> Function(
-  BuildContext context,
-  MediaClipDto clip,
-);
+typedef ClipPlaySingle =
+    Future<void> Function(BuildContext context, MediaClipDto clip);
 
-typedef ClipConfirm = Future<bool> Function(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  required Key confirmKey,
-  Key? drawerKey,
-  Future<void> Function()? onConfirm,
-});
+typedef ClipConfirm =
+    Future<bool> Function(
+      BuildContext context, {
+      required String title,
+      required String message,
+      required String confirmLabel,
+      required Key confirmKey,
+      Key? drawerKey,
+      Future<void> Function()? onConfirm,
+    });
 
-typedef ClipPlayAllBuilder = Widget Function(
-  BuildContext context, {
-  required bool enabled,
-  required VoidCallback onPlayFrom,
-});
+typedef ClipPlayAllBuilder =
+    Widget Function(
+      BuildContext context, {
+      required bool enabled,
+      required VoidCallback onPlayFrom,
+    });
 
 /// 单条切片动作的执行器（由共享 State 绑定后交给壳渲染动作抽屉 / 直接播放）。
 class ClipCollectionMemberActions {
@@ -176,8 +176,9 @@ class _ClipCollectionDetailContentState
         }
         // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
         // 骨架与数据到位后的首屏严格同形。
-        final displayState =
-            isLoading ? clipCollectionDetailPlaceholder() : state!;
+        final displayState = isLoading
+            ? clipCollectionDetailPlaceholder()
+            : state!;
         return AppSkeletonizer(
           enabled: isLoading,
           child: Column(
@@ -361,7 +362,9 @@ class _ClipCollectionDetailContentState
     if (_isMobile) {
       return AppListHeader.selection(
         selectionLabel: '已选 $selectedCount 个',
-        selectionExitButtonKey: Key('${widget.keyPrefix}-exit-selection-button'),
+        selectionExitButtonKey: Key(
+          '${widget.keyPrefix}-exit-selection-button',
+        ),
         onExitSelection: exitSelection,
         actionSlots: [
           AppButton(
@@ -401,10 +404,7 @@ class _ClipCollectionDetailContentState
     );
   }
 
-  Widget _buildBatchBar(
-    BuildContext context,
-    ClipCollectionDetailState state,
-  ) {
+  Widget _buildBatchBar(BuildContext context, ClipCollectionDetailState state) {
     final hasSelection = selectedCount > 0;
     return AppSelectionBottomBar(
       key: Key('${widget.keyPrefix}-batch-bottom-bar'),
@@ -413,8 +413,9 @@ class _ClipCollectionDetailContentState
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed:
-              hasSelection ? () => _batchAddToOtherCollection(state) : null,
+          onPressed: hasSelection
+              ? () => _batchAddToOtherCollection(state)
+              : null,
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-remove-button'),
@@ -452,6 +453,7 @@ class _ClipCollectionDetailContentState
           context,
           width: constraints.maxWidth,
           spacing: spacing.md,
+          orientation: AppCardGridOrientation.landscape,
         );
         final grid = GridView.builder(
           key: Key('${widget.keyPrefix}-detail-grid'),
@@ -468,26 +470,24 @@ class _ClipCollectionDetailContentState
           itemBuilder: (context, index) {
             final clip = clips[index];
             if (_isMobile) {
-              return GestureDetector(
-                onLongPress:
-                    selectionMode
-                        ? null
-                        : () {
-                          enterSelection();
-                          toggleSelect(clip.clipId);
-                        },
-                child: ClipCoverCard(
-                  key: ValueKey<int>(clip.clipId),
-                  clip: clip,
-                  selectionMode: selectionMode,
-                  isSelected: isSelected(clip.clipId),
-                  onSelectedChanged: (_) => toggleSelect(clip.clipId),
-                  onTap: () => _openMemberActions(context, clip),
-                ),
+              return ClipCoverCard(
+                key: ValueKey<int>(clip.clipId),
+                clip: clip,
+                selectionMode: selectionMode,
+                isSelected: isSelected(clip.clipId),
+                onSelectedChanged: (_) => toggleSelect(clip.clipId),
+                onTap: () => _openMemberActions(context, clip),
+                onLongPress: selectionMode
+                    ? null
+                    : () {
+                        enterSelection();
+                        toggleSelect(clip.clipId);
+                      },
               );
             }
-            final number =
-                clip.movieNumber?.isNotEmpty == true ? clip.movieNumber! : '无番号';
+            final number = clip.movieNumber?.isNotEmpty == true
+                ? clip.movieNumber!
+                : '无番号';
             final duration = formatMediaTimecode(clip.durationSeconds);
             final playSingle = widget.playSingle;
             final openMovie = _openMovieCallback(clip);
@@ -497,17 +497,15 @@ class _ClipCollectionDetailContentState
               coverAspectRatio: 16 / 9,
               title: number,
               subtitle: duration,
-              clipOverlay: true,
               onPlay: playSingle == null
                   ? null
                   : () => playSingle(context, clip),
               playButtonKey: Key(
                 '${widget.keyPrefix}-grid-play-${clip.clipId}',
               ),
-              onTap:
-                  selectionMode
-                      ? () => toggleSelect(clip.clipId)
-                      : () => _openMemberActions(context, clip),
+              onTap: selectionMode
+                  ? () => toggleSelect(clip.clipId)
+                  : () => _openMemberActions(context, clip),
               menuKey: Key('${widget.keyPrefix}-grid-menu-${clip.clipId}'),
               onOpenSource: openMovie,
               openSourceLabel: '影片',
@@ -589,9 +587,7 @@ class _ClipCollectionDetailContentState
   }
 
   Future<void> _removeClip(MediaClipDto clip) async {
-    final error = await ref
-        .read(_providerRef.notifier)
-        .removeClip(clip.clipId);
+    final error = await ref.read(_providerRef.notifier).removeClip(clip.clipId);
     if (!mounted) {
       return;
     }
@@ -665,10 +661,7 @@ class _ClipCollectionDetailContentState
     try {
       await ref
           .read(clipCollectionsApiProvider)
-          .addClipToCollection(
-            collectionId: target.id,
-            clipId: clip.clipId,
-          );
+          .addClipToCollection(collectionId: target.id, clipId: clip.clipId);
       if (!mounted) {
         return;
       }
@@ -713,10 +706,7 @@ class _ClipCollectionDetailContentState
     if (onAddClips == null) {
       return;
     }
-    await onAddClips(
-      context,
-      currentClips.map((clip) => clip.clipId).toSet(),
-    );
+    await onAddClips(context, currentClips.map((clip) => clip.clipId).toSet());
     if (!mounted) {
       return;
     }
@@ -768,11 +758,8 @@ class _ClipCollectionDetailContentState
       context,
       title: '正在加入「${target.name}」',
       items: selected,
-      action:
-          (clip) => api.addClipToCollection(
-            collectionId: target.id,
-            clipId: clip.clipId,
-          ),
+      action: (clip) =>
+          api.addClipToCollection(collectionId: target.id, clipId: clip.clipId),
     );
     if (!mounted) {
       return;
@@ -798,7 +785,9 @@ class _ClipCollectionDetailContentState
       message: '确认从合集移除选中的 ${selected.length} 个切片？切片本身不会被删除。',
       confirmLabel: _isMobile ? '移除' : '确认',
       confirmKey: _batchConfirmKey('remove'),
-      drawerKey: _isMobile ? Key('${widget.keyPrefix}-batch-remove-drawer') : null,
+      drawerKey: _isMobile
+          ? Key('${widget.keyPrefix}-batch-remove-drawer')
+          : null,
     );
     if (!mounted || !confirmed) {
       return;
@@ -845,7 +834,9 @@ class _ClipCollectionDetailContentState
       message: '确认删除选中的 ${selected.length} 个切片？切片文件会被一并删除，该操作不可恢复。',
       confirmLabel: _isMobile ? '删除' : '确认',
       confirmKey: _batchConfirmKey('delete'),
-      drawerKey: _isMobile ? Key('${widget.keyPrefix}-batch-delete-drawer') : null,
+      drawerKey: _isMobile
+          ? Key('${widget.keyPrefix}-batch-delete-drawer')
+          : null,
     );
     if (!mounted || !confirmed) {
       return;

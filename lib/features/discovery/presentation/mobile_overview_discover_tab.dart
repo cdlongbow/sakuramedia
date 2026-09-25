@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dto.dart';
@@ -10,10 +9,10 @@ import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.da
 import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
-import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
+import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
-import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
@@ -27,10 +26,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
@@ -135,6 +131,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                 : null,
             emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
             onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+            onMovieMenuRequest: (movie, globalPosition) =>
+                requestMovieCollectionMenu(
+                  context,
+                  movie.movieNumber,
+                  globalPosition,
+                  isSubscribed: movie.isSubscribed,
+                ),
             onMovieSubscriptionTap: (movie) =>
                 _toggleFollowSubscription(ref, movie.movieNumber),
             isMovieSubscriptionUpdating: (movie) =>
@@ -207,6 +210,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
         useDefaultSubscriptionActions: true,
         onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+        onMovieMenuRequest: (movie, globalPosition) =>
+            requestMovieCollectionMenu(
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
       ),
     );
   }
@@ -256,6 +266,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
                   .toList(growable: false),
         emptyMessage: '暂无每日推荐，去搜索看看吧',
         onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+        onMovieMenuRequest: (movie, globalPosition) =>
+            requestMovieCollectionMenu(
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
       ),
     );
   }
@@ -314,6 +331,14 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
           .toList(growable: false),
       onItemTap: (item) => _openMomentPreview(context, item),
       onItemPlay: (item) => _openPlayerForMoment(context, item),
+      onItemOpenMovie: (item) => openMomentSourceMovie(
+        context: context,
+        item: item,
+        fallbackPath: mobileOverviewPath,
+      ),
+      onItemAddToCollection: (item) => unawaited(
+        addMomentItemToCollection(context, item: item, isRecommendation: true),
+      ),
     );
   }
 
@@ -321,73 +346,24 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     MobileMovieDetailRouteData(movieNumber: movieNumber).push(context);
   }
 
-  Future<void> _openMomentPreview(
-    BuildContext context,
-    MomentListItem item,
-  ) async {
-    final action = await showMomentPreviewOverlay(
+  Future<void> _openMomentPreview(BuildContext context, MomentListItem item) {
+    return showMomentPreviewFlow(
       context: context,
       item: item,
-      presentation: MediaPreviewPresentation.bottomDrawer,
+      fallbackPath: mobileOverviewPath,
       drawerKey: const Key('mobile-discover-moment-preview-bottom-sheet'),
+      isRecommendation: true,
     );
-    if (!context.mounted || action == null) {
-      return;
-    }
-    switch (action) {
-      case MediaPreviewAction.searchSimilar:
-        await _searchSimilarFromMoment(context, item);
-      case MediaPreviewAction.addToCollection:
-        return;
-      case MediaPreviewAction.play:
-        _openPlayerForMoment(context, item);
-      case MediaPreviewAction.openMovieDetail:
-        final movieNumberForDetail = item.movieNumber;
-        if (movieNumberForDetail == null || movieNumberForDetail.isEmpty) {
-          return;
-        }
-        MobileMovieDetailRouteData(
-          movieNumber: movieNumberForDetail,
-        ).push(context);
-    }
   }
 
   void _openPlayerForMoment(BuildContext context, MomentListItem item) {
-    final movieNumber = item.movieNumber;
-    if (movieNumber == null || movieNumber.isEmpty) {
-      return;
-    }
     unawaited(
-      launchMoviePlayback(
-        context,
-        movieNumber: movieNumber,
-        mediaId: item.mediaId > 0 ? item.mediaId : null,
-        positionSeconds: item.offsetSeconds,
+      playMomentItem(
+        context: context,
+        item: item,
+        fallbackPath: mobileOverviewPath,
       ),
     );
-  }
-
-  Future<void> _searchSimilarFromMoment(
-    BuildContext context,
-    MomentListItem item,
-  ) async {
-    final imageUrl = resolveMomentImageUrl(item);
-    if (imageUrl.isEmpty) {
-      return;
-    }
-    try {
-      await launchImageSearchFromUrl(
-        context,
-        imageUrl: imageUrl,
-        routePath: mobileImageSearchPath,
-        fallbackPath: mobileOverviewPath,
-        fileName: buildMomentImageFileName(item, imageUrl),
-      );
-    } catch (_) {
-      if (context.mounted) {
-        showToast('读取结果图片失败，请稍后重试');
-      }
-    }
   }
 }
 

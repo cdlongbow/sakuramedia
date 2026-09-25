@@ -1,8 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
-import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
@@ -13,8 +14,8 @@ import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 /// 渲染常显的「···」按钮；桌面悬停披露层则与列表页卡片一致，在信息行下方铺
 /// 一整行动作按钮。
 ///
-/// 切片合集与视频合集详情页结构一致，仅在 DTO、封面比例、副信息、占位图标、
-/// 菜单项与 key 前缀上有差异，由各详情页把差异以参数喂入，避免两份近乎相同的实现重复。
+/// 切片合集与视频合集详情页结构一致，仅在 DTO、封面比例、副信息、菜单项
+/// 与 key 前缀上有差异，由各详情页把差异以参数喂入，避免两份近乎相同的实现重复。
 /// 与「合集封面卡」[CollectionCoverCard] 同属一套范式。
 enum _MemberMenuAction { openSource, remove, delete }
 
@@ -41,10 +42,7 @@ Future<void> _showCollectionMemberContextMenu(
     globalPosition: globalPosition,
     items: [
       if (openSource != null && label != null)
-        AppMenuItem(
-          value: _MemberMenuAction.openSource,
-          label: label,
-        ),
+        AppMenuItem(value: _MemberMenuAction.openSource, label: label),
       // 无「删除本体」时（如切片合集）「移出合集」保持原有 error 强调色；与红色
       // 删除项并列时退为常规色，让破坏性的「删除」独占红色、层级清晰。
       AppMenuItem(
@@ -73,16 +71,18 @@ Future<void> _showCollectionMemberContextMenu(
   }
 }
 
-/// 合集成员的网格卡。三种模式由 [overlayCaption] / [clipOverlay] 切换：
-/// - `false` / `false`（默认，上图下文）：横版封面在上、标题/副信息在下，适合 16:9 切片封面；
-/// - `overlayCaption: true`（标题压图）：整卡即封面、标题/副信息浮在底部渐变上，适合竖版海报，无下方留白；
-/// - `clipOverlay: true`（切片风格）：整卡即封面、收起态不铺文字，桌面悬停时底部渐显
-///   标题/副信息与动作行（播放 / 影片 / 缩略图 / 加入合集 / 移出合集 / 删除，
-///   按回调是否为空显隐），与全站封面卡片的悬停范式统一。
+/// 合集「成员」（切片 / 视频 / 时刻）在详情页的共享网格卡 [CollectionMemberCard]。
 ///
-/// 上图下文模式还可选右下角徽标 [coverBadge]。
-/// 整卡点击触发 [onTap]（通常为从该位置连播整个合集）；
-/// 整卡右键 / 长按弹「打开来源 / 移出合集 / 删除本体」上下文菜单。
+/// 整卡即封面、收起态不铺文字；桌面悬停时底部渐显单行标题/副信息与整行动作按钮
+/// （播放 / 影片 / 缩略图 / 加入合集 / 移出合集 / 删除，按回调是否为空显隐），与
+/// 全站封面卡片的悬停范式统一。移动端没有 hover，收起态停在纯封面，信息与动作走
+/// 点击后的操作面板 / 预览层。
+///
+/// 「打开来源 / 移出合集 / 删除本体」走**右键 / 长按**弹出的上下文菜单（与
+/// [ClipGridCard]、`VideoSummaryCard` 等的右键菜单形式对齐），封面右上角不再
+/// 渲染常显的「···」按钮。
+///
+/// 整卡点击触发 [onTap]（通常为从该位置连播整个合集）。
 class CollectionMemberCard extends StatelessWidget {
   const CollectionMemberCard({
     super.key,
@@ -107,14 +107,10 @@ class CollectionMemberCard extends StatelessWidget {
     this.removeButtonKey,
     this.deleteButtonKey,
     this.coverFit = BoxFit.cover,
-    this.placeholderIcon,
-    this.coverBadge,
-    this.titleMaxLines = 1,
-    this.overlayCaption = false,
-    this.clipOverlay = false,
     this.selectionMode = false,
     this.isSelected = false,
     this.expandToParent = false,
+    this.onLongPress,
   });
 
   final String? coverUrl;
@@ -137,7 +133,7 @@ class CollectionMemberCard extends StatelessWidget {
   /// 切片风格悬停面板里的播放键回调；为 `null` 时不显示按钮。
   final VoidCallback? onPlay;
 
-  /// 悬停动作行的测试锚点；仅 [clipOverlay] 模式生效。
+  /// 悬停动作行的测试锚点。
   final Key? playButtonKey;
   final String? subtitle;
   final VoidCallback? onOpenSource;
@@ -155,18 +151,6 @@ class CollectionMemberCard extends StatelessWidget {
   final Key? removeButtonKey;
   final Key? deleteButtonKey;
   final BoxFit coverFit;
-  final IconData? placeholderIcon;
-
-  /// 封面右下角徽标（如切片时长 `MediaDurationBadge`）；仅上图下文模式生效，为 `null` 时不展示。
-  final Widget? coverBadge;
-  final int titleMaxLines;
-
-  /// 是否把标题/副信息压在封面底部（竖版海报用，整卡即封面、无下方留白）。
-  final bool overlayCaption;
-
-  /// 是否使用切片风格（整卡即封面，收起态无文字；桌面悬停渐显标题/副信息与
-  /// 播放键，与 [ClipGridCard] 统一）。
-  final bool clipOverlay;
 
   /// 选择模式：整卡点击切换选中，左上角显示勾选标记；屏蔽右键 / 长按菜单。
   final bool selectionMode;
@@ -176,57 +160,24 @@ class CollectionMemberCard extends StatelessWidget {
 
   /// 卡片是否直接占满父布局尺寸（不再按 [coverAspectRatio] 自包 AspectRatio）。
   /// 瀑布流场景下父布局已按封面真实比例分配 tile 高度，再包 AspectRatio 会与父高度
-  /// 冲突导致留空 / 溢出，此时传 `true` 让卡片直接 fit 父尺寸。[overlayCaption]
-  /// 与 [clipOverlay] 模式生效（上图下文仍依赖 AspectRatio 隔离封面区与下方文案）。
+  /// 冲突导致留空 / 溢出，此时传 `true` 让卡片直接 fit 父尺寸。
   final bool expandToParent;
+
+  /// 整卡长按（移动端进入多选）；走 [AppInteractiveSurface] 的统一触感。
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    final borderColor = selectionMode && isSelected
-        ? colors.selectionBorder
-        : colors.borderSubtle;
-    final content = clipOverlay
-        ? _buildClipOverlay(context)
-        : overlayCaption
-        ? _buildOverlay(context)
-        : _buildBelow(context);
-    final radius = clipOverlay
-        ? context.appRadius.lgBorder
-        : context.appRadius.mdBorder;
-    final shadow = clipOverlay ? context.appShadows.card : null;
-    final card = Material(
-      color: colors.surfaceCard,
-      borderRadius: radius,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            border: Border.all(
-              color: borderColor,
-              width: selectionMode && isSelected ? 2 : 1,
-            ),
-            boxShadow: shadow,
-          ),
-          child: selectionMode
-              ? Stack(
-                  children: [
-                    content,
-                    Positioned(
-                      top: spacing.xs,
-                      left: spacing.xs,
-                      child: IgnorePointer(
-                        child: SelectionCheckBadge(isSelected: isSelected),
-                      ),
-                    ),
-                  ],
-                )
-              : content,
-        ),
+    final card = AppInteractiveSurface(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: AppCoverCard(
+        coverAspectRatio: expandToParent ? null : coverAspectRatio,
+        hoverEnabled: !selectionMode,
+        selectionMode: selectionMode,
+        isSelected: isSelected,
+        cover: _buildCover(context),
+        infoBuilder: (context) => _buildHoverInfo(context),
       ),
     );
 
@@ -234,22 +185,11 @@ class CollectionMemberCard extends StatelessWidget {
     if (selectionMode || remove == null) {
       return card;
     }
-    return GestureDetector(
+    return AppContextMenuTrigger(
       key: menuKey,
-      behavior: HitTestBehavior.deferToChild,
-      onSecondaryTapDown: (details) => _showCollectionMemberContextMenu(
+      onRequestMenu: (position) => _showCollectionMemberContextMenu(
         context,
-        globalPosition: details.globalPosition,
-        onRemove: remove,
-        removeLabel: '移出合集',
-        onOpenSource: onOpenSource,
-        openSourceLabel: openSourceLabel,
-        onDelete: onDelete,
-        deleteLabel: deleteLabel,
-      ),
-      onLongPressStart: (details) => _showCollectionMemberContextMenu(
-        context,
-        globalPosition: details.globalPosition,
+        globalPosition: position,
         onRemove: remove,
         removeLabel: '移出合集',
         onOpenSource: onOpenSource,
@@ -266,105 +206,25 @@ class CollectionMemberCard extends StatelessWidget {
     if (url != null && url.isNotEmpty) {
       return MaskedImage(url: url, fit: coverFit);
     }
-    return _CoverPlaceholder(
-      icon: placeholderIcon,
-      iconSize: context.appComponentTokens.iconSize3xl,
-    );
+    // 纯图片卡缺图态统一为 muted 纯色块：不带居中图标。
+    return ColoredBox(color: context.appColors.surfaceMuted);
   }
 
-  /// 上图下文：封面在上、标题/副信息在下。
-  Widget _buildBelow(BuildContext context) {
+  /// 悬停披露内容：单行标题/副信息与整行动作按钮（按回调显隐）。
+  Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
     final sub = subtitle?.trim();
-    final badge = coverBadge;
+    final actions = _buildHoverActions();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        AspectRatio(
-          aspectRatio: coverAspectRatio,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _buildCover(context),
-              if (badge != null)
-                Positioned(right: spacing.xs, bottom: spacing.xs, child: badge),
-            ],
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.all(spacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: titleMaxLines,
-                overflow: TextOverflow.ellipsis,
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              if (sub != null && sub.isNotEmpty) ...[
-                SizedBox(height: spacing.xs),
-                Text(
-                  sub,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 切片风格：整卡即封面，收起态不铺文字；桌面悬停时底部渐显单行
-  /// 标题/副信息与整行动作按钮（按回调显隐）。
-  Widget _buildClipOverlay(BuildContext context) {
-    final overlay = _buildClipOverlayStack(context);
-    if (expandToParent) {
-      return overlay;
-    }
-    return AspectRatio(aspectRatio: coverAspectRatio, child: overlay);
-  }
-
-  Widget _buildClipOverlayStack(BuildContext context) {
-    final spacing = context.appSpacing;
-    final sub = subtitle?.trim();
-    final actions = _buildHoverActions();
-    return ClipRRect(
-      borderRadius: context.appRadius.lgBorder,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          AppCoverHoverInfo(
-            enabled: !selectionMode,
-            cover: _buildCover(context),
-            infoBuilder: (context) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppCoverHoverInfoRow(label: title, meta: sub),
-                if (actions.isNotEmpty) ...[
-                  SizedBox(height: spacing.sm),
-                  AppCoverHoverActionBar(actions: actions),
-                ],
-              ],
-            ),
-          ),
+        AppCoverHoverInfoRow(label: title, meta: sub),
+        if (actions.isNotEmpty) ...[
+          SizedBox(height: spacing.sm),
+          AppCoverHoverActionBar(actions: actions),
         ],
-      ),
+      ],
     );
   }
 
@@ -415,86 +275,5 @@ class CollectionMemberCard extends StatelessWidget {
           tooltip: deleteLabel,
         ),
     ];
-  }
-
-  /// 标题压图：整卡即封面，标题/副信息浮在底部渐变上。
-  Widget _buildOverlay(BuildContext context) {
-    final spacing = context.appSpacing;
-    final sub = subtitle?.trim();
-    final stack = Stack(
-      fit: StackFit.expand,
-      children: [
-        _buildCover(context),
-        const AppCoverBottomShade(),
-        Positioned(
-          left: spacing.md,
-          right: spacing.md,
-          bottom: spacing.md,
-          child: IgnorePointer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  maxLines: titleMaxLines,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.onMedia,
-                  ),
-                ),
-                if (sub != null && sub.isNotEmpty) ...[
-                  SizedBox(height: spacing.xs),
-                  Text(
-                    sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s12,
-                      weight: AppTextWeight.regular,
-                      tone: AppTextTone.onMedia,
-                    ).copyWith(color: Colors.white.withValues(alpha: 0.72)),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-    if (expandToParent) {
-      return stack;
-    }
-    return AspectRatio(aspectRatio: coverAspectRatio, child: stack);
-  }
-}
-
-/// 封面缺图时的占位：muted 底色，可选居中图标（[icon] 为 `null` 时纯色）。
-class _CoverPlaceholder extends StatelessWidget {
-  const _CoverPlaceholder({required this.icon, required this.iconSize});
-
-  final IconData? icon;
-  final double iconSize;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final iconData = icon;
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.surfaceMuted),
-      child: iconData == null
-          ? null
-          : Center(
-              child: Icon(
-                iconData,
-                size: iconSize,
-                color: context.appTextPalette.muted,
-              ),
-            ),
-    );
   }
 }

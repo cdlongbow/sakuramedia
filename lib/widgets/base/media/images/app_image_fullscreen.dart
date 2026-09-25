@@ -8,6 +8,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
+import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -485,6 +486,7 @@ class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
 
       _tapDismissCancelled = true;
       _swipeDismissActive = false;
+      triggerSelectionHaptic();
       callback(_resolveCurrentGalleryIndex(currentSession), event.position);
     });
   }

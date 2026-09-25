@@ -16,7 +16,8 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
+import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -45,23 +46,21 @@ class _MobileClipCollectionsPageState
       if (!mounted) {
         return;
       }
-      unawaited(
-        ref.read(clipCollectionsOverviewProvider.notifier).refresh(),
-      );
+      unawaited(ref.read(clipCollectionsOverviewProvider.notifier).refresh());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<ClipMutationChange>>(
-      clipMutationEventsProvider,
-      (previous, next) {
-        final change = next.value;
-        if (change != null) {
-          _onMutation(change);
-        }
-      },
-    );
+    ref.listen<AsyncValue<ClipMutationChange>>(clipMutationEventsProvider, (
+      previous,
+      next,
+    ) {
+      final change = next.value;
+      if (change != null) {
+        _onMutation(change);
+      }
+    });
 
     final spacing = context.appSpacing;
     final colors = context.appColors;
@@ -108,8 +107,7 @@ class _MobileClipCollectionsPageState
       enabled: isLoading,
       child: AppAdaptiveRefreshScrollView(
         key: const Key('mobile-clip-collections-scroll'),
-        onRefresh:
-            ref.read(clipCollectionsOverviewProvider.notifier).refresh,
+        onRefresh: ref.read(clipCollectionsOverviewProvider.notifier).refresh,
         slivers: <Widget>[
           if (async.hasError && collections.isEmpty)
             SliverFillRemaining(
@@ -130,25 +128,21 @@ class _MobileClipCollectionsPageState
             SliverPadding(
               // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: AppAdaptiveCardSliver<ClipCollectionDto>(
-                gridKey: const Key('mobile-clip-collections-grid'),
-                items: collections,
-                // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
-                // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
-                // 贴合内容，对齐桌面合集卡的紧凑观感（此前 1.05 会留 ~30px 底部空白）。
-                childAspectRatio: 1.25,
-                itemBuilder: (context, collection, index) {
-                  return CollectionCard.clip(
+              sliver: SliverToBoxAdapter(
+                child: AppAdaptiveCardWrap<ClipCollectionDto>(
+                  key: const Key('mobile-clip-collections-grid'),
+                  items: collections,
+                  orientation: AppCardGridOrientation.landscape,
+                  itemBuilder: (context, collection, _) => CollectionCard.clip(
                     key: Key('mobile-clip-collection-card-${collection.id}'),
                     collection: collection,
-                    onTap:
-                        () => MobileClipCollectionDetailRouteData(
-                          collectionId: collection.id,
-                        ).push(context),
+                    onTap: () => MobileClipCollectionDetailRouteData(
+                      collectionId: collection.id,
+                    ).push(context),
                     onEdit: () => _editCollection(collection),
                     onDelete: () => _deleteCollection(collection),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
         ],
@@ -164,7 +158,9 @@ class _MobileClipCollectionsPageState
     if (!mounted || created == null) {
       return;
     }
-    ref.read(clipCollectionsOverviewProvider.notifier).insertCollection(created);
+    ref
+        .read(clipCollectionsOverviewProvider.notifier)
+        .insertCollection(created);
     showToast('已创建合集');
   }
 
@@ -184,8 +180,9 @@ class _MobileClipCollectionsPageState
   }
 
   Future<void> _deleteCollection(ClipCollectionDto collection) async {
-    final name =
-        collection.name.trim().isEmpty ? '该合集' : '“${collection.name.trim()}”';
+    final name = collection.name.trim().isEmpty
+        ? '该合集'
+        : '“${collection.name.trim()}”';
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除合集',

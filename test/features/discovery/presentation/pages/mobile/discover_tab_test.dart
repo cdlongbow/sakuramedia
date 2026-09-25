@@ -1,9 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
+import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart';
 
@@ -95,6 +98,109 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     },
   );
+
+  testWidgets('长按「发现」Tab 影片卡弹出影片合集菜单', (tester) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDiscoveryResponses(bundle);
+    _enqueueFollowPage(bundle);
+    _enqueueCollectionStatus(bundle, movieNumber: 'ABC-001');
+    _enqueueCollectionStatus(bundle, movieNumber: 'HOT-001');
+    _enqueueCollectionStatus(bundle, movieNumber: 'FOLLOW-001');
+
+    await _pumpDiscoveryWidget(
+      tester,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      child: const MobileOverviewDiscoverTab(),
+    );
+    await tester.pumpAndSettle();
+
+    // 今日推荐（未订阅）：订阅影片 / 标记为合集 / 屏蔽影片。
+    await _longPressMovieCard(tester, 'movie-summary-card-ABC-001');
+    expect(find.text('订阅影片'), findsOneWidget);
+    expect(find.text('标记为合集'), findsOneWidget);
+    expect(find.text('屏蔽影片'), findsOneWidget);
+    await _dismissMenu(tester);
+
+    // 热门新片（未订阅）同样接入长按菜单。
+    await _longPressMovieCard(tester, 'movie-summary-card-HOT-001');
+    expect(find.text('订阅影片'), findsOneWidget);
+    await _dismissMenu(tester);
+
+    // 女优上新（已订阅）：显示取消订阅，且不出现屏蔽项。
+    await _longPressMovieCard(tester, 'movie-summary-card-FOLLOW-001');
+    expect(find.text('取消订阅'), findsOneWidget);
+    expect(find.text('屏蔽影片'), findsNothing);
+    await _dismissMenu(tester);
+
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('移动推荐时刻预览统一为底部抽屉，封面可进影片详情', (tester) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDiscoveryResponses(bundle);
+    _enqueueFollowPage(bundle);
+    _enqueueMomentPreviewMovie(bundle);
+    _enqueueEmptyMediaPoints(bundle, mediaId: 101);
+
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) =>
+              const Scaffold(body: MobileOverviewDiscoverTab()),
+        ),
+        GoRoute(
+          path: '$mobileMoviesPath/:movieNumber',
+          builder: (_, __) => const Scaffold(body: Text('movie-detail')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await _pumpDiscoveryRouterApp(
+      tester,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      router: router,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const Key('moment-card-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('moment-card-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-discover-moment-preview-bottom-sheet')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('image-search-result-preview-movie-cover')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('movie-detail'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Future<void> _longPressMovieCard(WidgetTester tester, String key) async {
+  final finder = find.byKey(Key(key));
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.longPress(finder);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _dismissMenu(WidgetTester tester) async {
+  await tester.tapAt(const Offset(4, 4));
+  await tester.pumpAndSettle();
 }
 
 Future<SessionStore> _buildSessionStore() async {
@@ -131,6 +237,72 @@ Future<void> _pumpDiscoveryWidget(
   );
 }
 
+Future<void> _pumpDiscoveryRouterApp(
+  WidgetTester tester, {
+  required SessionStore sessionStore,
+  required TestApiBundle bundle,
+  required GoRouter router,
+}) {
+  return tester.pumpWidget(
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: AppPlatformScope(
+        platform: AppPlatform.mobile,
+        child: OKToast(
+          child: MaterialApp.router(
+            theme: sakuraMobileThemeData,
+            routerConfig: router,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void _enqueueEmptyMediaPoints(TestApiBundle bundle, {required int mediaId}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/media/$mediaId/points',
+    body: const <dynamic>[],
+  );
+}
+
+void _enqueueMomentPreviewMovie(TestApiBundle bundle) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies/ABC-001',
+    body: <String, dynamic>{
+      'javdb_id': 'MovieA1',
+      'movie_number': 'ABC-001',
+      'title': 'Movie 1',
+      'series_name': '',
+      'cover_image': <String, dynamic>{
+        'id': 1,
+        'origin': '/cover.jpg',
+        'small': '/cover.jpg',
+        'medium': '/cover.jpg',
+        'large': '/cover.jpg',
+      },
+      'release_date': null,
+      'duration_minutes': 0,
+      'score': 0,
+      'watched_count': 0,
+      'want_watch_count': 0,
+      'comment_count': 0,
+      'score_number': 0,
+      'is_collection': false,
+      'is_subscribed': false,
+      'can_play': true,
+      'summary': '',
+      'thin_cover_image': null,
+      'plot_images': const <Map<String, dynamic>>[],
+      'actors': const <Map<String, dynamic>>[],
+      'tags': const <Map<String, dynamic>>[],
+      'media_items': const <Map<String, dynamic>>[],
+    },
+  );
+}
+
 void _enqueueDiscoveryResponses(TestApiBundle bundle) {
   _enqueueHotActressPage(bundle, page: 1, start: 1, count: 1, total: 1);
   _enqueueDailyPage(bundle, page: 1, start: 1, count: 1, total: 1);
@@ -142,6 +314,21 @@ void _enqueueSubscription(TestApiBundle bundle, {required String movieNumber}) {
     method: 'PUT',
     path: '/movies/$movieNumber/subscription',
     statusCode: 204,
+  );
+}
+
+void _enqueueCollectionStatus(
+  TestApiBundle bundle, {
+  required String movieNumber,
+  bool isCollection = false,
+}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies/$movieNumber/collection-status',
+    body: <String, dynamic>{
+      'movie_number': movieNumber,
+      'is_collection': isCollection,
+    },
   );
 }
 

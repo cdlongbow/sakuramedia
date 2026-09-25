@@ -10,7 +10,7 @@
 
 路径：`lib/widgets/base/actions/app_text_button.dart`
 
-低强调文字操作，支持背景样式、强调色和尺寸。用于次要操作、筛选清除和卡片内联动作。
+低强调文字操作，支持背景样式、强调色和尺寸。用于次要操作、筛选清除和卡片内联动作。选中态由 `selectedStyle` 区分：默认 `tinted`（主色文字 + 淡主色底，筛选弹层里的 chip）；页面内联的排序/切换传 `plain`（主色文字 + 加粗，无底色）。
 
 ## `AppIconButton`
 
@@ -22,7 +22,7 @@
 
 路径：`lib/widgets/base/interaction/app_interactive_surface.dart`
 
-全项目统一的可点表面，所有可点元素都应经过它，不要再手写 `InkWell`。默认无水波纹、无 hover / 按下底色，按下整块透明度降到 `0.7`（整体变淡）；`onTap` / `onLongPress` / `onSecondaryTap` 都走这一层手势，可同时配合 `semanticLabel`。禁用时只负责不响应，视觉禁用（降透明度、换前景色）由调用方决定。完整交互基线见 `docs/interaction-design.md`。
+全项目统一的可点表面，所有可点元素都应经过它，不要再手写 `InkWell`。默认无水波纹、无 hover / 按下底色，按下整块透明度降到 `0.7`（整体变淡）；`onTap` / `onLongPress` / `onSecondaryTap` 都走这一层手势，可同时配合 `semanticLabel`。`onLongPress` 触发时统一播放一次选择触感（`core/platform/haptic_feedback.dart`，桌面端无副作用），调用方不要重复触发。禁用时只负责不响应，视觉禁用（降透明度、换前景色）由调用方决定。完整交互基线见 `docs/interaction-design.md`。
 
 ## `AppClickable`
 

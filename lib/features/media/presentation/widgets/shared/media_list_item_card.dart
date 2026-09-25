@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
@@ -68,12 +67,6 @@ class MediaListItemCard extends StatelessWidget {
     final tokens = context.appComponentTokens;
     final width = tokens.listRowCoverWidth;
     final height = tokens.listRowCoverHeight;
-    final handleLongPress = onLongPress == null
-        ? null
-        : () {
-            HapticFeedback.selectionClick();
-            onLongPress!();
-          };
 
     final card = AppLeftCoverCard(
       key: Key('$keyPrefix-row-${item.id}'),
@@ -85,7 +78,7 @@ class MediaListItemCard extends StatelessWidget {
       ),
       selected: selected,
       onTap: onTap,
-      onLongPress: mobile ? handleLongPress : null,
+      onLongPress: mobile ? onLongPress : null,
       cover: _MediaListItemCover(
         keyPrefix: keyPrefix,
         item: item,

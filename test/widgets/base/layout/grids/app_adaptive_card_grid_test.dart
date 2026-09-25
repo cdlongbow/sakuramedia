@@ -115,10 +115,11 @@ void main() {
     expect(find.byKey(const Key('adaptive-grid-item-0')), findsNothing);
   });
 
-  testWidgets('AppAdaptiveCardGrid defaults to the unified card grid spec', (
+  testWidgets('AppAdaptiveCardGrid caps columns at the unified card grid spec', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(2400, 800);
+    // 窗口足够宽，使三档目标列宽都能排到超过统一列数上限。
+    tester.view.physicalSize = const Size(12000, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -142,36 +143,49 @@ void main() {
     );
     final delegate =
         grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
-    // 2400 宽按统一目标宽 220 可排 10 列，由统一列数上限收敛到 8。
     expect(
       delegate.crossAxisCount,
       AppComponentTokens.defaults().cardGridMaxColumns,
     );
   });
 
-  testWidgets('resolveAppCardGridColumnCount reads the unified token spec', (
-    tester,
-  ) async {
-    late BuildContext ctx;
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              ctx = context;
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-      ),
-    );
+  test('card grid orientation derives from layout signals', () {
+    final tokens = AppComponentTokens.defaults();
 
-    // (1200 + 12) / (220 + 12) = 5.2 → 5 列。
-    expect(resolveAppCardGridColumnCount(ctx, width: 1200, spacing: 12), 5);
+    AppCardGridOrientation derive({
+      AppAdaptiveCardGridLayout layout = AppAdaptiveCardGridLayout.fixedAspect,
+      AppCardGridOrientation? orientation,
+      double? childAspectRatio,
+      double? mainAxisExtent,
+    }) {
+      return resolveAppCardGridOrientation(
+        layout: layout,
+        orientation: orientation,
+        childAspectRatio: childAspectRatio,
+        mainAxisExtent: mainAxisExtent,
+        tokens: tokens,
+      );
+    }
+
+    // fixedAspect 按宽高比选档，缺省比例按影片海报（竖图）。
+    expect(derive(), AppCardGridOrientation.portrait);
     expect(
-      resolveAppCardGridColumnCount(ctx, width: 2400, spacing: 12),
-      AppComponentTokens.defaults().cardGridMaxColumns,
+      derive(childAspectRatio: 16 / 9),
+      AppCardGridOrientation.landscape,
+    );
+    // masonry 与仅固定高度的卡片没有比例信号，取混排档。
+    expect(
+      derive(layout: AppAdaptiveCardGridLayout.masonry),
+      AppCardGridOrientation.mixed,
+    );
+    expect(derive(mainAxisExtent: 120), AppCardGridOrientation.mixed);
+    // 显式朝向优先于推导。
+    expect(
+      derive(
+        orientation: AppCardGridOrientation.landscape,
+        childAspectRatio: 0.7,
+      ),
+      AppCardGridOrientation.landscape,
     );
   });
 }

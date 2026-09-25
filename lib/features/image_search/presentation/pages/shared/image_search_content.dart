@@ -608,6 +608,11 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       items: searchState.items,
       onItemTap: _openResultPreviewDialog,
       onItemMenuRequested: _showResultActions,
+      onItemSearchSimilar:
+          (item) => unawaited(_searchSimilarFromResult(item)),
+      onItemSaveToLocal: (item) => unawaited(_saveResultImageToLocal(item)),
+      onItemPlay: _openPlayerForResult,
+      onItemMovieDetail: _openMovieDetailForResult,
     );
   }
 

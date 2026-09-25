@@ -29,11 +29,12 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
@@ -260,11 +261,15 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
             final collection = display[index];
             return SizedBox(
               width: 210,
-              child: CollectionCard.clip(
-                key: Key('clip-collection-card-${collection.id}'),
-                collection: collection,
-                onTap: () => context.pushDesktopClipCollectionDetail(
-                  collectionId: collection.id,
+              // 卡片按内容自然高度渲染，避免被固定行高拉伸后在标题下方留白。
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: CollectionCard.clip(
+                  key: Key('clip-collection-card-${collection.id}'),
+                  collection: collection,
+                  onTap: () => context.pushDesktopClipCollectionDetail(
+                    collectionId: collection.id,
+                  ),
                 ),
               ),
             );
@@ -281,12 +286,12 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     final hasClips = clips.isNotEmpty;
     final summary = ref.watch(clipsOverviewProvider).value;
     final currentSort = summary?.filter.sort ?? ClipsFilter.defaultSort;
-    return Padding(
-      padding: EdgeInsets.only(bottom: spacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(top: spacing.sm),
+          child: Row(
             children: [
               Text(
                 '全部切片',
@@ -298,7 +303,21 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                 ),
               ),
               const Spacer(),
-              // 与「时刻」页保持一致：最新/最早并排，选中高亮。
+            ],
+          ),
+        ),
+        // 与「时刻」页同构：选择态原地改写操作行，两态等高不跳版。
+        if (selectionMode)
+          _buildSelectionHeader(context, clips)
+        else
+          AppListHeader(
+            filterUpdate:
+                summary?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+            hasPreviousFilterItems: hasClips,
+            onRetryFilter: () => unawaited(
+              ref.read(clipsOverviewProvider.notifier).retryFilter(),
+            ),
+            actionSlots: [
               _buildSortAction(
                 context,
                 actionKey: const Key('clips-sort-latest'),
@@ -306,7 +325,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                 sort: 'created_at:desc',
                 currentSort: currentSort,
               ),
-              SizedBox(width: spacing.sm),
               _buildSortAction(
                 context,
                 actionKey: const Key('clips-sort-earliest'),
@@ -314,32 +332,14 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                 sort: 'created_at:asc',
                 currentSort: currentSort,
               ),
-              if (!selectionMode && hasClips) ...[
-                SizedBox(width: spacing.sm),
-                AppTextButton(
+              if (hasClips)
+                AppSelectionEntryButton(
                   key: const Key('clips-enter-selection-button'),
-                  label: '选择',
-                  size: AppTextButtonSize.small,
-                  icon: const Icon(Icons.check_circle_outline, size: 16),
                   onPressed: enterSelection,
                 ),
-              ],
             ],
           ),
-          if (selectionMode) ...[
-            SizedBox(height: spacing.sm),
-            _buildSelectionBar(context, clips),
-          ],
-          AppFilterUpdateBar(
-            state:
-                summary?.paged.filterUpdate ?? const FilterUpdateState.idle(),
-            hasPreviousItems: clips.isNotEmpty,
-            onRetry: () => unawaited(
-              ref.read(clipsOverviewProvider.notifier).retryFilter(),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -355,6 +355,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       label: label,
       size: AppTextButtonSize.xSmall,
       isSelected: currentSort == sort,
+      selectedStyle: AppTextButtonSelectedStyle.plain,
       onPressed: () => _applySort(sort),
     );
   }
@@ -369,30 +370,17 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   }
 
   /// 选择模式下的批量操作栏：已选数 / 全选 / 加入合集 / 删除 / 取消。
-  Widget _buildSelectionBar(BuildContext context, List<MediaClipDto> clips) {
-    final spacing = context.appSpacing;
+  /// 原地替换常规操作行（[AppSelectionHeaderToolbar] 与 [AppListHeader] 等高）。
+  Widget _buildSelectionHeader(BuildContext context, List<MediaClipDto> clips) {
     final clipIds = clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     final hasSelection = selectedCount > 0;
-    return Row(
-      children: [
-        Text(
-          '已选 $selectedCount 个',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.medium,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        const Spacer(),
-        AppTextButton(
-          key: const Key('clips-select-all-button'),
-          label: allSelected ? '取消全选' : '全选',
-          size: AppTextButtonSize.small,
-          onPressed: () => toggleSelectAll(clipIds),
-        ),
-        SizedBox(width: spacing.sm),
+    return AppSelectionHeaderToolbar(
+      countLabel: '已选 $selectedCount 个',
+      selectAllLabel: allSelected ? '取消全选' : '全选',
+      selectAllKey: const Key('clips-select-all-button'),
+      onToggleAll: () => toggleSelectAll(clipIds),
+      actions: [
         AppButton(
           key: const Key('clips-batch-add-collection-button'),
           label: '加入合集',
@@ -400,7 +388,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           size: AppButtonSize.small,
           onPressed: hasSelection ? _batchAddToCollection : null,
         ),
-        SizedBox(width: spacing.sm),
         AppButton(
           key: const Key('clips-batch-delete-button'),
           label: '删除',
@@ -408,14 +395,9 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           size: AppButtonSize.small,
           onPressed: hasSelection ? _batchDelete : null,
         ),
-        SizedBox(width: spacing.sm),
-        AppTextButton(
-          key: const Key('clips-exit-selection-button'),
-          label: '取消',
-          size: AppTextButtonSize.small,
-          onPressed: exitSelection,
-        ),
       ],
+      exitKey: const Key('clips-exit-selection-button'),
+      onExit: exitSelection,
     );
   }
 

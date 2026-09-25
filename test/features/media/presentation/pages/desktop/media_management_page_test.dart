@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/pages/desktop/media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/pages/shared/media_management_content.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
@@ -168,11 +169,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const Key('duplicate-media-collections-title-1')),
+      find.byKey(const Key('media-management-duplicate-group-1')),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('video-collection-chip-3')), findsOneWidget);
     expect(find.text('系列 A'), findsOneWidget);
     expect(find.text('稍后再看'), findsOneWidget);
+    expect(find.text('所属合集'), findsNothing);
     await tester.tap(find.byKey(const Key('video-collection-chip-8')));
     expect(openedCollectionId, 8);
   });
@@ -282,6 +285,82 @@ void main() {
     expect(adapter.hitCount('DELETE', '/media/1'), 1);
     expect(find.byKey(const Key('media-management-row-1')), findsNothing);
     expect(find.text('共 0 条'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('deleting a PornBox media syncs the deleted video event', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [_duplicateMediaItemJson(1, kind: 'video', videoItemId: 101)],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    final events = _watchVideoMutationEvents(tester);
+    await tester.tap(find.byKey(const Key('media-management-delete-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-delete-confirm-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(events, hasLength(1));
+    expect(events.single.kind, VideoMutationKind.deleted);
+    expect(events.single.videoId, 101);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('batch deleting only broadcasts PornBox members', (tester) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 2,
+        items: [
+          _duplicateMediaItemJson(1, kind: 'video', videoItemId: 101),
+          _duplicateMediaItemJson(2),
+        ],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    final events = _watchVideoMutationEvents(tester);
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-row-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-delete-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(adapter.hitCount('DELETE', '/media/1'), 1);
+    expect(adapter.hitCount('DELETE', '/media/2'), 1);
+    expect(events, hasLength(1));
+    expect(events.single.kind, VideoMutationKind.deleted);
+    expect(events.single.videoId, 101);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -586,6 +665,18 @@ Future<void> _pumpPage(
     await tester.tap(find.byKey(const Key('media-management-tab-maintenance')));
     await tester.pumpAndSettle();
   }
+}
+
+List<VideoMutationChange> _watchVideoMutationEvents(WidgetTester tester) {
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(DesktopMediaManagementPage)),
+  );
+  final events = <VideoMutationChange>[];
+  container.listen(videoMutationEventsProvider, (_, next) {
+    final change = next.value;
+    if (change != null) events.add(change);
+  });
+  return events;
 }
 
 class _EmptyMediaLibrariesApi extends MediaLibrariesApi {

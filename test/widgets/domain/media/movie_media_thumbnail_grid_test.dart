@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 
@@ -41,6 +42,21 @@ void main() {
         gridView.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
 
     expect(delegate.childAspectRatio, closeTo(16 / 9, 0.0001));
+  });
+
+  testWidgets('thumbnail grid skeleton collapses each tile into one block', (
+    WidgetTester tester,
+  ) async {
+    await _pumpGrid(tester, thumbnails: _thumbnails(), isLoading: true);
+    await tester.pump();
+
+    expect(
+      find.byKey(const Key('movie-media-thumbnail-grid-skeleton')),
+      findsOneWidget,
+    );
+    // 骨架 tile 由 AppSkeletonUnite 收敛成一块 shimmer，占位封面不再带图标。
+    expect(find.byType(AppSkeletonUnite), findsWidgets);
+    expect(find.byIcon(Icons.image_outlined), findsNothing);
   });
 
   testWidgets('thumbnail grid marks active thumbnail with selected style', (
@@ -911,6 +927,7 @@ Future<void> _pumpGrid(
   double width = 360,
   double height = 720,
   bool isScrollLocked = true,
+  bool isLoading = false,
   String? errorMessage,
   VoidCallback? onRetry,
   void Function(int index, Offset globalPosition)? onThumbnailMenuRequested,
@@ -930,7 +947,7 @@ Future<void> _pumpGrid(
             height: height,
             child: MovieMediaThumbnailGrid(
               thumbnails: thumbnails,
-              isLoading: false,
+              isLoading: isLoading,
               errorMessage: errorMessage,
               columns: columns,
               activeIndex: activeIndex,

@@ -13,7 +13,6 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../support/logged_in_session_store.dart';
 import '../../../support/test_api_bundle.dart';
@@ -243,7 +242,7 @@ void main() {
   );
 
   testWidgets(
-    'movie summary card ignores poster placeholder icon under skeleton',
+    'movie summary card collapses to one skeleton block without placeholder icon',
     (WidgetTester tester) async {
       final sessionStore = SessionStore.inMemory();
       await sessionStore.saveBaseUrl('https://api.example.com');
@@ -284,17 +283,10 @@ void main() {
         find.byKey(const Key('movie-summary-card-placeholder-ABC-004')),
         findsOneWidget,
       );
-      final icon = find.byIcon(Icons.movie_creation_outlined);
-      expect(icon, findsOneWidget);
-      // 图标自身包在 `Skeleton.ignore` 里，外层还有卡级 `Skeleton.unite`
-      // 把整卡收敛成一块 shimmer（避免角标 / 文字骨块单独透出）。
-      expect(
-        find.ancestor(
-          of: icon,
-          matching: find.byWidgetPredicate((widget) => widget is Skeleton),
-        ),
-        findsWidgets,
-      );
+      // 缺图占位不带图标（图标会被 skeletonizer 画成实心方块），整卡由
+      // AppSkeletonUnite 收敛成一块 shimmer（角标 / 文字骨块不再单独透出）。
+      expect(find.byIcon(Icons.movie_creation_outlined), findsNothing);
+      expect(find.byType(AppSkeletonUnite), findsOneWidget);
     },
   );
 

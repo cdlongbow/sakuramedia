@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 
 void main() {
@@ -25,7 +26,6 @@ void main() {
                 coverAspectRatio: 16 / 9,
                 title: 'ABC-001',
                 subtitle: 'JAV · 01:30',
-                clipOverlay: true,
                 onPlay: onPlay,
                 playButtonKey: const Key('member-card-play-1'),
                 onTap: onTap,
@@ -48,7 +48,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('clip overlay card keeps the cover clean until hovered', (
+  testWidgets('member card keeps the cover clean until hovered', (
     WidgetTester tester,
   ) async {
     await pumpCard(tester, onTap: () {}, onPlay: () {});
@@ -96,6 +96,41 @@ void main() {
 
     expect(find.text('ABC-001'), findsNothing);
     expect(find.byKey(const Key('member-card-play-1')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('skeleton state collapses the member card into one block', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 480,
+              child: AppSkeletonizer(
+                enabled: true,
+                child: CollectionMemberCard(
+                  key: const Key('member-card-skeleton'),
+                  coverUrl: null,
+                  coverAspectRatio: 16 / 9,
+                  title: 'ABC-001',
+                  onTap: () {},
+                  menuKey: const Key('member-card-skeleton-menu'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // 缺图占位不再自带居中图标（会被 skeletonizer 画成实心方块），
+    // 整卡由 AppSkeletonUnite 收敛成一块 shimmer 圆角块。
+    expect(find.byType(Icon), findsNothing);
+    expect(find.byType(AppSkeletonUnite), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

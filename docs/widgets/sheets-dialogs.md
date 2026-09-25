@@ -21,4 +21,6 @@
 
 合集成员选择器（添加切片 / 添加时刻）在弹层头部收口「搜索 + 仅看未加入 + 类型筛选 + 计数」，加入后即时出池；具体实现见各 feature 的 `add_*_to_collection_dialog.dart`。
 
+「加入合集」目标选择器（切片 / 时刻 / 视频）共用 `lib/widgets/domain/collections/collection_target_picker.dart` 的 `showCollectionTargetPicker`：桌面弹窗 / 移动抽屉由调用方的 presentation 决定，列表数据监听各域 overview provider，只负责选中一个目标合集并返回，实际写入由调用方批量执行。
+
 弹层关闭、导航和 API 操作的顺序由调用页面决定。弹层组件不要直接承担 feature 数据加载，除非该组件本身就是明确的跨域媒体预览组件。

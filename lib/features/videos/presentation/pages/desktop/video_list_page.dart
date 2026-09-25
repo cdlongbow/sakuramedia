@@ -501,10 +501,14 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
             final collection = display[index];
             return SizedBox(
               width: 210,
-              child: CollectionCard.video(
-                collection: collection,
-                onTap: () => context.pushDesktopVideoCollectionDetail(
-                  collectionId: collection.id,
+              // 卡片按内容自然高度渲染，避免被固定行高拉伸后在标题下方留白。
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: CollectionCard.video(
+                  collection: collection,
+                  onTap: () => context.pushDesktopVideoCollectionDetail(
+                    collectionId: collection.id,
+                  ),
                 ),
               ),
             );

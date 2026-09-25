@@ -1004,18 +1004,9 @@ class _MovieMediaThumbnailImagePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final componentTokens = context.appComponentTokens;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.surfaceMuted),
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: componentTokens.iconSize3xl,
-          color: context.appTextPalette.muted,
-        ),
-      ),
+    return ColoredBox(
+      color: context.appColors.surfaceMuted,
+      child: const Center(),
     );
   }
 }
@@ -1046,15 +1037,20 @@ class _MovieMediaThumbnailGridSkeleton extends StatelessWidget {
         ),
         itemCount: columns * 4,
         itemBuilder: (context, index) {
+          final radius = context.appRadius.xsBorder;
           return DecoratedBox(
             decoration: BoxDecoration(
               color: context.appColors.surfaceCard,
-              borderRadius: context.appRadius.xsBorder,
+              borderRadius: radius,
               border: Border.all(color: context.appColors.borderSubtle),
             ),
             child: ClipRRect(
-              borderRadius: context.appRadius.xsBorder,
-              child: const _MovieMediaThumbnailImagePlaceholder(),
+              borderRadius: radius,
+              // 骨架态整卡收敛成一块 shimmer 圆角块（非骨架态原样渲染）。
+              child: AppSkeletonUnite(
+                borderRadius: radius,
+                child: const _MovieMediaThumbnailImagePlaceholder(),
+              ),
             ),
           );
         },

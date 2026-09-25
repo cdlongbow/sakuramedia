@@ -13,8 +13,11 @@ enum AppAdaptiveCardGridLayout { fixedAspect, masonry }
 ///
 /// 消除 movies / actors / rankings / videos 四份网格的 copy-paste:
 /// - 列数按 `((width + spacing) / (targetWidth + spacing)).floor()` 计算,
-///   钳位到 [minColumns, maxColumns]；目标列宽与列数上限默认取全站统一规格
-///   [AppComponentTokens.cardGridTargetWidth] / [AppComponentTokens.cardGridMaxColumns]；
+///   钳位到 [minColumns, maxColumns]；目标列宽按 [orientation] 取全站统一规格
+///   [AppComponentTokens.cardGridPortraitTargetWidth] /
+///   [AppComponentTokens.cardGridMixedTargetWidth] /
+///   [AppComponentTokens.cardGridLandscapeTargetWidth]，列数上限取
+///   [AppComponentTokens.cardGridMaxColumns]；
 /// - `layout: fixedAspect` 走 [GridView] + [childAspectRatio]；
 /// - `layout: masonry` 走 [MasonryGridView] + [tileAspect]（每 tile 自算高度）。
 ///
@@ -32,6 +35,7 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
     this.errorMessage,
     this.emptyMessage = '当前没有可展示的数据。',
     this.targetColumnWidth,
+    this.orientation,
     this.minColumns = 2,
     this.maxColumns,
     this.layout = AppAdaptiveCardGridLayout.fixedAspect,
@@ -54,8 +58,16 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
   final String? errorMessage;
   final String emptyMessage;
 
-  /// 目标列宽,列公式的 target。null → [AppComponentTokens.cardGridTargetWidth]。
+  /// 目标列宽,列公式的 target。null → 按 [orientation] 取统一 token。
   final double? targetColumnWidth;
+
+  /// 卡片朝向档位，决定目标列宽取哪一档 token。
+  ///
+  /// null → 按布局自动推导：fixedAspect 用 [childAspectRatio]（缺省按
+  /// [AppComponentTokens.movieCardAspectRatio]）判断，比例 >= 1 视为横图，
+  /// 否则竖图；masonry 和仅设置 [mainAxisExtent] 的卡片取
+  /// [AppCardGridOrientation.mixed]。[targetColumnWidth] 优先于本参数。
+  final AppCardGridOrientation? orientation;
 
   final int minColumns;
 
@@ -105,7 +117,17 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
         final spacing = context.appSpacing.md;
         final componentTokens = context.appComponentTokens;
         final target =
-            targetColumnWidth ?? componentTokens.cardGridTargetWidth;
+            targetColumnWidth ??
+            resolveAppCardGridTargetWidth(
+              context,
+              resolveAppCardGridOrientation(
+                layout: layout,
+                orientation: orientation,
+                childAspectRatio: childAspectRatio,
+                mainAxisExtent: mainAxisExtent,
+                tokens: componentTokens,
+              ),
+            );
         final columns = resolveGridColumnCount(
           width: constraints.maxWidth,
           spacing: spacing,
@@ -154,6 +176,34 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
   }
 }
 
+/// 未显式声明朝向时按布局信号推导目标列宽档位。
+///
+/// fixedAspect 用宽高比：`>= 1` 视为横图，缺省比例按
+/// [AppComponentTokens.movieCardAspectRatio]；masonry 逐项比例由数据决定，
+/// 仅设置 [AppAdaptiveCardGrid.mainAxisExtent] 的卡片没有比例信号，两者都取
+/// [AppCardGridOrientation.mixed]。
+AppCardGridOrientation resolveAppCardGridOrientation({
+  required AppAdaptiveCardGridLayout layout,
+  required AppCardGridOrientation? orientation,
+  required double? childAspectRatio,
+  required double? mainAxisExtent,
+  required AppComponentTokens tokens,
+}) {
+  if (orientation case final explicit?) {
+    return explicit;
+  }
+  if (layout == AppAdaptiveCardGridLayout.masonry) {
+    return AppCardGridOrientation.mixed;
+  }
+  if (childAspectRatio == null && mainAxisExtent != null) {
+    return AppCardGridOrientation.mixed;
+  }
+  final aspectRatio = childAspectRatio ?? tokens.movieCardAspectRatio;
+  return aspectRatio >= 1
+      ? AppCardGridOrientation.landscape
+      : AppCardGridOrientation.portrait;
+}
+
 /// [AppAdaptiveCardGrid] 的 Sliver 版本，供累计分页页面直接放入
 /// [CustomScrollView.slivers]。
 ///
@@ -168,6 +218,7 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
     this.errorMessage,
     this.emptyMessage = '当前没有可展示的数据。',
     this.targetColumnWidth,
+    this.orientation,
     this.minColumns = 2,
     this.maxColumns,
     this.layout = AppAdaptiveCardGridLayout.fixedAspect,
@@ -184,7 +235,13 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
   final String? errorMessage;
   final String emptyMessage;
+
+  /// 目标列宽,列公式的 target。null → 按 [orientation] 取统一 token。
   final double? targetColumnWidth;
+
+  /// 卡片朝向档位，语义同 [AppAdaptiveCardGrid.orientation]。
+  final AppCardGridOrientation? orientation;
+
   final int minColumns;
   final int? maxColumns;
   final AppAdaptiveCardGridLayout layout;
@@ -207,7 +264,17 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
         final spacing = context.appSpacing.md;
         final componentTokens = context.appComponentTokens;
         final target =
-            targetColumnWidth ?? componentTokens.cardGridTargetWidth;
+            targetColumnWidth ??
+            resolveAppCardGridTargetWidth(
+              context,
+              resolveAppCardGridOrientation(
+                layout: layout,
+                orientation: orientation,
+                childAspectRatio: childAspectRatio,
+                mainAxisExtent: mainAxisExtent,
+                tokens: componentTokens,
+              ),
+            );
         final columns = resolveGridColumnCount(
           width: constraints.crossAxisExtent,
           spacing: spacing,

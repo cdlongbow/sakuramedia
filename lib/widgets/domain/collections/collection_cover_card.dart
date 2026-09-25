@@ -1,8 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 /// 合集封面卡的共享实现：16:9 封面 + 底部标题 + 封面右下角计数角标。
 ///
@@ -10,14 +12,16 @@ import 'package:skeletonizer/skeletonizer.dart';
 /// `VideoSummaryCard` 等的右键菜单形式对齐），封面右上角不再渲染常显
 /// 的「···」按钮。
 ///
-/// 切片合集与视频合集结构完全一致，仅在 DTO、计数字段、占位图标、
-/// 封面 `fit` 与 key 前缀上有差异，故由 [CollectionCard] 的 `.clip` / `.video`
-/// 命名构造把各自的差异以参数喂入，避免两份近乎相同的卡片实现重复。
+/// 切片合集、视频合集与时刻合集结构完全一致，仅在 DTO、计数字段、占位图标、
+/// 计数角标图标、封面 `fit` 与 key 前缀上有差异，故由 [CollectionCard] 的
+/// `.clip` / `.video` / `.moment` 命名构造把各自的差异以参数喂入，避免多份
+/// 近乎相同的卡片实现重复。
 class CollectionCoverCard extends StatelessWidget {
   const CollectionCoverCard({
     super.key,
     required this.title,
     required this.count,
+    required this.countIcon,
     required this.coverUrl,
     required this.onTap,
     this.tapKey,
@@ -31,8 +35,11 @@ class CollectionCoverCard extends StatelessWidget {
   /// 合集名称（底部单行标题）。
   final String title;
 
-  /// 封面右下角的计数（切片数 / 视频数）。
+  /// 封面右下角的计数（切片数 / 视频数 / 时刻数）。
   final int count;
+
+  /// 计数角标图标，按合集类型区分（切片 / 视频 / 时刻）。
+  final IconData countIcon;
 
   /// 封面图地址；为空时显示占位图标。
   final String? coverUrl;
@@ -64,70 +71,46 @@ class CollectionCoverCard extends StatelessWidget {
     final colors = context.appColors;
     final cover = coverUrl;
 
-    final card = Material(
-      color: colors.surfaceCard,
-      borderRadius: context.appRadius.mdBorder,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
-        key: tapKey,
-        borderRadius: context.appRadius.mdBorder,
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: context.appRadius.mdBorder,
-            border: Border.all(color: colors.borderSubtle),
+    final card = AppInteractiveSurface(
+      key: tapKey,
+      onTap: onTap,
+      child: AppCoverCard(
+        coverAspectRatio: 16 / 9,
+        cover: Stack(
+          fit: StackFit.expand,
+          children: [
+            // muted 底色：cover 时被封面盖满，contain 时填充留白。
+            ColoredBox(color: colors.surfaceMuted),
+            if (cover != null && cover.isNotEmpty)
+              MaskedImage(url: cover, fit: coverFit)
+            else
+              Center(
+                child: Icon(
+                  placeholderIcon,
+                  color: colors.borderStrong,
+                  size: context.appComponentTokens.iconSizeLg,
+                ),
+              ),
+          ],
+        ),
+        overlays: [
+          Positioned(
+            right: spacing.xs,
+            bottom: spacing.xs,
+            child: _CountBadge(count: count, icon: countIcon),
           ),
-          // 骨架态整卡收敛成一块 shimmer 圆角块：计数角标 / 标题骨块不再单独透出。
-          child: Skeleton.unite(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(context.appRadius.md),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // muted 底色：cover 时被封面盖满，contain 时填充留白。
-                        ColoredBox(color: colors.surfaceMuted),
-                        if (cover != null && cover.isNotEmpty)
-                          MaskedImage(url: cover, fit: coverFit)
-                        else
-                          Center(
-                            child: Icon(
-                              placeholderIcon,
-                              color: colors.borderStrong,
-                              size: context.appComponentTokens.iconSizeLg,
-                            ),
-                          ),
-                        Positioned(
-                          right: spacing.xs,
-                          bottom: spacing.xs,
-                          child: _CountBadge(count: count),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(spacing.sm),
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s14,
-                      weight: AppTextWeight.semibold,
-                      tone: AppTextTone.primary,
-                    ),
-                  ),
-                ),
-              ],
+        ],
+        footer: Padding(
+          padding: EdgeInsets.all(spacing.sm),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s14,
+              weight: AppTextWeight.semibold,
+              tone: AppTextTone.primary,
             ),
           ),
         ),
@@ -137,13 +120,9 @@ class CollectionCoverCard extends StatelessWidget {
     if (onEdit == null && onDelete == null) {
       return card;
     }
-    return GestureDetector(
+    return AppContextMenuTrigger(
       key: menuKey,
-      behavior: HitTestBehavior.deferToChild,
-      onSecondaryTapDown: (details) =>
-          _showContextMenu(context, details.globalPosition),
-      onLongPressStart: (details) =>
-          _showContextMenu(context, details.globalPosition),
+      onRequestMenu: (position) => _showContextMenu(context, position),
       child: card,
     );
   }
@@ -159,10 +138,7 @@ class CollectionCoverCard extends StatelessWidget {
       globalPosition: globalPosition,
       items: [
         if (edit != null)
-          const AppMenuItem(
-            value: _CollectionMenuAction.edit,
-            label: '编辑',
-          ),
+          const AppMenuItem(value: _CollectionMenuAction.edit, label: '编辑'),
         if (delete != null)
           const AppMenuItem(
             value: _CollectionMenuAction.delete,
@@ -184,9 +160,10 @@ class CollectionCoverCard extends StatelessWidget {
 }
 
 class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
+  const _CountBadge({required this.count, required this.icon});
 
   final int count;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -203,11 +180,7 @@ class _CountBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.video_library_rounded,
-              color: Colors.white,
-              size: 12,
-            ),
+            Icon(icon, color: Colors.white, size: 12),
             SizedBox(width: context.appSpacing.xs),
             Text(
               '$count',

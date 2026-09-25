@@ -6,10 +6,17 @@ enum AppTextButtonSize { medium, small, xSmall, xxSmall, xxxSmall }
 
 enum AppTextButtonBackgroundStyle { transparent, muted }
 
+/// 选中态外观。
+///
+/// [tinted] 为主色文字 + 淡主色底，用于弹层筛选面板里的 chip；
+/// [plain] 只用主色文字 + 加粗，无底色，用于页面内联的排序/切换
+/// （如「最新 / 最早」「最热 / 最新」）。
+enum AppTextButtonSelectedStyle { tinted, plain }
+
 /// 文字按钮的强调级别。
 ///
 /// [normal] 为默认的 muted 文字；[accent] 用主色文字 + 淡主色底，
-/// 适合「新建 / 添加 / 播放」这类需要突出的动作按钮。视觉同选中态，
+/// 适合「新建 / 添加 / 播放」这类需要突出的动作按钮。视觉同 [AppTextButtonSelectedStyle.tinted]，
 /// 但语义独立于 `isSelected`（后者表达「当前选中」，如排序的最新/最早）。
 enum AppTextButtonEmphasis { normal, accent }
 
@@ -23,6 +30,7 @@ class AppTextButton extends StatelessWidget {
     this.labelKey,
     this.size = AppTextButtonSize.medium,
     this.isSelected = false,
+    this.selectedStyle = AppTextButtonSelectedStyle.tinted,
     this.emphasis = AppTextButtonEmphasis.normal,
     this.backgroundStyle = AppTextButtonBackgroundStyle.transparent,
   });
@@ -33,6 +41,7 @@ class AppTextButton extends StatelessWidget {
   final Key? labelKey;
   final AppTextButtonSize size;
   final bool isSelected;
+  final AppTextButtonSelectedStyle selectedStyle;
   final AppTextButtonEmphasis emphasis;
   final AppTextButtonBackgroundStyle backgroundStyle;
 
@@ -81,10 +90,15 @@ class AppTextButton extends StatelessWidget {
       ),
     };
     final borderRadius = context.appRadius.smBorder;
+    final isPlainSelected =
+        isSelected && selectedStyle == AppTextButtonSelectedStyle.plain;
     final isAccent = isSelected || emphasis == AppTextButtonEmphasis.accent;
     final tone = isAccent ? AppTextTone.accent : AppTextTone.muted;
     final foregroundColor = resolveAppTextToneColor(context, tone);
-    final backgroundColor = isAccent
+    final usesAccentBackground =
+        (isSelected && selectedStyle == AppTextButtonSelectedStyle.tinted) ||
+        emphasis == AppTextButtonEmphasis.accent;
+    final backgroundColor = usesAccentBackground
         ? theme.colorScheme.primary.withValues(alpha: 0.08)
         : switch (backgroundStyle) {
             AppTextButtonBackgroundStyle.transparent => Colors.transparent,
@@ -94,6 +108,7 @@ class AppTextButton extends StatelessWidget {
     final labelStyle = resolveAppTextStyle(
       context,
       size: textSize,
+      weight: isPlainSelected ? AppTextWeight.semibold : AppTextWeight.regular,
       tone: tone,
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 

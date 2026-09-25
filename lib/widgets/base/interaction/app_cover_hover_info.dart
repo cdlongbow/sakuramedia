@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 /// 封面卡片的桌面悬停披露层：收起态只显示封面，指针悬停时底部渐显压暗层、
 /// 信息自下而上淡入。
@@ -13,6 +14,7 @@ class AppCoverHoverInfo extends StatefulWidget {
     super.key,
     required this.cover,
     required this.infoBuilder,
+    this.collapsedOverlay,
     this.enabled = true,
   });
 
@@ -21,6 +23,10 @@ class AppCoverHoverInfo extends StatefulWidget {
 
   /// 悬停展开的底部信息面板内容。
   final WidgetBuilder infoBuilder;
+
+  /// 收起态前景层（如影片番号、女优名字）：不随封面缩放，悬停展开时淡出并
+  /// 从树上移除，避免与底部信息面板的文字重复。
+  final Widget? collapsedOverlay;
 
   /// 是否允许悬停展开（选择模式下传 `false`）。
   final bool enabled;
@@ -50,10 +56,9 @@ class _AppCoverHoverInfoState extends State<AppCoverHoverInfo> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final duration = reduceMotion
-        ? Duration.zero
-        : AppCoverHoverInfo._duration;
+    final duration = reduceMotion ? Duration.zero : AppCoverHoverInfo._duration;
     final expanded = _expanded;
+    final collapsed = widget.collapsedOverlay;
     final panel = _CoverHoverPanel(child: widget.infoBuilder(context));
 
     final Widget overlay;
@@ -97,6 +102,24 @@ class _AppCoverHoverInfoState extends State<AppCoverHoverInfo> {
             curve: Curves.easeOutCubic,
             child: widget.cover,
           ),
+          if (collapsed != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                // 展开后收起态层整体移除，既避免与信息面板重复，也不再参与命中。
+                ignoring: expanded,
+                child: reduceMotion
+                    ? (expanded ? const SizedBox.shrink() : collapsed)
+                    : AnimatedSwitcher(
+                        duration: duration,
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeIn,
+                        child: KeyedSubtree(
+                          key: ValueKey<bool>(expanded),
+                          child: expanded ? const SizedBox.shrink() : collapsed,
+                        ),
+                      ),
+              ),
+            ),
           Positioned(
             left: 0,
             right: 0,
@@ -247,7 +270,8 @@ class AppCoverHoverActionBar extends StatelessWidget {
 /// 悬停面板动作行里的圆形图标按钮。
 ///
 /// [primary] 为播放等主操作：白底实心圆 + 品牌色图标；其余动作为半透明白底 +
-/// 白图标，保证在压暗渐变上可读。`onTap` 为 `null` 时只作占位（不响应点击）。
+/// 白图标，保证在压暗渐变上可读。按下反馈走 [AppInteractiveSurface]（整体变淡
+/// 0.7，与全站可点元素一致）；`onTap` 为 `null` 时只作占位（不响应点击）。
 class AppCoverHoverActionButton extends StatelessWidget {
   const AppCoverHoverActionButton({
     super.key,
@@ -268,30 +292,23 @@ class AppCoverHoverActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.appComponentTokens;
     final tooltipText = tooltip;
-    final button = GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    final button = AppInteractiveSurface(
+      enabled: onTap != null,
       onTap: onTap,
-      child: MouseRegion(
-        cursor: onTap != null
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        child: Container(
-          width: tokens.iconSize2xl,
-          height: tokens.iconSize2xl,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: primary
-                ? Colors.white
-                : Colors.white.withValues(alpha: 0.16),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: tokens.iconSizeMd,
-            color: primary
-                ? context.appTextPalette.primary
-                : context.appTextPalette.onMedia,
-          ),
+      child: Container(
+        width: tokens.iconSize2xl,
+        height: tokens.iconSize2xl,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: primary ? Colors.white : Colors.white.withValues(alpha: 0.16),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: tokens.iconSizeMd,
+          color: primary
+              ? context.appTextPalette.primary
+              : context.appTextPalette.onMedia,
         ),
       ),
     );

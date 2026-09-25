@@ -360,6 +360,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
                   label: sort.label,
                   size: AppTextButtonSize.xSmall,
                   isSelected: state.sort == sort,
+                  selectedStyle: AppTextButtonSelectedStyle.plain,
                   onPressed: () => _handleSortChange(sort),
                 ),
             ],

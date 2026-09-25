@@ -14,7 +14,8 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 ///
 /// 组头是「贴边小缩略图 + 标题区 + chevron」的 [AppLeftCoverCard]（`shell: false`
 /// 复用其贴边封面布局），缩略图由组卡圆角裁剪、与行卡封面区分层级；
-/// 组内文件行是平铺的「文件名 + 单行灰字元数据 + 尾部删除图标」，不再各自成卡。
+/// 组内文件行固定两行：第一行「文件名（超长省略，悬停/长按看全名）+ 附加信息
+/// + 失效徽标」，第二行灰字元数据；行高不随文件名或附加信息长度增长，不再各自成卡。
 class MediaFileGroupCard extends ConsumerWidget {
   const MediaFileGroupCard({
     super.key,
@@ -35,6 +36,9 @@ class MediaFileGroupCard extends ConsumerWidget {
   final String countLabel;
   final Key headerKey;
   final String deleteLabel;
+
+  /// 文件名行尾部的单行附加内容（差异番号、合集胶囊等）；由卡片限制为一行，
+  /// 超出时横向滚动。
   final Widget? Function(MediaListItemDto)? itemSupplement;
   final String keyPrefix;
   final bool mobile;
@@ -236,7 +240,7 @@ class _FileRow extends StatelessWidget {
             ? null
             : () => onToggle(item),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: spacing.md),
+          padding: EdgeInsets.symmetric(vertical: spacing.sm),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -255,6 +259,9 @@ class _FileRow extends StatelessWidget {
                           child: Checkbox(
                             key: Key('$keyPrefix-select-${item.id}'),
                             value: selectedIds!.contains(item.id),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
                             onChanged:
                                 selectionLimitReached &&
                                     !selectedIds!.contains(item.id)
@@ -268,10 +275,11 @@ class _FileRow extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SelectableText(
-                              item.fileName,
-                              key: Key('$keyPrefix-file-${item.id}'),
-                              style: filenameStyle,
+                            _FileTitleLine(
+                              item: item,
+                              filenameStyle: filenameStyle,
+                              keyPrefix: keyPrefix,
+                              itemSupplement: itemSupplement,
                             ),
                             SizedBox(height: spacing.xs),
                             Text(
@@ -287,18 +295,6 @@ class _FileRow extends StatelessWidget {
                                 tone: AppTextTone.muted,
                               ),
                             ),
-                            if (itemSupplement != null) ...[
-                              SizedBox(height: spacing.xs),
-                              itemSupplement!,
-                            ],
-                            if (!item.valid) ...[
-                              SizedBox(height: spacing.xs),
-                              const AppBadge(
-                                label: '失效',
-                                tone: AppBadgeTone.error,
-                                size: AppBadgeSize.compact,
-                              ),
-                            ],
                           ],
                         ),
                       ),
@@ -321,6 +317,70 @@ class _FileRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 文件行的第一行：文件名（超长省略，Tooltip 看全名）+ 附加信息 + 失效徽标。
+///
+/// 附加信息被限制在行宽的 50% 内并横向滚动，保证整行恒为一行。
+class _FileTitleLine extends StatelessWidget {
+  const _FileTitleLine({
+    required this.item,
+    required this.filenameStyle,
+    required this.keyPrefix,
+    required this.itemSupplement,
+  });
+
+  final MediaListItemDto item;
+  final TextStyle filenameStyle;
+  final String keyPrefix;
+  final Widget? itemSupplement;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final supplement = itemSupplement;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Tooltip(
+                message: item.fileName,
+                child: Text(
+                  item.fileName,
+                  key: Key('$keyPrefix-file-${item.id}'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: filenameStyle,
+                ),
+              ),
+            ),
+            if (supplement != null) ...[
+              SizedBox(width: spacing.sm),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: constraints.maxWidth * 0.5,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: supplement,
+                ),
+              ),
+            ],
+            if (!item.valid) ...[
+              SizedBox(width: spacing.sm),
+              const AppBadge(
+                label: '失效',
+                tone: AppBadgeTone.error,
+                size: AppBadgeSize.compact,
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 
 /// 全项目统一的**交互态表面**：所有可点元素都应经过它，不要各自写 `InkWell`。
 ///
@@ -60,7 +61,13 @@ class _AppInteractiveSurfaceState extends State<AppInteractiveSurface> {
       color: Colors.transparent,
       child: InkWell(
         onTap: interactive ? widget.onTap : null,
-        onLongPress: interactive ? widget.onLongPress : null,
+        // 长按统一补一次轻触感（移动端长按进多选/弹菜单的高频入口）。
+        onLongPress: interactive && widget.onLongPress != null
+            ? () {
+                triggerSelectionHaptic();
+                widget.onLongPress!();
+              }
+            : null,
         onSecondaryTap: interactive ? widget.onSecondaryTap : null,
         onHighlightChanged: interactive
             ? (highlighted) {

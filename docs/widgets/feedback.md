@@ -20,11 +20,20 @@
 - 占位数据约定：用真实 DTO 构造、文案取 `BoneMock`、封面 / 图片 URL 传 `null`
   不触发网络请求；每个 feature 的占位工厂放在 `presentation/<feature>_placeholders.dart`。
   加载态渲染真实组件后，`ignorePointers` 会屏蔽交互，回调不会被触发。
-- 卡片级整卡收敛：共享卡片内部用 `Skeleton.unite` 包住封面 / 内容区，骨架态下整张卡
-  被画成一块 shimmer 圆角块，订阅心、热度、排名、信息按钮、标题行等细碎骨块不再单独
-  透出；卡片的边框 / 圆角 / 阴影留在 unite 外层保持可见，非骨架态下 `Skeleton.unite`
-  原样渲染。当前用于影片、女优、切片、视频、时刻、合集封面、播放列表横幅和下载任务卡。
-  下载任务卡这类自带品牌色进度条的卡片在 unite 外层补 `borderRadius`，避免块变直角。
+- 卡片级整卡收敛：共享卡片内部用 `AppSkeletonUnite`（`app_skeletonizer.dart`，
+  **不要直接调用 `Skeleton.unite`**）包住封面 / 内容区，骨架态下整张卡被画成一块
+  shimmer 圆角块，订阅心、热度、排名、信息按钮、标题行等细碎骨块不再单独透出；
+  卡片的边框 / 圆角 / 阴影留在合并区外层保持可见，非骨架态下原样渲染。当前用于
+  影片、女优、切片、视频、时刻、合集封面、合集成员卡、播放器缩略图 tile、
+  播放列表横幅和下载任务卡。
+  `borderRadius` 必传且取卡片外层同一个圆角 token：skeletonizer 合并骨块时取合并区
+  内「最大后代」的圆角，卡内药丸角标用 `appRadius.pillBorder`（`circular(999)`），
+  一旦它成为最大后代，整张卡会被画成椭圆（影片卡热度胶囊曾踩坑）；漏传由
+  `test/widgets/base/feedback/skeleton_unite_guard_test.dart` 拦截。
+- 纯图片卡（整卡即封面）的缺图 / 首帧占位统一为 `surfaceMuted` 纯色块，不带渐变与
+  居中图标：skeletonizer 会把 `Icon` 按文本骨块画成实心方块，任何没被
+  `AppSkeletonUnite` 覆盖的居中图标都会让骨架中间多出一块。`MaskedImage` 的
+  首帧 / 缺图 / 加载失败占位同样是无图标纯块。
 - 首屏骨架不再使用手写骨架组件；`SliverPagedAsyncSection.skeletonBuilder` 传
   「占位数据 + 真实卡片」并用 `AppSkeletonizer` 灰化。`AppSkeletonBlock` 仅作为
   无真实对应物的小面积占位原子（如加载态工具条的两条灰线）保留，必须包在

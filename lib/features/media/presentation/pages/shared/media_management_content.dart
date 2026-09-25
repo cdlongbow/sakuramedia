@@ -15,14 +15,28 @@ import 'package:sakuramedia/features/media/presentation/providers/multi_version_
 import 'package:sakuramedia/features/media/presentation/widgets/shared/duplicate_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/invalid_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_section.dart';
+import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_transfer_target_dialog.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_version_movies_section.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
+
+/// 删除媒体后同步 videos 域缓存的统一入口（共享规则见
+/// `media_video_mutation_report.dart`）。
+void _reportDeletedPornboxVideos(
+  WidgetRef ref,
+  Iterable<MediaListItemDto> items,
+) {
+  reportDeletedVideoItems(
+    items,
+    ref.read(videoMutationEventsProvider.notifier).reportDeleted,
+  );
+}
 
 /// 「媒体管理」双端共享内容（桌面 / 移动壳收敛的 content 层）。
 ///
@@ -328,6 +342,13 @@ class MediaManagementContent extends HookConsumerWidget {
 
     if (okIds.isNotEmpty) {
       ref.read(mediaBrowseProvider.notifier).removeItemsByIds(okIds);
+      final itemsById = {
+        for (final item in browseState.paged.items) item.id: item,
+      };
+      _reportDeletedPornboxVideos(
+        ref,
+        okIds.map((id) => itemsById[id]).whereType<MediaListItemDto>(),
+      );
       if (mobile && context.mounted) {
         selectionMode.value = false;
       }
@@ -367,6 +388,7 @@ class MediaManagementContent extends HookConsumerWidget {
     try {
       await ref.read(mediaApiProvider).deleteMedia(mediaId: item.id);
       ref.read(mediaBrowseProvider.notifier).removeItemsByIds([item.id]);
+      _reportDeletedPornboxVideos(ref, [item]);
       if (context.mounted) showToast('媒体已删除');
     } catch (error) {
       if (context.mounted) {

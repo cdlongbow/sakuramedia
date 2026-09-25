@@ -39,6 +39,51 @@ void main() {
     expect(labels.last.style?.color, sakuraThemeData.appTextPalette.muted);
   });
 
+  testWidgets('app text button plain selected style drops the background', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: Column(
+            children: [
+              AppTextButton(
+                label: '最新',
+                isSelected: true,
+                selectedStyle: AppTextButtonSelectedStyle.plain,
+                onPressed: () {},
+              ),
+              AppTextButton(
+                label: '最早',
+                selectedStyle: AppTextButtonSelectedStyle.plain,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final containers =
+        tester
+            .widgetList<AnimatedContainer>(find.byType(AnimatedContainer))
+            .toList();
+    final selectedDecoration = containers.first.decoration! as BoxDecoration;
+    final labels = tester.widgetList<Text>(find.byType(Text)).toList();
+
+    expect(selectedDecoration.color, Colors.transparent);
+    expect(labels.first.style?.color, sakuraThemeData.appTextPalette.accent);
+    expect(
+      labels.first.style?.fontWeight,
+      sakuraThemeData.appTextWeights.semibold,
+    );
+    expect(
+      labels.last.style?.fontWeight,
+      sakuraThemeData.appTextWeights.regular,
+    );
+  });
+
   testWidgets('app text button supports muted background style', (
     WidgetTester tester,
   ) async {

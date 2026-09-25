@@ -121,7 +121,14 @@ void main() {
       );
 
       expect(find.byType(Image), findsNothing);
-      expect(find.byIcon(Icons.image_outlined), findsOneWidget);
+      // 首帧 / 缺图占位统一为 muted 纯块，不再带居中图标。
+      expect(
+        find.descendant(
+          of: find.byType(MaskedImage),
+          matching: find.byType(Icon),
+        ),
+        findsNothing,
+      );
     },
   );
 

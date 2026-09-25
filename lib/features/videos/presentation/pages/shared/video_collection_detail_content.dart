@@ -177,8 +177,9 @@ class _VideoCollectionDetailContentState
         }
         // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
         // 骨架与数据到位后的首屏严格同形。
-        final displayState =
-            isLoading ? videoCollectionDetailPlaceholder() : state!;
+        final displayState = isLoading
+            ? videoCollectionDetailPlaceholder()
+            : state!;
         return AppSkeletonizer(
           enabled: isLoading,
           child: Column(
@@ -524,6 +525,7 @@ class _VideoCollectionDetailContentState
           context,
           width: constraints.maxWidth,
           spacing: spacing,
+          orientation: AppCardGridOrientation.mixed,
         );
         return MasonryGridView.count(
           controller: _itemsScrollController,
@@ -545,63 +547,56 @@ class _VideoCollectionDetailContentState
             final playSingle = widget.playSingle;
             return AspectRatio(
               aspectRatio: aspect,
-              child: GestureDetector(
+              child: CollectionMemberCard(
+                key: ValueKey<int>(item.itemId),
                 onLongPress: _isMobile && !selectionMode
                     ? () {
                         enterSelection();
                         toggleSelect(item.itemId);
                       }
                     : null,
-                child: CollectionMemberCard(
-                  key: ValueKey<int>(item.itemId),
-                  coverUrl: item.video.coverImage?.bestAvailableUrl,
-                  // expandToParent 模式下 coverAspectRatio 仅在 cover placeholder 时
-                  // 影响占位比例；瀑布流 tile 已按真实比例分配高度，传 16:9 兜底即可。
-                  coverAspectRatio: 16 / 9,
-                  title: item.video.preferredTitle,
-                  // 副信息只在桌面悬停面板渲染；移动端无 hover，收起态不铺文字。
-                  subtitle: _formatReleaseDate(item.video.releaseDate),
-                  onTap: selectionMode
-                      ? () => toggleSelect(item.itemId)
-                      : () => _openMemberActions(context, item),
-                  menuKey: Key('${widget.keyPrefix}-grid-menu-${item.itemId}'),
-                  clipOverlay: true,
-                  onPlay: _isMobile || playSingle == null
-                      ? null
-                      : () => playSingle(
-                          context,
-                          item.video.id,
-                          item.video.preferredTitle,
-                        ),
-                  playButtonKey: Key(
-                    '${widget.keyPrefix}-grid-play-${item.itemId}',
-                  ),
-                  onThumbnails: _isMobile
-                      ? null
-                      : () => _openThumbnails(item),
-                  thumbnailsButtonKey: Key(
-                    '${widget.keyPrefix}-grid-thumbnails-${item.itemId}',
-                  ),
-                  onAddToCollection: _isMobile
-                      ? null
-                      : () => _addToOtherCollection(item),
-                  addToCollectionButtonKey: Key(
-                    '${widget.keyPrefix}-grid-add-collection-${item.itemId}',
-                  ),
-                  onRemove: _isMobile ? null : () => _removeItem(item.itemId),
-                  removeButtonKey: Key(
-                    '${widget.keyPrefix}-grid-remove-${item.itemId}',
-                  ),
-                  onDelete: _isMobile ? null : () => _deleteVideo(item.itemId),
-                  deleteButtonKey: Key(
-                    '${widget.keyPrefix}-grid-delete-${item.itemId}',
-                  ),
-                  placeholderIcon: Icons.video_library_outlined,
-                  titleMaxLines: 2,
-                  expandToParent: true,
-                  selectionMode: selectionMode,
-                  isSelected: isSelected(item.itemId),
+                coverUrl: item.video.coverImage?.bestAvailableUrl,
+                // expandToParent 模式下 coverAspectRatio 仅在 cover placeholder 时
+                // 影响占位比例；瀑布流 tile 已按真实比例分配高度，传 16:9 兜底即可。
+                coverAspectRatio: 16 / 9,
+                title: item.video.preferredTitle,
+                // 副信息只在桌面悬停面板渲染；移动端无 hover，收起态不铺文字。
+                subtitle: _formatReleaseDate(item.video.releaseDate),
+                onTap: selectionMode
+                    ? () => toggleSelect(item.itemId)
+                    : () => _openMemberActions(context, item),
+                menuKey: Key('${widget.keyPrefix}-grid-menu-${item.itemId}'),
+                onPlay: _isMobile || playSingle == null
+                    ? null
+                    : () => playSingle(
+                        context,
+                        item.video.id,
+                        item.video.preferredTitle,
+                      ),
+                playButtonKey: Key(
+                  '${widget.keyPrefix}-grid-play-${item.itemId}',
                 ),
+                onThumbnails: _isMobile ? null : () => _openThumbnails(item),
+                thumbnailsButtonKey: Key(
+                  '${widget.keyPrefix}-grid-thumbnails-${item.itemId}',
+                ),
+                onAddToCollection: _isMobile
+                    ? null
+                    : () => _addToOtherCollection(item),
+                addToCollectionButtonKey: Key(
+                  '${widget.keyPrefix}-grid-add-collection-${item.itemId}',
+                ),
+                onRemove: _isMobile ? null : () => _removeItem(item.itemId),
+                removeButtonKey: Key(
+                  '${widget.keyPrefix}-grid-remove-${item.itemId}',
+                ),
+                onDelete: _isMobile ? null : () => _deleteVideo(item.itemId),
+                deleteButtonKey: Key(
+                  '${widget.keyPrefix}-grid-delete-${item.itemId}',
+                ),
+                expandToParent: true,
+                selectionMode: selectionMode,
+                isSelected: isSelected(item.itemId),
               ),
             );
           },
@@ -952,5 +947,3 @@ String? _formatReleaseDate(DateTime? value) {
   }
   return DateFormat('yyyy-MM-dd').format(value.toLocal());
 }
-
-

@@ -21,6 +21,8 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -503,44 +505,52 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                     ),
                     if (!(movies?.paged.filterUpdate.hasFailed ?? false) ||
                         (movies?.paged.items.isNotEmpty ?? false))
-                      MovieSummarySliver(
-                        items: movies?.paged.items ?? const [],
-                        isLoading: moviesAsync.isLoading && movies == null,
-                        errorMessage: moviesAsync.hasError && movies == null
-                            ? _scope.initialLoadErrorText
-                            : null,
-                        onMovieTap: (movie) =>
-                            widget.onMovieTap(context, movie.movieNumber),
-                        onMovieMenuRequest: (movie, globalPosition) {
-                          unawaited(
-                            showMovieCollectionFeatureActionMenu(
-                              context: context,
-                              movieNumber: movie.movieNumber,
-                              globalPosition: globalPosition,
-                              isSubscribed: movie.isSubscribed,
-                              onBlacklisted: () => ref
-                                  .read(movieSummaryProvider(_scope).notifier)
-                                  .removeMovies(<String>[movie.movieNumber]),
-                              onEnterSelection: widget.useMobileSelectionLayout
-                                  ? () {
-                                      enterSelection();
-                                      toggleSelect(movie.movieNumber);
-                                    }
-                                  : null,
-                            ),
-                          );
-                        },
-                        onMovieSubscriptionTap: (movie) =>
-                            _toggleMovieSubscription(movie.movieNumber),
-                        isMovieSubscriptionUpdating: (movie) =>
-                            movies?.isSubscriptionUpdating(movie.movieNumber) ??
-                            false,
-                        emptyMessage: '暂无影片数据',
-                        selectionMode: selectionMode,
-                        isMovieSelected: (movie) =>
-                            isSelected(movie.movieNumber),
-                        onMovieSelectedChanged: (movie, _) =>
-                            toggleSelect(movie.movieNumber),
+                      AppSkeletonizer.sliver(
+                        enabled: moviesAsync.isLoading && movies == null,
+                        child: MovieSummarySliver(
+                          items: moviesAsync.isLoading && movies == null
+                              ? movieListItemPlaceholders(count: 24)
+                              : movies?.paged.items ?? const [],
+                          isLoading: false,
+                          errorMessage: moviesAsync.hasError && movies == null
+                              ? _scope.initialLoadErrorText
+                              : null,
+                          onMovieTap: (movie) =>
+                              widget.onMovieTap(context, movie.movieNumber),
+                          onMovieMenuRequest: (movie, globalPosition) {
+                            unawaited(
+                              showMovieCollectionFeatureActionMenu(
+                                context: context,
+                                movieNumber: movie.movieNumber,
+                                globalPosition: globalPosition,
+                                isSubscribed: movie.isSubscribed,
+                                onBlacklisted: () => ref
+                                    .read(movieSummaryProvider(_scope).notifier)
+                                    .removeMovies(<String>[movie.movieNumber]),
+                                onEnterSelection:
+                                    widget.useMobileSelectionLayout
+                                    ? () {
+                                        enterSelection();
+                                        toggleSelect(movie.movieNumber);
+                                      }
+                                    : null,
+                              ),
+                            );
+                          },
+                          onMovieSubscriptionTap: (movie) =>
+                              _toggleMovieSubscription(movie.movieNumber),
+                          isMovieSubscriptionUpdating: (movie) =>
+                              movies?.isSubscriptionUpdating(
+                                movie.movieNumber,
+                              ) ??
+                              false,
+                          emptyMessage: '暂无影片数据',
+                          selectionMode: selectionMode,
+                          isMovieSelected: (movie) =>
+                              isSelected(movie.movieNumber),
+                          onMovieSelectedChanged: (movie, _) =>
+                              toggleSelect(movie.movieNumber),
+                        ),
                       ),
                     if (footer != null)
                       SliverToBoxAdapter(

@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/notificatio
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
+import 'package:sakuramedia/features/activity/presentation/activity_placeholders.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -15,6 +16,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
 /// 移动端「消息」中心页。列表、分页与无感已读来自全局通知 provider；移动端在桌面行为之上,
@@ -124,17 +126,17 @@ class _MobileNotificationsPageState
     if (!_snapshotDirty || state.isInitialLoading) {
       return;
     }
-    _unreadSnapshotIds =
-        state.notifications
-            .where((item) => !item.isRead)
-            .map((item) => item.id)
-            .toSet();
+    _unreadSnapshotIds = state.notifications
+        .where((item) => !item.isRead)
+        .map((item) => item.id)
+        .toSet();
     _snapshotDirty = false;
   }
 
   void _onSegmentTap(int index) {
-    final next =
-        index == 0 ? _NotificationSegment.all : _NotificationSegment.unread;
+    final next = index == 0
+        ? _NotificationSegment.all
+        : _NotificationSegment.unread;
     if (next == _segment) {
       return;
     }
@@ -205,7 +207,10 @@ class _MobileNotificationsPageState
             variant: AppTabBarVariant.compact,
             controller: _segmentController,
             onTap: _onSegmentTap,
-            tabs: const <Widget>[Tab(text: '全部'), Tab(text: '未读')],
+            tabs: const <Widget>[
+              Tab(text: '全部'),
+              Tab(text: '未读'),
+            ],
           ),
         ),
         SizedBox(width: context.appSpacing.md),
@@ -215,10 +220,9 @@ class _MobileNotificationsPageState
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
           isLoading: state.isMarkingAllRead,
-          onPressed:
-              state.unreadCount > 0 && !state.isMarkingAllRead
-                  ? _handleMarkAllRead
-                  : null,
+          onPressed: state.unreadCount > 0 && !state.isMarkingAllRead
+              ? _handleMarkAllRead
+              : null,
         ),
       ],
     );
@@ -252,8 +256,9 @@ class _MobileNotificationsPageState
           hasScrollBody: false,
           child: AppEmptyState(
             key: const Key('mobile-notifications-empty'),
-            message:
-                _segment == _NotificationSegment.unread ? '没有未读消息' : '暂无消息',
+            message: _segment == _NotificationSegment.unread
+                ? '没有未读消息'
+                : '暂无消息',
           ),
         ),
       ];
@@ -313,15 +318,25 @@ class _MobileNotificationsPageState
 
   Widget _buildSkeletonSliver(BuildContext context) {
     final spacing = context.appSpacing;
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => Padding(
-          padding: EdgeInsets.only(
-            bottom: index == _skeletonCount - 1 ? 0 : spacing.sm,
+    final placeholders = activityNotificationPlaceholders(
+      count: _skeletonCount,
+    );
+    // loading 用占位通知渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer.sliver(
+      enabled: true,
+      child: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: EdgeInsets.only(
+              bottom: index == _skeletonCount - 1 ? 0 : spacing.sm,
+            ),
+            child: MobileNotificationCard(
+              notification: placeholders[index],
+              isUnread: false,
+            ),
           ),
-          child: const _MobileNotificationSkeleton(),
+          childCount: _skeletonCount,
         ),
-        childCount: _skeletonCount,
       ),
     );
   }
@@ -358,23 +373,22 @@ class MobileNotificationCard extends StatelessWidget {
         children: [
           SizedBox(
             width: spacing.sm,
-            child:
-                isUnread
-                    ? Padding(
-                      padding: EdgeInsets.only(top: spacing.xs),
-                      child: Container(
-                        key: Key(
-                          'mobile-activity-notification-${notification.id}-dot',
-                        ),
-                        width: spacing.sm,
-                        height: spacing.sm,
-                        decoration: BoxDecoration(
-                          color: context.appTextPalette.error,
-                          shape: BoxShape.circle,
-                        ),
+            child: isUnread
+                ? Padding(
+                    padding: EdgeInsets.only(top: spacing.xs),
+                    child: Container(
+                      key: Key(
+                        'mobile-activity-notification-${notification.id}-dot',
                       ),
-                    )
-                    : null,
+                      width: spacing.sm,
+                      height: spacing.sm,
+                      decoration: BoxDecoration(
+                        color: context.appTextPalette.error,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  )
+                : null,
           ),
           SizedBox(width: spacing.sm),
           Expanded(
@@ -409,10 +423,9 @@ class MobileNotificationCard extends StatelessWidget {
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s14,
-                    weight:
-                        isUnread
-                            ? AppTextWeight.semibold
-                            : AppTextWeight.medium,
+                    weight: isUnread
+                        ? AppTextWeight.semibold
+                        : AppTextWeight.medium,
                     tone: AppTextTone.primary,
                   ),
                 ),
@@ -429,46 +442,6 @@ class MobileNotificationCard extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileNotificationSkeleton extends StatelessWidget {
-  const _MobileNotificationSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-
-    Widget bar({required double width}) {
-      return Container(
-        height: spacing.md,
-        width: width,
-        decoration: BoxDecoration(
-          color: colors.surfaceMuted,
-          borderRadius: context.appRadius.smBorder,
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          bar(width: context.appLayoutTokens.filterFieldWidthMd),
-          SizedBox(height: spacing.sm),
-          bar(width: double.infinity),
-          SizedBox(height: spacing.xs),
-          bar(width: double.infinity),
         ],
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
 
 /// 影片详情页「切片」区块：横向滚动的切片卡条，四态与「相似影片」一致
@@ -39,15 +41,23 @@ class MovieClipStrip extends StatelessWidget {
         context.appComponentTokens.movieDetailPlotThumbnailHeight;
     final cardWidth = cardHeight * (16 / 9);
 
-    if (isLoading) {
-      return _MovieClipStripScroller(
-        scrollViewKey: const Key('movie-clip-strip-loading'),
-        children: List<Widget>.generate(
-          4,
-          (index) => _MovieClipSkeleton(
-            key: Key('movie-clip-strip-skeleton-$index'),
-            height: cardHeight,
-          ),
+    if (isLoading && clips.isEmpty) {
+      // loading 用占位切片渲染真实卡片，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: _MovieClipStripScroller(
+          scrollViewKey: const Key('movie-clip-strip-loading'),
+          children: [
+            for (final clip in clipPlaceholders(count: 4))
+              SizedBox(
+                width: cardWidth,
+                child: ClipGridCard(
+                  key: Key('movie-clip-strip-card-${clip.clipId}'),
+                  clip: clip,
+                  onTap: () {},
+                ),
+              ),
+          ],
         ),
       );
     }
@@ -165,31 +175,6 @@ class _MovieClipFeedback extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _MovieClipSkeleton extends StatelessWidget {
-  const _MovieClipSkeleton({super.key, required this.height});
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: height * (16 / 9),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.mdBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: DecoratedBox(
-          decoration: BoxDecoration(color: context.appColors.surfaceMuted),
-        ),
       ),
     );
   }

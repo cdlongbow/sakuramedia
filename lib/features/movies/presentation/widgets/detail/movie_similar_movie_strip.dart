@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 const double _similarMovieCardWidthFactor = 0.75;
@@ -36,15 +38,19 @@ class MovieSimilarMovieStrip extends ConsumerWidget {
         _similarMovieCardWidthFactor;
     final updatingMovieNumbers = ref.watch(movieSubscriptionToggleProvider);
 
-    if (isLoading) {
-      return _MovieSimilarMovieStripScroller(
-        scrollViewKey: const Key('movie-similar-strip-loading'),
-        children: List<Widget>.generate(
-          4,
-          (index) => _MovieSimilarMovieSkeleton(
-            key: Key('movie-similar-strip-skeleton-$index'),
-            width: cardWidth,
-          ),
+    if (isLoading && movies.isEmpty) {
+      // loading 用占位影片渲染真实卡片，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: _MovieSimilarMovieStripScroller(
+          scrollViewKey: const Key('movie-similar-strip-loading'),
+          children: [
+            for (final movie in movieListItemPlaceholders(count: 4))
+              SizedBox(
+                width: cardWidth,
+                child: MovieSummaryCard(movie: movie),
+              ),
+          ],
         ),
       );
     }
@@ -179,32 +185,6 @@ class _MovieSimilarMovieFeedback extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _MovieSimilarMovieSkeleton extends StatelessWidget {
-  const _MovieSimilarMovieSkeleton({super.key, required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: AspectRatio(
-        aspectRatio: context.appComponentTokens.movieCardAspectRatio,
-        child: DecoratedBox(
-          decoration: BoxDecoration(color: context.appColors.surfaceMuted),
-        ),
       ),
     );
   }

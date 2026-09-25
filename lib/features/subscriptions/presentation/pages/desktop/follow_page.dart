@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
@@ -93,30 +95,35 @@ class _DesktopFollowPageState extends ConsumerState<DesktopFollowPage> {
                 SliverToBoxAdapter(
                   child: SizedBox(height: context.appSpacing.lg),
                 ),
-                MovieSummarySliver(
-                  items: items,
-                  isLoading: isInitialLoading,
-                  errorMessage: initialErrorMessage,
-                  onMovieTap: (movie) => context.pushDesktopMovieDetail(
-                    movieNumber: movie.movieNumber,
-                    fallbackPath: desktopFollowPath,
+                AppSkeletonizer.sliver(
+                  enabled: isInitialLoading,
+                  child: MovieSummarySliver(
+                    items: isInitialLoading
+                        ? movieListItemPlaceholders(count: 24)
+                        : items,
+                    isLoading: false,
+                    errorMessage: initialErrorMessage,
+                    onMovieTap: (movie) => context.pushDesktopMovieDetail(
+                      movieNumber: movie.movieNumber,
+                      fallbackPath: desktopFollowPath,
+                    ),
+                    onMovieMenuRequest: (movie, globalPosition) {
+                      unawaited(
+                        showMovieCollectionFeatureActionMenu(
+                          context: context,
+                          movieNumber: movie.movieNumber,
+                          globalPosition: globalPosition,
+                          isSubscribed: movie.isSubscribed,
+                        ),
+                      );
+                    },
+                    onMovieSubscriptionTap: (movie) =>
+                        _toggleMovieSubscription(movie.movieNumber),
+                    isMovieSubscriptionUpdating: (movie) =>
+                        summary?.isSubscriptionUpdating(movie.movieNumber) ??
+                        false,
+                    emptyMessage: '暂无关注影片',
                   ),
-                  onMovieMenuRequest: (movie, globalPosition) {
-                    unawaited(
-                      showMovieCollectionFeatureActionMenu(
-                        context: context,
-                        movieNumber: movie.movieNumber,
-                        globalPosition: globalPosition,
-                        isSubscribed: movie.isSubscribed,
-                      ),
-                    );
-                  },
-                  onMovieSubscriptionTap: (movie) =>
-                      _toggleMovieSubscription(movie.movieNumber),
-                  isMovieSubscriptionUpdating: (movie) =>
-                      summary?.isSubscriptionUpdating(movie.movieNumber) ??
-                      false,
-                  emptyMessage: '暂无关注影片',
                 ),
                 if (showFooter)
                   SliverToBoxAdapter(

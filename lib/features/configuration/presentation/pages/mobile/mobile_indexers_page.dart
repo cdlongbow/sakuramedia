@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_state.dart';
@@ -27,7 +28,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_info_block.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_form_sheet.dart';
 
 class MobileIndexersPage extends ConsumerStatefulWidget {
@@ -123,7 +124,7 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
   Widget _buildBody(BuildContext context) {
     if (_isLoading) {
-      return const _MobileIndexersLoadingSection();
+      return _buildLoadingBody(context);
     }
 
     if (_errorMessage != null &&
@@ -204,6 +205,42 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
             disabledMessage: _connectionTestDisabledMessage,
             testButtonKey: const Key('mobile-indexers-connection-test-button'),
             resultKey: const Key('mobile-indexers-connection-test-result'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingBody(BuildContext context) {
+    final spacing = context.appSpacing;
+    final placeholders = indexerPlaceholders(count: 3);
+    // loading 用占位索引器渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppNoticeCard(
+            key: const Key('mobile-indexers-overview-card'),
+            title: 'Torznab 索引器负责搜索候选资源，并把资源请求投递到对应下载器。',
+            description: '每个索引器可独立配置 API Key；留空的站点请求不会携带 apikey。',
+            stats: [
+              AppNoticeStat(label: 'API Key 已配置', value: '0 个'),
+              AppNoticeStat(label: '索引器数', value: '${placeholders.length}'),
+              AppNoticeStat(label: '已绑定下载器', value: '0'),
+            ],
+          ),
+          SizedBox(height: spacing.md),
+          _buildConnectionTestCard(context),
+          SizedBox(height: spacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final entry in placeholders) ...[
+                _buildIndexerCard(context, entry),
+                if (entry != placeholders.last) SizedBox(height: spacing.sm),
+              ],
+            ],
           ),
         ],
       ),
@@ -577,26 +614,6 @@ Future<MobileIndexerDetailAction?> showMobileIndexerDetailDrawer(
 
 enum MobileIndexerDetailAction { edit, delete }
 
-class _MobileIndexersLoadingSection extends StatelessWidget {
-  const _MobileIndexersLoadingSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = context.appRadius.lgBorder;
-    return Column(
-      children: [
-        AppSkeletonBlock(width: double.infinity, height: 172, radius: radius),
-        SizedBox(height: context.appSpacing.md),
-        AppSkeletonBlock(width: double.infinity, height: 188, radius: radius),
-        SizedBox(height: context.appSpacing.md),
-        AppSkeletonBlock(width: double.infinity, height: 128, radius: radius),
-        SizedBox(height: context.appSpacing.sm),
-        AppSkeletonBlock(width: double.infinity, height: 128, radius: radius),
-      ],
-    );
-  }
-}
-
 class _MobileIndexerEditorDrawer extends ConsumerStatefulWidget {
   const _MobileIndexerEditorDrawer({
     required this.existingEntries,
@@ -770,10 +787,7 @@ class _MobileIndexerEditorDrawerState
         .map((id) => clientsById[id])
         .whereType<DownloadClientDto>()
         .map(
-          (client) => IndexerBoundClientDto(
-            id: client.id,
-            name: client.name,
-          ),
+          (client) => IndexerBoundClientDto(id: client.id, name: client.name),
         )
         .toList(growable: false);
   }

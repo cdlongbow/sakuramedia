@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -61,8 +62,15 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('movie-summary-grid')), findsOneWidget);
+      // 加载态渲染的是真实卡片（占位番号），由 AppSkeletonizer 灰化。
       expect(
-        find.byKey(const Key('movie-summary-card-skeleton-0')),
+        find.byKey(const Key('movie-summary-card-ABC-001')),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is AppSkeletonizer && widget.enabled,
+        ),
         findsOneWidget,
       );
 
@@ -214,8 +222,8 @@ void main() {
         routes: <RouteBase>[
           GoRoute(
             path: desktopFollowPath,
-            builder:
-                (context, state) => const Scaffold(body: DesktopFollowPage()),
+            builder: (context, state) =>
+                const Scaffold(body: DesktopFollowPage()),
           ),
           GoRoute(
             path: '/desktop/library/movies/:movieNumber',
@@ -271,8 +279,8 @@ void main() {
         routes: <RouteBase>[
           GoRoute(
             path: desktopFollowPath,
-            builder:
-                (context, state) => const Scaffold(body: DesktopFollowPage()),
+            builder: (context, state) =>
+                const Scaffold(body: DesktopFollowPage()),
           ),
         ],
       );

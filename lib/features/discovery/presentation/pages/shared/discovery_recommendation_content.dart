@@ -10,7 +10,9 @@ import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dt
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_recommendation_feeds_provider.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
@@ -21,6 +23,7 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
@@ -248,21 +251,28 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
         secondaryLabels[movieOf(item).movieNumber] = label;
       }
     }
-    return MovieSummarySliver(
-      items: paged.items.map(movieOf).toList(growable: false),
-      isLoading: async.isLoading,
-      emptyMessage: emptyMessage,
-      placeholderCount: placeholderCount,
-      secondaryLabelForMovie: secondaryLabels.isEmpty
-          ? null
-          : (movie) => secondaryLabels[movie.movieNumber],
-      useDefaultSubscriptionActions: useDefaultSubscriptionActions,
-      onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
-      onMovieMenuRequest: (movie, globalPosition) => requestMovieCollectionMenu(
-        context,
-        movie.movieNumber,
-        globalPosition,
-        isSubscribed: movie.isSubscribed,
+    final isLoading = async.isLoading && async.value == null;
+    return AppSkeletonizer.sliver(
+      enabled: isLoading,
+      child: MovieSummarySliver(
+        items: isLoading
+            ? movieListItemPlaceholders(count: placeholderCount)
+            : paged.items.map(movieOf).toList(growable: false),
+        isLoading: false,
+        emptyMessage: emptyMessage,
+        placeholderCount: placeholderCount,
+        secondaryLabelForMovie: secondaryLabels.isEmpty
+            ? null
+            : (movie) => secondaryLabels[movie.movieNumber],
+        useDefaultSubscriptionActions: useDefaultSubscriptionActions,
+        onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+        onMovieMenuRequest: (movie, globalPosition) =>
+            requestMovieCollectionMenu(
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
       ),
     );
   }
@@ -386,11 +396,14 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     PagedListState<MomentRecommendationDto> paged,
   ) {
     if (async.isLoading && async.value == null) {
-      return MomentSliver(
-        items: const <MomentListItem>[],
-        isLoading: true,
-        placeholderCount: pageSize,
-        onItemTap: _ignoreMomentTap,
+      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer.sliver(
+        enabled: true,
+        child: MomentSliver(
+          items: momentListPlaceholders(count: pageSize),
+          isLoading: false,
+          onItemTap: _ignoreMomentTap,
+        ),
       );
     }
     if (async.hasError) {

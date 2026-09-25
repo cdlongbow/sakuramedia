@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -10,6 +11,7 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
@@ -77,7 +79,10 @@ class _DesktopLatestMoviesPageState
     final moviesAsync = ref.watch(movieSummaryProvider(_scope));
     final summary = moviesAsync.value;
     final paged = summary?.paged;
-    final items = paged?.items ?? const [];
+    final isLoading = moviesAsync.isLoading && summary == null;
+    final items = isLoading
+        ? movieListItemPlaceholders(count: 18)
+        : paged?.items ?? const [];
     final showFooter =
         items.isNotEmpty &&
         (paged!.isLoadingMore || paged.loadMoreErrorMessage != null);
@@ -101,29 +106,32 @@ class _DesktopLatestMoviesPageState
                   SliverToBoxAdapter(
                     child: SizedBox(height: context.appSpacing.lg),
                   ),
-                  MovieSummarySliver(
-                    items: items,
-                    isLoading: moviesAsync.isLoading && summary == null,
-                    errorMessage: moviesAsync.hasError && summary == null
-                        ? _scope.initialLoadErrorText
-                        : null,
-                    onMovieTap: (movie) => context.pushDesktopMovieDetail(
-                      movieNumber: movie.movieNumber,
-                      fallbackPath: desktopLatestMoviesPath,
+                  AppSkeletonizer.sliver(
+                    enabled: isLoading,
+                    child: MovieSummarySliver(
+                      items: items,
+                      isLoading: false,
+                      errorMessage: moviesAsync.hasError && summary == null
+                          ? _scope.initialLoadErrorText
+                          : null,
+                      onMovieTap: (movie) => context.pushDesktopMovieDetail(
+                        movieNumber: movie.movieNumber,
+                        fallbackPath: desktopLatestMoviesPath,
+                      ),
+                      onMovieMenuRequest: (movie, globalPosition) =>
+                          requestMovieCollectionMenu(
+                            context,
+                            movie.movieNumber,
+                            globalPosition,
+                            isSubscribed: movie.isSubscribed,
+                          ),
+                      onMovieSubscriptionTap: (movie) =>
+                          _toggleMovieSubscription(movie.movieNumber),
+                      isMovieSubscriptionUpdating: (movie) =>
+                          summary?.isSubscriptionUpdating(movie.movieNumber) ??
+                          false,
+                      emptyMessage: '暂无入库影片，去搜索看看吧',
                     ),
-                    onMovieMenuRequest: (movie, globalPosition) =>
-                        requestMovieCollectionMenu(
-                          context,
-                          movie.movieNumber,
-                          globalPosition,
-                          isSubscribed: movie.isSubscribed,
-                        ),
-                    onMovieSubscriptionTap: (movie) =>
-                        _toggleMovieSubscription(movie.movieNumber),
-                    isMovieSubscriptionUpdating: (movie) =>
-                        summary?.isSubscriptionUpdating(movie.movieNumber) ??
-                        false,
-                    emptyMessage: '暂无入库影片，去搜索看看吧',
                   ),
                   if (showFooter)
                     SliverToBoxAdapter(

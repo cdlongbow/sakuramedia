@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
@@ -14,6 +15,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
@@ -31,9 +33,7 @@ class DesktopOverviewPage extends ConsumerWidget {
   static const int _previewMaxRows = 3;
 
   Future<void> _refreshOverview(WidgetRef ref) async {
-    final recentPlaylist = ref
-        .read(recentlyPlayedPlaylistProvider)
-        .value;
+    final recentPlaylist = ref.read(recentlyPlayedPlaylistProvider).value;
     final futures = <Future<void>>[
       // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),卡片不闪骨架。
       ref.read(overviewSystemInfoProvider.notifier).load(),
@@ -71,9 +71,7 @@ class DesktopOverviewPage extends ConsumerWidget {
     final systemInfoNotifier = ref.read(overviewSystemInfoProvider.notifier);
     final latestAsync = ref.watch(movieSummaryProvider(_latestScope));
     final latest = latestAsync.value;
-    final recentPlaylist = ref
-        .watch(recentlyPlayedPlaylistProvider)
-        .value;
+    final recentPlaylist = ref.watch(recentlyPlayedPlaylistProvider).value;
     final recentScope = recentPlaylist == null
         ? null
         : MovieSummaryScope.playlist(playlistId: recentPlaylist.id);
@@ -206,7 +204,8 @@ class DesktopOverviewPage extends ConsumerWidget {
                       ref: ref,
                       scope: recentScope!,
                       summary: recentAsync?.value,
-                      isLoading: (recentAsync?.isLoading ?? false) &&
+                      isLoading:
+                          (recentAsync?.isLoading ?? false) &&
                           recentAsync?.value == null,
                       errorMessage:
                           (recentAsync?.hasError ?? false) &&
@@ -234,27 +233,33 @@ class DesktopOverviewPage extends ConsumerWidget {
     required String? errorMessage,
     required String emptyMessage,
   }) {
-    return MovieSummaryGrid(
-      items: summary?.paged.items ?? const [],
-      isLoading: isLoading,
-      errorMessage: errorMessage,
-      onMovieTap: (movie) => context.pushDesktopMovieDetail(
-        movieNumber: movie.movieNumber,
-        fallbackPath: desktopOverviewPath,
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: MovieSummaryGrid(
+        items: isLoading
+            ? movieListItemPlaceholders(count: 12)
+            : summary?.paged.items ?? const [],
+        isLoading: false,
+        errorMessage: errorMessage,
+        onMovieTap: (movie) => context.pushDesktopMovieDetail(
+          movieNumber: movie.movieNumber,
+          fallbackPath: desktopOverviewPath,
+        ),
+        onMovieMenuRequest: (movie, globalPosition) =>
+            requestMovieCollectionMenu(
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
+        onMovieSubscriptionTap: (movie) =>
+            _toggleMovieSubscription(ref, scope, movie.movieNumber),
+        isMovieSubscriptionUpdating: (movie) =>
+            summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+        emptyMessage: emptyMessage,
+        placeholderCount: 12,
+        maxRows: _previewMaxRows,
       ),
-      onMovieMenuRequest: (movie, globalPosition) => requestMovieCollectionMenu(
-        context,
-        movie.movieNumber,
-        globalPosition,
-        isSubscribed: movie.isSubscribed,
-      ),
-      onMovieSubscriptionTap: (movie) =>
-          _toggleMovieSubscription(ref, scope, movie.movieNumber),
-      isMovieSubscriptionUpdating: (movie) =>
-          summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-      emptyMessage: emptyMessage,
-      placeholderCount: 12,
-      maxRows: _previewMaxRows,
     );
   }
 }

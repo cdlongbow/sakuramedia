@@ -8,6 +8,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
@@ -19,6 +20,7 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/playlist_fil
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
@@ -156,31 +158,37 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
             ),
             if (!(paged?.filterUpdate.hasFailed ?? false) ||
                 (paged?.items.isNotEmpty ?? false))
-              MovieSummarySliver(
-                items: paged?.items ?? const [],
-                isLoading: moviesAsync.isLoading && movies == null,
-                errorMessage: moviesAsync.hasError && movies == null
-                    ? _scope.initialLoadErrorText
-                    : null,
-                onMovieTap: widget.onMovieTap,
-                onMovieMenuRequest: (movie, globalPosition) =>
-                    requestMovieCollectionMenu(
-                      context,
-                      movie.movieNumber,
-                      globalPosition,
-                      isSubscribed: movie.isSubscribed,
-                    ),
-                onMovieSubscriptionTap: (movie) =>
-                    _toggleMovieSubscription(movie.movieNumber),
-                isMovieSubscriptionUpdating: (movie) =>
-                    movies?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-                emptyMessage: _filterState.isDefault
-                    ? '暂无影片数据'
-                    : '当前筛选条件下暂无匹配影片',
-                selectionMode: selectionMode,
-                isMovieSelected: (movie) => isSelected(movie.movieNumber),
-                onMovieSelectedChanged: (movie, _) =>
-                    toggleSelect(movie.movieNumber),
+              AppSkeletonizer.sliver(
+                enabled: moviesAsync.isLoading && movies == null,
+                child: MovieSummarySliver(
+                  items: moviesAsync.isLoading && movies == null
+                      ? movieListItemPlaceholders(count: 24)
+                      : paged?.items ?? const [],
+                  isLoading: false,
+                  errorMessage: moviesAsync.hasError && movies == null
+                      ? _scope.initialLoadErrorText
+                      : null,
+                  onMovieTap: widget.onMovieTap,
+                  onMovieMenuRequest: (movie, globalPosition) =>
+                      requestMovieCollectionMenu(
+                        context,
+                        movie.movieNumber,
+                        globalPosition,
+                        isSubscribed: movie.isSubscribed,
+                      ),
+                  onMovieSubscriptionTap: (movie) =>
+                      _toggleMovieSubscription(movie.movieNumber),
+                  isMovieSubscriptionUpdating: (movie) =>
+                      movies?.isSubscriptionUpdating(movie.movieNumber) ??
+                      false,
+                  emptyMessage: _filterState.isDefault
+                      ? '暂无影片数据'
+                      : '当前筛选条件下暂无匹配影片',
+                  selectionMode: selectionMode,
+                  isMovieSelected: (movie) => isSelected(movie.movieNumber),
+                  onMovieSelectedChanged: (movie, _) =>
+                      toggleSelect(movie.movieNumber),
+                ),
               ),
             if (footer != null)
               SliverToBoxAdapter(
@@ -355,33 +363,36 @@ class _PlaylistDetailLoadingContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    return CustomScrollView(
-      key: const Key('playlist-detail-loading'),
-      slivers: [
-        const SliverToBoxAdapter(child: PlaylistBannerCardSkeleton()),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: spacing.sm),
-            child: Row(
-              children: [
-                const AppSkeletonBlock(width: 96, height: 14),
-                const Spacer(),
-                AppSkeletonBlock(
-                  width: 76,
-                  height: context.appComponentTokens.buttonHeightXs,
-                  radius: context.appRadius.pillBorder,
-                ),
-              ],
+    // loading 用占位影片渲染真实网格，由 [AppSkeletonizer] 统一灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: CustomScrollView(
+        key: const Key('playlist-detail-loading'),
+        slivers: [
+          const SliverToBoxAdapter(child: PlaylistBannerCardSkeleton()),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: spacing.sm),
+              child: Row(
+                children: [
+                  const AppSkeletonBlock(width: 96, height: 14),
+                  const Spacer(),
+                  AppSkeletonBlock(
+                    width: 76,
+                    height: context.appComponentTokens.buttonHeightXs,
+                    radius: context.appRadius.pillBorder,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const MovieSummarySliver(
-          items: <MovieListItemDto>[],
-          isLoading: true,
-          placeholderCount: 12,
-          onMovieTap: _ignoreMovieTap,
-        ),
-      ],
+          MovieSummarySliver(
+            items: movieListItemPlaceholders(count: 12),
+            isLoading: false,
+            onMovieTap: _ignoreMovieTap,
+          ),
+        ],
+      ),
     );
   }
 }

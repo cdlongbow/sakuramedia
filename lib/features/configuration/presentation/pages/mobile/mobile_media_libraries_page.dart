@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
@@ -16,7 +17,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -189,7 +190,9 @@ class _MobileMediaLibrariesPageState
     BuildContext context,
     AsyncValue<List<MediaLibraryDto>> async,
   ) {
-    if (async.isLoading) return const _MobileMediaLibraryLoadingSection();
+    if (async.isLoading && async.value == null) {
+      return _buildLoadingSection(context);
+    }
     if (async.hasError) {
       return AppMobileSectionError(
         key: const Key('mobile-media-libraries-error-state'),
@@ -224,6 +227,31 @@ class _MobileMediaLibrariesPageState
             ],
           )
           .toList(growable: false),
+    );
+  }
+
+  Widget _buildLoadingSection(BuildContext context) {
+    final libraries = mediaLibraryPlaceholders(count: 3);
+    // loading 用占位媒体库渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: libraries
+            .expand(
+              (library) => <Widget>[
+                _buildLibraryCard(
+                  context,
+                  library,
+                  const <MediaProviderDto>[],
+                  catalogReady: false,
+                ),
+                if (library != libraries.last)
+                  SizedBox(height: context.appSpacing.sm),
+              ],
+            )
+            .toList(growable: false),
+      ),
     );
   }
 
@@ -351,69 +379,6 @@ Future<MobileMediaLibraryAction?> showMobileMediaLibraryActionsDrawer(
 }
 
 enum MobileMediaLibraryAction { edit, delete }
-
-class _MobileMediaLibraryLoadingSection extends StatelessWidget {
-  const _MobileMediaLibraryLoadingSection();
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Column(
-      children: List<Widget>.generate(
-        3,
-        (index) => Padding(
-          padding: EdgeInsets.only(bottom: index == 2 ? 0 : spacing.sm),
-          child: _MobileMediaLibrarySkeletonCard(
-            key: Key('mobile-media-library-skeleton-$index'),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileMediaLibrarySkeletonCard extends StatelessWidget {
-  const _MobileMediaLibrarySkeletonCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final colors = context.appColors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-      ),
-      padding: EdgeInsets.all(spacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppSkeletonBlock(
-            width: context.appComponentTokens.iconSizeXl + spacing.md,
-            height: context.appComponentTokens.iconSizeXl + spacing.md,
-            radius: context.appRadius.mdBorder,
-          ),
-          SizedBox(width: spacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AppSkeletonBlock(width: 136, height: 16),
-                SizedBox(height: spacing.xs),
-                const AppSkeletonBlock(width: double.infinity, height: 14),
-                SizedBox(height: spacing.sm),
-                const AppSkeletonBlock(width: 72, height: 12),
-                SizedBox(height: spacing.xs),
-                const AppSkeletonBlock(width: 148, height: 12),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _MobileMediaLibraryEditorDrawer extends ConsumerStatefulWidget {
   const _MobileMediaLibraryEditorDrawer({

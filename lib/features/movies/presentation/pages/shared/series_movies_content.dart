@@ -5,12 +5,14 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layou
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/series_import/series_import_dialog.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -328,38 +330,44 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
       );
     }
 
-    return MovieSummarySliver(
-      items: summary?.paged.items ?? const [],
-      isLoading: moviesAsync.isLoading && summary == null,
-      onMovieTap: (movie) => widget.onMovieTap(context, movie.movieNumber),
-      onMovieMenuRequest: (movie, globalPosition) {
-        unawaited(
-          showMovieCollectionFeatureActionMenu(
-            context: context,
-            movieNumber: movie.movieNumber,
-            globalPosition: globalPosition,
-            isSubscribed: movie.isSubscribed,
-            onBlacklisted: () => ref
-                .read(movieSummaryProvider(_scope).notifier)
-                .removeMovies(<String>[movie.movieNumber]),
-            // 移动端多选入口挂在长按菜单里，桌面仍在顶栏。
-            onEnterSelection: widget.useMobileSelectionLayout
-                ? () {
-                    enterSelection();
-                    toggleSelect(movie.movieNumber);
-                  }
-                : null,
-          ),
-        );
-      },
-      onMovieSubscriptionTap: (movie) =>
-          _toggleMovieSubscription(movie.movieNumber),
-      isMovieSubscriptionUpdating: (movie) =>
-          summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-      emptyMessage: '该系列暂无影片',
-      selectionMode: selectionMode,
-      isMovieSelected: (movie) => isSelected(movie.movieNumber),
-      onMovieSelectedChanged: (movie, _) => toggleSelect(movie.movieNumber),
+    final isInitialLoading = moviesAsync.isLoading && summary == null;
+    return AppSkeletonizer.sliver(
+      enabled: isInitialLoading,
+      child: MovieSummarySliver(
+        items: isInitialLoading
+            ? movieListItemPlaceholders(count: 24)
+            : summary?.paged.items ?? const [],
+        isLoading: false,
+        onMovieTap: (movie) => widget.onMovieTap(context, movie.movieNumber),
+        onMovieMenuRequest: (movie, globalPosition) {
+          unawaited(
+            showMovieCollectionFeatureActionMenu(
+              context: context,
+              movieNumber: movie.movieNumber,
+              globalPosition: globalPosition,
+              isSubscribed: movie.isSubscribed,
+              onBlacklisted: () => ref
+                  .read(movieSummaryProvider(_scope).notifier)
+                  .removeMovies(<String>[movie.movieNumber]),
+              // 移动端多选入口挂在长按菜单里，桌面仍在顶栏。
+              onEnterSelection: widget.useMobileSelectionLayout
+                  ? () {
+                      enterSelection();
+                      toggleSelect(movie.movieNumber);
+                    }
+                  : null,
+            ),
+          );
+        },
+        onMovieSubscriptionTap: (movie) =>
+            _toggleMovieSubscription(movie.movieNumber),
+        isMovieSubscriptionUpdating: (movie) =>
+            summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+        emptyMessage: '该系列暂无影片',
+        selectionMode: selectionMode,
+        isMovieSelected: (movie) => isSelected(movie.movieNumber),
+        onMovieSelectedChanged: (movie, _) => toggleSelect(movie.movieNumber),
+      ),
     );
   }
 

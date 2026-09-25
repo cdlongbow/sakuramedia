@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/download_client_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
@@ -20,6 +21,7 @@ import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
@@ -140,10 +142,11 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
         )
         .toList(growable: false);
 
+    // 首屏语义：只有某个列表尚无数据可显示时才铺骨架，避免刷新盖掉已有配置。
     final loading =
-        clientsAsync.isLoading ||
-        librariesAsync.isLoading ||
-        providersAsync.isLoading;
+        (clientsAsync.isLoading && clientsAsync.value == null) ||
+        (librariesAsync.isLoading && librariesAsync.value == null) ||
+        (providersAsync.isLoading && providersAsync.value == null);
     final error = clientsAsync.error ?? librariesAsync.error;
 
     return ColoredBox(
@@ -280,7 +283,7 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                   SizedBox(height: spacing.md),
                 ],
                 if (loading)
-                  const _MobileDownloadersLoadingSection()
+                  _MobileDownloadersLoadingSection()
                 else if (error != null)
                   AppMobileSectionError(
                     key: const Key('mobile-downloaders-error-state'),
@@ -633,13 +636,15 @@ class _MobileDownloaderEditorDrawerState
       _diagnosticReport = null;
     });
     try {
-      final report = await ref.read(downloadClientsApiProvider).testClient(
-        DownloadClientTestPayload(
-          libraryId: libraryId,
-          providerConfig: value.providerConfig,
-          clientId: widget.initialClient?.id,
-        ),
-      );
+      final report = await ref
+          .read(downloadClientsApiProvider)
+          .testClient(
+            DownloadClientTestPayload(
+              libraryId: libraryId,
+              providerConfig: value.providerConfig,
+              clientId: widget.initialClient?.id,
+            ),
+          );
       if (!mounted) return;
       setState(() => _diagnosticReport = report);
     } catch (error) {
@@ -695,21 +700,25 @@ class _MobileDownloadersLoadingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List<Widget>.generate(
-        3,
-        (index) => Padding(
-          padding: EdgeInsets.only(
-            bottom: index == 2 ? 0 : context.appSpacing.sm,
-          ),
-          child: Container(
-            height: 84,
-            decoration: BoxDecoration(
-              color: context.appColors.surfaceMuted,
-              borderRadius: context.appRadius.lgBorder,
+    final spacing = context.appSpacing;
+    final placeholders = downloadClientPlaceholders(count: 3);
+    // loading 用占位下载器渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < placeholders.length; index++) ...[
+            if (index > 0) SizedBox(height: spacing.sm),
+            _MobileDownloaderCard(
+              client: placeholders[index],
+              mediaLibrary: null,
+              provider: null,
+              onEdit: () {},
+              onDelete: () {},
             ),
-          ),
-        ),
+          ],
+        ],
       ),
     );
   }

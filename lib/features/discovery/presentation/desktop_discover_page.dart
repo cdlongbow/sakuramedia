@@ -11,8 +11,10 @@ import 'package:sakuramedia/features/discovery/presentation/providers/discovery_
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
@@ -22,6 +24,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
@@ -120,6 +123,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   ) {
     final follow = followAsync.value;
     final paged = follow?.paged;
+    final isLoading = followAsync.isLoading && follow == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -131,28 +135,33 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           onActionTap: () => context.push(desktopFollowPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        MovieSummaryGrid(
-          items: paged?.items ?? const [],
-          isLoading: followAsync.isLoading && follow == null,
-          errorMessage: followAsync.hasError && follow == null
-              ? _followScope.initialLoadErrorText
-              : null,
-          onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
-          onMovieMenuRequest: (movie, globalPosition) =>
-              requestMovieCollectionMenu(
-                context,
-                movie.movieNumber,
-                globalPosition,
-                isSubscribed: movie.isSubscribed,
-              ),
-          onMovieSubscriptionTap: (movie) =>
-              _toggleFollowSubscription(movie.movieNumber),
-          isMovieSubscriptionUpdating: (movie) =>
-              follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
-          emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
-          placeholderCount: _previewPageSize,
-          maxRows: 2,
-          maxColumns: 10,
+        AppSkeletonizer(
+          enabled: isLoading,
+          child: MovieSummaryGrid(
+            items: isLoading
+                ? movieListItemPlaceholders(count: _previewPageSize)
+                : paged?.items ?? const [],
+            isLoading: false,
+            errorMessage: followAsync.hasError && follow == null
+                ? _followScope.initialLoadErrorText
+                : null,
+            onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
+            onMovieMenuRequest: (movie, globalPosition) =>
+                requestMovieCollectionMenu(
+                  context,
+                  movie.movieNumber,
+                  globalPosition,
+                  isSubscribed: movie.isSubscribed,
+                ),
+            onMovieSubscriptionTap: (movie) =>
+                _toggleFollowSubscription(movie.movieNumber),
+            isMovieSubscriptionUpdating: (movie) =>
+                follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+            emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
+            placeholderCount: _previewPageSize,
+            maxRows: 2,
+            maxColumns: 10,
+          ),
         ),
       ],
     );
@@ -178,26 +187,31 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           onActionTap: () => context.push(desktopHotActressReleasesPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        MovieSummaryGrid(
-          items: hotActress.items
-              .map((item) => item.movie)
-              .toList(growable: false),
-          isLoading: hotActress.isLoading,
-          errorMessage: hotActress.errorMessage,
-          onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
-          onMovieMenuRequest: (movie, globalPosition) =>
-              requestMovieCollectionMenu(
-                context,
-                movie.movieNumber,
-                globalPosition,
-                isSubscribed: movie.isSubscribed,
-              ),
-          secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
-          useDefaultSubscriptionActions: true,
-          emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
-          placeholderCount: _previewPageSize,
-          maxRows: 2,
-          maxColumns: 10,
+        AppSkeletonizer(
+          enabled: hotActress.isLoading && hotActress.items.isEmpty,
+          child: MovieSummaryGrid(
+            items: hotActress.isLoading && hotActress.items.isEmpty
+                ? movieListItemPlaceholders(count: _previewPageSize)
+                : hotActress.items
+                      .map((item) => item.movie)
+                      .toList(growable: false),
+            isLoading: false,
+            errorMessage: hotActress.errorMessage,
+            onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
+            onMovieMenuRequest: (movie, globalPosition) =>
+                requestMovieCollectionMenu(
+                  context,
+                  movie.movieNumber,
+                  globalPosition,
+                  isSubscribed: movie.isSubscribed,
+                ),
+            secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
+            useDefaultSubscriptionActions: true,
+            emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
+            placeholderCount: _previewPageSize,
+            maxRows: 2,
+            maxColumns: 10,
+          ),
         ),
       ],
     );
@@ -233,19 +247,26 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
         onRetry: _refreshDiscovery,
       );
     }
-    return MovieSummaryGrid(
-      items: daily.items.map((item) => item.movie).toList(growable: false),
-      isLoading: daily.isLoading,
-      emptyMessage: '暂无每日推荐，去搜索看看吧',
-      placeholderCount: _previewPageSize,
-      maxRows: 2,
-      maxColumns: 10,
-      onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
-      onMovieMenuRequest: (movie, globalPosition) => requestMovieCollectionMenu(
-        context,
-        movie.movieNumber,
-        globalPosition,
-        isSubscribed: movie.isSubscribed,
+    final isLoading = daily.isLoading && daily.items.isEmpty;
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: MovieSummaryGrid(
+        items: isLoading
+            ? movieListItemPlaceholders(count: _previewPageSize)
+            : daily.items.map((item) => item.movie).toList(growable: false),
+        isLoading: false,
+        emptyMessage: '暂无每日推荐，去搜索看看吧',
+        placeholderCount: _previewPageSize,
+        maxRows: 2,
+        maxColumns: 10,
+        onMovieTap: (movie) => _openMovieDetail(movie.movieNumber),
+        onMovieMenuRequest: (movie, globalPosition) =>
+            requestMovieCollectionMenu(
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
       ),
     );
   }
@@ -275,13 +296,15 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
     if (moment.isLoading && moment.items.isEmpty) {
-      return MomentGrid(
-        items: const <MomentListItem>[],
-        isLoading: true,
-        placeholderCount: _previewPageSize,
-        maxRows: 2,
-        maxColumns: 6,
-        onItemTap: _ignoreMomentTap,
+      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        enabled: true,
+        child: MomentGrid(
+          items: momentListPlaceholders(count: _previewPageSize),
+          maxRows: 2,
+          maxColumns: 6,
+          onItemTap: _ignoreMomentTap,
+        ),
       );
     }
     if (moment.errorMessage != null) {

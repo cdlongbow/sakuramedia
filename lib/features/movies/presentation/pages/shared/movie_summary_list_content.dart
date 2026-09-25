@@ -11,7 +11,9 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
@@ -299,44 +301,51 @@ class _MovieSummaryListContentState
               slivers: [
                 if (!(paged?.filterUpdate.hasFailed ?? false) ||
                     items.isNotEmpty)
-                  MovieSummarySliver(
-                    items: items,
-                    isLoading: isInitialLoading,
-                    errorMessage: initialErrorMessage,
-                    placeholderCount: 24,
-                    onMovieTap: (movie) =>
-                        widget.onMovieTap(context, movie.movieNumber),
-                    onMovieMenuRequest: (movie, globalPosition) {
-                      unawaited(
-                        showMovieCollectionFeatureActionMenu(
-                          context: context,
-                          movieNumber: movie.movieNumber,
-                          globalPosition: globalPosition,
-                          isSubscribed: movie.isSubscribed,
-                          onBlacklisted: () => ref
-                              .read(movieSummaryProvider(widget.scope).notifier)
-                              .removeMovies(<String>[movie.movieNumber]),
-                          onEnterSelection: widget.useMobileSelectionLayout
-                              ? () {
-                                  enterSelection();
-                                  toggleSelect(movie.movieNumber);
-                                }
-                              : null,
-                        ),
-                      );
-                    },
-                    onMovieSubscriptionTap: (movie) =>
-                        _toggleMovieSubscription(movie.movieNumber),
-                    isMovieSubscriptionUpdating: (movie) =>
-                        summary?.isSubscriptionUpdating(movie.movieNumber) ??
-                        false,
-                    emptyMessage:
-                        widget.emptyMessage ??
-                        (filter.isDefault ? '暂无影片，去搜索看看吧' : '当前筛选条件下暂无匹配影片'),
-                    selectionMode: selectionMode,
-                    isMovieSelected: (movie) => isSelected(movie.movieNumber),
-                    onMovieSelectedChanged: (movie, _) =>
-                        toggleSelect(movie.movieNumber),
+                  AppSkeletonizer.sliver(
+                    enabled: isInitialLoading,
+                    child: MovieSummarySliver(
+                      items: isInitialLoading
+                          ? movieListItemPlaceholders(count: 24)
+                          : items,
+                      isLoading: false,
+                      errorMessage: initialErrorMessage,
+                      placeholderCount: 24,
+                      onMovieTap: (movie) =>
+                          widget.onMovieTap(context, movie.movieNumber),
+                      onMovieMenuRequest: (movie, globalPosition) {
+                        unawaited(
+                          showMovieCollectionFeatureActionMenu(
+                            context: context,
+                            movieNumber: movie.movieNumber,
+                            globalPosition: globalPosition,
+                            isSubscribed: movie.isSubscribed,
+                            onBlacklisted: () => ref
+                                .read(
+                                  movieSummaryProvider(widget.scope).notifier,
+                                )
+                                .removeMovies(<String>[movie.movieNumber]),
+                            onEnterSelection: widget.useMobileSelectionLayout
+                                ? () {
+                                    enterSelection();
+                                    toggleSelect(movie.movieNumber);
+                                  }
+                                : null,
+                          ),
+                        );
+                      },
+                      onMovieSubscriptionTap: (movie) =>
+                          _toggleMovieSubscription(movie.movieNumber),
+                      isMovieSubscriptionUpdating: (movie) =>
+                          summary?.isSubscriptionUpdating(movie.movieNumber) ??
+                          false,
+                      emptyMessage:
+                          widget.emptyMessage ??
+                          (filter.isDefault ? '暂无影片，去搜索看看吧' : '当前筛选条件下暂无匹配影片'),
+                      selectionMode: selectionMode,
+                      isMovieSelected: (movie) => isSelected(movie.movieNumber),
+                      onMovieSelectedChanged: (movie, _) =>
+                          toggleSelect(movie.movieNumber),
+                    ),
                   ),
                 if (showFooter)
                   SliverToBoxAdapter(

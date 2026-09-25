@@ -2,8 +2,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
+import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
@@ -125,15 +127,20 @@ class VideoListContent extends StatelessWidget {
           ),
         ),
         if (!paged.filterUpdate.hasFailed || paged.items.isNotEmpty)
-          VideoSummarySliver(
-            items: paged.items,
-            isLoading: isInitialLoading,
-            errorMessage: initialErrorMessage,
-            onVideoTap: onVideoTap,
-            selectionMode: selectionMode,
-            selectedIds: selectedIds,
-            onVideoToggleSelect: onVideoToggleSelect,
-            emptyMessage: emptyMessage,
+          AppSkeletonizer.sliver(
+            enabled: isInitialLoading,
+            child: VideoSummarySliver(
+              items: isInitialLoading
+                  ? videoSummaryPlaceholders(count: 18)
+                  : paged.items,
+              isLoading: false,
+              errorMessage: initialErrorMessage,
+              onVideoTap: onVideoTap,
+              selectionMode: selectionMode,
+              selectedIds: selectedIds,
+              onVideoToggleSelect: onVideoToggleSelect,
+              emptyMessage: emptyMessage,
+            ),
           ),
         if (showFooter)
           SliverToBoxAdapter(

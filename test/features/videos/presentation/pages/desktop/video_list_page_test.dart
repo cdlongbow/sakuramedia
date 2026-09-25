@@ -110,7 +110,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byType(AppSkeletonizer), findsOneWidget);
+    expect(find.byType(AppSkeletonizer), findsWidgets);
     // 加载态渲染的是真实合集卡（占位数据），骨架即真实布局。
     expect(find.byKey(const Key('videos-collections-row')), findsOneWidget);
     expect(find.byType(CollectionCard), findsNWidgets(4));

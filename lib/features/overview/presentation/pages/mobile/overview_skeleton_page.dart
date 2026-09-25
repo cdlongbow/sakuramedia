@@ -7,6 +7,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_clips_tab.dart';
@@ -27,6 +28,7 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
@@ -163,8 +165,8 @@ class _MobileOverviewHeader extends StatelessWidget {
                     // 走 findAncestorStateOfType,不建立依赖,drawer 后来挂上也不会
                     // 触发本页重建,按钮会永久停在禁用态。改为点击时现取,
                     // openDrawer 内部对无 drawer 的情况是 null-safe 的。
-                    onPressed:
-                        () => Scaffold.maybeOf(buttonContext)?.openDrawer(),
+                    onPressed: () =>
+                        Scaffold.maybeOf(buttonContext)?.openDrawer(),
                   ),
                 );
               },
@@ -290,7 +292,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                 controller: _searchController,
                 hintText: '如 SSNI-888、三上悠亚',
                 showImageSearchButton: ref.watch(imageSearchEnabledProvider),
-                showTextImageSearchButton: ref.watch(imageSearchEnabledProvider),
+                showTextImageSearchButton: ref.watch(
+                  imageSearchEnabledProvider,
+                ),
                 onSearchTap: _submitSearch,
                 onSubmitted: (_) => _submitSearch(),
                 onImageSearchTap: _openImageSearch,
@@ -330,9 +334,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
     try {
       await Future.wait<void>([
         _refreshLatestMovies(),
-        ref
-            .read(playlistsOverviewProvider(_playlistsScope).notifier)
-            .refresh(),
+        ref.read(playlistsOverviewProvider(_playlistsScope).notifier).refresh(),
       ]);
     } catch (_) {
       if (mounted) {
@@ -355,16 +357,16 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   }
 
   Widget _buildLatestMoviesSection() {
-    if (_isLoadingLatestMovies) {
-      return _buildLatestMoviesSkeleton();
-    }
-    if (_latestMoviesErrorMessage != null) {
+    if (!_isLoadingLatestMovies && _latestMoviesErrorMessage != null) {
       return AppEmptyState(
         message: _latestMoviesErrorMessage!,
         onRetry: _loadLatestMovies,
       );
     }
-    if (_latestMovies.isEmpty) {
+    final movies = _isLoadingLatestMovies
+        ? movieListItemPlaceholders(count: _latestMoviePageSize)
+        : _latestMovies;
+    if (movies.isEmpty) {
       return const AppEmptyState(message: '暂无入库影片，去搜索看看吧');
     }
 
@@ -372,52 +374,30 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
     final cardHeight =
         cardWidth / context.appComponentTokens.movieCardAspectRatio;
 
-    return SizedBox(
-      height: cardHeight,
-      child: ListView.separated(
-        key: const Key('mobile-overview-latest-movies-list'),
-        scrollDirection: Axis.horizontal,
-        itemCount: _latestMovies.length,
-        separatorBuilder:
-            (context, index) => SizedBox(width: context.appSpacing.sm),
-        itemBuilder: (context, index) {
-          final movie = _latestMovies[index];
-          return SizedBox(
-            width: cardWidth,
-            child: MovieSummaryCard(
-              movie: movie,
-              onTap:
-                  () => MobileMovieDetailRouteData(
-                    movieNumber: movie.movieNumber,
-                  ).push(context),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLatestMoviesSkeleton() {
-    final cardWidth = context.appComponentTokens.mobileLatestMovieCardWidth;
-    final cardHeight =
-        cardWidth / context.appComponentTokens.movieCardAspectRatio;
-    final colors = context.appColors;
-
-    return SizedBox(
-      height: cardHeight,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 4,
-        separatorBuilder:
-            (context, index) => SizedBox(width: context.appSpacing.sm),
-        itemBuilder:
-            (context, index) => Container(
+    // loading 用占位影片渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    return AppSkeletonizer(
+      enabled: _isLoadingLatestMovies,
+      child: SizedBox(
+        height: cardHeight,
+        child: ListView.separated(
+          key: const Key('mobile-overview-latest-movies-list'),
+          scrollDirection: Axis.horizontal,
+          itemCount: movies.length,
+          separatorBuilder: (context, index) =>
+              SizedBox(width: context.appSpacing.sm),
+          itemBuilder: (context, index) {
+            final movie = movies[index];
+            return SizedBox(
               width: cardWidth,
-              decoration: BoxDecoration(
-                color: colors.surfaceMuted,
-                borderRadius: context.appRadius.lgBorder,
+              child: MovieSummaryCard(
+                movie: movie,
+                onTap: () => MobileMovieDetailRouteData(
+                  movieNumber: movie.movieNumber,
+                ).push(context),
               ),
-            ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -456,10 +436,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                   key: Key('mobile-overview-playlist-${playlist.id}'),
                   title: playlist.name,
                   coverImageUrl: effective.coverUrlFor(playlist.id),
-                  onTap:
-                      () => MobilePlaylistDetailRouteData(
-                        playlistId: playlist.id,
-                      ).push(context),
+                  onTap: () => MobilePlaylistDetailRouteData(
+                    playlistId: playlist.id,
+                  ).push(context),
                 ),
               ),
             ],
@@ -487,10 +466,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
                   key: Key('mobile-overview-playlist-${playlist.id}'),
                   title: playlist.name,
                   coverImageUrl: effective.coverUrlFor(playlist.id),
-                  onTap:
-                      () => MobilePlaylistDetailRouteData(
-                        playlistId: playlist.id,
-                      ).push(context),
+                  onTap: () => MobilePlaylistDetailRouteData(
+                    playlistId: playlist.id,
+                  ).push(context),
                 ),
               ),
             );

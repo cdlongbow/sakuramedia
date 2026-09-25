@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/moments/presentation/moment_placeholders.da
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -110,6 +111,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
   ) {
     final follow = followAsync.value;
     final paged = follow?.paged;
+    final isLoading = followAsync.isLoading && follow == null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -122,19 +124,24 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
           onActionTap: () => context.push(mobileFollowPath),
         ),
         SizedBox(height: context.appSpacing.md),
-        MovieSummaryGrid(
-          items: paged?.items.take(_followPreviewCount).toList() ?? const [],
-          isLoading: followAsync.isLoading && follow == null,
-          errorMessage: followAsync.hasError && follow == null
-              ? _followScope.initialLoadErrorText
-              : null,
-          emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
-          placeholderCount: _followPreviewCount,
-          onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
-          onMovieSubscriptionTap: (movie) =>
-              _toggleFollowSubscription(ref, movie.movieNumber),
-          isMovieSubscriptionUpdating: (movie) =>
-              follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+        AppSkeletonizer(
+          enabled: isLoading,
+          child: MovieSummaryGrid(
+            items: isLoading
+                ? movieListItemPlaceholders(count: _followPreviewCount)
+                : paged?.items.take(_followPreviewCount).toList() ?? const [],
+            isLoading: false,
+            errorMessage: followAsync.hasError && follow == null
+                ? _followScope.initialLoadErrorText
+                : null,
+            emptyMessage: '暂无女优上新，先订阅感兴趣的女优，等定时任务同步后展示',
+            placeholderCount: _followPreviewCount,
+            onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+            onMovieSubscriptionTap: (movie) =>
+                _toggleFollowSubscription(ref, movie.movieNumber),
+            isMovieSubscriptionUpdating: (movie) =>
+                follow?.isSubscriptionUpdating(movie.movieNumber) ?? false,
+          ),
         ),
       ],
     );
@@ -188,17 +195,23 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         if (item.hotActressName.trim().isNotEmpty)
           item.movie.movieNumber: '热门：${item.hotActressName.trim()}',
     };
-    return MovieSummaryGrid(
-      items: hotActress.items
-          .take(_hotActressPreviewCount)
-          .map((item) => item.movie)
-          .toList(growable: false),
-      isLoading: hotActress.isLoading,
-      emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
-      placeholderCount: _hotActressPreviewCount,
-      secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
-      useDefaultSubscriptionActions: true,
-      onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+    final isLoading = hotActress.isLoading && hotActress.items.isEmpty;
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: MovieSummaryGrid(
+        items: isLoading
+            ? movieListItemPlaceholders(count: _hotActressPreviewCount)
+            : hotActress.items
+                  .take(_hotActressPreviewCount)
+                  .map((item) => item.movie)
+                  .toList(growable: false),
+        isLoading: false,
+        emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
+        placeholderCount: _hotActressPreviewCount,
+        secondaryLabelForMovie: (movie) => actressNames[movie.movieNumber],
+        useDefaultSubscriptionActions: true,
+        onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+      ),
     );
   }
 
@@ -235,15 +248,21 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         onRetry: () => _handleRefresh(ref),
       );
     }
-    return MovieSummaryGrid(
-      items: daily.items
-          .take(_dailyPreviewCount)
-          .map((item) => item.movie)
-          .toList(growable: false),
-      isLoading: daily.isLoading,
-      emptyMessage: '暂无每日推荐，去搜索看看吧',
-      placeholderCount: _dailyPreviewCount,
-      onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+    final isLoading = daily.isLoading && daily.items.isEmpty;
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: MovieSummaryGrid(
+        items: isLoading
+            ? movieListItemPlaceholders(count: _dailyPreviewCount)
+            : daily.items
+                  .take(_dailyPreviewCount)
+                  .map((item) => item.movie)
+                  .toList(growable: false),
+        isLoading: false,
+        emptyMessage: '暂无每日推荐，去搜索看看吧',
+        placeholderCount: _dailyPreviewCount,
+        onMovieTap: (movie) => _openMovieDetail(context, movie.movieNumber),
+      ),
     );
   }
 

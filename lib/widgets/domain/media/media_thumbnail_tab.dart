@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -5,7 +7,10 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_selection_status_bar.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 
@@ -16,6 +21,10 @@ import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart
 class MediaThumbnailTab extends ConsumerWidget {
   static const List<int> _intervalOptions = <int>[10, 20, 30, 60];
   static const List<int> _columnOptions = <int>[2, 3, 4, 5];
+
+  /// 窄于此宽度时工具条收成单行紧凑入口（完整 chips 铺开约需 464pt，
+  /// 移动端底抽屉会折成两行；桌面弹窗 960pt 与宽窗保持 chips 不变）。
+  static const double _compactToolbarWidthThreshold = 600;
 
   const MediaThumbnailTab({
     super.key,
@@ -67,36 +76,52 @@ class MediaThumbnailTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                key: Key('$keyPrefix-toolbar'),
-                spacing: _MediaThumbnailControlGroup.groupSpacing,
-                runSpacing: context.appSpacing.xs,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  _MediaThumbnailIntervalSelector(
-                    keyPrefix: keyPrefix,
-                    options: _intervalOptions,
-                    selectedIntervalSeconds: state.selectedIntervalSeconds,
-                    onSelect: controller.setIntervalSeconds,
-                  ),
-                  _MediaThumbnailColumnsSelector(
-                    keyPrefix: keyPrefix,
-                    options: _columnOptions,
-                    selectedColumns: resolvedColumns,
-                    onSelect: controller.setColumns,
-                  ),
-                  if (onCreateClip != null)
-                    AppIconButton(
-                      key: Key('$keyPrefix-clip-toggle'),
-                      tooltip: state.clipSelectionMode ? '退出切片圈选' : '圈选切片',
-                      isSelected: state.clipSelectionMode,
-                      size: AppIconButtonSize.mini,
-                      selectedIconColor: Theme.of(context).colorScheme.primary,
-                      onPressed: controller.toggleClipSelectionMode,
-                      icon: const Icon(Icons.content_cut_rounded),
+              if (constraints.maxWidth < _compactToolbarWidthThreshold)
+                _MediaThumbnailCompactToolbar(
+                  key: Key('$keyPrefix-toolbar'),
+                  keyPrefix: keyPrefix,
+                  selectedIntervalSeconds: state.selectedIntervalSeconds,
+                  selectedColumns: resolvedColumns,
+                  onSelectInterval: controller.setIntervalSeconds,
+                  onSelectColumns: controller.setColumns,
+                  clipSelectionMode: state.clipSelectionMode,
+                  onToggleClipSelectionMode: onCreateClip == null
+                      ? null
+                      : controller.toggleClipSelectionMode,
+                )
+              else
+                Wrap(
+                  key: Key('$keyPrefix-toolbar'),
+                  spacing: _MediaThumbnailControlGroup.groupSpacing,
+                  runSpacing: context.appSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _MediaThumbnailIntervalSelector(
+                      keyPrefix: keyPrefix,
+                      options: _intervalOptions,
+                      selectedIntervalSeconds: state.selectedIntervalSeconds,
+                      onSelect: controller.setIntervalSeconds,
                     ),
-                ],
-              ),
+                    _MediaThumbnailColumnsSelector(
+                      keyPrefix: keyPrefix,
+                      options: _columnOptions,
+                      selectedColumns: resolvedColumns,
+                      onSelect: controller.setColumns,
+                    ),
+                    if (onCreateClip != null)
+                      AppIconButton(
+                        key: Key('$keyPrefix-clip-toggle'),
+                        tooltip: state.clipSelectionMode ? '退出切片圈选' : '圈选切片',
+                        isSelected: state.clipSelectionMode,
+                        size: AppIconButtonSize.mini,
+                        selectedIconColor: Theme.of(
+                          context,
+                        ).colorScheme.primary,
+                        onPressed: controller.toggleClipSelectionMode,
+                        icon: const Icon(Icons.content_cut_rounded),
+                      ),
+                  ],
+                ),
               if (state.clipSelectionMode) ...[
                 SizedBox(height: context.appSpacing.sm),
                 ClipSelectionStatusBar(
@@ -222,6 +247,234 @@ class _MediaThumbnailColumnsSelector extends StatelessWidget {
             onPressed: () => onSelect(columns),
           ),
       ],
+    );
+  }
+}
+
+/// 窄屏工具条：两个「图标 + 当前值 + 下拉箭头」入口 + 右对齐的剪刀按钮。
+///
+/// 入口复用列表页筛选栏的 [AppFilterEntryButton]（常驻无底色），点击开小号
+/// 底部抽屉选择，即时生效；比一行 chips 少一行高度，选项再多也不变高。
+class _MediaThumbnailCompactToolbar extends StatelessWidget {
+  const _MediaThumbnailCompactToolbar({
+    super.key,
+    required this.keyPrefix,
+    required this.selectedIntervalSeconds,
+    required this.selectedColumns,
+    required this.onSelectInterval,
+    required this.onSelectColumns,
+    required this.clipSelectionMode,
+    this.onToggleClipSelectionMode,
+  });
+
+  final String keyPrefix;
+  final int selectedIntervalSeconds;
+  final int selectedColumns;
+  final ValueChanged<int> onSelectInterval;
+  final ValueChanged<int> onSelectColumns;
+  final bool clipSelectionMode;
+  final VoidCallback? onToggleClipSelectionMode;
+
+  Future<void> _pickInterval(BuildContext context) async {
+    final value = await _showThumbnailOptionDrawer(
+      context: context,
+      drawerKey: Key('$keyPrefix-interval-drawer'),
+      title: '缩略图时间间隔',
+      options: MediaThumbnailTab._intervalOptions,
+      selectedValue: selectedIntervalSeconds,
+      optionLabelBuilder: (seconds) => '$seconds 秒',
+      optionKeyBuilder: (seconds) => Key('$keyPrefix-interval-option-$seconds'),
+    );
+    if (value != null) {
+      onSelectInterval(value);
+    }
+  }
+
+  Future<void> _pickColumns(BuildContext context) async {
+    final value = await _showThumbnailOptionDrawer(
+      context: context,
+      drawerKey: Key('$keyPrefix-columns-drawer'),
+      title: '缩略图列数',
+      options: MediaThumbnailTab._columnOptions,
+      selectedValue: selectedColumns,
+      optionLabelBuilder: (columns) => '$columns 列',
+      optionKeyBuilder: (columns) => Key('$keyPrefix-columns-option-$columns'),
+    );
+    if (value != null) {
+      onSelectColumns(value);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: context.appComponentTokens.buttonHeightXs,
+      child: Row(
+        children: [
+          AppFilterEntryButton(
+            key: Key('$keyPrefix-interval-trigger'),
+            icon: Icons.schedule_rounded,
+            label: '$selectedIntervalSeconds秒',
+            tooltip: '缩略图时间间隔',
+            onTap: () => unawaited(_pickInterval(context)),
+          ),
+          SizedBox(width: context.appSpacing.sm),
+          AppFilterEntryButton(
+            key: Key('$keyPrefix-columns-trigger'),
+            icon: Icons.grid_view_rounded,
+            label: '$selectedColumns列',
+            tooltip: '缩略图列数',
+            onTap: () => unawaited(_pickColumns(context)),
+          ),
+          const Spacer(),
+          if (onToggleClipSelectionMode != null)
+            AppIconButton(
+              key: Key('$keyPrefix-clip-toggle'),
+              tooltip: clipSelectionMode ? '退出切片圈选' : '圈选切片',
+              isSelected: clipSelectionMode,
+              size: AppIconButtonSize.mini,
+              selectedIconColor: Theme.of(context).colorScheme.primary,
+              onPressed: onToggleClipSelectionMode,
+              icon: const Icon(Icons.content_cut_rounded),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<int?> _showThumbnailOptionDrawer({
+  required BuildContext context,
+  required Key drawerKey,
+  required String title,
+  required List<int> options,
+  required int selectedValue,
+  required String Function(int value) optionLabelBuilder,
+  required Key Function(int value) optionKeyBuilder,
+}) {
+  return showAppBottomDrawer<int>(
+    context: context,
+    drawerKey: drawerKey,
+    maxHeightFactor: 0.4,
+    ignoreTopSafeArea: true,
+    contentPadding: EdgeInsets.zero,
+    builder: (_) => _MediaThumbnailOptionDrawer(
+      title: title,
+      options: options,
+      selectedValue: selectedValue,
+      optionLabelBuilder: optionLabelBuilder,
+      optionKeyBuilder: optionKeyBuilder,
+    ),
+  );
+}
+
+class _MediaThumbnailOptionDrawer extends StatelessWidget {
+  const _MediaThumbnailOptionDrawer({
+    required this.title,
+    required this.options,
+    required this.selectedValue,
+    required this.optionLabelBuilder,
+    required this.optionKeyBuilder,
+  });
+
+  static const double _topSpacing = 20;
+
+  final String title;
+  final List<int> options;
+  final int selectedValue;
+  final String Function(int value) optionLabelBuilder;
+  final Key Function(int value) optionKeyBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              spacing.lg,
+              _topSpacing,
+              spacing.lg,
+              spacing.sm,
+            ),
+            child: Text(
+              title,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s16,
+                weight: AppTextWeight.semibold,
+                tone: AppTextTone.primary,
+              ),
+            ),
+          ),
+          for (final option in options)
+            _MediaThumbnailOptionRow(
+              key: optionKeyBuilder(option),
+              label: optionLabelBuilder(option),
+              isSelected: option == selectedValue,
+              onTap: () => Navigator.of(context).pop(option),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MediaThumbnailOptionRow extends StatelessWidget {
+  const _MediaThumbnailOptionRow({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  static const double _minHeight = 52;
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: AppInteractiveSurface(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: _minHeight),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: context.appSpacing.lg),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s14,
+                      tone: isSelected
+                          ? AppTextTone.accent
+                          : AppTextTone.primary,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_rounded,
+                    size: context.appComponentTokens.iconSizeSm,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

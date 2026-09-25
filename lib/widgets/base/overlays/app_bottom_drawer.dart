@@ -13,6 +13,7 @@ Future<T?> showAppBottomDrawer<T>({
   bool enableDrag = true,
   bool isDismissible = true,
   bool showHandle = true,
+  EdgeInsetsGeometry? contentPadding,
 }) {
   final shouldUseRouteSafeArea = useSafeArea && !ignoreTopSafeArea;
 
@@ -37,6 +38,7 @@ Future<T?> showAppBottomDrawer<T>({
         heightFactor: heightFactor,
         maxHeightFactor: maxHeightFactor,
         showHandle: showHandle,
+        contentPadding: contentPadding,
         child: builder(sheetContext),
       );
 
@@ -62,6 +64,7 @@ class AppBottomDrawerSurface extends StatelessWidget {
     this.heightFactor = 0.9,
     this.maxHeightFactor,
     this.showHandle = true,
+    this.contentPadding,
   });
 
   static const double _handleWidth = 28;
@@ -72,6 +75,7 @@ class AppBottomDrawerSurface extends StatelessWidget {
   final double heightFactor;
   final double? maxHeightFactor;
   final bool showHandle;
+  final EdgeInsetsGeometry? contentPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +86,8 @@ class AppBottomDrawerSurface extends StatelessWidget {
       screenHeight,
     );
     final colors = context.appColors;
-    final resolvedContentPadding = EdgeInsets.all(context.appSpacing.lg);
+    final resolvedContentPadding =
+        contentPadding ?? EdgeInsets.all(context.appSpacing.lg);
 
     final content = Material(
       color: colors.surfaceCard,

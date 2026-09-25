@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/playlist_placeholders.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
@@ -18,7 +19,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_management_card.dart';
 
 class PlaylistsSection extends ConsumerStatefulWidget {
@@ -215,9 +216,6 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
   ) {
     final state = async.value;
     final allPlaylists = state?.playlists ?? const <PlaylistDto>[];
-    if (async.isLoading && allPlaylists.isEmpty) {
-      return const AppSectionSkeleton(lineCount: 4);
-    }
     if (async.hasError && allPlaylists.isEmpty) {
       return AppEmptyState(
         message: apiErrorMessage(async.error!, fallback: '播放列表加载失败，请稍后重试'),
@@ -228,49 +226,55 @@ class _PlaylistsSectionState extends ConsumerState<PlaylistsSection> {
         retryLabel: '重试',
       );
     }
-    final playlists = allPlaylists.where((item) => !item.isSystem).toList();
-    if (playlists.isEmpty) {
+    final isLoading = async.isLoading && allPlaylists.isEmpty;
+    final playlists = (isLoading ? playlistPlaceholders() : allPlaylists)
+        .where((item) => !item.isSystem)
+        .toList();
+    if (!isLoading && playlists.isEmpty) {
       return const AppEmptyState(message: '还没有自定义播放列表');
     }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final spacing = context.appSpacing;
-        const targetWidth = 420.0;
-        final available = constraints.maxWidth;
-        final columns =
-            available < targetWidth * 1.6
-                ? 1
-                : ((available + spacing.md) / (targetWidth + spacing.md))
-                    .floor()
-                    .clamp(1, 3);
-        final cardWidth =
-            columns == 1
-                ? available
-                : (available - spacing.md * (columns - 1)) / columns;
-        return Wrap(
-          spacing: spacing.md,
-          runSpacing: spacing.md,
-          children: [
-            for (final playlist in playlists)
-              SizedBox(
-                width: cardWidth,
-                child: PlaylistManagementCard(
-                  playlist: playlist,
-                  coverImageUrl: state?.coverUrlFor(playlist.id),
-                  layout: PlaylistCardLayout.dense,
-                  keyPrefix: 'desktop-playlist',
-                  onViewTap: () => _viewPlaylist(playlist),
-                  onEditTap:
-                      playlist.isMutable ? () => _editPlaylist(playlist) : null,
-                  onDeleteTap:
-                      playlist.isDeletable
-                          ? () => _deletePlaylist(playlist)
-                          : null,
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final spacing = context.appSpacing;
+          const targetWidth = 420.0;
+          final available = constraints.maxWidth;
+          final columns =
+              available < targetWidth * 1.6
+                  ? 1
+                  : ((available + spacing.md) / (targetWidth + spacing.md))
+                      .floor()
+                      .clamp(1, 3);
+          final cardWidth =
+              columns == 1
+                  ? available
+                  : (available - spacing.md * (columns - 1)) / columns;
+          return Wrap(
+            spacing: spacing.md,
+            runSpacing: spacing.md,
+            children: [
+              for (final playlist in playlists)
+                SizedBox(
+                  width: cardWidth,
+                  child: PlaylistManagementCard(
+                    playlist: playlist,
+                    coverImageUrl: state?.coverUrlFor(playlist.id),
+                    layout: PlaylistCardLayout.dense,
+                    keyPrefix: 'desktop-playlist',
+                    onViewTap: () => _viewPlaylist(playlist),
+                    onEditTap:
+                        playlist.isMutable ? () => _editPlaylist(playlist) : null,
+                    onDeleteTap:
+                        playlist.isDeletable
+                            ? () => _deletePlaylist(playlist)
+                            : null,
+                  ),
                 ),
-              ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 }

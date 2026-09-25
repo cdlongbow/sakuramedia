@@ -6,6 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
+import 'package:sakuramedia/features/moment_collections/presentation/moment_collection_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
@@ -15,6 +16,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_filter_sections.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_provider.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_state.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
@@ -23,7 +25,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
@@ -377,34 +379,33 @@ class MomentsContent extends HookConsumerWidget {
         ),
       );
     }
-    if (collectionsAsync.isLoading && collections.isEmpty) {
-      return CollectionCardSkeletonRow(
-        key: Key('$keyPrefix-collections-skeleton-row'),
-        height: height,
-        itemWidth: itemWidth,
-        itemSpacing: itemSpacing,
-      );
-    }
-    if (collections.isEmpty) {
+    final isLoading = collectionsAsync.isLoading && collections.isEmpty;
+    final display = isLoading
+        ? momentCollectionPlaceholders(count: 4)
+        : collections;
+    if (display.isEmpty) {
       return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的时刻攒成一个合集吧');
     }
-    return SizedBox(
-      height: height,
-      child: ListView.separated(
-        key: Key('$keyPrefix-collections-row'),
-        scrollDirection: Axis.horizontal,
-        itemCount: collections.length,
-        separatorBuilder: (context, index) => SizedBox(width: itemSpacing),
-        itemBuilder: (context, index) {
-          final collection = collections[index];
-          return SizedBox(
-            width: itemWidth,
-            child: CollectionCard.moment(
-              collection: collection,
-              onTap: () => onOpenCollectionDetail?.call(collection.id),
-            ),
-          );
-        },
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: SizedBox(
+        height: height,
+        child: ListView.separated(
+          key: Key('$keyPrefix-collections-row'),
+          scrollDirection: Axis.horizontal,
+          itemCount: display.length,
+          separatorBuilder: (context, index) => SizedBox(width: itemSpacing),
+          itemBuilder: (context, index) {
+            final collection = display[index];
+            return SizedBox(
+              width: itemWidth,
+              child: CollectionCard.moment(
+                collection: collection,
+                onTap: () => onOpenCollectionDetail?.call(collection.id),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -668,27 +669,39 @@ class MomentsContent extends HookConsumerWidget {
     required ValueChanged<MomentListItem> onSelectedChanged,
     required ValueChanged<MomentListItem> onLongPress,
   }) {
-    if (async.isLoading && async.value == null) {
-      return const SliverToBoxAdapter(child: AppMobileSkeletonList());
-    }
-    if (async.hasError && paged.isEmpty) {
+    final isLoading = async.isLoading && async.value == null;
+    if (!isLoading && async.hasError && paged.isEmpty) {
       return const SliverToBoxAdapter(
         child: AppEmptyState(message: '时刻列表加载失败，请稍后重试'),
       );
     }
-    if (paged.isEmpty && paged.filterUpdate.hasFailed) {
+    if (!isLoading && paged.isEmpty && paged.filterUpdate.hasFailed) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
-    if (paged.isEmpty) {
+    if (!isLoading && paged.isEmpty) {
       return const SliverToBoxAdapter(child: AppEmptyState(message: '暂无时刻数据'));
     }
-    return MomentSliver(
-      items: paged.items,
-      onItemTap: (item) => _openMomentPreview(context, ref, item),
-      selectionMode: selectionMode,
-      isSelected: isSelected,
-      onSelectedChanged: onSelectedChanged,
-      onLongPress: useMobileFilterDrawer && !selectionMode ? onLongPress : null,
+    // loading 用占位时刻渲染真实卡片，由 [AppSkeletonizer] 灰化。
+    final items = isLoading ? momentListPlaceholders() : paged.items;
+    return AppSkeletonizer.sliver(
+      enabled: isLoading,
+      child: MomentSliver(
+        items: items,
+        onItemTap: (item) => _openMomentPreview(context, ref, item),
+        onItemPlay: (item) => unawaited(
+          playMomentItem(
+            context: context,
+            item: item,
+            fallbackPath: previewFallbackPath,
+          ),
+        ),
+        selectionMode: selectionMode,
+        isSelected: isSelected,
+        onSelectedChanged: onSelectedChanged,
+        onLongPress: useMobileFilterDrawer && !selectionMode
+            ? onLongPress
+            : null,
+      ),
     );
   }
 

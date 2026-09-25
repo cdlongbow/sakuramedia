@@ -11,7 +11,6 @@ import 'package:sakuramedia/features/external_player/presentation/providers/exte
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_copy.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -28,7 +27,6 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playli
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -323,17 +321,11 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       return;
     }
 
-    if (action == MovieDetailActionType.openInspector) {
-      await openInspector(movie, selectedMedia);
-      return;
-    }
-
-    if (action == MovieDetailActionType.refreshMetadata) {
-      await _confirmRefreshMetadata();
-      return;
-    }
-
-    await executeMovieAction(action);
+    await handleMovieActionSelection(
+      action,
+      movie: movie,
+      selectedMedia: selectedMedia,
+    );
   }
 
   @override
@@ -345,92 +337,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       context: context,
       movieNumber: movie.movieNumber,
       selectedMedia: selectedMedia,
-    );
-  }
-
-  Future<void> _confirmRefreshMetadata() {
-    var isSubmitting = false;
-
-    return showDialog<void>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          Future<void> handleConfirm() async {
-            if (isSubmitting) {
-              return;
-            }
-            setDialogState(() {
-              isSubmitting = true;
-            });
-            final succeeded = await executeMovieAction(
-              MovieDetailActionType.refreshMetadata,
-            );
-            if (!dialogContext.mounted) {
-              return;
-            }
-            if (succeeded) {
-              Navigator.of(dialogContext).pop();
-              return;
-            }
-            setDialogState(() {
-              isSubmitting = false;
-            });
-          }
-
-          return AppDesktopDialog(
-            dialogKey: const Key('movie-detail-refresh-metadata-dialog'),
-            width: dialogContext.appLayoutTokens.dialogWidthSm,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  MovieDetailRefreshConfirmationCopy.title,
-                  style: resolveAppTextStyle(
-                    dialogContext,
-                    size: AppTextSize.s18,
-                  ),
-                ),
-                SizedBox(height: dialogContext.appSpacing.lg),
-                Text(MovieDetailRefreshConfirmationCopy.description),
-                SizedBox(height: dialogContext.appSpacing.sm),
-                Text(
-                  MovieDetailRefreshConfirmationCopy.hint,
-                  style: resolveAppTextStyle(
-                    dialogContext,
-                    size: AppTextSize.s12,
-                    tone: AppTextTone.muted,
-                  ),
-                ),
-                SizedBox(height: dialogContext.appSpacing.xl),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppButton(
-                        key: const Key('movie-detail-refresh-metadata-cancel'),
-                        onPressed: isSubmitting
-                            ? null
-                            : () => Navigator.of(dialogContext).pop(),
-                        label: MovieDetailRefreshConfirmationCopy.cancelLabel,
-                      ),
-                    ),
-                    SizedBox(width: dialogContext.appSpacing.md),
-                    Expanded(
-                      child: AppButton(
-                        key: const Key('movie-detail-refresh-metadata-confirm'),
-                        onPressed: isSubmitting ? null : handleConfirm,
-                        label: MovieDetailRefreshConfirmationCopy.confirmLabel,
-                        variant: AppButtonVariant.primary,
-                        isLoading: isSubmitting,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 

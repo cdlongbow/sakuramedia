@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/movies/presentation/movie_subscription_togg
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 enum _MovieCollectionFeatureMenuAction {
   enterSelection,
@@ -269,172 +270,42 @@ Future<_MovieCollectionFeatureMenuAction?> _showMovieCollectionFeatureMenu({
   required Offset globalPosition,
   required bool canEnterSelection,
 }) {
-  final colors = context.appColors;
-  final spacing = context.appSpacing;
-  final componentTokens = Theme.of(context).appComponentTokens;
-  const menuItemHeight = 36.0;
-  final navigator = Navigator.of(context);
-  final overlay = navigator.overlay!.context.findRenderObject() as RenderBox;
-  final localPosition = overlay.globalToLocal(globalPosition);
-  final position = RelativeRect.fromRect(
-    Rect.fromPoints(localPosition, localPosition),
-    Offset.zero & overlay.size,
-  );
-
-  final subscriptionTone = isSubscribed == true
-      ? AppTextTone.error
-      : AppTextTone.primary;
-
-  return showMenu<_MovieCollectionFeatureMenuAction>(
+  return showAppActionMenu<_MovieCollectionFeatureMenuAction>(
     context: context,
-    position: position,
-    useRootNavigator: false,
-    color: colors.surfaceElevated,
-    elevation: 12,
-    shape: RoundedRectangleBorder(
-      borderRadius: context.appRadius.lgBorder,
-      side: BorderSide(color: colors.borderSubtle),
-    ),
-    items: <PopupMenuEntry<_MovieCollectionFeatureMenuAction>>[
+    globalPosition: globalPosition,
+    items: <AppMenuItem<_MovieCollectionFeatureMenuAction>>[
       if (canEnterSelection)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          key: const Key('movie-collection-feature-menu-select-item'),
+        const AppMenuItem(
+          key: Key('movie-collection-feature-menu-select-item'),
           value: _MovieCollectionFeatureMenuAction.enterSelection,
-          height: menuItemHeight,
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                size: componentTokens.iconSizeXs,
-                color: context.appTextPalette.secondary,
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                '选择',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      if (canEnterSelection)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          enabled: false,
-          height: 1,
-          padding: EdgeInsets.zero,
-          child: Divider(height: 1, thickness: 1, color: colors.borderStrong),
+          label: '选择',
+          icon: Icons.check_circle_outline,
         ),
       if (isSubscribed != null)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
+        AppMenuItem(
           key: const Key('movie-collection-feature-menu-subscription-item'),
           value: _MovieCollectionFeatureMenuAction.toggleSubscription,
-          height: menuItemHeight,
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                isSubscribed
-                    ? Icons.favorite_border_rounded
-                    : Icons.favorite_rounded,
-                size: componentTokens.iconSizeXs,
-                color: resolveAppTextToneColor(context, subscriptionTone),
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                isSubscribed ? '取消订阅' : '订阅影片',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: subscriptionTone,
-                ),
-              ),
-            ],
-          ),
+          label: isSubscribed ? '取消订阅' : '订阅影片',
+          icon: isSubscribed
+              ? Icons.favorite_border_rounded
+              : Icons.favorite_rounded,
+          tone: isSubscribed ? AppTextTone.error : AppTextTone.primary,
         ),
-      if (isSubscribed != null)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          enabled: false,
-          height: 1,
-          padding: EdgeInsets.zero,
-          child: Divider(height: 1, thickness: 1, color: colors.borderStrong),
-        ),
-      PopupMenuItem<_MovieCollectionFeatureMenuAction>(
+      AppMenuItem(
         key: const Key('movie-collection-feature-menu-toggle-item'),
         value: _MovieCollectionFeatureMenuAction.toggleCollectionType,
-        height: menuItemHeight,
-        padding: EdgeInsets.symmetric(
-          horizontal: spacing.sm,
-          vertical: spacing.xs,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.category_outlined,
-              size: componentTokens.iconSizeXs,
-              color: context.appTextPalette.secondary,
-            ),
-            SizedBox(width: spacing.sm),
-            Text(
-              isCollection == null
-                  ? '标记为合集/单体'
-                  : (isCollection ? '标记为单体' : '标记为合集'),
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.primary,
-              ),
-            ),
-          ],
-        ),
+        label: isCollection == null
+            ? '标记为合集/单体'
+            : (isCollection ? '标记为单体' : '标记为合集'),
+        icon: Icons.category_outlined,
       ),
       if (isSubscribed != true)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          enabled: false,
-          height: 1,
-          padding: EdgeInsets.zero,
-          child: Divider(height: 1, thickness: 1, color: colors.borderStrong),
-        ),
-      if (isSubscribed != true)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          key: const Key('movie-collection-feature-menu-blacklist-item'),
+        const AppMenuItem(
+          key: Key('movie-collection-feature-menu-blacklist-item'),
           value: _MovieCollectionFeatureMenuAction.blacklist,
-          height: menuItemHeight,
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.block_rounded,
-                size: componentTokens.iconSizeXs,
-                color: resolveAppTextToneColor(context, AppTextTone.error),
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                '屏蔽影片',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.error,
-                ),
-              ),
-            ],
-          ),
+          label: '屏蔽影片',
+          icon: Icons.block_rounded,
+          tone: AppTextTone.error,
         ),
     ],
   );

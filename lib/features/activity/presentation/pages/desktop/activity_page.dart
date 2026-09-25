@@ -11,6 +11,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
+import 'package:sakuramedia/features/activity/presentation/activity_placeholders.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/job_params_dialog.dart';
@@ -30,7 +31,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -328,7 +329,15 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
 
   List<Widget> _buildTabSlivers(BuildContext context) {
     if (_controller.isInitialLoading) {
-      return const <Widget>[SliverToBoxAdapter(child: _InitialLoadingState())];
+      // loading 用占位任务渲染真实任务卡与历史列表，由 [AppSkeletonizer] 灰化。
+      final slivers = _buildTaskSlivers(
+        context,
+        activeTaskRuns: taskRunPlaceholders(count: 2),
+        taskRuns: taskRunPlaceholders(count: 3, finished: false),
+      );
+      return <Widget>[
+        for (final sliver in slivers) AppSkeletonizer.sliver(child: sliver),
+      ];
     }
     if (_controller.initialErrorMessage != null) {
       return <Widget>[
@@ -349,7 +358,13 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     };
   }
 
-  List<Widget> _buildTaskSlivers(BuildContext context) {
+  List<Widget> _buildTaskSlivers(
+    BuildContext context, {
+    List<TaskRunDto>? activeTaskRuns,
+    List<TaskRunDto>? taskRuns,
+  }) {
+    final activeRuns = activeTaskRuns ?? _controller.activeTaskRuns;
+    final historyRuns = taskRuns ?? _controller.taskRuns;
     final titleStyle = resolveAppTextStyle(
       context,
       size: AppTextSize.s14,
@@ -362,26 +377,22 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
           key: const Key('activity-tasks-tab'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_controller.activeTaskRuns.isNotEmpty) ...[
+            if (activeRuns.isNotEmpty) ...[
               _ActivitySection(
                 title: '活动任务',
                 titleStyle: titleStyle,
                 child: Column(
                   children: [
-                    for (
-                      var index = 0;
-                      index < _controller.activeTaskRuns.length;
-                      index++
-                    ) ...[
+                    for (var index = 0; index < activeRuns.length; index++) ...[
                       RepaintBoundary(
                         child: _TaskRunCard(
-                          taskRun: _controller.activeTaskRuns[index],
+                          taskRun: activeRuns[index],
                           highlighted:
                               _controller.highlightedTaskRunId ==
-                              _controller.activeTaskRuns[index].id,
+                              activeRuns[index].id,
                         ),
                       ),
-                      if (index != _controller.activeTaskRuns.length - 1)
+                      if (index != activeRuns.length - 1)
                         SizedBox(height: context.appSpacing.md),
                     ],
                   ],
@@ -401,11 +412,10 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       ),
     ];
 
-    if (_controller.taskRuns.isEmpty &&
-        _controller.taskFilterUpdate.hasFailed) {
+    if (historyRuns.isEmpty && _controller.taskFilterUpdate.hasFailed) {
       return slivers;
     }
-    if (_controller.taskRuns.isEmpty) {
+    if (historyRuns.isEmpty) {
       slivers.add(
         const SliverToBoxAdapter(child: AppEmptyState(message: '当前筛选下暂无任务记录')),
       );
@@ -415,8 +425,8 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     slivers.add(
       SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
-          final item = _controller.taskRuns[index];
-          final isLast = index == _controller.taskRuns.length - 1;
+          final item = historyRuns[index];
+          final isLast = index == historyRuns.length - 1;
           return Padding(
             padding: EdgeInsets.only(
               bottom: isLast ? 0 : context.appSpacing.md,
@@ -428,7 +438,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
               ),
             ),
           );
-        }, childCount: _controller.taskRuns.length),
+        }, childCount: historyRuns.length),
       ),
     );
     slivers.add(
@@ -578,26 +588,6 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
               child: layout,
             )
           : layout,
-    );
-  }
-}
-
-class _InitialLoadingState extends StatelessWidget {
-  const _InitialLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return _ActivitySection(
-      title: '任务中心',
-      child: Column(
-        key: const Key('activity-initial-skeleton'),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const AppSectionSkeleton(lineCount: 3),
-          SizedBox(height: context.appSpacing.lg),
-          const AppSectionSkeleton(lineCount: 4),
-        ],
-      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/desktop/plugin_settings_dialog.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_management_actions.dart';
+import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_state.dart';
 import 'package:sakuramedia/theme.dart';
@@ -15,11 +16,12 @@ import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 /// 系统设置里的「插件」页：列表、zip 安装、启停、删除与 JSON 配置编辑。
 class DesktopPluginsSection extends ConsumerStatefulWidget {
@@ -46,15 +48,28 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection> {
       return const SizedBox.shrink();
     }
     final asyncPlugins = ref.watch(pluginsProvider);
-    final content = asyncPlugins.when(
-      loading: () => const AppSectionSkeleton(lineCount: 4),
-      error: (error, _) => AppSectionError(
-        title: '插件加载失败',
-        message: apiErrorMessage(error, fallback: '插件加载失败，请稍后重试。'),
-        onRetry: _actions.refresh,
-      ),
-      data: (state) => _buildLoaded(context, state),
-    );
+    final content = asyncPlugins.hasError
+        ? AppSectionError(
+            title: '插件加载失败',
+            message: apiErrorMessage(
+              asyncPlugins.error!,
+              fallback: '插件加载失败，请稍后重试。',
+            ),
+            onRetry: _actions.refresh,
+          )
+        : Builder(
+            builder: (context) {
+              final isLoading = asyncPlugins.value == null;
+              // loading 用占位插件渲染真实列表行，由 [AppSkeletonizer] 灰化。
+              final state = isLoading
+                  ? pluginsPlaceholderState()
+                  : asyncPlugins.value!;
+              return AppSkeletonizer(
+                enabled: isLoading,
+                child: _buildLoaded(context, state),
+              );
+            },
+          );
     return AppPageRefreshScope(onRefresh: _actions.refresh, child: content);
   }
 
@@ -111,16 +126,19 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection> {
                   : _actions.checkUpdates,
             ),
             SizedBox(width: spacing.sm),
-            AppButton(
-              key: const Key('plugins-install-button'),
-              label: '安装插件',
-              variant: AppButtonVariant.primary,
-              size: AppButtonSize.small,
-              icon: const Icon(Icons.upload_file_outlined),
-              isLoading: state.isInstalling,
-              onPressed: state.isInstalling || state.isCheckingUpdates
-                  ? null
-                  : _actions.install,
+            // 主行动保留品牌底色会显得「加载中也可用」，用 shade 随骨架一起灰化。
+            Skeleton.shade(
+              child: AppButton(
+                key: const Key('plugins-install-button'),
+                label: '安装插件',
+                variant: AppButtonVariant.primary,
+                size: AppButtonSize.small,
+                icon: const Icon(Icons.upload_file_outlined),
+                isLoading: state.isInstalling,
+                onPressed: state.isInstalling || state.isCheckingUpdates
+                    ? null
+                    : _actions.install,
+              ),
             ),
             SizedBox(width: spacing.md),
             Text(

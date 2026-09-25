@@ -37,6 +37,7 @@ import 'package:sakuramedia/features/image_search/presentation/widgets/image_sea
 import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_preview_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
@@ -1027,11 +1028,12 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     if (!mounted) {
       return;
     }
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: _buildResultActionDescriptors(item, point),
       globalPosition: globalPosition,
-      presentation: AppImageActionMenuPresentation.auto,
+      items: buildImageActionMenuItems(
+        _buildResultActionDescriptors(item, point),
+      ),
     );
     if (!mounted || action == null) {
       return;

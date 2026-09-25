@@ -24,6 +24,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_tab.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -146,16 +147,18 @@ class _MovieDetailInspectorPanelState
     if (!mounted) {
       return;
     }
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: buildMediaThumbnailActionDescriptors(
-        showSearchSimilar: ref.read(imageSearchEnabledProvider),
-        thumbnail: thumbnail,
-        point: point,
-        canSearchSimilar: widget.onSearchSimilar != null,
-        canPlay: widget.onPlay != null,
-      ),
       globalPosition: globalPosition,
+      items: buildImageActionMenuItems(
+        buildMediaThumbnailActionDescriptors(
+          showSearchSimilar: ref.read(imageSearchEnabledProvider),
+          thumbnail: thumbnail,
+          point: point,
+          canSearchSimilar: widget.onSearchSimilar != null,
+          canPlay: widget.onPlay != null,
+        ),
+      ),
     );
     if (!mounted || action == null) {
       return;

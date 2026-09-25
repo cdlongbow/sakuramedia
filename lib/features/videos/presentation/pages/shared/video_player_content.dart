@@ -20,6 +20,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/videos_api_pr
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
@@ -341,15 +342,16 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
     if (!mounted) {
       return;
     }
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: buildMediaThumbnailActionDescriptors(
-        showSearchSimilar: ref.read(imageSearchEnabledProvider),
-        thumbnail: thumbnail,
-        point: point,
-      ),
       globalPosition: globalPosition,
-      presentation: AppImageActionMenuPresentation.auto,
+      items: buildImageActionMenuItems(
+        buildMediaThumbnailActionDescriptors(
+          showSearchSimilar: ref.read(imageSearchEnabledProvider),
+          thumbnail: thumbnail,
+          point: point,
+        ),
+      ),
     );
     if (!mounted || action == null) {
       return;

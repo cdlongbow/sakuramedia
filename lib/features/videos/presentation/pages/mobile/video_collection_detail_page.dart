@@ -6,7 +6,6 @@ import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 
 export 'package:sakuramedia/features/videos/presentation/pages/shared/video_collection_detail_content.dart'
     show CollectionDetailLayout;
@@ -33,9 +32,6 @@ class MobileVideoCollectionDetailPage extends StatelessWidget {
       useMobileFilterDrawer: true,
       enableReorder: false,
       defaultLayout: CollectionDetailLayout.grid,
-      loadingBuilder: (_) => const AppMobileSkeletonList(
-        key: Key('mobile-video-collection-detail-loading'),
-      ),
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppTextButton(
           key: const Key('mobile-video-collection-play-all-button'),

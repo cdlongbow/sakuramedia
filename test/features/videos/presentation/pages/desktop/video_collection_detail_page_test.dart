@@ -13,6 +13,8 @@ import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart'
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_detail_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
 
@@ -119,7 +121,7 @@ void main() {
     }
   }
 
-  testWidgets('首屏加载显示视频合集详情骨架', (tester) async {
+  testWidgets('首屏加载用占位数据渲染真实布局并灰化', (tester) async {
     final pendingCollection = Completer<ResponseBody>();
     adapter.enqueueResponder(
       method: 'GET',
@@ -139,14 +141,13 @@ void main() {
 
     await pumpPage(tester, settle: false);
 
+    expect(find.byType(AppSkeletonizer), findsOneWidget);
     expect(
-      find.byKey(const Key('video-collection-detail-loading')),
+      find.byKey(const Key('video-collection-detail-list')),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const Key('video-collection-detail-skeleton-list')),
-      findsOneWidget,
-    );
+    // 加载态渲染的是真实成员行（占位数据），骨架即真实布局。
+    expect(find.byType(CollectionMemberRow), findsWidgets);
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
     pendingCollection.complete(

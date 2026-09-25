@@ -6,6 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/media_library_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_libraries_provider.dart';
@@ -16,7 +17,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -130,15 +131,28 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
   Widget build(BuildContext context) {
     if (!widget.active) return const SizedBox.shrink();
     final libraries = ref.watch(mediaLibrariesProvider);
-    final content = libraries.when(
-      loading: () => const AppSectionSkeleton(lineCount: 4),
-      error: (error, _) => AppSectionError(
-        title: '媒体库加载失败',
-        message: apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。'),
-        onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
-      ),
-      data: (value) => _buildLoaded(context, value),
-    );
+    final content = libraries.hasError
+        ? AppSectionError(
+            title: '媒体库加载失败',
+            message: apiErrorMessage(
+              libraries.error!,
+              fallback: '媒体库加载失败，请稍后重试。',
+            ),
+            onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
+          )
+        : Builder(
+            builder: (context) {
+              final isLoading = libraries.value == null;
+              // loading 用占位媒体库渲染真实设置组，由 [AppSkeletonizer] 灰化。
+              final display = isLoading
+                  ? mediaLibraryPlaceholders()
+                  : libraries.value!;
+              return AppSkeletonizer(
+                enabled: isLoading,
+                child: _buildLoaded(context, display),
+              );
+            },
+          );
     return AppPageRefreshScope(onRefresh: _refresh, child: content);
   }
 

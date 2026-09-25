@@ -72,6 +72,7 @@ class MovieClipStrip extends StatelessWidget {
                 key: Key('movie-clip-strip-card-${clip.clipId}'),
                 clip: clip,
                 onTap: () => onPlayClip(clip),
+                onPlay: () => onPlayClip(clip),
                 onRename: () => onRenameClip(clip),
                 onDelete: () => onDeleteClip(clip),
                 onAddToCollection: () => onAddClipToCollection(clip),

@@ -8,13 +8,14 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -100,63 +101,64 @@ class _MobileVideoCollectionsPageState
     BuildContext context,
     AsyncValue<List<VideoCollectionDto>> async,
   ) {
-    if (async.isLoading && async.value == null) {
-      return const AppMobileSkeletonList(
-        key: Key('mobile-video-collections-loading'),
-      );
-    }
+    final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = async.value ?? const <VideoCollectionDto>[];
-    return AppAdaptiveRefreshScrollView(
-      key: const Key('mobile-video-collections-scroll'),
-      onRefresh:
-          ref.read(videoCollectionsOverviewProvider.notifier).refresh,
-      slivers: <Widget>[
-        if (async.hasError && collections.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(
-              message: apiErrorMessage(
-                async.error!,
-                fallback: '合集加载失败，请稍后重试',
+    final collections = isLoading
+        ? videoCollectionPlaceholders()
+        : async.value ?? const <VideoCollectionDto>[];
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: AppAdaptiveRefreshScrollView(
+        key: const Key('mobile-video-collections-scroll'),
+        onRefresh:
+            ref.read(videoCollectionsOverviewProvider.notifier).refresh,
+        slivers: <Widget>[
+          if (async.hasError && collections.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(
+                message: apiErrorMessage(
+                  async.error!,
+                  fallback: '合集加载失败，请稍后重试',
+                ),
+              ),
+            )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+            )
+          else
+            SliverPadding(
+              // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
+              padding: EdgeInsets.symmetric(vertical: spacing.md),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 180,
+                  mainAxisSpacing: spacing.md,
+                  crossAxisSpacing: spacing.sm,
+                  // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
+                  // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
+                  // 贴合内容，对齐桌面合集卡的紧凑观感（此前 0.78 会留 ~80px 底部空白）。
+                  childAspectRatio: 1.25,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final collection = collections[index];
+                  return CollectionCard.video(
+                    key: Key('mobile-video-collection-card-${collection.id}'),
+                    collection: collection,
+                    onTap:
+                        () => MobileVideoCollectionDetailRouteData(
+                          collectionId: collection.id,
+                        ).push(context),
+                    onEdit: () => _editCollection(collection),
+                    onDelete: () => _deleteCollection(collection),
+                  );
+                }, childCount: collections.length),
               ),
             ),
-          )
-        else if (collections.isEmpty)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
-          )
-        else
-          SliverPadding(
-            // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
-            padding: EdgeInsets.symmetric(vertical: spacing.md),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 180,
-                mainAxisSpacing: spacing.md,
-                crossAxisSpacing: spacing.sm,
-                // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
-                // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
-                // 贴合内容，对齐桌面合集卡的紧凑观感（此前 0.78 会留 ~80px 底部空白）。
-                childAspectRatio: 1.25,
-              ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final collection = collections[index];
-                return CollectionCard.video(
-                  key: Key('mobile-video-collection-card-${collection.id}'),
-                  collection: collection,
-                  onTap:
-                      () => MobileVideoCollectionDetailRouteData(
-                        collectionId: collection.id,
-                      ).push(context),
-                  onEdit: () => _editCollection(collection),
-                  onDelete: () => _deleteCollection(collection),
-                );
-              }, childCount: collections.length),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

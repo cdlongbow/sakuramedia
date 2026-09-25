@@ -9,6 +9,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -512,11 +513,12 @@ void main() {
         tester,
         initialIndex: 0,
         onRequestImageMenu: (context, index, globalPosition) async {
-          await showAppImageActionMenu(
+          await showAppActionMenu<AppImageActionType>(
             context: context,
             globalPosition: globalPosition,
-            presentation: AppImageActionMenuPresentation.bottomDrawer,
-            actions: const <AppImageActionDescriptor>[
+            drawerKey: kAppImageActionMenuDrawerKey,
+            presentation: AppMenuPresentation.bottomDrawer,
+            items: buildImageActionMenuItems(const [
               AppImageActionDescriptor(
                 type: AppImageActionType.searchSimilar,
                 label: '相似图片',
@@ -527,7 +529,7 @@ void main() {
                 label: '保存到本地',
                 icon: Icons.download_outlined,
               ),
-            ],
+            ]),
           );
         },
       );
@@ -544,18 +546,18 @@ void main() {
 
       expect(find.byKey(kAppImageFullscreenOverlayKey), findsOneWidget);
       expect(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
         findsOneWidget,
       );
       expect(find.text('相似图片'), findsOneWidget);
       expect(find.text('保存到本地'), findsOneWidget);
 
       final enteringDrawerTop = tester.getTopLeft(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
       );
       await tester.pump(const Duration(milliseconds: 90));
       final midAnimationDrawerTop = tester.getTopLeft(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
       );
       expect(midAnimationDrawerTop.dy, lessThan(enteringDrawerTop.dy));
 
@@ -565,23 +567,23 @@ void main() {
         find.byKey(kAppImageFullscreenOverlayKey),
       );
       final drawerTop = tester.getTopLeft(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
       );
       expect(drawerTop.dy, greaterThan(overlayTop.dy));
 
       await tester.tap(
         find.byKey(
-          const Key('app-image-action-bottom-drawer-action-searchSimilar'),
+          const Key('app-image-action-searchSimilar'),
         ),
       );
       await tester.pump();
       expect(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
         findsOneWidget,
       );
       await tester.pump(const Duration(milliseconds: 220));
       expect(
-        find.byKey(const Key('app-image-action-bottom-drawer')),
+        find.byKey(kAppImageActionMenuDrawerKey),
         findsNothing,
       );
     },

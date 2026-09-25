@@ -5,11 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 Future<void> showMoviePlotImageActionMenu({
   required BuildContext context,
@@ -32,25 +32,25 @@ Future<void> showMoviePlotImageActionMenu({
     return;
   }
 
-  final action = await showAppImageActionMenu(
+  final action = await showAppActionMenu<AppImageActionType>(
     context: context,
     globalPosition: globalPosition,
-    presentation: isMobileAppPlatform()
-        ? AppImageActionMenuPresentation.bottomDrawer
-        : AppImageActionMenuPresentation.popup,
-    actions: <AppImageActionDescriptor>[
-      if (ProviderScope.containerOf(context, listen: false).read(imageSearchEnabledProvider))
+    items: buildImageActionMenuItems(<AppImageActionDescriptor>[
+      if (ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(imageSearchEnabledProvider))
+        const AppImageActionDescriptor(
+          type: AppImageActionType.searchSimilar,
+          label: '相似图片',
+          icon: Icons.image_search_outlined,
+        ),
       const AppImageActionDescriptor(
-        type: AppImageActionType.searchSimilar,
-        label: '相似图片',
-        icon: Icons.image_search_outlined,
-      ),
-      AppImageActionDescriptor(
         type: AppImageActionType.saveToLocal,
         label: '保存到本地',
         icon: Icons.download_outlined,
       ),
-    ],
+    ]),
   );
   if (action == null) {
     return;

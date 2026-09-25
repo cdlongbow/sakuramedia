@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/discovery/presentation/providers/discovery_
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
@@ -29,7 +30,7 @@ import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.da
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_image.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 class MobileOverviewDiscoverTab extends ConsumerWidget {
@@ -274,7 +275,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
     if (moment.isLoading) {
-      return const AppMobileSkeletonList();
+      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        child: MomentGrid(
+          items: momentListPlaceholders(count: _momentPreviewCount),
+          onItemTap: (_) {},
+        ),
+      );
     }
     if (moment.errorMessage != null) {
       return _RetryEmptyState(
@@ -291,6 +298,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: (item) => _openMomentPreview(context, item),
+      onItemPlay: (item) => _openPlayerForMoment(context, item),
     );
   }
 
@@ -317,18 +325,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
       case MediaPreviewAction.addToCollection:
         return;
       case MediaPreviewAction.play:
-        final movieNumber = item.movieNumber;
-        if (movieNumber == null || movieNumber.isEmpty) {
-          return;
-        }
-        unawaited(
-          launchMoviePlayback(
-            context,
-            movieNumber: movieNumber,
-            mediaId: item.mediaId > 0 ? item.mediaId : null,
-            positionSeconds: item.offsetSeconds,
-          ),
-        );
+        _openPlayerForMoment(context, item);
       case MediaPreviewAction.openMovieDetail:
         final movieNumberForDetail = item.movieNumber;
         if (movieNumberForDetail == null || movieNumberForDetail.isEmpty) {
@@ -338,6 +335,21 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
           movieNumber: movieNumberForDetail,
         ).push(context);
     }
+  }
+
+  void _openPlayerForMoment(BuildContext context, MomentListItem item) {
+    final movieNumber = item.movieNumber;
+    if (movieNumber == null || movieNumber.isEmpty) {
+      return;
+    }
+    unawaited(
+      launchMoviePlayback(
+        context,
+        movieNumber: movieNumber,
+        mediaId: item.mediaId > 0 ? item.mediaId : null,
+        positionSeconds: item.offsetSeconds,
+      ),
+    );
   }
 
   Future<void> _searchSimilarFromMoment(

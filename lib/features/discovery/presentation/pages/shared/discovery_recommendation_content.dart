@@ -412,6 +412,7 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: (item) => _openMomentPreview(context, item),
+      onItemPlay: (item) => _openPlayerForMoment(context, item),
     );
   }
 

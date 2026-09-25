@@ -9,6 +9,9 @@ import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_cl
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_state.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
+import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 void main() {
   testWidgets('initial loading uses collection and clip grid skeletons', (
@@ -37,14 +40,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.byKey(const Key('mobile-clips-collections-skeleton-row')),
-      findsOneWidget,
-    );
+    expect(find.byType(AppSkeletonizer), findsNWidgets(2));
     expect(find.text('切片合集'), findsOneWidget);
     expect(find.text('我的合集'), findsNothing);
-    expect(find.byKey(const Key('mobile-clips-grid-skeleton')), findsOneWidget);
-    expect(find.byKey(const Key('mobile-clips-loading')), findsNothing);
+    // 加载态渲染的是真实卡片（占位数据），骨架即真实布局。
+    expect(
+      find.byKey(const Key('mobile-clips-collections-row')),
+      findsOneWidget,
+    );
+    expect(find.byType(CollectionCard), findsWidgets);
+    expect(find.byType(ClipCoverCard), findsWidgets);
   });
 }
 

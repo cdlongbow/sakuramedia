@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -73,11 +74,11 @@ void main() {
             builder:
                 (context) => TextButton(
                   onPressed: () async {
-                    selectedAction = await showAppImageActionMenu(
+                    selectedAction = await showAppActionMenu<AppImageActionType>(
                       context: context,
-                      globalPosition: null,
-                      presentation: AppImageActionMenuPresentation.bottomDrawer,
-                      actions: const [
+                      drawerKey: kAppImageActionMenuDrawerKey,
+                      presentation: AppMenuPresentation.bottomDrawer,
+                      items: buildImageActionMenuItems(const [
                         AppImageActionDescriptor(
                           type: AppImageActionType.searchSimilar,
                           label: '相似图片',
@@ -88,7 +89,7 @@ void main() {
                           label: '保存到本地',
                           icon: Icons.download_outlined,
                         ),
-                      ],
+                      ]),
                     );
                   },
                   child: const Text('open'),
@@ -101,25 +102,18 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsOneWidget,
-    );
+    expect(find.byKey(kAppImageActionMenuDrawerKey), findsOneWidget);
     expect(find.text('相似图片'), findsOneWidget);
     expect(find.text('保存到本地'), findsOneWidget);
+    expect(find.text('取消'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(
-        const Key('app-image-action-bottom-drawer-action-searchSimilar'),
-      ),
+      find.byKey(const Key('app-image-action-searchSimilar')),
     );
     await tester.pumpAndSettle();
 
     expect(selectedAction, AppImageActionType.searchSimilar);
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsNothing,
-    );
+    expect(find.byKey(kAppImageActionMenuDrawerKey), findsNothing);
   });
 
   testWidgets('image action bottom drawer keeps disabled action visible', (
@@ -134,18 +128,18 @@ void main() {
             builder:
                 (context) => TextButton(
                   onPressed: () async {
-                    selectedAction = await showAppImageActionMenu(
+                    selectedAction = await showAppActionMenu<AppImageActionType>(
                       context: context,
-                      globalPosition: null,
-                      presentation: AppImageActionMenuPresentation.bottomDrawer,
-                      actions: const [
+                      drawerKey: kAppImageActionMenuDrawerKey,
+                      presentation: AppMenuPresentation.bottomDrawer,
+                      items: buildImageActionMenuItems(const [
                         AppImageActionDescriptor(
                           type: AppImageActionType.searchSimilar,
                           label: '相似图片',
                           icon: Icons.image_search_outlined,
                           enabled: false,
                         ),
-                      ],
+                      ]),
                     );
                   },
                   child: const Text('open'),
@@ -158,27 +152,19 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsOneWidget,
-    );
+    expect(find.byKey(kAppImageActionMenuDrawerKey), findsOneWidget);
     expect(find.text('相似图片'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(
-        const Key('app-image-action-bottom-drawer-action-searchSimilar'),
-      ),
+      find.byKey(const Key('app-image-action-searchSimilar')),
     );
     await tester.pumpAndSettle();
 
     expect(selectedAction, isNull);
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsOneWidget,
-    );
+    expect(find.byKey(kAppImageActionMenuDrawerKey), findsOneWidget);
   });
 
-  testWidgets('auto presentation resolves to bottom drawer on mobile scope', (
+  testWidgets('long press keeps the popup menu on a mobile platform scope', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -191,28 +177,8 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsOneWidget,
-    );
-    expect(_popupMenuFinder(), findsNothing);
-  });
-
-  testWidgets('auto presentation falls back to popup without platform scope', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: _AutoMenuTestButton())),
-    );
-
-    await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-
     expect(_popupMenuFinder(), findsOneWidget);
-    expect(
-      find.byKey(const Key('app-image-action-bottom-drawer')),
-      findsNothing,
-    );
+    expect(find.byKey(kAppImageActionMenuDrawerKey), findsNothing);
   });
 }
 
@@ -259,17 +225,17 @@ class _AutoMenuTestButton extends StatelessWidget {
         builder:
             (context) => TextButton(
               onPressed: () {
-                showAppImageActionMenu(
+                showAppActionMenu<AppImageActionType>(
                   context: context,
                   globalPosition: tapPositionOf(context),
-                  presentation: AppImageActionMenuPresentation.auto,
-                  actions: const [
+                  drawerKey: kAppImageActionMenuDrawerKey,
+                  items: buildImageActionMenuItems(const [
                     AppImageActionDescriptor(
                       type: AppImageActionType.searchSimilar,
                       label: '相似图片',
                       icon: Icons.image_search_outlined,
                     ),
-                  ],
+                  ]),
                 );
               },
               child: const Text('open'),
@@ -303,16 +269,16 @@ class _MenuTestTrigger extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppImageActionTrigger(
       onRequestMenu:
-          (globalPosition) => showAppImageActionMenu(
+          (globalPosition) => showAppActionMenu<AppImageActionType>(
             context: context,
-            actions: const [
+            globalPosition: globalPosition,
+            items: buildImageActionMenuItems(const [
               AppImageActionDescriptor(
                 type: AppImageActionType.searchSimilar,
                 label: '相似图片',
                 icon: Icons.image_search_outlined,
               ),
-            ],
-            globalPosition: globalPosition,
+            ]),
           ),
       child: Container(
         key: const Key('menu-test-trigger'),

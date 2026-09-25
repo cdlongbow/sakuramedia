@@ -8,7 +8,6 @@ import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 
 export 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_detail_content.dart'
@@ -34,9 +33,6 @@ class MobileClipCollectionDetailPage extends StatelessWidget {
       hoistTitleToSubpageShell: true,
       enableReorder: false,
       defaultLayout: ClipCollectionDetailLayout.grid,
-      loadingBuilder: (_) => const AppMobileSkeletonList(
-        key: Key('mobile-clip-collection-detail-loading'),
-      ),
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppTextButton(
           key: const Key('mobile-clip-collection-play-all-button'),

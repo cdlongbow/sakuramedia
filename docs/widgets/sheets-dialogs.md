@@ -13,7 +13,10 @@
 
 ## 菜单和筛选
 
-- `showAppCardContextMenu<T>` / `AppCardContextMenuItem<T>`：`app_card_context_menu.dart`，右键或长按后的卡片菜单。
+- `showAppActionMenu<T>` / `AppMenuItem<T>`：`app_action_menu.dart`，全应用唯一的右键 / 长按菜单壳；负责定位、统一表面样式与项渲染、底部操作表（可选标题 + 独立「取消」行）、全屏图片下的抽屉宿主。调用方只组装 items 并派发返回值，不要另写 `showMenu`。
+  - `AppMenuPresentation` 由**触发方式**决定，不按平台：长按 / 右键用 `popup`（默认，锚定按压点），「更多」按钮的动作列表用 `bottomDrawer`。
+  - 弹层宽度由最宽项决定（`min 112 / max 320`），正文 `s12`、行高 36（带副标题 52）、图标 16；菜单项之间固定 4px 间距分项，不使用分隔线；操作表行高 52、图标 18、正文 `s12`。
+  - 弹层菜单项的 hover / 按压高亮是从菜单边缘内缩 4px 的同心圆角矩形（`sm` = 外层 `md` 12 − 4），由壳内私有 entry 渲染，不要再退回 `PopupMenuItem`（它写死无圆角 InkWell）。
 - `AppFilterPopover` / `AppFilterPanelFooter`：`app_filter_popover.dart`，桌面筛选浮层和统一底部动作。
 
 合集成员选择器（添加切片 / 添加时刻）在弹层头部收口「搜索 + 仅看未加入 + 类型筛选 + 计数」，加入后即时出池；具体实现见各 feature 的 `add_*_to_collection_dialog.dart`。

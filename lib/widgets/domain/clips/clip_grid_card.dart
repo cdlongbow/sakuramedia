@@ -1,16 +1,18 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 enum _ClipCardAction { openMovie, addToCollection, rename, delete }
 
-/// 切片卡：封面 + 底部一条信息条（左番号、右时长）。桌面 grid 版本
-/// 单击播放 + 右键 / 长按弹菜单;移动 cover 版本(见 [ClipCoverCard]
-/// 薄壳)整卡点击弹操作抽屉、无右键菜单。
+/// 切片卡：整卡即封面，桌面端指针悬停时底部渐显单行「标题 + 番号 · 时长 ·
+/// 大小」与靠右的播放按钮，收起态不铺任何文字。
+///
+/// 桌面 grid 版本单击弹操作弹窗 + 右键 / 长按弹菜单；移动 cover 版本
+/// （见 [ClipCoverCard] 薄壳）整卡点击弹操作抽屉、无右键菜单、无悬停展开。
 ///
 /// 选择模式下整卡点击切换选中、屏蔽右键菜单与 tap、左上角叠勾选。
 class ClipGridCard extends StatelessWidget {
@@ -18,6 +20,7 @@ class ClipGridCard extends StatelessWidget {
     super.key,
     required this.clip,
     required this.onTap,
+    this.onPlay,
     this.onRename,
     this.onDelete,
     this.onAddToCollection,
@@ -26,15 +29,15 @@ class ClipGridCard extends StatelessWidget {
     this.isSelected = false,
     this.onSelectedChanged,
     this.tapKey,
-    this.numberOverride,
-    this.materialColor,
-    this.backgroundOnDecoration = false,
   });
 
   final MediaClipDto clip;
 
-  /// 整卡点击回调:桌面 = 播放;移动 cover 版 = 弹抽屉。
+  /// 整卡点击回调:桌面 = 弹操作弹窗;移动 cover 版 = 弹抽屉。
   final VoidCallback onTap;
+
+  /// 悬停面板里的播放主按钮回调;为 `null` 时不显示按钮。
+  final VoidCallback? onPlay;
 
   /// 菜单相关回调,全部可空。任一非空 + 非选择模式 = 加右键 / 长按手势。
   final VoidCallback? onRename;
@@ -52,18 +55,6 @@ class ClipGridCard extends StatelessWidget {
   /// 移动 cover 薄壳传 `clip-cover-card-<id>`。
   final Key? tapKey;
 
-  /// 番号显示 override。默认走 `movieNumber ?? '无番号'`(grid);
-  /// cover 版传 `clip.displayNumber`。
-  final String? numberOverride;
-
-  /// [Material] 底色。cover 版传 `Colors.transparent`(外层已有背景);
-  /// grid 版走默认 surfaceCard。
-  final Color? materialColor;
-
-  /// cover 版本外层没有额外背景,底色改到 [DecoratedBox] 上;grid 版走
-  /// [Material] 底色即可。
-  final bool backgroundOnDecoration;
-
   bool get _hasMenu =>
       onRename != null ||
       onDelete != null ||
@@ -72,25 +63,12 @@ class ClipGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
     final colors = context.appColors;
     final coverUrl = clip.coverImage?.bestAvailableUrl;
-    final number =
-        numberOverride ??
-        (clip.movieNumber?.isNotEmpty == true ? clip.movieNumber! : '无番号');
-    final duration = formatMediaTimecode(clip.durationSeconds);
-    final labelTextStyle = resolveAppTextStyle(
-      context,
-      size: AppTextSize.s12,
-      weight: AppTextWeight.regular,
-      tone: AppTextTone.onMedia,
-    );
     final selected = selectionMode && isSelected;
 
     final card = Material(
-      color:
-          materialColor ??
-          (backgroundOnDecoration ? Colors.transparent : colors.surfaceCard),
+      color: colors.surfaceCard,
       borderRadius: context.appRadius.mdBorder,
       child: InkWell(
         mouseCursor: selectionMode && onSelectedChanged == null
@@ -103,7 +81,6 @@ class ClipGridCard extends StatelessWidget {
             : onTap,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: backgroundOnDecoration ? colors.surfaceCard : null,
             borderRadius: context.appRadius.mdBorder,
             border: Border.all(
               color: selected ? colors.selectionBorder : colors.borderSubtle,
@@ -118,44 +95,17 @@ class ClipGridCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (coverUrl != null && coverUrl.isNotEmpty)
-                    MaskedImage(url: coverUrl, fit: BoxFit.cover)
-                  else
-                    ColoredBox(color: colors.surfaceMuted),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.44),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: spacing.md,
-                          vertical: spacing.sm,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                number,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: labelTextStyle,
-                              ),
-                            ),
-                            SizedBox(width: spacing.sm),
-                            Text(duration, style: labelTextStyle),
-                          ],
-                        ),
-                      ),
-                    ),
+                  AppCoverHoverInfo(
+                    enabled: !selectionMode,
+                    cover: coverUrl != null && coverUrl.isNotEmpty
+                        ? MaskedImage(url: coverUrl, fit: BoxFit.cover)
+                        : ColoredBox(color: colors.surfaceMuted),
+                    infoBuilder: (context) => _buildHoverInfo(context),
                   ),
                   if (selectionMode)
                     Positioned(
-                      top: spacing.xs,
-                      left: spacing.xs,
+                      top: context.appSpacing.xs,
+                      left: context.appSpacing.xs,
                       child: IgnorePointer(
                         child: SelectionCheckBadge(isSelected: isSelected),
                       ),
@@ -181,6 +131,22 @@ class ClipGridCard extends StatelessWidget {
     );
   }
 
+  /// 悬停展开内容：单行「标题 + 番号 · 时长 · 大小」，播放主按钮靠右。
+  Widget _buildHoverInfo(BuildContext context) {
+    final play = onPlay;
+    return AppCoverHoverInfoRow(
+      key: Key('clip-grid-card-info-${clip.clipId}'),
+      label: clip.displayTitle,
+      meta: clip.metaLine,
+      action: play == null
+          ? null
+          : AppCoverHoverPlayButton(
+              key: Key('clip-grid-card-play-${clip.clipId}'),
+              onTap: play,
+            ),
+    );
+  }
+
   Future<void> _showContextMenu(
     BuildContext context,
     Offset globalPosition,
@@ -189,29 +155,30 @@ class ClipGridCard extends StatelessWidget {
     final addToCollection = onAddToCollection;
     final rename = onRename;
     final delete = onDelete;
-    final action = await showAppCardContextMenu<_ClipCardAction>(
-      context,
+    final action = await showAppActionMenu<_ClipCardAction>(
+      context: context,
       globalPosition: globalPosition,
       items: [
         if (openMovie != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _ClipCardAction.openMovie,
             label: '影片',
           ),
         if (addToCollection != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _ClipCardAction.addToCollection,
             label: '加入合集',
           ),
         if (rename != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _ClipCardAction.rename,
             label: '重命名',
           ),
         if (delete != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _ClipCardAction.delete,
             label: '删除',
+            tone: AppTextTone.error,
           ),
       ],
     );

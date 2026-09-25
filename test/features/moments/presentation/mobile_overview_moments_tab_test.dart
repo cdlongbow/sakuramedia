@@ -71,8 +71,9 @@ void main() {
         0.1,
       ),
     );
-    expect(find.text('ABC-001'), findsOneWidget);
-    expect(find.text('02:00'), findsOneWidget);
+    // 移动端卡片只有封面，番号/位置不再常显（信息在点击后的预览里）。
+    expect(find.byKey(const Key('moment-card-10')), findsOneWidget);
+    expect(find.text('ABC-001'), findsNothing);
     expect(_mediaPointsQueryValue(bundle, 0, 'sort'), 'created_at:desc');
     expect(bundle.adapter.hitCount('GET', '/media/456/thumbnails'), 0);
   });

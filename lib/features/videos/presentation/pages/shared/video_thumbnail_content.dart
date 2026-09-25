@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/videos_api_pr
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_tab.dart';
 
@@ -127,16 +128,17 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
     if (!mounted) {
       return;
     }
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: buildMediaThumbnailActionDescriptors(
-        showSearchSimilar: ref.read(imageSearchEnabledProvider),
-        thumbnail: thumbnail,
-        point: point,
-        canSetCover: true,
-      ),
       globalPosition: globalPosition,
-      presentation: AppImageActionMenuPresentation.auto,
+      items: buildImageActionMenuItems(
+        buildMediaThumbnailActionDescriptors(
+          showSearchSimilar: ref.read(imageSearchEnabledProvider),
+          thumbnail: thumbnail,
+          point: point,
+          canSetCover: true,
+        ),
+      ),
     );
     if (!mounted || action == null) {
       return;

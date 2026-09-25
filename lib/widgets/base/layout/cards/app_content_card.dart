@@ -23,7 +23,7 @@ class AppContentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ?? EdgeInsets.all(context.appSpacing.xl),
+      padding: padding ?? EdgeInsets.all(context.appSpacing.lg),
       decoration: BoxDecoration(
         color: context.appColors.surfaceCard,
         borderRadius: context.appRadius.lgBorder,

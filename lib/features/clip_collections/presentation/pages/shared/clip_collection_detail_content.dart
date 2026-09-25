@@ -6,6 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_placeholders.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collection_detail_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collection_detail_state.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
@@ -22,6 +23,7 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_view_mode_toggle_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
@@ -32,6 +34,7 @@ import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 /// 合集详情的切片排布方式：纵向列表（可拖序）或网格（侧重浏览）。
 enum ClipCollectionDetailLayout { list, grid }
@@ -89,7 +92,6 @@ class ClipCollectionDetailContent extends ConsumerStatefulWidget {
     this.hoistTitleToSubpageShell = false,
     this.enableReorder = false,
     this.defaultLayout = ClipCollectionDetailLayout.grid,
-    this.loadingBuilder,
     this.playAllBuilder,
     this.onMemberTap,
     this.playSingle,
@@ -116,7 +118,6 @@ class ClipCollectionDetailContent extends ConsumerStatefulWidget {
   /// 默认成员排布：两端默认都是 grid。
   final ClipCollectionDetailLayout defaultLayout;
 
-  final Widget Function(BuildContext context)? loadingBuilder;
   final ClipPlayAllBuilder? playAllBuilder;
 
   /// 单条切片点击后的动作（桌面直接播放 / 移动动作抽屉），由壳实现。
@@ -198,16 +199,11 @@ class _ClipCollectionDetailContentState
     if (widget.hoistTitleToSubpageShell) {
       _reportTitleToShell(state?.collection);
     }
+    final isLoading = async.isLoading && state == null;
 
     final content = Builder(
       builder: (context) {
-        if (async.isLoading && state == null) {
-          return (
-            widget.loadingBuilder ??
-            (_) => const Center(child: CircularProgressIndicator.adaptive())
-          )(context);
-        }
-        if (async.hasError && state == null) {
+        if (!isLoading && async.hasError && state == null) {
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
@@ -215,26 +211,34 @@ class _ClipCollectionDetailContentState
             ),
           );
         }
-        if (state == null) {
+        if (!isLoading && state == null) {
           return const SizedBox.shrink();
         }
-        return Column(
-          key: Key('${widget.keyPrefix}-detail-page-body'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 移动端标题报到返回栏，页面内不再写第二遍大标题。
-            if (!widget.hoistTitleToSubpageShell)
-              _buildTitleBlock(context, state),
-            if (!widget.hoistTitleToSubpageShell)
+        // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
+        // 骨架与数据到位后的首屏严格同形。
+        final displayState =
+            isLoading ? clipCollectionDetailPlaceholder() : state!;
+        return AppSkeletonizer(
+          enabled: isLoading,
+          child: Column(
+            key: Key('${widget.keyPrefix}-detail-page-body'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 移动端标题报到返回栏，页面内不再写第二遍大标题。
+              if (!widget.hoistTitleToSubpageShell)
+                _buildTitleBlock(context, displayState),
+              if (!widget.hoistTitleToSubpageShell)
+                SizedBox(height: context.appSpacing.md),
+              if (selectionMode)
+                _buildSelectionHeader(context, displayState)
+              else
+                _buildListHeader(context, displayState),
               SizedBox(height: context.appSpacing.md),
-            if (selectionMode)
-              _buildSelectionHeader(context, state)
-            else
-              _buildListHeader(context, state),
-            SizedBox(height: context.appSpacing.md),
-            Expanded(child: _buildClips(context, state)),
-            if (_isMobile && selectionMode) _buildBatchBar(context, state),
-          ],
+              Expanded(child: _buildClips(context, displayState)),
+              if (_isMobile && selectionMode)
+                _buildBatchBar(context, displayState),
+            ],
+          ),
         );
       },
     );
@@ -296,10 +300,13 @@ class _ClipCollectionDetailContentState
           ),
         ),
         if (!selectionMode && playAllBuilder != null)
-          playAllBuilder(
-            context,
-            enabled: state.clips.isNotEmpty,
-            onPlayFrom: () => _playFrom(0),
+          // 主行动保留品牌底色会显得「加载中也可用」，用 shade 随骨架一起灰化。
+          Skeleton.shade(
+            child: playAllBuilder(
+              context,
+              enabled: state.clips.isNotEmpty,
+              onPlayFrom: () => _playFrom(0),
+            ),
           ),
       ],
     );
@@ -342,10 +349,12 @@ class _ClipCollectionDetailContentState
       ],
       actionSlots: [
         if (hasClips && _isMobile && playAllBuilder != null)
-          playAllBuilder(
-            context,
-            enabled: true,
-            onPlayFrom: () => _playFrom(0),
+          Skeleton.shade(
+            child: playAllBuilder(
+              context,
+              enabled: true,
+              onPlayFrom: () => _playFrom(0),
+            ),
           ),
         if (_isMobile)
           AppTextButton(
@@ -632,6 +641,7 @@ class _ClipCollectionDetailContentState
             final number =
                 clip.movieNumber?.isNotEmpty == true ? clip.movieNumber! : '无番号';
             final duration = formatMediaTimecode(clip.durationSeconds);
+            final playSingle = widget.playSingle;
             return CollectionMemberCard(
               key: ValueKey<int>(clip.clipId),
               coverUrl: clip.coverImage?.bestAvailableUrl,
@@ -639,6 +649,12 @@ class _ClipCollectionDetailContentState
               title: number,
               subtitle: duration,
               clipOverlay: true,
+              onPlay: playSingle == null
+                  ? null
+                  : () => playSingle(context, clip),
+              playButtonKey: Key(
+                '${widget.keyPrefix}-grid-play-${clip.clipId}',
+              ),
               onTap:
                   selectionMode
                       ? () => toggleSelect(clip.clipId)

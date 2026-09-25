@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/features/activity/presentation/activity_placeholders.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
@@ -13,7 +14,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
 /// 独立的「通知」消息中心页。列表、分页、筛选和无感已读由全局通知 provider
 /// 驱动，卡片被渲染时即上报已读。
@@ -118,7 +119,23 @@ class _DesktopNotificationsPageState
           .read(notificationCenterProvider.notifier)
           .refreshNotifications,
       child: state.isInitialLoading && state.notifications.isEmpty
-          ? const _NotificationsLoadingState()
+          ? AppSkeletonizer(
+              // loading 用占位通知渲染真实列表与卡片，由 [AppSkeletonizer] 灰化。
+              child: AppFixedHeaderLayout(
+                header: _buildHeader(context, state),
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  // 收敛视口外预构建，避免卡片「提前已读」。
+                  cacheExtent: 0,
+                  slivers: _buildSlivers(
+                    context,
+                    state.copyWith(
+                      notifications: activityNotificationPlaceholders(),
+                    ),
+                  ),
+                ),
+              ),
+            )
           : state.initialErrorMessage != null && state.notifications.isEmpty
           ? _NotificationsErrorState(
               message: state.initialErrorMessage!,
@@ -233,19 +250,6 @@ class _DesktopNotificationsPageState
       ),
     );
     return slivers;
-  }
-}
-
-class _NotificationsLoadingState extends StatelessWidget {
-  const _NotificationsLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const AppMobileSkeletonList(
-      key: Key('desktop-notifications-loading'),
-      itemCount: 5,
-      padding: EdgeInsets.zero,
-    );
   }
 }
 

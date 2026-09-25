@@ -19,7 +19,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -118,10 +118,7 @@ class _DesktopAdvancedSettingsSectionState
   }
 
   Widget _buildContent(BuildContext context) {
-    if (_isLoading) {
-      return const AppSectionSkeleton(lineCount: _advancedSkeletonLineCount);
-    }
-    if (_errorMessage != null) {
+    if (!_isLoading && _errorMessage != null) {
       return AppSectionError(
         title: '高级设置加载失败',
         message: _errorMessage!,
@@ -130,19 +127,24 @@ class _DesktopAdvancedSettingsSectionState
     }
 
     final spacing = context.appSpacing;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildMediaCard(context),
-        SizedBox(height: spacing.xl),
-        if (_hasOptionalServices) ...[
-          _buildOptionalServicesCard(context),
+    // loading 用当前（默认）字段值渲染真实设置卡，由 [AppSkeletonizer] 灰化；
+    // 首次加载数据未到，按完整形态展示可选服务卡，避免数据到达后多出一张卡。
+    return AppSkeletonizer(
+      enabled: _isLoading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildMediaCard(context),
           SizedBox(height: spacing.xl),
+          if (_hasOptionalServices || _isLoading) ...[
+            _buildOptionalServicesCard(context),
+            SizedBox(height: spacing.xl),
+          ],
+          _buildSchedulerCard(context),
+          SizedBox(height: spacing.xl),
+          _buildOtherCard(context),
         ],
-        _buildSchedulerCard(context),
-        SizedBox(height: spacing.xl),
-        _buildOtherCard(context),
-      ],
+      ),
     );
   }
 

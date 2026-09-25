@@ -28,6 +28,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_mutatio
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_playback_factory_provider.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_play_split_layout.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_page_mixin.dart';
@@ -338,9 +339,25 @@ class _VideoCollectionPlayContentState
               Navigator.of(panelContext).pop();
               jumpTo(index);
             },
-      onActions: _mutatingVideoId != null
+      // 长按 / 右键 → 锚定浮层；行尾「更多」按钮 → 移动端底部操作表。
+      onContextActions: _mutatingVideoId != null
           ? null
-          : (position) => _showEpisodeActions(panelContext, video, position),
+          : (position) => _showEpisodeActions(
+              panelContext,
+              video,
+              position,
+              AppMenuPresentation.popup,
+            ),
+      onMoreActions: _mutatingVideoId != null
+          ? null
+          : (position) => _showEpisodeActions(
+              panelContext,
+              video,
+              position,
+              widget.useTouchOptimizedControls
+                  ? AppMenuPresentation.bottomDrawer
+                  : AppMenuPresentation.popup,
+            ),
     );
   }
 
@@ -348,6 +365,7 @@ class _VideoCollectionPlayContentState
     BuildContext panelContext,
     VideoItemListItemDto video,
     Offset position,
+    AppMenuPresentation presentation,
   ) async {
     if (_episodeActionsOpen || _mutatingVideoId != null) return;
     _episodeActionsOpen = true;
@@ -355,8 +373,8 @@ class _VideoCollectionPlayContentState
       final action = await showVideoCollectionEpisodeActions(
         context: panelContext,
         title: video.preferredTitle,
+        presentation: presentation,
         position: position,
-        useTouchOptimizedControls: widget.useTouchOptimizedControls,
       );
       if (!mounted || !panelContext.mounted || action == null) return;
       if (action == VideoCollectionEpisodeAction.delete) {
@@ -473,15 +491,16 @@ class _VideoCollectionPlayContentState
             false)) {
       return;
     }
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: buildMediaThumbnailActionDescriptors(
-        showSearchSimilar: ref.read(imageSearchEnabledProvider),
-        thumbnail: thumbnail,
-        point: point,
-      ),
       globalPosition: globalPosition,
-      presentation: AppImageActionMenuPresentation.auto,
+      items: buildImageActionMenuItems(
+        buildMediaThumbnailActionDescriptors(
+          showSearchSimilar: ref.read(imageSearchEnabledProvider),
+          thumbnail: thumbnail,
+          point: point,
+        ),
+      ),
     );
     if (!mounted || action == null) {
       return;

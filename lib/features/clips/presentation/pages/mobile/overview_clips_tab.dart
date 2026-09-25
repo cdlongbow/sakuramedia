@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_placeholders.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
@@ -14,6 +15,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/creat
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
+import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
@@ -25,10 +27,10 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
@@ -234,39 +236,38 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         ),
       );
     }
-    if (collectionsAsync.isLoading && collections.isEmpty) {
-      return CollectionCardSkeletonRow(
-        key: const Key('mobile-clips-collections-skeleton-row'),
-        height: 148,
-        itemWidth: 168,
-        itemSpacing: spacing.sm,
-      );
-    }
-    if (collections.isEmpty) {
+    final isLoading = collectionsAsync.isLoading && collections.isEmpty;
+    final display = isLoading
+        ? clipCollectionPlaceholders(count: 4)
+        : collections;
+    if (display.isEmpty) {
       return const CollectionHintBox(
         message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧',
       );
     }
-    return SizedBox(
-      height: 148,
-      child: ListView.separated(
-        key: const Key('mobile-clips-collections-row'),
-        scrollDirection: Axis.horizontal,
-        itemCount: collections.length,
-        separatorBuilder: (context, index) => SizedBox(width: spacing.sm),
-        itemBuilder: (context, index) {
-          final collection = collections[index];
-          return SizedBox(
-            width: 168,
-            child: CollectionCard.clip(
-              key: Key('mobile-clip-collection-card-${collection.id}'),
-              collection: collection,
-              onTap: () => MobileClipCollectionDetailRouteData(
-                collectionId: collection.id,
-              ).push(context),
-            ),
-          );
-        },
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: SizedBox(
+        height: 148,
+        child: ListView.separated(
+          key: const Key('mobile-clips-collections-row'),
+          scrollDirection: Axis.horizontal,
+          itemCount: display.length,
+          separatorBuilder: (context, index) => SizedBox(width: spacing.sm),
+          itemBuilder: (context, index) {
+            final collection = display[index];
+            return SizedBox(
+              width: 168,
+              child: CollectionCard.clip(
+                key: Key('mobile-clip-collection-card-${collection.id}'),
+                collection: collection,
+                onTap: () => MobileClipCollectionDetailRouteData(
+                  collectionId: collection.id,
+                ).push(context),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -370,37 +371,11 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         .value
         ?.paged
         .filterUpdate;
-    if (clips.isEmpty && (filterUpdate?.hasFailed ?? false)) {
+    final isLoading = clipsAsync.isLoading && clips.isEmpty;
+    if (!isLoading && clips.isEmpty && (filterUpdate?.hasFailed ?? false)) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
-    if (clipsAsync.isLoading && clips.isEmpty) {
-      final spacing = context.appSpacing;
-      return SliverLayoutBuilder(
-        builder: (context, constraints) {
-          final columns = _resolveColumnCount(
-            constraints.crossAxisExtent,
-            spacing.md,
-          );
-          return SliverGrid(
-            key: const Key('mobile-clips-grid-skeleton'),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: spacing.md,
-              crossAxisSpacing: spacing.md,
-              childAspectRatio: 16 / 9,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => AppCoverCardSkeleton(
-                key: Key('mobile-clips-grid-skeleton-$index'),
-                aspectRatio: 16 / 9,
-              ),
-              childCount: 6,
-            ),
-          );
-        },
-      );
-    }
-    if (clipsAsync.hasError && clips.isEmpty) {
+    if (!isLoading && clipsAsync.hasError && clips.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -413,7 +388,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         ),
       );
     }
-    if (clips.isEmpty) {
+    if (!isLoading && clips.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -421,41 +396,46 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
         ),
       );
     }
+    // loading 用占位切片渲染同一份真实网格，由 [AppSkeletonizer] 灰化。
+    final display = isLoading ? clipPlaceholders(count: 6) : clips;
     final spacing = context.appSpacing;
-    return SliverLayoutBuilder(
-      builder: (context, constraints) {
-        final columns = _resolveColumnCount(
-          constraints.crossAxisExtent,
-          spacing.md,
-        );
-        return SliverGrid(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: spacing.md,
-            crossAxisSpacing: spacing.md,
-            childAspectRatio: 16 / 9,
-          ),
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final clip = clips[index];
-            return GestureDetector(
-              onLongPress: selectionMode
-                  ? null
-                  : () {
-                      enterSelection();
-                      toggleSelect(clip.clipId);
-                    },
-              child: ClipCoverCard(
-                key: Key('mobile-clip-grid-card-${clip.clipId}'),
-                clip: clip,
-                onTap: () => _openClipSheet(clip),
-                selectionMode: selectionMode,
-                isSelected: isSelected(clip.clipId),
-                onSelectedChanged: (_) => toggleSelect(clip.clipId),
-              ),
-            );
-          }, childCount: clips.length),
-        );
-      },
+    return AppSkeletonizer.sliver(
+      enabled: isLoading,
+      child: SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final columns = _resolveColumnCount(
+            constraints.crossAxisExtent,
+            spacing.md,
+          );
+          return SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: spacing.md,
+              crossAxisSpacing: spacing.md,
+              childAspectRatio: 16 / 9,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final clip = display[index];
+              return GestureDetector(
+                onLongPress: selectionMode
+                    ? null
+                    : () {
+                        enterSelection();
+                        toggleSelect(clip.clipId);
+                      },
+                child: ClipCoverCard(
+                  key: Key('mobile-clip-grid-card-${clip.clipId}'),
+                  clip: clip,
+                  onTap: () => _openClipSheet(clip),
+                  selectionMode: selectionMode,
+                  isSelected: isSelected(clip.clipId),
+                  onSelectedChanged: (_) => toggleSelect(clip.clipId),
+                ),
+              );
+            }, childCount: display.length),
+          );
+        },
+      ),
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
+import 'package:sakuramedia/features/moment_collections/presentation/moment_collection_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_detail_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
@@ -22,7 +23,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_view_mode_toggle_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
@@ -30,7 +31,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_too
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
-import 'package:sakuramedia/widgets/domain/collections/collection_detail_skeleton.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
@@ -102,20 +102,11 @@ class _MomentCollectionDetailContentState
     if (_isMobile) {
       _reportTitleToShell(state?.collection);
     }
+    final isLoading = async.isLoading && state == null;
 
     final content = Builder(
       builder: (context) {
-        if (async.isLoading && state == null) {
-          return _isMobile
-              ? const AppMobileSkeletonList(
-                  key: Key('mobile-moment-collection-detail-loading'),
-                )
-              : const CollectionDetailSkeleton(
-                  contentKey: Key('moment-collection-detail-loading'),
-                  gridKey: Key('moment-collection-detail-skeleton-grid'),
-                );
-        }
-        if (async.hasError && state == null) {
+        if (!isLoading && async.hasError && state == null) {
           return AppEmptyState(
             message: apiErrorMessage(
               async.error!,
@@ -123,25 +114,33 @@ class _MomentCollectionDetailContentState
             ),
           );
         }
-        if (state == null) {
+        if (!isLoading && state == null) {
           return const SizedBox.shrink();
         }
-        return Column(
-          key: Key('$_keyPrefix-detail-page-body'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!_isMobile) ...[
-              _buildTitleBlock(context, state),
+        // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
+        // 骨架与数据到位后的首屏严格同形。
+        final displayState =
+            isLoading ? momentCollectionDetailPlaceholder() : state!;
+        return AppSkeletonizer(
+          enabled: isLoading,
+          child: Column(
+            key: Key('$_keyPrefix-detail-page-body'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!_isMobile) ...[
+                _buildTitleBlock(context, displayState),
+                SizedBox(height: context.appSpacing.md),
+              ],
+              if (selectionMode)
+                _buildSelectionHeader(context, displayState)
+              else
+                _buildListHeader(context, displayState),
               SizedBox(height: context.appSpacing.md),
+              Expanded(child: _buildPoints(context, displayState)),
+              if (_isMobile && selectionMode)
+                _buildBatchBar(context, displayState),
             ],
-            if (selectionMode)
-              _buildSelectionHeader(context, state)
-            else
-              _buildListHeader(context, state),
-            SizedBox(height: context.appSpacing.md),
-            Expanded(child: _buildPoints(context, state)),
-            if (_isMobile && selectionMode) _buildBatchBar(context, state),
-          ],
+          ),
         );
       },
     );

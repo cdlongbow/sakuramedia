@@ -355,19 +355,21 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
   ) async {
     final action = await showMovieDetailMobileActionDrawer(
       context: context,
-      movieNumber: movie.movieNumber,
       actions: buildMovieDetailActionDescriptors(
         movie: movie,
         isSubscribed: isSubscribed,
         isBlacklisted: isBlacklisted,
       ),
-      onExecuteAction: executeMovieAction,
     );
-    if (!mounted || action != MovieDetailActionType.openInspector) {
+    if (!mounted || action == null) {
       return;
     }
 
-    await openInspector(movie, selectedMedia);
+    await handleMovieActionSelection(
+      action,
+      movie: movie,
+      selectedMedia: selectedMedia,
+    );
   }
 
   @override

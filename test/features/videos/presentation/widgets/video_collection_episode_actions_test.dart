@@ -6,6 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/video_collection_episode_actions.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/episode_selector_overlay.dart';
 
 void main() {
@@ -42,12 +43,22 @@ void main() {
                       isCurrent: true,
                       isBusy: false,
                       onPlay: () => plays++,
-                      onActions: (position) async {
+                      onContextActions: (position) async {
                         action = await showVideoCollectionEpisodeActions(
                           context: context,
                           title: '第一集：湖畔日落',
+                          presentation: AppMenuPresentation.popup,
                           position: position,
-                          useTouchOptimizedControls: mobile,
+                        );
+                      },
+                      onMoreActions: (position) async {
+                        action = await showVideoCollectionEpisodeActions(
+                          context: context,
+                          title: '第一集：湖畔日落',
+                          presentation: mobile
+                              ? AppMenuPresentation.bottomDrawer
+                              : AppMenuPresentation.popup,
+                          position: position,
                         );
                       },
                     ),

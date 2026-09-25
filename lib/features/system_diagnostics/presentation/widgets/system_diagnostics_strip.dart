@@ -48,10 +48,6 @@ class _SystemDiagnosticsStripState
         hasRun,
         overall,
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.xl,
-        vertical: spacing.lg,
-      ),
       child: _buildBody(context, controller),
     );
   }

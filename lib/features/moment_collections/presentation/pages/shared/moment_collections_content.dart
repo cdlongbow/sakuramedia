@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
+import 'package:sakuramedia/features/moment_collections/presentation/moment_collection_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
@@ -14,7 +15,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -111,21 +112,8 @@ class MomentCollectionsContent extends ConsumerWidget {
     AsyncValue<List<MomentCollectionDto>> async,
   ) {
     final spacing = context.appSpacing;
-    if (async.isLoading && async.value == null) {
-      return GridView.builder(
-        key: const Key('moment-collections-loading'),
-        padding: EdgeInsets.only(bottom: spacing.lg),
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 240,
-          mainAxisSpacing: spacing.md,
-          crossAxisSpacing: spacing.md,
-          childAspectRatio: 1.2,
-        ),
-        itemCount: 8,
-        itemBuilder: (_, _) => const CollectionCardSkeleton(),
-      );
-    }
-    if (async.hasError && async.value == null) {
+    final isLoading = async.isLoading && async.value == null;
+    if (!isLoading && async.hasError && async.value == null) {
       return AppEmptyState(
         message: apiErrorMessage(
           async.error!,
@@ -133,29 +121,34 @@ class MomentCollectionsContent extends ConsumerWidget {
         ),
       );
     }
-    final collections = async.value ?? const <MomentCollectionDto>[];
+    final collections = isLoading
+        ? momentCollectionPlaceholders(count: 8)
+        : async.value ?? const <MomentCollectionDto>[];
     if (collections.isEmpty) {
       return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
     }
-    return GridView.builder(
-      key: const Key('moment-collections-grid'),
-      padding: EdgeInsets.only(bottom: spacing.lg),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 240,
-        mainAxisSpacing: spacing.md,
-        crossAxisSpacing: spacing.md,
-        childAspectRatio: 1.2,
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: GridView.builder(
+        key: const Key('moment-collections-grid'),
+        padding: EdgeInsets.only(bottom: spacing.lg),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 240,
+          mainAxisSpacing: spacing.md,
+          crossAxisSpacing: spacing.md,
+          childAspectRatio: 1.2,
+        ),
+        itemCount: collections.length,
+        itemBuilder: (context, index) {
+          final collection = collections[index];
+          return CollectionCard.moment(
+            collection: collection,
+            onTap: () => onOpenDetail(collection.id),
+            onEdit: () => _edit(context, ref, collection: collection),
+            onDelete: () => _delete(context, ref, collection),
+          );
+        },
       ),
-      itemCount: collections.length,
-      itemBuilder: (context, index) {
-        final collection = collections[index];
-        return CollectionCard.moment(
-          collection: collection,
-          onTap: () => onOpenDetail(collection.id),
-          onEdit: () => _edit(context, ref, collection: collection),
-          onDelete: () => _delete(context, ref, collection),
-        );
-      },
     );
   }
 
@@ -164,54 +157,55 @@ class MomentCollectionsContent extends ConsumerWidget {
     WidgetRef ref,
     AsyncValue<List<MomentCollectionDto>> async,
   ) {
-    if (async.isLoading && async.value == null) {
-      return const AppMobileSkeletonList(
-        key: Key('mobile-moment-collections-loading'),
-      );
-    }
+    final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = async.value ?? const <MomentCollectionDto>[];
-    return AppAdaptiveRefreshScrollView(
-      key: const Key('moment-collections-scroll'),
-      onRefresh: ref.read(momentCollectionsOverviewProvider.notifier).refresh,
-      slivers: <Widget>[
-        if (async.hasError && collections.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(
-              message: apiErrorMessage(
-                async.error!,
-                fallback: '合集暂时无法加载，请稍后重试',
+    final collections = isLoading
+        ? momentCollectionPlaceholders()
+        : async.value ?? const <MomentCollectionDto>[];
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: AppAdaptiveRefreshScrollView(
+        key: const Key('moment-collections-scroll'),
+        onRefresh: ref.read(momentCollectionsOverviewProvider.notifier).refresh,
+        slivers: <Widget>[
+          if (async.hasError && collections.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(
+                message: apiErrorMessage(
+                  async.error!,
+                  fallback: '合集暂时无法加载，请稍后重试',
+                ),
+              ),
+            )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+            )
+          else
+            SliverPadding(
+              padding: EdgeInsets.symmetric(vertical: spacing.md),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  mainAxisSpacing: spacing.md,
+                  crossAxisSpacing: spacing.sm,
+                  childAspectRatio: 1.25,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final collection = collections[index];
+                  return CollectionCard.moment(
+                    collection: collection,
+                    onTap: () => onOpenDetail(collection.id),
+                    onEdit: () => _edit(context, ref, collection: collection),
+                    onDelete: () => _delete(context, ref, collection),
+                  );
+                }, childCount: collections.length),
               ),
             ),
-          )
-        else if (collections.isEmpty)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
-          )
-        else
-          SliverPadding(
-            padding: EdgeInsets.symmetric(vertical: spacing.md),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                mainAxisSpacing: spacing.md,
-                crossAxisSpacing: spacing.sm,
-                childAspectRatio: 1.25,
-              ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final collection = collections[index];
-                return CollectionCard.moment(
-                  collection: collection,
-                  onTap: () => onOpenDetail(collection.id),
-                  onEdit: () => _edit(context, ref, collection: collection),
-                  onDelete: () => _delete(context, ref, collection),
-                );
-              }, childCount: collections.length),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

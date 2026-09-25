@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/configuration/presentation/providers/indexe
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_connection_test_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/indexer_entry_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/indexer_connection_test_panel.dart';
@@ -21,7 +22,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
 class IndexerSettingsSection extends ConsumerStatefulWidget {
@@ -258,7 +259,16 @@ class _IndexerSettingsSectionState
     final downloadClients = widget.active
         ? ref.watch(downloadClientsProvider).value ?? _downloadClients
         : _downloadClients;
-    if (_isLoading) return const AppSectionSkeleton(lineCount: 5);
+    if (_isLoading) {
+      // loading 用占位下载器与索引器渲染真实设置组，由 [AppSkeletonizer] 灰化。
+      return AppSkeletonizer(
+        child: _buildLoaded(
+          context,
+          downloadClientPlaceholders(),
+          indexerPlaceholders(),
+        ),
+      );
+    }
     if (_errorMessage != null) {
       return AppSectionError(
         title: '索引器配置加载失败',
@@ -266,20 +276,21 @@ class _IndexerSettingsSectionState
         onRetry: _loadData,
       );
     }
-    return _buildLoaded(context, downloadClients);
+    return _buildLoaded(context, downloadClients, _indexers);
   }
 
   Widget _buildLoaded(
     BuildContext context,
     List<DownloadClientDto> downloadClients,
+    List<IndexerEntryDto> indexers,
   ) {
     final connectionTest = ref.watch(
       indexerConnectionTestProvider(_connectionTestScope),
     );
     final query = _searchController.text.trim().toLowerCase();
     final filteredIndexers = query.isEmpty
-        ? _indexers
-        : _indexers
+        ? indexers
+        : indexers
               .where((item) {
                 final source =
                     '${item.name} ${item.url} ${item.kind} '
@@ -365,15 +376,15 @@ class _IndexerSettingsSectionState
               for (final item in filteredIndexers)
                 IndexerEntryCard(
                   entry: item,
-                  index: _indexers.indexOf(item),
+                  index: indexers.indexOf(item),
                   onEdit: () {
                     if (!_isSaving) {
-                      _editIndexer(_indexers.indexOf(item));
+                      _editIndexer(indexers.indexOf(item));
                     }
                   },
                   onDelete: () {
                     if (!_isSaving) {
-                      _deleteIndexer(_indexers.indexOf(item));
+                      _deleteIndexer(indexers.indexOf(item));
                     }
                   },
                 ),

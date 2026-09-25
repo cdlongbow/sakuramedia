@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart'
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_list_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
@@ -109,12 +110,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      find.byKey(const Key('videos-collections-skeleton-row')),
-      findsOneWidget,
-    );
-    expect(find.byType(CollectionCardSkeletonRow), findsOneWidget);
-    expect(find.byType(CollectionCardSkeleton), findsNWidgets(4));
+    expect(find.byType(AppSkeletonizer), findsOneWidget);
+    // 加载态渲染的是真实合集卡（占位数据），骨架即真实布局。
+    expect(find.byKey(const Key('videos-collections-row')), findsOneWidget);
+    expect(find.byType(CollectionCard), findsNWidgets(4));
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
     pendingCollections.complete(

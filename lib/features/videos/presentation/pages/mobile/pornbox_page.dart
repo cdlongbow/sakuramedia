@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
+import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,10 +35,11 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -459,40 +461,39 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
-    if (async.isLoading && collections.isEmpty) {
-      return CollectionCardSkeletonRow(
-        key: const Key('mobile-pornbox-collections-skeleton-row'),
-        height: 116,
-        itemWidth: 116,
-        itemSpacing: spacing.sm,
-      );
-    }
-    if (collections.isEmpty) {
+    final isLoading = async.isLoading && collections.isEmpty;
+    final display = isLoading
+        ? videoCollectionPlaceholders(count: 4)
+        : collections;
+    if (display.isEmpty) {
       return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
     }
-    return SizedBox(
-      // CollectionCoverCard 内容下限：16:9 封面 + sm padding + s14 标题 + 边框 ≈ 105，
-      // 故 height 不能低于 ~110。保持 116（原值），只收紧宽度 132 → 116 已减少占用。
-      height: 116,
-      child: ListView.separated(
-        key: const Key('mobile-pornbox-collections-row'),
-        scrollDirection: Axis.horizontal,
-        // 横滑首尾内缩由 shell body padding 统一提供，此处不叠加额外 horizontal。
-        itemCount: collections.length,
-        separatorBuilder: (context, index) => SizedBox(width: spacing.sm),
-        itemBuilder: (context, index) {
-          final collection = collections[index];
-          return SizedBox(
-            width: 116, // L2 收紧：132 → 116
-            child: CollectionCard.video(
-              key: Key('mobile-video-collection-card-${collection.id}'),
-              collection: collection,
-              onTap: () => MobileVideoCollectionDetailRouteData(
-                collectionId: collection.id,
-              ).push(context),
-            ),
-          );
-        },
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: SizedBox(
+        // CollectionCoverCard 内容下限：16:9 封面 + sm padding + s14 标题 + 边框 ≈ 105，
+        // 故 height 不能低于 ~110。保持 116（原值），只收紧宽度 132 → 116 已减少占用。
+        height: 116,
+        child: ListView.separated(
+          key: const Key('mobile-pornbox-collections-row'),
+          scrollDirection: Axis.horizontal,
+          // 横滑首尾内缩由 shell body padding 统一提供，此处不叠加额外 horizontal。
+          itemCount: display.length,
+          separatorBuilder: (context, index) => SizedBox(width: spacing.sm),
+          itemBuilder: (context, index) {
+            final collection = display[index];
+            return SizedBox(
+              width: 116, // L2 收紧：132 → 116
+              child: CollectionCard.video(
+                key: Key('mobile-video-collection-card-${collection.id}'),
+                collection: collection,
+                onTap: () => MobileVideoCollectionDetailRouteData(
+                  collectionId: collection.id,
+                ).push(context),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -566,12 +567,8 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (paged.filterUpdate.hasFailed && paged.items.isEmpty) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
-    if (isInitialLoading && paged.items.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: AppMobileSkeletonList(key: Key('mobile-pornbox-loading')),
-      );
-    }
-    if (initialErrorMessage != null && paged.items.isEmpty) {
+    final isLoading = isInitialLoading && paged.items.isEmpty;
+    if (!isLoading && initialErrorMessage != null && paged.items.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -579,7 +576,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
         ),
       );
     }
-    final videos = paged.items;
+    final videos = isLoading ? videoSummaryPlaceholders() : paged.items;
     if (videos.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(height: 200, child: AppEmptyState(message: '暂无视频数据')),
@@ -588,108 +585,72 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     final spacing = context.appSpacing.md;
     // 网格横向缩进由 shell 提供；用 SliverMasonryGrid 直接消费外层 CustomScrollView，
     // 自带懒构建（按视口构建 tile），避免 SliverToBoxAdapter+Stack 一次性 build N 张卡。
-    return SliverLayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.crossAxisExtent;
-        final rawColumns = ((width + spacing) / (180 + spacing)).floor();
-        final columns = rawColumns < 2 ? 2 : (rawColumns > 6 ? 6 : rawColumns);
-        return SliverMasonryGrid.count(
-          crossAxisCount: columns,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          childCount: videos.length,
-          itemBuilder: (context, i) {
-            final video = videos[i];
-            final aspect = _resolveCoverAspect(
-              video.coverWidth,
-              video.coverHeight,
-            );
-            return AspectRatio(
-              aspectRatio: aspect,
-              // Builder 是为了拿到**这一张卡自己**的 RenderBox，长按浮层要盖住它。
-              child: Builder(
-                builder: (cardContext) => GestureDetector(
-                  onLongPressStart: selectionMode
-                      ? null
-                      : (details) => _openCardMenu(
-                          cardContext,
-                          video,
-                          details.globalPosition,
-                        ),
-                  child: VideoSummaryCard(
-                    video: video,
-                    onTap: selectionMode ? null : () => _openSheet(video),
-                    selectionMode: selectionMode,
-                    isSelected: isSelected(video.id),
-                    onSelectedChanged: (_) => toggleSelect(video.id),
+    return AppSkeletonizer.sliver(
+      enabled: isLoading,
+      child: SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.crossAxisExtent;
+          final rawColumns = ((width + spacing) / (180 + spacing)).floor();
+          final columns = rawColumns < 2
+              ? 2
+              : (rawColumns > 6 ? 6 : rawColumns);
+          return SliverMasonryGrid.count(
+            crossAxisCount: columns,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childCount: videos.length,
+            itemBuilder: (context, i) {
+              final video = videos[i];
+              final aspect = _resolveCoverAspect(
+                video.coverWidth,
+                video.coverHeight,
+              );
+              return AspectRatio(
+                aspectRatio: aspect,
+                // Builder 是为了拿到**这一张卡自己**的 RenderBox，长按浮层要盖住它。
+                child: Builder(
+                  builder: (cardContext) => GestureDetector(
+                    onLongPressStart: selectionMode
+                        ? null
+                        : (details) => _openCardMenu(
+                            cardContext,
+                            video,
+                            details.globalPosition,
+                          ),
+                    child: VideoSummaryCard(
+                      video: video,
+                      onTap: selectionMode ? null : () => _openSheet(video),
+                      selectionMode: selectionMode,
+                      isSelected: isSelected(video.id),
+                      onSelectedChanged: (_) => toggleSelect(video.id),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  /// 长按视频卡：在指尖旁弹操作菜单。目前只有「选择」——多选入口从此挂在长按
-  /// 菜单里，顶栏不再常驻「选择」按钮；其余动作仍走整卡点击的 [_openSheet]。
-  ///
-  /// 菜单样式对齐影片列表的 `_showMovieCollectionFeatureMenu`。
+  /// 长按视频卡：弹操作菜单。目前只有「选择」——多选入口从此挂在长按菜单里，
+  /// 顶栏不再常驻「选择」按钮；其余动作仍走整卡点击的 [_openSheet]。
   Future<void> _openCardMenu(
     BuildContext cardContext,
     VideoItemListItemDto video,
     Offset globalPosition,
   ) async {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    final componentTokens = Theme.of(context).appComponentTokens;
-    final navigator = Navigator.of(cardContext);
-    final overlay = navigator.overlay!.context.findRenderObject() as RenderBox;
-    final localPosition = overlay.globalToLocal(globalPosition);
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(localPosition, localPosition),
-      Offset.zero & overlay.size,
-    );
-
-    final selected = await showMenu<bool>(
+    final selected = await showAppActionMenu<bool>(
       context: cardContext,
-      position: position,
-      useRootNavigator: false,
-      color: colors.surfaceElevated,
-      elevation: 12,
-      shape: RoundedRectangleBorder(
-        borderRadius: context.appRadius.lgBorder,
-        side: BorderSide(color: colors.borderSubtle),
-      ),
-      items: <PopupMenuEntry<bool>>[
-        PopupMenuItem<bool>(
-          key: const Key('mobile-pornbox-card-menu-select-item'),
+      globalPosition: globalPosition,
+      drawerKey: const Key('mobile-pornbox-card-menu'),
+      items: const <AppMenuItem<bool>>[
+        AppMenuItem(
+          key: Key('mobile-pornbox-card-menu-select-item'),
           value: true,
-          height: componentTokens.buttonHeightSm,
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                size: componentTokens.iconSizeXs,
-                color: context.appTextPalette.secondary,
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                '选择',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-            ],
-          ),
+          label: '选择',
+          icon: Icons.check_circle_outline,
         ),
       ],
     );

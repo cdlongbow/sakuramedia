@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/download_client_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
@@ -17,7 +18,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_info_pill.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
@@ -130,31 +131,38 @@ class _DownloadClientsSectionState
     final clientsAsync = ref.watch(downloadClientsProvider);
     final librariesAsync = ref.watch(mediaLibrariesProvider);
     final providersAsync = ref.watch(mediaProviderCatalogProvider);
-    if (clientsAsync.isLoading ||
+    final isLoading =
+        clientsAsync.isLoading ||
         librariesAsync.isLoading ||
-        providersAsync.isLoading) {
-      return const AppSectionSkeleton(lineCount: 4);
+        providersAsync.isLoading;
+    if (!isLoading) {
+      final error = clientsAsync.error ?? librariesAsync.error;
+      if (error != null) {
+        return AppSectionError(
+          title: '下载器配置加载失败',
+          message: apiErrorMessage(error, fallback: '下载器配置加载失败，请稍后重试。'),
+          onRetry: () async {
+            await Future.wait<void>([
+              ref.read(downloadClientsProvider.notifier).reload(),
+              ref.read(mediaLibrariesProvider.notifier).reload(),
+              ref.read(mediaProviderCatalogProvider.notifier).reload(),
+            ]);
+          },
+        );
+      }
     }
-
-    final error = clientsAsync.error ?? librariesAsync.error;
     final providerCatalogError = providersAsync.error;
-    if (error != null) {
-      return AppSectionError(
-        title: '下载器配置加载失败',
-        message: apiErrorMessage(error, fallback: '下载器配置加载失败，请稍后重试。'),
-        onRetry: () async {
-          await Future.wait<void>([
-            ref.read(downloadClientsProvider.notifier).reload(),
-            ref.read(mediaLibrariesProvider.notifier).reload(),
-            ref.read(mediaProviderCatalogProvider.notifier).reload(),
-          ]);
-        },
-      );
-    }
 
-    final clients = clientsAsync.value ?? const <DownloadClientDto>[];
-    final allLibraries = librariesAsync.value ?? const <MediaLibraryDto>[];
-    final providers = providersAsync.value ?? const <MediaProviderDto>[];
+    // loading 用占位数据渲染真实设置组，由 [AppSkeletonizer] 灰化。
+    final clients = isLoading
+        ? downloadClientPlaceholders()
+        : clientsAsync.value ?? const <DownloadClientDto>[];
+    final allLibraries = isLoading
+        ? mediaLibraryPlaceholders()
+        : librariesAsync.value ?? const <MediaLibraryDto>[];
+    final providers = isLoading
+        ? mediaProviderPlaceholders()
+        : providersAsync.value ?? const <MediaProviderDto>[];
     final providersByKey = <String, MediaProviderDto>{
       for (final provider in providers) provider.providerKey: provider,
     };
@@ -169,7 +177,9 @@ class _DownloadClientsSectionState
     };
     final spacing = context.appSpacing;
 
-    return Column(
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (providerCatalogError != null)
@@ -239,6 +249,7 @@ class _DownloadClientsSectionState
           ],
         ),
       ],
+      ),
     );
   }
 }

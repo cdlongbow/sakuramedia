@@ -9,7 +9,6 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
-import 'package:sakuramedia/widgets/domain/collections/collection_detail_skeleton.dart';
 
 export 'package:sakuramedia/features/clip_collections/presentation/pages/shared/clip_collection_detail_content.dart'
     show ClipCollectionDetailLayout;
@@ -34,11 +33,6 @@ class DesktopClipCollectionDetailPage extends StatelessWidget {
       hoistTitleToSubpageShell: false,
       enableReorder: true,
       defaultLayout: ClipCollectionDetailLayout.grid,
-      loadingBuilder:
-          (_) => const CollectionDetailSkeleton(
-            contentKey: Key('clip-collection-detail-loading'),
-            gridKey: Key('clip-collection-detail-skeleton-grid'),
-          ),
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppButton(
           key: const Key('clip-collection-play-all-button'),

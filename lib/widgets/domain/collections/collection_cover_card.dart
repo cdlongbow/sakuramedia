@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 /// 合集封面卡的共享实现：16:9 封面 + 底部标题 + 封面右下角计数角标。
 ///
@@ -150,19 +150,20 @@ class CollectionCoverCard extends StatelessWidget {
   ) async {
     final edit = onEdit;
     final delete = onDelete;
-    final action = await showAppCardContextMenu<_CollectionMenuAction>(
-      context,
+    final action = await showAppActionMenu<_CollectionMenuAction>(
+      context: context,
       globalPosition: globalPosition,
       items: [
         if (edit != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _CollectionMenuAction.edit,
             label: '编辑',
           ),
         if (delete != null)
-          const AppCardContextMenuItem(
+          const AppMenuItem(
             value: _CollectionMenuAction.delete,
             label: '删除',
+            tone: AppTextTone.error,
           ),
       ],
     );

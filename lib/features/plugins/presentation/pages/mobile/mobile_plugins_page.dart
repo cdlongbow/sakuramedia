@@ -4,13 +4,14 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/shared/plugin_settings_content.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_management_actions.dart';
+import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -156,11 +157,52 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                           ],
                         ),
                         SizedBox(height: spacing.md),
-                        if (asyncPlugins.isLoading && state == null)
-                          const AppMobileSkeletonList(
-                            key: Key('mobile-plugins-loading-state'),
-                            itemCount: 3,
-                            padding: EdgeInsets.zero,
+                        if ((asyncPlugins.isLoading && state == null) ||
+                            (state != null && state.plugins.isNotEmpty))
+                          AppSkeletonizer(
+                            enabled: asyncPlugins.isLoading && state == null,
+                            // loading 用占位插件渲染真实卡片列表，
+                            // 由 [AppSkeletonizer] 灰化。
+                            child: Builder(
+                              builder: (context) {
+                                final display =
+                                    asyncPlugins.isLoading && state == null
+                                    ? pluginsPlaceholderState()
+                                    : state!;
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    for (
+                                      var index = 0;
+                                      index < display.plugins.length;
+                                      index++
+                                    ) ...[
+                                      if (index > 0)
+                                        SizedBox(height: spacing.sm),
+                                      _MobilePluginCard(
+                                        plugin: display.plugins[index],
+                                        update: display.updates[display
+                                            .plugins[index]
+                                            .pluginId],
+                                        busy: display.busyPluginIds.contains(
+                                          display.plugins[index].pluginId,
+                                        ),
+                                        installing: display.isInstalling,
+                                        checkingUpdates:
+                                            display.isCheckingUpdates,
+                                        onTap: () => _openSettings(
+                                          display.plugins[index],
+                                        ),
+                                        onMore: () => _showActions(
+                                          display.plugins[index],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
+                            ),
                           )
                         else if (asyncPlugins.hasError)
                           AppMobileSectionError(
@@ -175,36 +217,9 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                               'mobile-plugins-retry-button',
                             ),
                           )
-                        else if (state == null || state.plugins.isEmpty)
+                        else
                           const _MobilePluginsEmptyState(
                             key: Key('mobile-plugins-empty-state'),
-                          )
-                        else
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (
-                                var index = 0;
-                                index < state.plugins.length;
-                                index++
-                              ) ...[
-                                if (index > 0) SizedBox(height: spacing.sm),
-                                _MobilePluginCard(
-                                  plugin: state.plugins[index],
-                                  update: state
-                                      .updates[state.plugins[index].pluginId],
-                                  busy: state.busyPluginIds.contains(
-                                    state.plugins[index].pluginId,
-                                  ),
-                                  installing: state.isInstalling,
-                                  checkingUpdates: state.isCheckingUpdates,
-                                  onTap: () =>
-                                      _openSettings(state.plugins[index]),
-                                  onMore: () =>
-                                      _showActions(state.plugins[index]),
-                                ),
-                              ],
-                            ],
                           ),
                       ],
                     ),

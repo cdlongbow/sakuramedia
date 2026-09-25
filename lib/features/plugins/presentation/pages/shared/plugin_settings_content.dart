@@ -14,9 +14,8 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/plugins/presentation/widgets/plugin_settings_form.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_form_sheet.dart';
 
@@ -291,10 +290,17 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
     );
   }
 
+  /// 加载态占位 Schema：让骨架按「有 Schema 的插件表单」形态渲染。
+  static const Map<String, dynamic> _placeholderSchema = <String, dynamic>{
+    'type': 'object',
+    'properties': <String, dynamic>{
+      'endpoint': <String, dynamic>{'type': 'string', 'title': '服务地址'},
+      'api_key': <String, dynamic>{'type': 'string', 'title': 'API Key'},
+      'enabled': <String, dynamic>{'type': 'boolean', 'title': '启用'},
+    },
+  };
+
   Widget _buildDesktopBody(BuildContext context) {
-    if (_loading) {
-      return const AppSectionSkeleton(lineCount: 8);
-    }
     if (_errorMessage != null) {
       return AppSectionError(
         title: '插件配置加载失败',
@@ -302,41 +308,48 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         onRetry: _load,
       );
     }
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: SingleChildScrollView(
-              child: _buildFields(context, includeSaveButton: _schema == null),
-            ),
-          ),
-          if (_schema != null) SizedBox(height: context.appSpacing.md),
-          if (_schema != null)
-            Align(
-              alignment: Alignment.centerRight,
-              child: AppButton(
-                key: const Key('plugin-settings-save-button'),
-                label: '保存',
-                variant: AppButtonVariant.primary,
-                size: AppButtonSize.small,
-                isLoading: _saving,
-                onPressed: _saving ? null : _save,
+    // loading 用占位 Schema / 空表单渲染真实表单结构，由 [AppSkeletonizer] 灰化。
+    final schema = _schema ?? (_loading ? _placeholderSchema : null);
+    final values = _loading
+        ? <String, dynamic>{}
+        : _formSettings;
+    return AppSkeletonizer(
+      enabled: _loading,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: SingleChildScrollView(
+                child: _buildFields(
+                  context,
+                  includeSaveButton: schema == null,
+                  schema: schema,
+                  values: values,
+                ),
               ),
             ),
-        ],
+            if (schema != null) SizedBox(height: context.appSpacing.md),
+            if (schema != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: AppButton(
+                  key: const Key('plugin-settings-save-button'),
+                  label: '保存',
+                  variant: AppButtonVariant.primary,
+                  size: AppButtonSize.small,
+                  isLoading: _saving,
+                  onPressed: _saving ? null : _save,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMobileBody(BuildContext context) {
-    if (_loading) {
-      return const AppMobileSkeletonList(
-        itemCount: 2,
-        padding: EdgeInsets.zero,
-      );
-    }
     if (_errorMessage != null) {
       return AppMobileSectionError(
         title: '插件配置加载失败',
@@ -345,19 +358,35 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         retryButtonKey: const Key('mobile-plugin-settings-retry-button'),
       );
     }
-    return _buildFields(context, includeSaveButton: false);
+    return AppSkeletonizer(
+      enabled: _loading,
+      child: _buildFields(
+        context,
+        includeSaveButton: false,
+        schema: _schema ?? (_loading ? _placeholderSchema : null),
+        values: _loading ? <String, dynamic>{} : _formSettings,
+      ),
+    );
   }
 
-  Widget _buildFields(BuildContext context, {required bool includeSaveButton}) {
+  Widget _buildFields(
+    BuildContext context, {
+    required bool includeSaveButton,
+    Map<String, dynamic>? schema,
+    Map<String, dynamic>? values,
+  }) {
     final spacing = context.appSpacing;
+    // 兼容旧调用：不传时仍按已加载的 Schema / 表单值渲染。
+    final effectiveSchema = schema ?? _schema;
+    final effectiveValues = values ?? _formSettings;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_schema != null)
+        if (effectiveSchema != null)
           PluginSettingsForm(
-            schema: _schema!,
-            values: _formSettings,
+            schema: effectiveSchema,
+            values: effectiveValues,
             enabled: !_saving,
             fieldErrors: _fieldErrors,
             onEdited: () {
@@ -387,7 +416,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (_schema == null)
+            if (effectiveSchema == null)
               AppButton(
                 key: const Key('plugin-settings-format-button'),
                 label: '格式化',

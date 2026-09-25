@@ -9,6 +9,7 @@ class MomentGrid extends StatelessWidget {
     super.key,
     required this.items,
     required this.onItemTap,
+    this.onItemPlay,
     this.isLoading = false,
     this.placeholderCount = 8,
     this.maxRows,
@@ -21,6 +22,10 @@ class MomentGrid extends StatelessWidget {
 
   final List<MomentListItem> items;
   final ValueChanged<MomentListItem> onItemTap;
+
+  /// 卡片悬停面板里的播放回调（跳播到该时刻）；不传则 hover 不显示播放键。
+  final ValueChanged<MomentListItem>? onItemPlay;
+
   final bool isLoading;
   final int placeholderCount;
 
@@ -50,6 +55,7 @@ class MomentGrid extends StatelessWidget {
       itemBuilder: (context, item, _) => MomentCard(
         item: item,
         onTap: () => onItemTap(item),
+        onPlay: onItemPlay == null ? null : () => onItemPlay!(item),
         selectionMode: selectionMode,
         isSelected: isSelected?.call(item) ?? false,
         onSelectedChanged: onSelectedChanged == null
@@ -67,6 +73,7 @@ class MomentSliver extends StatelessWidget {
     super.key,
     required this.items,
     required this.onItemTap,
+    this.onItemPlay,
     this.isLoading = false,
     this.placeholderCount = 8,
     this.selectionMode = false,
@@ -77,6 +84,10 @@ class MomentSliver extends StatelessWidget {
 
   final List<MomentListItem> items;
   final ValueChanged<MomentListItem> onItemTap;
+
+  /// 卡片悬停面板里的播放回调（跳播到该时刻）；不传则 hover 不显示播放键。
+  final ValueChanged<MomentListItem>? onItemPlay;
+
   final bool isLoading;
   final int placeholderCount;
   final bool selectionMode;
@@ -99,6 +110,7 @@ class MomentSliver extends StatelessWidget {
       itemBuilder: (context, item, _) => MomentCard(
         item: item,
         onTap: () => onItemTap(item),
+        onPlay: onItemPlay == null ? null : () => onItemPlay!(item),
         selectionMode: selectionMode,
         isSelected: isSelected?.call(item) ?? false,
         onSelectedChanged: onSelectedChanged == null

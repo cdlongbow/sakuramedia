@@ -8,13 +8,13 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/configuration_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -172,11 +172,30 @@ class _SystemMaintenanceContentState
           onRetry: _load,
         );
       }
-      return _isMobile
-          ? const AppMobileSkeletonCard(
-              key: Key('mobile-system-maintenance-loading-state'),
-            )
-          : const AppSectionSkeleton(lineCount: 3);
+      // loading 用占位状态渲染真实卡片，由 [AppSkeletonizer] 灰化。
+      final placeholder = imageSearchStatusPlaceholder();
+      final placeholderIndexSpace = placeholder.indexSpace;
+      return AppSkeletonizer(
+        key: _isMobile
+            ? const Key('mobile-system-maintenance-loading-state')
+            : null,
+        child: AppContentCard(
+          title: '图搜索索引',
+          child: _isMobile
+              ? _buildMobileCardBody(
+                  context,
+                  status: placeholder,
+                  requiresRebuild: placeholderIndexSpace.requiresRebuild,
+                  isRebuilding: placeholderIndexSpace.isRebuilding,
+                )
+              : _buildDesktopCardBody(
+                  context,
+                  status: placeholder,
+                  requiresRebuild: placeholderIndexSpace.requiresRebuild,
+                  isRebuilding: placeholderIndexSpace.isRebuilding,
+                ),
+        ),
+      );
     }
 
     final indexSpace = status.indexSpace;
@@ -189,7 +208,6 @@ class _SystemMaintenanceContentState
             : 'configuration-system-maintenance-image-search-card',
       ),
       title: '图搜索索引',
-      padding: _isMobile ? EdgeInsets.all(context.appSpacing.lg) : null,
       child: _isMobile
           ? _buildMobileCardBody(
               context,
@@ -243,7 +261,6 @@ class _SystemMaintenanceContentState
     return AppContentCard(
       key: Key('$platformPrefix-system-maintenance-$taskKey-card'),
       title: title,
-      padding: _isMobile ? EdgeInsets.all(context.appSpacing.lg) : null,
       child: _isMobile
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

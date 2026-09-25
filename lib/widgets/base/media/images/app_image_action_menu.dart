@@ -1,9 +1,8 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
+/// 图片 / 影片媒体菜单的动作类型（跨页面共用的领域枚举）。
 enum AppImageActionType {
   searchSimilar,
   saveToLocal,
@@ -12,27 +11,6 @@ enum AppImageActionType {
   play,
   setCover,
   movieDetail,
-}
-
-enum AppImageActionMenuPresentation {
-  /// 读 `AppPlatformScope.maybeOf`：`mobile` → 底部抽屉，其余（`desktop` /
-  /// null）→ 定位弹出菜单。与 `AppConfirmVariant.auto` 同范式。
-  auto,
-  popup,
-  bottomDrawer,
-}
-
-/// 把 [AppImageActionMenuPresentation.auto] 解析为具体形态；非 auto 原样返回。
-AppImageActionMenuPresentation resolveAppImageActionMenuPresentation(
-  BuildContext context,
-  AppImageActionMenuPresentation presentation,
-) {
-  if (presentation != AppImageActionMenuPresentation.auto) {
-    return presentation;
-  }
-  return AppPlatformScope.maybeOf(context) == AppPlatform.mobile
-      ? AppImageActionMenuPresentation.bottomDrawer
-      : AppImageActionMenuPresentation.popup;
 }
 
 class AppImageActionDescriptor {
@@ -53,181 +31,31 @@ class AppImageActionDescriptor {
   final bool visible;
 }
 
-Future<AppImageActionType?> showAppImageActionMenu({
-  required BuildContext context,
-  required List<AppImageActionDescriptor> actions,
-  required Offset? globalPosition,
-  AppImageActionMenuPresentation presentation =
-      AppImageActionMenuPresentation.popup,
-}) {
+/// 描述符 → 统一菜单项：过滤 [AppImageActionDescriptor.visible]、按固定顺序排序，
+/// 破坏性动作统一红色，并保留稳定的测试锚点 key。渲染由 [showAppActionMenu] 负责。
+List<AppMenuItem<AppImageActionType>> buildImageActionMenuItems(
+  List<AppImageActionDescriptor> actions,
+) {
   final visibleActions = actions.where((action) => action.visible).toList()
     ..sort(
       (left, right) =>
           _actionOrder(left.type).compareTo(_actionOrder(right.type)),
     );
-  if (visibleActions.isEmpty) {
-    return Future<AppImageActionType?>.value(null);
-  }
-
-  final resolved = resolveAppImageActionMenuPresentation(context, presentation);
-  if (resolved == AppImageActionMenuPresentation.bottomDrawer) {
-    return _showBottomImageActionMenu(
-      context: context,
-      actions: visibleActions,
-    );
-  }
-  return _showPopupImageActionMenu(
-    context: context,
-    actions: visibleActions,
-    globalPosition: globalPosition,
-  );
+  return <AppMenuItem<AppImageActionType>>[
+    for (final action in visibleActions)
+      AppMenuItem(
+        key: Key('app-image-action-${action.type.name}'),
+        value: action.type,
+        label: action.label,
+        icon: action.icon,
+        enabled: action.enabled,
+        tone: action.destructive ? AppTextTone.error : AppTextTone.primary,
+      ),
+  ];
 }
 
-Future<AppImageActionType?> _showPopupImageActionMenu({
-  required BuildContext context,
-  required List<AppImageActionDescriptor> actions,
-  required Offset? globalPosition,
-}) {
-  if (globalPosition == null) {
-    return Future<AppImageActionType?>.value(null);
-  }
-
-  final componentTokens = Theme.of(context).appComponentTokens;
-
-  final navigator = Navigator.of(context);
-  final overlay = navigator.overlay!.context.findRenderObject() as RenderBox;
-  final localPosition = overlay.globalToLocal(globalPosition);
-  final position = RelativeRect.fromRect(
-    Rect.fromPoints(localPosition, localPosition),
-    Offset.zero & overlay.size,
-  );
-
-  return showMenu<AppImageActionType>(
-    context: context,
-    position: position,
-    useRootNavigator: false,
-    items: actions
-        .map(
-          (action) => PopupMenuItem<AppImageActionType>(
-            value: action.type,
-            enabled: action.enabled,
-            child: Row(
-              children: [
-                Icon(
-                  action.icon,
-                  size: componentTokens.iconSizeSm,
-                  color: action.enabled
-                      ? (action.destructive ? Colors.red.shade600 : null)
-                      : Colors.grey.shade400,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  action.label,
-                  style:
-                      resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        weight: AppTextWeight.regular,
-                        tone: AppTextTone.secondary,
-                      ).copyWith(
-                        color: action.enabled
-                            ? (action.destructive ? Colors.red.shade600 : null)
-                            : Colors.grey.shade400,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        )
-        .toList(growable: false),
-  );
-}
-
-Future<AppImageActionType?> _showBottomImageActionMenu({
-  required BuildContext context,
-  required List<AppImageActionDescriptor> actions,
-}) {
-  final screenHeight = MediaQuery.sizeOf(context).height;
-  final estimatedHeight = 72 + actions.length * 52;
-  final heightFactor = (estimatedHeight / screenHeight).clamp(0.24, 0.72);
-  final inlineFullscreenDrawer =
-      AppImageFullscreenHost.showBottomDrawer<AppImageActionType>(
-        context: context,
-        drawerKey: const Key('app-image-action-bottom-drawer'),
-        heightFactor: heightFactor,
-        ignoreTopSafeArea: true,
-        builder: (drawerContext, close) => _AppImageActionBottomDrawerContent(
-          actions: actions,
-          onSelected: close,
-        ),
-      );
-  if (inlineFullscreenDrawer != null) {
-    return inlineFullscreenDrawer;
-  }
-
-  return showAppBottomDrawer<AppImageActionType>(
-    context: context,
-    drawerKey: const Key('app-image-action-bottom-drawer'),
-    heightFactor: heightFactor,
-    ignoreTopSafeArea: true,
-    builder: (drawerContext) => _AppImageActionBottomDrawerContent(
-      actions: actions,
-      onSelected: (action) => Navigator.of(drawerContext).pop(action),
-    ),
-  );
-}
-
-class _AppImageActionBottomDrawerContent extends StatelessWidget {
-  const _AppImageActionBottomDrawerContent({
-    required this.actions,
-    required this.onSelected,
-  });
-
-  final List<AppImageActionDescriptor> actions;
-  final ValueChanged<AppImageActionType?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: EdgeInsets.zero,
-      itemCount: actions.length,
-      separatorBuilder: (context, index) =>
-          Divider(height: 1, color: context.appColors.borderSubtle),
-      itemBuilder: (context, index) {
-        final action = actions[index];
-        final color = _resolveActionColor(context, action);
-        return ListTile(
-          key: Key('app-image-action-bottom-drawer-action-${action.type.name}'),
-          enabled: action.enabled,
-          leading: Icon(action.icon, color: color),
-          title: Text(
-            action.label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s14,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.secondary,
-            ).copyWith(color: color),
-          ),
-          onTap: action.enabled ? () => onSelected(action.type) : null,
-        );
-      },
-    );
-  }
-}
-
-Color? _resolveActionColor(
-  BuildContext context,
-  AppImageActionDescriptor action,
-) {
-  if (!action.enabled) {
-    return Colors.grey.shade400;
-  }
-  if (action.destructive) {
-    return Colors.red.shade600;
-  }
-  return null;
-}
+/// 图片动作菜单的抽屉锚点，测试与全屏宿主共用。
+const Key kAppImageActionMenuDrawerKey = Key('app-image-action-menu');
 
 int _actionOrder(AppImageActionType type) {
   switch (type) {

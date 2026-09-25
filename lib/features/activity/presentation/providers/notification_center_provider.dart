@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/data/activity_bootstrap_dto.dart';
@@ -283,18 +284,20 @@ class NotificationCenter extends _$NotificationCenter {
     try {
       final filter = state.filter;
       final api = ref.read(activityApiProvider);
-      final notificationsFuture = api.getNotifications(
-        page: 1,
-        pageSize: _pageSize,
-        category: filter.category,
-      );
-      final unreadFuture = api.getNotifications(
-        page: 1,
-        pageSize: 1,
-        isRead: false,
-      );
-      final notifications = await notificationsFuture;
-      final unread = await unreadFuture;
+      // 两个请求必须一起 await：只 await 第一个时，第二个失败会变成
+      // 未处理异步异常（测试/真机上都会冒出来）。
+      final results = await Future.wait<Object>([
+        api.getNotifications(
+          page: 1,
+          pageSize: _pageSize,
+          category: filter.category,
+        ),
+        api.getNotifications(page: 1, pageSize: 1, isRead: false),
+      ]);
+      final notifications =
+          results[0] as PaginatedResponseDto<ActivityNotificationDto>;
+      final unread =
+          results[1] as PaginatedResponseDto<ActivityNotificationDto>;
       if (!ref.mounted) return;
       if (state.filter == filter && state.filterUpdate.isIdle) {
         final items = _sortNotifications(notifications.items);

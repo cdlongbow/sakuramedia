@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_copy.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_menu.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_action_support.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
@@ -21,8 +22,10 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 
 /// 影片详情页双端共用的**业务行为 mixin**——把桌面 / 移动详情页里逐字重复的
@@ -31,14 +34,15 @@ import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.da
 /// 已下沉（改一处两端生效）：订阅 / 合集 / 删媒体 / 标记点 / 保存图 / 找当前点 /
 /// 空媒体项、**pageCache 挂载**（[mountPageCache]，key 由 [pageCacheKey] 抽象提供）、
 /// build 前半段派生计算（[resolveDerived]）、[executeMovieAction]（远端动作装配）、
-/// [showMediaPointActions]（4 个 descriptor + 分派）与 [buildMediaPointPreviewItem]。
+/// [handleMovieActionSelection] / [confirmRefreshMetadata]（详情动作菜单分派与
+/// 刷新确认）、[showMediaPointActions]（4 个 descriptor + 分派）与
+/// [buildMediaPointPreviewItem]。
 ///
 /// **仍留在页面侧**（差异纯粹在呈现层，不放 mixin）：
 /// - `_confirmDeleteMedia`——桌面弹 dialog、移动弹 bottom drawer
 /// - `_openInspector`——桌面对话框 / 移动底部抽屉
 /// - `_openMediaPointPreview`——预览浮层弹出方式两端不同
-/// - `_showMovieActionMenu` / `_showMovieActionDrawer`
-/// - `_confirmRefreshMetadata`（桌面）/ `_handleRefresh`（移动）
+/// - `_handleRefresh`（移动）
 /// - `_searchSimilarFromPoint`（桌面/移动 launcher 不同）
 /// - `openPlayerForPoint`（桌面 push 播放路由 / 移动经 external player launcher）
 ///
@@ -695,14 +699,16 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   ) async {
     final hasImage = resolvePointImageUrl(point).isNotEmpty;
     final currentPoint = findCurrentPoint(mediaItem.mediaId, point.pointId);
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: menuContext,
       globalPosition: globalPosition,
-      actions: buildMediaPointActionDescriptors(
-        mediaItem,
-        point,
-        currentPoint,
-        hasImage,
+      items: buildImageActionMenuItems(
+        buildMediaPointActionDescriptors(
+          mediaItem,
+          point,
+          currentPoint,
+          hasImage,
+        ),
       ),
     );
     if (!mounted || action == null) {
@@ -776,6 +782,49 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
           isCollectionOverride = result.isCollectionOverride;
         });
       },
+    );
+  }
+
+  /// 详情动作菜单选中后的统一分派：本地动作落平台抽象，刷新元数据走共享确认，
+  /// 其余远端动作交给 [executeMovieAction]。
+  Future<void> handleMovieActionSelection(
+    MovieDetailActionType action, {
+    required MovieDetailDto movie,
+    required MovieMediaItemDto? selectedMedia,
+  }) async {
+    switch (action) {
+      case MovieDetailActionType.openInspector:
+        await openInspector(movie, selectedMedia);
+      case MovieDetailActionType.refreshMetadata:
+        await confirmRefreshMetadata();
+      case MovieDetailActionType.toggleSubscription:
+      case MovieDetailActionType.toggleBlacklist:
+      case MovieDetailActionType.recomputeHeat:
+        await executeMovieAction(action);
+    }
+  }
+
+  /// 「刷新元数据」覆盖式刷新的共享二次确认（移动底部抽屉 / 桌面居中弹窗）。
+  Future<void> confirmRefreshMetadata() async {
+    await showAppConfirmDialog(
+      context,
+      title: MovieDetailRefreshConfirmationCopy.title,
+      message: MovieDetailRefreshConfirmationCopy.description,
+      extraContent: Text(
+        MovieDetailRefreshConfirmationCopy.hint,
+        style: resolveAppTextStyle(
+          context,
+          size: AppTextSize.s12,
+          tone: AppTextTone.muted,
+        ),
+      ),
+      confirmLabel: MovieDetailRefreshConfirmationCopy.confirmLabel,
+      cancelLabel: MovieDetailRefreshConfirmationCopy.cancelLabel,
+      dialogKey: const Key('movie-detail-refresh-metadata-dialog'),
+      confirmKey: const Key('movie-detail-refresh-metadata-confirm'),
+      cancelKey: const Key('movie-detail-refresh-metadata-cancel'),
+      onConfirm: () =>
+          executeMovieAction(MovieDetailActionType.refreshMetadata),
     );
   }
 

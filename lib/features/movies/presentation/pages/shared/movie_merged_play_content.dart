@@ -19,6 +19,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/image_search/presentation/actions/image_search_launcher.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
@@ -150,15 +151,16 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
       thumbnail: thumbnail,
     );
     if (!mounted) return;
-    final action = await showAppImageActionMenu(
+    final action = await showAppActionMenu<AppImageActionType>(
       context: context,
-      actions: buildMediaThumbnailActionDescriptors(
-        showSearchSimilar: ref.read(imageSearchEnabledProvider),
-        thumbnail: thumbnail,
-        point: point,
-      ),
       globalPosition: globalPosition,
-      presentation: AppImageActionMenuPresentation.auto,
+      items: buildImageActionMenuItems(
+        buildMediaThumbnailActionDescriptors(
+          showSearchSimilar: ref.read(imageSearchEnabledProvider),
+          thumbnail: thumbnail,
+          point: point,
+        ),
+      ),
     );
     if (!mounted || action == null) return;
     final fileName =

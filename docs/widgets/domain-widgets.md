@@ -26,7 +26,7 @@
 
 路径：`lib/widgets/domain/clips/`
 
-包含 `ClipGridCard`、`ClipCoverCard`、`ClipCoverOverlays`、`ClipSelectionStatusBar` 和 `ClipActionsPanel`。`ClipActionsPanel` 提供切片操作面板（封面 + 标题 + 横向操作格），移动端走底部抽屉、桌面端走居中弹窗；切片创建、删除和重命名动作由 clips feature 负责，切片播放统一走 clips feature 的 `launchClipPlayback`（桌面轻量弹窗 / 移动全屏页）。
+包含 `ClipGridCard`、`ClipCoverCard`、`ClipCoverOverlays`、`ClipSelectionStatusBar` 和 `ClipActionsPanel`。`ClipGridCard` / `ClipCoverCard` 整卡即封面、收起态不铺文字；桌面悬停时底部渐显单行「标题 + 番号 · 时长 · 大小」与靠右的播放键（传 `onPlay` 时显示），移动端信息走点击后的 `ClipActionsPanel`。`ClipActionsPanel` 提供切片操作面板（封面 + 标题 + 横向操作格），移动端走底部抽屉、桌面端走居中弹窗；切片创建、删除和重命名动作由 clips feature 负责，切片播放统一走 clips feature 的 `launchClipPlayback`（桌面轻量弹窗 / 移动全屏页）。
 
 ## collections
 
@@ -46,7 +46,10 @@
 
 包含 `MomentCard`、`MomentGrid`、`MomentImage` 和时刻预览适配器
 `moment_preview_launcher.dart`（内部复用 `MediaPreviewDialog`）。时刻筛选和数据加载由
-moments feature 负责。已有时刻通过 `pointId` 执行删除和合集操作；来源媒体删除后仍可查看图片，显示“来源已删除”并隐藏播放入口。
+moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；桌面悬停时底部渐显
+单行「番号/视频号 + `JAV · 位置`」与靠右的播放键（`MomentGrid` / `MomentSliver` 的
+`onItemPlay` 提供），来源媒体删除时悬停面板补「来源已删除」。已有时刻通过 `pointId`
+执行删除和合集操作；来源媒体删除后预览仍可查看图片，显示“来源已删除”并隐藏播放入口。
 
 ## playlists and search
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
@@ -13,10 +14,10 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 enum _BlacklistedMovieAction { unblacklist }
@@ -80,11 +81,11 @@ class _BlacklistedMoviesSectionState
     MovieListItemDto movie,
     Offset globalPosition,
   ) async {
-    final action = await showAppCardContextMenu<_BlacklistedMovieAction>(
-      context,
+    final action = await showAppActionMenu<_BlacklistedMovieAction>(
+      context: context,
       globalPosition: globalPosition,
-      items: const <AppCardContextMenuItem<_BlacklistedMovieAction>>[
-        AppCardContextMenuItem(
+      items: const <AppMenuItem<_BlacklistedMovieAction>>[
+        AppMenuItem(
           value: _BlacklistedMovieAction.unblacklist,
           label: '取消屏蔽',
         ),
@@ -109,14 +110,21 @@ class _BlacklistedMoviesSectionState
 
   Widget _buildContent(BuildContext context) {
     final async = ref.watch(movieSummaryProvider(_scope));
-    return async.when(
-      loading: () => const AppSectionSkeleton(lineCount: 4),
-      error: (error, _) => AppSectionError(
+    if (async.hasError) {
+      return AppSectionError(
         title: '屏蔽影片加载失败',
-        message: apiErrorMessage(error, fallback: '屏蔽影片加载失败，请稍后重试。'),
+        message: apiErrorMessage(async.error!, fallback: '屏蔽影片加载失败，请稍后重试。'),
         onRetry: () => ref.read(movieSummaryProvider(_scope).notifier).reload(),
-      ),
-      data: (summary) => _buildLoaded(context, summary.paged),
+      );
+    }
+    final isLoading = async.value == null;
+    // loading 用占位影片渲染真实海报网格，由 [AppSkeletonizer] 灰化。
+    final paged = isLoading
+        ? PagedListState<MovieListItemDto>(items: movieListItemPlaceholders())
+        : async.value!.paged;
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: _buildLoaded(context, paged),
     );
   }
 

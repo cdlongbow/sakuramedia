@@ -4,103 +4,43 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_episode_queue_item.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 enum VideoCollectionEpisodeAction { remove, delete }
 
+/// [presentation] 由触发方式决定：行长按 / 右键用
+/// [AppMenuPresentation.popup]（锚定浮层），行尾「更多」按钮在移动端用
+/// [AppMenuPresentation.bottomDrawer]（底部操作表）。
 Future<VideoCollectionEpisodeAction?> showVideoCollectionEpisodeActions({
   required BuildContext context,
   required String title,
-  required Offset position,
-  required bool useTouchOptimizedControls,
+  required AppMenuPresentation presentation,
+  Offset position = Offset.zero,
 }) {
-  Widget action(BuildContext context, VideoCollectionEpisodeAction value) {
-    final deleting = value == VideoCollectionEpisodeAction.delete;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        deleting ? Icons.delete_outline_rounded : Icons.playlist_remove_rounded,
-        color: deleting
-            ? Theme.of(context).colorScheme.error
-            : context.appTextPalette.secondary,
-      ),
-      title: Text(
-        deleting ? '删除选集' : '移出合集',
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s14,
-          tone: deleting ? AppTextTone.error : AppTextTone.primary,
-        ),
-      ),
-      subtitle: Text(
-        deleting ? '删除视频及全部关联媒体' : '保留视频和媒体文件',
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          tone: AppTextTone.secondary,
-        ),
-      ),
-    );
-  }
-
-  if (useTouchOptimizedControls) {
-    return showAppBottomDrawer<VideoCollectionEpisodeAction>(
-      context: context,
-      drawerKey: const Key('video-episode-actions'),
-      maxHeightFactor: 0.9,
-      builder: (sheetContext) => SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: resolveAppTextStyle(
-                sheetContext,
-                size: AppTextSize.s14,
-                weight: AppTextWeight.semibold,
-              ),
-            ),
-            for (final value in VideoCollectionEpisodeAction.values)
-              InkWell(
-                mouseCursor: SystemMouseCursors.click,
-                key: Key('video-episode-action-${value.name}'),
-                onTap: () => Navigator.of(sheetContext).pop(value),
-                child: action(sheetContext, value),
-              ),
-            AppTextButton(
-              label: '取消',
-              onPressed: () => Navigator.of(sheetContext).pop(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  final overlay =
-      Navigator.of(
-            context,
-            rootNavigator: true,
-          ).overlay!.context.findRenderObject()!
-          as RenderBox;
-  final local = overlay.globalToLocal(position);
-  return showMenu<VideoCollectionEpisodeAction>(
+  final isDrawer = presentation == AppMenuPresentation.bottomDrawer;
+  return showAppActionMenu<VideoCollectionEpisodeAction>(
     context: context,
-    useRootNavigator: true,
-    position: RelativeRect.fromRect(
-      Rect.fromLTWH(local.dx, local.dy, 0, 0),
-      Offset.zero & overlay.size,
-    ),
-    items: [
-      for (final value in VideoCollectionEpisodeAction.values)
-        PopupMenuItem(
-          value: value,
-          key: Key('video-episode-action-${value.name}'),
-          child: action(context, value),
-        ),
+    globalPosition: position,
+    presentation: presentation,
+    useRootNavigator: !isDrawer,
+    drawerKey: const Key('video-episode-actions'),
+    title: isDrawer ? title : null,
+    items: const <AppMenuItem<VideoCollectionEpisodeAction>>[
+      AppMenuItem(
+        key: Key('video-episode-action-remove'),
+        value: VideoCollectionEpisodeAction.remove,
+        label: '移出合集',
+        subtitle: '保留视频和媒体文件',
+        icon: Icons.playlist_remove_rounded,
+      ),
+      AppMenuItem(
+        key: Key('video-episode-action-delete'),
+        value: VideoCollectionEpisodeAction.delete,
+        label: '删除选集',
+        subtitle: '删除视频及全部关联媒体',
+        icon: Icons.delete_outline_rounded,
+        tone: AppTextTone.error,
+      ),
     ],
   );
 }
@@ -139,7 +79,8 @@ class VideoEpisodeQueueItem extends StatelessWidget {
     required this.isCurrent,
     required this.isBusy,
     required this.onPlay,
-    required this.onActions,
+    required this.onContextActions,
+    this.onMoreActions,
   });
 
   final VideoItemListItemDto video;
@@ -147,45 +88,57 @@ class VideoEpisodeQueueItem extends StatelessWidget {
   final bool isCurrent;
   final bool isBusy;
   final VoidCallback? onPlay;
-  final ValueChanged<Offset>? onActions;
+
+  /// 行长按 / 右键 → 锚定浮层，回调带按压点全局坐标。
+  final ValueChanged<Offset>? onContextActions;
+
+  /// 行尾「更多」按钮 → 移动端底部操作表 / 桌面浮层，回调带按钮右下角坐标。
+  final ValueChanged<Offset>? onMoreActions;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onSecondaryTapDown: onActions == null
-        ? null
-        : (details) => onActions!(details.globalPosition),
-    onLongPressStart: onActions == null
-        ? null
-        : (details) => onActions!(details.globalPosition),
-    child: CollectionEpisodeQueueItem(
-      itemKey: Key('video-collection-play-queue-item-${video.id}'),
-      coverUrl: video.coverImage?.bestAvailableUrl,
-      coverStyle: CollectionQueueCoverStyle.containOnMuted,
-      title: video.preferredTitle,
-      subtitle: '第 ${index + 1} 集',
-      isCurrent: isCurrent,
-      onTap: onPlay,
-      trailing: Builder(
-        builder: (buttonContext) => AppIconButton(
-          key: Key('video-episode-more-${video.id}'),
-          size: AppIconButtonSize.regular,
-          tooltip: '选集操作',
-          icon: isBusy
-              ? SizedBox.square(
-                  dimension: context.appComponentTokens.iconSizeSm,
-                  child: const CircularProgressIndicator.adaptive(strokeWidth: 2),
-                )
-              : const Icon(Icons.more_horiz_rounded),
-          onPressed: onActions == null
-              ? null
-              : () {
-                  final box = buttonContext.findRenderObject()! as RenderBox;
-                  onActions!(
-                    box.localToGlobal(Offset(box.size.width, box.size.height)),
-                  );
-                },
+  Widget build(BuildContext context) {
+    final onContextActions = this.onContextActions;
+    final onMoreActions = this.onMoreActions;
+    return GestureDetector(
+      onSecondaryTapDown: onContextActions == null
+          ? null
+          : (details) => onContextActions(details.globalPosition),
+      onLongPressStart: onContextActions == null
+          ? null
+          : (details) => onContextActions(details.globalPosition),
+      child: CollectionEpisodeQueueItem(
+        itemKey: Key('video-collection-play-queue-item-${video.id}'),
+        coverUrl: video.coverImage?.bestAvailableUrl,
+        coverStyle: CollectionQueueCoverStyle.containOnMuted,
+        title: video.preferredTitle,
+        subtitle: '第 ${index + 1} 集',
+        isCurrent: isCurrent,
+        onTap: onPlay,
+        trailing: Builder(
+          builder: (buttonContext) => AppIconButton(
+            key: Key('video-episode-more-${video.id}'),
+            size: AppIconButtonSize.regular,
+            tooltip: '选集操作',
+            icon: isBusy
+                ? SizedBox.square(
+                    dimension: context.appComponentTokens.iconSizeSm,
+                    child: const CircularProgressIndicator.adaptive(
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.more_horiz_rounded),
+            onPressed: onMoreActions == null
+                ? null
+                : () {
+                    final box =
+                        buttonContext.findRenderObject()! as RenderBox;
+                    onMoreActions(
+                      box.localToGlobal(Offset(box.size.width, box.size.height)),
+                    );
+                  },
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -79,6 +79,7 @@ class _AppFullscreenBottomDrawerSession {
     required this.ignoreTopSafeArea,
     required this.showHandle,
     this.drawerKey,
+    this.contentPadding,
   });
 
   final Completer<Object?> completer;
@@ -87,6 +88,7 @@ class _AppFullscreenBottomDrawerSession {
   final double heightFactor;
   final bool ignoreTopSafeArea;
   final bool showHandle;
+  final EdgeInsetsGeometry? contentPadding;
 }
 
 class AppImageFullscreenHost extends ConsumerStatefulWidget {
@@ -105,6 +107,7 @@ class AppImageFullscreenHost extends ConsumerStatefulWidget {
     double heightFactor = 0.9,
     bool ignoreTopSafeArea = false,
     bool showHandle = true,
+    EdgeInsetsGeometry? contentPadding,
   }) {
     final host = _maybeOf(context);
     if (host == null || !host.isVisible) {
@@ -116,6 +119,7 @@ class AppImageFullscreenHost extends ConsumerStatefulWidget {
       heightFactor: heightFactor,
       ignoreTopSafeArea: ignoreTopSafeArea,
       showHandle: showHandle,
+      contentPadding: contentPadding,
     );
   }
 
@@ -508,6 +512,7 @@ class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
     required double heightFactor,
     required bool ignoreTopSafeArea,
     required bool showHandle,
+    EdgeInsetsGeometry? contentPadding,
   }) {
     _completeBottomDrawer();
     final completer = Completer<Object?>();
@@ -519,6 +524,7 @@ class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
       heightFactor: heightFactor,
       ignoreTopSafeArea: ignoreTopSafeArea,
       showHandle: showHandle,
+      contentPadding: contentPadding,
       builder: builder,
     );
     if (mounted) {
@@ -713,6 +719,7 @@ class _AppImageFullscreenHostState extends ConsumerState<AppImageFullscreenHost>
           key: session.drawerKey,
           heightFactor: session.heightFactor,
           showHandle: session.showHandle,
+          contentPadding: session.contentPadding,
           child: session.builder(context, _closeBottomDrawer),
         ),
       ),

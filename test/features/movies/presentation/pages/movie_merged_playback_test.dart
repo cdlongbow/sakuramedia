@@ -392,7 +392,10 @@ void main() {
             expect(find.text('播放'), findsOneWidget);
             if (mobile) {
               expect(
-                find.byKey(const Key('app-image-action-bottom-drawer')),
+                find.byWidgetPredicate(
+                  (widget) => widget.runtimeType.toString() ==
+                      '_PopupMenu<AppImageActionType>',
+                ),
                 findsOneWidget,
               );
             }

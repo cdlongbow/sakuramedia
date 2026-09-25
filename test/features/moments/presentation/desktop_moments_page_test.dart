@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -77,8 +78,15 @@ void main() {
     await tester.tapAt(const Offset(5, 5));
     await tester.pumpAndSettle();
 
-    expect(find.text('ABC-001'), findsOneWidget);
-    expect(find.text('02:00'), findsOneWidget);
+    // 卡片收起态不铺文字；桌面悬停展开番号与「类型 · 位置」。
+    expect(find.byKey(const Key('moment-card-10')), findsOneWidget);
+    expect(find.text('ABC-001'), findsNothing);
+    await _hoverMomentCard(tester, 10);
+    expect(find.textContaining('ABC-001', findRichText: true), findsOneWidget);
+    expect(
+      find.textContaining('02:00', findRichText: true),
+      findsOneWidget,
+    );
     expect(_mediaPointsQueryValue(bundle, 0, 'sort'), 'created_at:desc');
     expect(_mediaPointsQueryValue(bundle, 0, 'kind'), 'jav');
     expect(bundle.adapter.hitCount('GET', '/media/456/thumbnails'), 0);
@@ -310,6 +318,18 @@ Future<void> _pumpMomentsApp(
       ),
     ),
   );
+}
+
+/// 把鼠标指针移到时刻卡上：桌面端收起态不铺文字，信息靠悬停展开，
+/// 必须用真实指针事件触发。
+Future<void> _hoverMomentCard(WidgetTester tester, int pointId) async {
+  final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+  await gesture.addPointer(location: Offset.zero);
+  addTearDown(gesture.removePointer);
+  await gesture.moveTo(
+    tester.getCenter(find.byKey(Key('moment-card-$pointId'))),
+  );
+  await tester.pumpAndSettle();
 }
 
 void _enqueueMomentsPageResponses(

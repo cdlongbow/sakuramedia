@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_collect
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_detail_state.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_filter_sections.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -25,6 +26,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_view_mode_toggle_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
@@ -34,6 +36,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 /// 合集详情的成员排布方式：纵向列表（可拖序）或网格（侧重浏览）。
 enum CollectionDetailLayout { list, grid }
@@ -91,7 +94,6 @@ class VideoCollectionDetailContent extends ConsumerStatefulWidget {
     this.useMobileFilterDrawer = false,
     this.enableReorder = false,
     this.defaultLayout = CollectionDetailLayout.list,
-    this.loadingBuilder,
     this.playAllBuilder,
     this.onMemberTap,
     this.playSingle,
@@ -120,7 +122,6 @@ class VideoCollectionDetailContent extends ConsumerStatefulWidget {
   /// 默认成员排布：桌面 list，移动 grid。
   final CollectionDetailLayout defaultLayout;
 
-  final Widget Function(BuildContext context)? loadingBuilder;
   final VideoCollectionPlayAllBuilder? playAllBuilder;
 
   /// 单条成员点击后的动作壳（桌面弹窗 / 移动抽屉），由壳实现。
@@ -199,47 +200,55 @@ class _VideoCollectionDetailContentState
     if (widget.hoistTitleToSubpageShell) {
       _reportTitle(state);
     }
+    final isLoading = async.isLoading && state == null;
 
     final content = Builder(
       builder: (context) {
-        if (async.isLoading && state == null) {
-          return (widget.loadingBuilder ??
-              (_) => const Center(child: CircularProgressIndicator.adaptive()))(context);
-        }
-        if (async.hasError && state == null) {
+        if (!isLoading && async.hasError && state == null) {
           return _buildError(context, async.error!);
         }
-        if (state == null) {
+        if (!isLoading && state == null) {
           return const SizedBox.shrink();
         }
-        return Column(
-          key: Key('${widget.keyPrefix}-detail-page'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 移动端标题报到返回栏，页面内不再写第二遍大标题。
-            if (!widget.hoistTitleToSubpageShell)
-              _buildTitleBlock(context, state),
-            // 空合集没什么可排序 / 可选择的，顶栏整条省掉。
-            if (state.items.isNotEmpty || !state.filterUpdate.isIdle) ...[
+        // loading 用占位数据渲染同一份真实布局，由 [AppSkeletonizer] 灰化，
+        // 骨架与数据到位后的首屏严格同形。
+        final displayState =
+            isLoading ? videoCollectionDetailPlaceholder() : state!;
+        return AppSkeletonizer(
+          enabled: isLoading,
+          child: Column(
+            key: Key('${widget.keyPrefix}-detail-page'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 移动端标题报到返回栏，页面内不再写第二遍大标题。
               if (!widget.hoistTitleToSubpageShell)
-                SizedBox(height: context.appSpacing.md),
-              if (selectionMode)
-                _buildSelectionHeader(context, state)
-              else
-                _buildListHeader(context, state),
-            ],
-            SizedBox(
-              height: _isMobile ? context.appSpacing.md : context.appSpacing.lg,
-            ),
-            Expanded(
-              child: AppFilterResultLoadingOverlay(
-                isLoading: state.filterUpdate.isLoading,
-                hasPreviousItems: state.items.isNotEmpty,
-                child: _buildBody(context, state),
+                _buildTitleBlock(context, displayState),
+              // 空合集没什么可排序 / 可选择的，顶栏整条省掉。
+              if (displayState.items.isNotEmpty ||
+                  !displayState.filterUpdate.isIdle) ...[
+                if (!widget.hoistTitleToSubpageShell)
+                  SizedBox(height: context.appSpacing.md),
+                if (selectionMode)
+                  _buildSelectionHeader(context, displayState)
+                else
+                  _buildListHeader(context, displayState),
+              ],
+              SizedBox(
+                height: _isMobile
+                    ? context.appSpacing.md
+                    : context.appSpacing.lg,
               ),
-            ),
-            if (_isMobile && selectionMode) _buildBatchBar(context, state),
-          ],
+              Expanded(
+                child: AppFilterResultLoadingOverlay(
+                  isLoading: displayState.filterUpdate.isLoading,
+                  hasPreviousItems: displayState.items.isNotEmpty,
+                  child: _buildBody(context, displayState),
+                ),
+              ),
+              if (_isMobile && selectionMode)
+                _buildBatchBar(context, displayState),
+            ],
+          ),
         );
       },
     );
@@ -308,10 +317,13 @@ class _VideoCollectionDetailContentState
             ),
             // 多选态隐藏主行动，避免和批量操作混在一起误触。
             if (!selectionMode && playAllBuilder != null)
-              playAllBuilder(
-                context,
-                enabled: items.isNotEmpty,
-                onPlayFrom: () => _playFrom(0),
+              // 主行动保留品牌底色会显得「加载中也可用」，用 shade 随骨架一起灰化。
+              Skeleton.shade(
+                child: playAllBuilder(
+                  context,
+                  enabled: items.isNotEmpty,
+                  onPlayFrom: () => _playFrom(0),
+                ),
               ),
           ],
         ),

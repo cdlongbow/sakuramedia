@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_placeholders.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
@@ -14,6 +15,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/widgets/creat
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/actions/clip_playback_launcher.dart';
+import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
@@ -26,13 +28,14 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_cover_card_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
@@ -234,40 +237,39 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         ),
       );
     }
-    if (collectionsAsync.isLoading && collections.isEmpty) {
-      return CollectionCardSkeletonRow(
-        key: const Key('clips-collections-skeleton-row'),
-        height: 172,
-        itemWidth: 210,
-        itemSpacing: context.appSpacing.md,
-      );
-    }
-    if (collections.isEmpty) {
+    final isLoading = collectionsAsync.isLoading && collections.isEmpty;
+    final display = isLoading
+        ? clipCollectionPlaceholders(count: 4)
+        : collections;
+    if (display.isEmpty) {
       return const CollectionHintBox(
         message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧',
       );
     }
     final spacing = context.appSpacing;
-    return SizedBox(
-      height: 172,
-      child: ListView.separated(
-        key: const Key('clips-collections-row'),
-        scrollDirection: Axis.horizontal,
-        itemCount: collections.length,
-        separatorBuilder: (context, index) => SizedBox(width: spacing.md),
-        itemBuilder: (context, index) {
-          final collection = collections[index];
-          return SizedBox(
-            width: 210,
-            child: CollectionCard.clip(
-              key: Key('clip-collection-card-${collection.id}'),
-              collection: collection,
-              onTap: () => context.pushDesktopClipCollectionDetail(
-                collectionId: collection.id,
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: SizedBox(
+        height: 172,
+        child: ListView.separated(
+          key: const Key('clips-collections-row'),
+          scrollDirection: Axis.horizontal,
+          itemCount: display.length,
+          separatorBuilder: (context, index) => SizedBox(width: spacing.md),
+          itemBuilder: (context, index) {
+            final collection = display[index];
+            return SizedBox(
+              width: 210,
+              child: CollectionCard.clip(
+                key: Key('clip-collection-card-${collection.id}'),
+                collection: collection,
+                onTap: () => context.pushDesktopClipCollectionDetail(
+                  collectionId: collection.id,
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -427,36 +429,10 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         .value
         ?.paged
         .filterUpdate;
-    if (isInitialLoading) {
-      final spacing = context.appSpacing;
-      return SliverLayoutBuilder(
-        builder: (context, constraints) {
-          final columns = _resolveColumnCount(
-            constraints.crossAxisExtent,
-            spacing.md,
-          );
-          return SliverGrid(
-            key: const Key('clips-grid-skeleton'),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              mainAxisSpacing: spacing.md,
-              crossAxisSpacing: spacing.md,
-              childAspectRatio: 16 / 9,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => AppCoverCardSkeleton(
-                posterKey: Key('clips-grid-skeleton-$index'),
-              ),
-              childCount: 8,
-            ),
-          );
-        },
-      );
-    }
-    if (clips.isEmpty && (filterUpdate?.hasFailed ?? false)) {
+    if (!isInitialLoading && clips.isEmpty && (filterUpdate?.hasFailed ?? false)) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
-    if (clips.isEmpty) {
+    if (!isInitialLoading && clips.isEmpty) {
       return const SliverToBoxAdapter(
         child: SizedBox(
           height: 200,
@@ -464,41 +440,47 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         ),
       );
     }
+    // loading 用占位切片渲染同一份真实网格，由 [AppSkeletonizer] 灰化。
+    final display = isInitialLoading ? clipPlaceholders(count: 8) : clips;
     final spacing = context.appSpacing;
-    return SliverLayoutBuilder(
-      builder: (context, constraints) {
-        final columns = _resolveColumnCount(
-          constraints.crossAxisExtent,
-          spacing.md,
-        );
-        return SliverGrid(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: spacing.md,
-            crossAxisSpacing: spacing.md,
-            childAspectRatio: 16 / 9,
-          ),
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final clip = clips[index];
-            final movieNumber = clip.movieNumber;
-            return ClipGridCard(
-              key: Key('clip-grid-card-${clip.clipId}'),
-              clip: clip,
-              tapKey: Key('clip-grid-card-tap-${clip.clipId}'),
-              onTap: () => _playClip(clip),
-              onRename: () => _renameClip(clip),
-              onDelete: () => _deleteClip(clip),
-              onAddToCollection: () => _addToCollection(clip),
-              onOpenMovie: movieNumber != null && movieNumber.isNotEmpty
-                  ? () => _openMovie(movieNumber)
-                  : null,
-              selectionMode: selectionMode,
-              isSelected: isSelected(clip.clipId),
-              onSelectedChanged: (_) => toggleSelect(clip.clipId),
-            );
-          }, childCount: clips.length),
-        );
-      },
+    return AppSkeletonizer.sliver(
+      enabled: isInitialLoading,
+      child: SliverLayoutBuilder(
+        builder: (context, constraints) {
+          final columns = _resolveColumnCount(
+            constraints.crossAxisExtent,
+            spacing.md,
+          );
+          return SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: spacing.md,
+              crossAxisSpacing: spacing.md,
+              childAspectRatio: 16 / 9,
+            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final clip = display[index];
+              final movieNumber = clip.movieNumber;
+              return ClipGridCard(
+                key: Key('clip-grid-card-${clip.clipId}'),
+                clip: clip,
+                tapKey: Key('clip-grid-card-tap-${clip.clipId}'),
+                onTap: () => _openClipActions(clip),
+                onPlay: () => _playClip(clip),
+                onRename: () => _renameClip(clip),
+                onDelete: () => _deleteClip(clip),
+                onAddToCollection: () => _addToCollection(clip),
+                onOpenMovie: movieNumber != null && movieNumber.isNotEmpty
+                    ? () => _openMovie(movieNumber)
+                    : null,
+                selectionMode: selectionMode,
+                isSelected: isSelected(clip.clipId),
+                onSelectedChanged: (_) => toggleSelect(clip.clipId),
+              );
+            }, childCount: display.length),
+          );
+        },
+      ),
     );
   }
 
@@ -542,6 +524,23 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   }
 
   // ----------------------------------------------------------- 单条动作
+
+  /// 点击切片卡弹动作弹窗（对齐切片合集成员卡），由用户再选择播放 / 影片 /
+  /// 加入合集 / 重命名 / 删除，避免误触即播放。
+  void _openClipActions(MediaClipDto clip) {
+    final movieNumber = clip.movieNumber;
+    showClipActionsDialog(
+      context,
+      clip: clip,
+      onPlay: () => _playClip(clip),
+      onAddToCollection: () => _addToCollection(clip),
+      onRename: () => _renameClip(clip),
+      onDelete: () => _deleteClip(clip),
+      onOpenMovie: movieNumber != null && movieNumber.isNotEmpty
+          ? () => _openMovie(movieNumber)
+          : null,
+    );
+  }
 
   void _playClip(MediaClipDto clip) {
     unawaited(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_placeholders.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
@@ -14,7 +15,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
@@ -97,63 +98,64 @@ class _MobileClipCollectionsPageState
     BuildContext context,
     AsyncValue<List<ClipCollectionDto>> async,
   ) {
-    if (async.isLoading && async.value == null) {
-      return const AppMobileSkeletonList(
-        key: Key('mobile-clip-collections-loading'),
-      );
-    }
+    final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = async.value ?? const <ClipCollectionDto>[];
-    return AppAdaptiveRefreshScrollView(
-      key: const Key('mobile-clip-collections-scroll'),
-      onRefresh:
-          ref.read(clipCollectionsOverviewProvider.notifier).refresh,
-      slivers: <Widget>[
-        if (async.hasError && collections.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(
-              message: apiErrorMessage(
-                async.error!,
-                fallback: '合集暂时无法加载，请稍后重试',
+    final collections = isLoading
+        ? clipCollectionPlaceholders()
+        : async.value ?? const <ClipCollectionDto>[];
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: AppAdaptiveRefreshScrollView(
+        key: const Key('mobile-clip-collections-scroll'),
+        onRefresh:
+            ref.read(clipCollectionsOverviewProvider.notifier).refresh,
+        slivers: <Widget>[
+          if (async.hasError && collections.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(
+                message: apiErrorMessage(
+                  async.error!,
+                  fallback: '合集暂时无法加载，请稍后重试',
+                ),
+              ),
+            )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+            )
+          else
+            SliverPadding(
+              // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
+              padding: EdgeInsets.symmetric(vertical: spacing.md),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  mainAxisSpacing: spacing.md,
+                  crossAxisSpacing: spacing.sm,
+                  // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
+                  // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
+                  // 贴合内容，对齐桌面合集卡的紧凑观感（此前 1.05 会留 ~30px 底部空白）。
+                  childAspectRatio: 1.25,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final collection = collections[index];
+                  return CollectionCard.clip(
+                    key: Key('mobile-clip-collection-card-${collection.id}'),
+                    collection: collection,
+                    onTap:
+                        () => MobileClipCollectionDetailRouteData(
+                          collectionId: collection.id,
+                        ).push(context),
+                    onEdit: () => _editCollection(collection),
+                    onDelete: () => _deleteCollection(collection),
+                  );
+                }, childCount: collections.length),
               ),
             ),
-          )
-        else if (collections.isEmpty)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
-          )
-        else
-          SliverPadding(
-            // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
-            padding: EdgeInsets.symmetric(vertical: spacing.md),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                mainAxisSpacing: spacing.md,
-                crossAxisSpacing: spacing.sm,
-                // [CollectionCoverCard] = 16:9 封面 + 标题(s14, 单行) + sm 内边距,
-                // 实际内容高度约 (0.5625×W + 34)px。aspectRatio 1.25 让 cell 高度刚好
-                // 贴合内容，对齐桌面合集卡的紧凑观感（此前 1.05 会留 ~30px 底部空白）。
-                childAspectRatio: 1.25,
-              ),
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final collection = collections[index];
-                return CollectionCard.clip(
-                  key: Key('mobile-clip-collection-card-${collection.id}'),
-                  collection: collection,
-                  onTap:
-                      () => MobileClipCollectionDetailRouteData(
-                        collectionId: collection.id,
-                      ).push(context),
-                  onEdit: () => _editCollection(collection),
-                  onDelete: () => _deleteCollection(collection),
-                );
-              }, childCount: collections.length),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 

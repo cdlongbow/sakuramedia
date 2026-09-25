@@ -10,15 +10,24 @@
 
 ## 骨架和加载
 
-- `AppSectionSkeleton`：桌面 section 骨架；列表条目是结构明显的卡片时不要用它兜底。
-- `AppSkeletonBlock`、`AppMobileSkeletonCard`、`AppMobileSkeletonList`：移动页面和局部占位。
-- `AppCoverCardSkeleton`：封面网格占位。
-- `AppLeftCoverCardSkeleton`、`AppLeftCoverCardSkeletonList`：左封面卡列表占位，复用 `AppLeftCoverCard` 的壳与尺寸 token；真实卡行内有固定结构（如底部操作行）时由调用方传 `body`。
-- `AppPickerOptionSkeletonList`：选择器选项行的首屏骨架（复选框位 + 72×16:9 封面 + 两行文案），与选择器选项行同形。
+- `AppSkeletonizer`：**首屏骨架的统一入口**（`lib/widgets/base/feedback/app_skeletonizer.dart`）。
+  loading 分支用占位数据渲染**同一份真实布局**，外包 `AppSkeletonizer(enabled: isLoading)`
+  自动灰化：效果是 `ShimmerEffect` 微光扫过（底色取 `surfaceMuted`、高光取
+  `surfaceCard`；系统开启「减少动态效果」时退化为静态 `SolidColorEffect`），
+  加载态默认屏蔽子树指针事件、对屏幕阅读器隐藏占位内容；sliver 场景用
+  `AppSkeletonizer.sliver`。品牌底色主行动（如「播放全部」「安装插件」）用
+  `Skeleton.shade` 随骨架一起灰化。
+- 占位数据约定：用真实 DTO 构造、文案取 `BoneMock`、封面 / 图片 URL 传 `null`
+  不触发网络请求；每个 feature 的占位工厂放在 `presentation/<feature>_placeholders.dart`。
+  加载态渲染真实组件后，`ignorePointers` 会屏蔽交互，回调不会被触发。
+- 手写骨架组件（`AppCoverCardSkeleton`、`CollectionCardSkeleton`、`AppLeftCoverCardSkeleton`、
+  `MediaListItemCardSkeletonList` 等）是迁移前的历史存量；**新页面不要再新增**，
+  存量页面在后续清理中逐步迁移到 `AppSkeletonizer`。分页列表的
+  `SliverPagedAsyncSection.skeletonBuilder` 也应优先传「占位数据 + 真实卡片」。
 - `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading，随平台自适应。
 - `AppFilterUpdateBar`：筛选请求更新中的行内反馈。
 
-文件均位于 `lib/widgets/base/feedback/`（卡片骨架也可与所属 feature 的卡片文件同目录）。骨架只描述布局轮廓，不应把真实业务数据写进组件；`SliverPagedAsyncSection.skeletonBuilder` 用于把分页列表首屏骨架替换成与真实卡片同高同形的形态，避免加载完成时列表整片跳变。
+骨架只描述布局轮廓：占位数据是 `BoneMock` 文案而非真实业务数据；首屏骨架必须与数据到位后的布局同形，避免列表整片跳变。
 
 ## 确认和状态
 

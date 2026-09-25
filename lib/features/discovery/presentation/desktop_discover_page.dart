@@ -298,6 +298,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: _openMomentPreview,
+      onItemPlay: _openPlayerForMoment,
       maxRows: 2,
       maxColumns: 6,
     );

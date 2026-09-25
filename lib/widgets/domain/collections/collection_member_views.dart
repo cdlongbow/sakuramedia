@@ -1,9 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_card_context_menu.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_overlays.dart';
 
 /// 合集「成员」（切片 / 视频）在详情页的共享展示组件：列表行 [CollectionMemberRow]
@@ -36,24 +37,24 @@ Future<void> _showCollectionMemberContextMenu(
   final openSource = onOpenSource;
   final label = openSourceLabel;
   final delete = onDelete;
-  final action = await showAppCardContextMenu<_MemberMenuAction>(
-    context,
+  final action = await showAppActionMenu<_MemberMenuAction>(
+    context: context,
     globalPosition: globalPosition,
     items: [
       if (openSource != null && label != null)
-        AppCardContextMenuItem(
+        AppMenuItem(
           value: _MemberMenuAction.openSource,
           label: label,
         ),
       // 无「删除本体」时（如切片合集）「移出合集」保持原有 error 强调色；与红色
       // 删除项并列时退为常规色，让破坏性的「删除」独占红色、层级清晰。
-      AppCardContextMenuItem(
+      AppMenuItem(
         value: _MemberMenuAction.remove,
         label: removeLabel,
         tone: delete == null ? AppTextTone.error : AppTextTone.primary,
       ),
       if (delete != null)
-        AppCardContextMenuItem(
+        AppMenuItem(
           value: _MemberMenuAction.delete,
           label: deleteLabel,
           tone: AppTextTone.error,
@@ -298,7 +299,8 @@ class CollectionMemberRow extends StatelessWidget {
 /// 合集成员的网格卡。三种模式由 [overlayCaption] / [clipOverlay] 切换：
 /// - `false` / `false`（默认，上图下文）：横版封面在上、标题/副信息在下，适合 16:9 切片封面；
 /// - `overlayCaption: true`（标题压图）：整卡即封面、标题/副信息浮在底部渐变上，适合竖版海报，无下方留白；
-/// - `clipOverlay: true`（切片风格）：整卡即封面、底部半透明黑条展示左番号右时长，与 [ClipGridCard] 风格统一。
+/// - `clipOverlay: true`（切片风格）：整卡即封面、收起态不铺文字，桌面悬停时底部渐显
+///   标题/副信息与播放键，与 [ClipGridCard] 风格统一。
 ///
 /// 封面含播放遮罩；上图下文模式还可选右下角徽标 [coverBadge]。
 /// 整卡点击触发 [onTap]（通常为从该位置连播整个合集）；
@@ -314,6 +316,8 @@ class CollectionMemberCard extends StatelessWidget {
     this.onRemove,
     this.onDelete,
     this.deleteLabel = '删除视频',
+    this.onPlay,
+    this.playButtonKey,
     this.subtitle,
     this.onOpenSource,
     this.openSourceLabel,
@@ -344,6 +348,12 @@ class CollectionMemberCard extends StatelessWidget {
 
   /// 「删除本体」菜单项文案（如切片合集传「删除切片」）；默认「删除视频」。
   final String deleteLabel;
+
+  /// 切片风格悬停面板里的播放键回调；为 `null` 时不显示按钮。
+  final VoidCallback? onPlay;
+
+  /// 悬停播放键的测试锚点；仅 [clipOverlay] 模式生效。
+  final Key? playButtonKey;
   final String? subtitle;
   final VoidCallback? onOpenSource;
   final String? openSourceLabel;
@@ -357,7 +367,8 @@ class CollectionMemberCard extends StatelessWidget {
   /// 是否把标题/副信息压在封面底部（竖版海报用，整卡即封面、无下方留白）。
   final bool overlayCaption;
 
-  /// 是否使用切片风格（底部半透明黑条 + 左番号右时长，与 [ClipGridCard] 统一）。
+  /// 是否使用切片风格（整卡即封面，收起态无文字；桌面悬停渐显标题/副信息与
+  /// 播放键，与 [ClipGridCard] 统一）。
   final bool clipOverlay;
 
   /// 选择模式：整卡点击切换选中，左上角显示勾选标记；屏蔽右键 / 长按菜单。
@@ -522,16 +533,11 @@ class CollectionMemberCard extends StatelessWidget {
     );
   }
 
-  /// 切片风格：整卡即封面，番号/时长浮在底部半透明黑条上。
+  /// 切片风格：整卡即封面，收起态不铺文字；桌面悬停时底部渐显单行
+  /// 标题/副信息与靠右的播放键。
   Widget _buildClipOverlay(BuildContext context) {
-    final spacing = context.appSpacing;
     final sub = subtitle?.trim();
-    final labelTextStyle = resolveAppTextStyle(
-      context,
-      size: AppTextSize.s12,
-      weight: AppTextWeight.regular,
-      tone: AppTextTone.onMedia,
-    );
+    final play = onPlay;
     return ClipRRect(
       borderRadius: context.appRadius.lgBorder,
       child: AspectRatio(
@@ -539,38 +545,24 @@ class CollectionMemberCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _buildCover(context),
-            const ClipPlayOverlay(),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.44),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: spacing.md,
-                    vertical: spacing.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: labelTextStyle,
-                        ),
+            AppCoverHoverInfo(
+              enabled: !selectionMode,
+              cover: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildCover(context),
+                  const ClipPlayOverlay(),
+                ],
+              ),
+              infoBuilder: (context) => AppCoverHoverInfoRow(
+                label: title,
+                meta: sub,
+                action: play == null
+                    ? null
+                    : AppCoverHoverPlayButton(
+                        key: playButtonKey,
+                        onTap: play,
                       ),
-                      if (sub != null && sub.isNotEmpty) ...[
-                        SizedBox(width: spacing.sm),
-                        Text(sub, style: labelTextStyle),
-                      ],
-                    ],
-                  ),
-                ),
               ),
             ),
           ],

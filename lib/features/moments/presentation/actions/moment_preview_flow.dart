@@ -61,7 +61,11 @@ Future<void> showMomentPreviewFlow({
     case MediaPreviewAction.addToCollection:
       await showAddToMomentCollectionDialog(context, pointId: item.pointId);
     case MediaPreviewAction.play:
-      await _play(context, item, isMobile, fallbackPath);
+      await playMomentItem(
+        context: context,
+        item: item,
+        fallbackPath: fallbackPath,
+      );
     case MediaPreviewAction.openMovieDetail:
       final movieNumber = item.movieNumber;
       if (item.isVideo || movieNumber == null || movieNumber.isEmpty) {
@@ -103,12 +107,16 @@ Future<void> _searchSimilar(
   }
 }
 
-Future<void> _play(
-  BuildContext context,
-  MomentListItem item,
-  bool isMobile,
-  String fallbackPath,
-) async {
+/// 播放一个时刻：JAV 时刻跳进影片播放器的对应位置，视频时刻走快速播放。
+///
+/// 预览回执与时刻列表悬停播放键共用；平台按 `AppPlatformScope` 自行判定
+/// （查不到按桌面），保证两个入口行为一致。
+Future<void> playMomentItem({
+  required BuildContext context,
+  required MomentListItem item,
+  required String fallbackPath,
+}) async {
+  final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
   if (!item.isVideo) {
     final movieNumber = item.movieNumber;
     if (movieNumber == null || movieNumber.isEmpty) {

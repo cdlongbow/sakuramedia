@@ -20,6 +20,7 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list_content.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
+import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
@@ -31,6 +32,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_over
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
@@ -468,37 +470,36 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
         message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
       );
     }
-    if (async.isLoading && collections.isEmpty) {
-      return CollectionCardSkeletonRow(
-        key: const Key('videos-collections-skeleton-row'),
-        height: 172,
-        itemWidth: 210,
-        itemSpacing: context.appSpacing.md,
-      );
-    }
-    if (collections.isEmpty) {
+    final isLoading = async.isLoading && collections.isEmpty;
+    final display = isLoading
+        ? videoCollectionPlaceholders(count: 4)
+        : collections;
+    if (display.isEmpty) {
       return const CollectionHintBox(message: '还没有合集，点「新建」把视频攒成一个连播合集吧');
     }
-    return SizedBox(
-      height: 172,
-      child: ListView.separated(
-        key: const Key('videos-collections-row'),
-        scrollDirection: Axis.horizontal,
-        itemCount: collections.length,
-        separatorBuilder: (context, index) =>
-            SizedBox(width: context.appSpacing.md),
-        itemBuilder: (context, index) {
-          final collection = collections[index];
-          return SizedBox(
-            width: 210,
-            child: CollectionCard.video(
-              collection: collection,
-              onTap: () => context.pushDesktopVideoCollectionDetail(
-                collectionId: collection.id,
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: SizedBox(
+        height: 172,
+        child: ListView.separated(
+          key: const Key('videos-collections-row'),
+          scrollDirection: Axis.horizontal,
+          itemCount: display.length,
+          separatorBuilder: (context, index) =>
+              SizedBox(width: context.appSpacing.md),
+          itemBuilder: (context, index) {
+            final collection = display[index];
+            return SizedBox(
+              width: 210,
+              child: CollectionCard.video(
+                collection: collection,
+                onTap: () => context.pushDesktopVideoCollectionDetail(
+                  collectionId: collection.id,
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

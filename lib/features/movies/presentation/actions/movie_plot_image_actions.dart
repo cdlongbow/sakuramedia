@@ -1,3 +1,4 @@
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
@@ -32,9 +33,16 @@ Future<void> showMoviePlotImageActionMenu({
     return;
   }
 
+  // 全屏图片宿主画在路由之上，只有宿主自己的底部抽屉能盖住它；移动端统一走
+  // 抽屉，桌面端（详情页未开启全屏）用锚定弹层。
+  final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
   final action = await showAppActionMenu<AppImageActionType>(
     context: context,
     globalPosition: globalPosition,
+    presentation: isMobile
+        ? AppMenuPresentation.bottomDrawer
+        : AppMenuPresentation.popup,
+    drawerKey: isMobile ? kAppImageActionMenuDrawerKey : null,
     items: buildImageActionMenuItems(<AppImageActionDescriptor>[
       if (ProviderScope.containerOf(
         context,

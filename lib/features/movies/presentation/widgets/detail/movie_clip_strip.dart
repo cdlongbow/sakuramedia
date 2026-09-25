@@ -10,6 +10,7 @@ class MovieClipStrip extends StatelessWidget {
     super.key,
     required this.clips,
     required this.isLoading,
+    required this.onOpenClipActions,
     required this.onPlayClip,
     required this.onRenameClip,
     required this.onDeleteClip,
@@ -22,6 +23,11 @@ class MovieClipStrip extends StatelessWidget {
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback? onRetry;
+
+  /// 点击卡片主体：打开切片动作面板（不直接播放）。
+  final ValueChanged<MediaClipDto> onOpenClipActions;
+
+  /// 悬停面板的播放主按钮：直接播放。
   final ValueChanged<MediaClipDto> onPlayClip;
   final ValueChanged<MediaClipDto> onRenameClip;
   final ValueChanged<MediaClipDto> onDeleteClip;
@@ -71,7 +77,7 @@ class MovieClipStrip extends StatelessWidget {
               child: ClipGridCard(
                 key: Key('movie-clip-strip-card-${clip.clipId}'),
                 clip: clip,
-                onTap: () => onPlayClip(clip),
+                onTap: () => onOpenClipActions(clip),
                 onPlay: () => onPlayClip(clip),
                 onRename: () => onRenameClip(clip),
                 onDelete: () => onDeleteClip(clip),

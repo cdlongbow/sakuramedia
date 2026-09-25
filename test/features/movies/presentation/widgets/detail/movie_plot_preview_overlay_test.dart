@@ -4,12 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/actions/movie_plot_image_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
@@ -512,26 +513,16 @@ void main() {
       await _pumpMobilePlotPreview(
         tester,
         initialIndex: 0,
-        onRequestImageMenu: (context, index, globalPosition) async {
-          await showAppActionMenu<AppImageActionType>(
-            context: context,
-            globalPosition: globalPosition,
-            drawerKey: kAppImageActionMenuDrawerKey,
-            presentation: AppMenuPresentation.bottomDrawer,
-            items: buildImageActionMenuItems(const [
-              AppImageActionDescriptor(
-                type: AppImageActionType.searchSimilar,
-                label: '相似图片',
-                icon: Icons.image_search_outlined,
-              ),
-              AppImageActionDescriptor(
-                type: AppImageActionType.saveToLocal,
-                label: '保存到本地',
-                icon: Icons.download_outlined,
-              ),
-            ]),
-          );
-        },
+        onRequestImageMenu:
+            (context, index, globalPosition) =>
+                showMoviePlotImageActionMenu(
+                  context: context,
+                  hostContext: context,
+                  plotImages: _absolutePlotImages,
+                  movieNumber: 'ABC-001',
+                  index: index,
+                  globalPosition: globalPosition,
+                ),
       );
       await _openPlotPreviewFullscreen(tester);
 
@@ -549,8 +540,8 @@ void main() {
         find.byKey(kAppImageActionMenuDrawerKey),
         findsOneWidget,
       );
-      expect(find.text('相似图片'), findsOneWidget);
       expect(find.text('保存到本地'), findsOneWidget);
+      expect(find.text('取消'), findsOneWidget);
 
       final enteringDrawerTop = tester.getTopLeft(
         find.byKey(kAppImageActionMenuDrawerKey),
@@ -571,11 +562,7 @@ void main() {
       );
       expect(drawerTop.dy, greaterThan(overlayTop.dy));
 
-      await tester.tap(
-        find.byKey(
-          const Key('app-image-action-searchSimilar'),
-        ),
-      );
+      await tester.tap(find.text('取消'));
       await tester.pump();
       expect(
         find.byKey(kAppImageActionMenuDrawerKey),
@@ -749,19 +736,22 @@ void main() {
   );
 }
 
-Widget awaitableOverlayApp({required Widget child}) {
+Widget awaitableOverlayApp({required Widget child, AppPlatform? platform}) {
   final sessionStore = SessionStore.inMemory();
   // MaskedImage 走 ref.watch(baseUrlProvider)、MoviePlotThumbnail 经容器
   // read(sessionStoreProvider) 拼 baseUrl——两者都从这份 override 取会话。
+  final app = MaterialApp(
+    theme: sakuraThemeData,
+    builder:
+        (context, content) =>
+            AppImageFullscreenHost(child: content ?? const SizedBox()),
+    home: Scaffold(body: child),
+  );
   return ProviderScope(
     overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-    child: MaterialApp(
-      theme: sakuraThemeData,
-      builder:
-          (context, content) =>
-              AppImageFullscreenHost(child: content ?? const SizedBox()),
-      home: Scaffold(body: child),
-    ),
+    child: platform == null
+        ? app
+        : AppPlatformScope(platform: platform, child: app),
   );
 }
 
@@ -776,6 +766,7 @@ Future<void> _pumpMobilePlotPreview(
   try {
     await tester.pumpWidget(
       awaitableOverlayApp(
+        platform: AppPlatform.mobile,
         child: Builder(
           builder:
               (context) => TextButton(

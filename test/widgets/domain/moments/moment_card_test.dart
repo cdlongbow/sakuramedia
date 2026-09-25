@@ -149,7 +149,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('moment card with a deleted source never overflows the row', (
+  testWidgets('moment card with a deleted source hides play and never overflows', (
     WidgetTester tester,
   ) async {
     await pumpCard(
@@ -161,7 +161,7 @@ void main() {
 
     await hoverCard(tester, 10);
 
-    expect(find.byKey(const Key('moment-card-play-10')), findsOneWidget);
+    expect(find.byKey(const Key('moment-card-play-10')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

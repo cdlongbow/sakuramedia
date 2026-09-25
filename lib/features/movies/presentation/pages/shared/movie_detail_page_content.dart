@@ -77,6 +77,7 @@ class MovieDetailPageContent extends StatelessWidget {
     this.isClipsLoading = false,
     this.clipsErrorMessage,
     this.onRetryClips,
+    this.onOpenClipActions,
     this.onPlayClip,
     this.onRenameClip,
     this.onDeleteClip,
@@ -145,6 +146,11 @@ class MovieDetailPageContent extends StatelessWidget {
   final bool isClipsLoading;
   final String? clipsErrorMessage;
   final VoidCallback? onRetryClips;
+
+  /// 点击切片卡：打开动作面板。
+  final ValueChanged<MediaClipDto>? onOpenClipActions;
+
+  /// 切片卡悬停播放键：直接播放。
   final ValueChanged<MediaClipDto>? onPlayClip;
   final ValueChanged<MediaClipDto>? onRenameClip;
   final ValueChanged<MediaClipDto>? onDeleteClip;
@@ -483,6 +489,7 @@ class MovieDetailPageContent extends StatelessWidget {
               isLoading: isClipsLoading,
               errorMessage: clipsErrorMessage,
               onRetry: onRetryClips,
+              onOpenClipActions: onOpenClipActions ?? (_) {},
               onPlayClip: onPlayClip ?? (_) {},
               onRenameClip: onRenameClip ?? (_) {},
               onDeleteClip: onDeleteClip ?? (_) {},

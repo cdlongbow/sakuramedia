@@ -100,16 +100,19 @@ class MomentCard extends StatelessWidget {
       meta.write(' · 来源已删除');
     }
     final play = onPlay;
+    // 与时刻预览的播放入口对齐：来源媒体已删除（mediaId<=0）时不提供播放，
+    // 避免播到该影片的其它媒体。
+    final canPlay = play != null && item.mediaId > 0;
     return AppCoverHoverInfoRow(
       key: Key('moment-card-info-${item.pointId}'),
       label: item.displayLabel,
       meta: meta.toString(),
-      action: play == null
-          ? null
-          : AppCoverHoverPlayButton(
+      action: canPlay
+          ? AppCoverHoverPlayButton(
               key: Key('moment-card-play-${item.pointId}'),
               onTap: play,
-            ),
+            )
+          : null,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/theme.dart';
@@ -40,11 +41,14 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: OKToast(
-          child: MaterialApp(
-            theme: sakuraMobileThemeData,
-            home: const Scaffold(
-              body: MobileMovieDetailPage(movieNumber: 'ABC-001'),
+        child: AppPlatformScope(
+          platform: AppPlatform.mobile,
+          child: OKToast(
+            child: MaterialApp(
+              theme: sakuraMobileThemeData,
+              home: const Scaffold(
+                body: MobileMovieDetailPage(movieNumber: 'ABC-001'),
+              ),
             ),
           ),
         ),
@@ -65,6 +69,31 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Movie 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tapping a clip opens the actions drawer instead of playing', (
+    WidgetTester tester,
+  ) async {
+    _enqueueMovieDetailResponses(bundle);
+    _enqueueMovieClips(bundle);
+
+    await pumpPage(tester);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-clip-strip-card-1')),
+    );
+    await tester.tap(find.byKey(const Key('movie-clip-strip-card-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('movie-detail-clip-action-play')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-detail-clip-action-rename')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }
@@ -107,5 +136,28 @@ void _enqueueMovieDetailResponses(TestApiBundle bundle) {
     method: 'GET',
     path: '/movies/ABC-001/similar',
     body: const <String, dynamic>{'items': <dynamic>[]},
+  );
+}
+
+void _enqueueMovieClips(TestApiBundle bundle) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/media-clips',
+    body: <String, dynamic>{
+      'items': const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'clip_id': 1,
+          'media_id': 1,
+          'movie_number': 'ABC-001',
+          'start_offset_seconds': 120,
+          'end_offset_seconds': 300,
+          'title': '精彩片段',
+          'duration_seconds': 180,
+          'file_size_bytes': 15728640,
+          'cover_image': null,
+          'stream_url': '/media-clips/1/stream',
+        },
+      ],
+    },
   );
 }

@@ -10,6 +10,8 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_api_prov
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
+import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 
 /// 影片详情页「切片」区块的交互动作集合，供桌面 / 移动两端详情页 `with` 复用，
 /// 避免播放 / 改名 / 删除 / 加入合集这套 handler 在两端逐行重复。
@@ -22,6 +24,25 @@ mixin MovieClipSectionMixin<T extends ConsumerStatefulWidget>
     on ConsumerState<T> {
   /// 子类暴露本页的影片番号（用于取对应 provider 实例）。
   String get movieNumber;
+
+  /// 点击切片卡的入口：移动端弹底部抽屉、桌面端弹居中弹窗，由用户再选择播放 /
+  /// 改名 / 删除 / 加入合集，避免误触即播放。[playMovieClip] 为其中的原始播放动作。
+  Future<void> openMovieClipActions(MediaClipDto clip) {
+    return showAppAdaptiveModal<void>(
+      context: context,
+      modalKey: const Key('movie-detail-clip-actions'),
+      mobileMaxHeightFactor: 0.62,
+      builder:
+          (_) => ClipActionsPanel(
+            clip: clip,
+            keyPrefix: 'movie-detail-clip',
+            onPlay: () => playMovieClip(clip),
+            onAddToCollection: () => addMovieClipToCollection(clip),
+            onRename: () => renameMovieClip(clip),
+            onDelete: () => deleteMovieClip(clip),
+          ),
+    );
+  }
 
   Future<void> playMovieClip(MediaClipDto clip) {
     return launchClipPlayback(

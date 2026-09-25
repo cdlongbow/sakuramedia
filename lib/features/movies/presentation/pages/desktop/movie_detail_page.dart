@@ -258,7 +258,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             onRetryClips: () => ref
                 .read(movieClipsProvider(widget.movieNumber).notifier)
                 .retry(),
-            onPlayClip: playMovieClip,
+            onPlayClip: openMovieClipActions,
             onRenameClip: renameMovieClip,
             onDeleteClip: deleteMovieClip,
             onAddClipToCollection: addMovieClipToCollection,

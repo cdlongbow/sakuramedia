@@ -104,6 +104,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('tapping a clip opens the actions dialog instead of playing', (
+    WidgetTester tester,
+  ) async {
+    _enqueueMovieDetailResponses(bundle);
+    _enqueueMovieClips(bundle);
+
+    await pumpPage(tester);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-clip-strip-card-1')),
+    );
+    await tester.tap(find.byKey(const Key('movie-clip-strip-card-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('movie-detail-clip-action-play')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-detail-clip-action-rename')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('does not expose a playback delivery switch', (
     WidgetTester tester,
   ) async {
@@ -172,5 +197,28 @@ void _enqueueMovieDetailResponses(
     method: 'GET',
     path: '/movies/ABC-001/similar',
     body: const <String, dynamic>{'items': <dynamic>[]},
+  );
+}
+
+void _enqueueMovieClips(TestApiBundle bundle) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/media-clips',
+    body: <String, dynamic>{
+      'items': const <Map<String, dynamic>>[
+        <String, dynamic>{
+          'clip_id': 1,
+          'media_id': 1,
+          'movie_number': 'ABC-001',
+          'start_offset_seconds': 120,
+          'end_offset_seconds': 300,
+          'title': '精彩片段',
+          'duration_seconds': 180,
+          'file_size_bytes': 15728640,
+          'cover_image': null,
+          'stream_url': '/media-clips/1/stream',
+        },
+      ],
+    },
   );
 }

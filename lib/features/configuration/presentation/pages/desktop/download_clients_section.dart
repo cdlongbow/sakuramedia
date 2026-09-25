@@ -492,7 +492,6 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     return AppDesktopDialog(
-      backgroundColor: Colors.white,
       insetPadding: EdgeInsets.symmetric(
         horizontal: context.appLayoutTokens.dialogInsetPadding,
         vertical: context.appLayoutTokens.dialogInsetPadding,

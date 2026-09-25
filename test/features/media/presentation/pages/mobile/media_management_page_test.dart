@@ -157,6 +157,116 @@ void main() {
     );
   });
 
+  testWidgets('select button enters selection mode and toggles rows', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: [_mediaItemJson(1)]),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-media-management-selection-header')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-media-management-enter-selection-button')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('mobile-media-management-row-1')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-media-management-bottom-selection-count')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-media-management-batch-delete-button')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-exit-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-media-management-enter-selection-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-media-management-batch-delete-button')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('opens the movie actions drawer from a JAV media row', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: [_mediaItemJson(1)]),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(find.byKey(const Key('mobile-media-management-row-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('media-row-movie-actions-drawer')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-row-movie-actions-play')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('opens the video actions sheet from a PornBox media row', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, kind: 'video', videoItemId: 101)],
+      ),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(find.byKey(const Key('mobile-media-management-row-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('mobile-video-actions-sheet')), findsOneWidget);
+    expect(find.byKey(const Key('mobile-video-action-play')), findsOneWidget);
+    expect(
+      find.byKey(const Key('mobile-video-action-add-to-collection')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('mobile-video-action-delete')), findsNothing);
+  });
+
   testWidgets('deletes a media item from its mobile card', (tester) async {
     adapter.enqueueJson(
       method: 'GET',
@@ -488,12 +598,14 @@ Map<String, dynamic> _mediaPage({required List<Map<String, dynamic>> items}) {
 Map<String, dynamic> _mediaItemJson(
   int id, {
   String thumbnailGenerationState = 'succeeded',
+  String kind = 'jav',
+  int? videoItemId,
 }) {
   return <String, dynamic>{
     'id': id,
-    'kind': 'jav',
-    'movie_number': 'ABC-$id',
-    'video_item_id': null,
+    'kind': kind,
+    'movie_number': kind == 'jav' ? 'ABC-$id' : null,
+    'video_item_id': videoItemId,
     'title': 'Movie $id',
     'cover_image': null,
     'thin_cover_image': null,

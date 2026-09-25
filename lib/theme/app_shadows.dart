@@ -17,6 +17,12 @@ class AppShadows extends ThemeExtension<AppShadows> {
       panelBlur = 24,
       offsetY = 8;
 
+  const AppShadows.dark()
+    : color = const Color(0x40000000),
+      cardBlur = 16,
+      panelBlur = 24,
+      offsetY = 8;
+
   final Color color;
   final double cardBlur;
   final double panelBlur;

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/theme/app_theme_color.dart';
 
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
@@ -9,6 +10,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.surfaceMuted,
     required this.noticeSurface,
     required this.desktopSidebarGlassTint,
+    required this.windowsSidebarGlassTint,
     required this.desktopSidebarGlassHover,
     required this.desktopSidebarGlassActive,
     required this.sidebarBackground,
@@ -53,6 +55,7 @@ class AppColors extends ThemeExtension<AppColors> {
       surfaceMuted = const Color(0xFFF1F1F1),
       noticeSurface = const Color(0xFFF3F3F3),
       desktopSidebarGlassTint = const Color(0x4CEFEFEF),
+      windowsSidebarGlassTint = const Color(0xEBEFEFEF),
       desktopSidebarGlassHover = const Color(0x80FFFFFF),
       desktopSidebarGlassActive = const Color(0x99FFFFFF),
       sidebarBackground = const Color(0xFFD7D9D9),
@@ -89,16 +92,76 @@ class AppColors extends ThemeExtension<AppColors> {
       movieDetailHeatIcon = const Color(0xFFD84C57),
       movieDetailWantWatchCountIcon = const Color(0xFFC65A74);
 
+  /// 深色中性规格；品牌槽位先用酒红暗色占位，由 [of] 按主题色覆盖。
+  const AppColors._darkNeutral()
+    : surfacePage = const Color(0xFF121212),
+      surfaceCard = const Color(0xFF1E1E1E),
+      surfaceElevated = const Color(0xFF262626),
+      surfaceMuted = const Color(0xFF2A2A2A),
+      noticeSurface = const Color(0xFF232323),
+      desktopSidebarGlassTint = const Color(0x661E1E1E),
+      windowsSidebarGlassTint = const Color(0xEB1E1E1E),
+      desktopSidebarGlassHover = const Color(0x14FFFFFF),
+      desktopSidebarGlassActive = const Color(0x1FFFFFFF),
+      sidebarBackground = const Color(0xFF1A1A1A),
+      sidebarHoverBackground = const Color(0x14FFFFFF),
+      sidebarActiveBackground = const Color(0x1FFFFFFF),
+      subscriptionHeartIcon = const Color(0xFFE06A75),
+      borderSubtle = const Color(0x1FFFFFFF),
+      borderStrong = const Color(0x2EFFFFFF),
+      divider = const Color(0x14FFFFFF),
+      selectionSurface = const Color(0xFF3A2422),
+      selectionBorder = const Color(0xFFE9A29B),
+      infoSurface = const Color(0xFF14263D),
+      warningSurface = const Color(0xFF3A2A15),
+      errorSurface = const Color(0xFF3A1D1B),
+      errorAccentForeground = const Color(0xFFFF6B5E),
+      successSurface = const Color(0xFF122E1F),
+      mediaOverlaySoft = const Color(0x14000000),
+      mediaOverlayStrong = const Color(0x85000000),
+      mediaMaskOverlay = const Color(0xE6000000),
+      movieCardSubscribedBadgeBackground = const Color(0xFFF97316),
+      movieCardPlayableBadgeBackground = const Color(0xFF1677FF),
+      movieDetailPlayableBadgeBackground = const Color(0xFF1677FF),
+      movieDetailSelectedPlotBorder = const Color(0xFFE9A29B),
+      movieDetailEmptyBackground = const Color(0xFF2A2725),
+      movieDetailInvalidMediaBackground = const Color(0xFF3A2320),
+      movieDetailInvalidMediaForeground = const Color(0xFFF0A79E),
+      movieDetailHeroBackgroundStart = const Color(0xFF000000),
+      movieDetailHeroBackgroundEnd = const Color(0xFF000000),
+      movieDetailReleaseDateIcon = const Color(0xFF58A895),
+      movieDetailDurationIcon = const Color(0xFFD19045),
+      movieDetailScoreIcon = const Color(0xFFE2B34A),
+      movieDetailScoreCountIcon = const Color(0xFF6E9FD8),
+      movieDetailCommentCountIcon = const Color(0xFFA98BD9),
+      movieDetailHeatIcon = const Color(0xFFE87881),
+      movieDetailWantWatchCountIcon = const Color(0xFFDC8298);
+
+  static AppColors of({
+    required AppThemeColor themeColor,
+    required Brightness brightness,
+  }) {
+    final brand = themeColor.forBrightness(brightness);
+    final base = brightness == Brightness.dark
+        ? const AppColors._darkNeutral()
+        : const AppColors.defaults();
+    return base.copyWith(
+      selectionSurface: brand.selectionSurface,
+      selectionBorder: brand.selectionBorder,
+      movieDetailSelectedPlotBorder: brand.selectedPlotBorder,
+    );
+  }
+
   final Color surfacePage;
   final Color surfaceCard;
   final Color surfaceElevated;
   final Color surfaceMuted;
   final Color noticeSurface;
   final Color desktopSidebarGlassTint;
-  // Windows blur is more transparent than macOS vibrancy; keep the tint
-  // denser so background windows don't compete with navigation labels.
-  Color get windowsSidebarGlassTint =>
-      desktopSidebarGlassTint.withValues(alpha: 0.92);
+
+  /// Windows 的系统模糊比 macOS vibrancy 更透明，tint 需要更实，
+  /// 避免背景窗口内容干扰导航文字。
+  final Color windowsSidebarGlassTint;
   final Color desktopSidebarGlassHover;
   final Color desktopSidebarGlassActive;
   final Color sidebarBackground;
@@ -143,6 +206,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? surfaceMuted,
     Color? noticeSurface,
     Color? desktopSidebarGlassTint,
+    Color? windowsSidebarGlassTint,
     Color? desktopSidebarGlassHover,
     Color? desktopSidebarGlassActive,
     Color? sidebarBackground,
@@ -187,6 +251,8 @@ class AppColors extends ThemeExtension<AppColors> {
       noticeSurface: noticeSurface ?? this.noticeSurface,
       desktopSidebarGlassTint:
           desktopSidebarGlassTint ?? this.desktopSidebarGlassTint,
+      windowsSidebarGlassTint:
+          windowsSidebarGlassTint ?? this.windowsSidebarGlassTint,
       desktopSidebarGlassHover:
           desktopSidebarGlassHover ?? this.desktopSidebarGlassHover,
       desktopSidebarGlassActive:
@@ -265,6 +331,12 @@ class AppColors extends ThemeExtension<AppColors> {
           Color.lerp(
             desktopSidebarGlassTint,
             other.desktopSidebarGlassTint,
+            t,
+          )!,
+      windowsSidebarGlassTint:
+          Color.lerp(
+            windowsSidebarGlassTint,
+            other.windowsSidebarGlassTint,
             t,
           )!,
       desktopSidebarGlassHover:
@@ -404,6 +476,16 @@ class AppColors extends ThemeExtension<AppColors> {
 extension AppColorsThemeDataX on ThemeData {
   AppColors get appColors =>
       extension<AppColors>() ?? const AppColors.defaults();
+}
+
+/// 在当前 alpha 基础上按 [factor] 再淡化，得到「更弱」的颜色。
+///
+/// 对 alpha 为 1 的实色 token 等价于 `withValues(alpha: factor)`；
+/// 对深色下本身就是半透明白的描边/分隔 token（[AppColors.borderSubtle] 等），
+/// 使用 `withValues(alpha: factor)` 会把透明度「替换」成 factor 而反向变亮，
+/// 这里改为相乘，保证深浅色下都是「更弱」的语义。
+extension AppColorFadeX on Color {
+  Color fadedBy(double factor) => withValues(alpha: a * factor);
 }
 
 extension AppColorsBuildContextX on BuildContext {

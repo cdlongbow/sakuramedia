@@ -309,6 +309,49 @@ void main() {
     expect(sidebarDivider.dy, topbarDivider.dy);
   });
 
+  testWidgets('desktop glass sidebar lines stay subtle in dark mode', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      _enqueueOverviewResponses(bundle);
+      await _pumpDesktopApp(
+        tester,
+        bundle: bundle,
+        sessionStore: sessionStore,
+        statusApi: bundle.statusApi,
+        moviesApi: bundle.moviesApi,
+        theme: buildSakuraDesktopThemeData(brightness: Brightness.dark),
+      );
+      await tester.pumpAndSettle();
+
+      final sidebar = tester.widget<AnimatedContainer>(
+        find.byKey(const Key('desktop-shell-sidebar')),
+      );
+      final borderColor =
+          ((sidebar.decoration! as BoxDecoration).border! as Border)
+              .right
+              .color;
+      expect(borderColor.toARGB32(), 0x15FFFFFF);
+
+      final headerDivider = tester.widget<Divider>(
+        find.byKey(const Key('sidebar-header-divider')),
+      );
+      expect(headerDivider.color!.toARGB32(), 0x15FFFFFF);
+      expect(headerDivider.color!.a, lessThan(0.12));
+
+      final topbarDivider = tester.widget<Divider>(
+        find.byKey(const Key('topbar-header-divider')),
+      );
+      expect(topbarDivider.color, const Color(0x1FFFFFFF));
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('desktop sidebar does not overflow while expanding', (
     WidgetTester tester,
   ) async {
@@ -795,13 +838,17 @@ Future<void> _pumpDesktopApp(
   required SessionStore sessionStore,
   required StatusApi statusApi,
   required MoviesApi moviesApi,
+  ThemeData? theme,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: theme ?? sakuraThemeData,
+          routerConfig: router,
+        ),
       ),
     ),
   );

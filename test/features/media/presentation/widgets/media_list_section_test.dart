@@ -47,6 +47,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
+    var selectionMode = false;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -57,12 +58,17 @@ void main() {
         child: MaterialApp(
           theme: sakuraThemeData,
           home: Scaffold(
-            body: MediaListSection(
-              scrollController: scrollController,
-              isDeleting: false,
-              isTransferring: false,
-              onBatchDelete: _noOp,
-              onBatchTransfer: _noOp,
+            body: StatefulBuilder(
+              builder: (context, setState) => MediaListSection(
+                scrollController: scrollController,
+                isDeleting: false,
+                isTransferring: false,
+                onBatchDelete: _noOp,
+                onBatchTransfer: _noOp,
+                selectionMode: selectionMode,
+                onEnterSelection: () => setState(() => selectionMode = true),
+                onExitSelection: () => setState(() => selectionMode = false),
+              ),
             ),
           ),
         ),
@@ -87,9 +93,29 @@ void main() {
     );
     expect(find.byKey(const Key('media-management-row-120')), findsNothing);
 
+    // 普通态点行：JAV 项弹影片操作弹窗，不进入勾选。
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-row-movie-actions-dialog')),
+      findsOneWidget,
+    );
+    expect(find.text('共 120 条 · 已选 1 项'), findsNothing);
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+
+    // 选择入口进入选择模式后，点行才是勾选。
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('media-management-row-1')));
     await tester.pump();
     expect(find.text('共 120 条 · 已选 1 项'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('media-management-exit-selection-button')),
+    );
+    await tester.pumpAndSettle();
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MediaListSection)),

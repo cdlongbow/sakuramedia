@@ -21,6 +21,8 @@ class MainFlutterWindow: NSWindow {
 
   private let flutterViewController = FlutterViewController()
   private var externalPlayerChannel: FlutterMethodChannel?
+  private var windowAppearanceChannel: FlutterMethodChannel?
+  private var visualEffectView: PassthroughVisualEffectView?
 
   override func awakeFromNib() {
     let windowFrame = self.frame
@@ -39,11 +41,42 @@ class MainFlutterWindow: NSWindow {
     visualEffectView.blendingMode = .behindWindow
     visualEffectView.state = .active
     wrapperView.addSubview(visualEffectView, positioned: .below, relativeTo: nil)
+    self.visualEffectView = visualEffectView
 
     RegisterGeneratedPlugins(registry: flutterViewController)
     configureExternalPlayerChannel()
+    configureWindowAppearanceChannel()
 
     super.awakeFromNib()
+  }
+
+  private func configureWindowAppearanceChannel() {
+    let channel = FlutterMethodChannel(
+      name: "sakuramedia/window_appearance",
+      binaryMessenger: flutterViewController.engine.binaryMessenger
+    )
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "setAppearance" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      guard
+        let arguments = call.arguments as? [String: Any],
+        let dark = arguments["dark"] as? Bool
+      else {
+        result(
+          FlutterError(code: "invalid_arguments", message: "缺少 dark 参数", details: nil)
+        )
+        return
+      }
+      // 毛玻璃跟随应用内主题，而不是系统外观；否则浅色应用 + 深色系统时
+      // 侧栏玻璃会与 Flutter 内容脱节。
+      self?.visualEffectView?.appearance = NSAppearance(
+        named: dark ? .darkAqua : .aqua
+      )
+      result(nil)
+    }
+    windowAppearanceChannel = channel
   }
 
   private func configureExternalPlayerChannel() {

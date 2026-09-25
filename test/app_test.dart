@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/app/app.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/appearance_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,6 +35,7 @@ const List<String> _mobileSmokeRoutes = <String>[
   mobileSettingsPluginsPath,
   mobileSettingsSystemMaintenancePath,
   mobileSettingsExternalPlayerPath,
+  mobileSettingsAppearancePath,
 ];
 
 /// 同上，桌面侧。桌面是一等公民，覆盖面比移动宽。
@@ -130,6 +132,27 @@ void main() {
       materialApp.theme?.appTextScale.s14,
       sakuraDesktopThemeData.appTextScale.s14,
     );
+  });
+
+  testWidgets('MyApp applies the stored dark appearance at startup', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MyApp(
+        platformOverride: AppPlatform.desktop,
+        appearanceStore: InMemoryAppearanceStore(
+          const AppearanceSettings(
+            brightness: Brightness.dark,
+            themeColor: AppThemeColor.burgundy,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    expect(materialApp.themeMode, ThemeMode.dark);
+    expect(materialApp.darkTheme?.appColors.surfacePage, const Color(0xFF121212));
   });
 
   testWidgets('移动主要路由在真实组合根下都能建起来（provider 接线冒烟）', (WidgetTester tester) async {

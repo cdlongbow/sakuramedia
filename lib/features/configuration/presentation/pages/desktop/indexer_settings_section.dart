@@ -598,7 +598,6 @@ class _IndexerEntryDialogState extends ConsumerState<IndexerEntryDialog> {
     final spacing = context.appSpacing;
 
     return AppDesktopDialog(
-      backgroundColor: Colors.white,
       insetPadding: EdgeInsets.symmetric(
         horizontal: context.appLayoutTokens.dialogInsetPadding,
         vertical: context.appLayoutTokens.dialogInsetPadding,

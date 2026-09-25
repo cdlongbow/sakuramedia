@@ -230,6 +230,19 @@ class AppTextPalette extends ThemeExtension<AppTextPalette> {
       error = const Color(0xFFB42318),
       success = const Color(0xFF027A48);
 
+  /// 深色文字规格；`accent` 先用酒红暗色占位，由主题构建按主题色覆盖。
+  const AppTextPalette.dark()
+    : primary = const Color(0xFFECE6E4),
+      secondary = const Color(0xA3FFFFFF),
+      tertiary = const Color(0x7AFFFFFF),
+      muted = const Color(0x5CFFFFFF),
+      accent = const Color(0xFFE9A29B),
+      onMedia = const Color(0xFFFFFFFF),
+      info = const Color(0xFF84ADFF),
+      warning = const Color(0xFFFDB022),
+      error = const Color(0xFFFF7A70),
+      success = const Color(0xFF4CD08A);
+
   final Color primary;
   final Color secondary;
   final Color tertiary;

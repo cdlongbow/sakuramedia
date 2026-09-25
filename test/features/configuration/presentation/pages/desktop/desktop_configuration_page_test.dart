@@ -51,6 +51,7 @@ void main() {
         // 媒体维护 / 媒体管理已迁到侧边栏「管理 > 媒体管理」独立页，不再是设置分类。
         const categoryKeys = <String>[
           'configuration-tab-account-security',
+          'configuration-tab-appearance',
           'configuration-tab-media-libraries',
           'configuration-tab-downloads',
           'configuration-tab-indexers',

@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ProviderObserver, ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/appearance_store.dart';
+import 'package:sakuramedia/app/providers/appearance_providers.dart';
+import 'package:sakuramedia/app/window_bootstrap_desktop.dart'
+    show applyDesktopWindowBrightness;
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -34,11 +39,15 @@ class MyApp extends StatefulWidget {
     super.key,
     this.platformOverride,
     this.sessionStore,
+    this.appearanceStore,
     this.observers,
   });
 
   final AppPlatform? platformOverride;
   final SessionStore? sessionStore;
+
+  /// 外观偏好存储；生产传 SharedPreferences 实现，测试/预览默认内存实现。
+  final AppearanceStore? appearanceStore;
 
   /// 挂到组合根 [ProviderScope] 上的观察者。
   ///
@@ -54,6 +63,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late AppPlatform _platform;
   late SessionStore _activeSessionStore;
+  late AppearanceStore _activeAppearanceStore;
   late GoRouter _router;
   late bool _ownsSessionStore;
 
@@ -86,6 +96,8 @@ class _MyAppState extends State<MyApp> {
     _platform = resolveAppPlatform(override: widget.platformOverride);
     _ownsSessionStore = widget.sessionStore == null;
     _activeSessionStore = widget.sessionStore ?? SessionStore.inMemory();
+    _activeAppearanceStore =
+        widget.appearanceStore ?? InMemoryAppearanceStore();
     _router = buildAppRouter(_platform, _activeSessionStore);
   }
 
@@ -102,46 +114,86 @@ class _MyAppState extends State<MyApp> {
     //
     // 各 API / Store / 广播源都在各自 provider 里原生构造（见
     // `presentation/providers/` 与 `core/*/providers/`），这里只注入
-    // `sessionStoreProvider` 是唯一组合根 override：会话是应用输入（main 传入
-    // 持久化实例、测试传 inMemory），用 value override 接进容器。
+    // `sessionStoreProvider` 与 `appearanceStoreProvider` 两个组合根 override：
+    // 会话与外观偏好是应用输入（main 传入持久化实例、测试传 inMemory），
+    // 用 value override 接进容器。
     //
     // key 绑定会话实例：`didUpdateWidget` 换 sessionStore 时整个容器随之
     // 重建，等价于旧 MultiProvider 时代的全量重挂。
     return ProviderScope(
       key: ObjectKey(_activeSessionStore),
-      overrides: [sessionStoreProvider.overrideWithValue(_activeSessionStore)],
+      overrides: [
+        sessionStoreProvider.overrideWithValue(_activeSessionStore),
+        appearanceStoreProvider.overrideWithValue(_activeAppearanceStore),
+      ],
       observers: widget.observers,
       child: AppPlatformScope(
         platform: _platform,
-        child: OKToast(
-          textStyle: kAppToastTextStyle,
-          backgroundColor: kAppToastBackgroundColor,
-          child: MaterialApp.router(
-            title: 'SakuraMedia',
-            debugShowCheckedModeBanner: false,
-            localizationsDelegates: GlobalMaterialLocalizations.delegates,
-            supportedLocales: const <Locale>[Locale('zh', 'CN')],
-            theme: _platform == AppPlatform.mobile
-                ? sakuraMobileThemeData
-                : sakuraDesktopThemeData,
-            routerConfig: _router,
-            builder: (context, child) {
-              final content = AppImageFullscreenHost(
-                child: ScrollConfiguration(
-                  behavior: const MaterialScrollBehavior().copyWith(
-                    dragDevices: kAppScrollDragDevices,
-                  ),
-                  child: child ?? const SizedBox.shrink(),
-                ),
-              );
-              final framedContent = usesAppWindowsCaption
-                  ? AppWindowsFrame(child: content)
-                  : content;
-              // ignore: deprecated_member_use
-              return MaterialUiCompatibilityBridge(child: framedContent);
-            },
-          ),
-        ),
+        child: _SakuraApp(platform: _platform, router: _router),
+      ),
+    );
+  }
+}
+
+/// 主题装配层：读外观偏好，构建明暗主题并同步平台窗口外观。
+class _SakuraApp extends ConsumerWidget {
+  const _SakuraApp({required this.platform, required this.router});
+
+  final AppPlatform platform;
+  final GoRouter router;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final appearance = ref.watch(appearanceProvider);
+    ref.listen(appearanceProvider, (previous, next) {
+      if (previous?.brightness != next.brightness) {
+        unawaited(applyDesktopWindowBrightness(next.brightness));
+      }
+    });
+
+    final themeColor = appearance.themeColor;
+    final lightTheme = platform == AppPlatform.mobile
+        ? buildSakuraMobileThemeData(themeColor: themeColor)
+        : buildSakuraDesktopThemeData(themeColor: themeColor);
+    final darkTheme = platform == AppPlatform.mobile
+        ? buildSakuraMobileThemeData(
+            themeColor: themeColor,
+            brightness: Brightness.dark,
+          )
+        : buildSakuraDesktopThemeData(
+            themeColor: themeColor,
+            brightness: Brightness.dark,
+          );
+
+    return OKToast(
+      textStyle: appToastTextStyleFor(appearance.brightness),
+      backgroundColor: appToastBackgroundColorFor(appearance.brightness),
+      child: MaterialApp.router(
+        title: 'SakuraMedia',
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const <Locale>[Locale('zh', 'CN')],
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: appearance.brightness == Brightness.dark
+            ? ThemeMode.dark
+            : ThemeMode.light,
+        routerConfig: router,
+        builder: (context, child) {
+          final content = AppImageFullscreenHost(
+            child: ScrollConfiguration(
+              behavior: const MaterialScrollBehavior().copyWith(
+                dragDevices: kAppScrollDragDevices,
+              ),
+              child: child ?? const SizedBox.shrink(),
+            ),
+          );
+          final framedContent = usesAppWindowsCaption
+              ? AppWindowsFrame(child: content)
+              : content;
+          // ignore: deprecated_member_use
+          return MaterialUiCompatibilityBridge(child: framedContent);
+        },
       ),
     );
   }

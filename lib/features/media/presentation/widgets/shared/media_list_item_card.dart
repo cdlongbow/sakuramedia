@@ -28,7 +28,6 @@ class MediaListItemCard extends StatelessWidget {
     this.selected = false,
     this.onTap,
     this.onLongPress,
-    this.onOpenMovieDetail,
     this.onDelete,
     this.isDeleting = false,
     this.canDelete = true,
@@ -48,8 +47,6 @@ class MediaListItemCard extends StatelessWidget {
   final bool selected;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-  final void Function(BuildContext context, String movieNumber)?
-  onOpenMovieDetail;
   final VoidCallback? onDelete;
   final bool isDeleting;
   final bool canDelete;
@@ -85,7 +82,6 @@ class MediaListItemCard extends StatelessWidget {
         mobile: mobile,
         width: width,
         height: height,
-        onOpenMovieDetail: onOpenMovieDetail,
       ),
       body: _MediaListItemBody(
         keyPrefix: keyPrefix,
@@ -268,7 +264,6 @@ class _MediaListItemCover extends StatelessWidget {
     required this.mobile,
     required this.width,
     required this.height,
-    this.onOpenMovieDetail,
   });
 
   final String keyPrefix;
@@ -276,8 +271,6 @@ class _MediaListItemCover extends StatelessWidget {
   final bool mobile;
   final double width;
   final double height;
-  final void Function(BuildContext context, String movieNumber)?
-  onOpenMovieDetail;
 
   /// 桌面用宽图（16:9），移动用窄图。
   String? get _coverUrl => mobile ? item.preferredCoverUrl : item.wideCoverUrl;
@@ -292,7 +285,7 @@ class _MediaListItemCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = MediaCoverThumbnail(
+    return MediaCoverThumbnail(
       url: _coverUrl,
       width: width,
       height: height,
@@ -300,21 +293,6 @@ class _MediaListItemCover extends StatelessWidget {
       placeholderKey: Key('$keyPrefix-cover-placeholder-${item.id}'),
       imageKey: Key('$keyPrefix-cover-${item.id}'),
       placeholderBackground: context.appColors.surfaceMuted,
-    );
-    final movieNumber = item.movieNumber?.trim();
-    if (!item.isJav || movieNumber == null || movieNumber.isEmpty) {
-      return image;
-    }
-    final openMovieDetail = onOpenMovieDetail;
-    if (openMovieDetail == null) return image;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
-        key: Key('$keyPrefix-cover-tap-${item.id}'),
-        onTap: () => openMovieDetail(context, movieNumber),
-        child: image,
-      ),
     );
   }
 }

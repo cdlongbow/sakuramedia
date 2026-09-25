@@ -708,7 +708,7 @@ class _MediaPreviewSectionDivider extends StatelessWidget {
     return Divider(
       height: 1,
       thickness: 1,
-      color: context.appColors.borderSubtle.withValues(alpha: 0.72),
+      color: context.appColors.borderSubtle.fadedBy(0.72),
     );
   }
 }

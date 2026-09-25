@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/configuration/presentation/pages/desktop/do
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/indexer_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/media_libraries_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/system_maintenance_section.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/shared/appearance_settings_content.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/widgets/external_player_settings_content.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/blacklisted_movies_section.dart';
@@ -43,6 +44,14 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
           icon: Icons.shield_outlined,
         ),
         builder: (active) => AccountSecuritySection(active: active),
+      ),
+      _ConfigurationTab(
+        category: const _ConfigurationCategory(
+          itemKey: Key('configuration-tab-appearance'),
+          label: '外观',
+          icon: Icons.palette_outlined,
+        ),
+        builder: (active) => const AppearanceSettingsContent(),
       ),
       _ConfigurationTab(
         category: const _ConfigurationCategory(

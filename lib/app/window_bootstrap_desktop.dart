@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
+import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/appearance_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -13,12 +15,26 @@ const String _prefsWidthKey = 'desktop_window:width';
 const String _prefsHeightKey = 'desktop_window:height';
 const String _prefsMaximizedKey = 'desktop_window:maximized';
 
+const MethodChannel _windowEffectsChannel = MethodChannel(
+  'sakuramedia/window_effects',
+);
+const MethodChannel _windowAppearanceChannel = MethodChannel(
+  'sakuramedia/window_appearance',
+);
+
+int? _windowsBuildNumber;
+
 Future<void> bootstrapDesktopWindow() async {
   await windowManager.ensureInitialized();
   final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
   final isWindows = defaultTargetPlatform == TargetPlatform.windows;
 
   final restored = await _readPersistedWindowState();
+  final appearance = await _readPersistedAppearance();
+  final initialColors = AppColors.of(
+    themeColor: appearance.themeColor,
+    brightness: appearance.brightness,
+  );
 
   final windowOptions = WindowOptions(
     size: restored.size,
@@ -26,7 +42,7 @@ Future<void> bootstrapDesktopWindow() async {
     center: true,
     backgroundColor: isMacOS || isWindows
         ? Colors.transparent
-        : const AppColors.defaults().surfaceCard,
+        : initialColors.surfaceCard,
     skipTaskbar: false,
     titleBarStyle: isMacOS || isWindows
         ? TitleBarStyle.hidden
@@ -42,20 +58,15 @@ Future<void> bootstrapDesktopWindow() async {
       // after switching modes (setHasShadow is a no-op on framed Windows).
       await windowManager.setHasShadow(true);
       await acrylic.Window.initialize();
-      final windowsBuild = await const MethodChannel(
-        'sakuramedia/window_effects',
-      ).invokeMethod<int>('getWindowsBuildNumber');
+      _windowsBuildNumber = await _windowEffectsChannel.invokeMethod<int>(
+        'getWindowsBuildNumber',
+      );
       // Apply after window_manager's frame setup: Acrylic extends the DWM
       // backdrop across the client area, visible through the sidebar only.
-      await acrylic.Window.setEffect(
-        // Acrylic stalls native window dragging on Windows 10. Aero keeps
-        // the sidebar blurred without that compositor performance issue.
-        effect: (windowsBuild ?? 0) >= 22000
-            ? acrylic.WindowEffect.acrylic
-            : acrylic.WindowEffect.aero,
-        color: const AppColors.defaults().desktopSidebarGlassTint,
-        dark: false,
-      );
+      await _applyWindowsBackdrop(appearance.brightness);
+    }
+    if (isMacOS) {
+      await _applyMacAppearance(appearance.brightness);
     }
     if (restored.maximized) {
       await windowManager.maximize();
@@ -67,10 +78,70 @@ Future<void> bootstrapDesktopWindow() async {
   windowManager.addListener(_DesktopWindowStatePersistor());
 }
 
+/// 切换明暗时同步桌面窗口外观（Windows 亚克力参数 / macOS 毛玻璃外观 / 窗口底色）。
+Future<void> applyDesktopWindowBrightness(Brightness brightness) async {
+  if (resolveAppPlatform() != AppPlatform.desktop) {
+    return;
+  }
+  try {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.windows:
+        await _applyWindowsBackdrop(brightness);
+      case TargetPlatform.macOS:
+        await _applyMacAppearance(brightness);
+      case _:
+        await windowManager.setBackgroundColor(
+          AppColors.of(
+            themeColor: AppThemeColor.burgundy,
+            brightness: brightness,
+          ).surfaceCard,
+        );
+    }
+  } catch (_) {
+    // 原生外观更新失败不影响应用内主题切换。
+  }
+}
+
+Future<void> _applyWindowsBackdrop(Brightness brightness) async {
+  final colors = AppColors.of(
+    themeColor: AppThemeColor.burgundy,
+    brightness: brightness,
+  );
+  await acrylic.Window.setEffect(
+    // Acrylic stalls native window dragging on Windows 10. Aero keeps
+    // the sidebar blurred without that compositor performance issue.
+    effect: (_windowsBuildNumber ?? 0) >= 22000
+        ? acrylic.WindowEffect.acrylic
+        : acrylic.WindowEffect.aero,
+    color: colors.windowsSidebarGlassTint,
+    dark: brightness == Brightness.dark,
+  );
+}
+
+Future<void> _applyMacAppearance(Brightness brightness) async {
+  try {
+    await _windowAppearanceChannel.invokeMethod<void>(
+      'setAppearance',
+      <String, Object?>{'dark': brightness == Brightness.dark},
+    );
+  } catch (_) {
+    // 旧版本原生侧没有该通道时保持系统外观。
+  }
+}
+
 class _PersistedWindowState {
   const _PersistedWindowState({required this.size, required this.maximized});
   final Size size;
   final bool maximized;
+}
+
+Future<AppearanceSettings> _readPersistedAppearance() async {
+  try {
+    final preferences = await SharedPreferences.getInstance();
+    return SharedPreferencesAppearanceStore(preferences).read();
+  } catch (_) {
+    return AppearanceSettings.defaults;
+  }
 }
 
 Future<_PersistedWindowState> _readPersistedWindowState() async {

@@ -10,6 +10,7 @@ import 'package:sakuramedia/theme/app_radius.dart';
 import 'package:sakuramedia/theme/app_shadows.dart';
 import 'package:sakuramedia/theme/app_sidebar_tokens.dart';
 import 'package:sakuramedia/theme/app_spacing.dart';
+import 'package:sakuramedia/theme/app_theme_color.dart';
 import 'package:sakuramedia/theme/app_typography.dart';
 
 export 'package:sakuramedia/theme/app_component_tokens.dart';
@@ -23,6 +24,7 @@ export 'package:sakuramedia/theme/app_radius.dart';
 export 'package:sakuramedia/theme/app_shadows.dart';
 export 'package:sakuramedia/theme/app_sidebar_tokens.dart';
 export 'package:sakuramedia/theme/app_spacing.dart';
+export 'package:sakuramedia/theme/app_theme_color.dart';
 export 'package:sakuramedia/theme/app_typography.dart';
 export 'package:sakuramedia/widgets/base/typography/app_text.dart';
 
@@ -40,41 +42,82 @@ const TextStyle kAppToastTextStyle = TextStyle(
 final Color kAppToastBackgroundColor = AppTextPalette.defaults().primary
     .withValues(alpha: 0xDD / 0xFF);
 
+/// 深色模式下 toast 保持「深底浅字」，底色抬到层级面而不是纯黑。
+TextStyle appToastTextStyleFor(Brightness brightness) {
+  return brightness == Brightness.dark
+      ? const TextStyle(fontSize: 15, color: Color(0xFFF5F3F2))
+      : kAppToastTextStyle;
+}
+
+Color appToastBackgroundColorFor(Brightness brightness) {
+  return brightness == Brightness.dark
+      ? const Color(0xFF3A3A3A).withValues(alpha: 0xEB / 0xFF)
+      : kAppToastBackgroundColor;
+}
+
 final sakuraThemeData = sakuraDesktopThemeData;
 
-const _desktopTextScale = AppTextScale.defaults();
-const _desktopTextWeights = AppTextWeights.defaults();
-const _desktopTextPalette = AppTextPalette.defaults();
-const _mobileTextScale = AppTextScale.mobile();
-const _mobileTextWeights = AppTextWeights.mobile();
-const _mobileTextPalette = AppTextPalette.mobile();
+/// 浅色 + 酒红桌面主题；测试与旧调用方的稳定入口。
+final sakuraDesktopThemeData = buildSakuraDesktopThemeData();
 
-final sakuraDesktopThemeData = _buildSakuraThemeData(
-  componentTokens: const AppComponentTokens.defaults(),
-  formTokens: const AppFormTokens.defaults(),
-  navigationTokens: const AppNavigationTokens.defaults(),
-  textScale: _desktopTextScale,
-  textWeights: _desktopTextWeights,
-  textPalette: _desktopTextPalette,
-);
+/// 浅色 + 酒红移动主题；测试与旧调用方的稳定入口。
+final sakuraMobileThemeData = buildSakuraMobileThemeData();
 
-final sakuraMobileThemeData = _buildSakuraThemeData(
-  componentTokens: const AppComponentTokens.mobile(),
-  formTokens: const AppFormTokens.mobile(),
-  navigationTokens: const AppNavigationTokens.mobile(),
-  textScale: _mobileTextScale,
-  textWeights: _mobileTextWeights,
-  textPalette: _mobileTextPalette,
-);
+ThemeData buildSakuraDesktopThemeData({
+  Brightness brightness = Brightness.light,
+  AppThemeColor themeColor = AppThemeColor.burgundy,
+}) {
+  return _buildSakuraThemeData(
+    brightness: brightness,
+    themeColor: themeColor,
+    componentTokens: const AppComponentTokens.defaults(),
+    formTokens: const AppFormTokens.defaults(),
+    navigationTokens: const AppNavigationTokens.defaults(),
+    textScale: const AppTextScale.defaults(),
+    textWeights: const AppTextWeights.defaults(),
+    baseTextPalette: const AppTextPalette.defaults(),
+  );
+}
+
+ThemeData buildSakuraMobileThemeData({
+  Brightness brightness = Brightness.light,
+  AppThemeColor themeColor = AppThemeColor.burgundy,
+}) {
+  return _buildSakuraThemeData(
+    brightness: brightness,
+    themeColor: themeColor,
+    componentTokens: const AppComponentTokens.mobile(),
+    formTokens: const AppFormTokens.mobile(),
+    navigationTokens: const AppNavigationTokens.mobile(),
+    textScale: const AppTextScale.mobile(),
+    textWeights: const AppTextWeights.mobile(),
+    baseTextPalette: const AppTextPalette.mobile(),
+  );
+}
 
 ThemeData _buildSakuraThemeData({
+  required Brightness brightness,
+  required AppThemeColor themeColor,
   required AppComponentTokens componentTokens,
   required AppFormTokens formTokens,
   required AppNavigationTokens navigationTokens,
   required AppTextScale textScale,
   required AppTextWeights textWeights,
-  required AppTextPalette textPalette,
+  required AppTextPalette baseTextPalette,
 }) {
+  final brand = themeColor.forBrightness(brightness);
+  final colors = AppColors.of(themeColor: themeColor, brightness: brightness);
+  final textPalette = (brightness == Brightness.dark
+          ? const AppTextPalette.dark()
+          : baseTextPalette)
+      .copyWith(accent: brand.accent);
+  final shadows = brightness == Brightness.dark
+      ? const AppShadows.dark()
+      : const AppShadows.defaults();
+  final colorScheme = brightness == Brightness.dark
+      ? _darkColorScheme(brand)
+      : _lightColorScheme(brand);
+
   // 这里只给直接使用的 Material 内置控件兜底：关掉 InkRipple / InkSparkle，
   // 并保留 hover 8% / 按下 12% 的叠色。自研可点组件不走这套（无 hover 底色、
   // 按下整体变淡，见 `AppInteractiveSurface`）；内置控件的 MD 交互样式待清理。
@@ -106,43 +149,14 @@ ThemeData _buildSakuraThemeData({
     splashFactory: NoSplash.splashFactory,
   );
 
-  return ThemeData(brightness: Brightness.light, useMaterial3: true).copyWith(
-    scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+  return ThemeData(brightness: brightness, useMaterial3: true).copyWith(
+    scaffoldBackgroundColor: colors.surfacePage,
     splashFactory: NoSplash.splashFactory,
     splashColor: Colors.transparent,
     highlightColor: pressOverlay,
     hoverColor: hoverOverlay,
     focusColor: pressOverlay,
-    colorScheme: const ColorScheme(
-      brightness: Brightness.light,
-      primary: Color(0xFF6B2D2A),
-      onPrimary: Color(0xFFFFFFFF),
-      secondary: Color(0xFF8B5E57),
-      onSecondary: Color(0xFFFFFFFF),
-      error: Color(0xFFB3261E),
-      onError: Color(0xFFFFFFFF),
-      surface: Color(0xFFFFFFFF),
-      onSurface: Color(0xFF1F1A18),
-      primaryContainer: Color(0xFFE8D8D3),
-      onPrimaryContainer: Color(0xFF2F1412),
-      secondaryContainer: Color(0xFFF2E6E1),
-      onSecondaryContainer: Color(0xFF2B201E),
-      tertiary: Color(0xFF6C584C),
-      onTertiary: Color(0xFFFFFFFF),
-      tertiaryContainer: Color(0xFFE8DDD6),
-      onTertiaryContainer: Color(0xFF251C17),
-      errorContainer: Color(0xFFF9DEDC),
-      onErrorContainer: Color(0xFF410E0B),
-      surfaceTint: Color(0xFF6B2D2A),
-      onSurfaceVariant: Color(0xFF707070),
-      outline: Color(0xFFD6D6D6),
-      outlineVariant: Color(0xFFE8E8E8),
-      shadow: Color(0x1A2B1816),
-      scrim: Color(0x66000000),
-      inverseSurface: Color(0xFF362F2C),
-      onInverseSurface: Color(0xFFF8EEEA),
-      inversePrimary: Color(0xFFFFB4A9),
-    ),
+    colorScheme: colorScheme,
     textTheme: textScale
         .toTextTheme(textWeights)
         .apply(
@@ -165,7 +179,7 @@ ThemeData _buildSakuraThemeData({
       mouseCursor: WidgetStateMouseCursor.clickable,
     ),
     extensions: <ThemeExtension<dynamic>>[
-      const AppColors.defaults(),
+      colors,
       componentTokens,
       formTokens,
       const AppLayoutTokens.defaults(),
@@ -174,10 +188,76 @@ ThemeData _buildSakuraThemeData({
       const AppSpacing.defaults(),
       const AppRadius.defaults(),
       const AppSidebarTokens.defaults(),
-      const AppShadows.defaults(),
+      shadows,
       textScale,
       textWeights,
       textPalette,
     ],
+  );
+}
+
+ColorScheme _lightColorScheme(AppBrandColors brand) {
+  return ColorScheme(
+    brightness: Brightness.light,
+    primary: brand.primary,
+    onPrimary: brand.onPrimary,
+    secondary: brand.secondary,
+    onSecondary: brand.onSecondary,
+    error: const Color(0xFFB3261E),
+    onError: const Color(0xFFFFFFFF),
+    surface: const Color(0xFFFFFFFF),
+    onSurface: const Color(0xFF1F1A18),
+    primaryContainer: brand.primaryContainer,
+    onPrimaryContainer: brand.onPrimaryContainer,
+    secondaryContainer: brand.secondaryContainer,
+    onSecondaryContainer: brand.onSecondaryContainer,
+    tertiary: brand.tertiary,
+    onTertiary: brand.onTertiary,
+    tertiaryContainer: brand.tertiaryContainer,
+    onTertiaryContainer: brand.onTertiaryContainer,
+    errorContainer: const Color(0xFFF9DEDC),
+    onErrorContainer: const Color(0xFF410E0B),
+    surfaceTint: brand.surfaceTint,
+    onSurfaceVariant: const Color(0xFF707070),
+    outline: const Color(0xFFD6D6D6),
+    outlineVariant: const Color(0xFFE8E8E8),
+    shadow: const Color(0x1A2B1816),
+    scrim: const Color(0x66000000),
+    inverseSurface: const Color(0xFF362F2C),
+    onInverseSurface: const Color(0xFFF8EEEA),
+    inversePrimary: brand.inversePrimary,
+  );
+}
+
+ColorScheme _darkColorScheme(AppBrandColors brand) {
+  return ColorScheme(
+    brightness: Brightness.dark,
+    primary: brand.primary,
+    onPrimary: brand.onPrimary,
+    secondary: brand.secondary,
+    onSecondary: brand.onSecondary,
+    error: const Color(0xFFFFB4AB),
+    onError: const Color(0xFF690005),
+    surface: const Color(0xFF1E1E1E),
+    onSurface: const Color(0xFFECE6E4),
+    primaryContainer: brand.primaryContainer,
+    onPrimaryContainer: brand.onPrimaryContainer,
+    secondaryContainer: brand.secondaryContainer,
+    onSecondaryContainer: brand.onSecondaryContainer,
+    tertiary: brand.tertiary,
+    onTertiary: brand.onTertiary,
+    tertiaryContainer: brand.tertiaryContainer,
+    onTertiaryContainer: brand.onTertiaryContainer,
+    errorContainer: const Color(0xFF93000A),
+    onErrorContainer: const Color(0xFFFFDAD6),
+    surfaceTint: brand.surfaceTint,
+    onSurfaceVariant: const Color(0xFFA8A19E),
+    outline: const Color(0xFF8D8784),
+    outlineVariant: const Color(0xFF464240),
+    shadow: const Color(0x66000000),
+    scrim: const Color(0x99000000),
+    inverseSurface: const Color(0xFFE6E0DE),
+    onInverseSurface: const Color(0xFF322F2E),
+    inversePrimary: brand.inversePrimary,
   );
 }

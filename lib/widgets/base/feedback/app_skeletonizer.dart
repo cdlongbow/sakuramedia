@@ -11,7 +11,12 @@ import 'package:skeletonizer/skeletonizer.dart';
 ///   `surfaceCard`（高光）；系统开启「减少动态效果」时退化为静态
 ///   [SolidColorEffect]，避免持续动画；
 /// - 加载态默认屏蔽子树指针事件（`ignorePointers`），占位渲染期间的交互回调
-///   不会触发；品牌底色元素用 `Skeleton.shade` 随骨架灰化；
+///   不会触发；
+/// - 容器实色绘制（底色 / 边框 / BoxDecoration 阴影，含品牌色、状态色）统一
+///   被 `containersColor` 中性化为 `surfaceCard`，骨架内不出现真实颜色；取
+///   `surfaceCard` 而非骨块底色 `surfaceMuted`，否则白底容器上的骨块会同色不可见。
+///   渐变底与 Material 高度阴影不受影响，需要额外灰化的特殊元素仍可用
+///   `Skeleton.shade`；
 /// - 共享卡片内部用 [AppSkeletonUnite] 把整卡收敛成一块 shimmer 圆角块，卡内角标 /
 ///   文字骨块不再单独透出，卡片边框 / 阴影留在 unite 外层；非骨架态原样渲染；
 ///   合并骨块必须显式传卡片自身圆角，不要直接调用 `Skeleton.unite`；
@@ -54,6 +59,7 @@ class AppSkeletonizer extends StatelessWidget {
         enabled: enabled,
         effect: effect,
         textBoneBorderRadius: textBoneBorderRadius,
+        containersColor: colors.surfaceCard,
         child: child,
       );
     }
@@ -61,6 +67,7 @@ class AppSkeletonizer extends StatelessWidget {
       enabled: enabled,
       effect: effect,
       textBoneBorderRadius: textBoneBorderRadius,
+      containersColor: colors.surfaceCard,
       child: ExcludeSemantics(excluding: enabled, child: child),
     );
   }

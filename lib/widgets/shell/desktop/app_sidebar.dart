@@ -48,7 +48,7 @@ class AppSidebar extends ConsumerWidget {
         border: Border(
           right: BorderSide(
             color: useDesktopSidebarGlass
-                ? appColors.borderSubtle.withValues(alpha: 0.68)
+                ? appColors.borderSubtle.fadedBy(0.68)
                 : appColors.borderSubtle,
           ),
         ),
@@ -653,5 +653,5 @@ bool get _useDesktopSidebarGlass =>
 
 Color _sidebarDividerColor(AppColors appColors, bool useDesktopSidebarGlass) =>
     useDesktopSidebarGlass
-    ? appColors.borderSubtle.withValues(alpha: 0.68)
+    ? appColors.borderSubtle.fadedBy(0.68)
     : appColors.borderSubtle;

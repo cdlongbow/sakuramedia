@@ -167,12 +167,15 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   }
 
   SystemUiOverlayStyle _mobileSystemOverlayStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SystemUiOverlayStyle(
       statusBarColor: context.appColors.surfaceCard,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       systemNavigationBarColor: context.appColors.surfaceCard,
-      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarIconBrightness: isDark
+          ? Brightness.light
+          : Brightness.dark,
       systemNavigationBarDividerColor: context.appColors.divider,
     );
   }

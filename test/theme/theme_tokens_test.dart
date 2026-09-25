@@ -56,6 +56,7 @@ void main() {
     expect(colors.movieDetailHeroBackgroundEnd, const Color(0xFF000000));
     expect(colors.movieDetailHeatIcon, const Color(0xFFD84C57));
     expect(colors.desktopSidebarGlassTint, const Color(0x4CEFEFEF));
+    expect(colors.windowsSidebarGlassTint, const Color(0xEBEFEFEF));
     expect(colors.desktopSidebarGlassHover, const Color(0x80FFFFFF));
     expect(colors.desktopSidebarGlassActive, const Color(0x99FFFFFF));
     expect(colors.selectionSurface, const Color(0xFFF7ECEB));
@@ -171,6 +172,18 @@ void main() {
     expect(AppPageInsets.desktopStandard.left, 24);
     expect(AppPageInsets.compactStandard.left, 8);
     expect(shadows.card, isNotEmpty);
+  });
+
+  test('fadedBy scales the existing alpha instead of replacing it', () {
+    // 浅色实色 token：与 withValues(alpha: factor) 完全等价，视觉零变化。
+    const lightToken = Color(0xFFE5E5E5);
+    expect(lightToken.fadedBy(0.68), lightToken.withValues(alpha: 0.68));
+    expect(lightToken.fadedBy(0.68).toARGB32(), 0xADE5E5E5);
+
+    // 深色半透明白 token：结果比原值更淡，而不是被拔亮。
+    const darkToken = Color(0x1FFFFFFF);
+    expect(darkToken.fadedBy(0.68).toARGB32(), 0x15FFFFFF);
+    expect(darkToken.fadedBy(0.68).a, lessThan(darkToken.a));
   });
 
   test('mobile theme exposes the mobile typography and size mappings', () {

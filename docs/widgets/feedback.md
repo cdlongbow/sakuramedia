@@ -16,14 +16,19 @@
   `surfaceCard`；系统开启「减少动态效果」时退化为静态 `SolidColorEffect`），
   加载态默认屏蔽子树指针事件、对屏幕阅读器隐藏占位内容；sliver 场景用
   `AppSkeletonizer.sliver`（sliver 子树无法包盒模型节点，不做语义隐藏）。
-  品牌底色主行动（如「播放全部」「安装插件」）用 `Skeleton.shade` 随骨架一起灰化。
+  容器实色绘制（底色 / 边框 / `BoxDecoration` 阴影，含品牌色与状态色）统一
+  `containersColor` 中性化为 `surfaceCard`（不能用骨块底色 `surfaceMuted`，
+  否则白底容器上的骨块会同色不可见），骨架内不出现真实颜色；渐变底与
+  `Material` 高度阴影不受影响，需要额外灰化的特殊元素仍可用 `Skeleton.shade`。
 - 占位数据约定：用真实 DTO 构造、文案取 `BoneMock`、封面 / 图片 URL 传 `null`
   不触发网络请求；每个 feature 的占位工厂放在 `presentation/<feature>_placeholders.dart`。
   加载态渲染真实组件后，`ignorePointers` 会屏蔽交互，回调不会被触发。
 - 卡片级整卡收敛：共享卡片内部用 `AppSkeletonUnite`（`app_skeletonizer.dart`，
   **不要直接调用 `Skeleton.unite`**）包住封面 / 内容区，骨架态下整张卡被画成一块
   shimmer 圆角块，订阅心、热度、排名、信息按钮、标题行等细碎骨块不再单独透出；
-  卡片的边框 / 圆角 / 阴影留在合并区外层保持可见，非骨架态下原样渲染。当前用于
+  卡片的边框 / 圆角 / 阴影留在合并区外层（颜色随 `containersColor` 统一
+  中性化为 `surfaceCard`），
+  非骨架态下原样渲染。当前用于
   影片、女优、切片、视频、时刻、合集封面、合集成员卡、播放器缩略图 tile、
   播放列表横幅和下载任务卡。
   `borderRadius` 必传且取卡片外层同一个圆角 token：skeletonizer 合并骨块时取合并区

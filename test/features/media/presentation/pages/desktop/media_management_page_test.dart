@@ -343,6 +343,10 @@ void main() {
     );
 
     final events = _watchVideoMutationEvents(tester);
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('media-management-row-1')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('media-management-row-2')));
@@ -446,6 +450,10 @@ void main() {
         apiClient: apiClient,
       );
 
+      await tester.tap(
+        find.byKey(const Key('media-management-enter-selection-button')),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('media-management-row-1')));
       await tester.pumpAndSettle();
       await tester.tap(
@@ -591,6 +599,10 @@ void main() {
     await tester.tap(find.byKey(const Key('media-management-filter-trigger')));
     await tester.pumpAndSettle();
 
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('media-management-row-1')));
     await tester.pumpAndSettle();
     await tester.tap(
@@ -619,6 +631,166 @@ void main() {
     expect(find.byKey(const Key('media-management-row-1')), findsNothing);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('enters selection mode from the header button and toggles rows', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(total: 1, items: [_duplicateMediaItemJson(1)]),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    expect(
+      find.byKey(const Key('media-management-enter-selection-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-management-select-all-button')),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-management-select-all-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-management-enter-selection-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('media-management-refresh-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('media-management-batch-delete-button')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('共 1 条 · 已选 1 项'), findsOneWidget);
+    expect(
+      find.byKey(const Key('media-management-batch-delete-button')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('media-management-exit-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('共 1 条'), findsOneWidget);
+    expect(
+      find.byKey(const Key('media-management-enter-selection-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-management-batch-delete-button')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('opens the movie actions dialog from a JAV media row', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(total: 1, items: [_duplicateMediaItemJson(1)]),
+    );
+    String? openedMovieNumber;
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+      onOpenMovieDetail: (movieNumber) => openedMovieNumber = movieNumber,
+    );
+
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('media-row-movie-actions-dialog')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('media-row-movie-actions-play')),
+      findsOneWidget,
+    );
+    expect(find.text('ABC-1'), findsWidgets);
+    expect(find.text('共 1 条 · 已选 1 项'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const Key('media-row-movie-actions-open-detail')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(openedMovieNumber, 'ABC-1');
+    expect(
+      find.byKey(const Key('media-row-movie-actions-dialog')),
+      findsNothing,
+    );
+    expect(find.text('共 1 条 · 已选 1 项'), findsNothing);
+  });
+
+  testWidgets('opens the video actions dialog from a PornBox media row', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(
+            1,
+            kind: 'video',
+            videoItemId: 101,
+            collections: <Map<String, dynamic>>[
+              <String, dynamic>{'id': 3, 'name': '系列 A'},
+            ],
+          ),
+        ],
+      ),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('desktop-video-actions-dialog')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('desktop-video-action-play')), findsOneWidget);
+    expect(
+      find.byKey(const Key('desktop-video-action-thumbnails')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('desktop-video-action-add-to-collection')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('desktop-video-action-delete')), findsNothing);
+    expect(find.byKey(const Key('video-collection-chip-3')), findsOneWidget);
+    expect(find.text('共 1 条 · 已选 1 项'), findsNothing);
+  });
 }
 
 Future<void> _pumpPage(
@@ -628,11 +800,14 @@ Future<void> _pumpPage(
   required ApiClient apiClient,
   bool switchToMaintenance = false,
   void Function(int collectionId)? onOpenVideoCollectionDetail,
+  void Function(String movieNumber)? onOpenMovieDetail,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
+  final needsInjectedContent =
+      onOpenVideoCollectionDetail != null || onOpenMovieDetail != null;
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -646,14 +821,15 @@ Future<void> _pumpPage(
         theme: sakuraThemeData,
         home: OKToast(
           child: Scaffold(
-            body: onOpenVideoCollectionDetail == null
+            body: !needsInjectedContent
                 ? const DesktopMediaManagementPage()
                 : MediaManagementContent(
                     keyPrefix: 'media-management',
                     rootKey: const Key('desktop-media-management-page'),
-                    onOpenMovieDetail: (_, _) {},
+                    onOpenMovieDetail: (_, movieNumber) =>
+                        onOpenMovieDetail?.call(movieNumber),
                     onOpenVideoCollectionDetail: (_, collectionId) =>
-                        onOpenVideoCollectionDetail(collectionId),
+                        onOpenVideoCollectionDetail?.call(collectionId),
                   ),
           ),
         ),

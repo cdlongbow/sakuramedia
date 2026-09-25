@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/image_search/presentation/pages/mobile/imag
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/media/presentation/pages/mobile/media_management_page.dart';
 import 'package:sakuramedia/features/media_import/presentation/pages/shared/media_import_page.dart';
+import 'package:sakuramedia/features/configuration/presentation/pages/mobile/appearance_settings_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart';
@@ -515,6 +516,28 @@ class MobileSettingsExternalPlayerRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobileExternalPlayerSettingsPage();
+  }
+}
+
+@TypedGoRoute<MobileSettingsAppearanceRouteData>(
+  path: mobileSettingsAppearancePath,
+)
+class MobileSettingsAppearanceRouteData extends _MobileSubpageRouteData
+    with $MobileSettingsAppearanceRouteData {
+  const MobileSettingsAppearanceRouteData();
+
+  @override
+  String get pageName => 'mobile-settings-appearance';
+
+  @override
+  String get title => '外观';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileAppearanceSettingsPage();
   }
 }
 
@@ -1179,6 +1202,13 @@ class _MobileOverviewDrawer extends ConsumerWidget {
         label: '外部播放器',
       );
 
+  static const _MobileOverviewDrawerMenuItem _appearanceItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'appearance',
+        icon: Icons.palette_outlined,
+        label: '外观',
+      );
+
   // 调用外部播放器仅在 Android 原生实现，其它平台不展示该入口。
   static bool get _supportsExternalPlayer =>
       defaultTargetPlatform == TargetPlatform.android;
@@ -1341,6 +1371,18 @@ class _MobileOverviewDrawer extends ConsumerWidget {
                       SizedBox(height: spacing.md),
                       _MobileOverviewDrawerSection(
                         key: const Key(
+                          'mobile-overview-drawer-appearance-section',
+                        ),
+                        items: <Widget>[
+                          _buildMenuEntry(
+                            context: context,
+                            item: _appearanceItem,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: spacing.md),
+                      _MobileOverviewDrawerSection(
+                        key: const Key(
                           'mobile-overview-drawer-account-section',
                         ),
                         items: <Widget>[
@@ -1447,6 +1489,9 @@ class _MobileOverviewDrawer extends ConsumerWidget {
       case 'external-player':
         const MobileSettingsExternalPlayerRouteData().push(hostContext);
         return;
+      case 'appearance':
+        const MobileSettingsAppearanceRouteData().push(hostContext);
+        return;
       case 'username':
         const MobileSettingsUsernameRouteData().push(hostContext);
         return;
@@ -1496,7 +1541,7 @@ class _MobileOverviewDrawerSection extends StatelessWidget {
                       child: Divider(
                         height: spacing.xs,
                         thickness: 1,
-                        color: colors.borderSubtle.withValues(alpha: 0.56),
+                        color: colors.borderSubtle.fadedBy(0.56),
                       ),
                     ),
                 ];

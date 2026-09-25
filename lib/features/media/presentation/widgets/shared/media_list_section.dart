@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/actions/media_row_action_flow.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
 import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
@@ -22,6 +23,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
@@ -35,9 +37,12 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart'
 /// 由内部 `ref.read(...notifier)` 触发；父页只提供跨 provider 的批量操作与复合刷新。
 ///
 /// 平台差异（`mobile: true` 时启用）：
-/// - 行卡片：桌面 / 移动均使用 [MediaListItemCard]（移动端长按进入多选态）；
+/// - 行卡片：桌面 / 移动均使用 [MediaListItemCard]；
+/// - 行点击：普通态 = JAV 弹「影片操作」/ PornBox 弹视频操作（桌面弹窗、移动底部
+///   抽屉），选择态 = 勾选 / 取消勾选；移动端长按直接进入选择态并选中该行；
 /// - 筛选入口：桌面 popover 工具栏 / 移动底部抽屉（`MediaBrowseFilterSectionGroup` 复用）；
-/// - 多选：桌面顶栏按钮流 / 移动 `AppListHeader.selection`（顶）+ `AppSelectionBottomBar`（底）。
+/// - 多选：桌面顶栏「选择」入口 + 选择态操作条 / 移动 `AppListHeader.selection`（顶）
+///   + `AppSelectionBottomBar`（底）。
 ///
 /// 视觉参考「下载任务」卡片（[_DownloadTaskCard]）：页面灰底 + 每张 media card 直接浮起
 /// 为独立白卡（不再套 `AppContentCard`）。多选操作全部收敛到顶部 [AppFilterTotalHeader]
@@ -86,7 +91,7 @@ class MediaListSection extends StatelessWidget {
   /// 可选：父页复合刷新；不传则默认刷新媒体列表 + 媒体库。
   final Future<void> Function()? onRefresh;
 
-  /// 可选：媒体封面点击跳影片详情（JAV 项）；不传则封面不可点。
+  /// 可选：JAV 行弹层里的「影片详情」入口；不传时弹层不显示该动作。
   final void Function(BuildContext context, String movieNumber)?
   onOpenMovieDetail;
 
@@ -166,6 +171,7 @@ class MediaListSection extends StatelessWidget {
             isResettingThumbnails: isResettingThumbnails,
             onBatchResetThumbnails: onBatchResetThumbnails,
             onRefresh: onRefresh,
+            onEnterSelection: onEnterSelection,
             onExitSelection: onExitSelection,
           ),
           child: AppFilterResultLoadingOverlay(
@@ -210,6 +216,7 @@ class _MediaListHeader extends ConsumerWidget {
     required this.onBatchTransfer,
     required this.onBatchResetThumbnails,
     required this.onRefresh,
+    required this.onEnterSelection,
     required this.onExitSelection,
   });
 
@@ -223,6 +230,7 @@ class _MediaListHeader extends ConsumerWidget {
   final Future<void> Function() onBatchTransfer;
   final Future<void> Function()? onBatchResetThumbnails;
   final Future<void> Function()? onRefresh;
+  final VoidCallback? onEnterSelection;
   final VoidCallback? onExitSelection;
 
   Future<void> _defaultRefresh(WidgetRef ref) async {
@@ -339,6 +347,13 @@ class _MediaListHeader extends ConsumerWidget {
           ),
         ],
         actionSlots: [
+          AppTextButton(
+            key: Key('$keyPrefix-enter-selection-button'),
+            label: '选择',
+            size: AppTextButtonSize.xSmall,
+            icon: const Icon(Icons.check_circle_outline, size: 14),
+            onPressed: hasItems && !busy ? onEnterSelection : null,
+          ),
           AppIconButton(
             key: Key('$keyPrefix-refresh-button'),
             tooltip: isInitialLoading ? '刷新中' : '刷新',
@@ -371,6 +386,7 @@ class _MediaListHeader extends ConsumerWidget {
           unawaited(ref.read(mediaBrowseProvider.notifier).retryFilter()),
       trailing: _MediaListActionBar(
         hasItems: hasItems,
+        selectionMode: selectionMode,
         hasSelection: hasSelection,
         selectionCount: selectionCount,
         allLoadedSelected: allLoadedSelected,
@@ -379,6 +395,8 @@ class _MediaListHeader extends ConsumerWidget {
         isResettingThumbnails: isResettingThumbnails,
         isInitialLoading: isInitialLoading,
         busy: busy,
+        onEnterSelection: onEnterSelection,
+        onExitSelection: onExitSelection,
         onBatchDelete: onBatchDelete,
         onBatchTransfer: onBatchTransfer,
         canResetThumbnails:
@@ -508,6 +526,7 @@ class _MediaListBodySliver extends ConsumerWidget {
         : _MediaRowConsumer(
             keyPrefix: keyPrefix,
             item: item,
+            selectionMode: selectionMode,
             onOpenMovieDetail: onOpenMovieDetail,
             isDeleting: isDeleting,
             isTransferring: isTransferring,
@@ -629,14 +648,21 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
             ? () => ref
                   .read(mediaBrowseProvider.notifier)
                   .toggleSelection(item.id)
-            : null,
+            : () => unawaited(
+                openMediaRowActions(
+                  context,
+                  ref,
+                  item,
+                  mobile: true,
+                  onOpenMovieDetail: onOpenMovieDetail,
+                ),
+              ),
         onLongPress: selectionMode
             ? null
             : () {
                 ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id);
                 onEnterSelection?.call();
               },
-        onOpenMovieDetail: onOpenMovieDetail,
         onDelete: selectionMode || onDeleteItem == null
             ? null
             : () => unawaited(onDeleteItem!(item)),
@@ -753,6 +779,7 @@ class _MediaRowConsumer extends ConsumerWidget {
   const _MediaRowConsumer({
     required this.keyPrefix,
     required this.item,
+    required this.selectionMode,
     this.onOpenMovieDetail,
     required this.isDeleting,
     required this.isTransferring,
@@ -767,6 +794,7 @@ class _MediaRowConsumer extends ConsumerWidget {
 
   final String keyPrefix;
   final MediaListItemDto item;
+  final bool selectionMode;
   final void Function(BuildContext context, String movieNumber)?
   onOpenMovieDetail;
   final bool isDeleting;
@@ -798,8 +826,9 @@ class _MediaRowConsumer extends ConsumerWidget {
 
     Widget buildCard(int? deletingId, int? transferringId, int? retryingId) {
       final isRetryable =
+          !selectionMode &&
           item.thumbnailGenerationState ==
-          MediaThumbnailGenerationState.terminal;
+              MediaThumbnailGenerationState.terminal;
       final isRetrying = retryingId == item.id;
       final busy =
           isDeleting ||
@@ -814,15 +843,25 @@ class _MediaRowConsumer extends ConsumerWidget {
         library: library,
         mobile: false,
         selected: isSelected,
-        onTap: () =>
-            ref.read(mediaBrowseProvider.notifier).toggleSelection(item.id),
-        onOpenMovieDetail: onOpenMovieDetail,
-        onDelete: onDeleteItem == null
+        onTap: selectionMode
+            ? () => ref
+                  .read(mediaBrowseProvider.notifier)
+                  .toggleSelection(item.id)
+            : () => unawaited(
+                openMediaRowActions(
+                  context,
+                  ref,
+                  item,
+                  mobile: false,
+                  onOpenMovieDetail: onOpenMovieDetail,
+                ),
+              ),
+        onDelete: selectionMode || onDeleteItem == null
             ? null
             : () => unawaited(onDeleteItem!(item)),
         isDeleting: deletingId == item.id,
         canDelete: !busy,
-        onTransfer: onTransferItem == null
+        onTransfer: selectionMode || onTransferItem == null
             ? null
             : () => unawaited(onTransferItem!(item)),
         isTransferring: transferringId == item.id,
@@ -853,13 +892,15 @@ class _MediaRowConsumer extends ConsumerWidget {
   }
 }
 
-/// 顶栏右侧多选操作条：全选 / 迁移 / 重试 / 清空 / 批量删除 / 刷新。
+/// 顶栏右侧操作条：普通态 =「选择」入口 + 刷新；选择态 = 全选 / 迁移 / 重试 /
+/// 批量删除 / 退出选择，危险色只用于删除。
 ///
-/// 无选择态：仅保留「全选本页」+「刷新」（不占空间过多，视觉上不喧宾夺主）；
-/// 有选择态：追加「迁移 / 清空 / 批量删除」，危险色只用于删除。
+/// 「选择」是进入多选的唯一显式入口（移动端另有长按）；选择态下点行才是勾选。
+/// 退出选择与移动端多选顶栏同一语义：清空已选并结束选择模式。
 class _MediaListActionBar extends ConsumerWidget {
   const _MediaListActionBar({
     required this.hasItems,
+    required this.selectionMode,
     required this.hasSelection,
     required this.selectionCount,
     required this.allLoadedSelected,
@@ -868,6 +909,8 @@ class _MediaListActionBar extends ConsumerWidget {
     required this.isResettingThumbnails,
     required this.isInitialLoading,
     required this.busy,
+    required this.onEnterSelection,
+    required this.onExitSelection,
     required this.onBatchDelete,
     required this.onBatchTransfer,
     required this.canResetThumbnails,
@@ -876,6 +919,7 @@ class _MediaListActionBar extends ConsumerWidget {
   });
 
   final bool hasItems;
+  final bool selectionMode;
   final bool hasSelection;
   final int selectionCount;
   final bool allLoadedSelected;
@@ -884,15 +928,41 @@ class _MediaListActionBar extends ConsumerWidget {
   final bool isResettingThumbnails;
   final bool isInitialLoading;
   final bool busy;
+  final VoidCallback? onEnterSelection;
+  final VoidCallback? onExitSelection;
   final Future<void> Function() onBatchDelete;
   final Future<void> Function() onBatchTransfer;
   final bool canResetThumbnails;
   final Future<void> Function()? onBatchResetThumbnails;
   final VoidCallback onRefresh;
 
+  void _exitSelection(WidgetRef ref) {
+    ref.read(mediaBrowseProvider.notifier).clearSelection();
+    onExitSelection?.call();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spacing = context.appSpacing;
+    if (!selectionMode) {
+      return Wrap(
+        spacing: spacing.sm,
+        runSpacing: spacing.xs,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          AppSelectionEntryButton(
+            key: const Key('media-management-enter-selection-button'),
+            onPressed: hasItems && !busy ? onEnterSelection : null,
+          ),
+          AppIconButton(
+            key: const Key('media-management-refresh-button'),
+            tooltip: isInitialLoading ? '刷新中' : '刷新',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: isInitialLoading ? null : onRefresh,
+          ),
+        ],
+      );
+    }
     return Wrap(
       spacing: spacing.sm,
       runSpacing: spacing.xs,
@@ -931,16 +1001,6 @@ class _MediaListActionBar extends ConsumerWidget {
           ),
         if (hasSelection)
           AppButton(
-            key: const Key('media-management-clear-selection-button'),
-            label: '清空选择',
-            size: AppButtonSize.small,
-            variant: AppButtonVariant.secondary,
-            onPressed: busy
-                ? null
-                : () => ref.read(mediaBrowseProvider.notifier).clearSelection(),
-          ),
-        if (hasSelection)
-          AppButton(
             key: const Key('media-management-batch-delete-button'),
             label: '批量删除（$selectionCount）',
             size: AppButtonSize.small,
@@ -949,11 +1009,11 @@ class _MediaListActionBar extends ConsumerWidget {
             isLoading: isDeleting,
             onPressed: busy ? null : onBatchDelete,
           ),
-        AppIconButton(
-          key: const Key('media-management-refresh-button'),
-          tooltip: isInitialLoading ? '刷新中' : '刷新',
-          icon: const Icon(Icons.refresh_rounded),
-          onPressed: isInitialLoading ? null : onRefresh,
+        AppTextButton(
+          key: const Key('media-management-exit-selection-button'),
+          label: '退出选择',
+          size: AppTextButtonSize.small,
+          onPressed: busy ? null : () => _exitSelection(ref),
         ),
       ],
     );

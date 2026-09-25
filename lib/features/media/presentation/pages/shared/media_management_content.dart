@@ -349,7 +349,7 @@ class MediaManagementContent extends HookConsumerWidget {
         ref,
         okIds.map((id) => itemsById[id]).whereType<MediaListItemDto>(),
       );
-      if (mobile && context.mounted) {
+      if (context.mounted) {
         selectionMode.value = false;
       }
     }
@@ -459,7 +459,7 @@ class MediaManagementContent extends HookConsumerWidget {
         targetLibraryId: targetLibraryId,
       );
       ref.read(mediaBrowseProvider.notifier).clearSelection();
-      if (mobile) selectionMode?.value = false;
+      selectionMode?.value = false;
       showToast('迁移任务 #${accepted.taskRunId} 已提交，请在活动中心查看进度');
     } catch (error) {
       if (context.mounted) {
@@ -529,7 +529,7 @@ class MediaManagementContent extends HookConsumerWidget {
           .resetFailedMediaThumbnails(mediaIds: mediaIds);
       if (!context.mounted) return;
       ref.read(mediaBrowseProvider.notifier).clearSelection();
-      if (mobile) selectionMode?.value = false;
+      selectionMode?.value = false;
       final refreshMessage = await ref
           .read(mediaBrowseProvider.notifier)
           .refresh();

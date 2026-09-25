@@ -376,7 +376,6 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
     final provider = _selectedProvider;
     final unavailable = _isEditing && provider == null;
     return AppDesktopDialog(
-      backgroundColor: Colors.white,
       insetPadding: EdgeInsets.symmetric(
         horizontal: context.appLayoutTokens.dialogInsetPadding,
         vertical: context.appLayoutTokens.dialogInsetPadding,

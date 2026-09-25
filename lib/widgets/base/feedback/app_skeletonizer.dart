@@ -10,9 +10,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 /// - 效果为 [ShimmerEffect]（微光扫过），颜色取主题 `surfaceMuted`（底色）与
 ///   `surfaceCard`（高光）；系统开启「减少动态效果」时退化为静态
 ///   [SolidColorEffect]，避免持续动画；
-/// - 加载态默认屏蔽子树指针事件，需要保留交互的区块用
-///   `Skeleton.ignorePointer` / `Skeleton.keep` 标注，品牌底色元素用
-///   `Skeleton.shade` 随骨架灰化；
+/// - 加载态默认屏蔽子树指针事件（`ignorePointers`），占位渲染期间的交互回调
+///   不会触发；品牌底色元素用 `Skeleton.shade` 随骨架灰化；
 /// - 加载态对屏幕阅读器隐藏占位内容（占位文案用 `BoneMock`，不是真实数据）。
 ///
 /// [AppSkeletonizer.sliver] 用于把骨架网格直接放进 `CustomScrollView` 的

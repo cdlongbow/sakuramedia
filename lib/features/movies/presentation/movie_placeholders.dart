@@ -9,7 +9,9 @@ List<MovieListItemDto> movieListItemPlaceholders({int count = 8}) {
   return List<MovieListItemDto>.generate(
     count,
     (index) => MovieListItemDto(
-      movieNumber: 'ABC-000',
+      // 卡片 key 由 movieNumber 派生，占位项必须彼此唯一。
+      id: -1 - index,
+      movieNumber: 'ABC-${(index + 1).toString().padLeft(3, '0')}',
       title: BoneMock.words(3),
       coverImage: null,
       releaseDate: DateTime(2026, 1, 1),

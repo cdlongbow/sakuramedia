@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -20,6 +21,7 @@ import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_desktop_shell.dart';
 
 import '../../../../../support/logged_in_session_store.dart';
@@ -107,6 +109,49 @@ void main() {
       expect(bundle.adapter.hitCount('GET', '/media-libraries'), 2);
       expect(bundle.adapter.hitCount('GET', '/indexer-settings'), 0);
       expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
+    });
+
+    testWidgets('refreshing advanced settings keeps loaded content visible', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle);
+      _enqueueAdvancedConfig(bundle);
+      // 第二次 GET /config 挂起：刷新进行中也不能把已加载内容换成骨架。
+      bundle.adapter.enqueueResponder(
+        method: 'GET',
+        path: '/config',
+        responder: (_, _) => Completer<ResponseBody>().future,
+      );
+
+      await _pumpPage(
+        tester,
+        bundle,
+        sessionStore: sessionStore,
+        useDesktopShell: true,
+      );
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-advanced'),
+      );
+      expect(
+        find.byKey(const Key('configuration-advanced-min-video-size-field')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('topbar-refresh-button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.byKey(const Key('configuration-advanced-min-video-size-field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is AppSkeletonizer && widget.enabled,
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('rebuilds the image-search index from system maintenance', (

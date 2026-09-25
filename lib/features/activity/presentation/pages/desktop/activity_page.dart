@@ -336,7 +336,8 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         taskRuns: taskRunPlaceholders(count: 3, finished: false),
       );
       return <Widget>[
-        for (final sliver in slivers) AppSkeletonizer.sliver(child: sliver),
+        for (final sliver in slivers)
+          AppSkeletonizer.sliver(enabled: true, child: sliver),
       ];
     }
     if (_controller.initialErrorMessage != null) {

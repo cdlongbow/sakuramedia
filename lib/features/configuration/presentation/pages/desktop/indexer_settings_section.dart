@@ -262,6 +262,7 @@ class _IndexerSettingsSectionState
     if (_isLoading) {
       // loading 用占位下载器与索引器渲染真实设置组，由 [AppSkeletonizer] 灰化。
       return AppSkeletonizer(
+        enabled: true,
         child: _buildLoaded(
           context,
           downloadClientPlaceholders(),

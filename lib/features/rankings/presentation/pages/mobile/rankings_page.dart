@@ -179,9 +179,8 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                 summary.paged.items.isNotEmpty)
               RankedMovieSummarySliver(
                 items: summary.paged.items,
-                isLoading: summary.filters.isLoading
-                    ? summary.paged.items.isEmpty
-                    : summary.isListLoading,
+                isLoading:
+                    summary.filters.isLoading && summary.paged.items.isEmpty,
                 errorMessage: summary.initialErrorMessage,
                 onMovieTap: (movie) => context.pushMobileMovieDetail(
                   movieNumber: movie.movieNumber,

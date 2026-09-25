@@ -7,8 +7,8 @@ import 'package:sakuramedia/theme.dart';
 /// 的页脚。演员详情（桌面 / 移动）与播放列表详情此前各写了一份逐字相同的
 /// `SizedBox + CircularProgressIndicator`，统一收口到这里。
 ///
-/// **不是**整页 / 整区块的加载态：那些走 `AppSectionSkeleton` / `AppMobileSkeletonList`
-/// 等骨架屏，转圈只用于局部、短时的忙碌指示。
+/// **不是**整页 / 整区块的加载态：那些走 `AppSkeletonizer` 渲染的骨架屏，
+/// 转圈只用于局部、短时的忙碌指示。
 class AppInlineSpinner extends StatelessWidget {
   const AppInlineSpinner({super.key, this.color});
 

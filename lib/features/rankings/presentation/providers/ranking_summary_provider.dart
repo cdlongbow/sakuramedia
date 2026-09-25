@@ -152,7 +152,6 @@ class RankingSummary extends _$RankingSummary
       state = AsyncData(
         (state.value ?? current).copyWith(
           filters: filters,
-          isListLoading: false,
           initialErrorMessage: null,
           paged: current.paged.copyWith(
             filterUpdate: FilterUpdateState.failed(
@@ -424,7 +423,6 @@ class RankingSummary extends _$RankingSummary
       state = AsyncData(
         currentAfter.copyWith(
           paged: paged,
-          isListLoading: false,
           initialErrorMessage: null,
         ),
       );
@@ -435,7 +433,6 @@ class RankingSummary extends _$RankingSummary
       final currentAfter = state.value ?? current;
       state = AsyncData(
         currentAfter.copyWith(
-          isListLoading: false,
           initialErrorMessage: null,
           paged: currentAfter.paged.copyWith(
             filterUpdate: FilterUpdateState.failed(

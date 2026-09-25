@@ -25,9 +25,11 @@ class MovieSubtitleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      // loading 用占位字幕渲染真实药丸行，由 [AppSkeletonizer] 灰化。
+    if (isLoading && items.isEmpty) {
+      // loading 用占位字幕渲染真实药丸行，由 [AppSkeletonizer] 灰化；
+      // 刷新保留旧字幕时直接显示旧数据。
       return AppSkeletonizer(
+        enabled: true,
         child: _buildPills(context, movieSubtitlePlaceholders()),
       );
     }

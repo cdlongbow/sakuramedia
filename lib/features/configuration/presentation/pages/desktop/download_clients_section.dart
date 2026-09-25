@@ -131,10 +131,11 @@ class _DownloadClientsSectionState
     final clientsAsync = ref.watch(downloadClientsProvider);
     final librariesAsync = ref.watch(mediaLibrariesProvider);
     final providersAsync = ref.watch(mediaProviderCatalogProvider);
+    // 首屏语义：只有某个列表尚无数据可显示时才铺骨架，避免刷新盖掉已有配置。
     final isLoading =
-        clientsAsync.isLoading ||
-        librariesAsync.isLoading ||
-        providersAsync.isLoading;
+        (clientsAsync.isLoading && clientsAsync.value == null) ||
+        (librariesAsync.isLoading && librariesAsync.value == null) ||
+        (providersAsync.isLoading && providersAsync.value == null);
     if (!isLoading) {
       final error = clientsAsync.error ?? librariesAsync.error;
       if (error != null) {
@@ -154,15 +155,12 @@ class _DownloadClientsSectionState
     final providerCatalogError = providersAsync.error;
 
     // loading 用占位数据渲染真实设置组，由 [AppSkeletonizer] 灰化。
-    final clients = isLoading
-        ? downloadClientPlaceholders()
-        : clientsAsync.value ?? const <DownloadClientDto>[];
-    final allLibraries = isLoading
-        ? mediaLibraryPlaceholders()
-        : librariesAsync.value ?? const <MediaLibraryDto>[];
-    final providers = isLoading
-        ? mediaProviderPlaceholders()
-        : providersAsync.value ?? const <MediaProviderDto>[];
+    final clients =
+        clientsAsync.value ?? downloadClientPlaceholders();
+    final allLibraries =
+        librariesAsync.value ?? mediaLibraryPlaceholders();
+    final providers =
+        providersAsync.value ?? mediaProviderPlaceholders();
     final providersByKey = <String, MediaProviderDto>{
       for (final provider in providers) provider.providerKey: provider,
     };

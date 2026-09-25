@@ -32,7 +32,7 @@
 
 路径：`lib/widgets/domain/collections/`
 
-包含 `CollectionCard`（`.clip` / `.video` / `.moment` 命名构造）、`CollectionCoverCard`、`CollectionHintBox`、`CollectionDetailSkeleton`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成；`CollectionHintBox` 是合集横滑区空态/加载失败的共用提示条。
+包含 `CollectionCard`（`.clip` / `.video` / `.moment` 命名构造）、`CollectionCoverCard`、`CollectionHintBox`、`CollectionMemberViews` 以及 `playback/` 下的合集连播组件。影片合集、视频合集和切片合集的数据适配由各自 feature 完成；`CollectionHintBox` 是合集横滑区空态/加载失败的共用提示条。
 
 ## media and preview
 

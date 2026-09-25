@@ -39,11 +39,11 @@ List<TaskRunDto> taskRunPlaceholders({int count = 3, bool finished = true}) {
       taskName: BoneMock.words(2),
       triggerType: 'manual',
       // 不用 running / pending，避免占位卡渲染动画进度条。
-      state: finished ? 'success' : 'failed',
+      state: finished ? 'completed' : 'failed',
       progressCurrent: 10,
       progressTotal: 10,
       progressText: null,
-      resultText: '完成',
+      resultText: finished ? '完成' : '失败',
       resultSummary: null,
       errorMessage: null,
       startedAt: DateTime(2026, 1, 1),

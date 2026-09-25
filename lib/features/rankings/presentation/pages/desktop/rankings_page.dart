@@ -246,9 +246,9 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                         summary.paged.items.isNotEmpty)
                       RankedMovieSummarySliver(
                         items: summary.paged.items,
-                        isLoading: summary.filters.isLoading
-                            ? summary.paged.items.isEmpty
-                            : summary.isListLoading,
+                        isLoading:
+                            summary.filters.isLoading &&
+                            summary.paged.items.isEmpty,
                         errorMessage: summary.initialErrorMessage,
                         onMovieTap: (movie) => context.pushDesktopMovieDetail(
                           movieNumber: movie.movieNumber,

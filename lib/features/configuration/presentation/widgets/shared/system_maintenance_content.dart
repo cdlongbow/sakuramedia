@@ -179,6 +179,7 @@ class _SystemMaintenanceContentState
         key: _isMobile
             ? const Key('mobile-system-maintenance-loading-state')
             : null,
+        enabled: true,
         child: AppContentCard(
           title: '图搜索索引',
           child: _isMobile

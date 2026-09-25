@@ -129,8 +129,9 @@ class _DesktopAdvancedSettingsSectionState
     final spacing = context.appSpacing;
     // loading 用当前（默认）字段值渲染真实设置卡，由 [AppSkeletonizer] 灰化；
     // 首次加载数据未到，按完整形态展示可选服务卡，避免数据到达后多出一张卡。
+    // 仅首屏骨架：下拉刷新保留已展示的设置，不重铺骨架。
     return AppSkeletonizer(
-      enabled: _isLoading,
+      enabled: _isLoading && !_initialized,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -877,7 +878,6 @@ class _CronGroup {
 }
 
 const int _bytesPerMegabyte = 1024 * 1024;
-const int _advancedSkeletonLineCount = 8;
 const int _cronPartCount = 5;
 const int _workerConcurrencyMin = 1;
 const int _workerConcurrencyMax = 32;

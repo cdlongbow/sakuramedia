@@ -121,6 +121,7 @@ class _DesktopNotificationsPageState
       child: state.isInitialLoading && state.notifications.isEmpty
           ? AppSkeletonizer(
               // loading 用占位通知渲染真实列表与卡片，由 [AppSkeletonizer] 灰化。
+              enabled: true,
               child: AppFixedHeaderLayout(
                 header: _buildHeader(context, state),
                 child: CustomScrollView(

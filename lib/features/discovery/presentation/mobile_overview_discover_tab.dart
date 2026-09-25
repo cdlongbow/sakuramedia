@@ -274,9 +274,11 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     WidgetRef ref,
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
-    if (moment.isLoading) {
-      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化。
+    if (moment.isLoading && moment.items.isEmpty) {
+      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化；
+      // 刷新保留旧推荐时继续显示旧网格。
       return AppSkeletonizer(
+        enabled: true,
         child: MomentGrid(
           items: momentListPlaceholders(count: _momentPreviewCount),
           onItemTap: (_) {},

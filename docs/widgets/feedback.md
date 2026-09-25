@@ -15,14 +15,14 @@
   自动灰化：效果是 `ShimmerEffect` 微光扫过（底色取 `surfaceMuted`、高光取
   `surfaceCard`；系统开启「减少动态效果」时退化为静态 `SolidColorEffect`），
   加载态默认屏蔽子树指针事件、对屏幕阅读器隐藏占位内容；sliver 场景用
-  `AppSkeletonizer.sliver`。品牌底色主行动（如「播放全部」「安装插件」）用
-  `Skeleton.shade` 随骨架一起灰化。
+  `AppSkeletonizer.sliver`（sliver 子树无法包盒模型节点，不做语义隐藏）。
+  品牌底色主行动（如「播放全部」「安装插件」）用 `Skeleton.shade` 随骨架一起灰化。
 - 占位数据约定：用真实 DTO 构造、文案取 `BoneMock`、封面 / 图片 URL 传 `null`
   不触发网络请求；每个 feature 的占位工厂放在 `presentation/<feature>_placeholders.dart`。
   加载态渲染真实组件后，`ignorePointers` 会屏蔽交互，回调不会被触发。
-- 手写骨架组件（`AppCoverCardSkeleton`、`CollectionCardSkeleton`、`AppLeftCoverCardSkeleton`、
+- 手写骨架组件（`AppCoverCardSkeleton`、`AppLeftCoverCardSkeleton`、
   `MediaListItemCardSkeletonList` 等）是迁移前的历史存量；**新页面不要再新增**，
-  存量页面在后续清理中逐步迁移到 `AppSkeletonizer`。分页列表的
+  存量页面在收尾中继续迁移到 `AppSkeletonizer`。分页列表的
   `SliverPagedAsyncSection.skeletonBuilder` 也应优先传「占位数据 + 真实卡片」。
 - `AppInlineSpinner`：按钮、卡片或局部异步操作中的小型 loading，随平台自适应。
 - `AppFilterUpdateBar`：筛选请求更新中的行内反馈。

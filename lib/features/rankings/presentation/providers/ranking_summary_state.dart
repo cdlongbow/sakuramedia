@@ -95,7 +95,6 @@ class RankingSummaryState
   const RankingSummaryState({
     required this.paged,
     required this.filters,
-    this.isListLoading = false,
     this.initialErrorMessage,
     this.subscriptionUpdatingMovieNumbers = const <String>{},
   });
@@ -108,7 +107,6 @@ class RankingSummaryState
   @override
   final PagedListState<RankedMovieListItemDto> paged;
   final RankingFilterState filters;
-  final bool isListLoading;
   final String? initialErrorMessage;
   @override
   final Set<String> subscriptionUpdatingMovieNumbers;
@@ -119,14 +117,12 @@ class RankingSummaryState
   RankingSummaryState copyWith({
     PagedListState<RankedMovieListItemDto>? paged,
     RankingFilterState? filters,
-    bool? isListLoading,
     Object? initialErrorMessage = _sentinel,
     Set<String>? subscriptionUpdatingMovieNumbers,
   }) {
     return RankingSummaryState(
       paged: paged ?? this.paged,
       filters: filters ?? this.filters,
-      isListLoading: isListLoading ?? this.isListLoading,
       initialErrorMessage:
           identical(initialErrorMessage, _sentinel)
               ? this.initialErrorMessage

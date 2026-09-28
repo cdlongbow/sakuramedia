@@ -9,74 +9,67 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 class TagSelectionScope {
   const TagSelectionScope._({
     required this.instanceKey,
-    required this.popularLimit,
     this.cacheKey,
     this.initialSelectedTagIds = const <int>[],
     this.initialMatchMode = TagMatchMode.or,
+    this.preload = true,
   });
 
   const TagSelectionScope.desktopRoot()
-    : this._(
-        instanceKey: 'desktop:tags:list',
-        cacheKey: 'desktop:tags:list',
-        popularLimit: 15,
-      );
+    : this._(instanceKey: 'desktop:tags:list', cacheKey: 'desktop:tags:list');
 
   const TagSelectionScope.mobileRoot()
-    : this._(
-        instanceKey: 'mobile:tags:list',
-        cacheKey: 'mobile:tags:list',
-        popularLimit: 5,
-      );
+    : this._(instanceKey: 'mobile:tags:list', cacheKey: 'mobile:tags:list');
 
   const TagSelectionScope.custom({
     required String instanceKey,
-    int popularLimit = 60,
     List<int> initialSelectedTagIds = const <int>[],
     TagMatchMode initialMatchMode = TagMatchMode.or,
+    bool preload = true,
   }) : this._(
          instanceKey: instanceKey,
-         popularLimit: popularLimit,
          initialSelectedTagIds: initialSelectedTagIds,
          initialMatchMode: initialMatchMode,
+         preload: preload,
        );
 
   TagSelectionScope.desktopDetail({required int initialTagId})
     : this._(
         instanceKey: 'desktop:tags:detail:$initialTagId',
-        popularLimit: 15,
         initialSelectedTagIds: <int>[initialTagId],
       );
 
   TagSelectionScope.mobileDetail({required int initialTagId})
     : this._(
         instanceKey: 'mobile:tags:detail:$initialTagId',
-        popularLimit: 5,
         initialSelectedTagIds: <int>[initialTagId],
       );
 
   final String instanceKey;
   final String? cacheKey;
-  final int popularLimit;
   final List<int> initialSelectedTagIds;
   final TagMatchMode initialMatchMode;
+
+  /// 构建时是否立即拉取全量标签。标签页依赖它保证面板打开即有数据；
+  /// 女优详情等"把标签当附加筛选"的页面传 `false`，等面板真正打开再加载。
+  final bool preload;
 
   @override
   bool operator ==(Object other) {
     return other is TagSelectionScope &&
         other.instanceKey == instanceKey &&
         other.cacheKey == cacheKey &&
-        other.popularLimit == popularLimit &&
         listEquals(other.initialSelectedTagIds, initialSelectedTagIds) &&
-        other.initialMatchMode == initialMatchMode;
+        other.initialMatchMode == initialMatchMode &&
+        other.preload == preload;
   }
 
   @override
   int get hashCode => Object.hash(
     instanceKey,
     cacheKey,
-    popularLimit,
     Object.hashAll(initialSelectedTagIds),
     initialMatchMode,
+    preload,
   );
 }

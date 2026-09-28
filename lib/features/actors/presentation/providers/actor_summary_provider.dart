@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
@@ -72,6 +73,12 @@ class ActorSummary extends _$ActorSummary
         _patchActor(actor);
       }
     });
+    ref.listen(actorRemovalEventsProvider, (_, next) {
+      final actorIds = next.value;
+      if (actorIds != null && actorIds.isNotEmpty) {
+        _removeActors(actorIds);
+      }
+    });
     final paged = await loadInitialPage();
     return ActorSummaryState(paged: paged, filter: activeFilter);
   }
@@ -82,6 +89,11 @@ class ActorSummary extends _$ActorSummary
     int pageSize,
   ) {
     final filter = activeFilter;
+    final query = filter.query;
+    final useRelevanceSort =
+        query != null &&
+        query.isNotEmpty &&
+        filter.sortField == ActorSortField.subscribedAt;
     return ref
         .read(actorsApiProvider)
         .getActors(
@@ -89,12 +101,14 @@ class ActorSummary extends _$ActorSummary
           pageSize: pageSize,
           subscriptionStatus: filter.subscriptionStatus,
           gender: filter.gender,
+          hasPlayableMovies: filter.hasPlayableMovies,
+          query: query,
           ageMin: filter.ageMin,
           ageMax: filter.ageMax,
           heightMin: filter.heightMin,
           heightMax: filter.heightMax,
           cups: filter.cups,
-          sort: filter.sortExpression,
+          sort: useRelevanceSort ? null : filter.sortExpression,
         );
   }
 
@@ -174,9 +188,37 @@ class ActorSummary extends _$ActorSummary
         profileImage: updated.profileImage,
         isSubscribed: actor.isSubscribed,
         apiDisplayName: updated.displayName,
+        movieCount: updated.movieCount,
+        age: updated.age,
+        birthday: updated.birthday,
+        heightCm: updated.heightCm,
+        bustCm: updated.bustCm,
+        waistCm: updated.waistCm,
+        hipsCm: updated.hipsCm,
+        cup: updated.cup,
       ),
     );
     if (identical(paged, current.paged)) return;
     state = AsyncData(current.copyWith(paged: paged));
+  }
+
+  void _removeActors(List<int> actorIds) {
+    final current = state.value;
+    if (current == null) return;
+    final removed = actorIds.toSet();
+    final items = current.paged.items
+        .where((actor) => !removed.contains(actor.id))
+        .toList(growable: false);
+    final removedCount = current.paged.items.length - items.length;
+    if (removedCount == 0) return;
+    final total = current.paged.total - removedCount;
+    state = AsyncData(
+      current.copyWith(
+        paged: current.paged.copyWith(
+          items: items,
+          total: total < 0 ? 0 : total,
+        ),
+      ),
+    );
   }
 }

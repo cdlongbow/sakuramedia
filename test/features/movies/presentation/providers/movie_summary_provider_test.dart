@@ -282,6 +282,37 @@ void main() {
     expect(secondRequest.uri.queryParameters['heat_max'], '20000');
   });
 
+  test('女优作品叠加标签筛选，清空标签后请求不再带 tag_ids', () async {
+    const actorScope = MovieSummaryScope.actor(actorId: 8);
+    await prime(actorScope, <Map<String, dynamic>>[_movie('ABC-001')]);
+    final notifier = container.read(movieSummaryProvider(actorScope).notifier);
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-002')], total: 1),
+    );
+    await notifier.applyTagFilter(
+      tagIds: <int>[3, 5],
+      tagMatch: TagMatchMode.and,
+    );
+    final tagged = adapter.requests.last.uri.queryParameters;
+    expect(tagged['actor_id'], '8');
+    expect(tagged['tag_ids'], '3,5');
+    expect(tagged['tag_match'], 'and');
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-003')], total: 1),
+    );
+    await notifier.clearTagFilter();
+    final cleared = adapter.requests.last.uri.queryParameters;
+    expect(cleared['actor_id'], '8');
+    expect(cleared.containsKey('tag_ids'), isFalse);
+    expect(cleared.containsKey('tag_match'), isFalse);
+  });
+
   test('普通影片列表 scope 走 /movies，合集变更就地移除单体条目', () async {
     const scope = MovieSummaryScope.movies(cacheKey: 'desktop:movies:list');
     await prime(scope, <Map<String, dynamic>>[

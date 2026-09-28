@@ -14,7 +14,7 @@
 
 固定或吸顶由页面布局负责：普通列表用 `AppFixedHeaderLayout`，介绍区后的列表用 `AppPinnedListHeader`。`AppListHeader` 本身不控制滚动。多选时使用 `AppListHeader.selection` 在同一位置替换正常内容；移动批量操作放在结果区之外的底部操作条。
 
-标签影片页用 feature 内的 `TagSelectionHeader` 固定选择入口、横向已选摘要和匹配模式；完整 `TagSelectorPanel` 在移动底部抽屉或桌面浮层内滚动，选择即时生效。
+标签影片页用 `lib/widgets/domain/tags/tag_selection_header.dart` 的 `TagSelectionHeader` 固定选择入口、横向已选摘要和匹配模式；点入口打开自适应弹窗（移动全高底部弹层 / 桌面居中弹窗），弹窗内用 `TagSelectorPanel(scrollableTagCloud: true)` 滚动查看全部标签，选择即时生效。
 
 ## `AppSectionHeader`
 

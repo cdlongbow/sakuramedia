@@ -73,7 +73,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('标签面板可连续选择并清空，固定摘要不展开整个标签云', (tester) async {
+  testWidgets('弹窗可连续选择并清空，页面摘要跟随选择', (tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
@@ -91,37 +91,39 @@ void main() {
     expect(find.byKey(const Key('tags-option-1')), findsNothing);
     await tester.tap(find.byKey(const Key('tags-selector-trigger')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
+    // 标签页的 chips 继续显示影片数量。
+    expect(find.text('标签一 · 10'), findsOneWidget);
     await tester.tap(find.byKey(const Key('tags-option-1')));
     await settleFilterRequest(tester);
-    expect(find.byKey(const Key('tags-selector-popover')), findsOneWidget);
+    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
     await tester.tap(find.byKey(const Key('tags-option-2')));
     await settleFilterRequest(tester);
     expect(find.byKey(const Key('tags-selected-1')), findsOneWidget);
     expect(find.byKey(const Key('tags-selected-2')), findsOneWidget);
     await tester.tap(find.byKey(const Key('tags-clear-all')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tags-selector-popover')), findsOneWidget);
+    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
     expect(find.byKey(const Key('tags-selected-1')), findsNothing);
     expect(find.byKey(const Key('tags-selected-2')), findsNothing);
     await tester.tapAt(const Offset(790, 590));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-selector-dialog')), findsNothing);
     expect(find.text('请选择标签查看影片'), findsOneWidget);
     expect(find.byKey(const Key('tags-option-1')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('caps popular tags to popularLimit and hides 展开全部', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('弹窗可滚动查看全部标签，末尾标签懒构建', (WidgetTester tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
       body: <Map<String, dynamic>>[
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 200; i++)
           <String, dynamic>{
             'tag_id': i,
             'name': 'tag$i',
-            'movie_count': 100 - i,
+            'movie_count': 300 - i,
           },
       ],
     );
@@ -130,24 +132,33 @@ void main() {
     await tester.tap(find.byKey(const Key('tags-selector-trigger')));
     await tester.pumpAndSettle();
 
-    // popularLimit=15：仅展示前 15 个热门标签，更多标签靠搜索，不出现「展开全部」。
-    expect(find.byKey(const Key('tags-option-14')), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-15')), findsNothing);
-    expect(find.text('展开全部'), findsNothing);
+    // 全部标签按影片数降序：首屏是热门标签，末尾标签不在已构建的懒加载块里。
+    expect(find.text('全部标签 · 200'), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-0')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-199')), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tags-option-199')),
+      400,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('tags-cloud-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.byKey(const Key('tags-option-199')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('shows all popular tags when fewer than popularLimit', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('搜索在全部标签里过滤结果', (WidgetTester tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
       body: <Map<String, dynamic>>[
-        for (var i = 0; i < 5; i++)
+        for (var i = 0; i < 200; i++)
           <String, dynamic>{
             'tag_id': i,
-            'name': 'tag$i',
-            'movie_count': 100 - i,
+            'name': i == 199 ? '冷门标签' : 'tag$i',
+            'movie_count': 300 - i,
           },
       ],
     );
@@ -156,8 +167,12 @@ void main() {
     await tester.tap(find.byKey(const Key('tags-selector-trigger')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('tags-option-4')), findsOneWidget);
-    expect(find.text('展开全部'), findsNothing);
+    await tester.enterText(find.byKey(const Key('tags-search-field')), '冷门');
+    await tester.pumpAndSettle();
+
+    expect(find.text('搜索结果 · 1'), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-199')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-0')), findsNothing);
   });
 
   testWidgets('switching tag match mode reloads movies with tag_match=and', (

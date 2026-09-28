@@ -5,13 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_selector_panel.dart';
+import 'package:sakuramedia/widgets/domain/tags/tag_selector_panel.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
-/// 固定区只显示入口和横向摘要，完整标签云在有界面板内滚动。
+/// 固定区只显示入口和横向摘要；完整标签云在自适应弹窗内滚动查看。
+///
+/// 点入口：移动端弹全高底部抽屉，桌面弹居中对话框；弹窗里的
+/// [TagSelectorPanel] 以 `scrollableTagCloud` 展示全部标签。
 class TagSelectionHeader extends ConsumerWidget {
   const TagSelectionHeader({
     super.key,
@@ -32,21 +34,16 @@ class TagSelectionHeader extends ConsumerWidget {
         ? AppTextButton(
             key: const Key('tags-selector-trigger'),
             label: label,
-            onPressed: () => showAppBottomDrawer<void>(
-              context: context,
-              drawerKey: const Key('tags-selector-drawer'),
-              maxHeightFactor: 0.7,
-              builder: (_) => SingleChildScrollView(
-                child: _TagSelectionPanel(scope: scope),
-              ),
-            ),
+            onPressed: () => _openSelector(context),
           )
-        : AppFilterPopover(
-            triggerKey: const Key('tags-selector-trigger'),
-            triggerLabel: label,
-            panelKey: const Key('tags-selector-popover'),
-            alignment: AppFilterPopoverAlignment.leftAlignedToTrigger,
-            panelBuilder: (_) => _TagSelectionPanel(scope: scope),
+        : AppTextButton(
+            key: const Key('tags-selector-trigger'),
+            label: label,
+            icon: const Icon(Icons.filter_alt_outlined),
+            trailingIcon: const Icon(Icons.expand_more),
+            size: AppTextButtonSize.small,
+            isSelected: selection.hasSelection,
+            onPressed: () => _openSelector(context),
           );
     return Padding(
       padding: EdgeInsets.only(bottom: context.appSpacing.sm),
@@ -93,6 +90,19 @@ class TagSelectionHeader extends ConsumerWidget {
       ),
     );
   }
+
+  void _openSelector(BuildContext context) {
+    showAppAdaptiveModal<void>(
+      context: context,
+      variant: mobile
+          ? AppAdaptiveModalVariant.drawer
+          : AppAdaptiveModalVariant.dialog,
+      drawerKey: const Key('tags-selector-drawer'),
+      dialogKey: const Key('tags-selector-dialog'),
+      desktopHeight: MediaQuery.sizeOf(context).height * 0.72,
+      builder: (_) => _TagSelectionPanel(scope: scope),
+    );
+  }
 }
 
 class _TagSelectionPanel extends ConsumerWidget {
@@ -105,6 +115,7 @@ class _TagSelectionPanel extends ConsumerWidget {
     final notifier = ref.read(tagSelectionProvider(scope).notifier);
     return TagSelectorPanel(
       selection: selection,
+      scrollableTagCloud: true,
       onToggleTag: notifier.toggle,
       onRemoveTag: notifier.remove,
       onClear: notifier.clear,

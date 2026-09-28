@@ -1154,6 +1154,7 @@ class _TaskFilterBar extends StatelessWidget {
     'manual',
     'startup',
     'internal',
+    'plugin',
   ];
 
   @override
@@ -1656,6 +1657,7 @@ String _labelForTriggerType(String value) {
     'manual' => '手动触发',
     'startup' => '启动触发',
     'internal' => '内部触发',
+    'plugin' => '插件触发',
     _ => value,
   };
 }

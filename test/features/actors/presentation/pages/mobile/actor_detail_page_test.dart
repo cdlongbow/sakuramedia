@@ -76,6 +76,11 @@ void main() {
       path: '/actors/1/years',
       body: [],
     );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[],
+    );
     await tester.tap(header);
     await tester.pumpAndSettle();
     bundle.adapter.enqueueJson(
@@ -110,6 +115,11 @@ void main() {
       body: <Map<String, dynamic>>[
         <String, dynamic>{'year': 2024, 'movie_count': 2},
       ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[],
     );
 
     await tester.tap(find.byKey(const Key('actor-detail-filter-trigger')));
@@ -210,6 +220,75 @@ void main() {
     expect(find.text('作品 · 1 部'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('筛选抽屉内按标签过滤作品，重置同时清空标签', (tester) async {
+    enqueueInitialLoad();
+    await tester.pumpWidget(wrap(const MobileActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+
+    // 标签数据是懒加载：抽屉打开前不发 /tags。
+    expect(bundle.adapter.hitCount('GET', '/tags'), 0);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1/years',
+      body: <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 3, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
+    await tester.tap(find.byKey(const Key('actor-detail-filter-trigger')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-movies-filter-drawer')),
+      findsOneWidget,
+    );
+    expect(bundle.adapter.hitCount('GET', '/tags'), 1);
+    // 标签分节在抽屉最末，先滚到它再操作。
+    expect(find.byKey(const Key('tags-option-3')), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 1),
+    );
+    await tester.ensureVisible(find.byKey(const Key('tags-option-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-option-3')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final tagged = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(tagged.uri.queryParameters['actor_id'], '1');
+    expect(tagged.uri.queryParameters['tag_ids'], '3');
+
+    // 标签生效后抽屉 footer 实时变为「筛选条件已更新」，重置可用并同时清空标签。
+    expect(find.text('筛选条件已更新'), findsOneWidget);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(),
+    );
+    await tester.tap(find.text('重置'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final cleared = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(cleared.uri.queryParameters['actor_id'], '1');
+    expect(cleared.uri.queryParameters.containsKey('tag_ids'), isFalse);
+    expect(find.byKey(const Key('tags-selected-3')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

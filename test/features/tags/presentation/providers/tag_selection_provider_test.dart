@@ -77,11 +77,8 @@ void main() {
     expect(state.allTags, hasLength(2));
   });
 
-  test('热门上限与搜索过滤保留旧控制器语义', () async {
-    const scope = TagSelectionScope.custom(
-      instanceKey: 'visible',
-      popularLimit: 3,
-    );
+  test('搜索在全部标签里过滤，不做数量截断', () async {
+    const scope = TagSelectionScope.custom(instanceKey: 'visible');
     enqueueTags(<Map<String, dynamic>>[
       for (var index = 0; index < 10; index += 1)
         <String, dynamic>{
@@ -94,13 +91,13 @@ void main() {
     await waitForLoad(scope);
 
     expect(
-      container.read(tagSelectionProvider(scope)).visibleTags,
-      hasLength(3),
+      container.read(tagSelectionProvider(scope)).filteredTags,
+      hasLength(10),
     );
     container.read(tagSelectionProvider(scope).notifier).setQuery('乳');
     final state = container.read(tagSelectionProvider(scope));
     expect(state.isSearching, isTrue);
-    expect(state.visibleTags.map((tag) => tag.tagId), <int>[0, 1]);
+    expect(state.filteredTags.map((tag) => tag.tagId), <int>[0, 1]);
   });
 
   test('选择顺序、清空与 match mode 只写不可变 state', () async {
@@ -148,5 +145,21 @@ void main() {
     final state = container.read(tagSelectionProvider(scope));
     expect(state.errorMessage, isNull);
     expect(state.allTags.single.tagId, 1);
+  });
+
+  test('preload=false 构建不请求标签，显式 load 后才拉取', () async {
+    const scope = TagSelectionScope.custom(instanceKey: 'lazy', preload: false);
+    enqueueTags(<Map<String, dynamic>>[
+      <String, dynamic>{'tag_id': 1, 'name': '巨乳', 'movie_count': 10},
+    ]);
+    container.listen(tagSelectionProvider(scope), (_, __) {});
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(adapter.requests, isEmpty);
+    expect(container.read(tagSelectionProvider(scope)).hasLoadedOnce, isFalse);
+
+    await container.read(tagSelectionProvider(scope).notifier).load();
+    expect(container.read(tagSelectionProvider(scope)).allTags, hasLength(1));
   });
 }

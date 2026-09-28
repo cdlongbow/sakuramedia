@@ -30,9 +30,10 @@ class TagSelection extends _$TagSelection {
     final initial = TagSelectionState(
       selectedTagIds: scope.initialSelectedTagIds,
       matchMode: scope.initialMatchMode,
-      popularLimit: scope.popularLimit,
     );
-    Future<void>.microtask(load);
+    if (scope.preload) {
+      Future<void>.microtask(load);
+    }
     return initial;
   }
 

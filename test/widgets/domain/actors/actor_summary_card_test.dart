@@ -180,4 +180,105 @@ void main() {
     expect(tapped, 0);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('actor summary card reveals profile stats on hover', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: ActorSummaryCard(
+            actor: ActorListItemDto(
+              id: 5,
+              javdbId: 'Actor5',
+              name: '河北彩花',
+              aliasName: '',
+              profileImage: null,
+              isSubscribed: false,
+              movieCount: 123,
+              age: 28,
+              birthday: DateTime(1998, 5, 3),
+              heightCm: 165,
+              bustCm: 86,
+              waistCm: 58,
+              hipsCm: 88,
+              cup: 'E',
+            ),
+            onSubscriptionTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    // 收起态：资料不在树里。
+    expect(find.text('影片数 123', findRichText: true), findsNothing);
+
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const Key('actor-summary-card-5'))),
+    );
+    await tester.pumpAndSettle();
+
+    for (final text in <String>[
+      '影片数 123',
+      '年龄 28岁',
+      '出生年月 1998年5月',
+      '身高 165 cm',
+      '胸围 86 cm',
+      '腰围 58 cm',
+      '臀围 88 cm',
+      '罩杯 E',
+    ]) {
+      expect(find.text(text, findRichText: true), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('actor summary card skips missing profile stats on hover', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: ActorSummaryCard(
+            actor: const ActorListItemDto(
+              id: 6,
+              javdbId: 'Actor6',
+              name: '资料缺失',
+              aliasName: '',
+              profileImage: null,
+              isSubscribed: false,
+              movieCount: 3,
+              heightCm: 160,
+            ),
+            onSubscriptionTap: () {},
+          ),
+        ),
+      ),
+    );
+
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const Key('actor-summary-card-6'))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('影片数 3', findRichText: true), findsOneWidget);
+    expect(find.text('身高 160 cm', findRichText: true), findsOneWidget);
+    expect(find.text('年龄 28岁', findRichText: true), findsNothing);
+    expect(find.text('罩杯 E', findRichText: true), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }

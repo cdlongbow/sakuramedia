@@ -42,6 +42,7 @@ class AppListHeader extends StatelessWidget {
     this.onRetryFilter,
     this.informationSlots = const <Widget>[],
     this.actionSlots = const <Widget>[],
+    this.center,
   }) : assert(
          onFilterTap == null || filterPanelBuilder == null,
          'onFilterTap（移动：底部抽屉）与 filterPanelBuilder（桌面：就地浮层）'
@@ -73,7 +74,8 @@ class AppListHeader extends StatelessWidget {
        filterUpdate = const FilterUpdateState.idle(),
        hasPreviousFilterItems = true,
        onRetryFilter = null,
-       informationSlots = const <Widget>[];
+       informationSlots = const <Widget>[],
+       center = null;
 
   /// **移动端**筛选入口：点击弹底部抽屉。与 [filterPanelBuilder] 二选一。
   final VoidCallback? onFilterTap;
@@ -117,6 +119,12 @@ class AppListHeader extends StatelessWidget {
 
   /// 可交互节点，例如新建、查看全部、更多、选择。
   final List<Widget> actionSlots;
+
+  /// 替换中间槽位区的自定义内容（例如就地展开的搜索输入框）。
+  ///
+  /// 非空时 [informationSlots] / [actionSlots] 不显示，由调用方自行组织内容；
+  /// 左侧筛选入口与下方 [AppFilterUpdateBar] 保持不变。
+  final Widget? center;
 
   /// 多选态的计数文案，例如「已选 3 部」。
   final String? selectionLabel;
@@ -199,23 +207,27 @@ class AppListHeader extends StatelessWidget {
               children: [
                 if (leading != null) ...[leading, SizedBox(width: spacing.sm)],
                 Expanded(
-                  child: _HeaderSlotsViewport(
-                    informationSlots: _isSelectionMode
-                        ? <Widget>[
-                            Text(
-                              selectionLabel!,
-                              key: const Key('app-list-header-selection-label'),
-                              style: resolveAppTextStyle(
-                                context,
-                                size: AppTextSize.s14,
-                                weight: AppTextWeight.medium,
-                                tone: AppTextTone.primary,
-                              ),
-                            ),
-                          ]
-                        : informationSlots,
-                    actionSlots: actionSlots,
-                  ),
+                  child:
+                      center ??
+                      _HeaderSlotsViewport(
+                        informationSlots: _isSelectionMode
+                            ? <Widget>[
+                                Text(
+                                  selectionLabel!,
+                                  key: const Key(
+                                    'app-list-header-selection-label',
+                                  ),
+                                  style: resolveAppTextStyle(
+                                    context,
+                                    size: AppTextSize.s14,
+                                    weight: AppTextWeight.medium,
+                                    tone: AppTextTone.primary,
+                                  ),
+                                ),
+                              ]
+                            : informationSlots,
+                        actionSlots: actionSlots,
+                      ),
                 ),
               ],
             ),

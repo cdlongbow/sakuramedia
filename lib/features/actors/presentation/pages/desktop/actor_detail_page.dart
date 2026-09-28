@@ -44,12 +44,14 @@ class _DesktopActorDetailPageState extends State<DesktopActorDetailPage> {
             isSubscriptionUpdating,
             onSubscriptionTap,
             onEditTap,
+            onMergeTap,
           ) => _ActorDetailHeader(
             actor: actor,
             isSubscribed: isSubscribed,
             isSubscriptionUpdating: isSubscriptionUpdating,
             onSubscriptionTap: onSubscriptionTap,
             onEditTap: onEditTap,
+            onMergeTap: onMergeTap,
           ),
       // loading 用占位女优渲染真实详情头与影片网格，由 [AppSkeletonizer] 灰化。
       loadingBuilder: (context) => AppSkeletonizer(
@@ -64,6 +66,7 @@ class _DesktopActorDetailPageState extends State<DesktopActorDetailPage> {
                 isSubscriptionUpdating: false,
                 onSubscriptionTap: () {},
                 onEditTap: () {},
+                onMergeTap: () {},
               ),
               SizedBox(height: context.appSpacing.lg),
               MovieSummaryGrid(
@@ -107,6 +110,7 @@ class _ActorDetailHeader extends StatelessWidget {
     required this.isSubscriptionUpdating,
     required this.onSubscriptionTap,
     required this.onEditTap,
+    required this.onMergeTap,
   });
 
   final ActorDetailDto actor;
@@ -114,6 +118,7 @@ class _ActorDetailHeader extends StatelessWidget {
   final bool isSubscriptionUpdating;
   final VoidCallback? onSubscriptionTap;
   final VoidCallback onEditTap;
+  final VoidCallback onMergeTap;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +155,15 @@ class _ActorDetailHeader extends StatelessWidget {
           ),
         ),
         SizedBox(width: context.appSpacing.lg),
+        AppIconButton(
+          key: const Key('actor-detail-merge-button'),
+          icon: const Icon(Icons.call_merge_outlined),
+          size: AppIconButtonSize.compact,
+          tooltip: '合并女优',
+          semanticLabel: '合并女优',
+          onPressed: onMergeTap,
+        ),
+        SizedBox(width: context.appSpacing.sm),
         AppIconButton(
           key: const Key('actor-detail-edit-button'),
           icon: const Icon(Icons.edit_outlined),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
@@ -66,6 +67,8 @@ class AppMobileFilterDrawer<T> extends StatefulWidget {
     required this.isDefault,
     required this.scrollViewKey,
     required this.contentBuilder,
+    this.extraActive,
+    this.onExtraReset,
   });
 
   final T current;
@@ -79,6 +82,13 @@ class AppMobileFilterDrawer<T> extends StatefulWidget {
   /// 构建筛选内容；[onApply] 就地更新本地副本并向外应用。
   final Widget Function(BuildContext context, T local, ValueChanged<T> onApply)
   contentBuilder;
+
+  /// 是否还有筛选值之外的条件生效（如女优页筛选面板里的标签选择）；
+  /// 监听它可以让 footer 的默认态与重置可用性实时更新。
+  final ValueListenable<bool>? extraActive;
+
+  /// 重置时额外要清掉的条件（如女优页筛选面板里的标签选择）。
+  final VoidCallback? onExtraReset;
 
   @override
   State<AppMobileFilterDrawer<T>> createState() =>
@@ -99,14 +109,30 @@ class _AppMobileFilterDrawerState<T> extends State<AppMobileFilterDrawer<T>> {
     widget.onChanged(next);
   }
 
+  void _reset() {
+    _apply(widget.initial);
+    widget.onExtraReset?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
+    Widget buildFooter() {
+      final extra = widget.extraActive?.value ?? false;
+      return AppFilterPanelFooter(
+        isDefault: widget.isDefault(_local) && !extra,
+        onReset: _reset,
+      );
+    }
+
+    final extraActive = widget.extraActive;
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: widget.scrollViewKey,
-      footer: AppFilterPanelFooter(
-        isDefault: widget.isDefault(_local),
-        onReset: () => _apply(widget.initial),
-      ),
+      footer: extraActive == null
+          ? buildFooter()
+          : ListenableBuilder(
+              listenable: extraActive,
+              builder: (_, __) => buildFooter(),
+            ),
       child: widget.contentBuilder(context, _local, _apply),
     );
   }

@@ -1,10 +1,12 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_detail_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 
@@ -81,7 +83,7 @@ void main() {
       findsOneWidget,
     );
 
-    // 打开筛选浮层时懒加载年份分节。
+    // 打开筛选浮层时懒加载年份分节和标签数据。
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/actors/1/years',
@@ -89,11 +91,21 @@ void main() {
         <String, dynamic>{'year': 2024, 'movie_count': 2},
       ],
     );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 3, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
 
     await tester.tap(find.byKey(const Key('actor-detail-filter-trigger')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('actor-detail-filter-panel')), findsOneWidget);
+    // 标签分节在面板最末，不挤占其它筛选维度；这里只确认它存在。
+    expect(find.text('标签'), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-3')), findsOneWidget);
     expect(find.text('状态筛选'), findsOneWidget);
     expect(find.text('发行年份'), findsOneWidget);
     expect(find.text('2024(2)'), findsOneWidget);
@@ -373,6 +385,186 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('筛选面板内按标签过滤作品，重置同时清空标签', (WidgetTester tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 1600);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1',
+      body: _actorJson(),
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(),
+    );
+    await tester.pumpWidget(wrap(const DesktopActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+
+    // 标签数据是懒加载：面板打开前不发 /tags。
+    expect(bundle.adapter.hitCount('GET', '/tags'), 0);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1/years',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'year': 2024, 'movie_count': 2},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 3, 'name': '巨乳', 'movie_count': 100},
+        <String, dynamic>{'tag_id': 5, 'name': '单体作品', 'movie_count': 80},
+      ],
+    );
+    await tester.tap(find.byKey(const Key('actor-detail-filter-trigger')));
+    await tester.pumpAndSettle();
+    expect(bundle.adapter.hitCount('GET', '/tags'), 1);
+    // 标签分节在面板最末，先滚到它再操作。
+    expect(find.byKey(const Key('tags-option-3')), findsOneWidget);
+    expect(find.text('状态筛选'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 1),
+    );
+    await tester.ensureVisible(find.byKey(const Key('tags-option-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-option-3')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final tagged = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(tagged.uri.queryParameters['actor_id'], '1');
+    expect(tagged.uri.queryParameters['tag_ids'], '3');
+    expect(tagged.uri.queryParameters['tag_match'], 'or');
+    // 入口摘要直接反映标签条件。
+    final entry = tester.widget<AppFilterEntryButton>(
+      find.byType(AppFilterEntryButton),
+    );
+    expect(entry.label, '标签 · 1');
+
+    // 面板 footer 的重置同时清空标签条件。
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(),
+    );
+    await tester.tap(find.text('重置'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final cleared = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(cleared.uri.queryParameters['actor_id'], '1');
+    expect(cleared.uri.queryParameters.containsKey('tag_ids'), isFalse);
+    expect(find.byKey(const Key('tags-selected-3')), findsNothing);
+    expect(find.byKey(const Key('tags-option-3')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('标签节默认收起搜索并只展示前 5 个，展开后显示全部', (WidgetTester tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 1600);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1',
+      body: _actorJson(),
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(),
+    );
+    await tester.pumpWidget(wrap(const DesktopActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1/years',
+      body: <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        for (var index = 1; index <= 70; index += 1)
+          <String, dynamic>{
+            'tag_id': index,
+            'name': '标签$index',
+            'movie_count': 100 - index,
+          },
+      ],
+    );
+    await tester.tap(find.byKey(const Key('actor-detail-filter-trigger')));
+    await tester.pumpAndSettle();
+
+    // 标签节在面板末尾：默认只展示前 5 个，且搜索框收起。
+    await tester.ensureVisible(find.byKey(const Key('tags-option-5')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-search-field')), findsNothing);
+    expect(find.byKey(const Key('tags-option-5')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-6')), findsNothing);
+    expect(find.text('展开全部'), findsOneWidget);
+    // 女优筛选面板的标签不带影片数量。
+    final firstTagChip = tester.widget<AppTextButton>(
+      find.byKey(const Key('tags-option-1')),
+    );
+    expect(firstTagChip.label, '标签1');
+
+    // 点搜索图标才展开输入框。
+    await tester.ensureVisible(find.byKey(const Key('tags-search-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-search-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-search-field')), findsOneWidget);
+
+    // 回归：follower 浮层内 hover 搜索图标不得触发
+    // 「The paint transform cannot be reliably computed」断言
+    // （图标曾带 Tooltip，Tooltip 的 OverlayPortal 与浮层的
+    // CompositedTransformFollower 组合会崩，见 flutter/flutter#178522）。
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(
+      tester.getCenter(find.byKey(const Key('tags-search-toggle'))),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.takeException(), isNull);
+    await mouse.moveTo(Offset.zero);
+    await tester.pump();
+
+    // 收起搜索并「展开全部」后展示全部标签（旧实现在第 60 个处静默截断）。
+    await tester.tap(find.byKey(const Key('tags-search-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-search-field')), findsNothing);
+    await tester.ensureVisible(find.text('展开全部'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('展开全部'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-option-6')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-70')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Map<String, dynamic> _actorJson() {

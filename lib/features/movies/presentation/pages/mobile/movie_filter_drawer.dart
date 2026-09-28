@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
@@ -13,6 +14,9 @@ Future<void> showMobileMovieFilterDrawer(
   BuildContext context, {
   required MovieFilterState current,
   required ValueChanged<MovieFilterState> onChanged,
+  Widget? tagSection,
+  ValueListenable<bool>? extraActive,
+  VoidCallback? onResetExtra,
   List<MovieFilterYearOption>? yearOptions,
   bool isYearOptionsLoading = false,
   String? yearOptionsErrorMessage,
@@ -27,10 +31,13 @@ Future<void> showMobileMovieFilterDrawer(
       initial: MovieFilterState.initial,
       onChanged: onChanged,
       isDefault: (value) => value.isDefault,
+      extraActive: extraActive,
+      onExtraReset: onResetExtra,
       scrollViewKey: const Key('mobile-movies-filter-scroll-view'),
       contentBuilder: (context, local, onApply) => MovieFilterSectionGroup(
         filterState: local,
         onChanged: onApply,
+        tagSection: tagSection,
         yearOptions: yearOptions,
         isYearOptionsLoading: isYearOptionsLoading,
         yearOptionsErrorMessage: yearOptionsErrorMessage,

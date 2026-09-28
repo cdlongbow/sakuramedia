@@ -21,6 +21,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class MobileActorsPage extends ConsumerStatefulWidget {
@@ -35,11 +36,17 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
 
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
+  late final TextEditingController _searchController;
+
+  bool _searchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _searchController = TextEditingController(
+      text: ref.read(actorSummaryProvider(_scope)).value?.filter.query ?? '',
+    );
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -56,6 +63,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
   @override
   void dispose() {
     _pageCacheHandle.release();
+    _searchController.dispose();
     _scrollController
       ..removeListener(_loadMoreIfNeeded)
       ..dispose();
@@ -81,12 +89,26 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     if (current == nextState) {
       return;
     }
+    if ((nextState.query ?? '').isEmpty && _searchController.text.isNotEmpty) {
+      _searchController.clear();
+    }
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
     unawaited(
       ref.read(actorSummaryProvider(_scope).notifier).applyFilter(nextState),
     );
+  }
+
+  void _applySearchQuery(String value) {
+    final current =
+        ref.read(actorSummaryProvider(_scope)).value?.filter ??
+        ActorFilterState.initial;
+    _applyFilter(current.withSearchQuery(value));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchExpanded = !_searchExpanded);
   }
 
   Future<void> _toggleActorSubscription(int actorId) async {
@@ -131,12 +153,47 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
               onRetryFilter: () => unawaited(
                 ref.read(actorSummaryProvider(_scope).notifier).retryFilter(),
               ),
-              informationSlots: [
-                AppListHeaderInfo(
-                  key: const Key('mobile-actors-total'),
-                  label: '${paged?.total ?? 0} 位',
-                ),
-              ],
+              informationSlots: _searchExpanded
+                  ? const <Widget>[]
+                  : <Widget>[
+                      AppListHeaderInfo(
+                        key: const Key('mobile-actors-total'),
+                        label: '${paged?.total ?? 0} 位',
+                      ),
+                    ],
+              actionSlots: _searchExpanded
+                  ? const <Widget>[]
+                  : <Widget>[
+                      ActorListSearchToggle(
+                        key: const Key('mobile-actors-search-toggle'),
+                        isActive: _searchExpanded || filter.query != null,
+                        tooltip: _searchExpanded ? '收起搜索' : '搜索女优',
+                        onTap: _toggleSearch,
+                      ),
+                    ],
+              center: _searchExpanded
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: ActorListSearchField(
+                            fieldKey: const Key('mobile-actors-search-field'),
+                            clearButtonKey: const Key(
+                              'mobile-actors-search-clear',
+                            ),
+                            controller: _searchController,
+                            onChanged: _applySearchQuery,
+                          ),
+                        ),
+                        SizedBox(width: context.appSpacing.sm),
+                        ActorListSearchToggle(
+                          key: const Key('mobile-actors-search-toggle'),
+                          isActive: true,
+                          tooltip: '收起搜索',
+                          onTap: _toggleSearch,
+                        ),
+                      ],
+                    )
+                  : null,
             ),
             SizedBox(height: context.appSpacing.md),
           ],

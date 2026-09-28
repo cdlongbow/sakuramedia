@@ -11,8 +11,10 @@ import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart'
 /// 女优摘要卡：竖版海报 + 底部渐变姓名，与影片卡同参数（`lg` 圆角、常驻 1px
 /// 边框与卡片阴影）；触摸端没有 hover，停留在这层，随卡片附带的订阅心提供主操作。
 ///
-/// 桌面悬停时底部渐显姓名与订阅 / 取消订阅动作，收起态姓名层淡出；与全站封面
-/// 卡片共用同一套悬停披露范式。演员页没有多选 / 右键菜单业务，卡片不接入。
+/// 桌面悬停时底部渐显姓名、资料（影片数 / 年龄 / 出生年月 / 身高 / 三围 /
+/// 罩杯，字段随列表接口下发，缺项跳过）与订阅 / 取消订阅动作，收起态姓名层
+/// 淡出；与全站封面卡片共用同一套悬停披露范式。演员页没有多选 / 右键菜单
+/// 业务，卡片不接入。
 class ActorSummaryCard extends StatelessWidget {
   const ActorSummaryCard({
     super.key,
@@ -89,7 +91,7 @@ class ActorSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 悬停面板：姓名与订阅 / 取消订阅动作。
+  /// 悬停面板：姓名、资料与订阅 / 取消订阅动作。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
     final subscribe = onSubscriptionTap;
@@ -109,10 +111,53 @@ class ActorSummaryCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         AppCoverHoverInfoRow(label: actor.displayName),
+        SizedBox(height: spacing.sm),
+        _buildHoverStats(context),
         if (actions.isNotEmpty) ...[
           SizedBox(height: spacing.sm),
           AppCoverHoverActionBar(actions: actions),
         ],
+      ],
+    );
+  }
+
+  /// 悬停资料：列表接口随卡片下发，缺项跳过。
+  Widget _buildHoverStats(BuildContext context) {
+    final spacing = context.appSpacing;
+    final valueStyle = resolveCoverOverlayTextStyle(
+      context,
+      size: AppTextSize.s10,
+    );
+    final labelStyle = resolveCoverOverlayTextStyle(
+      context,
+      size: AppTextSize.s10,
+      opacity: 0.6,
+    );
+    final birthday = actor.birthday;
+    final stats = <(String, String)>[
+      ('影片数', '${actor.movieCount}'),
+      if (actor.age != null) ('年龄', '${actor.age}岁'),
+      if (birthday != null) ('出生年月', '${birthday.year}年${birthday.month}月'),
+      if (actor.heightCm != null) ('身高', '${actor.heightCm} cm'),
+      if (actor.bustCm != null) ('胸围', '${actor.bustCm} cm'),
+      if (actor.waistCm != null) ('腰围', '${actor.waistCm} cm'),
+      if (actor.hipsCm != null) ('臀围', '${actor.hipsCm} cm'),
+      if (actor.cup != null) ('罩杯', actor.cup!),
+    ];
+    return Wrap(
+      spacing: spacing.lg,
+      runSpacing: spacing.xs,
+      children: [
+        for (final (label, value) in stats)
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: '$label ', style: labelStyle),
+                TextSpan(text: value),
+              ],
+            ),
+            style: valueStyle,
+          ),
       ],
     );
   }

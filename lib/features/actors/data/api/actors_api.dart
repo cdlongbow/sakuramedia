@@ -25,6 +25,7 @@ class ActorsApi {
     int? heightMin,
     int? heightMax,
     List<String> cups = const <String>[],
+    bool hasPlayableMovies = false,
     String? sort,
     String? query,
     int page = 1,
@@ -38,6 +39,9 @@ class ActorsApi {
     };
     if (query != null && query.isNotEmpty) {
       queryParameters['query'] = query;
+    }
+    if (hasPlayableMovies) {
+      queryParameters['has_playable_movies'] = true;
     }
     if (sort != null && sort.isNotEmpty) {
       queryParameters['sort'] = sort;
@@ -169,6 +173,17 @@ class ActorsApi {
 
   Future<void> unsubscribeActor({required int actorId}) {
     return _apiClient.deleteNoContent('/actors/$actorId/subscription');
+  }
+
+  Future<ActorDetailDto> mergeActors({
+    required int actorId,
+    required List<int> sourceActorIds,
+  }) async {
+    final response = await _apiClient.post(
+      '/actors/$actorId/merge',
+      data: <String, dynamic>{'source_actor_ids': sourceActorIds},
+    );
+    return ActorDetailDto.fromJson(response);
   }
 
   ActorSearchStreamUpdate _mapActorSearchStreamEvent(ApiSseEvent event) {

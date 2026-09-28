@@ -1,3 +1,4 @@
+import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
 class ActorListItemDto {
@@ -9,6 +10,14 @@ class ActorListItemDto {
     required this.profileImage,
     required this.isSubscribed,
     this.apiDisplayName,
+    this.movieCount = 0,
+    this.age,
+    this.birthday,
+    this.heightCm,
+    this.bustCm,
+    this.waistCm,
+    this.hipsCm,
+    this.cup,
   });
 
   final int id;
@@ -18,6 +27,14 @@ class ActorListItemDto {
   final MovieImageDto? profileImage;
   final bool isSubscribed;
   final String? apiDisplayName;
+  final int movieCount;
+  final int? age;
+  final DateTime? birthday;
+  final int? heightCm;
+  final int? bustCm;
+  final int? waistCm;
+  final int? hipsCm;
+  final String? cup;
 
   String get displayName {
     final normalized = apiDisplayName?.trim();
@@ -44,6 +61,14 @@ class ActorListItemDto {
       profileImage: profileImage ?? this.profileImage,
       isSubscribed: isSubscribed ?? this.isSubscribed,
       apiDisplayName: apiDisplayName ?? this.apiDisplayName,
+      movieCount: this.movieCount,
+      age: this.age,
+      birthday: this.birthday,
+      heightCm: this.heightCm,
+      bustCm: this.bustCm,
+      waistCm: this.waistCm,
+      hipsCm: this.hipsCm,
+      cup: this.cup,
     );
   }
 
@@ -56,6 +81,14 @@ class ActorListItemDto {
       profileImage: _imageFromJson(json['profile_image']),
       isSubscribed: json['is_subscribed'] as bool? ?? false,
       apiDisplayName: json['display_name'] as String?,
+      movieCount: asIntOrNull(json['movie_count']) ?? 0,
+      age: asIntOrNull(json['age']),
+      birthday: asDateTime(json['birthday']),
+      heightCm: asIntOrNull(json['height_cm']),
+      bustCm: asIntOrNull(json['bust_cm']),
+      waistCm: asIntOrNull(json['waist_cm']),
+      hipsCm: asIntOrNull(json['hips_cm']),
+      cup: asStringOrNull(json['cup'], trim: true),
     );
   }
 

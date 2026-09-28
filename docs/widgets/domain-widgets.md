@@ -12,7 +12,7 @@
 
 路径：`lib/widgets/domain/actors/`
 
-包含 `ActorAvatar`、`ActorSummaryCard` 和 `ActorFilterSections`。女优数据和筛选状态由 actors feature 提供。`ActorSummaryCard` 与影片卡同参数（`lg` 圆角、常驻 1px 边框与卡片阴影）：收起态底部渐变上常显姓名（Tooltip 补全截断），桌面悬停渐显姓名与订阅 / 取消订阅动作，收起态姓名层淡出；演员页没有多选 / 右键菜单业务，卡片不接入。
+包含 `ActorAvatar`、`ActorSummaryCard` 和 `ActorFilterSections`。女优数据和筛选状态由 actors feature 提供。`ActorSummaryCard` 与影片卡同参数（`lg` 圆角、常驻 1px 边框与卡片阴影）：收起态底部渐变上常显姓名（Tooltip 补全截断），桌面悬停渐显姓名、资料行（影片数 / 年龄 / 出生年月 / 身高 / 胸围 / 腰围 / 臀围 / 罩杯，字段随列表接口下发、缺项跳过）与订阅 / 取消订阅动作，收起态姓名层淡出；演员页没有多选 / 右键菜单业务，卡片不接入。
 
 ## movies
 

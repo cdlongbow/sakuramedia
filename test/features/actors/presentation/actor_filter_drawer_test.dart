@@ -59,12 +59,15 @@ void main() {
     // 抽屉内容与桌面浮层面板同构：只有筛选分节 + footer。
     expect(find.text('订阅筛选'), findsOneWidget);
     expect(find.text('性别筛选'), findsOneWidget);
+    expect(find.text('播放筛选'), findsOneWidget);
     expect(find.byKey(const Key('actor-filter-年龄-slider')), findsOneWidget);
     expect(find.byKey(const Key('actor-filter-身高-slider')), findsOneWidget);
     expect(find.text('快捷筛选'), findsNothing);
     expect(find.text('确定'), findsNothing);
     expect(find.text('完成'), findsNothing);
 
+    await tester.ensureVisible(find.text('B (1)'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('B (1)'));
     await tester.pumpAndSettle();
 
@@ -72,10 +75,19 @@ void main() {
     expect(applied.single.cups, ['B']);
     expect(find.text('订阅筛选'), findsOneWidget);
 
-    await tester.tap(find.text('重置'));
+    await tester.ensureVisible(find.text('有可播放影片'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('有可播放影片'));
     await tester.pumpAndSettle();
 
     expect(applied, hasLength(2));
+    expect(applied.last.hasPlayableMovies, isTrue);
+    expect(applied.last.cups, ['B']);
+
+    await tester.tap(find.text('重置'));
+    await tester.pumpAndSettle();
+
+    expect(applied, hasLength(3));
     expect(applied.last.isDefault, isTrue);
   });
 }

@@ -57,6 +57,14 @@ void main() {
               'large': 'large.jpg',
             },
             'is_subscribed': true,
+            'movie_count': 42,
+            'age': 28,
+            'birthday': '1998-05-03',
+            'height_cm': 159,
+            'bust_cm': 86,
+            'waist_cm': 58,
+            'hips_cm': 88,
+            'cup': 'E',
           },
         ],
         'page': 2,
@@ -78,6 +86,14 @@ void main() {
     expect(page.items.single.id, 1);
     expect(page.items.single.displayName, '三上悠亚 / 鬼头桃菜');
     expect(page.items.single.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(page.items.single.movieCount, 42);
+    expect(page.items.single.age, 28);
+    expect(page.items.single.birthday, DateTime(1998, 5, 3));
+    expect(page.items.single.heightCm, 159);
+    expect(page.items.single.bustCm, 86);
+    expect(page.items.single.waistCm, 58);
+    expect(page.items.single.hipsCm, 88);
+    expect(page.items.single.cup, 'E');
 
     final request = adapter.requests.single;
     expect(request.path, '/actors');
@@ -100,6 +116,7 @@ void main() {
     await actorsApi.getActors(
       subscriptionStatus: ActorSubscriptionStatus.unsubscribed,
       gender: ActorGender.male,
+      hasPlayableMovies: true,
       sort: 'movie_count:desc',
       query: '三上',
       page: 1,
@@ -111,10 +128,37 @@ void main() {
     expect(request.method, 'GET');
     expect(request.uri.queryParameters['subscription_status'], 'unsubscribed');
     expect(request.uri.queryParameters['gender'], 'male');
+    expect(request.uri.queryParameters['has_playable_movies'], 'true');
     expect(request.uri.queryParameters['sort'], 'movie_count:desc');
     expect(request.uri.queryParameters['query'], '三上');
     expect(request.uri.queryParameters['page'], '1');
     expect(request.uri.queryParameters['page_size'], '24');
+  });
+
+  test('getActors omits blank optional query parameters', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'items': [],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+
+    await actorsApi.getActors(
+      query: '',
+      sort: '',
+      cups: const <String>[],
+    );
+
+    final query = adapter.requests.single.uri.queryParameters;
+    expect(query.containsKey('query'), isFalse);
+    expect(query.containsKey('sort'), isFalse);
+    expect(query.containsKey('cups'), isFalse);
+    expect(query.containsKey('has_playable_movies'), isFalse);
   });
 
   test('getActors converts backend error to ApiException', () async {
@@ -430,6 +474,28 @@ void main() {
       expect(request.uri.queryParameters, isEmpty);
     },
   );
+
+  test('mergeActors posts source ids and parses merged detail', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/actors/1/merge',
+      statusCode: 200,
+      body: _actorDetailResponse(),
+    );
+
+    final detail = await actorsApi.mergeActors(
+      actorId: 1,
+      sourceActorIds: <int>[2, 3],
+    );
+
+    expect(detail.summary.id, 1);
+    final request = adapter.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '/actors/1/merge');
+    expect(request.body, <String, dynamic>{
+      'source_actor_ids': <int>[2, 3],
+    });
+  });
 }
 
 Map<String, dynamic> _actorDetailResponse() {

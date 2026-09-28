@@ -49,6 +49,18 @@ class ActorFilterSectionGroup extends ConsumerWidget {
           onSelected: (value) => onChanged(filterState.copyWith(gender: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
+        MovieFilterChoiceSection<bool>(
+          title: '播放筛选',
+          options: const [false, true],
+          selectedValue: filterState.hasPlayableMovies,
+          labelBuilder: (value) => value ? '有可播放影片' : '全部',
+          optionKeyBuilder: (value) => Key(
+            value ? 'actor-filter-playable-only' : 'actor-filter-playable-all',
+          ),
+          onSelected: (value) =>
+              onChanged(filterState.copyWith(hasPlayableMovies: value)),
+        ),
+        SizedBox(height: context.appSpacing.lg),
         options.when(
           data: (value) => ActorProfileFilterSections(
             filterState: filterState,

@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_fo
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_filter_sections.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class DesktopActorsPage extends ConsumerStatefulWidget {
@@ -36,11 +37,17 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
 
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
+  late final TextEditingController _searchController;
+
+  bool _searchExpanded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _searchController = TextEditingController(
+      text: ref.read(actorSummaryProvider(_scope)).value?.filter.query ?? '',
+    );
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -57,6 +64,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
   @override
   void dispose() {
     _pageCacheHandle.release();
+    _searchController.dispose();
     _scrollController
       ..removeListener(_loadMoreIfNeeded)
       ..dispose();
@@ -82,12 +90,26 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
     if (current == nextState) {
       return;
     }
+    if ((nextState.query ?? '').isEmpty && _searchController.text.isNotEmpty) {
+      _searchController.clear();
+    }
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
     unawaited(
       ref.read(actorSummaryProvider(_scope).notifier).applyFilter(nextState),
     );
+  }
+
+  void _applySearchQuery(String value) {
+    final current =
+        ref.read(actorSummaryProvider(_scope)).value?.filter ??
+        ActorFilterState.initial;
+    _applyFilter(current.withSearchQuery(value));
+  }
+
+  void _toggleSearch() {
+    setState(() => _searchExpanded = !_searchExpanded);
   }
 
   void _resetFilters() => _applyFilter(ActorFilterState.initial);
@@ -141,6 +163,19 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                 ),
                 onFilterChanged: _applyFilter,
                 onResetFilters: _resetFilters,
+                searchExpanded: _searchExpanded,
+                searchToggle: ActorListSearchToggle(
+                  key: const Key('actors-search-toggle'),
+                  isActive: _searchExpanded || filter.query != null,
+                  tooltip: _searchExpanded ? '收起搜索' : '搜索女优',
+                  onTap: _toggleSearch,
+                ),
+                searchField: ActorListSearchField(
+                  fieldKey: const Key('actors-search-field'),
+                  clearButtonKey: const Key('actors-search-clear'),
+                  controller: _searchController,
+                  onChanged: _applySearchQuery,
+                ),
               ),
               SizedBox(height: context.appSpacing.lg),
             ],
@@ -210,6 +245,9 @@ class _ActorsHeader extends StatelessWidget {
     required this.onRetryFilter,
     required this.onFilterChanged,
     required this.onResetFilters,
+    required this.searchExpanded,
+    required this.searchToggle,
+    required this.searchField,
   });
 
   final int total;
@@ -219,6 +257,9 @@ class _ActorsHeader extends StatelessWidget {
   final VoidCallback onRetryFilter;
   final ValueChanged<ActorFilterState> onFilterChanged;
   final VoidCallback onResetFilters;
+  final bool searchExpanded;
+  final Widget searchToggle;
+  final Widget searchField;
 
   @override
   Widget build(BuildContext context) {
@@ -238,12 +279,36 @@ class _ActorsHeader extends StatelessWidget {
       filterUpdate: filterUpdate,
       hasPreviousFilterItems: hasPreviousItems,
       onRetryFilter: onRetryFilter,
-      informationSlots: [
-        AppListHeaderInfo(
-          key: const Key('actors-page-total'),
-          label: '$total 位',
-        ),
-      ],
+      informationSlots: searchExpanded
+          ? const <Widget>[]
+          : <Widget>[
+              AppListHeaderInfo(
+                key: const Key('actors-page-total'),
+                label: '$total 位',
+              ),
+            ],
+      actionSlots: searchExpanded ? const <Widget>[] : <Widget>[searchToggle],
+      center: searchExpanded
+          ? Row(
+              children: [
+                AppListHeaderInfo(
+                  key: const Key('actors-page-total'),
+                  label: '$total 位',
+                ),
+                const Spacer(),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: Row(
+                    children: [
+                      Expanded(child: searchField),
+                      SizedBox(width: context.appSpacing.sm),
+                      searchToggle,
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : null,
     );
   }
 }

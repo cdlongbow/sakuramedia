@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,8 @@ import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_detail_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/widgets/actor_merge_dialog.dart';
 import 'package:sakuramedia/features/actors/presentation/widgets/actor_profile_editor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -20,6 +23,9 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -32,6 +38,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/tags/tag_filter_section.dart';
 
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
@@ -52,6 +59,7 @@ typedef ActorDetailHeaderBuilder =
       bool isSubscriptionUpdating,
       VoidCallback? onSubscriptionTap,
       VoidCallback onEditTap,
+      VoidCallback onMergeTap,
     );
 
 typedef ActorDetailErrorBuilder =
@@ -127,6 +135,17 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   MovieSummaryScope get _scope =>
       MovieSummaryScope.actor(actorId: widget.actorId);
 
+  /// 作品区的附加标签筛选：独立于影片筛选面板，随页面释放；懒加载标签数据。
+  late final TagSelectionScope _tagSelectionScope = TagSelectionScope.custom(
+    instanceKey:
+        'actor-detail:${widget.useMobileFilterDrawer ? 'mobile' : 'desktop'}:'
+        '${widget.actorId}',
+    preload: false,
+  );
+
+  /// 供移动筛选抽屉的 footer 实时反映"标签条件是否生效"。
+  final ValueNotifier<bool> _tagSelectionActive = ValueNotifier<bool>(false);
+
   MovieCardHoverFeatureActions get _hoverFeatureActions =>
       movieCardHoverFeatureActions(
         context,
@@ -169,6 +188,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
 
   @override
   void dispose() {
+    _tagSelectionActive.dispose();
     _scrollController
       ..removeListener(_loadMoreIfNeeded)
       ..dispose();
@@ -207,6 +227,28 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
 
   void _resetFilters() {
     _applyFilter(MovieFilterState.initial);
+    if (ref.read(tagSelectionProvider(_tagSelectionScope)).hasSelection) {
+      ref.read(tagSelectionProvider(_tagSelectionScope).notifier).clear();
+    }
+  }
+
+  /// 标签选择变化后重拉作品列表：有选择走 tag 条件，清空则回到无标签请求。
+  void _applyTagSelection(TagSelectionState selection) {
+    if (selectionMode) {
+      exitSelection();
+    }
+    AppPinnedListHeader.scrollToStart(_listHeaderKey, _scrollController);
+    final notifier = ref.read(movieSummaryProvider(_scope).notifier);
+    if (selection.hasSelection) {
+      unawaited(
+        notifier.applyTagFilter(
+          tagIds: selection.selectedTagIds,
+          tagMatch: selection.matchMode,
+        ),
+      );
+    } else {
+      unawaited(notifier.clearTagFilter());
+    }
   }
 
   void _loadMovieYearsIfNeeded() {
@@ -325,6 +367,33 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         .reportUpdated(updated.summary);
   }
 
+  Future<void> _openActorMerger(ActorDetailDto actor) async {
+    final result = await showActorMergeDialog(
+      context,
+      actor: actor,
+      api: ref.read(actorsApiProvider),
+    );
+    if (!mounted || result == null) {
+      return;
+    }
+    ref
+        .read(actorDetailProvider(widget.actorId).notifier)
+        .replaceActor(result.actor);
+    ref
+        .read(actorMutationEventsProvider.notifier)
+        .reportUpdated(result.actor.summary);
+    ref
+        .read(actorRemovalEventsProvider.notifier)
+        .reportRemoved(result.sourceActorIds);
+    // 影片归属发生变化：重拉作品列表与懒加载的年份筛选。
+    ref.invalidate(movieSummaryProvider(_scope));
+    setState(() {
+      _hasLoadedMovieYears = false;
+      _movieYearOptions = const <MovieFilterYearOption>[];
+    });
+    showToast('已合并 ${result.sourceActorIds.length} 位女优');
+  }
+
   /// 影片区顶栏：与影片 / 女优列表页共用同一条 `AppListHeader`。
   /// 差别只在筛选面板的容器——桌面就地浮层，移动底部抽屉。
   ///
@@ -333,9 +402,12 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     BuildContext context,
     PagedListState<MovieListItemDto>? paged,
   ) {
+    final tagSelection = ref.watch(tagSelectionProvider(_tagSelectionScope));
     return AppListHeader(
       filterButtonKey: const Key('actor-detail-filter-trigger'),
-      filterLabel: _filterState.triggerLabel,
+      filterLabel: tagSelection.hasSelection
+          ? '标签 · ${tagSelection.selectedCount}'
+          : _filterState.triggerLabel,
       filterPanelKey: const Key('actor-detail-filter-panel'),
       filterUpdate: paged?.filterUpdate ?? const FilterUpdateState.idle(),
       hasPreviousFilterItems: paged?.items.isNotEmpty ?? false,
@@ -353,13 +425,14 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
           : (_) => MovieFilterSectionGroup(
               filterState: _filterState,
               onChanged: _applyFilter,
+              tagSection: TagFilterSection(scope: _tagSelectionScope),
               yearOptions: _movieYearOptions,
               isYearOptionsLoading: _isMovieYearsLoading,
               yearOptionsErrorMessage: _movieYearsErrorMessage,
               onYearOptionsRetry: () => unawaited(_loadMovieYears(force: true)),
             ),
       filterPanelFooter: AppFilterPanelFooter(
-        isDefault: _filterState.isDefault,
+        isDefault: _filterState.isDefault && !tagSelection.hasSelection,
         onReset: _resetFilters,
       ),
       informationSlots: [
@@ -386,6 +459,11 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       context,
       current: _filterState,
       onChanged: _applyFilter,
+      tagSection: TagFilterSection(scope: _tagSelectionScope),
+      extraActive: _tagSelectionActive,
+      onResetExtra: () {
+        ref.read(tagSelectionProvider(_tagSelectionScope).notifier).clear();
+      },
       yearOptions: _movieYearOptions,
       yearOptionsErrorMessage: _movieYearsErrorMessage,
       onYearOptionsRetry: () => unawaited(_loadMovieYears(force: true)),
@@ -422,6 +500,17 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     final actorState = actorAsync.value;
     final moviesAsync = ref.watch(movieSummaryProvider(_scope));
     final movies = moviesAsync.value;
+    ref.listen(tagSelectionProvider(_tagSelectionScope), (previous, next) {
+      if (previous == null) {
+        return;
+      }
+      if (listEquals(previous.selectedTagIds, next.selectedTagIds) &&
+          previous.matchMode == next.matchMode) {
+        return;
+      }
+      _tagSelectionActive.value = next.hasSelection;
+      _applyTagSelection(next);
+    });
     ref.listen(movieCollectionTypeEventsProvider, (_, next) {
       final change = next.value;
       if (change == null ||
@@ -494,6 +583,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                                   isSubscribed: isActorSubscribed,
                                 ),
                           () => unawaited(_openActorEditor(actor)),
+                          () => unawaited(_openActorMerger(actor)),
                         ),
                       ),
                     ),

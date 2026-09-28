@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
@@ -130,6 +131,49 @@ void main() {
     expect(query['cups'], 'B,C');
   });
 
+  test('搜索关键词时透传 query 且默认按相关度省略 sort', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1)]);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _page(items: <Map<String, dynamic>>[_actor(2)], total: 1),
+    );
+
+    await container
+        .read(actorSummaryProvider(scope).notifier)
+        .applyFilter(const ActorFilterState(query: '三上'));
+
+    final query = adapter.requests.last.uri.queryParameters;
+    expect(query['query'], '三上');
+    expect(query.containsKey('sort'), isFalse);
+  });
+
+  test('搜索时选择其他排序字段仍按其排序，可播放筛选透传', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1)]);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _page(items: <Map<String, dynamic>>[_actor(2)], total: 1),
+    );
+
+    await container
+        .read(actorSummaryProvider(scope).notifier)
+        .applyFilter(
+          const ActorFilterState(
+            query: '三上',
+            hasPlayableMovies: true,
+            sortField: ActorSortField.playableMovieCount,
+          ),
+        );
+
+    final query = adapter.requests.last.uri.queryParameters;
+    expect(query['query'], '三上');
+    expect(query['has_playable_movies'], 'true');
+    expect(query['sort'], 'playable_movie_count:desc');
+  });
+
   test('初始失败可显式重试，缓存 link 不随重试累加', () async {
     const scope = ActorSummaryScope.desktop();
     adapter.enqueueJson(method: 'GET', path: '/actors', statusCode: 500);
@@ -240,7 +284,7 @@ void main() {
     );
   });
 
-  test('演员资料变更会就地更新缓存条目的显示名和头像', () async {
+  test('演员资料变更会就地更新缓存条目的显示名、头像与资料', () async {
     const scope = ActorSummaryScope.desktop();
     await prime(scope, <Map<String, dynamic>>[_actor(1)]);
 
@@ -254,6 +298,14 @@ void main() {
         'medium': 'medium.jpg',
         'large': 'large.jpg',
       },
+      'movie_count': 12,
+      'age': 28,
+      'birthday': '1998-05-03',
+      'height_cm': 165,
+      'bust_cm': 86,
+      'waist_cm': 58,
+      'hips_cm': 88,
+      'cup': 'E',
     });
     container.read(actorMutationEventsProvider.notifier).reportUpdated(updated);
     await _settle();
@@ -266,6 +318,26 @@ void main() {
         .single;
     expect(actor.displayName, '新的显示名');
     expect(actor.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(actor.movieCount, 12);
+    expect(actor.age, 28);
+    expect(actor.birthday, DateTime(1998, 5, 3));
+    expect(actor.heightCm, 165);
+    expect(actor.bustCm, 86);
+    expect(actor.waistCm, 58);
+    expect(actor.hipsCm, 88);
+    expect(actor.cup, 'E');
+  });
+
+  test('合并移除广播把来源卡片摘掉并同步总数', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1), _actor(2)], total: 2);
+
+    container.read(actorRemovalEventsProvider.notifier).reportRemoved(<int>[2]);
+    await _settle();
+
+    final state = container.read(actorSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((actor) => actor.id), <int>[1]);
+    expect(state.paged.total, 1);
   });
 
   test('页面缓存 link 保活列表，驱逐后下一次读取重建 provider', () async {

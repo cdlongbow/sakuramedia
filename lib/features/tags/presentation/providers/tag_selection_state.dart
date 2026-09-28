@@ -15,7 +15,6 @@ class TagSelectionState {
     this.searchQuery = '',
     this.expanded = false,
     this.matchMode = TagMatchMode.or,
-    this.popularLimit = 60,
   });
 
   final List<TagListItemDto> allTags;
@@ -26,7 +25,6 @@ class TagSelectionState {
   final String searchQuery;
   final bool expanded;
   final TagMatchMode matchMode;
-  final int popularLimit;
 
   bool get isSearching => searchQuery.trim().isNotEmpty;
   int get selectedCount => selectedTagIds.length;
@@ -42,17 +40,15 @@ class TagSelectionState {
     );
   }
 
-  List<TagListItemDto> get visibleTags {
+  /// 按搜索词过滤后的标签云数据，不做数量截断；收起态由面板按数量裁剪。
+  List<TagListItemDto> get filteredTags {
     final keyword = searchQuery.trim().toLowerCase();
-    if (keyword.isNotEmpty) {
-      return List<TagListItemDto>.unmodifiable(
-        allTags.where((tag) => tag.name.toLowerCase().contains(keyword)),
-      );
-    }
-    if (allTags.length <= popularLimit) {
+    if (keyword.isEmpty) {
       return allTags;
     }
-    return List<TagListItemDto>.unmodifiable(allTags.take(popularLimit));
+    return List<TagListItemDto>.unmodifiable(
+      allTags.where((tag) => tag.name.toLowerCase().contains(keyword)),
+    );
   }
 
   TagSelectionState copyWith({
@@ -64,7 +60,6 @@ class TagSelectionState {
     String? searchQuery,
     bool? expanded,
     TagMatchMode? matchMode,
-    int? popularLimit,
   }) {
     return TagSelectionState(
       allTags: List<TagListItemDto>.unmodifiable(allTags ?? this.allTags),
@@ -80,7 +75,6 @@ class TagSelectionState {
       searchQuery: searchQuery ?? this.searchQuery,
       expanded: expanded ?? this.expanded,
       matchMode: matchMode ?? this.matchMode,
-      popularLimit: popularLimit ?? this.popularLimit,
     );
   }
 }

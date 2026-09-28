@@ -313,6 +313,92 @@ void main() {
     expect(find.text('download_task_sync'), findsNothing);
   });
 
+  testWidgets('plugin trigger source labeled and filterable', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/jobs',
+      body: const <dynamic>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/activity/bootstrap',
+      body: <String, dynamic>{
+        'notifications': <String, dynamic>{
+          'items': const <dynamic>[],
+          'page': 1,
+          'page_size': 20,
+          'total': 0,
+        },
+        'unread_count': 0,
+        'active_task_runs': const <dynamic>[],
+        'task_runs': <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 701,
+              'task_key': 'library_import',
+              'task_name': '插件视频导入',
+              'trigger_type': 'plugin',
+              'state': 'completed',
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      },
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const Scaffold(body: DesktopActivityPage()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('插件触发'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('activity-task-trigger-filter')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('插件触发'), findsWidgets);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': const <dynamic>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+    await tester.tap(find.text('插件触发').last);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final request = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/system/task-runs',
+    );
+    expect(request.uri.queryParameters['trigger_type'], 'plugin');
+  });
+
   testWidgets('completed import task exposes failed file handling entry', (
     tester,
   ) async {

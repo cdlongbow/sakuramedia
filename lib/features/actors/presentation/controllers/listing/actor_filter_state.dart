@@ -37,6 +37,7 @@ enum ActorSortField {
   subscribedAt,
   name,
   movieCount,
+  playableMovieCount,
   age,
   heightCm,
   bustCm,
@@ -51,6 +52,7 @@ extension ActorSortFieldX on ActorSortField {
     ActorSortField.subscribedAt => 'subscribed_at',
     ActorSortField.name => 'name',
     ActorSortField.movieCount => 'movie_count',
+    ActorSortField.playableMovieCount => 'playable_movie_count',
     ActorSortField.age => 'age',
     ActorSortField.heightCm => 'height_cm',
     ActorSortField.bustCm => 'bust_cm',
@@ -64,6 +66,7 @@ extension ActorSortFieldX on ActorSortField {
     ActorSortField.subscribedAt => '最近订阅',
     ActorSortField.name => '名称',
     ActorSortField.movieCount => '影片数',
+    ActorSortField.playableMovieCount => '可播放影片数',
     ActorSortField.age => '年龄',
     ActorSortField.heightCm => '身高',
     ActorSortField.bustCm => '胸围',
@@ -79,6 +82,8 @@ class ActorFilterState {
   const ActorFilterState({
     this.subscriptionStatus = ActorSubscriptionStatus.subscribed,
     this.gender = ActorGender.all,
+    this.hasPlayableMovies = false,
+    this.query,
     this.sortField = ActorSortField.subscribedAt,
     this.sortDirection = SortDirection.desc,
     this.ageMin,
@@ -90,6 +95,12 @@ class ActorFilterState {
 
   final ActorSubscriptionStatus subscriptionStatus;
   final ActorGender gender;
+
+  /// 只看存在可播放影片的女优；接口参数 `has_playable_movies`。
+  final bool hasPlayableMovies;
+
+  /// 关键词搜索；`null` 表示不搜索。调用方保证已去空白。
+  final String? query;
   final ActorSortField sortField;
   final SortDirection sortDirection;
   final int? ageMin;
@@ -103,6 +114,8 @@ class ActorFilterState {
   bool get isDefault =>
       subscriptionStatus == ActorSubscriptionStatus.subscribed &&
       gender == ActorGender.all &&
+      !hasPlayableMovies &&
+      query == null &&
       sortField == ActorSortField.subscribedAt &&
       sortDirection == SortDirection.desc &&
       ageMin == null &&
@@ -118,9 +131,29 @@ class ActorFilterState {
   /// 语义对齐 `MovieFilterState.triggerLabel`。
   String get triggerLabel => subscriptionStatus.label;
 
+  /// 女优搜索入口专用：从无关键词开始搜索时把默认的「已订阅」放宽为「全部」，
+  /// 避免在订阅视图下搜不到未订阅女优；搜索过程中继续输入不覆盖用户改过的筛选。
+  ActorFilterState withSearchQuery(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      return copyWith(query: null);
+    }
+    final isStartingSearch = (query ?? '').isEmpty;
+    return copyWith(
+      query: trimmed,
+      subscriptionStatus:
+          isStartingSearch &&
+              subscriptionStatus == ActorSubscriptionStatus.subscribed
+          ? ActorSubscriptionStatus.all
+          : subscriptionStatus,
+    );
+  }
+
   ActorFilterState copyWith({
     ActorSubscriptionStatus? subscriptionStatus,
     ActorGender? gender,
+    bool? hasPlayableMovies,
+    Object? query = _unset,
     ActorSortField? sortField,
     SortDirection? sortDirection,
     Object? ageMin = _unset,
@@ -132,6 +165,8 @@ class ActorFilterState {
     return ActorFilterState(
       subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
       gender: gender ?? this.gender,
+      hasPlayableMovies: hasPlayableMovies ?? this.hasPlayableMovies,
+      query: identical(query, _unset) ? this.query : query as String?,
       sortField: sortField ?? this.sortField,
       sortDirection: sortDirection ?? this.sortDirection,
       ageMin: identical(ageMin, _unset) ? this.ageMin : ageMin as int?,
@@ -151,6 +186,8 @@ class ActorFilterState {
     return other is ActorFilterState &&
         other.subscriptionStatus == subscriptionStatus &&
         other.gender == gender &&
+        other.hasPlayableMovies == hasPlayableMovies &&
+        other.query == query &&
         other.sortField == sortField &&
         other.sortDirection == sortDirection &&
         other.ageMin == ageMin &&
@@ -164,6 +201,8 @@ class ActorFilterState {
   int get hashCode => Object.hash(
     subscriptionStatus,
     gender,
+    hasPlayableMovies,
+    query,
     sortField,
     sortDirection,
     ageMin,

@@ -118,6 +118,8 @@ class MovieSummary extends _$MovieSummary
       ),
       MovieSummarySource.actor => moviesApi.getMovies(
         actorId: scope.resourceId!,
+        tagIds: filter.tagIds,
+        tagMatch: filter.tagMatch,
         page: page,
         pageSize: pageSize,
         status: filter.movie.status,
@@ -207,6 +209,14 @@ class MovieSummary extends _$MovieSummary
     }
     return applyFilterState(
       activeFilter.copyWith(tagIds: ordered, tagMatch: tagMatch),
+    );
+  }
+
+  /// 清空标签条件。只服务于把标签当附加筛选的入口（女优详情等）；
+  /// 标签页依赖"空标签不请求"语义，不调用本方法。
+  Future<void> clearTagFilter() {
+    return applyFilterState(
+      activeFilter.copyWith(tagIds: const <int>[], tagMatch: TagMatchMode.or),
     );
   }
 

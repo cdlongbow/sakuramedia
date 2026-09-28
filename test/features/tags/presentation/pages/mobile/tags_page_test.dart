@@ -70,7 +70,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('标签面板可连续选择并清空，固定摘要不展开整个标签云', (tester) async {
+  testWidgets('抽屉可连续选择并清空，页面摘要跟随选择', (tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
@@ -156,18 +156,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('caps popular tags to popularLimit and hides 展开全部', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('抽屉可滚动查看全部标签，末尾标签懒构建', (WidgetTester tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
       body: <Map<String, dynamic>>[
-        for (var i = 0; i < 30; i++)
+        for (var i = 0; i < 200; i++)
           <String, dynamic>{
             'tag_id': i,
             'name': 'tag$i',
-            'movie_count': 100 - i,
+            'movie_count': 300 - i,
           },
       ],
     );
@@ -177,35 +175,21 @@ void main() {
     await tester.tap(find.byKey(const Key('tags-selector-trigger')));
     await tester.pumpAndSettle();
 
-    // popularLimit=5：移动端仅展示前 5 个热门标签，更多标签靠搜索，不出现「展开全部」。
-    expect(find.byKey(const Key('tags-option-4')), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-5')), findsNothing);
-    expect(find.text('展开全部'), findsNothing);
-  });
+    // 全部标签按影片数降序：首屏是热门标签，末尾标签不在已构建的懒加载块里。
+    expect(find.text('全部标签 · 200'), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-0')), findsOneWidget);
+    expect(find.byKey(const Key('tags-option-199')), findsNothing);
 
-  testWidgets('shows all popular tags when fewer than popularLimit', (
-    WidgetTester tester,
-  ) async {
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/tags',
-      body: <Map<String, dynamic>>[
-        for (var i = 0; i < 3; i++)
-          <String, dynamic>{
-            'tag_id': i,
-            'name': 'tag$i',
-            'movie_count': 100 - i,
-          },
-      ],
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tags-option-199')),
+      400,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('tags-cloud-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
-
-    await tester.pumpWidget(wrap(const MobileTagsPage()));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('tags-selector-trigger')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('tags-option-2')), findsOneWidget);
-    expect(find.text('展开全部'), findsNothing);
+    expect(find.byKey(const Key('tags-option-199')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

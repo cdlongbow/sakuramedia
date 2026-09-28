@@ -11,7 +11,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_movie_summary_content.dart';
-import 'package:sakuramedia/features/tags/presentation/tag_selection_header.dart';
+import 'package:sakuramedia/widgets/domain/tags/tag_selection_header.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';

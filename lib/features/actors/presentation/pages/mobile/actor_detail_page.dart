@@ -44,6 +44,7 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
             isSubscriptionUpdating,
             onSubscriptionTap,
             onEditTap,
+            onMergeTap,
           ) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -53,6 +54,7 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
                 isSubscriptionUpdating: isSubscriptionUpdating,
                 onSubscriptionTap: onSubscriptionTap,
                 onEditTap: onEditTap,
+                onMergeTap: onMergeTap,
               ),
               ActorProfileDetails(actor: actor, compact: true),
             ],
@@ -70,6 +72,7 @@ class _MobileActorDetailPageState extends State<MobileActorDetailPage> {
                 isSubscriptionUpdating: false,
                 onSubscriptionTap: () {},
                 onEditTap: () {},
+                onMergeTap: () {},
               ),
               SizedBox(height: context.appSpacing.md),
               MovieSummaryGrid(
@@ -125,6 +128,7 @@ class _MobileActorDetailHeader extends StatelessWidget {
     required this.isSubscriptionUpdating,
     required this.onSubscriptionTap,
     required this.onEditTap,
+    required this.onMergeTap,
   });
 
   final ActorListItemDto actor;
@@ -132,6 +136,7 @@ class _MobileActorDetailHeader extends StatelessWidget {
   final bool isSubscriptionUpdating;
   final VoidCallback? onSubscriptionTap;
   final VoidCallback onEditTap;
+  final VoidCallback onMergeTap;
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +167,15 @@ class _MobileActorDetailHeader extends StatelessWidget {
           ),
         ),
         SizedBox(width: context.appSpacing.md),
+        AppIconButton(
+          key: const Key('mobile-actor-detail-merge-button'),
+          icon: const Icon(Icons.call_merge_outlined),
+          size: AppIconButtonSize.mini,
+          tooltip: '合并女优',
+          semanticLabel: '合并女优',
+          onPressed: onMergeTap,
+        ),
+        SizedBox(width: context.appSpacing.sm),
         AppIconButton(
           key: const Key('mobile-actor-detail-edit-button'),
           icon: const Icon(Icons.edit_outlined),

@@ -4,7 +4,7 @@ outline: [2, 3]
 
 # 插件开发
 
-SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前后端的 **Host API 7**，宿主接受 API **4–7** 的插件。插件的 `manifest.json` 与 `register()` 返回值中的 `plugin_id`、插件 `version` 必须一致；Host API 的声明规则见[版本兼容](#版本兼容)。
+SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前后端的 **Host API 9**，宿主接受 API **4–9** 的插件。插件的 `manifest.json` 与 `register()` 返回值中的 `plugin_id`、插件 `version` 必须一致；Host API 的声明规则见[版本兼容](#版本兼容)。
 
 插件不是前端扩展机制。当前不能注册页面、UI 组件、HTTP 路由、事件钩子或中间件，也不应直接访问宿主数据库。请只使用本文列出的公开契约；绑定 `src.model`、`src.service` 等内部实现会使插件随宿主重构失效。
 
@@ -13,6 +13,7 @@ SakuraMedia 插件是运行在后端进程内的 Python 包。本文对应当前
 | 目标 | 实现方式 |
 |---|---|
 | 定时抓取、手动处理、字幕或影片数据处理 | 注册后台任务 |
+| 定时浏览媒体库内容、自动导入或整理合集 | 注册后台任务，调用 `context.imports`、`context.videos` 与 `context.collections` |
 | 按媒体库判断缺片、分辨率或文件大小并自动下载 | 注册后台任务，调用 `context.media` 与 `context.downloads` |
 | JavDB 未收录时提供影片元数据 | 注册 `catalog.metadata_source` 扩展点（需要 Host API 6） |
 | 提供排行榜来源 | 注册 `discovery.ranking_source` 扩展点，并自行注册同步任务 |
@@ -41,7 +42,7 @@ example_plugin/
   "plugin_id": "example_plugin",
   "display_name": "示例插件",
   "version": "1.0.0",
-  "host_api_version": 7,
+  "host_api_version": 9,
   "settings_model": "Settings",
   "requires_python": ">=3.10,<3.11",
   "dependencies": []
@@ -120,13 +121,15 @@ def register(context: PluginContext) -> PluginRegistration:
 - `subtitles`：列出影片已登记的字幕，读取原始字节及 SHA256。
 - `media`：按影片、媒体库读取媒体快照，判断是否存在媒体或可播放媒体。
 - `downloads`：列出下载目标，按宿主默认路由或指定 `download_client_id` 搜索候选并提交。
+- `imports`：列出媒体库、浏览 provider 存储，按 provider 引用发起媒体库导入，并查询自己任务的结果（Host API 9）。
+- `videos`：读取普通视频快照；合集成员管理见 `context.collections`（Host API 9）。
 - `import_movie_by_number(movie_number, *, force_subscribed=False)`：复用本地影片，或按 JavDB 优先、元数据插件兜底的顺序导入，返回 `MovieSnapshot`。
 - `list_existing_movie_numbers()`：读取全库影片番号的大写集合。
 - `import_subtitle(movie_number, content, filename, language=None)`：交由宿主校验、去重、落盘并登记字幕。
 - `sync_ranking_sources(progress_callback=None)`、`sync_ranking_board()`：同步当前插件声明的排行榜来源。
 - `get_task_logger(name)`：取得任务日志 logger。
 
-影片、演员、查询结果、订阅、通知、合集、下载和字幕类型从 `src.plugins.types` 导入；元数据来源模型从 `src.plugins` 导入。公开入口是 `src.plugins`、`src.plugins.types`、`src.scheduler.contracts`，以及媒体 Provider 所用的 `src.plugins.provider_protocol`。
+影片、演员、查询结果、订阅、通知、合集、下载、导入受理和字幕类型从 `src.plugins.types` 导入；元数据来源模型从 `src.plugins` 导入。公开入口是 `src.plugins`、`src.plugins.types`、`src.scheduler.contracts`，以及媒体 Provider 所用的 `src.plugins.provider_protocol`。
 
 ### 插件配置模型
 
@@ -211,6 +214,10 @@ def update_actor_height(context, actor_id: int, height_cm: int) -> bool:
 
 `context.collections` 提供 `ensure_playlist()` / `set_playlist_movies()`、`ensure_moment()` / `set_moment_points()` 和 `ensure_clip()` / `set_clip_clips()`。合集通过插件自己的 `key` 管理，设置成员时会替换该合集的全部成员，不能修改其他插件拥有的 key。
 
+`ensure_video_collection(name, description=None)` 按名称获取或创建视频合集（Host API 9），用于把导入的视频加入指定合集。同名合集原样复用，插件不会覆盖用户设置的名字和描述；合集没有插件 key，`PluginCollection.key` 为空字符串。
+
+`add_video_items(collection, video_ids)` / `remove_video_items(collection, video_ids)` 按 id 或名称定位视频合集并增删成员（Host API 9）：添加幂等、任一视频不存在报 404；移除幂等、不存在的视频 id 静默跳过，合集不存在报 404。
+
 ## 字幕读取与导入
 
 `context.subtitles.list(movie_id)` 返回 `tuple[SubtitleAsset, ...]`，每项包含 `subtitle_id`、`file_name`、`format`、`size_bytes`、`created_at`。它只列出已登记且仍可访问的字幕，跳过失效文件，不扫描或清理目录。
@@ -259,6 +266,67 @@ result = context.downloads.submit(
 同一影片要提交到多个媒体库时，插件必须针对每个目标下载器分别搜索并提交。下载完成后的导入仍进入该下载器关联的媒体库，不能在普通插件中组合一个下载 Provider 和另一个存储 Provider。
 
 对于批量补缺，建议先读取影片分页，再调用 `presence_for_movies()`，只对目标库中 `has_playable=False` 的影片搜索和提交。当前门面只提供搜索与提交，不提供下载任务状态、重试、删除或导入控制。
+
+## 媒体库浏览与导入
+
+`context.imports`（Host API 9）让插件像前端手动导入一样浏览媒体库 provider 存储并发起导入：文件字节始终由目标媒体库的 Provider 流转，插件只处理不透明引用。
+
+- `list_libraries()`：返回全部媒体库的 `PluginLibrary`（`library_id`、`name`、`provider_key`），不包含 provider 配置与凭据；
+- `browse(library=..., parent_ref=None, cursor=None, limit=50)`：浏览目标媒体库的 provider 存储，返回 `PluginBrowsePage`；每项 `PluginBrowseEntry` 包含 provider 私有的 `source_ref`、`name`、`entry_type`、`size_bytes`、`modified_at` 和宿主判定的 `is_video`（`limit` 上限 200）；`next_cursor` 为 `None` 时结束；
+- `enqueue(media_kind, library, source_ref, collection_id=None, source_disposition="keep")`：按 provider 引用发起导入，返回 `PluginImportBatch`（`task_run_id`、`task_key`、`state`）；
+- `get(task_run_id)`：读取本插件发起的导入任务状态与结果摘要，返回 `PluginImportStatus`；任务不存在或不属于本插件时返回 `None`。
+
+`library` 支持媒体库 id 或名称（名称唯一）。`source_ref` 必须来自 `browse()` 的条目，由该媒体库的 provider 解释；插件不要自行构造引用，也不能把引用用到另一个媒体库。`entry_type="directory"` 的引用在导入时由 provider 展开为其中的文件。
+
+```python
+libraries = context.imports.list_libraries()
+page = context.imports.browse(library="本地媒体库", limit=100)
+collection = context.collections.ensure_video_collection("推特视频")
+
+for entry in page.entries:
+    if entry.entry_type != "file" or not entry.is_video:
+        continue
+    context.imports.enqueue(
+        media_kind="video",
+        library="本地媒体库",
+        source_ref=entry.source_ref,
+        collection_id=collection.collection_id,
+    )
+```
+
+导入规则与前端手动导入一致：
+
+- `media_kind="video"`：按文件名建立普通视频，可选加入 `collection_id`；
+- `media_kind="jav"`：从文件名解析番号，走 JavDB 优先、元数据插件兜底的元数据导入并自动订阅；番号缺失、文件小于最小视频体积或元数据获取失败会记录为失败项，可在任务中心人工处理；JAV 不支持 `collection_id`；
+- `source_disposition="delete_after_commit"` 时，导入成功后由 provider 删除来源文件；默认 `keep`；
+- 同一媒体库同一时间只允许一个导入任务；冲突时抛出 `409 import_task_conflict`，应等待当前导入结束后再重试；
+- 默认 `keep` 时，宿主按 provider 提供的来源身份去重，重复导入同一来源会被跳过。
+
+浏览或导入失败会抛出带 `status_code` 和 `code` 的错误（例如库不存在 `404 media_library_not_found`、provider 未安装 `503 provider_not_installed`、认证失败 `401 provider_authentication_failed`）。导入是异步任务，`enqueue()` 返回后可用 `get(task_run_id)` 轮询：`pending` / `running` 期间计数为零，结束后包含 imported / skipped / failed 计数、新建视频与影片 id 和 `error_message`；同一任务也可以在任务中心人工查看。插件可以浏览所有已配置媒体库的 provider 列表，这是宿主对仓库内可信插件的既定信任模型。
+
+## 普通视频（PornBox）
+
+`context.videos`（Host API 9）提供普通视频条目的只读快照，用于对账、策展和整理类插件：
+
+- `get(video_id)`：读取单个 `PluginVideoSnapshot`；不存在返回 `None`；
+- `list_page(after_id=0, limit=500)`：按 `VideoItem.id` 游标分页遍历全部视频（`limit` 上限 1000），`next_cursor` 为 `None` 时结束。
+
+快照包含 `title`、`summary`、`release_date`、`media_count`、`has_playable`、`collection_ids` 与时间戳；`duration_seconds`、`file_size_bytes`、`resolution`、`file_name` 取「第一条有效媒体」，没有有效媒体时分别为 `0`、`0`、`None`、`None`。
+
+```python
+# 把还没有合集归属、且有可播放媒体的视频加入“待整理”合集。
+collection = context.collections.ensure_video_collection("待整理")
+page = context.videos.list_page(limit=200)
+pending_ids = [
+    item.video_id
+    for item in page.items
+    if item.has_playable and not item.collection_ids
+]
+if pending_ids:
+    context.collections.add_video_items(collection.collection_id, pending_ids)
+```
+
+插件不能改写视频的标题、描述或封面，也没有删除入口；这些操作只在宿主界面进行。
 
 ## 影片元数据来源
 
@@ -408,12 +476,13 @@ uv run python -m src.start.commands plugins check /path/to/example_plugin
 
 ## 版本兼容
 
-当前宿主常量为 `HOST_API_VERSION = 7`、`MIN_SUPPORTED_HOST_API_VERSION = 4`，加载规则如下：
+当前宿主常量为 `HOST_API_VERSION = 9`、`MIN_SUPPORTED_HOST_API_VERSION = 4`，加载规则如下：
 
-- manifest 的 `host_api_version` 必须在 **4–7** 内。
-- `register()` 的 `host_api_version` 必须等于 manifest 声明的版本，或当前宿主版本 `7`。例如 manifest 为 `4` 时，注册返回 `4` 或导入宿主常量得到的 `7` 均可，返回 `5` 则不兼容。
+- manifest 的 `host_api_version` 必须在 **4–9** 内。
+- `register()` 的 `host_api_version` 必须等于 manifest 声明的版本，或当前宿主版本 `9`。例如 manifest 为 `4` 时，注册返回 `4` 或导入宿主常量得到的 `9` 均可，返回 `5` 则不兼容。
 - `catalog.metadata_source` 额外要求 manifest 声明 **6**；只把 `register()` 改为宿主常量不能绕过这一限制。
 - `context.media` 和 `context.downloads` 需要 Host API **7**；旧宿主能加载旧声明，不意味着旧宿主能提供这两个接口。
+- `context.imports`、`context.videos`、`context.collections.ensure_video_collection()` 与视频合集成员管理需要 Host API **9**。
 - Provider 的扫描进度回调只对按 Host API **7** 注册的实现启用；旧 Provider 仍按不带回调的旧签名调用。
 
 升级前应核对实际宿主版本、公开类型与所用能力，再运行插件检查。插件自身的 `version` 与 Host API 版本是两个概念，manifest 与 `register()` 的插件 `version` 仍须严格一致。

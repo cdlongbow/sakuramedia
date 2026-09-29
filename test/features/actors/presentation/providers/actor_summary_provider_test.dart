@@ -293,10 +293,7 @@ void main() {
       'display_name': '新的显示名',
       'profile_image': <String, dynamic>{
         'id': 10,
-        'origin': 'origin.jpg',
-        'small': 'small.jpg',
-        'medium': 'medium.jpg',
-        'large': 'large.jpg',
+        'origin': 'large.jpg',
       },
       'movie_count': 12,
       'age': 28,
@@ -317,7 +314,7 @@ void main() {
         .items
         .single;
     expect(actor.displayName, '新的显示名');
-    expect(actor.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(actor.profileImage?.origin, 'large.jpg');
     expect(actor.movieCount, 12);
     expect(actor.age, 28);
     expect(actor.birthday, DateTime(1998, 5, 3));

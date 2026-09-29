@@ -267,7 +267,7 @@ class _ActorMergeDialogState extends State<ActorMergeDialog> {
             controlAffinity: ListTileControlAffinity.trailing,
             contentPadding: EdgeInsets.zero,
             secondary: ActorAvatar(
-              imageUrl: candidate.profileImage?.bestAvailableUrl,
+              imageUrl: candidate.profileImage?.origin,
               size: context.appComponentTokens.iconSize2xl,
               placeholderKey: Key(
                 'actor-merge-candidate-avatar-placeholder-${candidate.id}',

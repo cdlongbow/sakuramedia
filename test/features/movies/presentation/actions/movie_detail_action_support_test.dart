@@ -291,9 +291,6 @@ MovieDetailDto _movieDetail({
     coverImage: const MovieImageDto(
       id: 1,
       origin: '/covers/1.jpg',
-      small: '',
-      medium: '',
-      large: '',
     ),
     releaseDate: DateTime.parse('2024-01-01'),
     durationMinutes: 120,

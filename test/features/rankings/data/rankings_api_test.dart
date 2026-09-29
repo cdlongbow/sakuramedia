@@ -90,17 +90,11 @@ void main() {
             'title': 'Movie A',
             'cover_image': <String, dynamic>{
               'id': 10,
-              'origin': 'cover-origin.jpg',
-              'small': 'cover-small.jpg',
-              'medium': 'cover-medium.jpg',
-              'large': 'cover-large.jpg',
+              'origin': 'cover-large.jpg',
             },
             'thin_cover_image': <String, dynamic>{
               'id': 11,
-              'origin': 'thin-origin.jpg',
-              'small': 'thin-small.jpg',
-              'medium': 'thin-medium.jpg',
-              'large': 'thin-large.jpg',
+              'origin': 'thin-large.jpg',
             },
             'release_date': '2024-10-01',
             'duration_minutes': 120,
@@ -130,13 +124,13 @@ void main() {
     expect(request.uri.queryParameters['page_size'], '24');
     expect(page.items.single.rank, 1);
     expect(page.items.single.movieNumber, 'ABP-001');
-    expect(page.items.single.coverImage?.bestAvailableUrl, 'cover-large.jpg');
+    expect(page.items.single.coverImage?.origin, 'cover-large.jpg');
     expect(
-      page.items.single.thinCoverImage?.bestAvailableUrl,
+      page.items.single.thinCoverImage?.origin,
       'thin-large.jpg',
     );
     expect(
-      page.items.single.toMovieListItem().thinCoverImage?.bestAvailableUrl,
+      page.items.single.toMovieListItem().thinCoverImage?.origin,
       'thin-large.jpg',
     );
     expect(page.items.single.heat, 1777);

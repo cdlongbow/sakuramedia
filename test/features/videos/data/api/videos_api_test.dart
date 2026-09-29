@@ -170,10 +170,7 @@ void main() {
           'offset_seconds': 90,
           'image': <String, dynamic>{
             'id': 88,
-            'origin': 'thumb-origin.webp',
-            'small': 'thumb-small.webp',
-            'medium': 'thumb-medium.webp',
-            'large': 'thumb-large.webp',
+            'origin': 'thumb-large.webp',
           },
           'width': 1280,
           'height': 720,
@@ -186,7 +183,7 @@ void main() {
     expect(thumbnails, hasLength(1));
     expect(thumbnails.single.thumbnailId, 51);
     expect(thumbnails.single.offsetSeconds, 90);
-    expect(thumbnails.single.image.bestAvailableUrl, 'thumb-large.webp');
+    expect(thumbnails.single.image.origin, 'thumb-large.webp');
     expect(adapter.requests.single.path, '/media/31/thumbnails');
   });
 
@@ -202,9 +199,6 @@ void main() {
           'cover_image': <String, dynamic>{
             'id': 88,
             'origin': 'cover.webp',
-            'small': 'cover.webp',
-            'medium': 'cover.webp',
-            'large': 'cover.webp',
           },
           'media_count': 1,
           'can_play': true,
@@ -215,7 +209,7 @@ void main() {
       final detail = await videosApi.setVideoCover(videoId: 7, thumbnailId: 51);
 
       expect(detail.id, 7);
-      expect(detail.coverImage?.bestAvailableUrl, 'cover.webp');
+      expect(detail.coverImage?.origin, 'cover.webp');
       expect(adapter.requests.single.body, <String, dynamic>{
         'cover_thumbnail_id': 51,
       });

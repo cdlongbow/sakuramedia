@@ -563,7 +563,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
                         ),
                       )
                     : MoviePlotThumbnail(
-                        url: movie.coverImage!.bestAvailableUrl,
+                        url: movie.coverImage!.origin,
                         maxHeight: 80,
                         fit: BoxFit.cover,
                         borderRadius: context.appRadius.mdBorder,
@@ -770,7 +770,7 @@ class _MovieActorStrip extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ActorAvatar(
-                        imageUrl: actor.profileImage?.bestAvailableUrl,
+                        imageUrl: actor.profileImage?.origin,
                         size: tokens.movieDetailActorAvatarSize,
                       ),
                       SizedBox(height: spacing.sm),

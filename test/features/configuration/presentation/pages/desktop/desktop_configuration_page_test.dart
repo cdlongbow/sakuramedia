@@ -240,6 +240,9 @@ void main() {
       expect(find.textContaining('补齐时长、分辨率和视频信息'), findsOneWidget);
       expect(find.text('媒体文件哈希补算'), findsOneWidget);
       expect(find.textContaining('用于识别重复媒体'), findsOneWidget);
+      expect(find.text('媒体缩略图打包回填'), findsOneWidget);
+      expect(find.text('影片图片打包回填'), findsOneWidget);
+      expect(find.textContaining('打包存储'), findsNWidgets(2));
 
       bundle.adapter.enqueueJson(
         method: 'POST',
@@ -287,6 +290,57 @@ void main() {
         bundle.adapter.hitCount(
           'POST',
           '/system/jobs/media_file_hash_backfill/run',
+        ),
+        1,
+      );
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/jobs/media_thumbnail_pack_backfill/run',
+        body: <String, dynamic>{
+          'task_run_id': 3,
+          'task_key': 'media_thumbnail_pack_backfill',
+          'state': 'pending',
+        },
+      );
+      await tester.tap(
+        find.byKey(
+          const Key(
+            'configuration-system-maintenance-media_thumbnail_pack_backfill-run',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        bundle.adapter.hitCount(
+          'POST',
+          '/system/jobs/media_thumbnail_pack_backfill/run',
+        ),
+        1,
+      );
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/jobs/movie_asset_pack_backfill/run',
+        body: <String, dynamic>{
+          'task_run_id': 4,
+          'task_key': 'movie_asset_pack_backfill',
+          'state': 'pending',
+        },
+      );
+      final movieAssetRunButton = find.byKey(
+        const Key(
+          'configuration-system-maintenance-movie_asset_pack_backfill-run',
+        ),
+      );
+      await tester.ensureVisible(movieAssetRunButton);
+      await tester.pumpAndSettle();
+      await tester.tap(movieAssetRunButton);
+      await tester.pumpAndSettle();
+      expect(
+        bundle.adapter.hitCount(
+          'POST',
+          '/system/jobs/movie_asset_pack_backfill/run',
         ),
         1,
       );

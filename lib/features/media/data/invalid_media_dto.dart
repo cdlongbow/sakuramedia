@@ -37,11 +37,11 @@ class InvalidMediaDto {
   }
 
   String? get preferredCoverUrl {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    final thinUrl = thinCoverImage?.origin.trim();
     if (thinUrl != null && thinUrl.isNotEmpty) {
       return thinUrl;
     }
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    final coverUrl = coverImage?.origin.trim();
     if (coverUrl != null && coverUrl.isNotEmpty) {
       return coverUrl;
     }
@@ -49,7 +49,7 @@ class InvalidMediaDto {
   }
 
   bool get usesThinCover {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    final thinUrl = thinCoverImage?.origin.trim();
     return thinUrl != null && thinUrl.isNotEmpty;
   }
 

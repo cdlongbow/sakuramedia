@@ -31,7 +31,7 @@ class MovieActorWrap extends StatelessWidget {
       runSpacing: spacing.sm,
       children: actors
           .map((actor) {
-            final avatarUrl = actor.profileImage?.bestAvailableUrl;
+            final avatarUrl = actor.profileImage?.origin;
             return Tooltip(
               message: actor.displayName,
               child: Builder(

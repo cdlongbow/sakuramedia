@@ -127,7 +127,7 @@ class _ActorDetailHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ActorAvatar(
-          imageUrl: actor.summary.profileImage?.bestAvailableUrl,
+          imageUrl: actor.summary.profileImage?.origin,
           size: context.appComponentTokens.movieDetailActorAvatarSize,
           placeholderKey: const Key('actor-detail-avatar-placeholder'),
         ),

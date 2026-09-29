@@ -227,7 +227,7 @@ class _ClipCollectionPlayContentState
               final clip = _clips[index];
               return CollectionEpisodeQueueItem(
                 itemKey: Key('clip-collection-play-queue-item-$index'),
-                coverUrl: clip.coverImage?.bestAvailableUrl,
+                coverUrl: clip.coverImage?.origin,
                 coverStyle: CollectionQueueCoverStyle.cover,
                 title: clip.displayTitle,
                 subtitle: formatMediaTimecode(clip.durationSeconds),

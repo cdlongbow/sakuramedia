@@ -170,7 +170,7 @@ class _ActorPoster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = actor.profileImage?.bestAvailableUrl;
+    final imageUrl = actor.profileImage?.origin;
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
     if (!hasImage) {

@@ -556,7 +556,7 @@ class _VideoCollectionDetailContentState
                         toggleSelect(item.itemId);
                       }
                     : null,
-                coverUrl: item.video.coverImage?.bestAvailableUrl,
+                coverUrl: item.video.coverImage?.origin,
                 // expandToParent 模式下 coverAspectRatio 仅在 cover placeholder 时
                 // 影响占位比例；瀑布流 tile 已按真实比例分配高度，传 16:9 兜底即可。
                 coverAspectRatio: 16 / 9,

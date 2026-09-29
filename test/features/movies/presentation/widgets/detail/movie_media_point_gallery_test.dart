@@ -125,9 +125,6 @@ MovieMediaPointDto _buildPoint(int pointId, int offsetSeconds) {
     image: MovieImageDto(
       id: pointId,
       origin: 'point-$pointId-origin.webp',
-      small: 'point-$pointId-small.webp',
-      medium: 'point-$pointId-medium.webp',
-      large: 'point-$pointId-large.webp',
     ),
   );
 }

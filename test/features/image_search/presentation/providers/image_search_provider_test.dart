@@ -432,9 +432,6 @@ Map<String, dynamic> _itemBody({
     'image': <String, dynamic>{
       'id': 10,
       'origin': '/thumb-$thumbnailId.webp',
-      'small': '/thumb-$thumbnailId.webp',
-      'medium': '/thumb-$thumbnailId.webp',
-      'large': '/thumb-$thumbnailId.webp',
     },
   };
 }
@@ -458,9 +455,6 @@ Map<String, dynamic> _plotSessionBody({
         'image': <String, dynamic>{
           'id': 10,
           'origin': '/plot-$plotImageId.webp',
-          'small': '/plot-$plotImageId.webp',
-          'medium': '/plot-$plotImageId.webp',
-          'large': '/plot-$plotImageId.webp',
         },
       },
     ],

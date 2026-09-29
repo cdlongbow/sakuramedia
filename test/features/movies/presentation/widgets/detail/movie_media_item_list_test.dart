@@ -92,9 +92,6 @@ void main() {
                     image: MovieImageDto(
                       id: 201,
                       origin: 'point-1-origin.webp',
-                      small: 'point-1-small.webp',
-                      medium: 'point-1-medium.webp',
-                      large: 'point-1-large.webp',
                     ),
                   ),
                 ],
@@ -138,9 +135,6 @@ void main() {
                     image: MovieImageDto(
                       id: 202,
                       origin: 'point-2-origin.webp',
-                      small: 'point-2-small.webp',
-                      medium: 'point-2-medium.webp',
-                      large: 'point-2-large.webp',
                     ),
                   ),
                 ],

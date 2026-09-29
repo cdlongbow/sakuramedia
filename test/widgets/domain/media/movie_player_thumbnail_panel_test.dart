@@ -25,9 +25,6 @@ void main() {
           image: const MovieImageDto(
             id: 10,
             origin: 'relative/thumb-10.webp',
-            small: 'relative/thumb-10.webp',
-            medium: 'relative/thumb-10.webp',
-            large: 'relative/thumb-10.webp',
           ),
         ),
       ],
@@ -185,9 +182,6 @@ void main() {
           image: MovieImageDto(
             id: index + 1,
             origin: 'relative/thumb-$index.webp',
-            small: 'relative/thumb-$index.webp',
-            medium: 'relative/thumb-$index.webp',
-            large: 'relative/thumb-$index.webp',
           ),
         ),
       ),
@@ -259,9 +253,6 @@ List<MovieMediaThumbnailDto> _thumbnails() {
       image: const MovieImageDto(
         id: 10,
         origin: 'relative/thumb-10.webp',
-        small: 'relative/thumb-10.webp',
-        medium: 'relative/thumb-10.webp',
-        large: 'relative/thumb-10.webp',
       ),
     ),
     MovieMediaThumbnailDto(
@@ -271,9 +262,6 @@ List<MovieMediaThumbnailDto> _thumbnails() {
       image: const MovieImageDto(
         id: 11,
         origin: 'relative/thumb-20.webp',
-        small: 'relative/thumb-20.webp',
-        medium: 'relative/thumb-20.webp',
-        large: 'relative/thumb-20.webp',
       ),
     ),
   ];

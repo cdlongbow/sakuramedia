@@ -279,9 +279,6 @@ void _enqueueMomentPreviewMovie(TestApiBundle bundle) {
       'cover_image': <String, dynamic>{
         'id': 1,
         'origin': '/cover.jpg',
-        'small': '/cover.jpg',
-        'medium': '/cover.jpg',
-        'large': '/cover.jpg',
       },
       'release_date': null,
       'duration_minutes': 0,

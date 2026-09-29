@@ -163,7 +163,7 @@ class _VideoCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    final coverUrl = coverImage?.origin.trim();
 
     if (coverUrl != null && coverUrl.isNotEmpty) {
       // 瀑布流网格按 coverWidth/coverHeight 切 tile，cover 填满不再留底色；

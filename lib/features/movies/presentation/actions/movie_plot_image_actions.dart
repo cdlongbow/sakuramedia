@@ -136,13 +136,7 @@ Future<void> _searchSimilarWithCallback({
   }
 }
 
-String _resolveImageUrl(MovieImageDto image) {
-  final origin = image.origin.trim();
-  if (origin.isNotEmpty) {
-    return origin;
-  }
-  return image.bestAvailableUrl.trim();
-}
+String _resolveImageUrl(MovieImageDto image) => image.origin.trim();
 
 Future<void> _searchSimilar({
   required BuildContext context,

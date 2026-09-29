@@ -57,10 +57,7 @@ void main() {
             'score': 0.91,
             'image': <String, dynamic>{
               'id': 10,
-              'origin': 'origin.webp',
-              'small': 'small.webp',
-              'medium': 'medium.webp',
-              'large': 'large.webp',
+              'origin': 'large.webp',
             },
           },
         ],
@@ -78,7 +75,7 @@ void main() {
     expect(session.pageSize, 20);
     expect(session.nextCursor, 'cursor-1');
     expect(session.items.single.movieNumber, 'ABC-001');
-    expect(session.items.single.image.bestAvailableUrl, 'large.webp');
+    expect(session.items.single.image.origin, 'large.webp');
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
@@ -160,10 +157,7 @@ void main() {
               'score': 0.87,
               'image': <String, dynamic>{
                 'id': 11,
-                'origin': 'origin-2.webp',
-                'small': 'small-2.webp',
-                'medium': 'medium-2.webp',
-                'large': 'large-2.webp',
+                'origin': 'large-2.webp',
               },
             },
           ],
@@ -303,10 +297,7 @@ Map<String, dynamic> _plotSessionBody({
         'score': 0.91,
         'image': <String, dynamic>{
           'id': 10,
-          'origin': 'origin.webp',
-          'small': 'small.webp',
-          'medium': 'medium.webp',
-          'large': 'large.webp',
+          'origin': 'large.webp',
         },
       },
     ],

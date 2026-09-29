@@ -267,7 +267,7 @@ class _ActorProfileEditorState extends State<ActorProfileEditor> {
     final spacing = context.appSpacing;
     final image = _selectedImage == null
         ? ActorAvatar(
-            imageUrl: _currentActor.summary.profileImage?.bestAvailableUrl,
+            imageUrl: _currentActor.summary.profileImage?.origin,
             size: context.appComponentTokens.iconSize3xl,
           )
         : ClipOval(

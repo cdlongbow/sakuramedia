@@ -854,7 +854,7 @@ void main() {
       thumbnailId: 56,
       mediaId: 34,
       offsetSeconds: 90,
-      image: MovieImageDto(id: 1, origin: '', small: '', medium: '', large: ''),
+      image: MovieImageDto(id: 1, origin: ''),
     );
 
     final actions = buildMediaThumbnailActionDescriptors(

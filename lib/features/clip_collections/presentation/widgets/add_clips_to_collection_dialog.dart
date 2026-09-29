@@ -357,7 +357,7 @@ class _AddClipsToCollectionDialogState
   Widget _buildClipOption(BuildContext context, MediaClipDto clip) {
     final selected = _memberIds.contains(clip.clipId);
     final isAnyUpdating = _updatingIds.isNotEmpty;
-    final coverUrl = clip.coverImage?.bestAvailableUrl;
+    final coverUrl = clip.coverImage?.origin;
     final title = clip.title.trim();
     final metaParts = <String>[
       if (clip.movieNumber != null && clip.movieNumber!.isNotEmpty)

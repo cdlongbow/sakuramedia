@@ -324,7 +324,7 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
     final fullscreenGalleryItems = widget.plotImages
-        .map((image) => AppFullscreenImageItem(url: image.bestAvailableUrl))
+        .map((image) => AppFullscreenImageItem(url: image.origin))
         .toList(growable: false);
 
     return KeyboardListener(
@@ -375,7 +375,7 @@ class _MoviePlotPreviewContentState extends State<_MoviePlotPreviewContent> {
                 final image = widget.plotImages[index];
                 return _PreviewMainImageActionTarget(
                   key: Key('movie-plot-preview-main-image-$index'),
-                  imageUrl: image.bestAvailableUrl,
+                  imageUrl: image.origin,
                   fullscreenGalleryItems: fullscreenGalleryItems,
                   fullscreenGalleryIndex: index,
                   onFullscreenImageIndexChanged: _syncFullscreenImageIndex,
@@ -481,7 +481,7 @@ class _PreviewStripThumbnail extends StatelessWidget {
           tokens.movieDetailPlotPreviewThumbnailWidth /
           tokens.movieDetailPlotPreviewThumbnailHeight,
       borderRadius: context.appRadius.mdBorder,
-      url: image.bestAvailableUrl,
+      url: image.origin,
     );
 
     return switch (thumbnailStripLayout) {

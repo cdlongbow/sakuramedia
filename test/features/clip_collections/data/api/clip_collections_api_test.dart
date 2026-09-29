@@ -14,10 +14,7 @@ Map<String, dynamic> _collectionJson({int id = 7, String name = '精选合集'})
       'clip_count': 3,
       'cover_image': <String, dynamic>{
         'id': 1,
-        'origin': '/clips/cover-origin.webp',
-        'small': '/clips/cover-small.webp',
-        'medium': '/clips/cover-medium.webp',
-        'large': '/clips/cover-large.webp',
+        'origin': '/clips/cover-large.webp',
       },
       'created_at': '2026-06-13T10:00:00Z',
       'updated_at': '2026-06-13T11:00:00Z',
@@ -81,7 +78,7 @@ void main() {
     expect(collections.first.name, '精选合集');
     expect(collections.first.clipCount, 3);
     expect(
-      collections.first.coverImage?.bestAvailableUrl,
+      collections.first.coverImage?.origin,
       '/clips/cover-large.webp',
     );
   });

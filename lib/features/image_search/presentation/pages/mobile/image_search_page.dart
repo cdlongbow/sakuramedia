@@ -40,7 +40,7 @@ class MobileImageSearchPage extends StatelessWidget {
     BuildContext context,
     ImageSearchResultItemDto item,
   ) async {
-    final imageUrl = item.image.resolvedUrl;
+    final imageUrl = item.image.origin;
     final fileName =
         'image_search_${item.movieNumber}_${item.thumbnailId}.${guessImageFileExtension(imageUrl)}';
     try {

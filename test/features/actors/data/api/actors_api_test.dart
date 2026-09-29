@@ -51,10 +51,7 @@ void main() {
             'alias_name': '三上悠亚 / 鬼头桃菜',
             'profile_image': <String, dynamic>{
               'id': 10,
-              'origin': 'origin.jpg',
-              'small': 'small.jpg',
-              'medium': 'medium.jpg',
-              'large': 'large.jpg',
+              'origin': 'large.jpg',
             },
             'is_subscribed': true,
             'movie_count': 42,
@@ -85,7 +82,7 @@ void main() {
     expect(page.total, 25);
     expect(page.items.single.id, 1);
     expect(page.items.single.displayName, '三上悠亚 / 鬼头桃菜');
-    expect(page.items.single.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(page.items.single.profileImage?.origin, 'large.jpg');
     expect(page.items.single.movieCount, 42);
     expect(page.items.single.age, 28);
     expect(page.items.single.birthday, DateTime(1998, 5, 3));
@@ -199,10 +196,7 @@ void main() {
         'alias_name': '三上悠亚 / 鬼头桃菜',
         'profile_image': <String, dynamic>{
           'id': 10,
-          'origin': 'origin.jpg',
-          'small': 'small.jpg',
-          'medium': 'medium.jpg',
-          'large': 'large.jpg',
+          'origin': 'large.jpg',
         },
         'is_subscribed': true,
         'birthday': '1993-08-16',
@@ -221,7 +215,7 @@ void main() {
 
     expect(actor.summary.id, 1);
     expect(actor.summary.displayName, '三上悠亚 / 鬼头桃菜');
-    expect(actor.summary.profileImage?.bestAvailableUrl, 'large.jpg');
+    expect(actor.summary.profileImage?.origin, 'large.jpg');
     expect(actor.birthday, DateTime(1993, 8, 16));
     expect(actor.age, 33);
     expect(actor.heightCm, 159);

@@ -19,8 +19,7 @@ class ImageSearchResultPreviewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final origin = item.image.origin.trim();
-    final imageUrl = origin.isNotEmpty ? origin : item.image.bestAvailableUrl;
+    final imageUrl = item.image.origin.trim();
     final extension = guessImageFileExtension(imageUrl);
     return MediaPreviewDialog(
       item: MediaPreviewItem(

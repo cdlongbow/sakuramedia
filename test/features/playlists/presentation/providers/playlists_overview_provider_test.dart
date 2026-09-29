@@ -460,9 +460,6 @@ Map<String, dynamic> _moviesPage(String coverUrl) => <String, dynamic>{
       'cover_image': <String, dynamic>{
         'id': 1,
         'origin': coverUrl,
-        'small': '',
-        'medium': '',
-        'large': '',
       },
     },
   ],

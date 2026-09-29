@@ -389,7 +389,7 @@ class _MomentCollectionDetailContentState
     final canPlay = item.mediaId > 0;
     return CollectionMemberCard(
       key: ValueKey<int>(point.pointId),
-      coverUrl: item.image?.bestAvailableUrl,
+      coverUrl: item.image?.origin,
       coverAspectRatio: 16 / 9,
       title: item.displayLabel,
       subtitle: item.hoverMeta,

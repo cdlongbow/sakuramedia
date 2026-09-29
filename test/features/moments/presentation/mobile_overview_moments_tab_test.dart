@@ -425,9 +425,6 @@ void _enqueueMomentsPageResponses(
           'image': <String, dynamic>{
             'id': 10,
             'origin': '/thumb-1.webp',
-            'small': '/thumb-1.webp',
-            'medium': '/thumb-1.webp',
-            'large': '/thumb-1.webp',
           },
           'created_at': '2026-03-12T10:00:00Z',
         },
@@ -470,9 +467,6 @@ void _enqueuePreviewResponses(TestApiBundle bundle) {
       'cover_image': <String, dynamic>{
         'id': 1,
         'origin': '/cover.jpg',
-        'small': '/cover.jpg',
-        'medium': '/cover.jpg',
-        'large': '/cover.jpg',
       },
       'release_date': null,
       'duration_minutes': 0,
@@ -521,9 +515,6 @@ void _enqueuePreviewResponses(TestApiBundle bundle) {
         'image': <String, dynamic>{
           'id': 10,
           'origin': '/thumb-1.webp',
-          'small': '/thumb-1.webp',
-          'medium': '/thumb-1.webp',
-          'large': '/thumb-1.webp',
         },
         'created_at': '2026-03-12T10:00:00Z',
       },

@@ -14,10 +14,7 @@ Map<String, dynamic> _collectionJson({int id = 7, String name = '周末回看'})
       'point_count': 3,
       'cover_image': <String, dynamic>{
         'id': 1,
-        'origin': '/moments/origin.webp',
-        'small': '/moments/small.webp',
-        'medium': '/moments/medium.webp',
-        'large': '/moments/large.webp',
+        'origin': '/moments/large.webp',
       },
       'created_at': '2026-09-10T10:00:00Z',
       'updated_at': '2026-09-10T11:00:00Z',
@@ -34,9 +31,6 @@ Map<String, dynamic> _pointJson({int pointId = 12, int position = 0}) =>
       'image': <String, dynamic>{
         'id': 2,
         'origin': '/moments/point.webp',
-        'small': '/moments/point.webp',
-        'medium': '/moments/point.webp',
-        'large': '/moments/point.webp',
       },
       'position': position,
     };
@@ -75,7 +69,7 @@ void main() {
     expect(collections.single.name, '周末回看');
     expect(collections.single.pointCount, 3);
     expect(
-      collections.single.coverImage?.bestAvailableUrl,
+      collections.single.coverImage?.origin,
       '/moments/large.webp',
     );
   });

@@ -176,7 +176,7 @@ class MovieDetail extends _$MovieDetail {
   }
 
   MovieDetailPreview _defaultPreviewFor(MovieDetailDto movie) {
-    final coverUrl = movie.coverImage?.bestAvailableUrl ?? '';
+    final coverUrl = movie.coverImage?.origin ?? '';
     if (coverUrl.isNotEmpty) {
       return MovieDetailPreview.cover(url: coverUrl);
     }
@@ -185,7 +185,7 @@ class MovieDetail extends _$MovieDetail {
 
   MovieDetailPreview _resolveUpdatedPreview(MovieDetailDto movie) {
     if (state.selectedPreview.key == 'cover') {
-      final coverUrl = movie.coverImage?.bestAvailableUrl ?? '';
+      final coverUrl = movie.coverImage?.origin ?? '';
       if (coverUrl.isNotEmpty) {
         return MovieDetailPreview.cover(url: coverUrl);
       }

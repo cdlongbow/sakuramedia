@@ -2265,9 +2265,6 @@ void main() {
         image: const MovieImageDto(
           id: 10,
           origin: '/thumb-1.webp',
-          small: '/thumb-1.webp',
-          medium: '/thumb-1.webp',
-          large: '/thumb-1.webp',
         ),
       );
 
@@ -4034,9 +4031,6 @@ void _enqueueImageSearchSingleResultResponse(TestApiBundle bundle) {
           'image': <String, dynamic>{
             'id': 10,
             'origin': '/thumb-1.webp',
-            'small': '/thumb-1.webp',
-            'medium': '/thumb-1.webp',
-            'large': '/thumb-1.webp',
           },
         },
       ],

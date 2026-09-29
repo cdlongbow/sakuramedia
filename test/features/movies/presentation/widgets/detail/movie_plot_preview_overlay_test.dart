@@ -690,9 +690,6 @@ void main() {
         (index) => MovieImageDto(
           id: index + 1,
           origin: 'plot-$index.jpg',
-          small: 'plot-$index-small.jpg',
-          medium: 'plot-$index-medium.jpg',
-          large: 'plot-$index-large.jpg',
         ),
       );
 
@@ -810,16 +807,10 @@ const List<MovieImageDto> _plotImages = <MovieImageDto>[
   MovieImageDto(
     id: 1,
     origin: 'plot-0.jpg',
-    small: 'plot-0-small.jpg',
-    medium: 'plot-0-medium.jpg',
-    large: 'plot-0-large.jpg',
   ),
   MovieImageDto(
     id: 2,
     origin: 'plot-1.jpg',
-    small: 'plot-1-small.jpg',
-    medium: 'plot-1-medium.jpg',
-    large: 'plot-1-large.jpg',
   ),
 ];
 
@@ -827,15 +818,9 @@ const List<MovieImageDto> _absolutePlotImages = <MovieImageDto>[
   MovieImageDto(
     id: 1,
     origin: 'https://api.example.com/plot-0.jpg',
-    small: 'https://api.example.com/plot-0-small.jpg',
-    medium: 'https://api.example.com/plot-0-medium.jpg',
-    large: 'https://api.example.com/plot-0-large.jpg',
   ),
   MovieImageDto(
     id: 2,
     origin: 'https://api.example.com/plot-1.jpg',
-    small: 'https://api.example.com/plot-1-small.jpg',
-    medium: 'https://api.example.com/plot-1-medium.jpg',
-    large: 'https://api.example.com/plot-1-large.jpg',
   ),
 ];

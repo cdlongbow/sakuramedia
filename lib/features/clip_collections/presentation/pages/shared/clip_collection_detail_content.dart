@@ -493,7 +493,7 @@ class _ClipCollectionDetailContentState
             final openMovie = _openMovieCallback(clip);
             return CollectionMemberCard(
               key: ValueKey<int>(clip.clipId),
-              coverUrl: clip.coverImage?.bestAvailableUrl,
+              coverUrl: clip.coverImage?.origin,
               coverAspectRatio: 16 / 9,
               title: number,
               subtitle: duration,

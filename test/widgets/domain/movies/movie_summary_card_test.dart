@@ -40,16 +40,10 @@ void main() {
                   coverImage: const MovieImageDto(
                     id: 1,
                     origin: '/poster-origin.jpg',
-                    small: '/poster-small.jpg',
-                    medium: '/poster-medium.jpg',
-                    large: '/poster-large.jpg',
                   ),
                   thinCoverImage: const MovieImageDto(
                     id: 2,
                     origin: '/thin-origin.jpg',
-                    small: '/thin-small.jpg',
-                    medium: '/thin-medium.jpg',
-                    large: '/thin-large.jpg',
                   ),
                   releaseDate: DateTime(2024, 1, 1),
                   durationMinutes: 120,
@@ -86,7 +80,7 @@ void main() {
     expect(find.byType(MaskedImage), findsOneWidget);
 
     final maskedImage = tester.widget<MaskedImage>(find.byType(MaskedImage));
-    expect(maskedImage.url, '/thin-large.jpg');
+    expect(maskedImage.url, '/thin-origin.jpg');
     expect(maskedImage.fit, BoxFit.cover);
 
     // 渐进披露：默认态不展开标题/时长，悬停后才补上。
@@ -157,16 +151,10 @@ void main() {
                   coverImage: const MovieImageDto(
                     id: 1,
                     origin: '/cover-origin.jpg',
-                    small: '/cover-small.jpg',
-                    medium: '/cover-medium.jpg',
-                    large: '/cover-large.jpg',
                   ),
                   thinCoverImage: const MovieImageDto(
                     id: 2,
                     origin: '',
-                    small: '',
-                    medium: '',
-                    large: '',
                   ),
                   releaseDate: DateTime(2024, 1, 1),
                   durationMinutes: 120,
@@ -184,7 +172,7 @@ void main() {
     expect(find.byType(MaskedImage), findsOneWidget);
 
     final maskedImage = tester.widget<MaskedImage>(find.byType(MaskedImage));
-    expect(maskedImage.url, '/cover-large.jpg');
+    expect(maskedImage.url, '/cover-origin.jpg');
     expect(maskedImage.fit, BoxFit.contain);
   });
 

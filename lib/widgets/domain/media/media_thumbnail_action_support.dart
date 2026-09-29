@@ -94,7 +94,7 @@ Future<void> handleMediaThumbnailAction({
   Future<void> Function()? onPlay,
   Future<void> Function()? onSetCover,
 }) async {
-  final imageUrl = thumbnail.image.resolvedUrl;
+  final imageUrl = thumbnail.image.origin;
 
   switch (action) {
     case AppImageActionType.searchSimilar:

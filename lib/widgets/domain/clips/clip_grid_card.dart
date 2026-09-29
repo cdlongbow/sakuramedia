@@ -71,7 +71,7 @@ class ClipGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final coverUrl = clip.coverImage?.bestAvailableUrl;
+    final coverUrl = clip.coverImage?.origin;
     final handleTap = selectionMode
         ? onSelectedChanged == null
               ? null

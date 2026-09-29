@@ -116,9 +116,6 @@ void main() {
         image: const MovieImageDto(
           id: 51,
           origin: 'relative/thumb.webp',
-          small: 'relative/thumb.webp',
-          medium: 'relative/thumb.webp',
-          large: 'relative/thumb.webp',
         ),
       );
 
@@ -155,9 +152,6 @@ void main() {
       image: const MovieImageDto(
         id: 51,
         origin: 'relative/thumb.webp',
-        small: 'relative/thumb.webp',
-        medium: 'relative/thumb.webp',
-        large: 'relative/thumb.webp',
       ),
     );
 
@@ -317,9 +311,6 @@ Map<String, dynamic> _thumbnailJson({required int id, required int offset}) {
     'image': <String, dynamic>{
       'id': id,
       'origin': 'relative/thumb-$id.webp',
-      'small': 'relative/thumb-$id.webp',
-      'medium': 'relative/thumb-$id.webp',
-      'large': 'relative/thumb-$id.webp',
     },
     'width': 1280,
     'height': 720,

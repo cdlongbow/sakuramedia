@@ -42,6 +42,8 @@ class _SystemMaintenanceContentState
     extends ConsumerState<SystemMaintenanceContent> {
   static const _mediaInfoBackfillTaskKey = 'media_video_info_backfill';
   static const _fileHashBackfillTaskKey = 'media_file_hash_backfill';
+  static const _thumbnailPackBackfillTaskKey = 'media_thumbnail_pack_backfill';
+  static const _movieAssetPackBackfillTaskKey = 'movie_asset_pack_backfill';
 
   StatusImageSearchDto? _imageSearchStatus;
   String? _errorMessage;
@@ -148,6 +150,24 @@ class _SystemMaintenanceContentState
           description:
               '为尚未记录文件哈希的媒体文件计算并保存文件指纹，用于识别重复媒体。只处理哈希为空的文件，媒体库较大时可能运行较久。',
           successMessage: '媒体文件哈希补算任务已提交，进度请在任务中心查看',
+        ),
+        SizedBox(height: context.appSpacing.xl),
+        _buildMaintenanceTaskCard(
+          context,
+          taskKey: _thumbnailPackBackfillTaskKey,
+          title: '媒体缩略图打包回填',
+          description:
+              '把媒体时间轴缩略图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的媒体，媒体库较大时可能运行较久。',
+          successMessage: '缩略图打包回填任务已提交，进度请在任务中心查看',
+        ),
+        SizedBox(height: context.appSpacing.xl),
+        _buildMaintenanceTaskCard(
+          context,
+          taskKey: _movieAssetPackBackfillTaskKey,
+          title: '影片图片打包回填',
+          description:
+              '把影片的封面、薄封面与剧情图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的影片，媒体库较大时可能运行较久。',
+          successMessage: '影片图片打包回填任务已提交，进度请在任务中心查看',
         ),
       ],
     );

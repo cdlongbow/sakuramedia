@@ -42,7 +42,7 @@ class MoviePlotGallery extends StatelessWidget {
                 tokens.movieDetailPlotThumbnailWidth /
                 tokens.movieDetailPlotThumbnailHeight,
             borderRadius: context.appRadius.mdBorder,
-            url: image.bestAvailableUrl,
+            url: image.origin,
           );
 
           final gestureChild = onRequestImageMenu == null

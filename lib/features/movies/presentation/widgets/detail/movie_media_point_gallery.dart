@@ -48,7 +48,7 @@ class MovieMediaPointGallery extends StatelessWidget {
                     tokens.movieDetailPlotThumbnailWidth /
                     tokens.movieDetailPlotThumbnailHeight,
                 borderRadius: context.appRadius.mdBorder,
-                url: point.image?.bestAvailableUrl ?? '',
+                url: point.image?.origin ?? '',
               ),
               Positioned(
                 right: spacing.xs,

@@ -777,7 +777,7 @@ class _MovieCover extends StatelessWidget {
 }
 
 String? _resolveMovieImageUrl(MovieImageDto? image) {
-  final url = image?.bestAvailableUrl.trim();
+  final url = image?.origin.trim();
   if (url == null || url.isEmpty) {
     return null;
   }

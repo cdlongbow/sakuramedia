@@ -102,7 +102,7 @@ class VideoEpisodeQueueItem extends StatelessWidget {
     final onMoreActions = this.onMoreActions;
     final item = CollectionEpisodeQueueItem(
       itemKey: Key('video-collection-play-queue-item-${video.id}'),
-      coverUrl: video.coverImage?.bestAvailableUrl,
+      coverUrl: video.coverImage?.origin,
       coverStyle: CollectionQueueCoverStyle.containOnMuted,
       title: video.preferredTitle,
       subtitle: '第 ${index + 1} 集',

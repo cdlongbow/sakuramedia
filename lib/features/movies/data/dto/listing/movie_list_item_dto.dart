@@ -4,46 +4,16 @@ class MovieImageDto {
   const MovieImageDto({
     required this.id,
     required this.origin,
-    required this.small,
-    required this.medium,
-    required this.large,
   });
 
   final int id;
   final String origin;
-  final String small;
-  final String medium;
-  final String large;
 
   factory MovieImageDto.fromJson(Map<String, dynamic> json) {
     return MovieImageDto(
       id: json['id'] as int? ?? 0,
       origin: json['origin'] as String? ?? '',
-      small: json['small'] as String? ?? '',
-      medium: json['medium'] as String? ?? '',
-      large: json['large'] as String? ?? '',
     );
-  }
-
-  String get bestAvailableUrl {
-    if (large.isNotEmpty) {
-      return large;
-    }
-    if (medium.isNotEmpty) {
-      return medium;
-    }
-    if (small.isNotEmpty) {
-      return small;
-    }
-    return origin;
-  }
-
-  String get resolvedUrl {
-    final trimmedOrigin = origin.trim();
-    if (trimmedOrigin.isNotEmpty) {
-      return trimmedOrigin;
-    }
-    return bestAvailableUrl;
   }
 }
 
@@ -57,32 +27,32 @@ mixin MovieCoverSelection {
   MovieImageDto? get thinCoverImage;
 
   bool get usesThinCover {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    final thinUrl = thinCoverImage?.origin.trim();
     return thinUrl != null && thinUrl.isNotEmpty;
   }
 
   bool get hasWideCover {
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    final coverUrl = coverImage?.origin.trim();
     return coverUrl != null && coverUrl.isNotEmpty;
   }
 
   /// 窄图优先（移动端行卡用），缺失时退回宽图。
   String? get preferredCoverUrl {
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    final thinUrl = thinCoverImage?.origin.trim();
     if (thinUrl != null && thinUrl.isNotEmpty) {
       return thinUrl;
     }
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    final coverUrl = coverImage?.origin.trim();
     return coverUrl != null && coverUrl.isNotEmpty ? coverUrl : null;
   }
 
   /// 宽图优先（桌面行卡用），缺失时退回窄图。
   String? get wideCoverUrl {
-    final coverUrl = coverImage?.bestAvailableUrl.trim();
+    final coverUrl = coverImage?.origin.trim();
     if (coverUrl != null && coverUrl.isNotEmpty) {
       return coverUrl;
     }
-    final thinUrl = thinCoverImage?.bestAvailableUrl.trim();
+    final thinUrl = thinCoverImage?.origin.trim();
     return thinUrl != null && thinUrl.isNotEmpty ? thinUrl : null;
   }
 }

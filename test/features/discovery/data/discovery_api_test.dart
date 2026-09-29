@@ -44,10 +44,7 @@ void main() {
               'title': 'Movie title',
               'cover_image': <String, dynamic>{
                 'id': 1,
-                'origin': 'origin.jpg',
-                'small': 'small.jpg',
-                'medium': 'medium.jpg',
-                'large': 'large.jpg',
+                'origin': 'large.jpg',
               },
               'thin_cover_image': null,
               'release_date': '2026-05-01',
@@ -110,10 +107,7 @@ void main() {
               'offset_seconds': 360,
               'image': <String, dynamic>{
                 'id': 88,
-                'origin': 'thumb-origin.webp',
-                'small': 'thumb-small.webp',
-                'medium': 'thumb-medium.webp',
-                'large': 'thumb-large.webp',
+                'origin': 'thumb-large.webp',
               },
               'movie': <String, dynamic>{
                 'javdb_id': 'abc-id',
@@ -149,7 +143,7 @@ void main() {
       expect(page.items.single.mediaId, 100);
       expect(page.items.single.thumbnailId, 500);
       expect(page.items.single.offsetSeconds, 360);
-      expect(page.items.single.image?.bestAvailableUrl, 'thumb-large.webp');
+      expect(page.items.single.image?.origin, 'thumb-large.webp');
       expect(page.items.single.movie.movieNumber, 'ABC-001');
     },
   );

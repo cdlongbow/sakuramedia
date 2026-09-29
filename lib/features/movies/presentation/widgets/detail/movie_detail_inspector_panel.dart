@@ -194,7 +194,7 @@ class _MovieDetailInspectorPanelState
   ) async {
     final fileName =
         'movie_thumbnail_${widget.movieNumber}_${thumbnail.thumbnailId}.webp';
-    final imageUrl = thumbnail.image.resolvedUrl;
+    final imageUrl = thumbnail.image.origin;
     await handleMediaThumbnailAction(
       context: context,
       ref: ref,

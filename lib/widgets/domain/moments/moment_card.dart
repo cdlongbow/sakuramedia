@@ -61,7 +61,7 @@ class MomentCard extends StatelessWidget {
         selectionMode: selectionMode,
         isSelected: isSelected,
         cover: MaskedImage(
-          url: item.image?.bestAvailableUrl ?? '',
+          url: item.image?.origin ?? '',
           fit: BoxFit.cover,
         ),
         infoBuilder: (context) => _buildHoverInfo(context),

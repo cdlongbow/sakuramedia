@@ -262,7 +262,7 @@ class PlaylistsOverview extends _$PlaylistsOverview
           playlistId: playlist.id,
           pageSize: 1,
         );
-        url = page.items.firstOrNull?.coverImage?.bestAvailableUrl;
+        url = page.items.firstOrNull?.coverImage?.origin;
       } catch (_) {
         // 刷新请求失败时保留旧封面；成功但无首图仍会写入 null。
         continue;

@@ -46,7 +46,7 @@ class ImageSearchResultCard extends StatelessWidget {
     final scoreText = formatImageSearchScore(item.score);
 
     final card = AppCoverCard(
-      cover: MaskedImage(url: item.image.bestAvailableUrl, fit: BoxFit.cover),
+      cover: MaskedImage(url: item.image.origin, fit: BoxFit.cover),
       infoBuilder: (context) => _buildHoverInfo(context, scoreText),
       overlays: [
         Positioned(

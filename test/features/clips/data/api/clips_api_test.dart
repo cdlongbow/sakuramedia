@@ -16,10 +16,7 @@ Map<String, dynamic> _clipJson({int clipId = 12}) => <String, dynamic>{
   'file_size_bytes': 1048576,
   'cover_image': <String, dynamic>{
     'id': 1,
-    'origin': '/clips/12-origin.webp',
-    'small': '/clips/12-small.webp',
-    'medium': '/clips/12-medium.webp',
-    'large': '/clips/12-large.webp',
+    'origin': '/clips/12-large.webp',
   },
   'stream_url': '/media-clips/12/stream?expires=1&signature=abc',
   'created_at': '2026-06-13T10:00:00Z',
@@ -95,7 +92,7 @@ void main() {
     expect(page.items, hasLength(1));
     expect(page.items.single.clipId, 12);
     expect(
-      page.items.single.coverImage?.bestAvailableUrl,
+      page.items.single.coverImage?.origin,
       '/clips/12-large.webp',
     );
     expect(page.total, 1);
@@ -145,17 +142,11 @@ void main() {
           'preview_frames': <Map<String, dynamic>>[
             <String, dynamic>{
               'id': 2,
-              'origin': '/clips/12-f0.webp',
-              'small': '/clips/12-f0-s.webp',
-              'medium': '/clips/12-f0-m.webp',
-              'large': '/clips/12-f0-l.webp',
+              'origin': '/clips/12-f0-l.webp',
             },
             <String, dynamic>{
               'id': 3,
-              'origin': '/clips/12-f1.webp',
-              'small': '/clips/12-f1-s.webp',
-              'medium': '/clips/12-f1-m.webp',
-              'large': '/clips/12-f1-l.webp',
+              'origin': '/clips/12-f1-l.webp',
             },
           ],
           'collections': <Map<String, dynamic>>[
@@ -168,7 +159,7 @@ void main() {
 
       expect(clip.clipId, 12);
       expect(clip.previewFrames, hasLength(2));
-      expect(clip.previewFrames.first.bestAvailableUrl, '/clips/12-f0-l.webp');
+      expect(clip.previewFrames.first.origin, '/clips/12-f0-l.webp');
       expect(clip.collections, hasLength(1));
       expect(clip.collections.single.id, 7);
       expect(clip.collections.single.name, '精选合集');
@@ -214,10 +205,7 @@ void main() {
             'offset_seconds': 0,
             'image': <String, dynamic>{
               'id': 2,
-              'origin': '/clips/12-f0.webp',
-              'small': '/clips/12-f0-s.webp',
-              'medium': '/clips/12-f0-m.webp',
-              'large': '/clips/12-f0-l.webp',
+              'origin': '/clips/12-f0-l.webp',
             },
           },
           <String, dynamic>{
@@ -226,10 +214,7 @@ void main() {
             'offset_seconds': 10,
             'image': <String, dynamic>{
               'id': 3,
-              'origin': '/clips/12-f1.webp',
-              'small': '/clips/12-f1-s.webp',
-              'medium': '/clips/12-f1-m.webp',
-              'large': '/clips/12-f1-l.webp',
+              'origin': '/clips/12-f1-l.webp',
             },
           },
         ],
@@ -241,7 +226,7 @@ void main() {
       expect(thumbnails.first.thumbnailId, 201);
       expect(thumbnails.first.offsetSeconds, 0);
       expect(thumbnails.last.offsetSeconds, 10);
-      expect(thumbnails.last.image.bestAvailableUrl, '/clips/12-f1-l.webp');
+      expect(thumbnails.last.image.origin, '/clips/12-f1-l.webp');
       expect(adapter.hitCount('GET', '/media-clips/12/thumbnails'), 1);
     },
   );

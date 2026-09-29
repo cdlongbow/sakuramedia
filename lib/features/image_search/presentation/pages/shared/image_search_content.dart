@@ -1015,11 +1015,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   String _resultImageUrl(ImageSearchResultItemDto item) {
-    final origin = item.image.origin.trim();
-    if (origin.isNotEmpty) {
-      return origin;
-    }
-    return item.image.bestAvailableUrl;
+    return item.image.origin.trim();
   }
 
   String _resultImageFileName(ImageSearchResultItemDto item) {

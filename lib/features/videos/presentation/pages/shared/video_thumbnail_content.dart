@@ -152,7 +152,7 @@ class _VideoThumbnailContentState extends ConsumerState<VideoThumbnailContent> {
       fileName:
           'video_thumbnail_${widget.videoId}_${thumbnail.thumbnailId}.webp',
       onSearchSimilar: () => widget.onSearchSimilar(
-        thumbnail.image.resolvedUrl,
+        thumbnail.image.origin,
         'video_thumbnail_${widget.videoId}_${thumbnail.thumbnailId}.webp',
       ),
       onPlay: () => widget.onPlay(thumbnail.offsetSeconds),

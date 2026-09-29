@@ -49,9 +49,6 @@ Map<String, dynamic> _pointJson(
       ? <String, dynamic>{
           'id': pointId,
           'origin': '/thumb-$pointId.webp',
-          'small': '/thumb-$pointId.webp',
-          'medium': '/thumb-$pointId.webp',
-          'large': '/thumb-$pointId.webp',
         }
       : null,
   'position': position,

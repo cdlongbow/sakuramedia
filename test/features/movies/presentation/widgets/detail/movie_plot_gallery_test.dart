@@ -36,16 +36,10 @@ void main() {
             MovieImageDto(
               id: 1,
               origin: 'plot-0.jpg',
-              small: 'plot-0-small.jpg',
-              medium: 'plot-0-medium.jpg',
-              large: 'plot-0-large.jpg',
             ),
             MovieImageDto(
               id: 2,
               origin: 'plot-1.jpg',
-              small: 'plot-1-small.jpg',
-              medium: 'plot-1-medium.jpg',
-              large: 'plot-1-large.jpg',
             ),
           ],
           onOpenPreview: (index) => tappedIndex = index,
@@ -78,16 +72,10 @@ void main() {
             MovieImageDto(
               id: 1,
               origin: 'plot-0.jpg',
-              small: 'plot-0-small.jpg',
-              medium: 'plot-0-medium.jpg',
-              large: 'plot-0-large.jpg',
             ),
             MovieImageDto(
               id: 2,
               origin: 'plot-1.jpg',
-              small: 'plot-1-small.jpg',
-              medium: 'plot-1-medium.jpg',
-              large: 'plot-1-large.jpg',
             ),
           ],
           onRequestImageMenu: (context, index, globalPosition) async {
@@ -121,16 +109,10 @@ void main() {
             MovieImageDto(
               id: 1,
               origin: 'plot-0.jpg',
-              small: 'plot-0-small.jpg',
-              medium: 'plot-0-medium.jpg',
-              large: 'plot-0-large.jpg',
             ),
             MovieImageDto(
               id: 2,
               origin: 'plot-1.jpg',
-              small: 'plot-1-small.jpg',
-              medium: 'plot-1-medium.jpg',
-              large: 'plot-1-large.jpg',
             ),
           ],
           onRequestImageMenu: (context, index, globalPosition) async {

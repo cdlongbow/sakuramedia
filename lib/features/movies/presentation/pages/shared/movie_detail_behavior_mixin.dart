@@ -313,11 +313,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   }
 
   String resolvePointImageUrl(MovieMediaPointDto point) {
-    final origin = point.image?.origin.trim() ?? '';
-    if (origin.isNotEmpty) {
-      return origin;
-    }
-    return point.image?.bestAvailableUrl.trim() ?? '';
+    return point.image?.origin.trim() ?? '';
   }
 
   String buildPointFileName(MovieMediaPointDto point) {

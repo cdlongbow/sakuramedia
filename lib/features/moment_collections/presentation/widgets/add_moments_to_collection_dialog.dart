@@ -410,7 +410,7 @@ class _AddMomentsToCollectionDialogState
   Widget _buildPointOption(BuildContext context, MediaPointListItemDto point) {
     final selected = _memberIds.contains(point.pointId);
     final isAnyUpdating = _updatingIds.isNotEmpty;
-    final coverUrl = point.image?.bestAvailableUrl;
+    final coverUrl = point.image?.origin;
     final title = point.movieNumber?.isNotEmpty == true
         ? point.movieNumber!
         : (point.isVideo ? '视频 #${point.videoItemId}' : '时刻 #${point.pointId}');

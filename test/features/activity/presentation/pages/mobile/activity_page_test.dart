@@ -79,16 +79,10 @@ void main() {
             'movie_cover': <String, dynamic>{
               'id': 501,
               'origin': '/files/images/wide-401.jpg',
-              'small': '/files/images/wide-401.jpg',
-              'medium': '/files/images/wide-401.jpg',
-              'large': '/files/images/wide-401.jpg',
             },
             'movie_thin_cover': <String, dynamic>{
               'id': 502,
               'origin': '/files/images/thin-401.jpg',
-              'small': '/files/images/thin-401.jpg',
-              'medium': '/files/images/thin-401.jpg',
-              'large': '/files/images/thin-401.jpg',
             },
             'created_at': '2026-08-10T12:00:00Z',
             'updated_at': '2026-08-10T12:00:00Z',
@@ -106,9 +100,6 @@ void main() {
             'movie_cover': <String, dynamic>{
               'id': 503,
               'origin': '/files/images/wide-402.jpg',
-              'small': '/files/images/wide-402.jpg',
-              'medium': '/files/images/wide-402.jpg',
-              'large': '/files/images/wide-402.jpg',
             },
             'created_at': '2026-08-10T12:00:00Z',
             'updated_at': '2026-08-10T12:00:00Z',

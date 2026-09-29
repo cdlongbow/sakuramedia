@@ -174,7 +174,7 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
       fileName: fileName,
       onSearchSimilar: () => launchImageSearchFromUrl(
         context,
-        imageUrl: thumbnail.image.resolvedUrl,
+        imageUrl: thumbnail.image.origin,
         routePath: widget.imageSearchRoutePath,
         fallbackPath: GoRouterState.of(context).uri.toString(),
         fileName: fileName,

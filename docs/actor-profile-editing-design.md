@@ -301,7 +301,7 @@ DELETE /actors/{actor_id}/profile-image?expected_revision=13
   "alias_name": "来源别名",
   "display_name": "本地显示名",
   "display_name_override": "本地显示名",
-  "profile_image": {"medium": "/..."},
+  "profile_image": {"origin": "/..."},
   "has_profile_image_override": true,
   "birthday": "1998-04-12",
   "age": 28,

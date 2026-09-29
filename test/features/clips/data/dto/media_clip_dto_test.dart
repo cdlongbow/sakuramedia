@@ -15,10 +15,7 @@ void main() {
         'file_size_bytes': 1048576,
         'cover_image': <String, dynamic>{
           'id': 1,
-          'origin': '/clips/12-origin.webp',
-          'small': '/clips/12-small.webp',
-          'medium': '/clips/12-medium.webp',
-          'large': '/clips/12-large.webp',
+          'origin': '/clips/12-large.webp',
         },
         'stream_url': '/media-clips/12/stream?expires=1&signature=abc',
         'created_at': '2026-06-13T10:00:00Z',
@@ -32,7 +29,7 @@ void main() {
       expect(dto.title, '精彩片段');
       expect(dto.durationSeconds, 20);
       expect(dto.fileSizeBytes, 1048576);
-      expect(dto.coverImage?.bestAvailableUrl, '/clips/12-large.webp');
+      expect(dto.coverImage?.origin, '/clips/12-large.webp');
       expect(dto.streamUrl, '/media-clips/12/stream?expires=1&signature=abc');
       expect(dto.createdAt, DateTime.parse('2026-06-13T10:00:00Z'));
     });

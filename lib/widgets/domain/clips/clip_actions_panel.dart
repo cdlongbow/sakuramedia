@@ -91,7 +91,7 @@ class ClipActionsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
-    final coverUrl = clip.coverImage?.bestAvailableUrl;
+    final coverUrl = clip.coverImage?.origin;
 
     return SingleChildScrollView(
       child: Column(

@@ -6,7 +6,7 @@ String resolveMomentImageUrl(MomentListItem item) {
   if (image == null) {
     return '';
   }
-  return image.resolvedUrl;
+  return image.origin;
 }
 
 String buildMomentImageFileName(MomentListItem item, String imageUrl) {

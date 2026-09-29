@@ -367,7 +367,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
       fileName: fileName,
       onSearchSimilar: () => launchImageSearchFromUrl(
         context,
-        imageUrl: thumbnail.image.resolvedUrl,
+        imageUrl: thumbnail.image.origin,
         routePath: widget.imageSearchRoutePath,
         fallbackPath: widget.fallbackPath,
         fileName: fileName,

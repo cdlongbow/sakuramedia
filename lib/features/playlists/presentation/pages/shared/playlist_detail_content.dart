@@ -168,7 +168,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                         ?.items
                         .firstOrNull
                         ?.coverImage
-                        ?.bestAvailableUrl,
+                        ?.origin,
                   ),
                   if (canManage)
                     Positioned(

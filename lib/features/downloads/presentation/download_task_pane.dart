@@ -351,8 +351,8 @@ class _DownloadTaskCard extends ConsumerWidget {
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     final selectionMode = state.selectionMode;
     final isSelected = state.isSelected(task.id);
-    final thinCoverUrl = task.movieThinCover?.bestAvailableUrl.trim() ?? '';
-    final wideCoverUrl = task.movieCover?.bestAvailableUrl.trim() ?? '';
+    final thinCoverUrl = task.movieThinCover?.origin.trim() ?? '';
+    final wideCoverUrl = task.movieCover?.origin.trim() ?? '';
     final coverUrl = isMobile && thinCoverUrl.isNotEmpty
         ? thinCoverUrl
         : wideCoverUrl;

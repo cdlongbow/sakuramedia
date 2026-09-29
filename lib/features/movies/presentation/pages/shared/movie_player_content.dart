@@ -345,7 +345,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
       fileName: fileName,
       onSearchSimilar: () => launchImageSearchFromUrl(
         context,
-        imageUrl: thumbnail.image.resolvedUrl,
+        imageUrl: thumbnail.image.origin,
         routePath: widget.imageSearchRoutePath,
         fallbackPath: buildDesktopMoviePlayerRoutePath(
           widget.movieNumber,

@@ -6,9 +6,6 @@ import 'package:sakuramedia/widgets/domain/collections/playback/collection_films
 MovieImageDto _img(int id) => MovieImageDto(
   id: id,
   origin: '/f$id.webp',
-  small: '/f$id-s.webp',
-  medium: '/f$id-m.webp',
-  large: '/f$id-l.webp',
 );
 
 /// 构造「每集帧」：传入每集的 offset 列表，按集生成 (offset, image)。

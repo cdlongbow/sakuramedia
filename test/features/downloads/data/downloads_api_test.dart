@@ -159,17 +159,11 @@ void main() {
                 'movie_title': '中文标题',
                 'movie_cover': {
                   'id': 5,
-                  'origin': '/files/images/orig.jpg',
-                  'small': '/files/images/small.jpg',
-                  'medium': '/files/images/medium.jpg',
-                  'large': '/files/images/large.jpg',
+                  'origin': '/files/images/large.jpg',
                 },
                 'movie_thin_cover': {
                   'id': 6,
-                  'origin': '/files/images/thin-orig.jpg',
-                  'small': '/files/images/thin-small.jpg',
-                  'medium': '/files/images/thin-medium.jpg',
-                  'large': '/files/images/thin-large.jpg',
+                  'origin': '/files/images/thin-large.jpg',
                 },
                 'created_at': '2026-03-10T08:10:00Z',
                 'updated_at': '2026-03-10T08:11:00Z',
@@ -201,12 +195,12 @@ void main() {
         // 后端 JOIN 出的标题/封面已进入 DTO，前端下载卡片可以直接展示，不再二次查。
         expect(result.items.single.movieTitle, '中文标题');
         expect(
-          result.items.single.movieCover?.small,
-          '/files/images/small.jpg',
+          result.items.single.movieCover?.origin,
+          '/files/images/large.jpg',
         );
         expect(
-          result.items.single.movieThinCover?.small,
-          '/files/images/thin-small.jpg',
+          result.items.single.movieThinCover?.origin,
+          '/files/images/thin-large.jpg',
         );
       },
     );

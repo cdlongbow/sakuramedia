@@ -21,7 +21,7 @@ const resultItem = ImageSearchResultItemDto(
   movieNumber: 'ABC-001',
   offsetSeconds: 120,
   score: 0.93,
-  image: MovieImageDto(id: 1, origin: '', small: '', medium: '', large: ''),
+  image: MovieImageDto(id: 1, origin: ''),
 );
 
 ResponseBody jsonResponse(Object body) {
@@ -119,7 +119,7 @@ Future<void> pumpResultPreview(
                   presentation: presentation,
                   builder: (_) => MediaPreviewDialog(
                     item: MediaPreviewItem(
-                      imageUrl: resultItem.image.resolvedUrl,
+                      imageUrl: resultItem.image.origin,
                       fileName: 'image-search.webp',
                       mediaId: resultItem.mediaId,
                       movieNumber: resultItem.movieNumber,

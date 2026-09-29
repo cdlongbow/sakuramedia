@@ -62,7 +62,7 @@ void main() {
         expect(point.mediaId, 0);
         expect(point.thumbnailId, 0);
         expect(point.isVideo, video);
-        expect(point.image?.bestAvailableUrl, '/saved.webp');
+        expect(point.image?.origin, '/saved.webp');
         adapter.enqueueJson(
           method: 'DELETE',
           path: '/media-points/20',
@@ -87,10 +87,7 @@ void main() {
           'offset_seconds': 120,
           'image': <String, dynamic>{
             'id': 9001,
-            'origin': '/points/88-origin.webp',
-            'small': '/points/88-small.webp',
-            'medium': '/points/88-medium.webp',
-            'large': '/points/88-large.webp',
+            'origin': '/points/88-large.webp',
           },
           'created_at': '2026-03-12T10:00:00Z',
         },
@@ -104,7 +101,7 @@ void main() {
     expect(points.single.mediaId, 100);
     expect(points.single.thumbnailId, 88);
     expect(points.single.offsetSeconds, 120);
-    expect(points.single.image?.bestAvailableUrl, '/points/88-large.webp');
+    expect(points.single.image?.origin, '/points/88-large.webp');
     expect(points.single.createdAt, DateTime.parse('2026-03-12T10:00:00Z'));
   });
 
@@ -122,10 +119,7 @@ void main() {
             'offset_seconds': 120,
             'image': <String, dynamic>{
               'id': 9001,
-              'origin': '/points/88-origin.webp',
-              'small': '/points/88-small.webp',
-              'medium': '/points/88-medium.webp',
-              'large': '/points/88-large.webp',
+              'origin': '/points/88-large.webp',
             },
             'created_at': '2026-03-12T10:00:00Z',
           },
@@ -150,7 +144,7 @@ void main() {
     expect(page.items.single.isVideo, isFalse);
     expect(page.items.single.thumbnailId, 88);
     expect(page.items.single.offsetSeconds, 120);
-    expect(page.items.single.image?.bestAvailableUrl, '/points/88-large.webp');
+    expect(page.items.single.image?.origin, '/points/88-large.webp');
     expect(page.items.single.createdAt, DateTime.parse('2026-03-12T10:00:00Z'));
     expect(page.total, 1);
     expect(adapter.requests.single.uri.queryParameters, <String, String>{
@@ -177,10 +171,7 @@ void main() {
               'offset_seconds': 360,
               'image': <String, dynamic>{
                 'id': 9100,
-                'origin': '/points/v18-origin.webp',
-                'small': '/points/v18-small.webp',
-                'medium': '/points/v18-medium.webp',
-                'large': '/points/v18-large.webp',
+                'origin': '/points/v18-large.webp',
               },
               'created_at': '2026-03-12T11:00:00Z',
             },
@@ -252,17 +243,11 @@ void main() {
             'movie_title': 'Movie 1',
             'cover_image': <String, dynamic>{
               'id': 10,
-              'origin': '/covers/abc-001-origin.webp',
-              'small': '/covers/abc-001-small.webp',
-              'medium': '/covers/abc-001-medium.webp',
-              'large': '/covers/abc-001-large.webp',
+              'origin': '/covers/abc-001-large.webp',
             },
             'thin_cover_image': <String, dynamic>{
               'id': 11,
-              'origin': '/covers/abc-001-thin-origin.webp',
-              'small': '/covers/abc-001-thin-small.webp',
-              'medium': '/covers/abc-001-thin-medium.webp',
-              'large': '/covers/abc-001-thin-large.webp',
+              'origin': '/covers/abc-001-thin-large.webp',
             },
             'file_name': 'abc-001.mp4',
             'library_id': 1,
@@ -287,9 +272,9 @@ void main() {
     expect(item.id, 100);
     expect(item.movieNumber, 'ABC-001');
     expect(item.movieTitle, 'Movie 1');
-    expect(item.coverImage?.bestAvailableUrl, '/covers/abc-001-large.webp');
+    expect(item.coverImage?.origin, '/covers/abc-001-large.webp');
     expect(
-      item.thinCoverImage?.bestAvailableUrl,
+      item.thinCoverImage?.origin,
       '/covers/abc-001-thin-large.webp',
     );
     expect(item.preferredCoverUrl, '/covers/abc-001-thin-large.webp');
@@ -424,10 +409,7 @@ void main() {
         'offset_seconds': 600,
         'image': <String, dynamic>{
           'id': 9901,
-          'origin': '/points/66-origin.webp',
-          'small': '/points/66-small.webp',
-          'medium': '/points/66-medium.webp',
-          'large': '/points/66-large.webp',
+          'origin': '/points/66-large.webp',
         },
         'created_at': '2026-03-12T14:00:00Z',
       },
@@ -594,10 +576,7 @@ void main() {
             'title': 'Movie 1',
             'cover_image': <String, dynamic>{
               'id': 88,
-              'origin': '/covers/abc-001-origin.webp',
-              'small': '/covers/abc-001-small.webp',
-              'medium': '/covers/abc-001-medium.webp',
-              'large': '/covers/abc-001-large.webp',
+              'origin': '/covers/abc-001-large.webp',
             },
             'thin_cover_image': null,
             'library_id': 1,

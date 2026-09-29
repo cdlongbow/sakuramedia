@@ -516,7 +516,7 @@ class _VideoCollectionPlayContentState
       fileName: fileName,
       onSearchSimilar: () => launchImageSearchFromUrl(
         context,
-        imageUrl: thumbnail.image.resolvedUrl,
+        imageUrl: thumbnail.image.origin,
         routePath: widget.imageSearchRoutePath,
         fileName: fileName,
         replaceRouteStack: true,

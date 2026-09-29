@@ -237,8 +237,8 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
       if (oldThumbnail.thumbnailId != nextThumbnail.thumbnailId ||
           oldThumbnail.mediaId != nextThumbnail.mediaId ||
           oldThumbnail.offsetSeconds != nextThumbnail.offsetSeconds ||
-          oldThumbnail.image.bestAvailableUrl !=
-              nextThumbnail.image.bestAvailableUrl ||
+          oldThumbnail.image.origin !=
+              nextThumbnail.image.origin ||
           oldThumbnail.width != nextThumbnail.width ||
           oldThumbnail.height != nextThumbnail.height) {
         return true;
@@ -768,14 +768,14 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
     final image = _shouldBuildImageForIndex(index)
         ? useAdaptiveFit
               ? _AdaptiveFitThumbnailImage(
-                  url: thumbnail.image.bestAvailableUrl,
+                  url: thumbnail.image.origin,
                   memCacheWidth: decodeHint.width,
                   memCacheHeight: decodeHint.height,
                   knownAspectRatio: aspectRatio,
                 )
               // 瀑布流分支按真实比例切 tile，cover 不再裁掉关键内容。
               : MaskedImage(
-                  url: thumbnail.image.bestAvailableUrl,
+                  url: thumbnail.image.origin,
                   fit: BoxFit.cover,
                   memCacheWidth: decodeHint.width,
                   memCacheHeight: decodeHint.height,

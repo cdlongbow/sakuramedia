@@ -117,7 +117,7 @@ class MobileVideoActionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
-    final coverUrl = video.coverImage?.bestAvailableUrl;
+    final coverUrl = video.coverImage?.origin;
 
     return SingleChildScrollView(
       child: Column(

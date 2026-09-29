@@ -124,7 +124,7 @@ class DesktopVideoActionsDialogBody extends StatelessWidget {
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final tokens = context.appComponentTokens;
-    final coverUrl = video.coverImage?.bestAvailableUrl;
+    final coverUrl = video.coverImage?.origin;
 
     // 关闭按钮浮在弹窗右上角(约 40px)，标题右侧留同宽度空隙避免遮挡。
     final closeGutter = tokens.iconSizeLg + spacing.md;

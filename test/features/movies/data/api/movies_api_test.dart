@@ -59,9 +59,6 @@ void main() {
       'cover_image': <String, dynamic>{
         'id': 10,
         'origin': coverOrigin,
-        'small': coverOrigin,
-        'medium': coverOrigin,
-        'large': coverOrigin,
       },
       'release_date': '2026-03-08',
       'duration_minutes': 120,
@@ -666,17 +663,11 @@ void main() {
             'title': 'Movie 1',
             'cover_image': <String, dynamic>{
               'id': 10,
-              'origin': 'origin.jpg',
-              'small': 'small.jpg',
-              'medium': 'medium.jpg',
-              'large': 'large.jpg',
+              'origin': 'large.jpg',
             },
             'thin_cover_image': <String, dynamic>{
               'id': 11,
-              'origin': 'thin-origin.jpg',
-              'small': 'thin-small.jpg',
-              'medium': 'thin-medium.jpg',
-              'large': 'thin-large.jpg',
+              'origin': 'thin-large.jpg',
             },
             'release_date': '2024-01-02',
             'duration_minutes': 120,
@@ -697,9 +688,9 @@ void main() {
     expect(page.total, 1);
     expect(page.items.single.movieNumber, 'ABC-001');
     expect(page.items.single.preferredTitle, 'Movie 1');
-    expect(page.items.single.coverImage?.bestAvailableUrl, 'large.jpg');
+    expect(page.items.single.coverImage?.origin, 'large.jpg');
     expect(
-      page.items.single.thinCoverImage?.bestAvailableUrl,
+      page.items.single.thinCoverImage?.origin,
       'thin-large.jpg',
     );
     expect(page.items.single.releaseDate, DateTime.parse('2024-01-02'));
@@ -804,10 +795,7 @@ void main() {
         'title': 'Movie 1',
         'cover_image': <String, dynamic>{
           'id': 10,
-          'origin': 'cover-origin.jpg',
-          'small': 'cover-small.jpg',
-          'medium': 'cover-medium.jpg',
-          'large': 'cover-large.jpg',
+          'origin': 'cover-large.jpg',
         },
         'release_date': '2024-01-02',
         'duration_minutes': 120,
@@ -836,10 +824,7 @@ void main() {
             'is_subscribed': false,
             'profile_image': <String, dynamic>{
               'id': 11,
-              'origin': 'actor-origin.jpg',
-              'small': 'actor-small.jpg',
-              'medium': 'actor-medium.jpg',
-              'large': 'actor-large.jpg',
+              'origin': 'actor-large.jpg',
             },
           },
         ],
@@ -848,18 +833,12 @@ void main() {
         ],
         'thin_cover_image': <String, dynamic>{
           'id': 12,
-          'origin': 'thin-origin.jpg',
-          'small': 'thin-small.jpg',
-          'medium': 'thin-medium.jpg',
-          'large': 'thin-large.jpg',
+          'origin': 'thin-large.jpg',
         },
         'plot_images': [
           <String, dynamic>{
             'id': 13,
-            'origin': 'plot-origin.jpg',
-            'small': 'plot-small.jpg',
-            'medium': 'plot-medium.jpg',
-            'large': 'plot-large.jpg',
+            'origin': 'plot-large.jpg',
           },
         ],
         'merge_playback_candidates': [
@@ -961,10 +940,7 @@ void main() {
                 'offset_seconds': 120,
                 'image': <String, dynamic>{
                   'id': 9100,
-                  'origin': 'point-origin.webp',
-                  'small': 'point-small.webp',
-                  'medium': 'point-medium.webp',
-                  'large': 'point-large.webp',
+                  'origin': 'point-large.webp',
                 },
               },
             ],
@@ -988,9 +964,9 @@ void main() {
     expect(detail.directorName, '紋℃');
     expect(detail.summary, 'summary');
     expect(detail.preferredDescription, 'summary');
-    expect(detail.coverImage?.bestAvailableUrl, 'cover-large.jpg');
-    expect(detail.thinCoverImage?.bestAvailableUrl, 'thin-large.jpg');
-    expect(detail.plotImages.single.bestAvailableUrl, 'plot-large.jpg');
+    expect(detail.coverImage?.origin, 'cover-large.jpg');
+    expect(detail.thinCoverImage?.origin, 'thin-large.jpg');
+    expect(detail.plotImages.single.origin, 'plot-large.jpg');
     expect(detail.actors.single.aliasName, '三上悠亚 / 鬼头桃菜');
     expect(detail.actors.single.gender, 1);
     expect(detail.actors.single.isFemale, isTrue);
@@ -1012,7 +988,7 @@ void main() {
     expect(detail.mergePlaybackCandidates.single.providerKey, 'cloud115');
     expect(detail.mergePlaybackCandidates.single.segmentCount, 2);
     expect(
-      detail.mediaItems.single.points.single.image?.bestAvailableUrl,
+      detail.mediaItems.single.points.single.image?.origin,
       'point-large.webp',
     );
     expect(detail.playlists, hasLength(2));
@@ -1514,10 +1490,7 @@ void main() {
           'offset_seconds': 10,
           'image': <String, dynamic>{
             'id': 88,
-            'origin': 'thumb-origin.webp',
-            'small': 'thumb-small.webp',
-            'medium': 'thumb-medium.webp',
-            'large': 'thumb-large.webp',
+            'origin': 'thumb-large.webp',
           },
           'width': 1280,
           'height': 720,
@@ -1532,7 +1505,7 @@ void main() {
     expect(thumbnails.single.thumbnailId, 5);
     expect(thumbnails.single.mediaId, 100);
     expect(thumbnails.single.offsetSeconds, 10);
-    expect(thumbnails.single.image.bestAvailableUrl, 'thumb-large.webp');
+    expect(thumbnails.single.image.origin, 'thumb-large.webp');
     expect(thumbnails.single.width, 1280);
     expect(thumbnails.single.height, 720);
     expect(adapter.requests.single.path, '/media/100/thumbnails');
@@ -1552,10 +1525,7 @@ void main() {
             'offset_seconds': 10,
             'image': <String, dynamic>{
               'id': 88,
-              'origin': 'thumb-origin.webp',
-              'small': 'thumb-small.webp',
-              'medium': 'thumb-medium.webp',
-              'large': 'thumb-large.webp',
+              'origin': 'thumb-large.webp',
             },
           },
         ],

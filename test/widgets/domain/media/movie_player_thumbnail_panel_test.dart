@@ -57,6 +57,10 @@ void main() {
     final decoration = decoratedBox.decoration as BoxDecoration;
 
     expect(decoration.border, isA<Border>());
+    expect(
+      find.byKey(const Key('movie-player-thumbnail-tile-1-highlight')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('thumbnail panel toggles highlighted column pill', (

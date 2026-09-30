@@ -69,6 +69,35 @@ void main() {
     expect(decoration.border, isA<Border>());
   });
 
+  testWidgets('thumbnail grid overlays active border above the image', (
+    WidgetTester tester,
+  ) async {
+    await _pumpGrid(tester, thumbnails: _thumbnails(), activeIndex: 1);
+
+    final highlight = tester.widget<DecoratedBox>(
+      find.byKey(const Key('movie-media-thumbnail-tile-1-highlight')),
+    );
+    final decoration = highlight.decoration as BoxDecoration;
+    final border = decoration.border as Border;
+
+    expect(border.top.width, 1.5);
+    expect(
+      border.top.color,
+      sakuraThemeData.colorScheme.primary,
+    );
+  });
+
+  testWidgets('thumbnail grid leaves non-active tiles without highlight layer', (
+    WidgetTester tester,
+  ) async {
+    await _pumpGrid(tester, thumbnails: _thumbnails(), activeIndex: 1);
+
+    expect(
+      find.byKey(const Key('movie-media-thumbnail-tile-0-highlight')),
+      findsNothing,
+    );
+  });
+
   testWidgets(
     'thumbnail grid decodes landscape images at the fixed long edge',
     (WidgetTester tester) async {

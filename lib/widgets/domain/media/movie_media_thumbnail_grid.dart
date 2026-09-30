@@ -734,6 +734,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
     final isClipEnd = widget.clipEndIndex == index;
     final isClipEndpoint = isClipStart || isClipEnd;
     final isInClipBand = _isWithinClipBand(index);
+    final isHighlighted = isActive || isClipEndpoint || isInClipBand;
     final primary = Theme.of(context).colorScheme.primary;
 
     final Color tileColor;
@@ -782,6 +783,47 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
                 )
         : const _MovieMediaThumbnailImagePlaceholder();
 
+    Widget tileContent = ClipRRect(
+      borderRadius: context.appRadius.xsBorder,
+      child: isClipEndpoint
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                image,
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: _ClipEndpointBadge(label: isClipStart ? '起' : '终'),
+                ),
+              ],
+            )
+          : image,
+    );
+
+    // 高亮边框必须叠在图片上层：tile 用 cover 铺满时，背景 DecoratedBox 的边框会被图片盖住，
+    // 导致选中态在横图上不可见。前景层只画边框、不填充，避免遮住画面。
+    if (isHighlighted) {
+      tileContent = Stack(
+        fit: StackFit.expand,
+        children: [
+          tileContent,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                key: Key(
+                  '${widget.keyPrefix}-thumbnail-tile-$index-highlight',
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: context.appRadius.xsBorder,
+                  border: Border.all(color: borderColor, width: borderWidth),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     final child = KeyedSubtree(
       key: Key('${widget.keyPrefix}-thumb-$index'),
       child: DecoratedBox(
@@ -794,22 +836,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
               ? context.appShadows.panel
               : null,
         ),
-        child: ClipRRect(
-          borderRadius: context.appRadius.xsBorder,
-          child: isClipEndpoint
-              ? Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    image,
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: _ClipEndpointBadge(label: isClipStart ? '起' : '终'),
-                    ),
-                  ],
-                )
-              : image,
-        ),
+        child: tileContent,
       ),
     );
 

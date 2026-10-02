@@ -48,11 +48,16 @@ void main() {
         displayName: '索引器',
         cause: '连接失败',
         fixHint: '检查索引器配置',
-        fixTarget: const DiagnosticFixTarget.configurationTab(3),
+        fixTarget: const DiagnosticFixTarget.configurationTabKey(
+          'configuration-tab-indexers',
+        ),
       );
       expect(state.cause, isNotNull);
       expect(state.fixHint, isNotNull);
-      expect(state.fixTarget?.configurationTabIndex, 3);
+      expect(
+        state.fixTarget?.configurationTabKey,
+        'configuration-tab-indexers',
+      );
     });
 
     test('blocked factory 必须给 blockedByLabel，summary 自动兜底', () {
@@ -69,10 +74,16 @@ void main() {
   });
 
   group('DiagnosticFixTarget', () {
-    test('相同 tabIndex 视为相等', () {
-      const a = DiagnosticFixTarget.configurationTab(3);
-      const b = DiagnosticFixTarget.configurationTab(3);
-      const c = DiagnosticFixTarget.configurationTab(4);
+    test('相同 tabKey 视为相等', () {
+      const a = DiagnosticFixTarget.configurationTabKey(
+        'configuration-tab-indexers',
+      );
+      const b = DiagnosticFixTarget.configurationTabKey(
+        'configuration-tab-indexers',
+      );
+      const c = DiagnosticFixTarget.configurationTabKey(
+        'configuration-tab-media-libraries',
+      );
       expect(a, equals(b));
       expect(a == c, isFalse);
     });

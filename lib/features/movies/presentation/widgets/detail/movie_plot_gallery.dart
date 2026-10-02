@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_empty_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
 class MoviePlotGallery extends StatelessWidget {
@@ -25,7 +26,7 @@ class MoviePlotGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (plotImages.isEmpty) {
-      return _EmptyPanel(message: '暂无剧情图');
+      return const MovieDetailEmptyPanel(message: '暂无剧情图');
     }
 
     final spacing = context.appSpacing;
@@ -73,33 +74,6 @@ class MoviePlotGallery extends StatelessWidget {
             child: gestureChild,
           );
         }),
-      ),
-    );
-  }
-}
-
-class _EmptyPanel extends StatelessWidget {
-  const _EmptyPanel({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.lg),
-      decoration: BoxDecoration(
-        color: context.appColors.movieDetailEmptyBackground,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s14,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
       ),
     );
   }

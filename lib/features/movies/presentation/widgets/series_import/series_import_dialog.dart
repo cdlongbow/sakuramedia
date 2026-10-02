@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/series_import
 import 'package:sakuramedia/features/movies/presentation/providers/series_import_state.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
 Future<bool> showSeriesImportDialog(BuildContext context, int seriesId) async {
@@ -12,12 +13,20 @@ Future<bool> showSeriesImportDialog(BuildContext context, int seriesId) async {
       platform == TargetPlatform.iOS || platform == TargetPlatform.android;
 
   if (isMobile) {
-    final result = await showModalBottomSheet<bool>(
+    final spacing = context.appSpacing;
+    final result = await showAppBottomDrawer<bool>(
       context: context,
       isDismissible: false,
       enableDrag: false,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      maxHeightFactor: 1.0,
+      useSafeArea: true,
+      ignoreTopSafeArea: true,
+      contentPadding: EdgeInsets.fromLTRB(
+        spacing.xl,
+        spacing.md + spacing.lg,
+        spacing.xl,
+        spacing.xl,
+      ),
       builder: (ctx) => _SeriesImportSheet(seriesId: seriesId),
     );
     return result ?? false;
@@ -84,40 +93,15 @@ class _SeriesImportSheet extends StatelessWidget {
     return _SeriesImportHost(
       seriesId: seriesId,
       builder: (context, state, notifier, dismiss) {
-        final spacing = context.appSpacing;
-        final radius = context.appRadius;
-
         return PopScope(
           canPop: state.canDismiss,
           onPopInvokedWithResult: (didPop, _) {
             if (didPop) dismiss(state.hasNewMovies);
           },
-          child: Container(
-            decoration: BoxDecoration(
-              color: context.appColors.surfaceCard,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(radius.lg),
-                topRight: Radius.circular(radius.lg),
-              ),
-            ),
-            padding: EdgeInsets.fromLTRB(
-              spacing.xl,
-              spacing.md,
-              spacing.xl,
-              spacing.xl + MediaQuery.of(context).viewPadding.bottom,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _DragHandle(),
-                SizedBox(height: spacing.md),
-                _SeriesImportContent(
-                  state: state,
-                  onDone: () => dismiss(state.hasNewMovies),
-                  onRetry: notifier.startImport,
-                ),
-              ],
-            ),
+          child: _SeriesImportContent(
+            state: state,
+            onDone: () => dismiss(state.hasNewMovies),
+            onRetry: notifier.startImport,
           ),
         );
       },
@@ -298,12 +282,11 @@ class _ProgressBar extends StatelessWidget {
         value: progress,
         minHeight: 5,
         backgroundColor: context.appColors.borderSubtle,
-        color:
-            state.hasFailed
-                ? _errorColor(context)
-                : state.isCompleted
-                ? _successColor(context)
-                : _accentColor(context),
+        color: state.hasFailed
+            ? _errorColor(context)
+            : state.isCompleted
+            ? _successColor(context)
+            : _accentColor(context),
       ),
     );
   }
@@ -486,22 +469,6 @@ class _FailureView extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-// ─── 移动端拖动手柄 ───────────────────────────────────────────────────────────
-
-class _DragHandle extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 4,
-      decoration: BoxDecoration(
-        color: context.appColors.borderStrong,
-        borderRadius: context.appRadius.xsBorder,
-      ),
     );
   }
 }

@@ -7,8 +7,10 @@ import 'package:sakuramedia/features/plugins/presentation/plugin_management_acti
 import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -182,9 +184,10 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
                                         SizedBox(height: spacing.sm),
                                       _MobilePluginCard(
                                         plugin: display.plugins[index],
-                                        update: display.updates[display
-                                            .plugins[index]
-                                            .pluginId],
+                                        update:
+                                            display.updates[display
+                                                .plugins[index]
+                                                .pluginId],
                                         busy: display.busyPluginIds.contains(
                                           display.plugins[index].pluginId,
                                         ),
@@ -306,26 +309,19 @@ class _MobilePluginCard extends StatelessWidget {
     final statusTone = plugin.enabled
         ? AppBadgeTone.success
         : AppBadgeTone.neutral;
-    return Container(
+    return AppContentCard(
       key: Key('mobile-plugin-card-${plugin.pluginId}'),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
+      title: null,
+      padding: EdgeInsets.zero,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: Material(
               color: Colors.transparent,
-              child: InkWell(
-                mouseCursor: disabled
-                    ? SystemMouseCursors.basic
-                    : SystemMouseCursors.click,
+              child: AppInteractiveSurface(
+                enabled: !disabled,
                 key: Key('mobile-plugin-card-body-${plugin.pluginId}'),
-                borderRadius: context.appRadius.lgBorder,
                 onTap: disabled ? null : onTap,
                 child: Padding(
                   padding: EdgeInsets.all(spacing.md),
@@ -563,12 +559,9 @@ class _MobilePluginActionRow extends StatelessWidget {
       opacity: disabled ? 0.56 : 1,
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          mouseCursor: disabled
-              ? SystemMouseCursors.basic
-              : SystemMouseCursors.click,
+        child: AppInteractiveSurface(
+          enabled: !disabled,
           onTap: disabled ? null : onTap,
-          borderRadius: context.appRadius.mdBorder,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: spacing.md),
             child: Row(

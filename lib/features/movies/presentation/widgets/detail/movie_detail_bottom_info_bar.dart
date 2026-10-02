@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 
 enum MovieDetailBottomInfoBarVariant { desktopCard, mobileFullWidth }
@@ -36,10 +37,8 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
       key: const Key('movie-detail-fixed-info-bar'),
       color: context.appColors.surfaceCard,
       borderRadius: borderRadius,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
+      child: AppInteractiveSurface(
         onTap: onTap,
-        borderRadius: borderRadius,
         child: Container(
           width: double.infinity,
           constraints: BoxConstraints(

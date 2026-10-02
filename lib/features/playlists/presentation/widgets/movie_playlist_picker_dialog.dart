@@ -133,6 +133,8 @@ class _MoviePlaylistPickerDialogState
           return Material(
             color: context.appColors.surfaceCard,
             clipBehavior: Clip.hardEdge,
+            // 保留原生 InkWell：该选项行需要 hover/highlight 底色反馈，
+            // AppInteractiveSurface 明确不做 hover 底色（见其类注释）。
             child: InkWell(
               mouseCursor: updating
                   ? SystemMouseCursors.basic

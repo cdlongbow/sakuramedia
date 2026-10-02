@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_librarie
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_cover_thumbnail.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_meta_label.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
@@ -230,12 +231,9 @@ class _FileRow extends StatelessWidget {
     );
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: _selectable && selectedIds != null
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
+      child: AppInteractiveSurface(
+        enabled: _selectable && selectedIds != null,
         key: Key('$keyPrefix-row-${item.id}'),
-        borderRadius: context.appRadius.mdBorder,
         onTap: selectedIds == null || !_selectable
             ? null
             : () => onToggle(item),
@@ -252,7 +250,8 @@ class _FileRow extends StatelessWidget {
                     children: [
                       if (selectedIds != null) ...[
                         Tooltip(
-                          message: selectionLimitReached &&
+                          message:
+                              selectionLimitReached &&
                                   !selectedIds!.contains(item.id)
                               ? '至少保留一个'
                               : '选择此项',

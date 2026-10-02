@@ -22,6 +22,7 @@ import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/m
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_info_block.dart';
@@ -178,20 +179,14 @@ class _MobileIndexersPageState extends ConsumerState<MobileIndexersPage> {
 
   Widget _buildConnectionTestCard(BuildContext context) {
     final spacing = context.appSpacing;
-    final colors = context.appColors;
     final connectionTest = ref.watch(
       indexerConnectionTestProvider(_connectionTestScope),
     );
 
-    return Container(
+    return AppContentCard(
       key: const Key('mobile-indexers-connection-test-card'),
+      title: null,
       padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

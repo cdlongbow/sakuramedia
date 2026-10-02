@@ -156,5 +156,29 @@ void main() {
       expect(themeData.bottomButtonBar, hasLength(1));
       expect(themeData.bottomButtonBar.first, same(bottom));
     });
+
+    test('desktop controls theme replaces built-in seek bar with cluster', () {
+      const top = SizedBox(key: Key('top-control'));
+      const bottom = MaterialDesktopFullscreenButton();
+      const seekBar = SizedBox(key: Key('bottom-seek-bar'));
+      final themeData = buildMoviePlayerDesktopControlsThemeData(
+        theme: ThemeData.light(),
+        topControls: <Widget>[top],
+        bottomControls: <Widget>[bottom],
+        bottomSeekBar: seekBar,
+      );
+
+      expect(themeData.displaySeekBar, isFalse);
+      expect(themeData.seekBarMargin, EdgeInsets.zero);
+      expect(themeData.buttonBarHeight, 92);
+      expect(themeData.topButtonBar, hasLength(1));
+      expect(themeData.topButtonBar.first, isA<Expanded>());
+      expect(themeData.bottomButtonBar, hasLength(1));
+      final cluster =
+          (themeData.bottomButtonBar.first as Expanded).child as Column;
+      expect(cluster.children.first, same(seekBar));
+      final buttonRow = cluster.children.last as SizedBox;
+      expect((buttonRow.child! as Row).children.first, same(bottom));
+    });
   });
 }

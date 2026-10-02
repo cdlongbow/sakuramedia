@@ -12,7 +12,7 @@ class AppContentCard extends StatelessWidget {
     this.headerTrailing,
   });
 
-  final String title;
+  final String? title;
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final TextStyle? titleStyle;
@@ -21,6 +21,7 @@ class AppContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = this.title;
     return Container(
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(context.appSpacing.lg),
@@ -33,39 +34,41 @@ class AppContentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (headerTrailing == null)
-            Text(
-              title,
-              style:
-                  titleStyle ??
-                  resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.primary,
+          if (title != null) ...[
+            if (headerTrailing == null)
+              Text(
+                title,
+                style:
+                    titleStyle ??
+                    resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s14,
+                      weight: AppTextWeight.semibold,
+                      tone: AppTextTone.primary,
+                    ),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style:
+                          titleStyle ??
+                          resolveAppTextStyle(
+                            context,
+                            size: AppTextSize.s14,
+                            weight: AppTextWeight.semibold,
+                            tone: AppTextTone.primary,
+                          ),
+                    ),
                   ),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style:
-                        titleStyle ??
-                        resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s14,
-                          weight: AppTextWeight.semibold,
-                          tone: AppTextTone.primary,
-                        ),
-                  ),
-                ),
-                SizedBox(width: context.appSpacing.md),
-                headerTrailing!,
-              ],
-            ),
-          SizedBox(height: headerBottomSpacing ?? context.appSpacing.lg),
+                  SizedBox(width: context.appSpacing.md),
+                  headerTrailing!,
+                ],
+              ),
+            SizedBox(height: headerBottomSpacing ?? context.appSpacing.lg),
+          ],
           child,
         ],
       ),

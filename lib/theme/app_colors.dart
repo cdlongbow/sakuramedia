@@ -29,6 +29,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.successSurface,
     required this.mediaOverlaySoft,
     required this.mediaOverlayStrong,
+    required this.mediaOverlayBorder,
     required this.mediaMaskOverlay,
     required this.movieCardSubscribedBadgeBackground,
     required this.movieCardPlayableBadgeBackground,
@@ -74,6 +75,7 @@ class AppColors extends ThemeExtension<AppColors> {
       successSurface = const Color(0xFFECFDF3),
       mediaOverlaySoft = const Color(0x14000000),
       mediaOverlayStrong = const Color(0x85000000),
+      mediaOverlayBorder = const Color(0x6BE5E5E5),
       mediaMaskOverlay = const Color(0xE6000000),
       movieCardSubscribedBadgeBackground = const Color(0xFFF97316),
       movieCardPlayableBadgeBackground = const Color(0xFF1677FF),
@@ -119,6 +121,7 @@ class AppColors extends ThemeExtension<AppColors> {
       successSurface = const Color(0xFF122E1F),
       mediaOverlaySoft = const Color(0x14000000),
       mediaOverlayStrong = const Color(0x85000000),
+      mediaOverlayBorder = const Color(0x6BFFFFFF),
       mediaMaskOverlay = const Color(0xE6000000),
       movieCardSubscribedBadgeBackground = const Color(0xFFF97316),
       movieCardPlayableBadgeBackground = const Color(0xFF1677FF),
@@ -180,6 +183,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color successSurface;
   final Color mediaOverlaySoft;
   final Color mediaOverlayStrong;
+
+  /// 媒体图上的胶囊/圆形角标描边：亮色用灰白、暗色用半透明白，保证在深色叠加层上可见。
+  final Color mediaOverlayBorder;
   final Color mediaMaskOverlay;
   final Color movieCardSubscribedBadgeBackground;
   final Color movieCardPlayableBadgeBackground;
@@ -225,6 +231,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? successSurface,
     Color? mediaOverlaySoft,
     Color? mediaOverlayStrong,
+    Color? mediaOverlayBorder,
     Color? mediaMaskOverlay,
     Color? movieCardSubscribedBadgeBackground,
     Color? movieCardPlayableBadgeBackground,
@@ -277,6 +284,7 @@ class AppColors extends ThemeExtension<AppColors> {
       successSurface: successSurface ?? this.successSurface,
       mediaOverlaySoft: mediaOverlaySoft ?? this.mediaOverlaySoft,
       mediaOverlayStrong: mediaOverlayStrong ?? this.mediaOverlayStrong,
+      mediaOverlayBorder: mediaOverlayBorder ?? this.mediaOverlayBorder,
       mediaMaskOverlay: mediaMaskOverlay ?? this.mediaMaskOverlay,
       movieCardSubscribedBadgeBackground:
           movieCardSubscribedBadgeBackground ??
@@ -379,6 +387,8 @@ class AppColors extends ThemeExtension<AppColors> {
           Color.lerp(mediaOverlaySoft, other.mediaOverlaySoft, t)!,
       mediaOverlayStrong:
           Color.lerp(mediaOverlayStrong, other.mediaOverlayStrong, t)!,
+      mediaOverlayBorder:
+          Color.lerp(mediaOverlayBorder, other.mediaOverlayBorder, t)!,
       mediaMaskOverlay:
           Color.lerp(mediaMaskOverlay, other.mediaMaskOverlay, t)!,
       movieCardSubscribedBadgeBackground:

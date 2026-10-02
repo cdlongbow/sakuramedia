@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 class MovieDetailPillItem {
   const MovieDetailPillItem({
@@ -102,18 +103,9 @@ class _MovieDetailPill extends StatelessWidget {
       return DecoratedBox(decoration: decoration, child: content);
     }
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: radius,
-      child: DecoratedBox(
-        decoration: decoration,
-        child: InkWell(
-          mouseCursor: SystemMouseCursors.click,
-          borderRadius: radius,
-          onTap: item.onTap,
-          child: content,
-        ),
-      ),
+    return DecoratedBox(
+      decoration: decoration,
+      child: AppInteractiveSurface(onTap: item.onTap, child: content),
     );
   }
 }

@@ -567,6 +567,8 @@ class _VideoCollectionPlayContentState
     // 播放器保持挂载，最后一集移除后也能先关闭全屏路由，再展示空态。
     return CollectionPlaySplitLayout(
       keyPrefix: 'video-collection',
+      collapsible: widget.useTouchOptimizedControls,
+      panelAvailable: filmstrip != null,
       left: Stack(
         fit: StackFit.expand,
         children: [

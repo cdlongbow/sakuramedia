@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 /// 视频「所属合集」的可点击胶囊组：
 ///
@@ -69,8 +70,7 @@ class _VideoCollectionChip extends StatelessWidget {
         side: BorderSide(color: colors.borderSubtle),
       ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
+      child: AppInteractiveSurface(
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(

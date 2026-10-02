@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart';
 
@@ -78,10 +79,7 @@ class MovieDetailHeroCard extends StatelessWidget {
                     // 模糊会在边缘留下透明回透（露出底下黑底），放大一圈推出可视区。
                     child: Transform.scale(
                       scale: 1.1,
-                      child: MaskedImage(
-                        url: mainImageUrl!,
-                        fit: BoxFit.cover,
-                      ),
+                      child: MaskedImage(url: mainImageUrl!, fit: BoxFit.cover),
                     ),
                   ),
                   ColoredBox(
@@ -94,10 +92,7 @@ class MovieDetailHeroCard extends StatelessWidget {
             ),
           // 内框铺满整个 Hero：加载时占位灰即满幅，完成后前景图居中、
           // 两侧留白透出底下的全幅模糊，不再有黑边距。
-          _HeroImageFrame(
-            imageKey: mainImageKey,
-            imageUrl: mainImageUrl,
-          ),
+          _HeroImageFrame(imageKey: mainImageKey, imageUrl: mainImageUrl),
           Positioned(
             top: spacing.sm,
             left: spacing.sm,
@@ -138,9 +133,7 @@ class MovieDetailHeroCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.mediaOverlayStrong,
                     borderRadius: context.appRadius.pillBorder,
-                    border: Border.all(
-                      color: colors.borderSubtle.withValues(alpha: 0.42),
-                    ),
+                    border: Border.all(color: colors.mediaOverlayBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -182,7 +175,10 @@ class MovieDetailHeroCard extends StatelessWidget {
                 child: Tooltip(
                   message: watchTooltip ?? watchLabel!,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: spacing.sm, vertical: spacing.xs),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: spacing.sm,
+                      vertical: spacing.xs,
+                    ),
                     decoration: BoxDecoration(
                       color: colors.mediaOverlayStrong,
                       borderRadius: context.appRadius.smBorder,
@@ -190,11 +186,24 @@ class MovieDetailHeroCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.history_rounded, size: tokens.iconSizeXs, color: context.appTextPalette.onMedia),
+                        Icon(
+                          Icons.history_rounded,
+                          size: tokens.iconSizeXs,
+                          color: context.appTextPalette.onMedia,
+                        ),
                         SizedBox(width: spacing.xs),
-                        Flexible(child: Text(watchLabel!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: resolveAppTextStyle(context, size: AppTextSize.s12, tone: AppTextTone.onMedia),
-                        )),
+                        Flexible(
+                          child: Text(
+                            watchLabel!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: resolveAppTextStyle(
+                              context,
+                              size: AppTextSize.s12,
+                              tone: AppTextTone.onMedia,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -208,12 +217,9 @@ class MovieDetailHeroCard extends StatelessWidget {
                   cursor: SystemMouseCursors.click,
                   child: Material(
                     color: Colors.transparent,
-                    child: InkWell(
-                      mouseCursor: !isPlayLoading && onPlayTap != null
-                          ? SystemMouseCursors.click
-                          : SystemMouseCursors.basic,
+                    child: AppInteractiveSurface(
+                      enabled: !isPlayLoading && onPlayTap != null,
                       key: const Key('movie-detail-hero-play-button'),
-                      customBorder: const CircleBorder(),
                       onTap: isPlayLoading ? null : onPlayTap,
                       child: Container(
                         width: 72,
@@ -228,12 +234,17 @@ class MovieDetailHeroCard extends StatelessWidget {
                             ? Padding(
                                 padding: const EdgeInsets.all(22),
                                 child: CircularProgressIndicator.adaptive(
-                                  backgroundColor: switch (Theme.of(context).platform) {
-                                    TargetPlatform.iOS || TargetPlatform.macOS => Colors.white,
+                                  backgroundColor: switch (Theme.of(
+                                    context,
+                                  ).platform) {
+                                    TargetPlatform.iOS ||
+                                    TargetPlatform.macOS => Colors.white,
                                     _ => null,
                                   },
                                   strokeWidth: 3,
-                                  valueColor: AlwaysStoppedAnimation<Color?>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color?>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : Icon(
@@ -352,7 +363,7 @@ class _HeroMoreActionsButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.mediaOverlayStrong,
         borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: colors.borderSubtle.withValues(alpha: 0.42)),
+        border: Border.all(color: colors.mediaOverlayBorder),
       ),
       child: isUpdating
           ? SizedBox(
@@ -360,12 +371,15 @@ class _HeroMoreActionsButton extends StatelessWidget {
               height: tokens.iconSizeSm,
               child: CircularProgressIndicator.adaptive(
                 backgroundColor: switch (Theme.of(context).platform) {
-                  TargetPlatform.iOS || TargetPlatform.macOS => context.appTextPalette.onMedia,
+                  TargetPlatform.iOS ||
+                  TargetPlatform.macOS => context.appTextPalette.onMedia,
                   _ => null,
                 },
                 key: const Key('movie-detail-hero-more-actions-loading'),
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color?>(context.appTextPalette.onMedia),
+                valueColor: AlwaysStoppedAnimation<Color?>(
+                  context.appTextPalette.onMedia,
+                ),
               ),
             )
           : Icon(

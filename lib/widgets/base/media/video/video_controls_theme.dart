@@ -81,6 +81,7 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
   required List<Widget> bottomControls,
   bool displaySeekBar = true,
   bool showBufferingIndicator = true,
+  Widget? bottomSeekBar,
 }) {
   final overlayTokens = theme.appOverlayTokens;
   return MaterialDesktopVideoControlsThemeData(
@@ -98,14 +99,57 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
     // seek bar 造成的高频状态更新，音量图标切换本身不需要过渡动画（用户感知不到），
     // 直接设为 0 让切换在单帧内完成，从根上避开这条过渡期叠加窗口。
     volumeBarTransitionDuration: Duration.zero,
-    displaySeekBar: displaySeekBar,
-    topButtonBar: topControls,
+    displaySeekBar: bottomSeekBar == null && displaySeekBar,
+    // 自定义进度条自带横向内边距（由 bottomButtonBarMargin 提供），
+    // 这里清零避免与 media_kit 默认的 seekBarMargin 叠加。
+    seekBarMargin: bottomSeekBar == null
+        ? EdgeInsets.symmetric(horizontal: theme.appSpacing.lg)
+        : EdgeInsets.zero,
+    topButtonBar: bottomSeekBar == null
+        ? topControls
+        : <Widget>[
+            Expanded(
+              // 底栏集群把 buttonBarHeight 撑高后，用固定 56 高的贴顶行
+              // 保持顶栏控件的原有纵向位置。
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  height: _moviePlayerDesktopButtonBarHeight,
+                  child: Row(children: topControls),
+                ),
+              ),
+            ),
+          ],
     topButtonBarMargin: EdgeInsets.fromLTRB(
       overlayTokens.playerControlBarHorizontalInset,
       overlayTokens.playerControlBarTopInset,
       overlayTokens.playerControlBarHorizontalInset,
       0,
     ),
-    bottomButtonBar: bottomControls,
+    bottomButtonBar: bottomSeekBar == null
+        ? bottomControls
+        : <Widget>[
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  bottomSeekBar,
+                  SizedBox(
+                    height: _moviePlayerDesktopButtonBarHeight,
+                    child: Row(children: bottomControls),
+                  ),
+                ],
+              ),
+            ),
+          ],
+    buttonBarHeight: bottomSeekBar == null
+        ? _moviePlayerDesktopButtonBarHeight
+        : _moviePlayerDesktopSeekBarClusterHeight,
   );
 }
+
+const double _moviePlayerDesktopButtonBarHeight = 56;
+
+/// 自定义底栏 = 进度条容器（36）+ 按钮行（56）。
+const double _moviePlayerDesktopSeekBarClusterHeight =
+    _moviePlayerDesktopButtonBarHeight + 36;

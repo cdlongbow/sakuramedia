@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.da
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_state.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
@@ -203,13 +204,10 @@ class _PluginRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final disabled = busy || installing || checkingUpdates;
-    return InkWell(
-      mouseCursor: disabled
-          ? SystemMouseCursors.basic
-          : SystemMouseCursors.click,
+    return AppInteractiveSurface(
+      enabled: !disabled,
       key: Key('plugin-row-${plugin.pluginId}'),
       onTap: disabled ? null : onTap,
-      borderRadius: context.appRadius.mdBorder,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: spacing.md),
         child: Row(

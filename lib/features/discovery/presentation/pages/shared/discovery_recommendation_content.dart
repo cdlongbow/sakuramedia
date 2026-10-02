@@ -422,7 +422,11 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
           .toList(growable: false),
       onItemTap: (item) => _openMomentPreview(context, item),
       onItemPlay: (item) => unawaited(
-        playMomentItem(context: context, item: item, fallbackPath: fallbackPath),
+        playMomentItem(
+          context: context,
+          item: item,
+          fallbackPath: fallbackPath,
+        ),
       ),
       onItemOpenMovie: (item) => openMomentSourceMovie(
         context: context,
@@ -430,19 +434,12 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
         fallbackPath: fallbackPath,
       ),
       onItemAddToCollection: (item) => unawaited(
-        addMomentItemToCollection(
-          context,
-          item: item,
-          isRecommendation: true,
-        ),
+        addMomentItemToCollection(context, item: item, isRecommendation: true),
       ),
     );
   }
 
-  Future<void> _openMomentPreview(
-    BuildContext context,
-    MomentListItem item,
-  ) {
+  Future<void> _openMomentPreview(BuildContext context, MomentListItem item) {
     return showMomentPreviewFlow(
       context: context,
       item: item,
@@ -460,10 +457,12 @@ class DiscoveryRetryEmptyState extends StatelessWidget {
     super.key,
     required this.message,
     required this.onRetry,
+    this.retryKey,
   });
 
   final String message;
   final Future<void> Function() onRetry;
+  final Key? retryKey;
 
   @override
   Widget build(BuildContext context) {
@@ -472,6 +471,7 @@ class DiscoveryRetryEmptyState extends StatelessWidget {
         AppEmptyState(message: message),
         SizedBox(height: context.appSpacing.md),
         AppButton(
+          key: retryKey,
           label: '重试',
           size: AppButtonSize.small,
           onPressed: () => unawaited(onRetry()),

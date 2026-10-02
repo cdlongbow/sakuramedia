@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
@@ -239,6 +240,20 @@ class _IndexerSettingsSectionState
   }
 
   Future<void> _deleteIndexer(int index) async {
+    final entry = _indexers[index];
+    final confirmed = await showAppConfirmDialog(
+      context,
+      dialogKey: const Key('configuration-indexer-delete-dialog'),
+      confirmKey: const Key('configuration-indexer-delete-confirm-button'),
+      cancelKey: const Key('configuration-indexer-delete-cancel-button'),
+      title: '删除索引器',
+      message: '确认删除索引器"${entry.name}"？删除后，该索引器将无法继续把资源请求投递到当前下载器。',
+      confirmLabel: '删除',
+      danger: true,
+    );
+    if (!confirmed || !mounted) {
+      return;
+    }
     await _saveIndexers(
       List<IndexerEntryDto>.from(_indexers)..removeAt(index),
       successToast: '索引器已删除',

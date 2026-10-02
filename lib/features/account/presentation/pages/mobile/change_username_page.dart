@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/account/presentation/providers/account_prof
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
@@ -29,16 +30,15 @@ class _MobileChangeUsernamePageState
   bool _hasAttemptedSubmit = false;
   bool _hasSyncedInitialUsername = false;
 
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
     super.initState();
-    _usernameController =
-        TextEditingController()..addListener(_handleInputChanged);
+    _usernameController = TextEditingController()
+      ..addListener(_handleInputChanged);
     _usernameFocusNode = FocusNode();
   }
 
@@ -334,15 +334,10 @@ class _FormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppContentCard(
       key: key == null ? const Key('mobile-username-form-card') : null,
+      title: null,
       padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,

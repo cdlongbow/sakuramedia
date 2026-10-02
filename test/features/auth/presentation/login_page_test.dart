@@ -15,6 +15,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
@@ -158,10 +159,11 @@ void main() {
     await tester.tap(find.byKey(const Key('login-submit-button')));
     await tester.pump();
 
-    final submitButton = tester.widget<ElevatedButton>(
+    final submitButton = tester.widget<AppButton>(
       find.byKey(const Key('login-submit-button')),
     );
     expect(submitButton.onPressed, isNull);
+    expect(submitButton.isLoading, isTrue);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     completer.complete();

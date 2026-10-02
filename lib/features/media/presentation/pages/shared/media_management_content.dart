@@ -25,6 +25,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
+import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 
 /// 删除媒体后同步 videos 域缓存的统一入口（共享规则见
 /// `media_video_mutation_report.dart`）。
@@ -320,25 +321,30 @@ class MediaManagementContent extends HookConsumerWidget {
     if (!confirmed || !context.mounted) return;
 
     isDeleting.value = true;
-    final okIds = <int>[];
-    final failedIds = <int>[];
+    late final BatchRunResult<int> result;
     Object? firstError;
     try {
       final mediaApi = ref.read(mediaApiProvider);
-      for (final mediaId in selectedIds) {
-        try {
-          await mediaApi.deleteMedia(mediaId: mediaId);
-          okIds.add(mediaId);
-        } catch (error) {
-          failedIds.add(mediaId);
-          firstError ??= error;
-        }
-      }
+      result = await runBatchOperation<int>(
+        context,
+        title: '正在删除媒体',
+        items: selectedIds,
+        action: (mediaId) async {
+          try {
+            await mediaApi.deleteMedia(mediaId: mediaId);
+          } catch (error) {
+            firstError ??= error;
+            rethrow;
+          }
+        },
+      );
     } finally {
       if (context.mounted) {
         isDeleting.value = false;
       }
     }
+    final okIds = result.succeeded;
+    final failedIds = result.failed;
 
     if (okIds.isNotEmpty) {
       ref.read(mediaBrowseProvider.notifier).removeItemsByIds(okIds);
@@ -357,9 +363,10 @@ class MediaManagementContent extends HookConsumerWidget {
     if (failedIds.isEmpty) {
       showToast('已删除 ${okIds.length} 项媒体');
     } else {
-      final errorMessage = firstError == null
+      final resolvedError = firstError;
+      final errorMessage = resolvedError == null
           ? '未知错误'
-          : apiErrorMessage(firstError, fallback: '批量删除失败');
+          : apiErrorMessage(resolvedError, fallback: '批量删除失败');
       showToast('已删除 ${okIds.length} 项，${failedIds.length} 项失败：$errorMessage');
       unawaited(ref.read(mediaBrowseProvider.notifier).refresh());
     }

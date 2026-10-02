@@ -1,24 +1,34 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 
 /// 合集连播页的左右分栏壳：左 72% 放播放器（含「选集」浮层），右 28% 放「整部合集」
 /// 关键帧面板。语义对齐 jav 播放页的 `_MoviePlayerSplitLayout`，但**独立实现**——
 /// jav 播放页不迁移（避免动其稳定 Key / 测试），两个合集连播页共用本壳。
 ///
 /// 自持 [MultiSplitViewController]（在 [State] 内创建并释放），调用方只传左右子树。
+/// 移动端（[collapsible]）默认收起右面板，右缘把手可展开/收起，展开后仍可拖宽。
 class CollectionPlaySplitLayout extends StatefulWidget {
   const CollectionPlaySplitLayout({
     super.key,
     required this.keyPrefix,
     required this.left,
     required this.right,
+    this.collapsible = false,
+    this.panelAvailable = true,
   });
 
   /// 区分两个合集页的 Key 前缀（如 `clip-collection` / `video-collection`）。
   final String keyPrefix;
   final Widget left;
   final Widget right;
+
+  /// 移动端传 true：右侧面板默认收起，显示右缘把手。
+  final bool collapsible;
+
+  /// 右侧面板是否有内容可展示；无内容时不显示把手。
+  final bool panelAvailable;
 
   @override
   State<CollectionPlaySplitLayout> createState() =>
@@ -44,28 +54,15 @@ class _CollectionPlaySplitLayoutState extends State<CollectionPlaySplitLayout> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiSplitViewTheme(
-      data: MultiSplitViewThemeData(
-        dividerThickness: context.appSpacing.xs,
-        dividerPainter: DividerPainters.grooved1(
-          color: context.appColors.borderSubtle,
-        ),
-      ),
-      child: MultiSplitView(
-        controller: _controller,
-        axis: Axis.horizontal,
-        builder:
-            (context, area) =>
-                area.index == 0
-                    ? _PlayerPanel(
-                      keyPrefix: widget.keyPrefix,
-                      child: widget.left,
-                    )
-                    : _SidePanel(
-                      keyPrefix: widget.keyPrefix,
-                      child: widget.right,
-                    ),
-      ),
+    return CollapsiblePlayerSplitView(
+      controller: _controller,
+      collapsible: widget.collapsible,
+      panelAvailable: widget.panelAvailable,
+      handleKey: Key('${widget.keyPrefix}-panel-handle'),
+      leftBuilder: (context) =>
+          _PlayerPanel(keyPrefix: widget.keyPrefix, child: widget.left),
+      rightBuilder: (context) =>
+          _SidePanel(keyPrefix: widget.keyPrefix, child: widget.right),
     );
   }
 }

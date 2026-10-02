@@ -99,12 +99,16 @@ class _MovieSubtitleViewerContentState
           child: SelectableText(
             text.isEmpty ? '（字幕内容为空）' : text,
             key: const Key('movie-subtitle-viewer-text'),
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.regular,
-              tone: AppTextTone.primary,
-            ).copyWith(fontFamily: 'monospace', height: 1.5),
+            style:
+                resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s12,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.primary,
+                ).copyWith(
+                  fontFamilyFallback: kAppMonospaceFontFallback,
+                  height: 1.5,
+                ),
           ),
         ),
       ),

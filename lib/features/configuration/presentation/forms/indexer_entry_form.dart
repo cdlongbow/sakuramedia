@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
@@ -464,12 +465,9 @@ class IndexerKindOptionButton extends StatelessWidget {
         ? context.appTextPalette.accent
         : context.appTextPalette.secondary;
 
-    return InkWell(
-      mouseCursor: enabled
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.basic,
+    return AppInteractiveSurface(
+      enabled: enabled,
       onTap: enabled ? onTap : null,
-      borderRadius: context.appRadius.mdBorder,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         height: layoutTokens.segmentedControlHeight,

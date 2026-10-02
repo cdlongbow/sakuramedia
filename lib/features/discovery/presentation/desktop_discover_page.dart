@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_d
 import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/moment_recommendation_mapping.dart';
+import 'package:sakuramedia/features/discovery/presentation/pages/shared/discovery_recommendation_content.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
 import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
@@ -21,7 +22,6 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -241,9 +241,10 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     DiscoveryPreviewState<DailyRecommendationMovieDto> daily,
   ) {
     if (daily.errorMessage != null) {
-      return _RetryEmptyState(
+      return DiscoveryRetryEmptyState(
         message: daily.errorMessage!,
         onRetry: _refreshDiscovery,
+        retryKey: Key('desktop-discover-retry-${daily.errorMessage!.hashCode}'),
       );
     }
     final isLoading = daily.isLoading && daily.items.isEmpty;
@@ -263,8 +264,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
               globalPosition,
               isSubscribed: movie.isSubscribed,
             ),
-        onMovieToggleCollectionType:
-            _hoverFeatureActions.toggleCollectionType,
+        onMovieToggleCollectionType: _hoverFeatureActions.toggleCollectionType,
         onMovieBlacklist: _hoverFeatureActions.blacklist,
       ),
     );
@@ -306,9 +306,12 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       );
     }
     if (moment.errorMessage != null) {
-      return _RetryEmptyState(
+      return DiscoveryRetryEmptyState(
         message: moment.errorMessage!,
         onRetry: _refreshDiscovery,
+        retryKey: Key(
+          'desktop-discover-retry-${moment.errorMessage!.hashCode}',
+        ),
       );
     }
     if (moment.items.isEmpty) {
@@ -368,26 +371,3 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
 }
 
 void _ignoreMomentTap(MomentListItem _) {}
-
-class _RetryEmptyState extends StatelessWidget {
-  const _RetryEmptyState({required this.message, required this.onRetry});
-
-  final String message;
-  final Future<void> Function() onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AppEmptyState(message: message),
-        SizedBox(height: context.appSpacing.md),
-        AppButton(
-          key: Key('desktop-discover-retry-${message.hashCode}'),
-          label: '重试',
-          size: AppButtonSize.small,
-          onPressed: () => unawaited(onRetry()),
-        ),
-      ],
-    );
-  }
-}

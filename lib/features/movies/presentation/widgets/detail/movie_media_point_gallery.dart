@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_empty_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
 
 class MovieMediaPointGallery extends StatelessWidget {
@@ -28,7 +29,10 @@ class MovieMediaPointGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return _EmptyPanel(message: emptyMessage);
+      return MovieDetailEmptyPanel(
+        key: const Key('movie-media-point-empty'),
+        message: emptyMessage,
+      );
     }
 
     final spacing = context.appSpacing;
@@ -107,34 +111,6 @@ class MovieMediaPointGallery extends StatelessWidget {
             child: gestureChild,
           );
         }),
-      ),
-    );
-  }
-}
-
-class _EmptyPanel extends StatelessWidget {
-  const _EmptyPanel({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('movie-media-point-empty'),
-      width: double.infinity,
-      padding: EdgeInsets.all(context.appSpacing.lg),
-      decoration: BoxDecoration(
-        color: context.appColors.movieDetailEmptyBackground,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Text(
-        message,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s14,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.secondary,
-        ),
       ),
     );
   }

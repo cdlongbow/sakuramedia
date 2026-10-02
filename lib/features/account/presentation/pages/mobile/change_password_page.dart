@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 
@@ -31,10 +32,9 @@ class _MobileChangePasswordPageState
   bool _hasAttemptedSubmit = false;
   bool _isSubmitting = false;
 
-  AutovalidateMode get _autovalidateMode =>
-      _hasAttemptedSubmit
-          ? AutovalidateMode.onUserInteraction
-          : AutovalidateMode.disabled;
+  AutovalidateMode get _autovalidateMode => _hasAttemptedSubmit
+      ? AutovalidateMode.onUserInteraction
+      : AutovalidateMode.disabled;
 
   @override
   void initState() {
@@ -193,8 +193,8 @@ class _MobileChangePasswordPageState
                           enabled: !_isSubmitting,
                           validator: _validateCurrentPassword,
                           textInputAction: TextInputAction.next,
-                          onFieldSubmitted:
-                              (_) => _newPasswordFocusNode.requestFocus(),
+                          onFieldSubmitted: (_) =>
+                              _newPasswordFocusNode.requestFocus(),
                         ),
                         SizedBox(height: spacing.md),
                         AppPasswordField(
@@ -208,8 +208,8 @@ class _MobileChangePasswordPageState
                           enabled: !_isSubmitting,
                           validator: _validateNewPassword,
                           textInputAction: TextInputAction.next,
-                          onFieldSubmitted:
-                              (_) => _confirmPasswordFocusNode.requestFocus(),
+                          onFieldSubmitted: (_) =>
+                              _confirmPasswordFocusNode.requestFocus(),
                         ),
                         SizedBox(height: spacing.md),
                         AppPasswordField(
@@ -269,15 +269,10 @@ class _FormCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppContentCard(
       key: const Key('mobile-password-form-card'),
+      title: null,
       padding: EdgeInsets.all(context.appSpacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,

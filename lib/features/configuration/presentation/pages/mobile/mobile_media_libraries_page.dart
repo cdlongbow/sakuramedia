@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/m
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
@@ -619,10 +620,8 @@ class _MobileDrawerActionRow extends StatelessWidget {
     final textColor = resolveAppTextToneColor(context, tone);
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
+      child: AppInteractiveSurface(
         onTap: onTap,
-        borderRadius: context.appRadius.lgBorder,
         child: Container(
           padding: EdgeInsets.symmetric(
             horizontal: spacing.md,

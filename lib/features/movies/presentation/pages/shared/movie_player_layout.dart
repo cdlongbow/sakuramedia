@@ -3,6 +3,7 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
+import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 
 /// 影片播放器纯展示布局组件族（左右分栏 / 加载 / 错误 / 空态面板）。
 /// 由 [MoviePlayerContent] 组装；无业务状态，全部参数由调用方注入。
@@ -14,6 +15,8 @@ class MoviePlayerSplitLayout extends StatelessWidget {
     required this.dividerHandleBuffer,
     required this.leftChild,
     required this.rightChild,
+    this.collapsible = false,
+    this.panelAvailable = true,
   });
 
   final MultiSplitViewController controller;
@@ -21,25 +24,22 @@ class MoviePlayerSplitLayout extends StatelessWidget {
   final Widget leftChild;
   final Widget rightChild;
 
+  /// 移动端传 true：缩略图面板默认收起，右缘把手可展开/收起。
+  final bool collapsible;
+
+  /// 右侧缩略图面板是否有内容可展示；无内容时不显示把手。
+  final bool panelAvailable;
+
   @override
   Widget build(BuildContext context) {
-    return MultiSplitViewTheme(
-      data: MultiSplitViewThemeData(
-        dividerThickness: context.appSpacing.xs,
-        dividerHandleBuffer: dividerHandleBuffer,
-        dividerPainter: DividerPainters.grooved1(
-          color: context.appColors.borderSubtle,
-        ),
-      ),
-      child: MultiSplitView(
-        controller: controller,
-        axis: Axis.horizontal,
-        builder:
-            (context, area) =>
-                area.index == 0
-                    ? MoviePlayerPanel(child: leftChild)
-                    : MoviePlayerSidePanel(child: rightChild),
-      ),
+    return CollapsiblePlayerSplitView(
+      controller: controller,
+      dividerHandleBuffer: dividerHandleBuffer,
+      collapsible: collapsible,
+      panelAvailable: panelAvailable,
+      handleKey: const Key('movie-player-panel-handle'),
+      leftBuilder: (context) => MoviePlayerPanel(child: leftChild),
+      rightBuilder: (context) => MoviePlayerSidePanel(child: rightChild),
     );
   }
 }
@@ -198,16 +198,17 @@ class MoviePlayerPanelMessage extends StatelessWidget {
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ).copyWith(
-                    color: context.appTextPalette.onMedia.withValues(
-                      alpha: 0.8,
-                    ),
-                  ),
+                  style:
+                      resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s14,
+                        weight: AppTextWeight.regular,
+                        tone: AppTextTone.secondary,
+                      ).copyWith(
+                        color: context.appTextPalette.onMedia.withValues(
+                          alpha: 0.8,
+                        ),
+                      ),
                 ),
                 if (actionLabel != null && onAction != null) ...[
                   SizedBox(height: context.appSpacing.lg),

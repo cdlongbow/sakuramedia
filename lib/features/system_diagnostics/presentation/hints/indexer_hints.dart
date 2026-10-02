@@ -5,10 +5,9 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagn
 
 /// 索引器（Torznab）先校验静态配置，再进行真实搜索连通性检测。
 ///
-/// 「索引器」在配置页分类列表里的索引（`desktop_configuration_page.dart`）。
-const DiagnosticFixTarget _indexerTarget = DiagnosticFixTarget.configurationTab(
-  3,
-);
+/// 「索引器」在配置页分类列表里的稳定 itemKey（见 `configuration_page.dart`）。
+const DiagnosticFixTarget _indexerTarget =
+    DiagnosticFixTarget.configurationTabKey('configuration-tab-indexers');
 
 /// `entries-empty`（前端读配置发现没条目）与 `no_indexers_configured`（后端发起
 /// 搜索时发现没条目）在用户眼里是同一件事，共用一条文案。

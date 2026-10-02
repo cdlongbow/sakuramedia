@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/download_t
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -130,12 +131,7 @@ class _DesktopSelectionHeader extends ConsumerWidget {
       exitKey: const Key('download-tasks-selection-exit'),
       onExit: notifier.exitSelectionMode,
       actions: <Widget>[
-        _buildBatchDeleteButton(
-          context,
-          ref,
-          state,
-          size: AppButtonSize.small,
-        ),
+        _buildBatchDeleteButton(context, ref, state, size: AppButtonSize.small),
       ],
     );
   }
@@ -485,7 +481,8 @@ class _DownloadTaskCard extends ConsumerWidget {
                     tooltip: '重新导入',
                     onPressed: isPending
                         ? null
-                        : () => unawaited(_triggerImport(context, ref, task.id)),
+                        : () =>
+                              unawaited(_triggerImport(context, ref, task.id)),
                   ),
                   SizedBox(width: context.appSpacing.xs),
                 ],
@@ -507,8 +504,8 @@ class _DownloadTaskCard extends ConsumerWidget {
               ],
             ),
           ],
-          ),
         ),
+      ),
     );
   }
 
@@ -616,8 +613,7 @@ class _DownloadTaskCover extends StatelessWidget {
         label: '查看影片详情：${movieNumber ?? ''}',
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
-            mouseCursor: SystemMouseCursors.click,
+          child: AppInteractiveSurface(
             key: Key('download-task-cover-tap-${movieNumber ?? ''}'),
             onTap: onTap,
             child: image,

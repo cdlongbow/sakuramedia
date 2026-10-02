@@ -35,6 +35,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.iconSize3xl,
     required this.iconSize4xl,
     required this.buttonHeightMd,
+    required this.buttonHeightLg,
     required this.buttonHeightSm,
     required this.buttonHeightXs,
     required this.buttonHeight2xs,
@@ -120,6 +121,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       iconSize3xl = 36,
       iconSize4xl = 44,
       buttonHeightMd = 36,
+      buttonHeightLg = 48,
       buttonHeightSm = 32,
       buttonHeightXs = 28,
       buttonHeight2xs = 24,
@@ -206,6 +208,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       iconSize3xl = 36,
       iconSize4xl = 44,
       buttonHeightMd = 40,
+      buttonHeightLg = 48,
       buttonHeightSm = 36,
       buttonHeightXs = 32,
       buttonHeight2xs = 28,
@@ -297,6 +300,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   final double iconSize3xl;
   final double iconSize4xl;
   final double buttonHeightMd;
+  final double buttonHeightLg;
   final double buttonHeightSm;
   final double buttonHeightXs;
   final double buttonHeight2xs;
@@ -397,6 +401,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? iconSize3xl,
     double? iconSize4xl,
     double? buttonHeightMd,
+    double? buttonHeightLg,
     double? buttonHeightSm,
     double? buttonHeightXs,
     double? buttonHeight2xs,
@@ -489,6 +494,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       iconSize3xl: iconSize3xl ?? this.iconSize3xl,
       iconSize4xl: iconSize4xl ?? this.iconSize4xl,
       buttonHeightMd: buttonHeightMd ?? this.buttonHeightMd,
+      buttonHeightLg: buttonHeightLg ?? this.buttonHeightLg,
       buttonHeightSm: buttonHeightSm ?? this.buttonHeightSm,
       buttonHeightXs: buttonHeightXs ?? this.buttonHeightXs,
       buttonHeight2xs: buttonHeight2xs ?? this.buttonHeight2xs,
@@ -671,6 +677,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       iconSize3xl: lerpDouble(iconSize3xl, other.iconSize3xl, t)!,
       iconSize4xl: lerpDouble(iconSize4xl, other.iconSize4xl, t)!,
       buttonHeightMd: lerpDouble(buttonHeightMd, other.buttonHeightMd, t)!,
+      buttonHeightLg: lerpDouble(buttonHeightLg, other.buttonHeightLg, t)!,
       buttonHeightSm: lerpDouble(buttonHeightSm, other.buttonHeightSm, t)!,
       buttonHeightXs: lerpDouble(buttonHeightXs, other.buttonHeightXs, t)!,
       buttonHeight2xs: lerpDouble(buttonHeight2xs, other.buttonHeight2xs, t)!,

@@ -251,4 +251,66 @@ void main() {
 
     await mouse.removePointer();
   });
+
+  testWidgets('large size uses the lg height token and pill radius override', (
+    WidgetTester tester,
+  ) async {
+    final pill = sakuraThemeData.appRadius.pillBorder;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppButton(
+            label: '登录',
+            size: AppButtonSize.large,
+            borderRadius: pill,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer).first,
+    );
+    final decoration = container.decoration! as BoxDecoration;
+
+    expect(
+      tester.getSize(find.byType(AnimatedContainer).first).height,
+      sakuraThemeData.appComponentTokens.buttonHeightLg,
+    );
+    expect(decoration.borderRadius, pill);
+  });
+
+  testWidgets('disabled color overrides replace the default disabled look', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppButton(
+            label: '登录中...',
+            variant: AppButtonVariant.primary,
+            isLoading: true,
+            disabledOpacity: 1,
+            disabledBackgroundColor: const Color(0xFFAA0000),
+            disabledForegroundColor: const Color(0xFFFFFFFF),
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer).first,
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    final label = tester.widget<Text>(find.text('登录中...'));
+
+    expect(decoration.color, const Color(0xFFAA0000));
+    expect(label.style?.color, const Color(0xFFFFFFFF));
+    final opacity = tester.widget<Opacity>(find.byType(Opacity).first);
+    expect(opacity.opacity, 1);
+  });
 }

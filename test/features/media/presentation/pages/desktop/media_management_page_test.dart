@@ -368,6 +368,70 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('batch delete keeps partial failures visible until closed', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 2,
+        items: [_duplicateMediaItemJson(1), _duplicateMediaItemJson(2)],
+      ),
+    );
+    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/media/2',
+      statusCode: 500,
+      body: <String, dynamic>{
+        'error': <String, dynamic>{
+          'code': 'delete_failed',
+          'message': '删除失败',
+        },
+      },
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [_duplicateMediaItemJson(2)],
+      ),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-row-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-delete-confirm-button')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('成功 1 个，失败 1 个'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('batch-progress-close-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 项失败'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('retries a terminal thumbnail from its media card', (
     tester,
   ) async {

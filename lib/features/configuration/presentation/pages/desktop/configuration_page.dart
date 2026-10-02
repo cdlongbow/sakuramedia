@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/account_security_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/advanced_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/download_clients_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/indexer_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/media_libraries_section.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/configuration_tab_request_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/system_maintenance_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/appearance_settings_content.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
@@ -14,15 +18,16 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_rail.dart';
 
-class DesktopConfigurationPage extends StatefulWidget {
+class DesktopConfigurationPage extends ConsumerStatefulWidget {
   const DesktopConfigurationPage({super.key});
 
   @override
-  State<DesktopConfigurationPage> createState() =>
+  ConsumerState<DesktopConfigurationPage> createState() =>
       _DesktopConfigurationPageState();
 }
 
-class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
+class _DesktopConfigurationPageState
+    extends ConsumerState<DesktopConfigurationPage> {
   static const Key _defaultCategoryKey = Key(
     'configuration-tab-media-libraries',
   );
@@ -160,7 +165,35 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _applyTabRequest(ref.read(configurationTabRequestProvider));
+  }
+
+  /// 消费「去修复」等入口留下的一次性跳转请求：切到对应分类后立即清空信号。
+  void _applyTabRequest(String? tabKey) {
+    if (tabKey == null) {
+      return;
+    }
+    Future.microtask(() {
+      if (!mounted) {
+        return;
+      }
+      ref.read(configurationTabRequestProvider.notifier).clear();
+      final index = _tabs.indexWhere(
+        (tab) => tab.category.itemKey == Key(tabKey),
+      );
+      if (index >= 0) {
+        unawaited(_select(index));
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(configurationTabRequestProvider, (previous, next) {
+      _applyTabRequest(next);
+    });
     final spacing = context.appSpacing;
     return Row(
       key: const Key('configuration-page'),

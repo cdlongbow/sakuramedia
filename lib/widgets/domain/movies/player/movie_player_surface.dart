@@ -9,6 +9,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/media/media_url_resolver.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
@@ -22,6 +23,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/movie_player_media_sour
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawer_coordinator.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_native_stats_sampler.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_seek_bar_preview.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_error_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_rate_coordinator.dart';
@@ -49,6 +51,7 @@ class MoviePlayerSurface extends ConsumerStatefulWidget {
     this.useTouchOptimizedControls = false,
     this.mediaSourceKind = MoviePlayerMediaSourceKind.unknown,
     this.mediaInfo,
+    this.thumbnails = const <MovieMediaThumbnailDto>[],
   });
 
   final String movieNumber;
@@ -74,6 +77,9 @@ class MoviePlayerSurface extends ConsumerStatefulWidget {
   final bool useTouchOptimizedControls;
   final MoviePlayerMediaSourceKind mediaSourceKind;
   final MoviePlayerMediaInfo? mediaInfo;
+
+  /// 右侧时间轴面板同一份缩略图，供桌面进度条 hover 预览使用。
+  final List<MovieMediaThumbnailDto> thumbnails;
 
   @override
   ConsumerState<MoviePlayerSurface> createState() => _MoviePlayerSurfaceState();
@@ -671,6 +677,13 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       theme: theme,
       topControls: topControls,
       bottomControls: bottomControls,
+      bottomSeekBar: widget.useTouchOptimizedControls
+          ? null
+          : MoviePlayerSeekBarPreview(
+              thumbnails: widget.thumbnails,
+              readDuration: () => _player.state.duration,
+              seekBar: const MaterialDesktopSeekBar(),
+            ),
     );
   }
 

@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.d
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
@@ -498,9 +499,10 @@ class MovieDetailPageContent extends StatelessWidget {
               onAddClipToCollection: onAddClipToCollection ?? (_) {},
             ),
           ),
-        if (showSimilarMovies && (isSimilarMoviesLoading ||
-            similarMoviesErrorMessage?.trim().isNotEmpty == true ||
-            similarMovies.isNotEmpty))
+        if (showSimilarMovies &&
+            (isSimilarMoviesLoading ||
+                similarMoviesErrorMessage?.trim().isNotEmpty == true ||
+                similarMovies.isNotEmpty))
           MovieDetailSection(
             title: '相似影片',
             titleKey: const Key('movie-similar-movies-title'),
@@ -517,8 +519,7 @@ class MovieDetailPageContent extends StatelessWidget {
                     globalPosition,
                     isSubscribed: movie.isSubscribed,
                   ),
-              onMovieToggleCollectionType:
-                  hoverActions.toggleCollectionType,
+              onMovieToggleCollectionType: hoverActions.toggleCollectionType,
               onMovieBlacklist: hoverActions.blacklist,
             ),
           ),
@@ -605,11 +606,9 @@ class _MovieInlineMetaRow extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
+      child: AppInteractiveSurface(
         key: const Key('movie-detail-series-link'),
         onTap: onTap,
-        borderRadius: context.appRadius.xsBorder,
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: context.appSpacing.xs,
@@ -649,7 +648,6 @@ double _resolveViewportHeight(
   }
   return MediaQuery.sizeOf(context).height;
 }
-
 
 class MovieDetailErrorState extends StatelessWidget {
   const MovieDetailErrorState({

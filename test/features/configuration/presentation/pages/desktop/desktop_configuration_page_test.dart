@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.
 import 'package:sakuramedia/features/configuration/data/dto/provider_catalog_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/configuration_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/download_clients_provider.dart';
+import 'package:sakuramedia/features/configuration/presentation/providers/configuration_tab_request_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -78,6 +79,26 @@ void main() {
         );
       },
     );
+
+    testWidgets('selects the tab requested by the fix-target signal', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle, libraries: const []);
+      _enqueueIndexerSettings(bundle);
+      _enqueueDownloadClientsList(bundle, clients: const []);
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DesktopConfigurationPage)),
+      );
+      container
+          .read(configurationTabRequestProvider.notifier)
+          .request('configuration-tab-indexers');
+      await tester.pumpAndSettle();
+
+      expect(find.text('还没有配置索引站'), findsOneWidget);
+    });
 
     testWidgets('top-bar refresh follows the selected configuration section', (
       WidgetTester tester,
@@ -1538,7 +1559,9 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
 
-    testWidgets('deletes an indexer immediately', (WidgetTester tester) async {
+    testWidgets('deletes an indexer after confirmation', (
+      WidgetTester tester,
+    ) async {
       _enqueueMediaLibraries(bundle);
       _enqueueIndexerSettings(
         bundle,
@@ -1566,6 +1589,15 @@ void main() {
       await tester.tap(find.byKey(const Key('indexer-entry-delete-0')));
       await tester.pumpAndSettle();
 
+      expect(
+        find.byKey(const Key('configuration-indexer-delete-dialog')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const Key('configuration-indexer-delete-confirm-button')),
+      );
+      await tester.pumpAndSettle();
+
       final patchRequest = bundle.adapter.requests.firstWhere(
         (request) =>
             request.method == 'PATCH' && request.path == '/indexer-settings',
@@ -1573,6 +1605,48 @@ void main() {
       expect(patchRequest.body['indexers'], isEmpty);
       expect(find.text('还没有配置索引站'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
+    });
+
+    testWidgets('keeps the indexer when deletion is cancelled', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle);
+      _enqueueIndexerSettings(
+        bundle,
+        indexers: const [
+          {
+            'id': 1,
+            'name': 'mteam',
+            'url': 'https://mirror.example.com/torznab',
+            'kind': 'pt',
+            'download_client_id': 1,
+            'download_client_name': 'client-a',
+          },
+        ],
+      );
+      _enqueueDownloadClientsList(bundle, clients: _defaultDownloadClients);
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await tester.tap(find.byKey(const Key('configuration-tab-indexers')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('indexer-entry-delete-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('configuration-indexer-delete-cancel-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        bundle.adapter.requests
+            .where(
+              (request) =>
+                  request.method == 'PATCH' &&
+                  request.path == '/indexer-settings',
+            )
+            .isEmpty,
+        isTrue,
+      );
+      expect(find.text('mteam'), findsOneWidget);
     });
 
     testWidgets('searches indexers by bound download client name', (

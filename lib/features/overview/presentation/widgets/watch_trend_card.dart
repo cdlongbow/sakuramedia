@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/overview/presentation/widgets/overview_card
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
@@ -227,11 +228,9 @@ class _RangeChip extends StatelessWidget {
       ),
     );
 
-    return InkWell(
+    return AppInteractiveSurface(
       key: Key('overview-watch-trend-range-${range.apiValue}'),
       onTap: onTap,
-      mouseCursor: SystemMouseCursors.click,
-      borderRadius: context.appRadius.pillBorder,
       child: chip,
     );
   }

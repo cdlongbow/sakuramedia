@@ -440,7 +440,7 @@ class _SystemMaintenanceContentState
   }
 
   String _buildImageSearchMessage(StatusImageSearchDto status) {
-    if (!status.enabled) return '图片与文字搜图未启用。可在桌面端高级设置中开启，保存后重启后端容器。';
+    if (!status.enabled) return '图片与文字搜图未启用。可在服务器端高级设置中开启，保存后重启后端容器。';
     final indexSpace = status.indexSpace;
     if (indexSpace.isRebuilding) {
       return '图搜索索引正在后台重建，请稍候。';

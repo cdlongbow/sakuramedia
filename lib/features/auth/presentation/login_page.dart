@@ -12,6 +12,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
@@ -262,10 +263,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                         child: Form(
                           key: _formKey,
-                          autovalidateMode:
-                              _hasAttemptedSubmit
-                                  ? AutovalidateMode.onUserInteraction
-                                  : AutovalidateMode.disabled,
+                          autovalidateMode: _hasAttemptedSubmit
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -274,8 +274,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 children: <Widget>[
                                   Icon(
                                     Icons.lock_outline_rounded,
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   SizedBox(width: spacing.sm),
                                   Text(
@@ -307,8 +308,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 enabled: !_isSubmitting,
                                 validator: _validateBaseUrl,
                                 onChanged: _handleBaseUrlChanged,
-                                onFieldSubmitted:
-                                    (_) => _usernameFocusNode.requestFocus(),
+                                onFieldSubmitted: (_) =>
+                                    _usernameFocusNode.requestFocus(),
                                 hintText: '127.0.0.1:38000',
                                 prefix: _ProtocolPrefix(
                                   protocol: _protocol,
@@ -323,10 +324,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 focusNode: _usernameFocusNode,
                                 textInputAction: TextInputAction.next,
                                 enabled: !_isSubmitting,
-                                validator:
-                                    (value) => _validateRequired('用户名', value),
-                                onFieldSubmitted:
-                                    (_) => _passwordFocusNode.requestFocus(),
+                                validator: (value) =>
+                                    _validateRequired('用户名', value),
+                                onFieldSubmitted: (_) =>
+                                    _passwordFocusNode.requestFocus(),
                                 hintText: '用户名',
                                 prefix: Icon(
                                   Icons.person_outline_rounded,
@@ -342,8 +343,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 obscureText: _isPasswordObscured,
                                 textInputAction: TextInputAction.done,
                                 enabled: !_isSubmitting,
-                                validator:
-                                    (value) => _validateRequired('密码', value),
+                                validator: (value) =>
+                                    _validateRequired('密码', value),
                                 onFieldSubmitted: (_) => _submitLogin(),
                                 hintText: '密码',
                                 prefix: Icon(
@@ -353,20 +354,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ),
                                 suffix: AppIconButton(
                                   key: const Key('login-password-toggle'),
-                                  tooltip:
-                                      _isPasswordObscured ? '显示密码' : '隐藏密码',
+                                  tooltip: _isPasswordObscured
+                                      ? '显示密码'
+                                      : '隐藏密码',
                                   padding: EdgeInsets.all(
                                     context.appSpacing.xs,
                                   ),
-                                  onPressed:
-                                      _isSubmitting
-                                          ? null
-                                          : () {
-                                            setState(() {
-                                              _isPasswordObscured =
-                                                  !_isPasswordObscured;
-                                            });
-                                          },
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _isPasswordObscured =
+                                                !_isPasswordObscured;
+                                          });
+                                        },
                                   icon: Icon(
                                     _isPasswordObscured
                                         ? Icons.visibility_off_outlined
@@ -389,108 +390,62 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                                   child: Text(
                                     _submitError!,
-                                    style: resolveAppTextStyle(
-                                      context,
-                                      size: AppTextSize.s14,
-                                      weight: AppTextWeight.regular,
-                                      tone: AppTextTone.secondary,
-                                    ).copyWith(
-                                      color:
-                                          Theme.of(
+                                    style:
+                                        resolveAppTextStyle(
+                                          context,
+                                          size: AppTextSize.s14,
+                                          weight: AppTextWeight.regular,
+                                          tone: AppTextTone.secondary,
+                                        ).copyWith(
+                                          color: Theme.of(
                                             context,
                                           ).colorScheme.onErrorContainer,
-                                    ),
+                                        ),
                                   ),
                                 ),
                               ],
                               SizedBox(height: sectionGap),
-                              SizedBox(
-                                height: 48,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    borderRadius: radius.pillBorder,
-                                    boxShadow:
-                                        _isSubmitting
-                                            ? const <BoxShadow>[]
-                                            : <BoxShadow>[
-                                              BoxShadow(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .primary
-                                                    .withValues(alpha: 0.22),
-                                                blurRadius: 18,
-                                                offset: const Offset(0, 8),
-                                              ),
-                                            ],
-                                  ),
-                                  child: ElevatedButton(
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: radius.pillBorder,
+                                  boxShadow: _isSubmitting
+                                      ? const <BoxShadow>[]
+                                      : <BoxShadow>[
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(
+                                                  alpha: context
+                                                      .appOverlayTokens
+                                                      .surfaceShadowAlpha,
+                                                ),
+                                            blurRadius: 18,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: AppButton(
                                     key: const Key('login-submit-button'),
-                                    onPressed:
-                                        _isSubmitting ? null : _submitLogin,
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      foregroundColor:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimary,
-                                      disabledBackgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.55),
-                                      disabledForegroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary
-                                          .withValues(alpha: 0.92),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: radius.pillBorder,
-                                      ),
-                                    ),
-                                    child:
-                                        _isSubmitting
-                                            ? Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: <Widget>[
-                                                SizedBox(
-                                                  width: spacing.lg,
-                                                  height: spacing.lg,
-                                                  child: CircularProgressIndicator.adaptive(
-                                                    backgroundColor: switch (Theme.of(context).platform) {
-                                                      TargetPlatform.iOS || TargetPlatform.macOS => Theme.of(context).colorScheme.onPrimary,
-                                                      _ => null,
-                                                    },
-                                                    strokeWidth: 2.2,
-                                                    valueColor:
-                                                        AlwaysStoppedAnimation<
-                                                          Color
-                                                        >(
-                                                          Theme.of(context)
-                                                              .colorScheme
-                                                              .onPrimary,
-                                                        ),
-                                                  ),
-                                                ),
-                                                SizedBox(width: spacing.md),
-                                                Text(
-                                                  '登录中...',
-                                                  style: resolveAppTextStyle(
-                                                    context,
-                                                    size: AppTextSize.s14,
-                                                    tone: AppTextTone.onMedia,
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                            : Text(
-                                              '登录',
-                                              style: resolveAppTextStyle(
-                                                context,
-                                                size: AppTextSize.s14,
-                                                tone: AppTextTone.onMedia,
-                                              ),
-                                            ),
+                                    label: _isSubmitting ? '登录中...' : '登录',
+                                    variant: AppButtonVariant.primary,
+                                    size: AppButtonSize.large,
+                                    borderRadius: radius.pillBorder,
+                                    isLoading: _isSubmitting,
+                                    disabledOpacity: 1,
+                                    disabledBackgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.55),
+                                    disabledForegroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary
+                                        .withValues(alpha: 0.92),
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : _submitLogin,
                                   ),
                                 ),
                               ),
@@ -623,10 +578,9 @@ class _ProtocolPrefixState extends State<_ProtocolPrefix> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: MouseRegion(
-        cursor:
-            widget.enabled
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
+        cursor: widget.enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
         child: GestureDetector(
           key: const Key('login-protocol-selector'),
           onTap: _toggleMenu,
@@ -735,12 +689,11 @@ class _ProtocolMenuItemState extends State<_ProtocolMenuItem> {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final formTokens = context.appFormTokens;
-    final backgroundColor =
-        widget.selected
-            ? colors.surfaceMuted
-            : _isHovered
-            ? colors.sidebarHoverBackground
-            : Colors.transparent;
+    final backgroundColor = widget.selected
+        ? colors.surfaceMuted
+        : _isHovered
+        ? colors.sidebarHoverBackground
+        : Colors.transparent;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,

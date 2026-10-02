@@ -4,7 +4,7 @@ import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dar
 
 enum AppButtonVariant { primary, secondary, ghost, danger }
 
-enum AppButtonSize { medium, small, xSmall, xxSmall, xxxSmall }
+enum AppButtonSize { large, medium, small, xSmall, xxSmall, xxxSmall }
 
 class AppButton extends StatelessWidget {
   const AppButton({
@@ -18,6 +18,10 @@ class AppButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
     this.isLoading = false,
     this.isSelected = false,
+    this.borderRadius,
+    this.disabledBackgroundColor,
+    this.disabledForegroundColor,
+    this.disabledOpacity = 0.56,
   });
 
   final String label;
@@ -30,6 +34,14 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final bool isSelected;
 
+  /// 覆盖默认圆角（默认 [AppRadius.smBorder]）；品牌主 CTA 可用 pill 圆角。
+  final BorderRadius? borderRadius;
+
+  /// 覆盖禁用态背景/文字色（默认灰底 + 主题前景色）；仅在确有品牌禁用样式时使用。
+  final Color? disabledBackgroundColor;
+  final Color? disabledForegroundColor;
+  final double disabledOpacity;
+
   bool get _isEnabled => onPressed != null && !isLoading;
 
   @override
@@ -38,6 +50,13 @@ class AppButton extends StatelessWidget {
     final theme = Theme.of(context);
     final componentTokens = context.appComponentTokens;
     final (height, horizontal, gap, iconSize, textSize) = switch (size) {
+      AppButtonSize.large => (
+        componentTokens.buttonHeightLg,
+        componentTokens.buttonHorizontalPaddingMd,
+        componentTokens.buttonGapMd,
+        componentTokens.iconSizeSm,
+        AppTextSize.s14,
+      ),
       AppButtonSize.medium => (
         componentTokens.buttonHeightMd,
         componentTokens.buttonHorizontalPaddingMd,
@@ -74,7 +93,7 @@ class AppButton extends StatelessWidget {
         AppTextSize.s10,
       ),
     };
-    final borderRadius = context.appRadius.smBorder;
+    final borderRadius = this.borderRadius ?? context.appRadius.smBorder;
     final isSecondarySelected =
         variant == AppButtonVariant.secondary && isSelected;
     final isGhostSelected = variant == AppButtonVariant.ghost && isSelected;
@@ -104,6 +123,8 @@ class AppButton extends StatelessWidget {
     };
 
     final disabledColor = colors.borderSubtle;
+    final effectiveDisabledBackground =
+        disabledBackgroundColor ?? disabledColor;
     final tone = switch (variant) {
       AppButtonVariant.primary => AppTextTone.onMedia,
       AppButtonVariant.secondary =>
@@ -112,14 +133,18 @@ class AppButton extends StatelessWidget {
       AppButtonVariant.danger => AppTextTone.error,
     };
     final foregroundColor = resolveAppTextToneColor(context, tone);
-    final labelStyle = resolveAppTextStyle(
-      context,
-      size: textSize,
-      tone: tone,
-    ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
+    final effectiveForeground = _isEnabled
+        ? foregroundColor
+        : (disabledForegroundColor ?? foregroundColor);
+    final labelStyle = resolveAppTextStyle(context, size: textSize, tone: tone)
+        .copyWith(
+          color: effectiveForeground,
+          height: 1,
+          leadingDistribution: TextLeadingDistribution.even,
+        );
 
     return Opacity(
-      opacity: _isEnabled ? 1 : 0.56,
+      opacity: _isEnabled ? 1 : disabledOpacity,
       child: AppInteractiveSurface(
         enabled: _isEnabled,
         onTap: onPressed,
@@ -129,10 +154,10 @@ class AppButton extends StatelessWidget {
           alignment: Alignment.center,
           padding: EdgeInsets.symmetric(horizontal: horizontal),
           decoration: BoxDecoration(
-            color: _isEnabled ? backgroundColor : disabledColor,
+            color: _isEnabled ? backgroundColor : effectiveDisabledBackground,
             borderRadius: borderRadius,
             border: Border.all(
-              color: _isEnabled ? borderColor : disabledColor,
+              color: _isEnabled ? borderColor : effectiveDisabledBackground,
             ),
           ),
           child: Row(
@@ -145,16 +170,21 @@ class AppButton extends StatelessWidget {
                   child: CircularProgressIndicator.adaptive(
                     backgroundColor: switch (Theme.of(context).platform) {
                       TargetPlatform.iOS ||
-                      TargetPlatform.macOS => foregroundColor,
+                      TargetPlatform.macOS => effectiveForeground,
                       _ => null,
                     },
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      effectiveForeground,
+                    ),
                   ),
                 )
               else if (icon != null)
                 IconTheme(
-                  data: IconThemeData(size: iconSize, color: foregroundColor),
+                  data: IconThemeData(
+                    size: iconSize,
+                    color: effectiveForeground,
+                  ),
                   child: icon!,
                 ),
               if (isLoading || icon != null) SizedBox(width: gap),
@@ -169,7 +199,10 @@ class AppButton extends StatelessWidget {
               if (trailingIcon != null) ...[
                 SizedBox(width: gap),
                 IconTheme(
-                  data: IconThemeData(size: iconSize, color: foregroundColor),
+                  data: IconThemeData(
+                    size: iconSize,
+                    color: effectiveForeground,
+                  ),
                   child: trailingIcon!,
                 ),
               ],

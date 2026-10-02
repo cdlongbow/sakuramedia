@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// configuration 三个移动页面（indexers / downloaders / media_libraries）
 /// 共用的实体列表卡片外壳。
@@ -40,7 +42,6 @@ class MobileEntityListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final colors = context.appColors;
 
     final infoColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,10 +62,8 @@ class MobileEntityListCard extends StatelessWidget {
 
     final tapArea = Material(
       color: Colors.transparent,
-      child: InkWell(
-        mouseCursor: SystemMouseCursors.click,
+      child: AppInteractiveSurface(
         key: bodyKey,
-        borderRadius: context.appRadius.lgBorder,
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.all(spacing.md),
@@ -80,30 +79,22 @@ class MobileEntityListCard extends StatelessWidget {
       ),
     );
 
-    return Container(
+    return AppContentCard(
       key: outerKey,
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: context.appRadius.lgBorder,
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child:
-          trailingAction == null
-              ? tapArea
-              : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: tapArea),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      top: spacing.sm,
-                      right: spacing.sm,
-                    ),
-                    child: trailingAction,
-                  ),
-                ],
-              ),
+      title: null,
+      padding: EdgeInsets.zero,
+      child: trailingAction == null
+          ? tapArea
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: tapArea),
+                Padding(
+                  padding: EdgeInsets.only(top: spacing.sm, right: spacing.sm),
+                  child: trailingAction,
+                ),
+              ],
+            ),
     );
   }
 }

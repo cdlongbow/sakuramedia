@@ -417,6 +417,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
 
     return CollectionPlaySplitLayout(
       keyPrefix: 'video-single',
+      collapsible: widget.useTouchOptimizedControls,
       left: _buildPlayerSurface(controller),
       right: _buildThumbnailPanel(),
     );

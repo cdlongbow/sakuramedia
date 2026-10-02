@@ -499,9 +499,7 @@ class _CardInfoButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.mediaOverlayStrong,
             borderRadius: context.appRadius.pillBorder,
-            border: Border.all(
-              color: colors.borderSubtle.withValues(alpha: 0.42),
-            ),
+            border: Border.all(color: colors.mediaOverlayBorder),
           ),
           child: isLoading
               ? SizedBox(
@@ -548,9 +546,7 @@ class _ResolutionBadge extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.mediaOverlayStrong,
               borderRadius: context.appRadius.pillBorder,
-              border: Border.all(
-                color: colors.borderSubtle.withValues(alpha: 0.42),
-              ),
+              border: Border.all(color: colors.mediaOverlayBorder),
             ),
             child: Text(
               movie.maxMediaWidth >= 7680 ? '8K' : '4K',
@@ -561,8 +557,6 @@ class _ResolutionBadge extends StatelessWidget {
                     weight: AppTextWeight.semibold,
                     tone: AppTextTone.onMedia,
                   ).copyWith(
-                    color: context.appTextPalette.onMedia,
-                    fontWeight: FontWeight.w800,
                     height: 1,
                     leadingDistribution: TextLeadingDistribution.even,
                   ),
@@ -594,7 +588,7 @@ class _HeatBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.mediaOverlayStrong,
         borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: colors.borderSubtle.withValues(alpha: 0.42)),
+        border: Border.all(color: colors.mediaOverlayBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -721,7 +715,7 @@ class _RankBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.mediaOverlayStrong,
         borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: colors.borderSubtle.withValues(alpha: 0.42)),
+        border: Border.all(color: colors.mediaOverlayBorder),
       ),
       child: Text(
         '#$rank',

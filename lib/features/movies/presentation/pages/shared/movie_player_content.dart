@@ -142,6 +142,8 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
           child: MoviePlayerSplitLayout(
             controller: _splitController,
             dividerHandleBuffer: widget.dividerHandleBuffer,
+            collapsible: widget.useTouchOptimizedControls,
+            panelAvailable: playerState.selectedMedia != null,
             leftChild: const MoviePlayerEmptyState(),
             rightChild: playerState.selectedMedia == null
                 ? const SizedBox.expand()
@@ -152,6 +154,8 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
         content = MoviePlayerSplitLayout(
           controller: _splitController,
           dividerHandleBuffer: widget.dividerHandleBuffer,
+          collapsible: widget.useTouchOptimizedControls,
+          panelAvailable: playerState.selectedMedia != null,
           leftChild: _buildPlayerSurface(context, primaryResolvedUrl),
           rightChild: playerState.selectedMedia == null
               ? const SizedBox.expand()
@@ -206,6 +210,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
       onBackPressed: _handleBack,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       mediaInfo: _buildMediaInfo(),
+      thumbnails: _playerState.thumbnails,
     );
   }
 

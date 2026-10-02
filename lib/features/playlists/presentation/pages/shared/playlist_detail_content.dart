@@ -164,11 +164,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                   PlaylistBannerCard(
                     key: Key('playlist-banner-card-${playlist.id}'),
                     title: playlist.name,
-                    coverImageUrl: paged
-                        ?.items
-                        .firstOrNull
-                        ?.coverImage
-                        ?.origin,
+                    coverImageUrl: paged?.items.firstOrNull?.coverImage?.origin,
                   ),
                   if (canManage)
                     Positioned(
@@ -525,7 +521,7 @@ class _PlaylistDetailMoreButton extends StatelessWidget {
         semanticLabel: '播放列表操作',
         borderRadius: context.appRadius.pillBorder,
         backgroundColor: colors.mediaOverlayStrong,
-        borderColor: colors.borderSubtle.withValues(alpha: 0.42),
+        borderColor: colors.mediaOverlayBorder,
         iconColor: context.appTextPalette.onMedia,
         icon: const Icon(Icons.more_horiz_rounded),
         onPressed: () {

@@ -5,9 +5,11 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagn
 /// 因此只有两种失败态——**列表是空的**，和**列表压根没拉到**。两者原因完全不同，
 /// 各自一份 hint，不能共用（否则接口 500 会被说成"还没有配置媒体库"）。
 
-/// 「媒体库」在配置页分类列表里的索引（`desktop_configuration_page.dart`）。
+/// 「媒体库」在配置页分类列表里的稳定 itemKey（见 `configuration_page.dart`）。
 const DiagnosticFixTarget _mediaLibraryTarget =
-    DiagnosticFixTarget.configurationTab(1);
+    DiagnosticFixTarget.configurationTabKey(
+      'configuration-tab-media-libraries',
+    );
 
 const DiagnosticHint mediaLibraryEmptyHint = DiagnosticHint(
   cause: '还没有配置媒体库。',

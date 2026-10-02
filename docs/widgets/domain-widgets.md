@@ -78,4 +78,6 @@ moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；
 
 影片筛选面板的分辨率选项仅在“可播放”状态启用，切换到其他状态时清空；与其他条件组合并即时生效。
 
+`MovieFilterChoiceSection` 的选项整组变化（如排行榜切来源后的榜单/周期）以淡入淡出加高度过渡替换，单选态变化不触发动画；`isLoading: true` 时选项区用 `AppSkeletonizer` 骨架显示占位 options 并屏蔽点击，由调用方保证占位文案不暴露真实数据。
+
 播放列表分辨率筛选复用 `MovieFilterChoiceSection`，固定展示全部、8K、4K、2K、1080P、720P、480P、360P，不显示数量；桌面浮层与移动抽屉均即时生效。

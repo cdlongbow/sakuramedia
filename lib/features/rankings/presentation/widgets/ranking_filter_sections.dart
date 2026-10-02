@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
+import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
@@ -51,6 +52,7 @@ class RankingFilterSectionGroup extends StatelessWidget {
     required this.selectedSortField,
     required this.selectedSortDirection,
     required this.onSortChanged,
+    this.isBoardLoading = false,
     this.sectionKeys,
   });
 
@@ -68,8 +70,17 @@ class RankingFilterSectionGroup extends StatelessWidget {
   onSortChanged;
   final RankingFilterSectionKeys? sectionKeys;
 
+  /// 切换来源后榜单（含周期）正在加载：榜单 / 周期分节显示骨架占位，
+  /// 避免面板先塌成空标题、数据到达后再整块恢复的生硬跳变。
+  final bool isBoardLoading;
+
   @override
   Widget build(BuildContext context) {
+    final boardOptions = isBoardLoading ? rankingBoardPlaceholders() : boards;
+    final periodOptions = isBoardLoading
+        ? rankingPeriodPlaceholders()
+        : selectedBoard?.supportedPeriods ?? const <String>[];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,8 +102,9 @@ class RankingFilterSectionGroup extends StatelessWidget {
           key: sectionKeys?.board,
           child: MovieFilterChoiceSection<RankingBoardDto>(
             title: '榜单',
-            options: boards,
+            options: boardOptions,
             selectedValue: selectedBoard,
+            isLoading: isBoardLoading,
             optionKeyBuilder:
                 (value) => Key('rankings-filter-board-${value.boardKey}'),
             labelBuilder: (value) => value.name,
@@ -104,8 +116,9 @@ class RankingFilterSectionGroup extends StatelessWidget {
           key: sectionKeys?.period,
           child: MovieFilterChoiceSection<String>(
             title: '周期',
-            options: selectedBoard?.supportedPeriods ?? const <String>[],
+            options: periodOptions,
             selectedValue: selectedPeriod,
+            isLoading: isBoardLoading,
             optionKeyBuilder: (value) => Key('rankings-filter-period-$value'),
             labelBuilder: rankingPeriodLabel,
             onSelected: onPeriodChanged,

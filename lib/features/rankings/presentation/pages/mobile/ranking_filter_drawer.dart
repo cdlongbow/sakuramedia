@@ -87,6 +87,7 @@ class _MobileRankingFilterDrawerContentState
         boards: filters.boards,
         selectedBoard: filters.selectedBoard,
         selectedPeriod: filters.selectedPeriod,
+        isBoardLoading: filters.isLoading,
         onSourceChanged: (value) {
           if (filters.selectedSource?.sourceKey == value.sourceKey) {
             return;

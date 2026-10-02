@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/riverpod_page_cache.dart';
@@ -168,6 +172,79 @@ void main() {
     expect(state.filters.selectedSource?.sourceKey, 'mock-source');
     expect(state.filters.selectedBoard?.boardKey, 'hot');
     expect(state.filters.selectedPeriod, 'weekly');
+    expect(state.paged.items.single.movieNumber, 'ABC-002');
+  });
+
+  test('来源榜单加载中排序 no-op，不取消来源请求也不卡住加载态', () async {
+    const scope = RankingSummaryScope.desktop();
+    await prime(scope);
+
+    final boardsCompleter = Completer<void>();
+    adapter.enqueueResponder(
+      method: 'GET',
+      path: '/ranking-sources/mock-source/boards',
+      responder: (_, _) async {
+        await boardsCompleter.future;
+        return ResponseBody.fromString(
+          jsonEncode(<Map<String, dynamic>>[
+            <String, dynamic>{
+              'source_key': 'mock-source',
+              'board_key': 'hot',
+              'name': '热门',
+              'supported_periods': <String>['weekly'],
+              'default_period': 'weekly',
+            },
+          ]),
+          200,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        );
+      },
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/mock-source/boards/hot/items',
+      body: _page(items: <Map<String, dynamic>>[_rankedMovie(2)], total: 1),
+    );
+
+    final sourceFuture = container
+        .read(rankingSummaryProvider(scope).notifier)
+        .selectSource(
+          const RankingSourceDto(
+            sourceKey: 'mock-source',
+            name: 'Mock Source',
+          ),
+        );
+    // 越过 250ms 防抖，boards 请求已发出并挂起。
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(
+      adapter.hitCount('GET', '/ranking-sources/mock-source/boards'),
+      1,
+    );
+    final itemsRequestCount = adapter.hitCount(
+      'GET',
+      '/ranking-sources/javdb/boards/censored/items',
+    );
+
+    await container
+        .read(rankingSummaryProvider(scope).notifier)
+        .selectSort(RankingSortField.heat, SortDirection.asc);
+
+    var state = container.read(rankingSummaryProvider(scope)).requireValue;
+    expect(state.filters.selectedSortField, isNull);
+    expect(state.paged.filterUpdate.isLoading, isTrue);
+    expect(
+      adapter.hitCount('GET', '/ranking-sources/javdb/boards/censored/items'),
+      itemsRequestCount,
+    );
+
+    boardsCompleter.complete();
+    await sourceFuture;
+
+    state = container.read(rankingSummaryProvider(scope)).requireValue;
+    expect(state.filters.isLoading, isFalse);
+    expect(state.filters.selectedBoard?.boardKey, 'hot');
     expect(state.paged.items.single.movieNumber, 'ABC-002');
   });
 

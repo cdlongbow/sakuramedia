@@ -154,6 +154,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
         boards: summary.filters.boards,
         selectedBoard: summary.filters.selectedBoard,
         selectedPeriod: summary.filters.selectedPeriod,
+        isBoardLoading: summary.filters.isLoading,
         onSourceChanged: (value) => _applyFilterChange(
           () => ref
               .read(rankingSummaryProvider(_scope).notifier)

@@ -291,6 +291,7 @@ class RankingSummary extends _$RankingSummary
   Future<void> selectSort(RankingSortField? field, SortDirection direction) {
     final current = state.value;
     if (current == null ||
+        current.filters.isLoading ||
         (field == current.filters.selectedSortField &&
             direction == current.filters.selectedSortDirection)) {
       return Future<void>.value();

@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +9,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/rankings/presentation/pages/desktop/rankings_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -157,6 +162,112 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
+  });
+
+  testWidgets('切换来源的加载窗口用骨架占位，数据到达后替换为新榜单/周期', (WidgetTester tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'source_key': 'javdb', 'name': 'JavDB'},
+        <String, dynamic>{'source_key': 'mock-source', 'name': 'Mock Source'},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/javdb/boards',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'source_key': 'javdb',
+          'board_key': 'censored',
+          'name': '有码',
+          'supported_periods': <String>['daily', 'weekly'],
+          'default_period': 'daily',
+        },
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/javdb/boards/censored/items',
+      body: _rankingItemsJson(total: 2),
+    );
+
+    await _pumpRankingsPage(tester, sessionStore: sessionStore, bundle: bundle);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('desktop-rankings-filter-trigger')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('rankings-filter-board-censored')),
+      findsOneWidget,
+    );
+
+    // 新来源的榜单请求挂起，观察加载窗口内的骨架状态。
+    final boardsCompleter = Completer<void>();
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/ranking-sources/mock-source/boards',
+      responder: (_, _) async {
+        await boardsCompleter.future;
+        return ResponseBody.fromString(
+          jsonEncode(<Map<String, dynamic>>[
+            <String, dynamic>{
+              'source_key': 'mock-source',
+              'board_key': 'hot',
+              'name': '热门',
+              'supported_periods': <String>['weekly'],
+              'default_period': 'weekly',
+            },
+          ]),
+          200,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        );
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/mock-source/boards/hot/items',
+      body: _rankingItemsJson(total: 1),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('rankings-filter-source-mock-source')),
+    );
+    // 首帧进入骨架态；再覆盖防抖、浮层下一帧重建与 180ms 交叉淡出。
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
+    final panelSkeletonizers = find.descendant(
+      of: find.byKey(const Key('rankings-filter-panel')),
+      matching: find.byType(AppSkeletonizer),
+    );
+    expect(
+      tester
+          .widgetList<AppSkeletonizer>(panelSkeletonizers)
+          .where((widget) => widget.enabled),
+      hasLength(2),
+    );
+    expect(
+      find.byKey(const Key('rankings-filter-board-censored')),
+      findsNothing,
+    );
+
+    boardsCompleter.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('rankings-filter-board-hot')), findsOneWidget);
+    expect(
+      find.byKey(const Key('rankings-filter-period-weekly')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('rankings-filter-board-censored')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 }
 

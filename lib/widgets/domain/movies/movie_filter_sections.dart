@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
 /// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 热度范围 / 年份 / 排序 / 可选标签）的纵向 Column。
 ///
@@ -132,7 +133,16 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
     required this.onSelected,
     this.optionKeyBuilder,
     this.enabled = true,
+    this.isLoading = false,
   });
+
+  static const Duration _optionsSwitchDuration = Duration(milliseconds: 180);
+  static const Duration _optionsResizeDuration = Duration(milliseconds: 200);
+
+  /// 加载态 options 的固定切换 key：占位文案会变，不能拿它当动画签名。
+  static const ValueKey<String> _loadingOptionsKey = ValueKey<String>(
+    '__movie-filter-choice-loading__',
+  );
 
   final String title;
   final bool enabled;
@@ -145,6 +155,44 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
 
   /// 给每个选项 chip 生成稳定 Key（测试锚点）。不传则不挂 Key。
   final Key Function(T value)? optionKeyBuilder;
+
+  /// options 是否正在加载。为 `true` 时应传入占位 options，选项区以
+  /// [AppSkeletonizer] 骨架显示，并屏蔽点击；就绪后与真实选项交叉淡入。
+  final bool isLoading;
+
+  /// 选项集合的动画签名。只改选中态时签名不变，不会触发整组切换动画。
+  ValueKey<String> get _optionsKey {
+    if (isLoading) {
+      return _loadingOptionsKey;
+    }
+    return ValueKey<String>(options.map(labelBuilder).join('\u0001'));
+  }
+
+  static Widget _optionsSwitcherLayout(
+    Widget? currentChild,
+    List<Widget> previousChildren,
+  ) {
+    return Stack(
+      alignment: Alignment.topLeft,
+      children: [...previousChildren, ?currentChild],
+    );
+  }
+
+  static Widget _optionsSwitcherTransition(
+    Widget child,
+    Animation<double> animation,
+  ) {
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.08),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,20 +209,40 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
           ),
         ),
         SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: options
-              .map(
-                (value) => AppTextButton(
-                  key: optionKeyBuilder?.call(value),
-                  label: labelBuilder(value),
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == selectedValue,
-                  onPressed: enabled ? () => onSelected(value) : null,
+        AnimatedSize(
+          duration: _optionsResizeDuration,
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topLeft,
+          child: AnimatedSwitcher(
+            duration: _optionsSwitchDuration,
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            layoutBuilder: _optionsSwitcherLayout,
+            transitionBuilder: _optionsSwitcherTransition,
+            child: KeyedSubtree(
+              key: _optionsKey,
+              // AppSkeletonizer 放在 AnimatedSwitcher 内部：骨架淡出期间
+              // 旧子树仍持有 enabled=true，不会露出占位文案。
+              child: AppSkeletonizer(
+                enabled: isLoading,
+                child: Wrap(
+                  spacing: context.appSpacing.sm,
+                  runSpacing: context.appSpacing.sm,
+                  children: options
+                      .map(
+                        (value) => AppTextButton(
+                          key: optionKeyBuilder?.call(value),
+                          label: labelBuilder(value),
+                          size: AppTextButtonSize.xSmall,
+                          isSelected: value == selectedValue,
+                          onPressed: enabled ? () => onSelected(value) : null,
+                        ),
+                      )
+                      .toList(growable: false),
                 ),
-              )
-              .toList(growable: false),
+              ),
+            ),
+          ),
         ),
       ],
     );

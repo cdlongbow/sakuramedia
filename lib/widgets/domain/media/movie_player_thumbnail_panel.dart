@@ -78,7 +78,7 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
         final spacing = context.appSpacing;
         final autoColumns = resolveGridColumnCount(
           width: constraints.maxWidth,
-          spacing: spacing.sm,
+          spacing: spacing.xs,
           targetWidth: context.appComponentTokens.movieThumbnailTargetWidth,
         );
         final resolvedColumns =
@@ -94,7 +94,7 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
         }
 
         return Padding(
-          padding: EdgeInsets.all(spacing.lg),
+          padding: EdgeInsets.all(spacing.xs),
           child: Column(
             children: [
               Align(
@@ -161,7 +161,7 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
                   onClear: widget.onClearClipSelection,
                 ),
               ],
-              SizedBox(height: spacing.md),
+              SizedBox(height: spacing.sm),
               Expanded(
                 child: MovieMediaThumbnailGrid(
                   thumbnails: widget.thumbnails,
@@ -177,6 +177,7 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
                   clipEndIndex: widget.clipEndIndex,
                   keyPrefix: 'movie-player',
                   layout: widget.layout,
+                  spacing: spacing.xs,
                 ),
               ),
             ],

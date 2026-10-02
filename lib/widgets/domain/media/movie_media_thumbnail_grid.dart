@@ -98,6 +98,7 @@ class MovieMediaThumbnailGrid extends StatefulWidget {
     this.clipEndIndex,
     this.keyPrefix = 'movie-media',
     this.layout = ThumbnailGridLayout.uniform16x9,
+    this.spacing,
   });
 
   final List<MovieMediaThumbnailDto> thumbnails;
@@ -118,6 +119,10 @@ class MovieMediaThumbnailGrid extends StatefulWidget {
   /// 走瀑布流，按帧自带 w/h 排版。
   final ThumbnailGridLayout layout;
 
+  /// 网格横纵间距；null 时用主题 `appSpacing.sm`。
+  /// 播放器缩略图面板传 `appSpacing.xs` 收紧留白，详情页签保持默认。
+  final double? spacing;
+
   @override
   State<MovieMediaThumbnailGrid> createState() =>
       _MovieMediaThumbnailGridState();
@@ -129,6 +134,10 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
     milliseconds: 180,
   );
   static const int _visibleRowBuffer = 2;
+
+  /// 尺寸计算与真实布局共用同一间距：滚动跟随和可视范围估算不能按固定 8px 算，
+  /// 否则面板传更小的间距时定位会有偏差。
+  double get _gridSpacing => widget.spacing ?? context.appSpacing.sm;
 
   late final ScrollController _scrollController;
   Timer? _scrollIdleTimer;
@@ -181,7 +190,8 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
         widget.isScrollLocked && _shouldAutoScroll(oldWidget);
     if (oldWidget.thumbnails.length != widget.thumbnails.length ||
         oldWidget.columns != widget.columns ||
-        oldWidget.layout != widget.layout) {
+        oldWidget.layout != widget.layout ||
+        oldWidget.spacing != widget.spacing) {
       // 瀑布流缓存的 layout 依赖 thumbnails/columns/layout 模式，任一变就失效重算。
       _staggeredLayout = null;
       _staggeredLayoutWidth = null;
@@ -321,7 +331,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
       return;
     }
 
-    final spacing = context.appSpacing.sm;
+    final spacing = _gridSpacing;
     final viewportDimension = _scrollController.position.viewportDimension;
 
     final double centeredOffset;
@@ -490,7 +500,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
       return false;
     }
 
-    final spacing = context.appSpacing.sm;
+    final spacing = _gridSpacing;
     final viewportDimension = effectiveMetrics.viewportDimension;
     final offset = effectiveMetrics.pixels.clamp(
       effectiveMetrics.minScrollExtent,
@@ -631,6 +641,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
       return _MovieMediaThumbnailGridSkeleton(
         columns: widget.columns,
         keyPrefix: widget.keyPrefix,
+        spacing: _gridSpacing,
       );
     }
     if (widget.errorMessage != null) {
@@ -676,8 +687,8 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
           : const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: widget.columns,
-        crossAxisSpacing: context.appSpacing.sm,
-        mainAxisSpacing: context.appSpacing.sm,
+        crossAxisSpacing: _gridSpacing,
+        mainAxisSpacing: _gridSpacing,
         childAspectRatio:
             context.appComponentTokens.moviePlayerThumbnailAspectRatio,
       ),
@@ -688,7 +699,7 @@ class _MovieMediaThumbnailGridState extends State<MovieMediaThumbnailGrid> {
   }
 
   Widget _buildStaggeredGrid(BuildContext context) {
-    final spacing = context.appSpacing.sm;
+    final spacing = _gridSpacing;
     return CustomScrollView(
       key: Key('${widget.keyPrefix}-thumbnail-grid'),
       controller: _scrollController,
@@ -1042,10 +1053,12 @@ class _MovieMediaThumbnailGridSkeleton extends StatelessWidget {
   const _MovieMediaThumbnailGridSkeleton({
     required this.columns,
     required this.keyPrefix,
+    required this.spacing,
   });
 
   final int columns;
   final String keyPrefix;
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
@@ -1057,8 +1070,8 @@ class _MovieMediaThumbnailGridSkeleton extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: columns,
-          crossAxisSpacing: context.appSpacing.sm,
-          mainAxisSpacing: context.appSpacing.sm,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
           childAspectRatio:
               context.appComponentTokens.moviePlayerThumbnailAspectRatio,
         ),

@@ -136,6 +136,81 @@ void main() {
     expect(afterWidth, closeTo(beforeWidth, 0.5));
   });
 
+  testWidgets('收起/展开动画期间右侧内容宽度恒定且不重新布局', (tester) async {
+    var layoutCount = 0;
+    // 模拟真实调用方：右面板包装层每帧新建，但内部内容实例稳定，
+    // 只有约束变化时内部 LayoutBuilder 才会重新布局。
+    final panel = LayoutBuilder(
+      builder: (context, constraints) {
+        layoutCount++;
+        return const ColoredBox(key: _rightPanelKey, color: Colors.white);
+      },
+    );
+    final controller = MultiSplitViewController(
+      areas: <Area>[Area(flex: 0.72), Area(flex: 0.28)],
+    );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 400,
+            child: CollapsiblePlayerSplitView(
+              controller: controller,
+              collapsible: true,
+              handleKey: _handleKey,
+              leftBuilder: (context) =>
+                  const ColoredBox(color: Colors.black, child: Text('left')),
+              rightBuilder: (context) =>
+                  ColoredBox(color: Colors.white, child: panel),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final expandedWidth = tester.getRect(find.byKey(_rightPanelKey)).width;
+    expect(expandedWidth, greaterThan(0));
+
+    // 收起动画：内容按展开态宽度保持不动，约束不变则 Flutter 跳过重新布局。
+    await tester.tap(find.byKey(_handleKey));
+    await tester.pump(const Duration(milliseconds: 50));
+    final collapseLayoutCount = layoutCount;
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      tester.getRect(find.byKey(_rightPanelKey)).width,
+      closeTo(expandedWidth, 0.5),
+    );
+    expect(layoutCount, collapseLayoutCount);
+    await tester.pumpAndSettle();
+    expect(find.byKey(_rightPanelKey), findsNothing);
+
+    // 展开动画：面板挂载后内容宽度立即可用且全程恒定，动画期间不重新布局。
+    await tester.tap(find.byKey(_handleKey));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    final expandLayoutCount = layoutCount;
+    expect(
+      tester.getRect(find.byKey(_rightPanelKey)).width,
+      closeTo(expandedWidth, 0.5),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(
+      tester.getRect(find.byKey(_rightPanelKey)).width,
+      closeTo(expandedWidth, 0.5),
+    );
+    expect(layoutCount, expandLayoutCount);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byKey(_rightPanelKey)).width,
+      closeTo(expandedWidth, 0.5),
+    );
+  });
+
   testWidgets('收起再展开恢复用户拖过的宽度', (tester) async {
     final controller = await pumpSplit(tester, collapsible: true);
 

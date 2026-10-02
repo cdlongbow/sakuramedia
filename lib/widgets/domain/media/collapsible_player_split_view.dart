@@ -13,8 +13,9 @@ typedef PlayerSplitPanelBuilder = Widget Function(BuildContext context);
 ///
 /// 收起/展开由右侧 [Area.flex] 驱动（0 = 收起）：收起时右侧子树卸载，展开时挂载；
 /// 左侧子树始终挂在同一个 [MultiSplitView] 的同一位置，保证调用方的播放器 State
-/// 不因开关面板重建。收起动画尾部面板槽位接近 0 宽，右侧面板内容按最小宽度布局后
-/// 裁切，避免缩略图网格拿到负的布局约束。
+/// 不因开关面板重建。动画期间右侧内容按展开态宽度固定布局，只有外层裁切窗口随
+/// 槽位收缩/展开（从右滑出/滑入），缩略图网格不会每帧重新布局；收起动画尾部槽位
+/// 接近 0 宽，固定宽度裁切也避免给网格负的布局约束。
 class CollapsiblePlayerSplitView extends StatefulWidget {
   const CollapsiblePlayerSplitView({
     super.key,
@@ -176,38 +177,53 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
           color: context.appColors.borderSubtle,
         ),
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          MultiSplitView(
-            controller: widget.controller,
-            axis: Axis.horizontal,
-            builder: (context, area) => area.index == 0
-                ? widget.leftBuilder(context)
-                : _expanded
-                ? _buildClippedPanel(context)
-                : const SizedBox.shrink(),
-          ),
-          if (showToggle) Positioned.fill(child: _buildToggleOverlay(context)),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final available = math.max(constraints.maxWidth - spacing.xs, 0.0);
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              MultiSplitView(
+                controller: widget.controller,
+                axis: Axis.horizontal,
+                builder: (context, area) => area.index == 0
+                    ? RepaintBoundary(child: widget.leftBuilder(context))
+                    : _expanded
+                    ? _buildClippedPanel(context, available)
+                    : const SizedBox.shrink(),
+              ),
+              if (showToggle)
+                Positioned.fill(child: _buildToggleOverlay(context, available)),
+            ],
+          );
+        },
       ),
     );
   }
 
-  /// 面板槽位宽度随收起/展开动画收缩；内容按不小于 [_minPanelContentWidth] 的
-  /// 宽度布局，再裁切到槽位宽度，动画全程平滑且不会给网格负约束。
-  Widget _buildClippedPanel(BuildContext context) {
+  /// 面板槽位宽度随收起/展开动画收缩。动画期间内容按展开态宽度固定布局，
+  /// 只有外层 [ClipRect] 窗口和内容偏移在动，网格全程不重新布局；非动画时
+  /// （拖拽分隔条 / 窗口缩放）内容按当前 flex 跟随槽位宽度。
+  Widget _buildClippedPanel(BuildContext context, double available) {
+    final contentWidth = math.max(
+      _panelPixelWidth(
+        _animationController.isAnimating ? _rememberedPanelFlex : _panelFlex,
+        available,
+      ),
+      _minPanelContentWidth,
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = math.max(constraints.maxWidth, _minPanelContentWidth);
+        final width = math.max(constraints.maxWidth, contentWidth);
+        // 内容左缘贴槽位左缘：收起时槽位左缘右移，内容整体向右滑出被裁掉。
         return ClipRect(
           child: OverflowBox(
-            alignment: Alignment.centerRight,
+            alignment: Alignment.centerLeft,
             minWidth: width,
             maxWidth: width,
             minHeight: constraints.minHeight,
             maxHeight: constraints.maxHeight,
-            child: widget.rightBuilder(context),
+            child: RepaintBoundary(child: widget.rightBuilder(context)),
           ),
         );
       },
@@ -219,7 +235,7 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
   ///
   /// 位置由 [ListenableBuilder] 监听 controller 逐帧计算，动画/拖拽时只重建这个
   /// 小按钮，不重建分栏与播放器。
-  Widget _buildToggleOverlay(BuildContext context) {
+  Widget _buildToggleOverlay(BuildContext context, double available) {
     final overlayTokens = context.appOverlayTokens;
     final button = AppIconButton(
       key: widget.handleKey,
@@ -236,36 +252,33 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
         ],
       ),
     );
-    return LayoutBuilder(
-      builder: (context, constraints) => ListenableBuilder(
-        listenable: widget.controller,
-        child: button,
-        builder: (context, child) {
-          final spacing = context.appSpacing;
-          final available = math.max(constraints.maxWidth - spacing.xs, 0.0);
-          final panelWidth = _panelPixelWidth(_panelFlex, available);
-          // 不叠 SafeArea：media_kit 窗口态顶栏用的就是零安全区内边距，开关要
-          // 和「视频信息」按钮同锚点，多塞一层安全区会在带刘海的设备上横向错开。
-          return Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: EdgeInsets.only(
-                // 与 media_kit 顶栏按钮同一行：顶栏是 56 高容器（top margin 18）
-                // 内垂直居中 44 的按钮，按钮实际 top = 18 + (56-44)/2 = 24，
-                // 正是 playerBackOverlayTop；用 18 会低 6px、与信息按钮错位。
-                top: overlayTokens.playerBackOverlayTop,
-                // 与顶栏同一坐标系：都相对左侧播放画面的右缘内缩，而不是相对
-                // 整个分栏，展开时才能停在播放画面右上角、不落到右侧面板上。
-                right:
-                    panelWidth +
-                    spacing.xs +
-                    overlayTokens.playerControlBarHorizontalInset,
-              ),
-              child: child,
+    return ListenableBuilder(
+      listenable: widget.controller,
+      child: button,
+      builder: (context, child) {
+        final spacing = context.appSpacing;
+        final panelWidth = _panelPixelWidth(_panelFlex, available);
+        // 不叠 SafeArea：media_kit 窗口态顶栏用的就是零安全区内边距，开关要
+        // 和「视频信息」按钮同锚点，多塞一层安全区会在带刘海的设备上横向错开。
+        return Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: EdgeInsets.only(
+              // 与 media_kit 顶栏按钮同一行：顶栏是 56 高容器（top margin 18）
+              // 内垂直居中 44 的按钮，按钮实际 top = 18 + (56-44)/2 = 24，
+              // 正是 playerBackOverlayTop；用 18 会低 6px、与信息按钮错位。
+              top: overlayTokens.playerBackOverlayTop,
+              // 与顶栏同一坐标系：都相对左侧播放画面的右缘内缩，而不是相对
+              // 整个分栏，展开时才能停在播放画面右上角、不落到右侧面板上。
+              right:
+                  panelWidth +
+                  spacing.xs +
+                  overlayTokens.playerControlBarHorizontalInset,
             ),
-          );
-        },
-      ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

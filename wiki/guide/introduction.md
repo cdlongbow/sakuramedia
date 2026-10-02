@@ -36,7 +36,7 @@ SakuraMedia 是面向 NAS 用户的媒体管理与观影平台，将影片发现
 
 排行榜、字幕获取和女优资料补全也可通过插件按需扩展。存储、下载和迁移能力取决于所安装插件的支持范围。
 
-[查看开源插件](/guide/plugins) · [了解媒体存储迁移](/guide/media-storage-transfer)
+[查看插件](/guide/plugins) · [了解媒体存储迁移](/guide/media-storage-transfer)
 
 ### 更多日常功能
 
@@ -73,7 +73,7 @@ SakuraMedia 是面向 NAS 用户的媒体管理与观影平台，将影片发现
 ## 从哪里开始
 
 1. **还没有部署**：阅读[快速开始](/guide/quick-start)，完成部署和首次配置。
-2. **至少选择一个存储插件并安装**：查看[开源插件](/guide/plugins)。
+2. **至少选择一个存储插件并安装**：查看[推荐插件](/guide/plugins)。
 3. **已经部署完成**：进入[使用手册](/manual/)，按「下载第一部影片」或「导入已有资源」开始。
 4. **想了解产品的使用思路**：阅读[为什么做 SakuraMedia](/guide/collection-strategy)及「设计理念」中的文章。
 

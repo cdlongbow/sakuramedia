@@ -8,7 +8,7 @@ import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.d
 /// jav 播放页不迁移（避免动其稳定 Key / 测试），两个合集连播页共用本壳。
 ///
 /// 自持 [MultiSplitViewController]（在 [State] 内创建并释放），调用方只传左右子树。
-/// 移动端（[collapsible]）默认收起右面板，右缘把手可展开/收起，展开后仍可拖宽。
+/// [collapsible] 为 true 时右面板默认展开，右上角常显开关可收起/再展开，展开后仍可拖宽。
 class CollectionPlaySplitLayout extends StatefulWidget {
   const CollectionPlaySplitLayout({
     super.key,
@@ -24,10 +24,10 @@ class CollectionPlaySplitLayout extends StatefulWidget {
   final Widget left;
   final Widget right;
 
-  /// 移动端传 true：右侧面板默认收起，显示右缘把手。
+  /// 传 true：右侧面板默认展开，显示右上角常显开关。
   final bool collapsible;
 
-  /// 右侧面板是否有内容可展示；无内容时不显示把手。
+  /// 右侧面板是否有内容可展示；无内容时不显示开关。
   final bool panelAvailable;
 
   @override

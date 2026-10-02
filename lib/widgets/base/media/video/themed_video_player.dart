@@ -40,6 +40,7 @@ class ThemedVideoPlayer extends StatefulWidget {
     this.resumePosition,
     this.onResumePromptResolved,
     this.playbackSessionKey,
+    this.reservePanelToggleSpace = false,
   });
 
   final VideoController videoController;
@@ -80,6 +81,11 @@ class ThemedVideoPlayer extends StatefulWidget {
 
   /// Playlist 切换时标识新的首帧阶段；普通单媒体不需要传。
   final Object? playbackSessionKey;
+
+  /// 页面右侧有可收起的缩略图面板（右上角常显开关）时传 `true`：
+  /// 移动端窗口态顶栏为开关预留一格，使最右侧的「视频信息」按钮左移、不与之重叠。
+  /// 仅在 [useTouchOptimizedControls] 的移动主题生效；全屏态不预留（无该开关）。
+  final bool reservePanelToggleSpace;
 
   @override
   State<ThemedVideoPlayer> createState() => _ThemedVideoPlayerState();
@@ -259,6 +265,7 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
       bottomControls: widget.bottomControls,
       displaySeekBar: widget.displaySeekBar,
       showBufferingIndicator: showBufferingIndicator,
+      reserveTopRightToggle: widget.reservePanelToggleSpace,
     );
     final desktopFullscreenThemeData = buildMoviePlayerDesktopControlsThemeData(
       theme: theme,
@@ -274,6 +281,7 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
       displaySeekBar: widget.displaySeekBar,
       seekEnabled: _seekEnabled,
       showBufferingIndicator: showBufferingIndicator,
+      reserveTopRightToggle: widget.reservePanelToggleSpace,
     );
     final mobileFullscreenThemeData = buildMoviePlayerMobileControlsThemeData(
       theme: theme,

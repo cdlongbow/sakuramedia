@@ -73,21 +73,20 @@ void main() {
         MaterialApp(
           theme: sakuraThemeData,
           home: Builder(
-            builder:
-                (context) => Column(
-                  children: [
-                    buildMoviePlayerMobileControlsThemeData(
-                      theme: Theme.of(context),
-                      topControls: const <Widget>[],
-                      bottomControls: const <Widget>[],
-                    ).bufferingIndicatorBuilder!(context),
-                    buildMoviePlayerDesktopControlsThemeData(
-                      theme: Theme.of(context),
-                      topControls: const <Widget>[],
-                      bottomControls: const <Widget>[],
-                    ).bufferingIndicatorBuilder!(context),
-                  ],
-                ),
+            builder: (context) => Column(
+              children: [
+                buildMoviePlayerMobileControlsThemeData(
+                  theme: Theme.of(context),
+                  topControls: const <Widget>[],
+                  bottomControls: const <Widget>[],
+                ).bufferingIndicatorBuilder!(context),
+                buildMoviePlayerDesktopControlsThemeData(
+                  theme: Theme.of(context),
+                  topControls: const <Widget>[],
+                  bottomControls: const <Widget>[],
+                ).bufferingIndicatorBuilder!(context),
+              ],
+            ),
           ),
         ),
       );
@@ -179,6 +178,34 @@ void main() {
       expect(cluster.children.first, same(seekBar));
       final buttonRow = cluster.children.last as SizedBox;
       expect((buttonRow.child! as Row).children.first, same(bottom));
+    });
+
+    test('reserveTopRightToggle 为右上角面板开关让位，避免与信息按钮重叠', () {
+      final overlay = sakuraThemeData.appOverlayTokens;
+      final spacing = sakuraThemeData.appSpacing;
+      final reserve = overlay.playerBackBadgeMinHeight + spacing.sm;
+
+      final mobile = buildMoviePlayerMobileControlsThemeData(
+        theme: sakuraThemeData,
+        topControls: const <Widget>[],
+        bottomControls: const <Widget>[],
+        reserveTopRightToggle: true,
+      );
+      expect(
+        mobile.topButtonBarMargin.right,
+        overlay.playerControlBarHorizontalInset + reserve,
+      );
+
+      final desktop = buildMoviePlayerDesktopControlsThemeData(
+        theme: sakuraThemeData,
+        topControls: const <Widget>[],
+        bottomControls: const <Widget>[],
+        reserveTopRightToggle: true,
+      );
+      expect(
+        desktop.topButtonBarMargin.right,
+        overlay.playerControlBarHorizontalInset + reserve,
+      );
     });
   });
 }

@@ -21,7 +21,7 @@ export default defineConfig({
         items: [
           { text: '介绍', link: '/guide/introduction' },
           { text: '快速开始', link: '/guide/quick-start' },
-          { text: '开源插件', link: '/guide/plugins' },
+          { text: '推荐插件', link: '/guide/plugins' },
           { text: '配置说明', link: '/guide/config' },
           { text: '进阶部署', link: '/guide/docker' },
           { text: '后台任务', link: '/guide/tasks' },

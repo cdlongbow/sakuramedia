@@ -24,10 +24,10 @@ class MoviePlayerSplitLayout extends StatelessWidget {
   final Widget leftChild;
   final Widget rightChild;
 
-  /// 移动端传 true：缩略图面板默认收起，右缘把手可展开/收起。
+  /// 传 true：缩略图面板默认展开，右上角常显开关可收起/再展开。
   final bool collapsible;
 
-  /// 右侧缩略图面板是否有内容可展示；无内容时不显示把手。
+  /// 右侧缩略图面板是否有内容可展示；无内容时不显示开关。
   final bool panelAvailable;
 
   @override

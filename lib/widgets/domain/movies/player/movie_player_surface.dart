@@ -623,8 +623,15 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       ],
     );
 
+    // 有可用媒体时页面右侧才有可收起的缩略图面板与右上角常显开关；顶栏需为其让位。
+    final reserveTopRightToggle = widget.mediaInfo != null;
     final player = MaterialVideoControlsTheme(
-      normal: _mobileControlsTheme(theme, topControls, mobileBottomControls),
+      normal: _mobileControlsTheme(
+        theme,
+        topControls,
+        mobileBottomControls,
+        reserveTopRightToggle: reserveTopRightToggle,
+      ),
       fullscreen: _mobileControlsTheme(
         theme,
         fullscreenTopControls,
@@ -635,6 +642,7 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
           theme,
           topControls,
           desktopBottomControls,
+          reserveTopRightToggle: reserveTopRightToggle,
         ),
         fullscreen: _desktopControlsTheme(
           theme,
@@ -671,12 +679,14 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
   MaterialDesktopVideoControlsThemeData _desktopControlsTheme(
     ThemeData theme,
     List<Widget> topControls,
-    List<Widget> bottomControls,
-  ) {
+    List<Widget> bottomControls, {
+    bool reserveTopRightToggle = false,
+  }) {
     return buildMoviePlayerDesktopControlsThemeData(
       theme: theme,
       topControls: topControls,
       bottomControls: bottomControls,
+      reserveTopRightToggle: reserveTopRightToggle,
       bottomSeekBar: widget.useTouchOptimizedControls
           ? null
           : MoviePlayerSeekBarPreview(
@@ -690,12 +700,14 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
   MaterialVideoControlsThemeData _mobileControlsTheme(
     ThemeData theme,
     List<Widget> topControls,
-    List<Widget> bottomControls,
-  ) {
+    List<Widget> bottomControls, {
+    bool reserveTopRightToggle = false,
+  }) {
     return buildMoviePlayerMobileControlsThemeData(
       theme: theme,
       topControls: topControls,
       bottomControls: bottomControls,
+      reserveTopRightToggle: reserveTopRightToggle,
     );
   }
 }

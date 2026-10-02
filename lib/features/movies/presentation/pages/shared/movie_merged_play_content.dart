@@ -279,7 +279,7 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
     } else {
       body = CollectionPlaySplitLayout(
         keyPrefix: 'movie-merged',
-        collapsible: widget.useTouchOptimizedControls,
+        collapsible: true,
         panelAvailable: filmstrip != null,
         left: ThemedVideoPlayer(
           videoKey: _videoKey,

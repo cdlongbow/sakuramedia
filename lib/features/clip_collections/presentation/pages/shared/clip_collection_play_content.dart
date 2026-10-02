@@ -214,7 +214,7 @@ class _ClipCollectionPlayContentState
     // 左：原沉浸式播放器 + 「选集」浮层（原样保留）；右：「整部合集」关键帧面板。
     return CollectionPlaySplitLayout(
       keyPrefix: 'clip-collection',
-      collapsible: widget.useTouchOptimizedControls,
+      collapsible: true,
       panelAvailable: filmstrip != null,
       left: Stack(
         children: [
@@ -261,6 +261,7 @@ class _ClipCollectionPlayContentState
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       videoKey: const Key('clip-collection-play-video'),
       displaySeekBar: false,
+      reservePanelToggleSpace: true,
       topControls: [
         ...buildMoviePlayerTopControls(
           movieNumber: _currentClipTitle(),

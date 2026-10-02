@@ -370,12 +370,6 @@ void main() {
           native.select(1, const Duration(seconds: 1));
           await tester.pumpAndSettle();
           expect(native.calls, contains('seek:150'));
-          if (mobile) {
-            await tester.tap(
-              find.byKey(const Key('movie-merged-panel-handle')),
-            );
-            await tester.pumpAndSettle();
-          }
           final panel = tester.widget<MoviePlayerThumbnailPanel>(
             find.byType(MoviePlayerThumbnailPanel),
           );
@@ -407,7 +401,8 @@ void main() {
             if (mobile) {
               expect(
                 find.byWidgetPredicate(
-                  (widget) => widget.runtimeType.toString() ==
+                  (widget) =>
+                      widget.runtimeType.toString() ==
                       '_PopupMenu<AppImageActionType>',
                 ),
                 findsOneWidget,

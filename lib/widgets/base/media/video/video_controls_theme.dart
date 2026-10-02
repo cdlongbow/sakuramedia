@@ -40,8 +40,16 @@ MaterialVideoControlsThemeData buildMoviePlayerMobileControlsThemeData({
   bool displaySeekBar = true,
   bool seekEnabled = true,
   bool showBufferingIndicator = true,
+  bool reserveTopRightToggle = false,
 }) {
   final overlayTokens = theme.appOverlayTokens;
+  // 右上角界面为常显的缩略图面板开关预留一格（开关贴右上角、与顶栏同宽内缩），
+  // 让顶栏最右侧的「视频信息」按钮整体左移，避免与开关重叠。
+  final topBarTrailingInset =
+      overlayTokens.playerControlBarHorizontalInset +
+      (reserveTopRightToggle
+          ? overlayTokens.playerBackBadgeMinHeight + theme.appSpacing.sm
+          : 0);
   return MaterialVideoControlsThemeData(
     horizontalGestureSensitivity: 3000,
     seekOnDoubleTap: seekEnabled,
@@ -68,7 +76,7 @@ MaterialVideoControlsThemeData buildMoviePlayerMobileControlsThemeData({
     topButtonBarMargin: EdgeInsets.fromLTRB(
       overlayTokens.playerControlBarHorizontalInset,
       overlayTokens.playerControlBarTopInset,
-      overlayTokens.playerControlBarHorizontalInset,
+      topBarTrailingInset,
       0,
     ),
     bottomButtonBar: bottomControls,
@@ -82,8 +90,14 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
   bool displaySeekBar = true,
   bool showBufferingIndicator = true,
   Widget? bottomSeekBar,
+  bool reserveTopRightToggle = false,
 }) {
   final overlayTokens = theme.appOverlayTokens;
+  final topBarTrailingInset =
+      overlayTokens.playerControlBarHorizontalInset +
+      (reserveTopRightToggle
+          ? overlayTokens.playerBackBadgeMinHeight + theme.appSpacing.sm
+          : 0);
   return MaterialDesktopVideoControlsThemeData(
     bufferingIndicatorBuilder: showBufferingIndicator
         ? buildMoviePlayerBufferingIndicator
@@ -123,7 +137,7 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
     topButtonBarMargin: EdgeInsets.fromLTRB(
       overlayTokens.playerControlBarHorizontalInset,
       overlayTokens.playerControlBarTopInset,
-      overlayTokens.playerControlBarHorizontalInset,
+      topBarTrailingInset,
       0,
     ),
     bottomButtonBar: bottomSeekBar == null

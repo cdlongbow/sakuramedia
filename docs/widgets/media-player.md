@@ -12,6 +12,7 @@
 
 - `MovieMediaThumbnailGrid`：媒体缩略图网格。
 - `MoviePlayerThumbnailPanel`：播放器旁的缩略图面板。
+- `CollapsiblePlayerSplitView`：播放器左右分栏共享壳。桌面与移动端的右侧面板默认展开，右上角常显纯图标开关（与顶栏同一行）可收起/再展开；双端顶栏会为开关预留位置，避免与「视频信息」按钮重叠。
 
 两者位于 `lib/widgets/domain/media/`，缩略图请求和切片动作由调用方提供。
 

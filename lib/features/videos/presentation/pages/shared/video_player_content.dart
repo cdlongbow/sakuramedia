@@ -417,7 +417,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
 
     return CollectionPlaySplitLayout(
       keyPrefix: 'video-single',
-      collapsible: widget.useTouchOptimizedControls,
+      collapsible: true,
       left: _buildPlayerSurface(controller),
       right: _buildThumbnailPanel(),
     );
@@ -441,6 +441,7 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
       onResumePromptResolved: _resolveResumePrompt,
       playbackSessionKey: widget.videoId,
       videoKey: const Key('video-player-video'),
+      reservePanelToggleSpace: true,
       topControls: [
         ...buildMoviePlayerTopControls(
           movieNumber: title.isEmpty ? '视频' : title,

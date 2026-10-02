@@ -135,6 +135,14 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
       native.select(2, const Duration(minutes: 5), playing: false);
       await tester.pump();
+      // 收起再展开：收起动画尾部面板宽度趋近 0，缩略图网格曾据此拿到负的
+      // 布局约束；这里回归保护收起/展开全程不产生布局异常。
+      await tester.tap(find.byKey(const Key('video-collection-panel-handle')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const Key('video-collection-panel-handle')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
       Future<void> openEpisodes() async {
         final controls = tester
             .widget<ThemedVideoPlayer>(

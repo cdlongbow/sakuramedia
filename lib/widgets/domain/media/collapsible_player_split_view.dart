@@ -3,16 +3,18 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
 typedef PlayerSplitPanelBuilder = Widget Function(BuildContext context);
 
-/// 播放器左右分栏的共享壳：桌面端固定分栏；移动端（[collapsible]）默认收起
-/// 右面板，通过右缘毛玻璃把手展开/收起，展开后仍可用分隔条拖拽调节宽度。
+/// 播放器左右分栏的共享壳：桌面与移动端默认都展开右面板；[collapsible] 时右上角
+/// 常显一个纯图标开关（与顶栏返回/信息按钮同一行），点击收起/展开，展开后仍可用
+/// 分隔条拖拽调节宽度。
 ///
 /// 收起/展开由右侧 [Area.flex] 驱动（0 = 收起）：收起时右侧子树卸载，展开时挂载；
 /// 左侧子树始终挂在同一个 [MultiSplitView] 的同一位置，保证调用方的播放器 State
-/// 不因开关面板重建。把手在收起态吸右缘、展开态停靠分隔条中点，点击切换、横拖跟手。
+/// 不因开关面板重建。收起动画尾部面板槽位接近 0 宽，右侧面板内容按最小宽度布局后
+/// 裁切，避免缩略图网格拿到负的布局约束。
 class CollapsiblePlayerSplitView extends StatefulWidget {
   const CollapsiblePlayerSplitView({
     super.key,
@@ -31,10 +33,10 @@ class CollapsiblePlayerSplitView extends StatefulWidget {
   final PlayerSplitPanelBuilder rightBuilder;
   final double dividerHandleBuffer;
 
-  /// 移动端传 true：进入时右侧面板收起，显示右缘把手。
+  /// 传 true：右上角常显展开/收起开关（默认展开，点击收起/再展开）。
   final bool collapsible;
 
-  /// 右侧面板是否有内容可展示；无内容时不显示把手。
+  /// 右侧面板是否有内容可展示；无内容时不显示开关。
   final bool panelAvailable;
   final Key? handleKey;
 
@@ -49,20 +51,22 @@ class CollapsiblePlayerSplitView extends StatefulWidget {
 class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
     with SingleTickerProviderStateMixin {
   static const Duration _animationDuration = Duration(milliseconds: 220);
+  static const Curve _animationCurve = Curves.easeOutCubic;
   static const double _collapsedFlexThreshold = 0.0001;
   static const double _rememberedFlexFloor = 0.04;
-  static const double _dragCollapseFlexThreshold = 0.02;
-  static const double _maxPanelWidthFactor = 0.92;
-  static const double _handleWidth = 28;
-  static const double _handleHeight = 64;
+
+  /// 收起/展开动画途中，右侧面板内容至少按此像素宽度布局再裁切，避免面板槽位
+  /// 接近 0 宽时缩略图网格拿到负的布局约束。
+  static const double _minPanelContentWidth = 48;
 
   late final AnimationController _animationController;
-  Animation<double>? _flexTween;
+  double _animationBeginFlex = 0;
+  double _animationEndFlex = 0;
   double _rememberedPanelFlex = 0.28;
+  bool _expanded = true;
 
   MultiSplitViewController get _controller => widget.controller;
   double get _panelFlex => _controller.areas[1].flex ?? 0;
-  bool get _panelExpanded => _panelFlex > _collapsedFlexThreshold;
 
   @override
   void initState() {
@@ -72,12 +76,20 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       vsync: this,
       duration: _animationDuration,
     )..addListener(_applyFlexAnimationTick);
-    _controller.addListener(_handleControllerChanged);
-    if (widget.collapsible) {
-      if (_panelExpanded) {
-        _rememberedPanelFlex = _panelFlex;
-      }
+    if (!widget.panelAvailable) {
       _controller.areas[1].flex = 0;
+    } else if (_panelFlex >= _rememberedFlexFloor) {
+      _rememberedPanelFlex = _panelFlex;
+    }
+    _expanded = _panelFlex > _collapsedFlexThreshold;
+    _controller.addListener(_handleControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant CollapsiblePlayerSplitView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.panelAvailable && _expanded) {
+      _animatePanelFlexTo(0);
     }
   }
 
@@ -93,34 +105,47 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
     if (!_animationController.isAnimating && flex >= _rememberedFlexFloor) {
       _rememberedPanelFlex = flex;
     }
-    if (mounted) {
-      setState(() {});
+    // layout 由 MultiSplitView 自己监听 controller 完成；这里只在展开/收起翻转时
+    // 重建，用来挂载/卸载右侧子树和切换图标，避免动画每帧重建整棵分栏。
+    final expanded = flex > _collapsedFlexThreshold;
+    if (expanded != _expanded) {
+      _expanded = expanded;
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
   void _applyFlexAnimationTick() {
-    final tween = _flexTween;
-    if (tween == null) {
-      return;
-    }
-    _controller.areas[1].flex = tween.value;
+    final progress = _animationCurve.transform(_animationController.value);
+    _controller.areas[1].flex =
+        _animationBeginFlex +
+        (_animationEndFlex - _animationBeginFlex) * progress;
   }
 
   void _animatePanelFlexTo(double target) {
     final from = _panelFlex;
     if ((from - target).abs() < _collapsedFlexThreshold) {
-      _flexTween = null;
+      _animationBeginFlex = target;
+      _animationEndFlex = target;
       _controller.areas[1].flex = target;
       return;
     }
-    _flexTween = Tween<double>(begin: from, end: target).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
+    _animationBeginFlex = from;
+    _animationEndFlex = target;
     _animationController.forward(from: 0);
   }
 
   void _togglePanel() {
-    if (_panelExpanded) {
+    if (_animationController.isAnimating) {
+      // 动画途中点击：反向动画。不读当前 flex 当记忆宽度，避免把中间值当成
+      // 「上次宽度」，收起再展开后宽度变样。
+      _animatePanelFlexTo(
+        _animationEndFlex > _collapsedFlexThreshold ? 0 : _rememberedPanelFlex,
+      );
+      return;
+    }
+    if (_panelFlex > _collapsedFlexThreshold) {
       if (_panelFlex >= _rememberedFlexFloor) {
         _rememberedPanelFlex = _panelFlex;
       }
@@ -128,27 +153,6 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       return;
     }
     _animatePanelFlexTo(_rememberedPanelFlex);
-  }
-
-  void _handleHandleDragStart() {
-    _animationController.stop();
-    _flexTween = null;
-  }
-
-  void _handleHandleDragUpdate(DragUpdateDetails details, double layoutWidth) {
-    final available = math.max(layoutWidth - context.appSpacing.xs, 1.0);
-    final currentWidth = _panelPixelWidth(_panelFlex, available);
-    final targetWidth = (currentWidth - details.delta.dx).clamp(
-      0.0,
-      available * _maxPanelWidthFactor,
-    );
-    _controller.areas[1].flex = _flexForPanelWidth(targetWidth, available);
-  }
-
-  void _handleHandleDragEnd() {
-    if (_panelFlex < _dragCollapseFlexThreshold) {
-      _animatePanelFlexTo(0);
-    }
   }
 
   double _panelPixelWidth(double flex, double available) {
@@ -160,19 +164,10 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
     return available * flex / totalFlex;
   }
 
-  double _flexForPanelWidth(double width, double available) {
-    if (width <= 0) {
-      return 0;
-    }
-    final otherFlex = _controller.areas[0].flex ?? 1;
-    return otherFlex * width / (available - width);
-  }
-
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final expanded = _panelExpanded;
-    final showHandle = widget.collapsible && widget.panelAvailable;
+    final showToggle = widget.collapsible && widget.panelAvailable;
     return MultiSplitViewTheme(
       data: MultiSplitViewThemeData(
         dividerThickness: spacing.xs,
@@ -181,73 +176,95 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
           color: context.appColors.borderSubtle,
         ),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              MultiSplitView(
-                controller: widget.controller,
-                axis: Axis.horizontal,
-                builder: (context, area) => area.index == 0
-                    ? widget.leftBuilder(context)
-                    : expanded
-                    ? widget.rightBuilder(context)
-                    : const SizedBox.shrink(),
-              ),
-              if (showHandle) _buildHandle(context, constraints, expanded),
-            ],
-          );
-        },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          MultiSplitView(
+            controller: widget.controller,
+            axis: Axis.horizontal,
+            builder: (context, area) => area.index == 0
+                ? widget.leftBuilder(context)
+                : _expanded
+                ? _buildClippedPanel(context)
+                : const SizedBox.shrink(),
+          ),
+          if (showToggle) Positioned.fill(child: _buildToggleOverlay(context)),
+        ],
       ),
     );
   }
 
-  Widget _buildHandle(
-    BuildContext context,
-    BoxConstraints constraints,
-    bool expanded,
-  ) {
-    final dividerThickness = context.appSpacing.xs;
-    final available = math.max(constraints.maxWidth - dividerThickness, 0.0);
-    final panelWidth = _panelPixelWidth(_panelFlex, available);
-    final dividerCenterX = available - panelWidth + dividerThickness / 2;
-    final handleRight = math.max(
-      constraints.maxWidth - dividerCenterX - _handleWidth / 2,
-      0.0,
-    );
-    final handleTop = math.max(
-      (constraints.maxHeight - _handleHeight) / 2,
-      0.0,
-    );
-    return Positioned(
-      right: handleRight,
-      top: handleTop,
-      child: Semantics(
-        button: true,
-        label: expanded ? '收起缩略图面板' : '展开缩略图面板',
-        child: GestureDetector(
-          key: widget.handleKey,
-          behavior: HitTestBehavior.opaque,
-          onTap: _togglePanel,
-          onHorizontalDragStart: (_) => _handleHandleDragStart(),
-          onHorizontalDragUpdate: (details) =>
-              _handleHandleDragUpdate(details, constraints.maxWidth),
-          onHorizontalDragEnd: (_) => _handleHandleDragEnd(),
-          child: MoviePlayerGlassSurface(
-            width: _handleWidth,
-            height: _handleHeight,
-            child: Center(
-              child: Icon(
-                expanded
-                    ? Icons.chevron_right_rounded
-                    : Icons.grid_view_rounded,
-                size: context.appComponentTokens.iconSizeSm,
-                color: context.appTextPalette.onMedia.withValues(alpha: 0.9),
-              ),
-            ),
+  /// 面板槽位宽度随收起/展开动画收缩；内容按不小于 [_minPanelContentWidth] 的
+  /// 宽度布局，再裁切到槽位宽度，动画全程平滑且不会给网格负约束。
+  Widget _buildClippedPanel(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.max(constraints.maxWidth, _minPanelContentWidth);
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.centerRight,
+            minWidth: width,
+            maxWidth: width,
+            minHeight: constraints.minHeight,
+            maxHeight: constraints.maxHeight,
+            child: widget.rightBuilder(context),
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  /// 右上角常显的面板开关：定位跟随**播放画面（左面板）的右缘** —— 收起时贴屏幕
+  /// 右上角，展开时随分隔条左移，停在顶栏「视频信息」按钮旁，不落到右侧面板上。
+  ///
+  /// 位置由 [ListenableBuilder] 监听 controller 逐帧计算，动画/拖拽时只重建这个
+  /// 小按钮，不重建分栏与播放器。
+  Widget _buildToggleOverlay(BuildContext context) {
+    final overlayTokens = context.appOverlayTokens;
+    final button = AppIconButton(
+      key: widget.handleKey,
+      size: AppIconButtonSize.regular,
+      iconColor: context.appTextPalette.onMedia,
+      semanticLabel: _expanded ? '收起缩略图面板' : '展开缩略图面板',
+      onPressed: _togglePanel,
+      icon: Icon(
+        _expanded ? Icons.chevron_right_rounded : Icons.grid_view_rounded,
+        size: context.appComponentTokens.iconSizeSm,
+        // 常显在画面上，加轻描影保证亮画面下也可读。
+        shadows: <Shadow>[
+          Shadow(color: Colors.black.withValues(alpha: 0.55), blurRadius: 8),
+        ],
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => ListenableBuilder(
+        listenable: widget.controller,
+        child: button,
+        builder: (context, child) {
+          final spacing = context.appSpacing;
+          final available = math.max(constraints.maxWidth - spacing.xs, 0.0);
+          final panelWidth = _panelPixelWidth(_panelFlex, available);
+          // 不叠 SafeArea：media_kit 窗口态顶栏用的就是零安全区内边距，开关要
+          // 和「视频信息」按钮同锚点，多塞一层安全区会在带刘海的设备上横向错开。
+          return Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: EdgeInsets.only(
+                // 与 media_kit 顶栏按钮同一行：顶栏是 56 高容器（top margin 18）
+                // 内垂直居中 44 的按钮，按钮实际 top = 18 + (56-44)/2 = 24，
+                // 正是 playerBackOverlayTop；用 18 会低 6px、与信息按钮错位。
+                top: overlayTokens.playerBackOverlayTop,
+                // 与顶栏同一坐标系：都相对左侧播放画面的右缘内缩，而不是相对
+                // 整个分栏，展开时才能停在播放画面右上角、不落到右侧面板上。
+                right:
+                    panelWidth +
+                    spacing.xs +
+                    overlayTokens.playerControlBarHorizontalInset,
+              ),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }

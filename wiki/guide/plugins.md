@@ -18,6 +18,7 @@ SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。�
 | 本地存储与 qBittorrent | `sakuramedia_local_provider` | 接入本地媒体目录，提供手动导入、qBittorrent 下载、后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_local_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_local_provider/releases/latest) |
 | 女优资料补全 | `sakuramedia_actor_metadata` | 从 JavDB 和 MinnanoAV 补全本地女优资料，包括生日、身高、三围、罩杯、出生地、血型和性别。 | [源码](https://github.com/tinypinglite/sakuramedia-actor-metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia-actor-metadata/releases/latest) |
 | JavBus 元数据 | `sakuramedia_javbus_metadata` | JavDB 未收录时，按番号从 JavBus 补全影片标题、发行日期、时长、片商、演员、标签、封面和剧照等元数据。 | [源码](https://github.com/tinypinglite/sakuramedia_javbus_metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javbus_metadata/releases/latest) |
+| 影片文案抓取与翻译 | `sakuramedia_movie_scrape_translate` | 从 DMM 抓取影片的日文标题和简介，可选翻译成中文后写回影片标题与简介。 | [源码](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate) · [下载最新版](https://github.com/tinypinglite/sakuramedia_movie_scrape_translate/releases/latest) |
 | JavDB 排行榜 | `sakuramedia_javdb_ranking` | 提供 JavDB 热播、高评分、有码、无码、FC2 和 TOP250 榜单，并注册定时同步任务。 | [源码](https://github.com/tinypinglite/sakuramedia_javdb_ranking) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javdb_ranking/releases/latest) |
 | 更多影片榜单 | `sakuramedia_more_rank_movies` | 接入 Minnano AV 和 JavLibrary，提供 Minnano AV 日榜/周榜/月榜以及 JavLibrary 高评价、最想要榜单（上个月/全部），并注册定时同步任务。 | [源码](https://github.com/tinypinglite/sakuramedia_more_rank_movies) · [下载最新版](https://github.com/tinypinglite/sakuramedia_more_rank_movies/releases/latest) |
 | 合集影片判定 | `sakuramedia_judge_collecttion_movie` | 按影片时长和番号前缀自动标记合集影片，不覆盖 App 内的手动判定。 | [源码](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie) · [下载最新版](https://github.com/tinypinglite/sakuramedia_judge_collecttion_movie/releases/latest) |
@@ -26,7 +27,8 @@ SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。�
 ## 怎么选
 
 - 后端镜像不内置插件。首次部署请先安装所需的存储 Provider：「本地存储与 qBittorrent」适合本机或 NAS 挂载目录加 qBittorrent，「115 网盘 Provider」适合 115 离线下载。
-- 排行榜、合集判定、字幕、女优资料补全和 JavBus 元数据插件可以按需独立安装，不决定媒体的存储方式。
+- 排行榜、合集判定、字幕、女优资料补全、JavBus 元数据和影片文案抓取与翻译插件可以按需独立安装，不决定媒体的存储方式。
+- 影片文案抓取与翻译需要容器能访问 DMM（通常需日本 IP 或代理），启用翻译时还需配置兼容 `chat_completions` 的大模型 API。
 - JavBus 元数据只在 JavDB 明确未收录影片时补缺，不会替换 JavDB 作为主数据源。
 - JavDB 排行榜只有 TOP250 需要配置 JavDB 账号，其余榜单无需账号也能同步。
 - SubtitleCat 当前只抓取中文字幕，且影片必须已经存在于 SakuraMedia。

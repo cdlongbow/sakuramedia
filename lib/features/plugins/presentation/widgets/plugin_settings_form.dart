@@ -30,6 +30,29 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
   final _controllers = <String, TextEditingController>{};
 
   @override
+  void didUpdateWidget(covariant PluginSettingsForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.values, widget.values)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      for (final entry in _controllers.entries) {
+        dynamic value = widget.values;
+        for (final part in entry.key.split('.')) {
+          value = value is Map ? value[part] : null;
+        }
+        final text = value is List ? value.join('\n') : value?.toString() ?? '';
+        if (entry.value.text != text) {
+          entry.value.text = text;
+        }
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (final controller in _controllers.values) {
       controller.dispose();

@@ -271,6 +271,64 @@ void main() {
     );
   }
 
+  for (final mobile in [false, true]) {
+    testWidgets(
+      'saved password survives skeleton handoff (mobile=$mobile)',
+      (tester) async {
+        final bundle = await openSettings(
+          tester,
+          mobile: mobile,
+          schema: {
+            'type': 'object',
+            'properties': {
+              'api_key': {
+                'type': 'string',
+                'default': '',
+                'format': 'password',
+                'title': 'API 密钥',
+              },
+              'request_timeout_seconds': {
+                'type': 'number',
+                'default': 20,
+                'title': '请求超时（秒）',
+              },
+            },
+          },
+          settings: {'api_key': 'sk-existing'},
+        );
+        final password = find.byKey(const Key('plugin-setting-api_key'));
+        expect(
+          tester.widget<TextFormField>(password).controller!.text,
+          'sk-existing',
+        );
+        expect(
+          tester
+              .widget<EditableText>(
+                find.descendant(
+                  of: password,
+                  matching: find.byType(EditableText),
+                ),
+              )
+              .obscureText,
+          isTrue,
+        );
+        bundle.adapter.enqueueJson(
+          method: 'PUT',
+          path: '/system/plugins/demo_plugin/settings',
+          body: {'settings': {}},
+        );
+        await tester.tap(find.byKey(const Key('plugin-settings-save-button')));
+        await tester.pumpAndSettle();
+        final body =
+            bundle.adapter.requests.singleWhere((r) => r.method == 'PUT').body
+                as Map;
+        expect(body['api_key'], 'sk-existing');
+        expect(tester.takeException(), isNull);
+        await tester.pump(const Duration(seconds: 3));
+      },
+    );
+  }
+
   testWidgets(
     'server field errors can be corrected and nullable values cleared',
     (tester) async {

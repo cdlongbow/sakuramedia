@@ -10,6 +10,7 @@ class MediaLibraryDto {
     required this.name,
     required this.providerKey,
     this.providerConfig = const <String, dynamic>{},
+    this.supportsInPlaceImport = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -18,6 +19,7 @@ class MediaLibraryDto {
   final String name;
   final String providerKey;
   final Map<String, dynamic> providerConfig;
+  final bool supportsInPlaceImport;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -39,6 +41,7 @@ class MediaLibraryDto {
       name: json['name'] as String? ?? '',
       providerKey: providerKey,
       providerConfig: Map<String, dynamic>.unmodifiable(config),
+      supportsInPlaceImport: json['supports_in_place_import'] == true,
       createdAt: asDateTime(json['created_at']),
       updatedAt: asDateTime(json['updated_at']),
     );

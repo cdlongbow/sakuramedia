@@ -299,8 +299,9 @@ for entry in page.entries:
 - `media_kind="video"`：按文件名建立普通视频，可选加入 `collection_id`；
 - `media_kind="jav"`：从文件名解析番号，走 JavDB 优先、元数据插件兜底的元数据导入并自动订阅；番号缺失、文件小于最小视频体积或元数据获取失败会记录为失败项，可在任务中心人工处理；JAV 不支持 `collection_id`；
 - `source_disposition="delete_after_commit"` 时，导入成功后由 provider 删除来源文件；默认 `keep`；
+- `source_disposition="in_place"` 时，不复制也不移动文件，媒体直接引用源文件当前位置；只有声明了该能力的 provider（bundle 的 `supports_in_place_import = True`）可用，其余 provider 会返回 `422 in_place_import_unsupported`；
 - 同一媒体库同一时间只允许一个导入任务；冲突时抛出 `409 import_task_conflict`，应等待当前导入结束后再重试；
-- 默认 `keep` 时，宿主按 provider 提供的来源身份去重，重复导入同一来源会被跳过。
+- `keep` 与 `in_place` 时，宿主按 provider 提供的来源身份去重，重复导入同一来源会被跳过。
 
 浏览或导入失败会抛出带 `status_code` 和 `code` 的错误（例如库不存在 `404 media_library_not_found`、provider 未安装 `503 provider_not_installed`、认证失败 `401 provider_authentication_failed`）。导入是异步任务，`enqueue()` 返回后可用 `get(task_run_id)` 轮询：`pending` / `running` 期间计数为零，结束后包含 imported / skipped / failed 计数、新建视频与影片 id 和 `error_message`；同一任务也可以在任务中心人工查看。插件可以浏览所有已配置媒体库的 provider 列表，这是宿主对仓库内可信插件的既定信任模型。
 
@@ -438,6 +439,7 @@ bundle 必须声明：
 | 跳过未变化的导入来源 | `get_import_source_identity(source=...)` | 返回字符串或 `None`；同一标识必须代表同一位置、未变化的来源，改名或移动必须改变标识 |
 | 扫描媒体引用 | `scan_media_refs(source_ref=...)` | 枚举 Provider 原生引用 |
 | 核对已管理媒体 | `scan_managed_media_ref_keys()`、`managed_media_ref_key(media_ref=...)` | 返回当前媒体库文件的键集合，并能用同一规则计算已登记媒体的键 |
+| 原地导入 | bundle 的 `supports_in_place_import = True`；`stage_import_file(..., source_disposition="in_place")` | 直接把媒体指向导入来源、不复制或移动文件；`finalize_import`/`abort_import` 必须处理该处置方式的回执；`delete_media` 与有效性巡检按 provider 自己的引用规则处理 |
 | 普通视频封面 | `open_cover_source(media=...)` | 以上下文管理器提供封面生成使用的视频来源 |
 | 补充时长与分辨率 | `probe_duration_seconds(media=...)`、`probe_resolution(media=...)` | 分别返回整数秒和 `"WxH"` 字符串（或 `None`）；导入时也可通过 `StagedMedia.resolution` 提供分辨率 |
 | 探测原始视频信息 | `probe_video_info(media=...)` | 返回 JSON 对象或 `None`，用于补充原始文件技术信息 |

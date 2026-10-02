@@ -71,6 +71,7 @@ class _MediaImportSourcePickerState
     if (library != null) {
       unawaited(_resetAndBrowse(library));
     }
+    _clampSourceDispositionIfUnsupported();
   }
 
   @override
@@ -80,12 +81,32 @@ class _MediaImportSourcePickerState
         widget.selectedLibrary != null) {
       unawaited(_resetAndBrowse(widget.selectedLibrary!));
     }
+    _clampSourceDispositionIfUnsupported();
   }
 
   @override
   void dispose() {
     _browseGeneration += 1;
     super.dispose();
+  }
+
+  List<SourceDisposition> get _supportedDispositions => SourceDisposition.values
+      .where(
+        (disposition) =>
+            disposition != SourceDisposition.inPlace ||
+            (widget.selectedLibrary?.supportsInPlaceImport ?? false),
+      )
+      .toList(growable: false);
+
+  void _clampSourceDispositionIfUnsupported() {
+    if (_supportedDispositions.contains(widget.sourceDisposition)) {
+      return;
+    }
+    scheduleMicrotask(() {
+      if (mounted) {
+        widget.onSourceDispositionChanged(SourceDisposition.keep);
+      }
+    });
   }
 
   Future<void> _resetAndBrowse(MediaLibraryDto library) async {
@@ -455,14 +476,18 @@ class _MediaImportSourcePickerState
   }
 
   Widget _buildSourceDispositionSelector(BuildContext context) {
+    final dispositions = _supportedDispositions;
+    final selectedDisposition = dispositions.contains(widget.sourceDisposition)
+        ? widget.sourceDisposition
+        : SourceDisposition.keep;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppSelectField<SourceDisposition>(
           key: const Key('media-import-picker-source-disposition-select'),
           label: '导入方式',
-          value: widget.sourceDisposition,
-          items: SourceDisposition.values
+          value: selectedDisposition,
+          items: dispositions
               .map(
                 (disposition) => DropdownMenuItem<SourceDisposition>(
                   value: disposition,
@@ -478,13 +503,22 @@ class _MediaImportSourcePickerState
         ),
         SizedBox(height: context.appSpacing.xs),
         Text(
-          '将源文件复制到媒体库中，导入后不会删除源文件',
+          selectedDisposition.description,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
             tone: AppTextTone.muted,
           ),
         ),
+        if (selectedDisposition == SourceDisposition.inPlace) ...[
+          SizedBox(height: context.appSpacing.md),
+          const AppNoticeCard(
+            key: Key('media-import-source-disposition-in-place-warning'),
+            leadingIcon: Icons.info_outline_rounded,
+            title: '源文件保留在原位置',
+            description: '移动、重命名或修改源文件会导致媒体失效；删除媒体记录不会删除源文件。',
+          ),
+        ],
       ],
     );
   }

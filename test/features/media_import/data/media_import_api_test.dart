@@ -137,6 +137,35 @@ void main() {
     },
   );
 
+  test('createImport sends the in_place disposition', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/imports',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 44,
+        'task_key': 'jav_import',
+        'state': 'pending',
+      },
+    );
+
+    await api.createImport(
+      mediaKind: 'jav',
+      libraryId: 2,
+      source: const MediaImportSource(
+        sourceRef: <String, dynamic>{'opaque': true},
+      ),
+      sourceDisposition: SourceDisposition.inPlace,
+    );
+
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'media_kind': 'jav',
+      'library_id': 2,
+      'source_ref': <String, dynamic>{'opaque': true},
+      'source_disposition': 'in_place',
+    });
+  });
+
   test('getFailedItems reads the task-scoped failed file list', () async {
     adapter.enqueueJson(
       method: 'GET',

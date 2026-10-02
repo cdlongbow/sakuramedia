@@ -20,6 +20,7 @@ void main() {
           'name': 'Main',
           'provider_key': 'demo',
           'provider_config': <String, dynamic>{'root': '/media/main'},
+          'supports_in_place_import': true,
           'created_at': '2026-03-08T09:30:00Z',
           'updated_at': '2026-03-08T10:30:00Z',
         },
@@ -67,7 +68,9 @@ void main() {
 
     expect(libraries.single.providerKey, 'demo');
     expect(libraries.single.providerConfig, {'root': '/media/main'});
+    expect(libraries.single.supportsInPlaceImport, isTrue);
     expect(created.providerConfig, {'root': '/media/archive'});
+    expect(created.supportsInPlaceImport, isFalse);
     expect(updated.name, 'Archive Updated');
     expect(bundle.adapter.requests[1].body, <String, dynamic>{
       'name': 'Archive',

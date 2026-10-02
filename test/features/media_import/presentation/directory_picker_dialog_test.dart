@@ -6,10 +6,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/media_import/presentation/directory_picker_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/domain/media_import/media_import_source_picker.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -169,6 +171,111 @@ void main() {
     expect(find.text('Other'), findsOneWidget);
     expect(find.text('Stale'), findsNothing);
   });
+
+  testWidgets('offers in-place import when the library supports it', (
+    tester,
+  ) async {
+    final bundle = await _buildBundle();
+    addTearDown(bundle.dispose);
+    _enqueueLibraries(bundle, <Map<String, dynamic>>[
+      _library(supportsInPlace: true),
+    ]);
+    _enqueueBrowse(
+      bundle,
+      libraryId: 1,
+      entries: <Map<String, dynamic>>[
+        _entry(ref: 'folder-1', name: 'Movies', type: 'directory'),
+      ],
+    );
+    _enqueueBrowse(
+      bundle,
+      libraryId: 1,
+      parentRef: <String, dynamic>{'id': 'folder-1'},
+    );
+
+    await _pumpHarness(tester, bundle);
+    await _openPicker(tester);
+    await tester.tap(
+      find.byKey(const Key('media-import-picker-source-disposition-select')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('原地导入（不复制文件）'), findsOneWidget);
+
+    await tester.tap(find.text('原地导入（不复制文件）'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-import-source-disposition-in-place-warning')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('media-import-entry-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(
+        const Key('media-import-picker-select-current-directory-button'),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const Key('media-import-picker-submit-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('result:{"id":"folder-1"}:in_place'), findsOneWidget);
+  });
+
+  testWidgets('hides in-place import when the library does not support it', (
+    tester,
+  ) async {
+    final bundle = await _buildBundle();
+    addTearDown(bundle.dispose);
+    _enqueueLibraries(bundle, <Map<String, dynamic>>[_library()]);
+    _enqueueBrowse(
+      bundle,
+      libraryId: 1,
+      entries: <Map<String, dynamic>>[
+        _entry(ref: 'folder-1', name: 'Movies', type: 'directory'),
+      ],
+    );
+
+    await _pumpHarness(tester, bundle);
+    await _openPicker(tester);
+    await tester.tap(
+      find.byKey(const Key('media-import-picker-source-disposition-select')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('原地导入（不复制文件）'), findsNothing);
+    expect(find.text('导入成功后删除源文件'), findsOneWidget);
+  });
+
+  testWidgets('falls back to keep when the library cannot import in place', (
+    tester,
+  ) async {
+    final bundle = await _buildBundle();
+    addTearDown(bundle.dispose);
+    _enqueueBrowse(bundle, libraryId: 1);
+    final received = <SourceDisposition>[];
+
+    await _pumpWidget(
+      tester,
+      bundle,
+      MediaImportSourcePicker(
+        selectedLibrary: MediaLibraryDto.fromJson(_library()),
+        sourceDisposition: SourceDisposition.inPlace,
+        onSourceChanged: (_) {},
+        onSourceDispositionChanged: received.add,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(received, <SourceDisposition>[SourceDisposition.keep]);
+    expect(find.text('保留源文件'), findsOneWidget);
+    expect(
+      find.byKey(const Key('media-import-source-disposition-in-place-warning')),
+      findsNothing,
+    );
+  });
 }
 
 Future<TestApiBundle> _buildBundle() async {
@@ -182,7 +289,15 @@ Future<TestApiBundle> _buildBundle() async {
   return createTestApiBundle(sessionStore);
 }
 
-Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) async {
+Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) {
+  return _pumpWidget(tester, bundle, const _PickerHarness());
+}
+
+Future<void> _pumpWidget(
+  WidgetTester tester,
+  TestApiBundle bundle,
+  Widget child,
+) async {
   tester.view.physicalSize = const Size(1440, 1000);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -192,7 +307,7 @@ Future<void> _pumpHarness(WidgetTester tester, TestApiBundle bundle) async {
       overrides: bundle.riverpodOverrides(),
       child: MaterialApp(
         theme: sakuraThemeData,
-        home: const Scaffold(body: _PickerHarness()),
+        home: Scaffold(body: child),
       ),
     ),
   );
@@ -247,14 +362,16 @@ Map<String, dynamic> _entry({
   'is_video': isVideo,
 };
 
-Map<String, dynamic> _library() => <String, dynamic>{
-  'id': 1,
-  'name': '主媒体库',
-  'provider_key': 'provider-a',
-  'provider_config': <String, dynamic>{},
-  'created_at': '2026-07-14T09:00:00Z',
-  'updated_at': '2026-07-14T09:00:00Z',
-};
+Map<String, dynamic> _library({bool supportsInPlace = false}) =>
+    <String, dynamic>{
+      'id': 1,
+      'name': '主媒体库',
+      'provider_key': 'provider-a',
+      'provider_config': <String, dynamic>{},
+      'supports_in_place_import': supportsInPlace,
+      'created_at': '2026-07-14T09:00:00Z',
+      'updated_at': '2026-07-14T09:00:00Z',
+    };
 
 Map<String, dynamic> _otherLibrary() => <String, dynamic>{
   'id': 2,

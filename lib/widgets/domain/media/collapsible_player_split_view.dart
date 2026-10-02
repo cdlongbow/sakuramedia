@@ -265,7 +265,7 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
           child: Padding(
             padding: EdgeInsets.only(
               // 与 media_kit 顶栏按钮同一行：顶栏是 56 高容器（top margin 18）
-              // 内垂直居中 44 的按钮，按钮实际 top = 18 + (56-44)/2 = 24，
+              // 内垂直居中 44 的按钮，按钮实际 top = 18 + （56-44）/2 = 24，
               // 正是 playerBackOverlayTop；用 18 会低 6px、与信息按钮错位。
               top: overlayTokens.playerBackOverlayTop,
               // 与顶栏同一坐标系：都相对左侧播放画面的右缘内缩，而不是相对

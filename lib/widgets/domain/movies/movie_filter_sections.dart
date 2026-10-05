@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
@@ -39,7 +40,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
       yearOptions!.isNotEmpty ||
       isYearOptionsLoading ||
       yearOptionsErrorMessage != null ||
-      filterState.year != null;
+      filterState.years.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -96,11 +97,11 @@ class MovieFilterSectionGroup extends StatelessWidget {
           SizedBox(height: context.appSpacing.lg),
           MovieYearFilterSection(
             options: resolvedYearOptions,
-            selectedYear: filterState.year,
+            selectedYears: filterState.years,
             isLoading: isYearOptionsLoading,
             errorMessage: yearOptionsErrorMessage,
             onRetry: onYearOptionsRetry,
-            onSelected: (value) => onChanged(filterState.copyWith(year: value)),
+            onChanged: (value) => onChanged(filterState.copyWith(years: value)),
           ),
         ],
         SizedBox(height: context.appSpacing.lg),
@@ -402,19 +403,19 @@ class MovieYearFilterSection extends StatefulWidget {
   const MovieYearFilterSection({
     super.key,
     required this.options,
-    required this.selectedYear,
+    required this.selectedYears,
     required this.isLoading,
     required this.errorMessage,
     required this.onRetry,
-    required this.onSelected,
+    required this.onChanged,
   });
 
   final List<MovieFilterYearOption> options;
-  final int? selectedYear;
+  final Set<int> selectedYears;
   final bool isLoading;
   final String? errorMessage;
   final VoidCallback? onRetry;
-  final ValueChanged<int?> onSelected;
+  final ValueChanged<Set<int>> onChanged;
 
   @override
   State<MovieYearFilterSection> createState() => _MovieYearFilterSectionState();
@@ -429,16 +430,27 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
   void initState() {
     super.initState();
     // 当前已选年份可能在两行之外；首次打开时直接展开，避免筛选条件不可见。
-    _isExpanded = widget.selectedYear != null;
+    _isExpanded = widget.selectedYears.isNotEmpty;
   }
 
   @override
   void didUpdateWidget(covariant MovieYearFilterSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.selectedYear != oldWidget.selectedYear &&
-        widget.selectedYear != null) {
+    if (widget.selectedYears.isNotEmpty &&
+        !setEquals(widget.selectedYears, oldWidget.selectedYears)) {
       _isExpanded = true;
     }
+  }
+
+  /// 点「全部年份」清空；点年份 chip 在选中集合里切换。
+  void _toggleChoice(int? year) {
+    final next = Set<int>.of(widget.selectedYears);
+    if (year == null) {
+      next.clear();
+    } else if (!next.remove(year)) {
+      next.add(year);
+    }
+    widget.onChanged(next);
   }
 
   List<_MovieYearChoice> get _choices => <_MovieYearChoice>[
@@ -591,8 +603,10 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
                           ),
                           label: choice.label,
                           size: AppTextButtonSize.xSmall,
-                          isSelected: choice.value == widget.selectedYear,
-                          onPressed: () => widget.onSelected(choice.value),
+                          isSelected: choice.value == null
+                              ? widget.selectedYears.isEmpty
+                              : widget.selectedYears.contains(choice.value),
+                          onPressed: () => _toggleChoice(choice.value),
                         ),
                     ],
                   ),

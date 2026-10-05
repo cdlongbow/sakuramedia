@@ -185,7 +185,7 @@ void main() {
   });
 
   test(
-    'getMovies sends actor_id and year when actor year filters provided',
+    'getMovies sends actor_id and years as stable desc CSV',
     () async {
       adapter.enqueueJson(
         method: 'GET',
@@ -199,11 +199,16 @@ void main() {
         },
       );
 
-      await moviesApi.getMovies(actorId: 7, year: 2026, page: 1, pageSize: 24);
+      await moviesApi.getMovies(
+        actorId: 7,
+        years: const <int>[2024, 2026],
+        page: 1,
+        pageSize: 24,
+      );
 
       final request = adapter.requests.single;
       expect(request.uri.queryParameters['actor_id'], '7');
-      expect(request.uri.queryParameters['year'], '2026');
+      expect(request.uri.queryParameters['year'], '2026,2024');
     },
   );
 

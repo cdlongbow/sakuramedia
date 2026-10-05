@@ -265,7 +265,7 @@ void main() {
         .applyMovieFilter(
           const MovieFilterState(
             status: MovieStatusFilter.subscribed,
-            year: 2024,
+            years: <int>{2023, 2024},
             heatMin: 1000,
             heatMax: 20000,
           ),
@@ -276,7 +276,7 @@ void main() {
     expect(state.filter.movie.status, MovieStatusFilter.subscribed);
     final secondRequest = adapter.requests.last;
     expect(secondRequest.uri.queryParameters['status'], 'subscribed');
-    expect(secondRequest.uri.queryParameters['year'], '2024');
+    expect(secondRequest.uri.queryParameters['year'], '2024,2023');
     // 女优详情也走 /catalog/movies 接口，热度范围与 actor_id 可组合过滤。
     expect(secondRequest.uri.queryParameters['heat_min'], '1000');
     expect(secondRequest.uri.queryParameters['heat_max'], '20000');

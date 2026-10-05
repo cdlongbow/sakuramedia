@@ -24,7 +24,7 @@ class MoviesApi {
     MovieNumberSourceFilter? numberSource,
     String? sort,
     int? actorId,
-    int? year,
+    List<int>? years,
     List<int>? tagIds,
     TagMatchMode? tagMatch,
     int? heatMin,
@@ -57,8 +57,10 @@ class MoviesApi {
     if (actorId != null) {
       queryParameters['actor_id'] = actorId;
     }
-    if (year != null) {
-      queryParameters['year'] = year;
+    if (years != null && years.isNotEmpty) {
+      // 降序拼接，保证同一选择集合的请求 URL 稳定。
+      final ordered = years.toList()..sort((a, b) => b.compareTo(a));
+      queryParameters['year'] = ordered.join(',');
     }
     if (heatMin != null) {
       queryParameters['heat_min'] = heatMin;

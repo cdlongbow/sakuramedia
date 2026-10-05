@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
@@ -123,6 +124,16 @@ int? movieHeatMinFromSlider(int value) => value <= 0 ? null : value;
 int? movieHeatMaxFromSlider(int value) =>
     value >= movieFilterHeatSliderMax ? null : value;
 
+/// 年份多选的展示文案：1 个直出，2 个顿号相连，3 个及以上折叠为
+/// 「最新年份 等 N 个年份」；空集返回空串，此时调用方不采用年份标签。
+String movieFilterYearsLabel(Set<int> years) {
+  final ordered = years.toList()..sort((a, b) => b.compareTo(a));
+  if (ordered.length <= 2) {
+    return ordered.join('、');
+  }
+  return '${ordered.first} 等 ${ordered.length} 个年份';
+}
+
 /// 热度范围的展示文案，桌面浮层与移动抽屉、筛选入口共用一份。
 String movieHeatRangeLabel(int? heatMin, int? heatMax) {
   if (heatMin != null && heatMax != null) {
@@ -166,7 +177,7 @@ class MovieFilterState {
     this.numberSource = MovieNumberSourceFilter.all,
     this.sortField = MovieSortField.releaseDate,
     this.sortDirection = SortDirection.desc,
-    this.year,
+    this.years = const <int>{},
     this.heatMin,
     this.heatMax,
     this.resolution,
@@ -177,7 +188,9 @@ class MovieFilterState {
   final MovieNumberSourceFilter numberSource;
   final MovieSortField sortField;
   final SortDirection sortDirection;
-  final int? year;
+
+  /// 多选年份，空集表示不限；多个年份之间为 OR。
+  final Set<int> years;
 
   /// 热度下限（接口 `heat_min` 语义）：null 表示不限。
   final int? heatMin;
@@ -194,7 +207,7 @@ class MovieFilterState {
       numberSource == MovieNumberSourceFilter.all &&
       sortField == MovieSortField.releaseDate &&
       sortDirection == SortDirection.desc &&
-      year == null &&
+      years.isEmpty &&
       heatMin == null &&
       heatMax == null &&
       resolution == null;
@@ -205,8 +218,8 @@ class MovieFilterState {
       '${sortField.apiValue}:${sortDirection.apiValue}';
 
   String get triggerLabel {
-    final label = switch ((year, hasHeatRange)) {
-      (final int y, _) => '$y',
+    final label = switch ((years.isNotEmpty, hasHeatRange)) {
+      (true, _) => movieFilterYearsLabel(years),
       (_, true) => movieHeatRangeLabel(heatMin, heatMax),
       _ => status.label,
     };
@@ -219,7 +232,7 @@ class MovieFilterState {
       numberSource == other.numberSource &&
       sortField == other.sortField &&
       sortDirection == other.sortDirection &&
-      year == other.year &&
+      setEquals(years, other.years) &&
       heatMin == other.heatMin &&
       heatMax == other.heatMax &&
       resolution == other.resolution;
@@ -230,7 +243,7 @@ class MovieFilterState {
     MovieNumberSourceFilter? numberSource,
     MovieSortField? sortField,
     SortDirection? sortDirection,
-    Object? year = _movieFilterUnset,
+    Object? years = _movieFilterUnset,
     Object? heatMin = _movieFilterUnset,
     Object? heatMax = _movieFilterUnset,
     Object? resolution = _movieFilterUnset,
@@ -246,7 +259,9 @@ class MovieFilterState {
       numberSource: numberSource ?? this.numberSource,
       sortField: sortField ?? this.sortField,
       sortDirection: sortDirection ?? this.sortDirection,
-      year: identical(year, _movieFilterUnset) ? this.year : year as int?,
+      years: identical(years, _movieFilterUnset)
+          ? this.years
+          : years as Set<int>? ?? const <int>{},
       heatMin: identical(heatMin, _movieFilterUnset)
           ? this.heatMin
           : heatMin as int?,

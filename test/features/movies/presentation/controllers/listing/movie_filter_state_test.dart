@@ -33,6 +33,21 @@ void main() {
     });
   });
 
+  group('movieFilterYearsLabel', () {
+    test('1 个直出，2 个顿号相连，3 个及以上折叠', () {
+      expect(movieFilterYearsLabel(<int>{2024}), '2024');
+      expect(movieFilterYearsLabel(<int>{2023, 2024}), '2024、2023');
+      expect(
+        movieFilterYearsLabel(<int>{2022, 2024, 2023}),
+        '2024 等 3 个年份',
+      );
+    });
+
+    test('空集返回空串', () {
+      expect(movieFilterYearsLabel(const <int>{}), '');
+    });
+  });
+
   group('MovieFilterState', () {
     test('初始状态不含热度条件', () {
       const state = MovieFilterState.initial;
@@ -57,7 +72,7 @@ void main() {
     });
 
     test('triggerLabel 优先级：年份 > 热度 > 状态', () {
-      final withYear = const MovieFilterState().copyWith(year: 2024);
+      final withYear = const MovieFilterState().copyWith(years: <int>{2024});
       expect(withYear.triggerLabel, '2024');
 
       final withYearAndHeat = withYear.copyWith(heatMin: 1000);
@@ -65,6 +80,31 @@ void main() {
 
       final withHeatOnly = const MovieFilterState().copyWith(heatMax: 2000);
       expect(withHeatOnly.triggerLabel, '≤ 2000');
+    });
+
+    test('多选年份影响 isDefault / triggerLabel / matches', () {
+      final multi = const MovieFilterState().copyWith(
+        years: <int>{2022, 2024, 2023},
+      );
+      expect(multi.isDefault, isFalse);
+      expect(multi.triggerLabel, '2024 等 3 个年份');
+
+      expect(
+        multi.matches(const MovieFilterState(years: <int>{2024, 2023, 2022})),
+        isTrue,
+      );
+      expect(
+        multi.matches(const MovieFilterState(years: <int>{2024})),
+        isFalse,
+      );
+      expect(multi.copyWith(years: const <int>{}).isDefault, isTrue);
+    });
+
+    test('copyWith 可显式清空年份条件', () {
+      const withYears = MovieFilterState(years: <int>{2023, 2024});
+      final cleared = withYears.copyWith(years: null);
+      expect(cleared.years, isEmpty);
+      expect(cleared.isDefault, isTrue);
     });
 
     test('copyWith 可显式清空热度条件', () {

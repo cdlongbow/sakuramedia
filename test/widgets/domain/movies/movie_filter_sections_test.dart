@@ -118,14 +118,14 @@ void main() {
     await tester.tap(find.text('1997(1)'));
     await tester.pumpAndSettle();
 
-    expect(changedState?.year, 1997);
+    expect(changedState?.years, <int>{1997});
     expect(find.text('重置'), findsOneWidget);
 
     await tester.tap(find.text('重置'));
     await tester.pumpAndSettle();
 
     expect(resetCount, 1);
-    expect(filterState.year, isNull);
+    expect(filterState.years, isEmpty);
     expect(tester.takeException(), isNull);
   });
 
@@ -158,7 +158,63 @@ void main() {
     await tester.tap(find.byKey(Key('movie-filter-year-$currentYear')));
     await tester.pumpAndSettle();
 
-    expect(changedState?.year, currentYear);
+    expect(changedState?.years, <int>{currentYear});
+  });
+
+  testWidgets('年份多选：再次点击取消，全部年份清空，入口标签折叠', (WidgetTester tester) async {
+    final yearOptions = List<MovieFilterYearOption>.generate(
+      3,
+      (index) => MovieFilterYearOption(year: 2026 - index, movieCount: 1),
+    );
+    var filterState = MovieFilterState.initial;
+    MovieFilterState? changedState;
+
+    tester.view.physicalSize = const Size(420, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      StatefulBuilder(
+        builder: (context, setState) => wrapHeader(
+          filterState: filterState,
+          yearOptions: yearOptions,
+          onChanged: (nextState) {
+            changedState = nextState;
+            setState(() => filterState = nextState);
+          },
+          onReset: () => setState(() => filterState = MovieFilterState.initial),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('movies-filter-trigger')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('movie-filter-year-2026')));
+    await tester.pumpAndSettle();
+    expect(changedState?.years, <int>{2026});
+    expect(find.text('2026'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('movie-filter-year-2024')));
+    await tester.pumpAndSettle();
+    expect(changedState?.years, <int>{2026, 2024});
+    expect(find.text('2026、2024'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('movie-filter-year-2025')));
+    await tester.pumpAndSettle();
+    expect(changedState?.years, <int>{2026, 2025, 2024});
+    expect(find.text('2026 等 3 个年份'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('movie-filter-year-2025')));
+    await tester.pumpAndSettle();
+    expect(changedState?.years, <int>{2026, 2024});
+
+    await tester.tap(find.byKey(const Key('movie-filter-year-all')));
+    await tester.pumpAndSettle();
+    expect(changedState?.years, isEmpty);
+    expect(filterState.isDefault, isTrue);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('影片筛选面板可选 FC2 番号来源并重置回默认', (WidgetTester tester) async {

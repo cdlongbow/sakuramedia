@@ -584,6 +584,8 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
         }
         if (widget.useTouchOptimizedControls) {
           await enterPlayerFullscreenOrientation();
+        } else {
+          await defaultEnterNativeFullscreen();
         }
       },
       // 移动端退出全屏恢复页面横屏+沉浸，避免 media_kit 默认回调

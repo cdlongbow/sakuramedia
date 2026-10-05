@@ -133,6 +133,24 @@ void main() {
     },
   );
 
+  test('pickImageSearchFile allows heic and heif files on desktop', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    debugImageSearchDownloadsDirectoryProvider = () async => null;
+    debugImageSearchEnvironmentLookup = (_) => null;
+
+    await pickImageSearchFile();
+
+    expect(
+      recordingFilePicker.pickFileAllowedExtensions,
+      containsAll(<String>['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']),
+    );
+  });
+
+  test('guessImageMimeType maps heic and heif files', () {
+    expect(guessImageMimeType('IMG_0001.HEIC'), 'image/heic');
+    expect(guessImageMimeType('photo.heif'), 'image/heif');
+  });
+
   test('pickMobileImageSearchFile uses debug override', () async {
     debugMobileImageSearchFilePicker = () async => ImageSearchPickedFile(
       bytes: Uint8List.fromList(const <int>[7, 8, 9]),
@@ -184,6 +202,7 @@ class _RecordingFilePicker extends FilePickerPlatform {
   String? pickFileInitialDirectory;
   FileType? pickFileType;
   int? pickFileCompressionQuality;
+  List<String>? pickFileAllowedExtensions;
   PlatformFile? selectedFile;
 
   @override
@@ -203,6 +222,7 @@ class _RecordingFilePicker extends FilePickerPlatform {
     pickFileInitialDirectory = initialDirectory;
     pickFileType = type;
     pickFileCompressionQuality = compressionQuality;
+    pickFileAllowedExtensions = allowedExtensions;
     return selectedFile;
   }
 }

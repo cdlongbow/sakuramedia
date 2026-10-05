@@ -53,7 +53,15 @@ Future<ImageSearchPickedFile?> pickImageSearchFile() async {
   try {
     final initialDirectory = await resolveImageSearchInitialDirectory();
     final picked = await pickFileWithBytes(
-      allowedExtensions: const <String>['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      allowedExtensions: const <String>[
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+        'heic',
+        'heif',
+      ],
       initialDirectory: initialDirectory,
       unreadableMessage: '无法读取所选图片，请换一张再试',
       pickerUnavailableMessage: '图片选择器尚未加载，请完整重启应用后再试',
@@ -140,6 +148,12 @@ String? guessImageMimeType(String fileName) {
   }
   if (lower.endsWith('.gif')) {
     return 'image/gif';
+  }
+  if (lower.endsWith('.heic')) {
+    return 'image/heic';
+  }
+  if (lower.endsWith('.heif')) {
+    return 'image/heif';
   }
   return null;
 }

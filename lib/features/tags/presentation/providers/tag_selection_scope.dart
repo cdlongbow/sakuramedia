@@ -23,11 +23,13 @@ class TagSelectionScope {
 
   const TagSelectionScope.custom({
     required String instanceKey,
+    String? cacheKey,
     List<int> initialSelectedTagIds = const <int>[],
     TagMatchMode initialMatchMode = TagMatchMode.or,
     bool preload = true,
   }) : this._(
          instanceKey: instanceKey,
+         cacheKey: cacheKey,
          initialSelectedTagIds: initialSelectedTagIds,
          initialMatchMode: initialMatchMode,
          preload: preload,

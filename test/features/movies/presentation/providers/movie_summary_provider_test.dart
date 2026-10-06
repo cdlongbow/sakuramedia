@@ -316,6 +316,56 @@ void main() {
     expect(cleared.containsKey('actor_age_max'), isFalse);
   });
 
+  test('普通影片列表 scope 标签筛选写入请求参数，可与影片筛选组合并清空', () async {
+    const scope = MovieSummaryScope.movies(cacheKey: 'desktop:movies:list');
+    await prime(scope, <Map<String, dynamic>>[_movie('ABC-001')]);
+
+    final initial = adapter.requests.single.uri.queryParameters;
+    expect(initial.containsKey('tag_ids'), isFalse);
+    expect(initial.containsKey('tag_match'), isFalse);
+
+    final notifier = container.read(movieSummaryProvider(scope).notifier);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-002')], total: 1),
+    );
+    await notifier.applyTagFilter(
+      tagIds: <int>[3, 5],
+      tagMatch: TagMatchMode.and,
+    );
+
+    final tagged = adapter.requests.last.uri.queryParameters;
+    expect(tagged['tag_ids'], '3,5');
+    expect(tagged['tag_match'], 'and');
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-003')], total: 1),
+    );
+    await notifier.applyMovieFilter(
+      const MovieFilterState(actorAgeMin: 20, actorAgeMax: 35),
+    );
+
+    final combined = adapter.requests.last.uri.queryParameters;
+    expect(combined['tag_ids'], '3,5');
+    expect(combined['actor_age_min'], '20');
+    expect(combined['actor_age_max'], '35');
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-004')], total: 1),
+    );
+    await notifier.clearTagFilter();
+
+    final cleared = adapter.requests.last.uri.queryParameters;
+    expect(cleared.containsKey('tag_ids'), isFalse);
+    expect(cleared.containsKey('tag_match'), isFalse);
+    expect(cleared['actor_age_min'], '20');
+  });
+
   test('标签列表 scope 出演年龄与标签条件组合，未设置时不发送', () async {
     const scope = MovieSummaryScope.tags(instanceKey: 'desktop:tags:list');
     container.listen(movieSummaryProvider(scope), (_, __) {});

@@ -81,6 +81,8 @@ class MovieSummary extends _$MovieSummary
         pageSize: pageSize,
       ),
       MovieSummarySource.movies => moviesApi.getMovies(
+        tagIds: filter.tagIds,
+        tagMatch: filter.tagMatch,
         page: page,
         pageSize: pageSize,
         status: filter.movie.status,

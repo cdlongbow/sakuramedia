@@ -210,6 +210,70 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     });
   }
+
+  testWidgets('筛选抽屉内按标签过滤影片，重置同时清空标签', (tester) async {
+    await pumpPage(tester, TargetPlatform.android);
+
+    // 标签数据懒加载：抽屉打开前不发 /tags。
+    expect(bundle.adapter.hitCount('GET', '/tags'), 0);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 3, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
+    await tester.tap(find.byKey(const Key('mobile-movies-filter-button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('mobile-movies-filter-drawer')),
+      findsOneWidget,
+    );
+    expect(bundle.adapter.hitCount('GET', '/tags'), 1);
+    // 标签分节在抽屉最末，先滚到它再操作。
+    expect(find.byKey(const Key('tags-option-3')), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page('ABC-002'),
+    );
+    await tester.ensureVisible(find.byKey(const Key('tags-option-3')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-option-3')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final tagged = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(tagged.uri.queryParameters['tag_ids'], '3');
+    expect(tagged.uri.queryParameters['tag_match'], 'or');
+    // 入口摘要直接反映标签条件。
+    expect(find.text('标签 · 1'), findsOneWidget);
+
+    // 标签生效后抽屉 footer 实时变为「筛选条件已更新」，重置可用并同时清空标签。
+    expect(find.text('筛选条件已更新'), findsOneWidget);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page('ABC-003'),
+    );
+    await tester.tap(find.text('重置'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    final cleared = bundle.adapter.requests.lastWhere(
+      (request) => request.path == '/movies',
+    );
+    expect(cleared.uri.queryParameters.containsKey('tag_ids'), isFalse);
+    expect(find.byKey(const Key('tags-selected-3')), findsNothing);
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
 }
 
 Map<String, dynamic> _page(String number, {int count = 1}) => {

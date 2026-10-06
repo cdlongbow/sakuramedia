@@ -6,6 +6,8 @@ import 'package:sakuramedia/app/riverpod_page_cache.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -22,6 +24,14 @@ class _DesktopMoviesPageState extends ConsumerState<DesktopMoviesPage> {
     cacheKey: 'desktop:movies:list',
   );
 
+  /// 影片库的附加标签筛选：选择状态随页面缓存一起保活，避免切页回来后
+  /// 「列表按标签过滤、标签面板为空」的不一致；标签数据懒加载。
+  static const _tagSelectionScope = TagSelectionScope.custom(
+    instanceKey: 'desktop:movies:tags',
+    cacheKey: 'desktop:movies:list',
+    preload: false,
+  );
+
   late final RiverpodPageHandle _pageCacheHandle;
 
   @override
@@ -32,9 +42,13 @@ class _DesktopMoviesPageState extends ConsumerState<DesktopMoviesPage> {
         .obtain(
           key: desktopMoviesPageCacheKey(),
           resolveLinks: () {
-            final link =
-                ref.read(movieSummaryProvider(_scope).notifier).cacheLink;
-            return link == null ? const [] : [link];
+            final movieLink = ref
+                .read(movieSummaryProvider(_scope).notifier)
+                .cacheLink;
+            final tagLink = ref
+                .read(tagSelectionProvider(_tagSelectionScope).notifier)
+                .cacheLink;
+            return [?movieLink, ?tagLink];
           },
         );
   }
@@ -52,6 +66,7 @@ class _DesktopMoviesPageState extends ConsumerState<DesktopMoviesPage> {
       surfaceColor: context.appColors.surfaceElevated,
       contentKey: const Key('movies-page'),
       totalKey: const Key('movies-page-total'),
+      tagSelectionScope: _tagSelectionScope,
       sectionSpacing: context.appSpacing.lg,
       registerPageRefresh: true,
       onMovieTap:

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
@@ -11,6 +12,9 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
+import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -25,6 +29,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/tags/tag_filter_section.dart';
 
 typedef MovieSummaryListBodyBuilder =
     Widget Function(
@@ -42,11 +47,15 @@ class MovieSummaryListHeaderArgs {
     required this.filterState,
     required this.onApply,
     required this.total,
+    this.tagSelection,
   });
 
   final MovieFilterState filterState;
   final ValueChanged<MovieFilterState> onApply;
   final int total;
+
+  /// 当前标签筛选选择；未启用标签筛选的页面为 null。
+  final TagSelectionState? tagSelection;
 }
 
 /// Riverpod 版影片列表共用渲染壳。
@@ -72,6 +81,7 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
     this.headerLeading,
     this.showHeader = true,
     this.useMobileSelectionLayout = false,
+    this.tagSelectionScope,
   });
 
   final MovieSummaryScope scope;
@@ -91,6 +101,11 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
   /// 无筛选维度的列表（如女优上新）可以整行不渲染顶栏，把高度留给内容。
   final bool showHeader;
   final bool useMobileSelectionLayout;
+
+  /// 可选的标签筛选：传入后筛选面板末尾出现「标签」分节，选择变化实时应用
+  /// 到列表筛选，顶栏摘要与重置也纳入标签条件。生命周期由调用页面管理
+  /// （缓存页需把它的 cacheLink 一并注册进页面缓存）。
+  final TagSelectionScope? tagSelectionScope;
 
   @override
   ConsumerState<MovieSummaryListContent> createState() =>
@@ -183,7 +198,34 @@ class _MovieSummaryListContentState
     );
   }
 
-  void _resetFilters() => _applyFilter(MovieFilterState.initial);
+  /// 标签选择变化后重拉列表：有选择走标签条件，清空则回到无标签请求。
+  void _applyTagSelection(TagSelectionState selection) {
+    if (selectionMode) {
+      exitSelection();
+    }
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+    final notifier = ref.read(movieSummaryProvider(widget.scope).notifier);
+    if (selection.hasSelection) {
+      unawaited(
+        notifier.applyTagFilter(
+          tagIds: selection.selectedTagIds,
+          tagMatch: selection.matchMode,
+        ),
+      );
+    } else {
+      unawaited(notifier.clearTagFilter());
+    }
+  }
+
+  void _resetFilters() {
+    _applyFilter(MovieFilterState.initial);
+    final tagSelectionScope = widget.tagSelectionScope;
+    if (tagSelectionScope != null) {
+      ref.read(tagSelectionProvider(tagSelectionScope).notifier).clear();
+    }
+  }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
     final result = await ref
@@ -225,6 +267,23 @@ class _MovieSummaryListContentState
         items.isNotEmpty &&
         (paged!.isLoadingMore || paged.loadMoreErrorMessage != null);
 
+    final tagSelectionScope = widget.tagSelectionScope;
+    final tagSelection = tagSelectionScope == null
+        ? null
+        : ref.watch(tagSelectionProvider(tagSelectionScope));
+    if (tagSelectionScope != null) {
+      ref.listen(tagSelectionProvider(tagSelectionScope), (previous, next) {
+        if (previous == null) {
+          return;
+        }
+        if (listEquals(previous.selectedTagIds, next.selectedTagIds) &&
+            previous.matchMode == next.matchMode) {
+          return;
+        }
+        _applyTagSelection(next);
+      });
+    }
+
     ref.listen(movieCollectionTypeEventsProvider, (_, next) {
       final change = next.value;
       if (change == null ||
@@ -252,19 +311,26 @@ class _MovieSummaryListContentState
           filterState: filter,
           onApply: _applyFilter,
           total: paged?.total ?? 0,
+          tagSelection: tagSelection,
         ),
       );
     } else {
+      final hasTagSelection = tagSelection?.hasSelection ?? false;
       header = AppListHeader(
         filterButtonKey: const Key('movies-filter-trigger'),
-        filterLabel: filter.triggerLabel,
+        filterLabel: hasTagSelection
+            ? '标签 · ${tagSelection!.selectedCount}'
+            : filter.triggerLabel,
         filterPanelKey: const Key('movies-filter-panel'),
         filterPanelBuilder: (_) => MovieFilterSectionGroup(
           filterState: filter,
           onChanged: _applyFilter,
+          tagSection: tagSelectionScope == null
+              ? null
+              : TagFilterSection(scope: tagSelectionScope),
         ),
         filterPanelFooter: AppFilterPanelFooter(
-          isDefault: filter.isDefault,
+          isDefault: filter.isDefault && !hasTagSelection,
           onReset: _resetFilters,
         ),
         informationSlots: [

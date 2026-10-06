@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
@@ -23,7 +24,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
 /// 时刻合集列表内容：桌面网格页 / 移动子页两套壳共用同一份取数与卡片逻辑。
-class MomentCollectionsContent extends ConsumerWidget {
+class MomentCollectionsContent extends ConsumerStatefulWidget {
   const MomentCollectionsContent({
     super.key,
     required this.isMobile,
@@ -34,7 +35,23 @@ class MomentCollectionsContent extends ConsumerWidget {
   final ValueChanged<int> onOpenDetail;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MomentCollectionsContent> createState() =>
+      _MomentCollectionsContentState();
+}
+
+class _MomentCollectionsContentState
+    extends ConsumerState<MomentCollectionsContent> {
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen(momentCollectionMutationEventsProvider, (_, next) {
       if (next.value != null) {
         unawaited(
@@ -43,12 +60,23 @@ class MomentCollectionsContent extends ConsumerWidget {
       }
     });
     final async = ref.watch(momentCollectionsOverviewProvider);
-    if (isMobile) {
+    if (widget.isMobile) {
       return ColoredBox(
         key: const Key('mobile-moment-collections-page'),
         color: context.appColors.surfaceCard,
         child: Column(
           children: [
+            Padding(
+              padding: EdgeInsets.only(top: context.appSpacing.sm),
+              child: AppSearchField(
+                fieldKey: const Key('mobile-moment-collections-search-field'),
+                controller: _searchController,
+                hintText: '搜索合集',
+                onChanged: (value) =>
+                    setState(() => _keyword = value.trim().toLowerCase()),
+                clearKey: const Key('mobile-moment-collections-search-clear'),
+              ),
+            ),
             Expanded(child: _buildMobileBody(context, ref, async)),
             Container(
               padding: EdgeInsets.all(context.appSpacing.md),
@@ -100,6 +128,15 @@ class MomentCollectionsContent extends ConsumerWidget {
                 ),
               ],
             ),
+            SizedBox(height: context.appSpacing.sm),
+            AppSearchField(
+              fieldKey: const Key('moment-collections-search-field'),
+              controller: _searchController,
+              hintText: '搜索合集',
+              onChanged: (value) =>
+                  setState(() => _keyword = value.trim().toLowerCase()),
+              clearKey: const Key('moment-collections-search-clear'),
+            ),
             SizedBox(height: context.appSpacing.lg),
             Expanded(child: _buildDesktopBody(context, ref, async)),
           ],
@@ -120,27 +157,44 @@ class MomentCollectionsContent extends ConsumerWidget {
         message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
       );
     }
-    final collections = isLoading
+    final allCollections = isLoading
         ? momentCollectionPlaceholders(count: 8)
         : async.value ?? const <MomentCollectionDto>[];
-    if (collections.isEmpty) {
+    if (allCollections.isEmpty) {
       return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
+    }
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
+    if (collections.isEmpty) {
+      return const AppEmptyState(message: '没有匹配的合集');
     }
     return AppSkeletonizer(
       enabled: isLoading,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: spacing.lg),
-        child: AppAdaptiveCardWrap<MomentCollectionDto>(
-          key: const Key('moment-collections-grid'),
-          items: collections,
-          orientation: AppCardGridOrientation.landscape,
-          itemBuilder: (context, collection, _) => CollectionCard.moment(
-            collection: collection,
-            onTap: () => onOpenDetail(collection.id),
-            onEdit: () => _edit(context, ref, collection: collection),
-            onDelete: () => _delete(context, ref, collection),
+      // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(bottom: spacing.lg),
+            sliver: AppAdaptiveCardWrapSliver<MomentCollectionDto>(
+              gridKey: const Key('moment-collections-grid'),
+              items: collections,
+              orientation: AppCardGridOrientation.landscape,
+              itemBuilder:
+                  (context, collection, _) => CollectionCard.moment(
+                    collection: collection,
+                    onTap: () => widget.onOpenDetail(collection.id),
+                    onEdit: () => _edit(context, ref, collection: collection),
+                    onDelete: () => _delete(context, ref, collection),
+                  ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -152,16 +206,24 @@ class MomentCollectionsContent extends ConsumerWidget {
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = isLoading
+    final allCollections = isLoading
         ? momentCollectionPlaceholders()
         : async.value ?? const <MomentCollectionDto>[];
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
     return AppSkeletonizer(
       enabled: isLoading,
       child: AppAdaptiveRefreshScrollView(
         key: const Key('moment-collections-scroll'),
         onRefresh: ref.read(momentCollectionsOverviewProvider.notifier).refresh,
         slivers: <Widget>[
-          if (async.hasError && collections.isEmpty)
+          if (async.hasError && allCollections.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(
@@ -171,28 +233,31 @@ class MomentCollectionsContent extends ConsumerWidget {
                 ),
               ),
             )
-          else if (collections.isEmpty)
+          else if (allCollections.isEmpty)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
             )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '没有匹配的合集'),
+            )
           else
             SliverPadding(
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: SliverToBoxAdapter(
-                child: AppAdaptiveCardWrap<MomentCollectionDto>(
-                  key: const Key('mobile-moment-collections-grid'),
-                  items: collections,
-                  orientation: AppCardGridOrientation.landscape,
-                  itemBuilder: (context, collection, _) =>
-                      CollectionCard.moment(
-                        collection: collection,
-                        onTap: () => onOpenDetail(collection.id),
-                        onEdit: () =>
-                            _edit(context, ref, collection: collection),
-                        onDelete: () => _delete(context, ref, collection),
-                      ),
-                ),
+              // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+              sliver: AppAdaptiveCardWrapSliver<MomentCollectionDto>(
+                gridKey: const Key('mobile-moment-collections-grid'),
+                items: collections,
+                orientation: AppCardGridOrientation.landscape,
+                itemBuilder:
+                    (context, collection, _) => CollectionCard.moment(
+                      collection: collection,
+                      onTap: () => widget.onOpenDetail(collection.id),
+                      onEdit: () => _edit(context, ref, collection: collection),
+                      onDelete: () => _delete(context, ref, collection),
+                    ),
               ),
             ),
         ],

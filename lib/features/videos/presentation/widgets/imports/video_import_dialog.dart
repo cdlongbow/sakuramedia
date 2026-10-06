@@ -1,15 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_single_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_import_source_picker.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_library_selector_field.dart';
@@ -61,15 +61,27 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
 
   Future<void> _loadCollections() async {
     try {
-      final collections = await ref
-          .read(videoCollectionsApiProvider)
-          .getCollections();
+      // 与合集列表页共用 overview 缓存，减少一次全量拉取。
+      final collections = await ref.read(
+        videoCollectionsOverviewProvider.future,
+      );
       if (mounted) {
         setState(() => _collections = collections);
       }
     } catch (_) {
       // 合集加载失败不阻塞浏览，用户仍可现场「新建合集」后再导入。
     }
+  }
+
+  Future<void> _pickCollection() async {
+    final result = await showPickVideoCollectionSingleDialog(
+      context,
+      selectedCollectionId: _collectionId,
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+    setState(() => _collectionId = result.collectionId);
   }
 
   Future<void> _createCollection() async {
@@ -86,6 +98,8 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
       _collections = <VideoCollectionDto>[..._collections, created];
       _collectionId = created.id;
     });
+    // 同步 overview 缓存：其后打开的单选弹层复用同一份缓存，才不会漏掉刚建的合集。
+    await ref.read(videoCollectionsOverviewProvider.notifier).refresh();
   }
 
   void _handleLibraryChanged(MediaLibraryDto? library) {
@@ -114,6 +128,8 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // 维持合集 overview 存活：嵌套的单选弹层复用同一份缓存，不重复全量拉取。
+    ref.listen(videoCollectionsOverviewProvider, (_, _) {});
     final spacing = context.appSpacing;
     return SafeArea(
       top: false,
@@ -194,6 +210,16 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
   }
 
   Widget _buildCollectionField(BuildContext context) {
+    String? selectedName;
+    if (_collectionId != null) {
+      selectedName = '已选合集';
+      for (final collection in _collections) {
+        if (collection.id == _collectionId) {
+          selectedName = collection.name;
+          break;
+        }
+      }
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,19 +243,69 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
           ],
         ),
         SizedBox(height: context.appSpacing.sm),
-        AppSelectField<int?>(
-          value: _collectionId,
-          placeholder: _collections.isEmpty ? '暂无合集，可直接导入' : '不加入合集',
-          items: <DropdownMenuItem<int?>>[
-            for (final collection in _collections)
-              DropdownMenuItem<int?>(
-                value: collection.id,
-                child: Text(collection.name),
-              ),
-          ],
-          onChanged: (value) => setState(() => _collectionId = value),
+        _CollectionPickerField(
+          valueLabel: selectedName,
+          onTap: _pickCollection,
         ),
       ],
+    );
+  }
+}
+
+/// 只读合集选择触发条：外观对齐 `AppSelectField`，点击打开可搜索单选弹层。
+class _CollectionPickerField extends StatelessWidget {
+  const _CollectionPickerField({required this.valueLabel, required this.onTap});
+
+  final String? valueLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final formTokens = context.appFormTokens;
+    final label = valueLabel?.trim() ?? '';
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        key: const Key('video-import-collection-field'),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            horizontal: formTokens.fieldHorizontalPadding,
+            vertical: formTokens.fieldVerticalPadding,
+          ),
+          decoration: BoxDecoration(
+            color: colors.surfaceMuted,
+            borderRadius: context.appRadius.smBorder,
+            border: Border.all(color: colors.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label.isEmpty ? '不加入合集' : label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s14,
+                    tone: label.isEmpty
+                        ? AppTextTone.muted
+                        : AppTextTone.primary,
+                  ),
+                ),
+              ),
+              SizedBox(width: context.appSpacing.sm),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: context.appComponentTokens.iconSizeSm,
+                color: context.appTextPalette.secondary,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

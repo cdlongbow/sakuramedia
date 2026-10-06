@@ -15,6 +15,7 @@ class VideosApi {
   Future<PaginatedResponseDto<VideoItemListItemDto>> getVideos({
     String? query,
     String? sort,
+    bool uncollected = false,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -28,6 +29,9 @@ class VideosApi {
     }
     if (sort != null && sort.isNotEmpty) {
       queryParameters['sort'] = sort;
+    }
+    if (uncollected) {
+      queryParameters['uncollected'] = true;
     }
 
     final response = await _apiClient.get(

@@ -36,7 +36,7 @@ void main() {
     apiClient.dispose();
   });
 
-  test('getVideos 编码 query/sort 并解析分页', () async {
+  test('getVideos 编码 query/sort/uncollected 并解析分页', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/videos',
@@ -63,6 +63,7 @@ void main() {
     final result = await videosApi.getVideos(
       query: '关键词',
       sort: 'created_at:desc',
+      uncollected: true,
     );
 
     expect(result.total, 1);
@@ -74,9 +75,30 @@ void main() {
     final recorded = adapter.requests.single;
     expect(recorded.uri.queryParameters['query'], '关键词');
     expect(recorded.uri.queryParameters['sort'], 'created_at:desc');
+    expect(recorded.uri.queryParameters['uncollected'], 'true');
     // 后端已移除 videos 域标签/人物筛选，不应再下发这两个 key。
     expect(recorded.uri.queryParameters.containsKey('tag_id'), isFalse);
     expect(recorded.uri.queryParameters.containsKey('person_id'), isFalse);
+  });
+
+  test('getVideos 默认不下发 uncollected', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/videos',
+      body: <String, dynamic>{
+        'items': <dynamic>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+
+    await videosApi.getVideos();
+
+    expect(
+      adapter.requests.single.uri.queryParameters.containsKey('uncollected'),
+      isFalse,
+    );
   });
 
   test('getVideoDetail 复用 MovieMediaItemDto 解析 media_items（含进度与时刻）', () async {

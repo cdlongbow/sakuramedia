@@ -1,8 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 
 /// 选择器弹层的统一头部：标题 + 计数 + 搜索 + 筛选 chips。
 ///
@@ -90,34 +89,12 @@ class AppPickerHeader extends StatelessWidget {
           ],
         ),
         SizedBox(height: spacing.lg),
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: searchController,
-          builder: (context, value, _) {
-            return AppTextField(
-              fieldKey: searchFieldKey,
-              controller: searchController,
-              hintText: searchHintText,
-              textInputAction: TextInputAction.search,
-              onChanged: onSearchChanged,
-              prefix: Icon(
-                Icons.search_rounded,
-                size: context.appComponentTokens.iconSizeSm,
-                color: context.appTextPalette.muted,
-              ),
-              suffix: value.text.isEmpty
-                  ? null
-                  : AppIconButton(
-                      key: clearSearchKey,
-                      tooltip: '清空',
-                      size: AppIconButtonSize.compact,
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () {
-                        searchController.clear();
-                        onSearchChanged?.call('');
-                      },
-                    ),
-            );
-          },
+        AppSearchField(
+          fieldKey: searchFieldKey,
+          controller: searchController,
+          hintText: searchHintText,
+          onChanged: onSearchChanged,
+          clearKey: clearSearchKey,
         ),
         if (chips.isNotEmpty) ...[
           SizedBox(height: spacing.md),

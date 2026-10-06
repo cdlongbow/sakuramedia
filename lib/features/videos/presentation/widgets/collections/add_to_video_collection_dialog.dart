@@ -1,43 +1,57 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
+import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
-import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 
 /// 「加入合集」的呈现形态：桌面弹窗 / 移动端底部抽屉。
 enum AddToVideoCollectionPresentation { dialog, bottomDrawer }
 
-/// 把视频加入某个视频合集。返回 `true` 表示成功加入。
-Future<bool?> showAddToVideoCollectionDialog(
+/// 弹出「加入合集」选择器，勾选切换视频与合集的归属（即时生效）。
+///
+/// [collectedRefs] 为该视频当前所属合集（列表 / 详情响应里的 `collections`），
+/// 用于打开时回显已加入项；点行勾选 = 加入，取消勾选 = 移出，与切片 / 时刻的
+/// 「加入合集」弹窗行为一致。
+///
+/// 关闭方式不固定（X / 点遮罩 / 下滑），不依赖返回值传递结果；调用方关闭后
+/// 统一广播合集成员变化刷新列表即可。
+Future<void> showAddToVideoCollectionDialog(
   BuildContext context, {
   required int videoItemId,
+  List<VideoCollectionRef> collectedRefs = const <VideoCollectionRef>[],
   AddToVideoCollectionPresentation presentation =
       AddToVideoCollectionPresentation.dialog,
 }) {
   switch (presentation) {
     case AddToVideoCollectionPresentation.dialog:
-      return showDialog<bool>(
+      return showDialog<void>(
         context: context,
         builder:
-            (dialogContext) =>
-                AddToVideoCollectionDialog(videoItemId: videoItemId),
+            (dialogContext) => AddToVideoCollectionDialog(
+              videoItemId: videoItemId,
+              collectedRefs: collectedRefs,
+            ),
       );
     case AddToVideoCollectionPresentation.bottomDrawer:
-      return showAppBottomDrawer<bool>(
+      return showAppBottomDrawer<void>(
         context: context,
         drawerKey: const Key('add-to-video-collection-bottom-sheet'),
         maxHeightFactor: 0.7,
         builder:
             (sheetContext) => AddToVideoCollectionDialog(
               videoItemId: videoItemId,
+              collectedRefs: collectedRefs,
               presentation: AddToVideoCollectionPresentation.bottomDrawer,
             ),
       );
@@ -48,10 +62,15 @@ class AddToVideoCollectionDialog extends ConsumerStatefulWidget {
   const AddToVideoCollectionDialog({
     super.key,
     required this.videoItemId,
+    this.collectedRefs = const <VideoCollectionRef>[],
     this.presentation = AddToVideoCollectionPresentation.dialog,
   });
 
   final int videoItemId;
+
+  /// 视频当前所属合集，用于回显已加入项。
+  final List<VideoCollectionRef> collectedRefs;
+
   final AddToVideoCollectionPresentation presentation;
 
   @override
@@ -61,29 +80,45 @@ class AddToVideoCollectionDialog extends ConsumerStatefulWidget {
 
 class _AddToVideoCollectionDialogState
     extends ConsumerState<AddToVideoCollectionDialog> {
-  late final VideoCollectionsApi _api;
   List<VideoCollectionDto> _collections = const <VideoCollectionDto>[];
+  final Set<int> _selectedIds = <int>{};
+  final Set<int> _updatingIds = <int>{};
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
   bool _isLoading = true;
-  String? _error;
-  int? _busyCollectionId;
+  String? _errorMessage;
 
   bool get _isBottomDrawer =>
       widget.presentation == AddToVideoCollectionPresentation.bottomDrawer;
 
+  List<VideoCollectionDto> get _visibleCollections {
+    if (_keyword.isEmpty) {
+      return _collections;
+    }
+    return _collections
+        .where((collection) => collection.name.toLowerCase().contains(_keyword))
+        .toList(growable: false);
+  }
+
   @override
   void initState() {
     super.initState();
-    _api = ref.read(videoCollectionsApiProvider);
+    _selectedIds.addAll(widget.collectedRefs.map((ref) => ref.id));
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
     try {
-      final collections = await _api.getCollections();
+      // 与列表页 / 目标选择器共享 overview 缓存，避免每次打开重复全量拉取。
+      final collections = await ref.read(
+        videoCollectionsOverviewProvider.future,
+      );
       if (!mounted) {
         return;
       }
@@ -96,41 +131,9 @@ class _AddToVideoCollectionDialogState
         return;
       }
       setState(() {
-        _error = apiErrorMessage(error, fallback: '合集加载失败');
+        _errorMessage = apiErrorMessage(error, fallback: '合集加载失败');
         _isLoading = false;
       });
-    }
-  }
-
-  Future<void> _addTo(VideoCollectionDto collection) async {
-    setState(() => _busyCollectionId = collection.id);
-    try {
-      await _api.addCollectionItem(
-        collectionId: collection.id,
-        videoItemId: widget.videoItemId,
-      );
-      if (!mounted) {
-        return;
-      }
-      Navigator.of(context).pop(true);
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '加入合集失败'));
-      if (mounted) {
-        setState(() => _busyCollectionId = null);
-      }
-    }
-  }
-
-  Future<void> _createAndAdd() async {
-    final created = await showVideoCollectionDialog(
-      context,
-      presentation:
-          _isBottomDrawer
-              ? VideoCollectionEditPresentation.bottomDrawer
-              : VideoCollectionEditPresentation.dialog,
-    );
-    if (created != null) {
-      await _addTo(created);
     }
   }
 
@@ -145,6 +148,7 @@ class _AddToVideoCollectionDialogState
 
   Widget _buildContent(BuildContext context) {
     final spacing = context.appSpacing;
+    final isAnyUpdating = _updatingIds.isNotEmpty;
     // 抽屉形态：列表占据抽屉剩余空间并内部滚动，表头/按钮常驻，整体由抽屉 maxHeightFactor
     // 约束，避免矮屏上「表头 + 固定高列表 + 按钮」超过抽屉封顶导致溢出。桌面弹窗仍用固定上限。
     final listSection =
@@ -154,35 +158,63 @@ class _AddToVideoCollectionDialogState
               constraints: const BoxConstraints(maxHeight: 320),
               child: _buildBody(context),
             );
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        Text(
-          '加入合集',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s16,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
+        AbsorbPointer(
+          absorbing: isAnyUpdating,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '加入合集',
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s16,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.primary,
+                ),
+              ),
+              SizedBox(height: spacing.md),
+              AppSearchField(
+                fieldKey: const Key('add-to-video-collection-search-field'),
+                controller: _searchController,
+                hintText: '搜索合集',
+                onChanged: (value) =>
+                    setState(() => _keyword = value.trim().toLowerCase()),
+                clearKey: const Key(
+                  'add-to-video-collection-search-clear',
+                ),
+              ),
+              SizedBox(height: spacing.md),
+              listSection,
+              SizedBox(height: spacing.md),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(
+                      label: '新建合集并加入',
+                      onPressed: _isLoading || isAnyUpdating ? null : _createAndAdd,
+                    ),
+                  ),
+                  SizedBox(width: spacing.md),
+                  AppButton(
+                    label: '关闭',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        SizedBox(height: spacing.md),
-        listSection,
-        SizedBox(height: spacing.md),
-        Row(
-          children: [
-            Expanded(
-              child: AppButton(label: '新建合集并加入', onPressed: _createAndAdd),
-            ),
-            SizedBox(width: spacing.md),
-            AppButton(
-              label: '关闭',
-              variant: AppButtonVariant.secondary,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
+        if (isAnyUpdating)
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+          ),
       ],
     );
   }
@@ -196,34 +228,97 @@ class _AddToVideoCollectionDialogState
         ),
       );
     }
-    if (_error != null) {
-      return AppEmptyState(message: _error!);
+    if (_errorMessage != null) {
+      return AppEmptyState(message: _errorMessage!);
     }
     if (_collections.isEmpty) {
       return const AppEmptyState(message: '暂无合集，点击下方新建');
     }
+    final visibleCollections = _visibleCollections;
+    if (visibleCollections.isEmpty) {
+      return const AppEmptyState(message: '没有匹配的合集');
+    }
+    final isAnyUpdating = _updatingIds.isNotEmpty;
     return ListView.separated(
+      key: const Key('add-to-video-collection-list'),
       shrinkWrap: true,
-      itemCount: _collections.length,
-      separatorBuilder: (context, _) => SizedBox(height: context.appSpacing.xs),
+      itemCount: visibleCollections.length,
+      separatorBuilder: (context, _) => SizedBox(height: context.appSpacing.sm),
       itemBuilder: (context, index) {
-        final collection = _collections[index];
-        final isBusy = _busyCollectionId == collection.id;
-        return ListTile(
-          key: Key('add-to-collection-${collection.id}'),
-          title: Text(collection.name),
-          subtitle: Text('${collection.itemCount} 个视频'),
-          trailing:
-              isBusy
-                  ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-                  )
-                  : const Icon(Icons.add),
-          onTap: isBusy ? null : () => _addTo(collection),
+        final collection = visibleCollections[index];
+        final selected = _selectedIds.contains(collection.id);
+        return AppPickerOptionTile.text(
+          selected: selected,
+          enabled: !isAnyUpdating,
+          onTap: () => _toggle(collection),
+          title: collection.name,
+          trailingText: collection.itemCount > 0 ? '${collection.itemCount}' : null,
+          optionKey: Key('add-to-video-collection-option-${collection.id}'),
+          checkboxKey: Key('add-to-video-collection-checkbox-${collection.id}'),
         );
       },
     );
+  }
+
+  Future<void> _toggle(VideoCollectionDto collection) async {
+    final api = ref.read(videoCollectionsApiProvider);
+    final isSelected = _selectedIds.contains(collection.id);
+    setState(() {
+      _updatingIds.add(collection.id);
+      if (isSelected) {
+        _selectedIds.remove(collection.id);
+      } else {
+        _selectedIds.add(collection.id);
+      }
+    });
+    try {
+      if (isSelected) {
+        await api.removeCollectionVideo(
+          collectionId: collection.id,
+          videoItemId: widget.videoItemId,
+        );
+      } else {
+        await api.addCollectionItem(
+          collectionId: collection.id,
+          videoItemId: widget.videoItemId,
+        );
+      }
+    } catch (error) {
+      // 失败回滚勾选状态。
+      if (mounted) {
+        setState(() {
+          if (isSelected) {
+            _selectedIds.add(collection.id);
+          } else {
+            _selectedIds.remove(collection.id);
+          }
+        });
+      }
+      showToast(
+        apiErrorMessage(error, fallback: isSelected ? '移出合集失败' : '加入合集失败'),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _updatingIds.remove(collection.id));
+      }
+    }
+  }
+
+  Future<void> _createAndAdd() async {
+    final created = await showVideoCollectionDialog(
+      context,
+      presentation:
+          _isBottomDrawer
+              ? VideoCollectionEditPresentation.bottomDrawer
+              : VideoCollectionEditPresentation.dialog,
+    );
+    if (!mounted || created == null) {
+      return;
+    }
+    setState(() {
+      _collections = <VideoCollectionDto>[created, ..._collections];
+      _errorMessage = null;
+    });
+    await _toggle(created);
   }
 }

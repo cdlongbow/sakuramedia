@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/create_playl
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
@@ -66,12 +67,23 @@ class MoviePlaylistPickerDialog extends ConsumerStatefulWidget {
 class _MoviePlaylistPickerDialogState
     extends ConsumerState<MoviePlaylistPickerDialog> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   List<PlaylistDto> _playlists = const <PlaylistDto>[];
   late Set<int> _selectedPlaylistIds;
   final Set<int> _updatingPlaylistIds = <int>{};
+  String _keyword = '';
   bool _isLoading = true;
   String? _errorMessage;
+
+  List<PlaylistDto> get _visiblePlaylists {
+    if (_keyword.isEmpty) {
+      return _playlists;
+    }
+    return _playlists
+        .where((playlist) => playlist.name.toLowerCase().contains(_keyword))
+        .toList(growable: false);
+  }
 
   @override
   void initState() {
@@ -108,6 +120,7 @@ class _MoviePlaylistPickerDialogState
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -117,6 +130,7 @@ class _MoviePlaylistPickerDialogState
     final tokens = context.appComponentTokens;
     final isBottomDrawer =
         widget.presentation == MoviePlaylistPickerPresentation.bottomDrawer;
+    final visiblePlaylists = _visiblePlaylists;
     final playlistList = Scrollbar(
       controller: _scrollController,
       thumbVisibility: !isBottomDrawer,
@@ -125,9 +139,9 @@ class _MoviePlaylistPickerDialogState
         controller: _scrollController,
         padding: EdgeInsets.zero,
         shrinkWrap: true,
-        itemCount: _playlists.length,
+        itemCount: visiblePlaylists.length,
         itemBuilder: (context, index) {
-          final playlist = _playlists[index];
+          final playlist = visiblePlaylists[index];
           final selected = _selectedPlaylistIds.contains(playlist.id);
           final updating = _updatingPlaylistIds.contains(playlist.id);
           return Material(
@@ -238,6 +252,17 @@ class _MoviePlaylistPickerDialogState
           ),
         ),
       );
+    } else if (visiblePlaylists.isEmpty) {
+      body = Center(
+        child: Text(
+          '没有匹配的播放列表',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s14,
+            tone: AppTextTone.muted,
+          ),
+        ),
+      );
     } else {
       body = playlistList;
     }
@@ -266,6 +291,15 @@ class _MoviePlaylistPickerDialogState
           ],
         ),
         SizedBox(height: spacing.sm),
+        AppSearchField(
+          fieldKey: const Key('movie-playlist-search-field'),
+          controller: _searchController,
+          hintText: '搜索播放列表',
+          onChanged: (value) =>
+              setState(() => _keyword = value.trim().toLowerCase()),
+          clearKey: const Key('movie-playlist-search-clear'),
+        ),
+        SizedBox(height: spacing.sm),
         if (isBottomDrawer)
           Expanded(child: body)
         else
@@ -274,7 +308,10 @@ class _MoviePlaylistPickerDialogState
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.sizeOf(context).height * 0.5,
               ),
-              child: _isLoading || _errorMessage != null || _playlists.isEmpty
+              child:
+                  _isLoading ||
+                      _errorMessage != null ||
+                      visiblePlaylists.isEmpty
                   ? SizedBox(height: 160, child: body)
                   : body,
             ),

@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
@@ -33,6 +34,14 @@ class DesktopClipCollectionsPage extends ConsumerStatefulWidget {
 class _DesktopClipCollectionsPageState
     extends ConsumerState<DesktopClipCollectionsPage> {
   bool _refreshScheduled = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   /// 详情页（压在本页之上）增删 / 拖序 / 改名后，合集卡的封面、计数、名称可能变化；
   /// 用微任务合并一轮内的多次信号成一次整列表刷新。
@@ -92,6 +101,15 @@ class _DesktopClipCollectionsPageState
                 ),
               ],
             ),
+            SizedBox(height: context.appSpacing.sm),
+            AppSearchField(
+              fieldKey: const Key('clip-collections-search-field'),
+              controller: _searchController,
+              hintText: '搜索合集',
+              onChanged: (value) =>
+                  setState(() => _keyword = value.trim().toLowerCase()),
+              clearKey: const Key('clip-collections-search-clear'),
+            ),
             SizedBox(height: context.appSpacing.lg),
             Expanded(child: _buildBody(context, async)),
           ],
@@ -110,32 +128,49 @@ class _DesktopClipCollectionsPageState
         message: apiErrorMessage(async.error!, fallback: '合集暂时无法加载，请稍后重试'),
       );
     }
-    final collections = isLoading
+    final allCollections = isLoading
         ? clipCollectionPlaceholders(count: 8)
         : async.value ?? const <ClipCollectionDto>[];
-    if (collections.isEmpty) {
+    if (allCollections.isEmpty) {
       return const AppEmptyState(message: '还没有合集，点右上角「新建合集」开始吧');
+    }
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
+    if (collections.isEmpty) {
+      return const AppEmptyState(message: '没有匹配的合集');
     }
 
     final spacing = context.appSpacing;
     return AppSkeletonizer(
       enabled: isLoading,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: spacing.lg),
-        child: AppAdaptiveCardWrap<ClipCollectionDto>(
-          key: const Key('clip-collections-grid'),
-          items: collections,
-          orientation: AppCardGridOrientation.landscape,
-          itemBuilder: (context, collection, _) => CollectionCard.clip(
-            key: Key('clip-collection-card-${collection.id}'),
-            collection: collection,
-            onTap: () => context.pushDesktopClipCollectionDetail(
-              collectionId: collection.id,
+      // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(bottom: spacing.lg),
+            sliver: AppAdaptiveCardWrapSliver<ClipCollectionDto>(
+              gridKey: const Key('clip-collections-grid'),
+              items: collections,
+              orientation: AppCardGridOrientation.landscape,
+              itemBuilder:
+                  (context, collection, _) => CollectionCard.clip(
+                    key: Key('clip-collection-card-${collection.id}'),
+                    collection: collection,
+                    onTap: () => context.pushDesktopClipCollectionDetail(
+                      collectionId: collection.id,
+                    ),
+                    onEdit: () => _editCollection(collection),
+                    onDelete: () => _deleteCollection(collection),
+                  ),
             ),
-            onEdit: () => _editCollection(collection),
-            onDelete: () => _deleteCollection(collection),
           ),
-        ),
+        ],
       ),
     );
   }

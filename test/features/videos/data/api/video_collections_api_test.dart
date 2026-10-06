@@ -145,4 +145,23 @@ void main() {
     // 翻了两页直至取满 total。
     expect(adapter.hitCount('GET', '/video-collections/7/items'), 2);
   });
+
+  test('removeCollectionVideo 按视频 id 移出合集', () async {
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/video-collections/3/videos/101',
+      statusCode: 204,
+    );
+
+    await collectionsApi.removeCollectionVideo(
+      collectionId: 3,
+      videoItemId: 101,
+    );
+
+    expect(adapter.requests.single.method, 'DELETE');
+    expect(
+      adapter.requests.single.uri.path,
+      '/video-collections/3/videos/101',
+    );
+  });
 }

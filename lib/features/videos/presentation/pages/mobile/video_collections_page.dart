@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -33,6 +34,14 @@ class MobileVideoCollectionsPage extends ConsumerStatefulWidget {
 class _MobileVideoCollectionsPageState
     extends ConsumerState<MobileVideoCollectionsPage> {
   bool _refreshScheduled = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   /// 详情页（压在本页之上）增删 / 改名后，合集卡的封面、计数、名称可能变化；
   /// 用微任务合并一轮内的多次信号成一次整列表刷新。
@@ -71,6 +80,17 @@ class _MobileVideoCollectionsPageState
       color: colors.surfaceCard,
       child: Column(
         children: [
+          Padding(
+            padding: EdgeInsets.only(top: spacing.sm),
+            child: AppSearchField(
+              fieldKey: const Key('mobile-video-collections-search-field'),
+              controller: _searchController,
+              hintText: '搜索合集',
+              onChanged: (value) =>
+                  setState(() => _keyword = value.trim().toLowerCase()),
+              clearKey: const Key('mobile-video-collections-search-clear'),
+            ),
+          ),
           Expanded(child: _buildBody(context, async)),
           Container(
             padding: EdgeInsets.all(spacing.md),
@@ -103,16 +123,24 @@ class _MobileVideoCollectionsPageState
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = isLoading
+    final allCollections = isLoading
         ? videoCollectionPlaceholders()
         : async.value ?? const <VideoCollectionDto>[];
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
     return AppSkeletonizer(
       enabled: isLoading,
       child: AppAdaptiveRefreshScrollView(
         key: const Key('mobile-video-collections-scroll'),
         onRefresh: ref.read(videoCollectionsOverviewProvider.notifier).refresh,
         slivers: <Widget>[
-          if (async.hasError && collections.isEmpty)
+          if (async.hasError && allCollections.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(
@@ -122,30 +150,38 @@ class _MobileVideoCollectionsPageState
                 ),
               ),
             )
-          else if (collections.isEmpty)
+          else if (allCollections.isEmpty)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+            )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '没有匹配的合集'),
             )
           else
             SliverPadding(
               // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: SliverToBoxAdapter(
-                child: AppAdaptiveCardWrap<VideoCollectionDto>(
-                  key: const Key('mobile-video-collections-grid'),
-                  items: collections,
-                  orientation: AppCardGridOrientation.landscape,
-                  itemBuilder: (context, collection, _) => CollectionCard.video(
-                    key: Key('mobile-video-collection-card-${collection.id}'),
-                    collection: collection,
-                    onTap: () => MobileVideoCollectionDetailRouteData(
-                      collectionId: collection.id,
-                    ).push(context),
-                    onEdit: () => _editCollection(collection),
-                    onDelete: () => _deleteCollection(collection),
-                  ),
-                ),
+              // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+              sliver: AppAdaptiveCardWrapSliver<VideoCollectionDto>(
+                gridKey: const Key('mobile-video-collections-grid'),
+                items: collections,
+                orientation: AppCardGridOrientation.landscape,
+                itemBuilder:
+                    (context, collection, _) => CollectionCard.video(
+                      key: Key(
+                        'mobile-video-collection-card-${collection.id}',
+                      ),
+                      collection: collection,
+                      onTap:
+                          () => MobileVideoCollectionDetailRouteData(
+                            collectionId: collection.id,
+                          ).push(context),
+                      onEdit: () => _editCollection(collection),
+                      onDelete: () => _deleteCollection(collection),
+                    ),
               ),
             ),
         ],

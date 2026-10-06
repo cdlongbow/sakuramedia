@@ -16,6 +16,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -33,6 +34,14 @@ class MobileClipCollectionsPage extends ConsumerStatefulWidget {
 class _MobileClipCollectionsPageState
     extends ConsumerState<MobileClipCollectionsPage> {
   bool _refreshScheduled = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   /// 详情页（压在本页之上）增删 / 改名后，合集卡的封面、计数、名称可能变化；
   /// 用微任务合并一轮内的多次信号成一次整列表刷新。
@@ -71,6 +80,17 @@ class _MobileClipCollectionsPageState
       color: colors.surfaceCard,
       child: Column(
         children: [
+          Padding(
+            padding: EdgeInsets.only(top: spacing.sm),
+            child: AppSearchField(
+              fieldKey: const Key('mobile-clip-collections-search-field'),
+              controller: _searchController,
+              hintText: '搜索合集',
+              onChanged: (value) =>
+                  setState(() => _keyword = value.trim().toLowerCase()),
+              clearKey: const Key('mobile-clip-collections-search-clear'),
+            ),
+          ),
           Expanded(child: _buildBody(context, async)),
           Container(
             padding: EdgeInsets.all(spacing.md),
@@ -100,16 +120,24 @@ class _MobileClipCollectionsPageState
   ) {
     final isLoading = async.isLoading && async.value == null;
     final spacing = context.appSpacing;
-    final collections = isLoading
+    final allCollections = isLoading
         ? clipCollectionPlaceholders()
         : async.value ?? const <ClipCollectionDto>[];
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
     return AppSkeletonizer(
       enabled: isLoading,
       child: AppAdaptiveRefreshScrollView(
         key: const Key('mobile-clip-collections-scroll'),
         onRefresh: ref.read(clipCollectionsOverviewProvider.notifier).refresh,
         slivers: <Widget>[
-          if (async.hasError && collections.isEmpty)
+          if (async.hasError && allCollections.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(
@@ -119,30 +147,36 @@ class _MobileClipCollectionsPageState
                 ),
               ),
             )
-          else if (collections.isEmpty)
+          else if (allCollections.isEmpty)
             const SliverFillRemaining(
               hasScrollBody: false,
               child: AppEmptyState(message: '还没有合集，点下方「新建合集」开始吧'),
+            )
+          else if (collections.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppEmptyState(message: '没有匹配的合集'),
             )
           else
             SliverPadding(
               // 横向缩进由 shell 8px body padding 统一提供，此处只补上下留白。
               padding: EdgeInsets.symmetric(vertical: spacing.md),
-              sliver: SliverToBoxAdapter(
-                child: AppAdaptiveCardWrap<ClipCollectionDto>(
-                  key: const Key('mobile-clip-collections-grid'),
-                  items: collections,
-                  orientation: AppCardGridOrientation.landscape,
-                  itemBuilder: (context, collection, _) => CollectionCard.clip(
-                    key: Key('mobile-clip-collection-card-${collection.id}'),
-                    collection: collection,
-                    onTap: () => MobileClipCollectionDetailRouteData(
-                      collectionId: collection.id,
-                    ).push(context),
-                    onEdit: () => _editCollection(collection),
-                    onDelete: () => _deleteCollection(collection),
-                  ),
-                ),
+              // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+              sliver: AppAdaptiveCardWrapSliver<ClipCollectionDto>(
+                gridKey: const Key('mobile-clip-collections-grid'),
+                items: collections,
+                orientation: AppCardGridOrientation.landscape,
+                itemBuilder:
+                    (context, collection, _) => CollectionCard.clip(
+                      key: Key('mobile-clip-collection-card-${collection.id}'),
+                      collection: collection,
+                      onTap:
+                          () => MobileClipCollectionDetailRouteData(
+                            collectionId: collection.id,
+                          ).push(context),
+                      onEdit: () => _editCollection(collection),
+                      onDelete: () => _deleteCollection(collection),
+                    ),
               ),
             ),
         ],

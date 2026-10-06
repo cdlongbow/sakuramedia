@@ -137,4 +137,72 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  testWidgets('搜索按名称过滤播放列表', (tester) async {
+    final session = SessionStore.inMemory();
+    await session.saveBaseUrl('https://api.example.com');
+    await session.saveTokens(
+      accessToken: 'test',
+      refreshToken: 'test',
+      expiresAt: DateTime(2030),
+    );
+    final bundle = await createTestApiBundle(session);
+    addTearDown(() {
+      bundle.dispose();
+      session.dispose();
+    });
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: [
+        {'id': 1, 'name': '周末观影', 'movie_count': 3},
+        {'id': 2, 'name': '精选合集', 'movie_count': 8},
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showMoviePlaylistPickerDialog(
+                    context,
+                    movieNumber: 'ABC-001',
+                    initialPlaylists: const [],
+                  ),
+                  child: const Text('打开'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('打开'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('movie-playlist-search-field')),
+      '精选',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('movie-playlist-option-1')), findsNothing);
+    expect(find.byKey(const Key('movie-playlist-option-2')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('movie-playlist-search-field')),
+      '不存在',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('没有匹配的播放列表'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
 }

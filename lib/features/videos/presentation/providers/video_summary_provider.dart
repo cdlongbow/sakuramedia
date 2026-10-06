@@ -87,6 +87,7 @@ class VideoSummary extends _$VideoSummary
           page: page,
           pageSize: pageSize,
           sort: activeFilter.sortExpression,
+          uncollected: activeFilter.uncollected,
         );
   }
 

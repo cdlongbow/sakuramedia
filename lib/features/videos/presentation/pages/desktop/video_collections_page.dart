@@ -16,13 +16,30 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_wrap.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 
-class DesktopVideoCollectionsPage extends ConsumerWidget {
+class DesktopVideoCollectionsPage extends ConsumerStatefulWidget {
   const DesktopVideoCollectionsPage({super.key});
+
+  @override
+  ConsumerState<DesktopVideoCollectionsPage> createState() =>
+      _DesktopVideoCollectionsPageState();
+}
+
+class _DesktopVideoCollectionsPageState
+    extends ConsumerState<DesktopVideoCollectionsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final created = await showVideoCollectionDialog(context);
@@ -76,7 +93,7 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final async = ref.watch(videoCollectionsOverviewProvider);
     final notifier = ref.read(videoCollectionsOverviewProvider.notifier);
 
@@ -87,14 +104,24 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
         // 页面边距由桌面 shell 的 AppPageInsets.desktopStandard (24px) 统一提供，
         // 此处不再叠加 EdgeInsets.all(spacing.lg)，否则合计 40px 比合集详情等
         // 同类页明显宽（详情页此前已修，这里是漏掉的一处）。
-        child: SingleChildScrollView(
-          child: Column(
-            key: const Key('video-collections-page'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: CustomScrollView(
+          key: const Key('video-collections-page'),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Row(
                 children: [
-                  const Spacer(),
+                  Expanded(
+                    child: AppSearchField(
+                      fieldKey: const Key('video-collections-search-field'),
+                      controller: _searchController,
+                      hintText: '搜索合集',
+                      onChanged: (value) => setState(
+                        () => _keyword = value.trim().toLowerCase(),
+                      ),
+                      clearKey: const Key('video-collections-search-clear'),
+                    ),
+                  ),
+                  SizedBox(width: context.appSpacing.md),
                   AppButton(
                     key: const Key('video-collections-create-button'),
                     label: '新建合集',
@@ -103,10 +130,10 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              SizedBox(height: context.appSpacing.lg),
-              _buildBody(context, ref, async),
-            ],
-          ),
+            ),
+            SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
+            _buildBody(context, ref, async),
+          ],
         ),
       ),
     );
@@ -119,28 +146,48 @@ class DesktopVideoCollectionsPage extends ConsumerWidget {
   ) {
     final isLoading = async.isLoading && async.value == null;
     if (!isLoading && async.hasError && async.value == null) {
-      return AppEmptyState(
-        message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: apiErrorMessage(async.error!, fallback: '合集加载失败，请稍后重试'),
+        ),
       );
     }
-    final collections = isLoading
+    final allCollections = isLoading
         ? videoCollectionPlaceholders(count: 4)
         : async.value ?? const <VideoCollectionDto>[];
-    if (collections.isEmpty) {
-      return const AppEmptyState(message: '暂无合集，点击「新建合集」创建');
+    if (allCollections.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: AppEmptyState(message: '暂无合集，点击「新建合集」创建'),
+      );
     }
-    return AppSkeletonizer(
+    final collections = isLoading || _keyword.isEmpty
+        ? allCollections
+        : allCollections
+              .where(
+                (collection) =>
+                    collection.name.toLowerCase().contains(_keyword),
+              )
+              .toList(growable: false);
+    if (collections.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: AppEmptyState(message: '没有匹配的合集'),
+      );
+    }
+    return AppSkeletonizer.sliver(
       enabled: isLoading,
-      child: AppAdaptiveCardWrap<VideoCollectionDto>(
+      // 懒加载：合集上千时不首帧构建全部卡片与封面图请求。
+      child: AppAdaptiveCardWrapSliver<VideoCollectionDto>(
+        gridKey: const Key('video-collections-grid'),
         items: collections,
         orientation: AppCardGridOrientation.landscape,
-        itemBuilder: (context, collection, _) => CollectionCard.video(
-          collection: collection,
-          onTap: () =>
-              context.go('$desktopVideoCollectionsPath/${collection.id}'),
-          onEdit: () => _edit(context, ref, collection),
-          onDelete: () => _delete(context, ref, collection),
-        ),
+        itemBuilder:
+            (context, collection, _) => CollectionCard.video(
+              collection: collection,
+              onTap: () =>
+                  context.go('$desktopVideoCollectionsPath/${collection.id}'),
+              onEdit: () => _edit(context, ref, collection),
+              onDelete: () => _delete(context, ref, collection),
+            ),
       ),
     );
   }

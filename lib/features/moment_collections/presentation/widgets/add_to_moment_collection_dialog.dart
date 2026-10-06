@@ -6,6 +6,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
+import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
@@ -14,6 +15,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 Future<void> showAddToMomentCollectionDialog(
@@ -62,10 +64,21 @@ class _AddToMomentCollectionDialogState
 
   List<MomentCollectionDto> _collections = const [];
   final Set<int> _selectedIds = <int>{};
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
   bool _isLoading = true;
   bool _isUpdating = false;
   String? _error;
   int? _pointId;
+
+  List<MomentCollectionDto> get _visibleCollections {
+    if (_keyword.isEmpty) {
+      return _collections;
+    }
+    return _collections
+        .where((collection) => collection.name.toLowerCase().contains(_keyword))
+        .toList(growable: false);
+  }
 
   @override
   void initState() {
@@ -74,11 +87,18 @@ class _AddToMomentCollectionDialogState
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     try {
       final api = ref.read(momentCollectionsApiProvider);
       final results = await Future.wait<Object>([
-        api.getCollections(),
+        // 与合集列表页 / 批量选择器共享 overview 缓存，避免每次打开重复全量拉取。
+        ref.read(momentCollectionsOverviewProvider.future),
         _pointId == null
             ? Future<List<MomentCollectionSummaryDto>>.value(
                 const <MomentCollectionSummaryDto>[],
@@ -154,6 +174,15 @@ class _AddToMomentCollectionDialogState
                   ),
                 ],
               ),
+              SizedBox(height: spacing.sm),
+              AppSearchField(
+                fieldKey: const Key('add-to-moment-collection-search-field'),
+                controller: _searchController,
+                hintText: '搜索合集',
+                onChanged: (value) =>
+                    setState(() => _keyword = value.trim().toLowerCase()),
+                clearKey: const Key('add-to-moment-collection-search-clear'),
+              ),
               SizedBox(height: spacing.lg),
               _buildList(context, maxListHeight: maxListHeight),
             ],
@@ -189,16 +218,23 @@ class _AddToMomentCollectionDialogState
         child: Center(child: Text('还没有合集，点右上角「+」新建')),
       );
     }
+    final visibleCollections = _visibleCollections;
+    if (visibleCollections.isEmpty) {
+      return const SizedBox(
+        height: 160,
+        child: Center(child: Text('没有匹配的合集')),
+      );
+    }
     final spacing = context.appSpacing;
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxListHeight),
       child: ListView.separated(
         key: const Key('add-to-moment-collection-list'),
         shrinkWrap: true,
-        itemCount: _collections.length,
+        itemCount: visibleCollections.length,
         separatorBuilder: (_, _) => SizedBox(height: spacing.sm),
         itemBuilder: (context, index) {
-          final collection = _collections[index];
+          final collection = visibleCollections[index];
           final selected = _selectedIds.contains(collection.id);
           return AppPickerOptionTile.text(
             selected: selected,

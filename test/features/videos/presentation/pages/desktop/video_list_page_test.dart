@@ -202,6 +202,43 @@ void main() {
     expect(lastRequest.uri.queryParameters['sort'], startsWith('title:'));
     expect(find.text('1 个'), findsOneWidget);
   });
+
+  testWidgets('桌面筛选浮层「未加入合集」即时生效并携带 uncollected', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad();
+
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('videos-filter-trigger')));
+    await tester.pumpAndSettle();
+
+    // 面板新增「合集」分节，与排序分节同构。
+    expect(find.text('合集'), findsOneWidget);
+    expect(find.text('未加入合集'), findsOneWidget);
+    expect(find.byKey(const Key('videos-filter-collection-all')), findsOneWidget);
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/videos',
+      body: _videosJson(total: 1),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('videos-filter-collection-uncollected')),
+    );
+    await tester.pumpAndSettle();
+
+    final lastRequest = adapter.requests.last;
+    expect(lastRequest.path, '/videos');
+    expect(lastRequest.uri.queryParameters['uncollected'], 'true');
+    expect(find.text('1 个'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpVideoListPage(

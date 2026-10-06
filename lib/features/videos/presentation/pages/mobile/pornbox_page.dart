@@ -183,19 +183,19 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   }
 
   Future<void> _addToCollection(VideoItemListItemDto video) async {
-    final added = await showAddToVideoCollectionDialog(
+    await showAddToVideoCollectionDialog(
       context,
       videoItemId: video.id,
+      collectedRefs: video.collections,
       presentation: AddToVideoCollectionPresentation.bottomDrawer,
     );
     if (!mounted) {
       return;
     }
-    if (added == true) {
-      ref
-          .read(videoMutationEventsProvider.notifier)
-          .reportCollectionMembershipChanged(videoId: video.id);
-    }
+    // 弹窗内可加入 / 移出（勾选切换），关闭后统一广播刷新合集横滑区与卡片角标。
+    ref
+        .read(videoMutationEventsProvider.notifier)
+        .reportCollectionMembershipChanged(videoId: video.id);
   }
 
   Future<void> _deleteVideo(VideoItemListItemDto video) async {
@@ -535,7 +535,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     return AppListHeader(
       filterButtonKey: const Key('mobile-pornbox-filter-button'),
       filterTooltip: '排序筛选',
-      filterLabel: filter.sortField.label,
+      filterLabel: filter.triggerLabel,
       onFilterTap: _openSortDrawer,
       filterUpdate: paged.filterUpdate,
       hasPreviousFilterItems: videos.isNotEmpty,

@@ -127,4 +127,17 @@ class VideoCollectionsApi {
       '/video-collections/$collectionId/items/$itemId',
     );
   }
+
+  /// 按视频 id 从合集移出成员（加入合集弹窗做勾选切换用）。
+  ///
+  /// 与 [removeCollectionItem] 的区别：不需要成员行 id，加入后立刻取消勾选也能移出；
+  /// 幂等，非成员调用同样成功。
+  Future<void> removeCollectionVideo({
+    required int collectionId,
+    required int videoItemId,
+  }) {
+    return _apiClient.deleteNoContent(
+      '/video-collections/$collectionId/videos/$videoItemId',
+    );
+  }
 }

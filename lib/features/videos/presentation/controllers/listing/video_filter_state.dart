@@ -24,36 +24,48 @@ extension VideoSortFieldX on VideoSortField {
   };
 }
 
-/// 视频列表的排序状态。标签/人物/关键词筛选由各自的选择器/查询持有，不放这里，
-/// 与影片页 [MovieFilterState] 的职责划分保持一致。
+/// 视频列表的排序与合集归属筛选。标签/人物/关键词筛选由各自的选择器/查询持有，
+/// 不放这里，与影片页 [MovieFilterState] 的职责划分保持一致。
 class VideoFilterState {
   const VideoFilterState({
     this.sortField = VideoSortField.createdAt,
     this.sortDirection = SortDirection.desc,
+    this.uncollected = false,
   });
 
   final VideoSortField sortField;
   final SortDirection sortDirection;
 
+  /// 只保留不属于任何视频合集的条目（后端 `uncollected=true`）。
+  final bool uncollected;
+
   static const VideoFilterState initial = VideoFilterState();
 
   bool get isDefault =>
       sortField == VideoSortField.createdAt &&
-      sortDirection == SortDirection.desc;
+      sortDirection == SortDirection.desc &&
+      !uncollected;
 
   String get sortExpression =>
       '${sortField.apiValue}:${sortDirection.apiValue}';
 
+  String get triggerLabel =>
+      uncollected ? '未归类 · ${sortField.label}' : sortField.label;
+
   bool matches(VideoFilterState other) =>
-      sortField == other.sortField && sortDirection == other.sortDirection;
+      sortField == other.sortField &&
+      sortDirection == other.sortDirection &&
+      uncollected == other.uncollected;
 
   VideoFilterState copyWith({
     VideoSortField? sortField,
     SortDirection? sortDirection,
+    bool? uncollected,
   }) {
     return VideoFilterState(
       sortField: sortField ?? this.sortField,
       sortDirection: sortDirection ?? this.sortDirection,
+      uncollected: uncollected ?? this.uncollected,
     );
   }
 }

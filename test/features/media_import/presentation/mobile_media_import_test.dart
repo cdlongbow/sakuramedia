@@ -108,10 +108,11 @@ void main() {
         find.byKey(const Key('media-import-source-disposition-warning')),
         findsOneWidget,
       );
-      await tester.ensureVisible(find.text('不加入合集'));
-      await tester.tap(find.text('不加入合集'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('旅行记录').last);
+      // 选合集：点击字段打开可搜索单选弹层，选中目标合集。
+      await _tap(tester, 'video-import-collection-field');
+      await tester.tap(
+        find.byKey(const Key('pick-video-collection-single-7')),
+      );
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('video-import-submit-button')).hitTestable(),

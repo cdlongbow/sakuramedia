@@ -116,7 +116,7 @@ class VideoListContent extends StatelessWidget {
               selectionHeader ??
                   AppListHeader(
                     filterButtonKey: const Key('videos-filter-trigger'),
-                    filterLabel: filterState.sortField.label,
+                    filterLabel: filterState.triggerLabel,
                     filterPanelKey: const Key('videos-filter-panel'),
                     filterPanelExtraWidth: 180,
                     filterPanelBuilder: (_) => VideoFilterSectionGroup(

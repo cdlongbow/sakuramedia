@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
+import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
@@ -12,6 +13,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_option_tile.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 
 /// 「加入合集」选择器的呈现形态：桌面弹窗 / 移动端底部抽屉。
 enum AddToClipCollectionPresentation { dialog, bottomDrawer }
@@ -65,11 +67,22 @@ class _AddToClipCollectionDialogState
   List<ClipCollectionDto> _collections = const <ClipCollectionDto>[];
   final Set<int> _selectedIds = <int>{};
   final Set<int> _updatingIds = <int>{};
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
   bool _isLoading = true;
   String? _errorMessage;
 
   bool get _isBottomDrawer =>
       widget.presentation == AddToClipCollectionPresentation.bottomDrawer;
+
+  List<ClipCollectionDto> get _visibleCollections {
+    if (_keyword.isEmpty) {
+      return _collections;
+    }
+    return _collections
+        .where((collection) => collection.name.toLowerCase().contains(_keyword))
+        .toList(growable: false);
+  }
 
   @override
   void initState() {
@@ -77,11 +90,19 @@ class _AddToClipCollectionDialogState
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
-    final collectionsApi = ref.read(clipCollectionsApiProvider);
     final clipsApi = ref.read(clipsApiProvider);
     try {
-      final collections = await collectionsApi.getCollections();
+      // 与合集列表页 / 批量选择器共享 overview 缓存，避免每次打开重复全量拉取。
+      final collections = await ref.read(
+        clipCollectionsOverviewProvider.future,
+      );
       // 切片详情携带 collections（后端对称影片 playlists），用于回显已加入项。
       final detail = await clipsApi.getClipDetail(clipId: widget.clipId);
       if (!mounted) {
@@ -155,6 +176,15 @@ class _AddToClipCollectionDialogState
                   ),
                 ],
               ),
+              SizedBox(height: spacing.sm),
+              AppSearchField(
+                fieldKey: const Key('add-to-clip-collection-search-field'),
+                controller: _searchController,
+                hintText: '搜索合集',
+                onChanged: (value) =>
+                    setState(() => _keyword = value.trim().toLowerCase()),
+                clearKey: const Key('add-to-clip-collection-search-clear'),
+              ),
               SizedBox(height: spacing.lg),
               _buildList(context, maxListHeight: maxListHeight),
             ],
@@ -190,6 +220,13 @@ class _AddToClipCollectionDialogState
         child: Center(child: Text('还没有合集，点右上角「+」新建')),
       );
     }
+    final visibleCollections = _visibleCollections;
+    if (visibleCollections.isEmpty) {
+      return const SizedBox(
+        height: 160,
+        child: Center(child: Text('没有匹配的合集')),
+      );
+    }
 
     final spacing = context.appSpacing;
     final isAnyUpdating = _updatingIds.isNotEmpty;
@@ -198,10 +235,10 @@ class _AddToClipCollectionDialogState
       child: ListView.separated(
         key: const Key('add-to-clip-collection-list'),
         shrinkWrap: true,
-        itemCount: _collections.length,
+        itemCount: visibleCollections.length,
         separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
         itemBuilder: (context, index) {
-          final collection = _collections[index];
+          final collection = visibleCollections[index];
           final selected = _selectedIds.contains(collection.id);
           return AppPickerOptionTile.text(
             selected: selected,

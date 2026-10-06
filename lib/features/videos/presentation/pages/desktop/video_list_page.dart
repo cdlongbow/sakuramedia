@@ -147,19 +147,18 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   }
 
   Future<void> _addToCollection(VideoItemListItemDto video) async {
-    final added = await showAddToVideoCollectionDialog(
+    await showAddToVideoCollectionDialog(
       context,
       videoItemId: video.id,
+      collectedRefs: video.collections,
     );
     if (!mounted) {
       return;
     }
-    if (added == true) {
-      // 合集成员/封面可能变化：广播信号，由页面监听统一刷新合集横滑区。
-      ref
-          .read(videoMutationEventsProvider.notifier)
-          .reportCollectionMembershipChanged(videoId: video.id);
-    }
+    // 弹窗内可加入 / 移出（勾选切换），关闭后统一广播，由页面刷新合集横滑区与卡片角标。
+    ref
+        .read(videoMutationEventsProvider.notifier)
+        .reportCollectionMembershipChanged(videoId: video.id);
   }
 
   /// 播放：外部播放器优先（能唤起时交给系统），否则进入应用内 PornBox 单视频播放页。

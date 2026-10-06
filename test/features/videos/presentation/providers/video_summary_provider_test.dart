@@ -71,6 +71,26 @@ void main() {
     expect(request.path, '/videos');
     expect(request.uri.queryParameters['page_size'], '24');
     expect(request.uri.queryParameters['sort'], 'created_at:desc');
+    expect(request.uri.queryParameters.containsKey('uncollected'), isFalse);
+  });
+
+  test('未归类筛选携带 uncollected 重拉且清空旧页', () async {
+    const scope = VideoSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_video(1)]);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/videos',
+      body: _page(items: <Map<String, dynamic>>[_video(2)], total: 1),
+    );
+
+    await container
+        .read(videoSummaryProvider(scope).notifier)
+        .applyFilter(const VideoFilterState(uncollected: true));
+
+    final state = container.read(videoSummaryProvider(scope)).requireValue;
+    expect(state.filter.uncollected, isTrue);
+    expect(state.paged.items.single.id, 2);
+    expect(adapter.requests.last.uri.queryParameters['uncollected'], 'true');
   });
 
   test('排序切换清空旧页并用新参数重拉', () async {

@@ -92,7 +92,13 @@ Future<void> _openPornboxActions(
   void onThumbnails() =>
       _openThumbnails(context, videoItemId, mobile: mobile);
   void onAddToCollection() => unawaited(
-    _addToCollection(context, ref, videoItemId: videoItemId, mobile: mobile),
+    _addToCollection(
+      context,
+      ref,
+      videoItemId: videoItemId,
+      collections: item.collections,
+      mobile: mobile,
+    ),
   );
   void onCollectionTap(VideoCollectionRef collection) =>
       _openCollection(context, collection.id, mobile: mobile);
@@ -172,19 +178,19 @@ Future<void> _addToCollection(
   BuildContext context,
   WidgetRef ref, {
   required int videoItemId,
+  required List<VideoCollectionRef> collections,
   required bool mobile,
 }) async {
-  final added = await showAddToVideoCollectionDialog(
+  await showAddToVideoCollectionDialog(
     context,
     videoItemId: videoItemId,
+    collectedRefs: collections,
     presentation: mobile
         ? AddToVideoCollectionPresentation.bottomDrawer
         : AddToVideoCollectionPresentation.dialog,
   );
-  if (added == true) {
-    // 合集成员变化：广播信号，让 PornBox 列表 / 首页合集横滑区刷新。
-    ref
-        .read(videoMutationEventsProvider.notifier)
-        .reportCollectionMembershipChanged(videoId: videoItemId);
-  }
+  // 弹窗内可加入 / 移出（勾选切换）：关闭后统一广播，让 PornBox 列表 / 首页合集横滑区刷新。
+  ref
+      .read(videoMutationEventsProvider.notifier)
+      .reportCollectionMembershipChanged(videoId: videoItemId);
 }

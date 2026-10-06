@@ -8,8 +8,8 @@ import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动 `MobileVideoSortDrawer` 都用它，
 /// 避免双份维护。底栏/重置按钮由调用方自己附加。
 ///
-/// 视频只有排序一维（字段 + 升降序），分节复用影片侧的 `MovieFilterChoiceSection`
-/// ——两边 chip 的观感必须一致。
+/// 排序只有字段 + 升降序两节，分节复用影片侧的 `MovieFilterChoiceSection`
+/// ——两边 chip 的观感必须一致；合集归属（是否未加入任何合集）同属本面板。
 class VideoFilterSectionGroup extends StatelessWidget {
   const VideoFilterSectionGroup({
     super.key,
@@ -25,6 +25,20 @@ class VideoFilterSectionGroup extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        MovieFilterChoiceSection<bool>(
+          title: '合集',
+          options: const <bool>[false, true],
+          selectedValue: filterState.uncollected,
+          optionKeyBuilder: (uncollected) => Key(
+            uncollected
+                ? 'videos-filter-collection-uncollected'
+                : 'videos-filter-collection-all',
+          ),
+          labelBuilder: (uncollected) => uncollected ? '未加入合集' : '全部',
+          onSelected: (uncollected) =>
+              onChanged(filterState.copyWith(uncollected: uncollected)),
+        ),
+        SizedBox(height: context.appSpacing.lg),
         MovieFilterChoiceSection<VideoSortField>(
           title: '排序字段',
           options: VideoSortField.values,

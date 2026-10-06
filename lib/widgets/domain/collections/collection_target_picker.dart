@@ -4,6 +4,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
@@ -84,7 +85,16 @@ class _CollectionTargetPicker<T extends Object> extends ConsumerStatefulWidget {
 
 class _CollectionTargetPickerState<T extends Object>
     extends ConsumerState<_CollectionTargetPicker<T>> {
+  final TextEditingController _searchController = TextEditingController();
+  String _keyword = '';
+
   bool get _isBottomDrawer => AppAdaptiveModalShellScope.maybeIsDrawer(context);
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _createAndPick() async {
     final created = await widget.onCreate(context, _isBottomDrawer);
@@ -117,6 +127,15 @@ class _CollectionTargetPickerState<T extends Object>
             weight: AppTextWeight.semibold,
             tone: AppTextTone.primary,
           ),
+        ),
+        SizedBox(height: spacing.md),
+        AppSearchField(
+          fieldKey: const Key('collection-target-picker-search-field'),
+          controller: _searchController,
+          hintText: '搜索合集',
+          onChanged: (value) =>
+              setState(() => _keyword = value.trim().toLowerCase()),
+          clearKey: const Key('collection-target-picker-search-clear'),
         ),
         SizedBox(height: spacing.md),
         listSection,
@@ -160,13 +179,23 @@ class _CollectionTargetPickerState<T extends Object>
     }
     final allCollections = collectionsAsync.value ?? <T>[];
     final excluded = widget.excludedCollectionId;
-    final collections = excluded == null
+    var collections = excluded == null
         ? allCollections
         : allCollections
               .where((collection) => widget.idOf(collection) != excluded)
               .toList(growable: false);
+    if (_keyword.isNotEmpty) {
+      collections = collections
+          .where(
+            (collection) =>
+                widget.nameOf(collection).toLowerCase().contains(_keyword),
+          )
+          .toList(growable: false);
+    }
     if (collections.isEmpty) {
-      return const AppEmptyState(message: '暂无合集，点击下方新建');
+      return AppEmptyState(
+        message: allCollections.isEmpty ? '暂无合集，点击下方新建' : '没有匹配的合集',
+      );
     }
     return ListView.separated(
       shrinkWrap: true,

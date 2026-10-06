@@ -109,6 +109,11 @@ void main() {
     expect(find.text('状态筛选'), findsOneWidget);
     expect(find.text('发行年份'), findsOneWidget);
     expect(find.text('2024(2)'), findsOneWidget);
+    // 女优详情是她本人的作品，按出演年龄再筛没有意义，分节隐藏。
+    expect(
+      find.byKey(const Key('movie-filter-actor-age-section-title')),
+      findsNothing,
+    );
     expect(find.text('重置'), findsOneWidget);
   });
 

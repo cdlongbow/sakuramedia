@@ -425,6 +425,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
           : (_) => MovieFilterSectionGroup(
               filterState: _filterState,
               onChanged: _applyFilter,
+              showActorAgeSection: false,
               tagSection: TagFilterSection(scope: _tagSelectionScope),
               yearOptions: _movieYearOptions,
               isYearOptionsLoading: _isMovieYearsLoading,
@@ -459,6 +460,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       context,
       current: _filterState,
       onChanged: _applyFilter,
+      showActorAgeSection: false,
       tagSection: TagFilterSection(scope: _tagSelectionScope),
       extraActive: _tagSelectionActive,
       onResetExtra: () {

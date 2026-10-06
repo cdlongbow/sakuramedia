@@ -115,6 +115,8 @@ void main() {
       sort: 'release_date:desc',
       heatMin: 1000,
       heatMax: 5000,
+      actorAgeMin: 20,
+      actorAgeMax: 30,
       query: '温泉 三上',
       page: 1,
       pageSize: 24,
@@ -126,6 +128,8 @@ void main() {
     expect(request.uri.queryParameters['sort'], 'release_date:desc');
     expect(request.uri.queryParameters['heat_min'], '1000');
     expect(request.uri.queryParameters['heat_max'], '5000');
+    expect(request.uri.queryParameters['actor_age_min'], '20');
+    expect(request.uri.queryParameters['actor_age_max'], '30');
     expect(request.uri.queryParameters['query'], '温泉 三上');
     expect(request.uri.queryParameters['actor_id'], isNull);
     expect(request.uri.queryParameters['page'], '1');
@@ -136,6 +140,26 @@ void main() {
     expect(page.items.single.seriesId, 7);
     expect(page.items.single.seriesName, 'Series 1');
     expect(page.items.single.heat, 9);
+  });
+
+  test('getMovies omits actor age params when unset', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+
+    await moviesApi.getMovies();
+
+    final request = adapter.requests.single;
+    expect(request.uri.queryParameters['actor_age_min'], isNull);
+    expect(request.uri.queryParameters['actor_age_max'], isNull);
   });
 
   test('getMoviesBySeries sends series body and parses response', () async {

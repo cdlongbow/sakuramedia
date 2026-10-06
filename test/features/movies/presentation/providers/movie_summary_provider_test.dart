@@ -282,6 +282,73 @@ void main() {
     expect(secondRequest.uri.queryParameters['heat_max'], '20000');
   });
 
+  test('出演年龄筛选写入请求参数，清空后不再发送', () async {
+    const scope = MovieSummaryScope.movies(cacheKey: 'desktop:movies:list');
+    await prime(scope, <Map<String, dynamic>>[_movie('ABC-001')]);
+
+    final initial = adapter.requests.single.uri.queryParameters;
+    expect(initial.containsKey('actor_age_min'), isFalse);
+    expect(initial.containsKey('actor_age_max'), isFalse);
+
+    final notifier = container.read(movieSummaryProvider(scope).notifier);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-002')], total: 1),
+    );
+    await notifier.applyMovieFilter(
+      const MovieFilterState(actorAgeMin: 20, actorAgeMax: 35),
+    );
+
+    final applied = adapter.requests.last.uri.queryParameters;
+    expect(applied['actor_age_min'], '20');
+    expect(applied['actor_age_max'], '35');
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-003')], total: 1),
+    );
+    await notifier.applyMovieFilter(const MovieFilterState());
+
+    final cleared = adapter.requests.last.uri.queryParameters;
+    expect(cleared.containsKey('actor_age_min'), isFalse);
+    expect(cleared.containsKey('actor_age_max'), isFalse);
+  });
+
+  test('标签列表 scope 出演年龄与标签条件组合，未设置时不发送', () async {
+    const scope = MovieSummaryScope.tags(instanceKey: 'desktop:tags:list');
+    container.listen(movieSummaryProvider(scope), (_, __) {});
+    await container.read(movieSummaryProvider(scope).future);
+
+    final notifier = container.read(movieSummaryProvider(scope).notifier);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-001')], total: 1),
+    );
+    await notifier.applyTagFilter(
+      tagIds: <int>[3, 5],
+      tagMatch: TagMatchMode.and,
+    );
+    final tagged = adapter.requests.last.uri.queryParameters;
+    expect(tagged['tag_ids'], '3,5');
+    expect(tagged.containsKey('actor_age_min'), isFalse);
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-002')], total: 1),
+    );
+    await notifier.applyMovieFilter(
+      const MovieFilterState(actorAgeMin: 20, actorAgeMax: 35),
+    );
+    final withAge = adapter.requests.last.uri.queryParameters;
+    expect(withAge['tag_ids'], '3,5');
+    expect(withAge['actor_age_min'], '20');
+    expect(withAge['actor_age_max'], '35');
+  });
+
   test('女优作品叠加标签筛选，清空标签后请求不再带 tag_ids', () async {
     const actorScope = MovieSummaryScope.actor(actorId: 8);
     await prime(actorScope, <Map<String, dynamic>>[_movie('ABC-001')]);

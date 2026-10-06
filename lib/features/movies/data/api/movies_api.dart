@@ -29,6 +29,8 @@ class MoviesApi {
     TagMatchMode? tagMatch,
     int? heatMin,
     int? heatMax,
+    int? actorAgeMin,
+    int? actorAgeMax,
     String? resolution,
     bool? blacklisted,
     String? query,
@@ -70,6 +72,12 @@ class MoviesApi {
     }
     if (heatMax != null) {
       queryParameters['heat_max'] = heatMax;
+    }
+    if (actorAgeMin != null) {
+      queryParameters['actor_age_min'] = actorAgeMin;
+    }
+    if (actorAgeMax != null) {
+      queryParameters['actor_age_max'] = actorAgeMax;
     }
     if (blacklisted != null) {
       queryParameters['blacklisted'] = blacklisted;

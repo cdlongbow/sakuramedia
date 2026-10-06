@@ -124,6 +124,35 @@ int? movieHeatMinFromSlider(int value) => value <= 0 ? null : value;
 int? movieHeatMaxFromSlider(int value) =>
     value >= movieFilterHeatSliderMax ? null : value;
 
+/// 出演年龄筛选的滑块范围：18 ~ 50 岁。
+///
+/// 与后端语义对齐：最小 18 岁即下限不限（不传 `actor_age_min`）；
+/// 滑到顶 50 即上限不限（不传 `actor_age_max`，50 岁及以上都包含）。
+const int movieFilterActorAgeSliderMin = 18;
+const int movieFilterActorAgeSliderMax = 50;
+
+/// 滑块下限值 → 接口参数：18 即不限（不传 `actor_age_min`）。
+int? movieActorAgeMinFromSlider(int value) =>
+    value <= movieFilterActorAgeSliderMin ? null : value;
+
+/// 滑块上限值 → 接口参数：滑到顶即无上界（不传 `actor_age_max`）。
+int? movieActorAgeMaxFromSlider(int value) =>
+    value >= movieFilterActorAgeSliderMax ? null : value;
+
+/// 出演年龄范围的展示文案，与热度范围同构。
+String movieActorAgeRangeLabel(int? actorAgeMin, int? actorAgeMax) {
+  if (actorAgeMin != null && actorAgeMax != null) {
+    return '$actorAgeMin ~ $actorAgeMax 岁';
+  }
+  if (actorAgeMin != null) {
+    return '≥ $actorAgeMin 岁';
+  }
+  if (actorAgeMax != null) {
+    return '≤ $actorAgeMax 岁';
+  }
+  return '不限';
+}
+
 /// 年份多选的展示文案：1 个直出，2 个顿号相连，3 个及以上折叠为
 /// 「最新年份 等 N 个年份」；空集返回空串，此时调用方不采用年份标签。
 String movieFilterYearsLabel(Set<int> years) {
@@ -180,6 +209,8 @@ class MovieFilterState {
     this.years = const <int>{},
     this.heatMin,
     this.heatMax,
+    this.actorAgeMin,
+    this.actorAgeMax,
     this.resolution,
   });
 
@@ -197,6 +228,12 @@ class MovieFilterState {
 
   /// 热度上限（接口 `heat_max` 语义）：null 表示不限。
   final int? heatMax;
+
+  /// 出演年龄下限（接口 `actor_age_min` 语义）：null 表示不限。
+  final int? actorAgeMin;
+
+  /// 出演年龄上限（接口 `actor_age_max` 语义）：null 表示不限。
+  final int? actorAgeMax;
   final PlaylistResolutionFilter? resolution;
 
   static const MovieFilterState initial = MovieFilterState();
@@ -210,17 +247,22 @@ class MovieFilterState {
       years.isEmpty &&
       heatMin == null &&
       heatMax == null &&
+      actorAgeMin == null &&
+      actorAgeMax == null &&
       resolution == null;
 
   bool get hasHeatRange => heatMin != null || heatMax != null;
+
+  bool get hasActorAgeRange => actorAgeMin != null || actorAgeMax != null;
 
   String get sortExpression =>
       '${sortField.apiValue}:${sortDirection.apiValue}';
 
   String get triggerLabel {
-    final label = switch ((years.isNotEmpty, hasHeatRange)) {
-      (true, _) => movieFilterYearsLabel(years),
-      (_, true) => movieHeatRangeLabel(heatMin, heatMax),
+    final label = switch ((years.isNotEmpty, hasHeatRange, hasActorAgeRange)) {
+      (true, _, _) => movieFilterYearsLabel(years),
+      (_, true, _) => movieHeatRangeLabel(heatMin, heatMax),
+      (_, _, true) => movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
       _ => status.label,
     };
     return resolution == null ? label : '$label · ${resolution!.label}';
@@ -235,6 +277,8 @@ class MovieFilterState {
       setEquals(years, other.years) &&
       heatMin == other.heatMin &&
       heatMax == other.heatMax &&
+      actorAgeMin == other.actorAgeMin &&
+      actorAgeMax == other.actorAgeMax &&
       resolution == other.resolution;
 
   MovieFilterState copyWith({
@@ -246,6 +290,8 @@ class MovieFilterState {
     Object? years = _movieFilterUnset,
     Object? heatMin = _movieFilterUnset,
     Object? heatMax = _movieFilterUnset,
+    Object? actorAgeMin = _movieFilterUnset,
+    Object? actorAgeMax = _movieFilterUnset,
     Object? resolution = _movieFilterUnset,
   }) {
     return MovieFilterState(
@@ -268,6 +314,12 @@ class MovieFilterState {
       heatMax: identical(heatMax, _movieFilterUnset)
           ? this.heatMax
           : heatMax as int?,
+      actorAgeMin: identical(actorAgeMin, _movieFilterUnset)
+          ? this.actorAgeMin
+          : actorAgeMin as int?,
+      actorAgeMax: identical(actorAgeMax, _movieFilterUnset)
+          ? this.actorAgeMax
+          : actorAgeMax as int?,
     );
   }
 }

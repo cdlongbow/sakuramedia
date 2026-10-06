@@ -130,6 +130,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('actor-detail-filter-panel')), findsNothing);
+    // 出演年龄分节在女优详情隐藏。
+    expect(
+      find.byKey(const Key('movie-filter-actor-age-section-title')),
+      findsNothing,
+    );
     // 年份分节在弹抽屉前已取回，不会停在转圈态（抽屉内容是打开瞬间的快照）。
     expect(find.text('发行年份'), findsOneWidget);
     expect(find.text('2024(2)'), findsOneWidget);

@@ -37,6 +37,9 @@ void main() {
     expect(find.byKey(const Key('movie-filter-heat-section-title')), findsOneWidget);
     expect(find.text('0'), findsOneWidget);
     expect(find.text('2w'), findsOneWidget);
+    expect(find.byKey(const Key('movie-filter-actor-age-section-title')), findsOneWidget);
+    expect(find.text('18'), findsOneWidget);
+    expect(find.text('50+'), findsOneWidget);
     expect(find.text('${DateTime.now().year}'), findsOneWidget);
     expect(find.text('筛选'), findsNothing);
     expect(find.text('确定'), findsNothing);
@@ -105,5 +108,68 @@ void main() {
     expect(applied.last.isDefault, isTrue);
     expect(applied.last.heatMin, isNull);
     expect(applied.last.heatMax, isNull);
+  });
+
+  testWidgets('出演年龄双滑块：拖动中不应用，松手才生效且边界映射为不限', (tester) async {
+    final applied = <MovieFilterState>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                await showMobileMovieFilterDrawer(
+                  context,
+                  current: MovieFilterState.initial,
+                  onChanged: applied.add,
+                );
+              },
+              child: const Text('打开筛选'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('打开筛选'));
+    await tester.pumpAndSettle();
+
+    final slider = find.byKey(const Key('movie-filter-actor-age-slider'));
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(slider);
+
+    // 右 thumb 分多步拖离顶端：拖动过程只改面板显示，不产生应用回调。
+    final gesture = await tester.startGesture(
+      Offset(rect.right - 12, rect.center.dy),
+    );
+    await gesture.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    expect(applied, isEmpty);
+    await gesture.moveBy(const Offset(-60, 0));
+    await tester.pump();
+    expect(applied, isEmpty);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(applied, hasLength(1));
+    expect(applied.single.actorAgeMin, isNull);
+    expect(applied.single.actorAgeMax, isNotNull);
+    expect(applied.single.actorAgeMax, lessThan(movieFilterActorAgeSliderMax));
+    expect(applied.single.triggerLabel, contains('岁'));
+
+    // 左 thumb 同样松手才生效：拖离底端后传具体 actor_age_min。
+    await tester.dragFrom(
+      Offset(rect.left + 12, rect.center.dy),
+      const Offset(120, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(applied, hasLength(2));
+    expect(applied.last.actorAgeMin, isNotNull);
+    expect(applied.last.actorAgeMin, greaterThan(movieFilterActorAgeSliderMin));
+    expect(applied.last.actorAgeMax, applied.first.actorAgeMax);
   });
 }

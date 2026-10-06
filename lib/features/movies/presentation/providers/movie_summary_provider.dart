@@ -90,6 +90,8 @@ class MovieSummary extends _$MovieSummary
         years: filter.movie.years.toList(),
         heatMin: filter.movie.heatMin,
         heatMax: filter.movie.heatMax,
+        actorAgeMin: filter.movie.actorAgeMin,
+        actorAgeMax: filter.movie.actorAgeMax,
         resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.tags => moviesApi.getMovies(
@@ -104,6 +106,8 @@ class MovieSummary extends _$MovieSummary
         years: filter.movie.years.toList(),
         heatMin: filter.movie.heatMin,
         heatMax: filter.movie.heatMax,
+        actorAgeMin: filter.movie.actorAgeMin,
+        actorAgeMax: filter.movie.actorAgeMax,
         resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.subscribedActorsLatest =>

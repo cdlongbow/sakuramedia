@@ -5,7 +5,8 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
-/// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 热度范围 / 年份 / 排序 / 可选标签）的纵向 Column。
+/// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 热度范围 /
+/// 出演年龄 / 年份 / 排序 / 可选标签）的纵向 Column。
 ///
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动 `MobileMovieFilterDrawer` 都用它，
 /// 避免双份维护。底栏/重置按钮由调用方自己附加。
@@ -15,6 +16,7 @@ class MovieFilterSectionGroup extends StatelessWidget {
     required this.filterState,
     required this.onChanged,
     this.tagSection,
+    this.showActorAgeSection = true,
     this.yearOptions,
     this.isYearOptionsLoading = false,
     this.yearOptionsErrorMessage,
@@ -27,6 +29,10 @@ class MovieFilterSectionGroup extends StatelessWidget {
   /// 可选的「标签」分节（女优详情传入）。标签云占用空间大，放在面板最末，
   /// 不前置挤压其它筛选维度；为空时不渲染。
   final Widget? tagSection;
+
+  /// 女优详情页的影片全部属于同一位女优，再按出演年龄筛选没有意义，
+  /// 显式关闭该分节；普通影片列表保持默认展示。
+  final bool showActorAgeSection;
 
   /// `null` 表示普通影片库，使用前端生成的 2008 年至当前年的固定范围；
   /// 女优详情传入非空列表，以展示接口返回的影片数量。
@@ -93,6 +99,19 @@ class MovieFilterSectionGroup extends StatelessWidget {
             filterState.copyWith(heatMin: range.$1, heatMax: range.$2),
           ),
         ),
+        if (showActorAgeSection) ...[
+          SizedBox(height: context.appSpacing.lg),
+          MovieActorAgeRangeFilterSection(
+            actorAgeMin: filterState.actorAgeMin,
+            actorAgeMax: filterState.actorAgeMax,
+            onChanged: (range) => onChanged(
+              filterState.copyWith(
+                actorAgeMin: range.$1,
+                actorAgeMax: range.$2,
+              ),
+            ),
+          ),
+        ],
         if (_shouldShowYearSection) ...[
           SizedBox(height: context.appSpacing.lg),
           MovieYearFilterSection(
@@ -384,6 +403,157 @@ class _MovieHeatRangeFilterSectionState
               ),
               Text(
                 '2w',
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s10,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 出演年龄双滑块筛选：18 ~ 50 岁，按最老女优在影片发行日（拍摄时间近似）
+/// 的周岁过滤。
+///
+/// - 左滑块拖到 18 = 下限不限（数据域最小 18 岁）；右滑块拖到顶 = 无上界
+///   （50 岁及以上都包含），两者都映射为接口参数的 `null`（不传）。
+/// - 拖动中只更新面板内的值显示，松手（onChangeEnd）才应用请求。
+class MovieActorAgeRangeFilterSection extends StatefulWidget {
+  const MovieActorAgeRangeFilterSection({
+    super.key,
+    required this.actorAgeMin,
+    required this.actorAgeMax,
+    required this.onChanged,
+  });
+
+  final int? actorAgeMin;
+  final int? actorAgeMax;
+  final ValueChanged<(int?, int?)> onChanged;
+
+  @override
+  State<MovieActorAgeRangeFilterSection> createState() =>
+      _MovieActorAgeRangeFilterSectionState();
+}
+
+class _MovieActorAgeRangeFilterSectionState
+    extends State<MovieActorAgeRangeFilterSection> {
+  late RangeValues _values;
+
+  @override
+  void initState() {
+    super.initState();
+    _values = _valuesFrom(widget.actorAgeMin, widget.actorAgeMax);
+  }
+
+  @override
+  void didUpdateWidget(covariant MovieActorAgeRangeFilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.actorAgeMin != widget.actorAgeMin ||
+        oldWidget.actorAgeMax != widget.actorAgeMax) {
+      // 外部状态变化（重置筛选 / 其他入口改条件）时同步滑块位置；
+      // onChangeEnd 应用后回传的值与此处推导一致，不会闪烁。
+      _values = _valuesFrom(widget.actorAgeMin, widget.actorAgeMax);
+    }
+  }
+
+  static RangeValues _valuesFrom(int? actorAgeMin, int? actorAgeMax) =>
+      RangeValues(
+        (actorAgeMin ?? movieFilterActorAgeSliderMin).toDouble(),
+        (actorAgeMax ?? movieFilterActorAgeSliderMax).toDouble(),
+      );
+
+  void _apply(RangeValues values) {
+    final actorAgeMin = movieActorAgeMinFromSlider(values.start.round());
+    final actorAgeMax = movieActorAgeMaxFromSlider(values.end.round());
+    if (actorAgeMin != widget.actorAgeMin ||
+        actorAgeMax != widget.actorAgeMax) {
+      widget.onChanged((actorAgeMin, actorAgeMax));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actorAgeMin = movieActorAgeMinFromSlider(_values.start.round());
+    final actorAgeMax = movieActorAgeMaxFromSlider(_values.end.round());
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '出演年龄',
+              key: const Key('movie-filter-actor-age-section-title'),
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.primary,
+              ),
+            ),
+            Text(
+              movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
+              key: const Key('movie-filter-actor-age-range-label'),
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.muted,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: context.appSpacing.xs),
+        // 与热度条同款的克制体量：3px 细轨道 + 小扁平 thumb，
+        // 拖动反馈用 10% 品牌色的浅晕圈；年龄按整数年吸附。
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3,
+            activeTrackColor: colorScheme.primary,
+            inactiveTrackColor: context.appColors.divider,
+            rangeThumbShape: const RoundRangeSliderThumbShape(
+              enabledThumbRadius: 7,
+              disabledThumbRadius: 7,
+              elevation: 0,
+            ),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            overlayColor: colorScheme.primary.withValues(alpha: 0.10),
+          ),
+          child: RangeSlider(
+            key: const Key('movie-filter-actor-age-slider'),
+            min: movieFilterActorAgeSliderMin.toDouble(),
+            max: movieFilterActorAgeSliderMax.toDouble(),
+            divisions:
+                movieFilterActorAgeSliderMax - movieFilterActorAgeSliderMin,
+            values: _values,
+            onChanged: (values) => setState(() => _values = values),
+            onChangeEnd: _apply,
+          ),
+        ),
+        // 两端刻度与 thumb 中心对齐（轨道两端各内缩一个 overlay 半径）。
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: context.appSpacing.lg),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '18',
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s10,
+                  weight: AppTextWeight.regular,
+                  tone: AppTextTone.muted,
+                ),
+              ),
+              Text(
+                '50+',
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s10,

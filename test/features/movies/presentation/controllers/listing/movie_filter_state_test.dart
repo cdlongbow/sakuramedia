@@ -33,6 +33,28 @@ void main() {
     });
   });
 
+  group('出演年龄滑块值 → 接口参数映射', () {
+    test('下限 18 映射为不限，高于 18 原样透传', () {
+      expect(movieActorAgeMinFromSlider(movieFilterActorAgeSliderMin), isNull);
+      expect(movieActorAgeMinFromSlider(25), 25);
+    });
+
+    test('上限滑到顶 50 映射为不限，未到顶原样透传', () {
+      expect(movieActorAgeMaxFromSlider(movieFilterActorAgeSliderMax), isNull);
+      expect(movieActorAgeMaxFromSlider(49), 49);
+      expect(movieActorAgeMaxFromSlider(30), 30);
+    });
+  });
+
+  group('movieActorAgeRangeLabel', () {
+    test('双边 / 单边 / 不限的文案', () {
+      expect(movieActorAgeRangeLabel(18, 25), '18 ~ 25 岁');
+      expect(movieActorAgeRangeLabel(30, null), '≥ 30 岁');
+      expect(movieActorAgeRangeLabel(null, 25), '≤ 25 岁');
+      expect(movieActorAgeRangeLabel(null, null), '不限');
+    });
+  });
+
   group('movieFilterYearsLabel', () {
     test('1 个直出，2 个顿号相连，3 个及以上折叠', () {
       expect(movieFilterYearsLabel(<int>{2024}), '2024');
@@ -124,6 +146,58 @@ void main() {
       expect(
         base.matches(const MovieFilterState(heatMin: 1000)),
         isFalse,
+      );
+    });
+
+    test('初始状态不含出演年龄条件', () {
+      const state = MovieFilterState.initial;
+      expect(state.actorAgeMin, isNull);
+      expect(state.actorAgeMax, isNull);
+      expect(state.hasActorAgeRange, isFalse);
+    });
+
+    test('出演年龄条件影响 isDefault / hasActorAgeRange / triggerLabel', () {
+      final state = const MovieFilterState().copyWith(actorAgeMax: 25);
+      expect(state.hasActorAgeRange, isTrue);
+      expect(state.isDefault, isFalse);
+      expect(state.triggerLabel, '≤ 25 岁');
+
+      final both = const MovieFilterState().copyWith(
+        actorAgeMin: 18,
+        actorAgeMax: 25,
+      );
+      expect(both.triggerLabel, '18 ~ 25 岁');
+    });
+
+    test('triggerLabel 优先级：年份 > 热度 > 出演年龄 > 状态', () {
+      final withAgeAndHeat = const MovieFilterState()
+          .copyWith(actorAgeMax: 25)
+          .copyWith(heatMin: 1000);
+      expect(withAgeAndHeat.triggerLabel, '≥ 1000');
+
+      final withAgeAndYear = const MovieFilterState()
+          .copyWith(actorAgeMax: 25)
+          .copyWith(years: <int>{2024});
+      expect(withAgeAndYear.triggerLabel, '2024');
+    });
+
+    test('copyWith 可显式清空出演年龄条件', () {
+      const withAge = MovieFilterState(actorAgeMin: 20, actorAgeMax: 25);
+      final cleared = withAge.copyWith(actorAgeMin: null, actorAgeMax: null);
+      expect(cleared.actorAgeMin, isNull);
+      expect(cleared.actorAgeMax, isNull);
+      expect(cleared.isDefault, isTrue);
+    });
+
+    test('matches 比较出演年龄条件', () {
+      const base = MovieFilterState();
+      expect(base.matches(const MovieFilterState(actorAgeMax: 25)), isFalse);
+      expect(
+        const MovieFilterState(
+          actorAgeMin: 20,
+          actorAgeMax: 25,
+        ).matches(const MovieFilterState(actorAgeMin: 20, actorAgeMax: 25)),
+        isTrue,
       );
     });
   });

@@ -35,6 +35,7 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_coll
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_thumbnail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
+import 'package:sakuramedia/features/cast/presentation/pages/cast_remote_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/latest_movies_page.dart';
@@ -635,6 +636,28 @@ class MobileMoviePlayerRouteData extends _MobileCupertinoRouteData
         fallback: positionSeconds,
       ),
     );
+  }
+}
+
+@TypedGoRoute<MobileCastRemoteRouteData>(
+  path: '/mobile/cast/remote',
+)
+class MobileCastRemoteRouteData extends _MobileCupertinoRouteData
+    with $MobileCastRemoteRouteData {
+  const MobileCastRemoteRouteData();
+
+  @override
+  String get pageName => 'mobile-cast-remote';
+
+  @override
+  String get location => buildRouteLocation(
+    path: '/mobile/cast/remote',
+    queryParameters: const <String, String?>{},
+  );
+
+  @override
+  Widget buildCupertino(BuildContext context, GoRouterState state) {
+    return const CastRemotePage();
   }
 }
 

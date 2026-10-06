@@ -235,7 +235,6 @@ Future<void> _pumpPanel(
               activeIndex: activeIndex,
               isScrollLocked: isScrollLocked,
               usesAutoColumns: usesAutoColumns,
-              onAutoColumnsResolved: (_) {},
               onColumnsChanged: onColumnsChanged ?? (_) {},
               onToggleScrollLock: onToggleScrollLock ?? () {},
               onThumbnailTap: (_) {},

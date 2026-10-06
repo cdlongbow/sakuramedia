@@ -28,6 +28,7 @@ List<RouteBase> get $appRoutes => [
   $mobileSettingsUsernameRouteData,
   $mobileSettingsPasswordRouteData,
   $mobileMoviePlayerRouteData,
+  $mobileCastRemoteRouteData,
   $mobileVideoPlayerRouteData,
   $mobileVideoThumbnailRouteData,
   $mobileTagsRouteData,
@@ -711,6 +712,33 @@ mixin $MobileMoviePlayerRouteData on GoRouteData {
         'position-seconds': _self.positionSeconds!.toString(),
     },
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileCastRemoteRouteData => GoRouteData.$route(
+  path: '/mobile/cast/remote',
+  hasOverriddenOnExit: false,
+  factory: $MobileCastRemoteRouteData._fromState,
+);
+
+mixin $MobileCastRemoteRouteData on GoRouteData {
+  static MobileCastRemoteRouteData _fromState(GoRouterState state) =>
+      const MobileCastRemoteRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/cast/remote');
 
   @override
   void go(BuildContext context) => context.go(location);

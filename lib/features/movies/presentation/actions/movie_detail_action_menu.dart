@@ -4,6 +4,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 enum MovieDetailActionType {
+  castToDevice,
   openInspector,
   toggleSubscription,
   toggleBlacklist,
@@ -31,8 +32,16 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
   required MovieDetailDto movie,
   required bool isSubscribed,
   required bool isBlacklisted,
+  bool canCast = false,
+  String? castSessionLabel,
 }) {
   return <MovieDetailActionDescriptor>[
+    if (canCast || castSessionLabel != null)
+      MovieDetailActionDescriptor(
+        type: MovieDetailActionType.castToDevice,
+        label: castSessionLabel ?? '投屏到电视',
+        icon: Icons.cast_rounded,
+      ),
     const MovieDetailActionDescriptor(
       type: MovieDetailActionType.openInspector,
       label: '更多信息',

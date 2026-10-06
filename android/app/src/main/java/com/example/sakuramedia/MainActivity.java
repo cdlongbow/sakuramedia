@@ -1,10 +1,12 @@
 package com.example.sakuramedia;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
@@ -21,6 +23,7 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "sakuramedia/external_player";
+    private static final String MULTICAST_LOCK_CHANNEL = "sakuramedia/multicast_lock";
     private static final String VIDEO_MIME = "video/*";
     private static final String FALLBACK_SAMPLE_URL = "http://127.0.0.1/video.mp4";
     // 外部播放器通用 intent extra：position 单位毫秒、title 为媒体标题。
@@ -29,11 +32,17 @@ public class MainActivity extends FlutterActivity {
     // MX Player 系列读 int 型 position，其余（VLC 等）读 long 型。
     private static final String MX_PLAYER_PACKAGE_PREFIX = "com.mxtech";
 
+    private WifiManager.MulticastLock multicastLock;
+
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler(this::handleMethodCall);
+        new MethodChannel(
+                flutterEngine.getDartExecutor().getBinaryMessenger(),
+                MULTICAST_LOCK_CHANNEL)
+                .setMethodCallHandler(this::handleMulticastLockCall);
     }
 
     private void handleMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
@@ -114,5 +123,59 @@ public class MainActivity extends FlutterActivity {
         } catch (Exception error) {
             result.error("launch_failed", error.getMessage(), null);
         }
+    }
+
+    // 部分设备的 WiFi 芯片默认过滤组播帧，不持有 MulticastLock 时收不到 SSDP
+    // 响应；锁在投屏设备搜索期间持有，搜索结束或取消时释放。
+    private void handleMulticastLockCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+        switch (call.method) {
+            case "acquire":
+                result.success(acquireMulticastLock());
+                break;
+            case "release":
+                releaseMulticastLock();
+                result.success(null);
+                break;
+            default:
+                result.notImplemented();
+        }
+    }
+
+    private boolean acquireMulticastLock() {
+        final WifiManager wifiManager =
+                (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager == null) {
+            return false;
+        }
+        if (multicastLock == null) {
+            multicastLock = wifiManager.createMulticastLock("sakuramedia_cast");
+            multicastLock.setReferenceCounted(false);
+        }
+        if (!multicastLock.isHeld()) {
+            try {
+                multicastLock.acquire();
+            } catch (Exception error) {
+                return false;
+            }
+        }
+        return multicastLock.isHeld();
+    }
+
+    private void releaseMulticastLock() {
+        if (multicastLock == null || !multicastLock.isHeld()) {
+            return;
+        }
+        try {
+            multicastLock.release();
+        } catch (Exception ignored) {
+            // 锁可能已被系统回收，无需处理。
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        // 兜底：Dart 侧未正常释放时（异常退出搜索等）避免锁泄漏到进程结束。
+        releaseMulticastLock();
+        super.onDestroy();
     }
 }

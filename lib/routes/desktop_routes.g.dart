@@ -9,6 +9,7 @@ part of 'desktop_routes.dart';
 List<RouteBase> get $appRoutes => [
   $desktopLoginRouteData,
   $desktopMoviePlayerRouteData,
+  $desktopCastRemoteRouteData,
   $desktopVideoPlayerRouteData,
   $desktopClipCollectionPlayRouteData,
   $desktopVideoCollectionPlayRouteData,
@@ -104,6 +105,33 @@ T? _$convertMapValue<T>(
 ) {
   final value = map[key];
   return value == null ? null : converter(value);
+}
+
+RouteBase get $desktopCastRemoteRouteData => GoRouteData.$route(
+  path: '/desktop/cast/remote',
+  hasOverriddenOnExit: false,
+  factory: $DesktopCastRemoteRouteData._fromState,
+);
+
+mixin $DesktopCastRemoteRouteData on GoRouteData {
+  static DesktopCastRemoteRouteData _fromState(GoRouterState state) =>
+      const DesktopCastRemoteRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/cast/remote');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
 }
 
 RouteBase get $desktopVideoPlayerRouteData => GoRouteData.$route(

@@ -9,6 +9,8 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/cast/presentation/actions/cast_movie_playback.dart';
+import 'package:sakuramedia/features/cast/presentation/providers/cast_session_provider.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
@@ -789,6 +791,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     required MovieMediaItemDto? selectedMedia,
   }) async {
     switch (action) {
+      case MovieDetailActionType.castToDevice:
+        final castSession = ref.read(castSessionControllerProvider);
+        if (castSession != null &&
+            castSession.movieNumber == movie.movieNumber) {
+          openCastRemotePage(context);
+        } else {
+          await launchMovieCast(
+            context,
+            movie: movie,
+            selectedMedia: selectedMedia,
+          );
+        }
       case MovieDetailActionType.openInspector:
         await openInspector(movie, selectedMedia);
       case MovieDetailActionType.refreshMetadata:
@@ -798,6 +812,15 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       case MovieDetailActionType.recomputeHeat:
         await executeMovieAction(action);
     }
+  }
+
+  /// 当前影片是否存在进行中的投屏会话；存在时返回菜单展示文案。
+  String? activeCastSessionLabel(MovieDetailDto movie) {
+    final session = ref.read(castSessionControllerProvider);
+    if (session == null || session.movieNumber != movie.movieNumber) {
+      return null;
+    }
+    return '投屏中 · ${session.device.name}';
   }
 
   /// 「刷新元数据」覆盖式刷新的共享二次确认（移动底部抽屉 / 桌面居中弹窗）。

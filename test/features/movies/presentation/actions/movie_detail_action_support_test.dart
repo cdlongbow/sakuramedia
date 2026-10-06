@@ -50,6 +50,30 @@ void main() {
     },
   );
 
+  test('buildMovieDetailActionDescriptors prepends cast action when enabled', () {
+    final actions = buildMovieDetailActionDescriptors(
+      movie: _movieDetail(javdbId: ''),
+      isSubscribed: false,
+      isBlacklisted: false,
+      canCast: true,
+    );
+
+    expect(actions.first.type, MovieDetailActionType.castToDevice);
+    expect(actions.first.label, '投屏到电视');
+  });
+
+  test('buildMovieDetailActionDescriptors shows casting label when active', () {
+    final actions = buildMovieDetailActionDescriptors(
+      movie: _movieDetail(javdbId: ''),
+      isSubscribed: false,
+      isBlacklisted: false,
+      castSessionLabel: '投屏中 · 客厅电视',
+    );
+
+    expect(actions.first.type, MovieDetailActionType.castToDevice);
+    expect(actions.first.label, '投屏中 · 客厅电视');
+  });
+
   test(
     'movieDetailRemoteActionSpecFor has no remote spec for openInspector',
     () {

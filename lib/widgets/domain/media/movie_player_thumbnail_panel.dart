@@ -17,7 +17,7 @@ class MoviePlayerThumbnailPanel extends StatefulWidget {
     required this.activeIndex,
     required this.isScrollLocked,
     required this.usesAutoColumns,
-    required this.onAutoColumnsResolved,
+    this.onAutoColumnsResolved,
     required this.onColumnsChanged,
     required this.onToggleScrollLock,
     required this.onThumbnailTap,
@@ -34,6 +34,7 @@ class MoviePlayerThumbnailPanel extends StatefulWidget {
     this.onCreateClip,
     this.onClearClipSelection,
     this.layout = ThumbnailGridLayout.uniform16x9,
+    this.controlsAlignment = Alignment.centerLeft,
   });
 
   final List<MovieMediaThumbnailDto> thumbnails;
@@ -43,7 +44,8 @@ class MoviePlayerThumbnailPanel extends StatefulWidget {
   final int? activeIndex;
   final bool isScrollLocked;
   final bool usesAutoColumns;
-  final ValueChanged<int> onAutoColumnsResolved;
+  /// 运行时解析出的自动列数回调；不需要把自动列数写回状态的调用方可以省略。
+  final ValueChanged<int>? onAutoColumnsResolved;
   final ValueChanged<int> onColumnsChanged;
   final VoidCallback onToggleScrollLock;
   final ValueChanged<int> onThumbnailTap;
@@ -65,6 +67,9 @@ class MoviePlayerThumbnailPanel extends StatefulWidget {
   /// 其余调用方默认 [ThumbnailGridLayout.uniform16x9]（统一 16:9 网格 + 运行时 fit 自适应）。
   final ThumbnailGridLayout layout;
 
+  /// 列数/锁定控制行的对齐方式；投屏遥控页居中，播放器保持左侧对齐。
+  final Alignment controlsAlignment;
+
   @override
   State<MoviePlayerThumbnailPanel> createState() =>
       _MoviePlayerThumbnailPanelState();
@@ -85,10 +90,13 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
             widget.usesAutoColumns
                 ? autoColumns
                 : (widget.columns ?? autoColumns);
-        if (widget.usesAutoColumns && widget.columns != autoColumns) {
+        final onAutoColumnsResolved = widget.onAutoColumnsResolved;
+        if (widget.usesAutoColumns &&
+            widget.columns != autoColumns &&
+            onAutoColumnsResolved != null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
-              widget.onAutoColumnsResolved(autoColumns);
+              onAutoColumnsResolved(autoColumns);
             }
           });
         }
@@ -98,7 +106,7 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
           child: Column(
             children: [
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: widget.controlsAlignment,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(

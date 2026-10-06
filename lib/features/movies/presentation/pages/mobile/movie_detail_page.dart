@@ -7,6 +7,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/cast/data/cast_director.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -387,6 +388,11 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
         movie: movie,
         isSubscribed: isSubscribed,
         isBlacklisted: isBlacklisted,
+        canCast:
+            isCastPlatformSupported &&
+            selectedMedia != null &&
+            selectedMedia.hasPlayableUrl,
+        castSessionLabel: activeCastSessionLabel(movie),
       ),
     );
     if (!mounted || action == null) {

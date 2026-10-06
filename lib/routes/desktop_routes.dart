@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/discovery/presentation/pages/desktop/hot_ac
 import 'package:sakuramedia/features/image_search/presentation/pages/desktop/image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/providers/image_search_draft_store_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
+import 'package:sakuramedia/features/cast/presentation/pages/cast_remote_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/series_movies_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collections_page.dart';
@@ -111,6 +112,28 @@ class DesktopMoviePlayerRouteData extends _DesktopNoTransitionRouteData
         fallback: positionSeconds,
       ),
     );
+  }
+}
+
+@TypedGoRoute<DesktopCastRemoteRouteData>(
+  path: '/desktop/cast/remote',
+)
+class DesktopCastRemoteRouteData extends _DesktopNoTransitionRouteData
+    with $DesktopCastRemoteRouteData {
+  const DesktopCastRemoteRouteData();
+
+  @override
+  String get pageName => 'desktop-cast-remote';
+
+  @override
+  String get location => buildRouteLocation(
+    path: '/desktop/cast/remote',
+    queryParameters: const <String, String?>{},
+  );
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    return const CastRemotePage();
   }
 }
 

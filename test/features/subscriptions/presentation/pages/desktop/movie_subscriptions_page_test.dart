@@ -437,6 +437,149 @@ void main() {
     expect(adapter.hitCount('GET', '/download-tasks'), 3);
   });
 
+  testWidgets('completed task exposes files button and opens file list', (tester) async {
+    _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124')]);
+    adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
+      'items': [
+        {'id': 41, 'movie_number': 'ABP-123', 'name': 'ABP-123 task', 'state': 'completed'},
+        {'id': 42, 'movie_number': 'ABP-124', 'name': 'ABP-124 task', 'state': 'downloading'},
+      ], 'total': 2, 'page': 1, 'page_size': 100,
+    });
+    await _pumpPage(tester, sessionStore, apiClient);
+
+    // 只有带已完成任务的影片显示「查看文件」。
+    expect(find.byKey(const Key('movie-subscription-row-files')), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-subscription-row-retrigger-import')),
+      findsNothing,
+    );
+
+    adapter.enqueueJson(method: 'GET', path: '/download-tasks/41/files', body: [
+      {
+        'name': 'ABP-123.mkv',
+        'relative_path': 'ABP-123/ABP-123.mkv',
+        'size_bytes': 1048576,
+        'is_video': true,
+      },
+    ]);
+    await tester.tap(find.byKey(const Key('movie-subscription-row-files')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('download-task-files-modal')), findsOneWidget);
+    expect(find.text('ABP-123.mkv'), findsOneWidget);
+  });
+
+  testWidgets('retrigger import submits newest failed task and refreshes', (tester) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
+      'items': [
+        {'id': 42, 'movie_number': 'ABP-123', 'name': 'Resource B', 'state': 'completed', 'import_status': 'skipped'},
+        {'id': 41, 'movie_number': 'ABP-123', 'name': 'Resource A', 'state': 'completed', 'import_status': 'failed'},
+      ], 'total': 2, 'page': 1, 'page_size': 100,
+    });
+    await _pumpPage(tester, sessionStore, apiClient);
+
+    expect(
+      find.byKey(const Key('movie-subscription-row-retrigger-import')),
+      findsOneWidget,
+    );
+
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/42/import',
+      statusCode: 202,
+      body: {'task_id': 42, 'task_run_id': 7, 'status': 'accepted'},
+    );
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    await tester.tap(
+      find.byKey(const Key('movie-subscription-row-retrigger-import')),
+    );
+    await tester.pumpAndSettle();
+
+    final posts = adapter.requests
+        .where((r) => r.method == 'POST')
+        .toList();
+    expect(posts.map((r) => r.path), ['/download-tasks/42/import']);
+    expect(find.text('已提交导入任务'), findsOneWidget);
+    // 提交成功后刷新订阅列表，行状态与任务快照都会重拉。
+    expect(_listRequests(adapter).length, 2);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('batch retrigger submits newest retryable task per movie', (tester) async {
+    _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124')]);
+    adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
+      'items': [
+        {'id': 41, 'movie_number': 'ABP-123', 'name': 'A1', 'state': 'completed', 'import_status': 'failed'},
+        {'id': 42, 'movie_number': 'ABP-123', 'name': 'A2', 'state': 'completed', 'import_status': 'skipped'},
+        {'id': 43, 'movie_number': 'ABP-124', 'name': 'B1', 'state': 'completed', 'import_status': 'completed'},
+      ], 'total': 3, 'page': 1, 'page_size': 100,
+    });
+    await _pumpPage(tester, sessionStore, apiClient);
+    await tester.tap(find.text('选择'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('movie-subscriptions-select-all-button')),
+    );
+    await tester.pumpAndSettle();
+
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/imports',
+      statusCode: 202,
+      body: {'accepted_count': 1, 'skipped_task_ids': []},
+    );
+    _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124')]);
+    await tester.tap(
+      find.byKey(
+        const Key('movie-subscriptions-batch-retrigger-imports-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final posts = adapter.requests
+        .where((r) => r.method == 'POST' && r.path == '/download-tasks/imports')
+        .toList();
+    expect(posts, hasLength(1));
+    // 每部片只取最新一个可重提任务：ABP-123 → 41（列表倒序第一个），ABP-124 无。
+    expect(posts.single.body, {'task_ids': [41]});
+    expect(find.text('已提交 1 个重新导入'), findsOneWidget);
+    expect(_listRequests(adapter).length, 2);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('batch retrigger toasts when nothing is retryable', (tester) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
+      'items': [
+        {'id': 41, 'movie_number': 'ABP-123', 'name': 'A1', 'state': 'completed', 'import_status': 'completed'},
+      ], 'total': 1, 'page': 1, 'page_size': 100,
+    });
+    await _pumpPage(tester, sessionStore, apiClient);
+    await tester.tap(find.text('选择'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('movie-subscriptions-select-all-button')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(
+        const Key('movie-subscriptions-batch-retrigger-imports-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('所选影片没有可重新导入的任务'), findsOneWidget);
+    expect(
+      adapter.requests.where(
+        (r) => r.method == 'POST' && r.path == '/download-tasks/imports',
+      ),
+      isEmpty,
+    );
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   for (final deleteFiles in [false, true]) {
     testWidgets('delete movie tasks with deleteFiles=$deleteFiles and refresh', (tester) async {
       _enqueuePage(adapter, [_item('ABP-123')]);

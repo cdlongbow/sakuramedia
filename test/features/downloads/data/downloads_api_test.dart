@@ -328,6 +328,106 @@ void main() {
       expect(request.path, '/download-tasks/7/import');
     });
 
+    test('getDownloadTaskFiles gets the task files endpoint and parses files', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/download-tasks/7/files',
+        body: [
+          {
+            'name': 'ABC-001.mkv',
+            'relative_path': 'ABC-001/ABC-001.mkv',
+            'size_bytes': 123,
+            'is_video': true,
+          },
+          {
+            'name': 'zh.srt',
+            'relative_path': 'ABC-001/subs/zh.srt',
+            'size_bytes': 45,
+            'is_video': false,
+          },
+        ],
+      );
+
+      final files = await bundle.downloadsApi.getDownloadTaskFiles(7);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.method, 'GET');
+      expect(request.path, '/download-tasks/7/files');
+      expect(files, hasLength(2));
+      expect(files.first.name, 'ABC-001.mkv');
+      expect(files.first.relativePath, 'ABC-001/ABC-001.mkv');
+      expect(files.first.sizeBytes, 123);
+      expect(files.first.isVideo, isTrue);
+      expect(files.last.name, 'zh.srt');
+      expect(files.last.isVideo, isFalse);
+    });
+
+    test(
+      'triggerDownloadTaskBatchImport posts task ids and parses result',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/download-tasks/imports',
+          statusCode: 202,
+          body: {'accepted_count': 2, 'skipped_task_ids': [7]},
+        );
+
+        final result = await bundle.downloadsApi.triggerDownloadTaskBatchImport(
+          [1, 2, 7],
+        );
+
+        final request = bundle.adapter.requests.single;
+        expect(request.method, 'POST');
+        expect(request.path, '/download-tasks/imports');
+        expect(request.body, {'task_ids': [1, 2, 7]});
+        expect(result.acceptedCount, 2);
+        expect(result.skippedTaskIds, [7]);
+      },
+    );
+
+    test(
+      'triggerDownloadTaskBatchImport chunks ids over 100 and merges results',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        final ids = List<int>.generate(250, (index) => index + 1);
+        for (final body in const <Map<String, dynamic>>[
+          {'accepted_count': 100, 'skipped_task_ids': <int>[]},
+          {'accepted_count': 100, 'skipped_task_ids': <int>[]},
+          {'accepted_count': 49, 'skipped_task_ids': [250]},
+        ]) {
+          bundle.adapter.enqueueJson(
+            method: 'POST',
+            path: '/download-tasks/imports',
+            statusCode: 202,
+            body: body,
+          );
+        }
+
+        final result = await bundle.downloadsApi.triggerDownloadTaskBatchImport(
+          ids,
+        );
+
+        final posts = bundle.adapter.requests.toList();
+        expect(posts, hasLength(3));
+        expect(posts[0].body, {'task_ids': ids.sublist(0, 100)});
+        expect(posts[1].body, {'task_ids': ids.sublist(100, 200)});
+        expect(posts[2].body, {'task_ids': ids.sublist(200)});
+        expect(result.acceptedCount, 249);
+        expect(result.skippedTaskIds, [250]);
+      },
+    );
+
     test(
       'createDownloadRequest converts backend error to ApiException',
       () async {

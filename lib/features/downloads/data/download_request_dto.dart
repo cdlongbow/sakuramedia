@@ -65,6 +65,34 @@ class DownloadTaskDto {
           : null,
     );
   }
+
+  /// 导入已跑完但没成功的任务才可重新导入；pending / running 在途、
+  /// completed 已入库，都不需要。
+  bool get canRetriggerImport =>
+      importStatus == 'failed' || importStatus == 'skipped';
+}
+
+/// `POST /download-tasks/imports` 的批量重新导入受理结果。
+class DownloadTaskBatchImportResultDto {
+  const DownloadTaskBatchImportResultDto({
+    required this.acceptedCount,
+    required this.skippedTaskIds,
+  });
+
+  final int acceptedCount;
+
+  /// 后端校验不通过（不存在 / 未完成 / 状态不符）而未受理的任务 id。
+  final List<int> skippedTaskIds;
+
+  factory DownloadTaskBatchImportResultDto.fromJson(Map<String, dynamic> json) {
+    final rawSkipped = json['skipped_task_ids'];
+    return DownloadTaskBatchImportResultDto(
+      acceptedCount: asInt(json['accepted_count']),
+      skippedTaskIds: rawSkipped is List
+          ? rawSkipped.map(asInt).toList(growable: false)
+          : const <int>[],
+    );
+  }
 }
 
 class DownloadRequestResponseDto {

@@ -50,7 +50,7 @@ void main() {
     sessionStore.dispose();
   });
 
-  testWidgets('renders mobile rows with the full action set', (tester) async {
+  testWidgets('renders mobile rows with the more entry', (tester) async {
     _enqueuePage(adapter, [_item('ABP-123')]);
     await _pumpPage(tester, sessionStore, apiClient);
 
@@ -62,14 +62,18 @@ void main() {
       find.byKey(const Key('movie-subscription-row-number-ABP-123')),
       findsOneWidget,
     );
-    // 移动端操作图标不再挤在信息行尾，但动作完整保留。
+    // 移动端操作收进「更多」，行内不再摆一排无标签图标。
     expect(
-      find.byKey(const Key('movie-subscription-row-magnet-search')),
+      find.byKey(const Key('movie-subscription-row-more')),
       findsOneWidget,
     );
     expect(
+      find.byKey(const Key('movie-subscription-row-magnet-search')),
+      findsNothing,
+    );
+    expect(
       find.byKey(const Key('movie-subscription-row-unsubscribe')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const Key('movie-subscriptions-filter-button')),
@@ -78,7 +82,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('shows download task entry when the movie has tasks', (tester) async {
+  testWidgets('more sheet lists labelled actions for a movie with tasks', (
+    tester,
+  ) async {
     _enqueuePage(adapter, [_item('ABP-123')]);
     adapter.setFallbackJson(
       method: 'GET',
@@ -94,8 +100,194 @@ void main() {
     );
     await _pumpPage(tester, sessionStore, apiClient);
 
+    await tester.tap(find.byKey(const Key('movie-subscription-row-more')));
+    await tester.pumpAndSettle();
+
     expect(
-      find.byKey(const Key('movie-subscription-row-downloads')),
+      find.byKey(const Key('movie-subscription-row-actions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-downloads')),
+      findsOneWidget,
+    );
+    // 标题以番号为主、中文标题为次。
+    final sheet = find.byKey(const Key('movie-subscription-row-actions'));
+    expect(
+      find.descendant(of: sheet, matching: find.text('ABP-123')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('Title ABP-123')),
+      findsOneWidget,
+    );
+    expect(find.text('查看下载任务'), findsOneWidget);
+    expect(find.text('磁力搜索'), findsOneWidget);
+    expect(find.text('删除下载任务'), findsOneWidget);
+    expect(find.text('取消订阅'), findsOneWidget);
+    // 未完成 / 未失败的任务不出现对应动作。
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-files')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-retrigger-import')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('completed task exposes files action in the sheet', (
+    tester,
+  ) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: {
+        'items': [
+          {
+            'id': 41,
+            'movie_number': 'ABP-123',
+            'name': 'ABP-123 task',
+            'state': 'completed',
+          },
+        ],
+        'total': 1,
+        'page': 1,
+        'page_size': 100,
+      },
+    );
+    await _pumpPage(tester, sessionStore, apiClient);
+
+    await tester.tap(find.byKey(const Key('movie-subscription-row-more')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-files')),
+      findsOneWidget,
+    );
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-tasks/41/files',
+      body: [
+        {
+          'name': 'ABP-123.mkv',
+          'relative_path': 'ABP-123/ABP-123.mkv',
+          'size_bytes': 1048576,
+          'is_video': true,
+        },
+      ],
+    );
+    await tester.tap(
+      find.byKey(const Key('movie-subscription-row-action-files')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('download-task-files-modal')), findsOneWidget);
+    expect(find.text('ABP-123.mkv'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('failed import exposes retrigger action and submits it', (
+    tester,
+  ) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: {
+        'items': [
+          {
+            'id': 41,
+            'movie_number': 'ABP-123',
+            'name': 'ABP-123 task',
+            'state': 'completed',
+            'import_status': 'failed',
+          },
+        ],
+        'total': 1,
+        'page': 1,
+        'page_size': 100,
+      },
+    );
+    await _pumpPage(tester, sessionStore, apiClient);
+
+    await tester.tap(find.byKey(const Key('movie-subscription-row-more')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-retrigger-import')),
+      findsOneWidget,
+    );
+
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/41/import',
+      statusCode: 202,
+      body: {'task_id': 41, 'task_run_id': 7, 'status': 'accepted'},
+    );
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    await tester.tap(
+      find.byKey(const Key('movie-subscription-row-action-retrigger-import')),
+    );
+    await tester.pumpAndSettle();
+
+    final posts = adapter.requests.where((r) => r.method == 'POST').toList();
+    expect(posts.map((r) => r.path), ['/download-tasks/41/import']);
+    expect(find.text('已提交导入任务'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('more sheet opens on narrow width without overflow', (
+    tester,
+  ) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: {
+        'items': [
+          {
+            'id': 41,
+            'movie_number': 'ABP-123',
+            'name': 'ABP-123 task',
+            'state': 'completed',
+            'import_status': 'failed',
+          },
+        ],
+        'total': 1,
+        'page': 1,
+        'page_size': 100,
+      },
+    );
+    await _pumpPage(
+      tester,
+      sessionStore,
+      apiClient,
+      size: const Size(360, 844),
+    );
+
+    expect(
+      find.byKey(const Key('movie-subscription-row-more')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('movie-subscription-row-more')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('movie-subscription-row-actions')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-downloads')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-files')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-subscription-row-action-retrigger-import')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -168,7 +360,14 @@ void main() {
       find.byKey(const Key('movie-subscriptions-batch-unsubscribe-button')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('取消订阅'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(
+          const Key('movie-subscriptions-batch-unsubscribe-dialog'),
+        ),
+        matching: find.text('取消订阅'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final request = adapter.requests.singleWhere(
@@ -224,14 +423,75 @@ void main() {
     expect(adapter.hitCount('DELETE', '/download-tasks/41'), 1);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('mobile selection exposes batch retrigger from the bottom bar', (
+    tester,
+  ) async {
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: {
+        'items': [
+          {
+            'id': 41,
+            'movie_number': 'ABP-123',
+            'name': 'ABP-123 task',
+            'state': 'completed',
+            'import_status': 'failed',
+          },
+        ],
+        'total': 1,
+        'page': 1,
+        'page_size': 100,
+      },
+    );
+    await _pumpPage(tester, sessionStore, apiClient);
+
+    await tester.tap(find.text('选择'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('movie-subscriptions-select-all-button')),
+    );
+    await tester.pumpAndSettle();
+
+    // 三个按钮平分贴底条，用短标签避免省略。
+    expect(find.text('重新导入'), findsOneWidget);
+    expect(find.text('删除任务'), findsOneWidget);
+    expect(find.text('取消订阅'), findsOneWidget);
+
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-tasks/imports',
+      statusCode: 202,
+      body: {'accepted_count': 1, 'skipped_task_ids': []},
+    );
+    _enqueuePage(adapter, [_item('ABP-123')]);
+    await tester.tap(
+      find.byKey(
+        const Key('movie-subscriptions-batch-retrigger-imports-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final posts = adapter.requests
+        .where((r) => r.method == 'POST' && r.path == '/download-tasks/imports')
+        .toList();
+    expect(posts, hasLength(1));
+    expect(posts.single.body, {'task_ids': [41]});
+    expect(find.text('已提交 1 个重新导入'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
 }
 
 Future<void> _pumpPage(
   WidgetTester tester,
   SessionStore sessionStore,
-  ApiClient apiClient,
-) async {
-  tester.view.physicalSize = const Size(390, 844);
+  ApiClient apiClient, {
+  Size size = const Size(390, 844),
+}) async {
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(

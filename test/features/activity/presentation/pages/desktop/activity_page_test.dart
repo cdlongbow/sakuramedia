@@ -754,6 +754,89 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
+  testWidgets('completed download task exposes files button and file list', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    await sessionStore.saveTokens(
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    _enqueueActivityBootstrap(bundle);
+    final page = <String, dynamic>{
+      'items': <Map<String, dynamic>>[
+        <String, dynamic>{
+          ..._downloadTaskJson(401),
+          'state': 'completed',
+          'progress': 1.0,
+          'import_status': 'completed',
+        },
+        _downloadTaskJson(402),
+      ],
+      'page': 1,
+      'page_size': 20,
+      'total': 2,
+    };
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: page,
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: const <Map<String, dynamic>>[],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: const OKToast(child: Scaffold(body: DesktopActivityPage())),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-tasks',
+      body: page,
+    );
+    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
+    await tester.pumpAndSettle();
+
+    // 只有已完成任务的卡片带「查看文件」入口。
+    expect(find.byKey(const Key('download-task-files-401')), findsOneWidget);
+    expect(find.byKey(const Key('download-task-files-402')), findsNothing);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/download-tasks/401/files',
+      body: [
+        {
+          'name': 'ABC-00401.mkv',
+          'relative_path': 'ABC-00401/ABC-00401.mkv',
+          'size_bytes': 1048576,
+          'is_video': true,
+        },
+      ],
+    );
+    await tester.tap(find.byKey(const Key('download-task-files-401')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('download-task-files-modal')), findsOneWidget);
+    expect(find.text('ABC-00401.mkv'), findsOneWidget);
+  });
+
   testWidgets('executable jobs dialog fits short window and list scrolls to end', (
     tester,
   ) async {

@@ -373,6 +373,35 @@ void main() {
     final text = tester.widget<Text>(find.text('删除选集'));
     expect(text.style?.color, sakuraMobileThemeData.appTextPalette.error);
   });
+
+  testWidgets('drawer shows a muted secondary title under the primary title', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      AppPlatformScope(
+        platform: AppPlatform.mobile,
+        child: MaterialApp(
+          theme: sakuraMobileThemeData,
+          home: Scaffold(
+            body: _AutoTrigger(
+              presentation: AppMenuPresentation.bottomDrawer,
+              title: 'ABP-123',
+              titleSubtitle: '示例订阅影片标题',
+              items: const [AppMenuItem(value: 'search', label: '磁力搜索')],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABP-123'), findsOneWidget);
+    expect(find.text('示例订阅影片标题'), findsOneWidget);
+    final secondary = tester.widget<Text>(find.text('示例订阅影片标题'));
+    expect(secondary.style?.color, sakuraMobileThemeData.appTextPalette.muted);
+  });
 }
 
 class _SecondaryTapTrigger extends StatelessWidget {
@@ -410,12 +439,14 @@ class _AutoTrigger extends StatelessWidget {
     required this.items,
     this.presentation = AppMenuPresentation.popup,
     this.title,
+    this.titleSubtitle,
     this.onResult,
   });
 
   final List<AppMenuItem<String>> items;
   final AppMenuPresentation presentation;
   final String? title;
+  final String? titleSubtitle;
   final ValueChanged<String?>? onResult;
 
   @override
@@ -431,6 +462,7 @@ class _AutoTrigger extends StatelessWidget {
                   presentation: presentation,
                   drawerKey: const Key('app-action-menu-drawer'),
                   title: title,
+                  titleSubtitle: titleSubtitle,
                   items: items,
                 );
                 onResult?.call(result);

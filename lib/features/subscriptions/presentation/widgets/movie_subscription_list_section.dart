@@ -4,6 +4,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
+import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -20,6 +21,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_filter_sections.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row.dart';
+import 'package:sakuramedia/features/subscriptions/presentation/widgets/movie_subscription_row_actions.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
@@ -75,8 +77,9 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     final spacing = context.appSpacing;
     final ownedScrollController = useScrollController();
     final effectiveScrollController = scrollController ?? ownedScrollController;
-    // 移动端删除下载任务的 loading：顶栏（退出 / 全选）和贴底操作条要同步禁用。
+    // 移动端删除下载任务 / 重新导入的 loading：顶栏（退出 / 全选）和贴底操作条要同步禁用。
     final batchDeleting = useState(false);
+    final batchImporting = useState(false);
     useEffect(() {
       void loadMoreIfNeeded() {
         if (!effectiveScrollController.hasClients) return;
@@ -107,7 +110,11 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
       managerProvider.select((asyncState) => asyncState.value?.paged),
     );
     final resultView = AppFixedHeaderLayout(
-      header: _ListHeader(mobile: mobile, batchDeleting: batchDeleting.value),
+      header: _ListHeader(
+        mobile: mobile,
+        batchDeleting: batchDeleting.value,
+        batchImporting: batchImporting.value,
+      ),
       child: AppFilterResultLoadingOverlay(
         surfaceColor: mobile
             ? context.appColors.surfaceCard
@@ -143,6 +150,8 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
         _MobileSelectionBar(
           deleting: batchDeleting.value,
           onDeletingChanged: (value) => batchDeleting.value = value,
+          importing: batchImporting.value,
+          onImportingChanged: (value) => batchImporting.value = value,
         ),
       ],
     );
@@ -152,10 +161,15 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
 // --- 顶栏 -------------------------------------------------------------------
 
 class _ListHeader extends ConsumerWidget {
-  const _ListHeader({required this.mobile, required this.batchDeleting});
+  const _ListHeader({
+    required this.mobile,
+    required this.batchDeleting,
+    required this.batchImporting,
+  });
 
   final bool mobile;
   final bool batchDeleting;
+  final bool batchImporting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -166,7 +180,11 @@ class _ListHeader extends ConsumerWidget {
     final current = asyncState.value;
     if (current != null && current.selectionMode) {
       return mobile
-          ? _MobileSelectionHeader(state: current, batchDeleting: batchDeleting)
+          ? _MobileSelectionHeader(
+              state: current,
+              batchDeleting: batchDeleting,
+              batchImporting: batchImporting,
+            )
           : _SelectionHeader(state: current);
     }
 
@@ -328,7 +346,9 @@ class _SelectionHeader extends HookConsumerWidget {
     );
     final notifier = ref.read(managerProvider.notifier);
     final loadingDownloads = useState(false);
-    final busy = state.isBatchRunning || loadingDownloads.value;
+    final loadingImports = useState(false);
+    final busy =
+        state.isBatchRunning || loadingDownloads.value || loadingImports.value;
 
     final loadedCount = state.paged.items.length;
     final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
@@ -351,6 +371,15 @@ class _SelectionHeader extends HookConsumerWidget {
         state,
         size: AppButtonSize.small,
         loadingDownloads: loadingDownloads.value,
+        loadingImports: loadingImports.value,
+        onRetriggerImports: () => unawaited(
+          _retriggerSelectedImports(
+            context,
+            ref,
+            state,
+            onLoadingChanged: (value) => loadingImports.value = value,
+          ),
+        ),
         onDeleteDownloads: () => unawaited(
           _deleteSelectedDownloads(
             context,
@@ -369,10 +398,12 @@ class _MobileSelectionHeader extends ConsumerWidget {
   const _MobileSelectionHeader({
     required this.state,
     required this.batchDeleting,
+    required this.batchImporting,
   });
 
   final MovieSubscriptionManagerState state;
   final bool batchDeleting;
+  final bool batchImporting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -380,7 +411,7 @@ class _MobileSelectionHeader extends ConsumerWidget {
       ref.watch(movieSubscriptionStatusSelectionProvider),
     );
     final notifier = ref.read(managerProvider.notifier);
-    final busy = state.isBatchRunning || batchDeleting;
+    final busy = state.isBatchRunning || batchDeleting || batchImporting;
     final loadedCount = state.paged.items.length;
     final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
 
@@ -408,10 +439,14 @@ class _MobileSelectionBar extends ConsumerWidget {
   const _MobileSelectionBar({
     required this.deleting,
     required this.onDeletingChanged,
+    required this.importing,
+    required this.onImportingChanged,
   });
 
   final bool deleting;
   final ValueChanged<bool> onDeletingChanged;
+  final bool importing;
+  final ValueChanged<bool> onImportingChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -425,7 +460,17 @@ class _MobileSelectionBar extends ConsumerWidget {
         context,
         ref,
         state,
+        compactLabels: true,
         loadingDownloads: deleting,
+        loadingImports: importing,
+        onRetriggerImports: () => unawaited(
+          _retriggerSelectedImports(
+            context,
+            ref,
+            state,
+            onLoadingChanged: onImportingChanged,
+          ),
+        ),
         onDeleteDownloads: () => unawaited(
           _deleteSelectedDownloads(
             context,
@@ -441,31 +486,47 @@ class _MobileSelectionBar extends ConsumerWidget {
 
 /// 多选态的批量操作按钮。桌面放进 `AppSelectionHeaderToolbar.actions`（small），
 /// 移动贴底 `AppSelectionBottomBar` 用默认 medium 撑满等宽。
+///
+/// 移动端三个按钮平分宽度，图标 + 长标签会省略；[compactLabels] 用不带图标的
+/// 短标签（已选数量由顶栏「已选 N 部」表达）。
 List<Widget> _buildBatchActions(
   BuildContext context,
   WidgetRef ref,
   MovieSubscriptionManagerState state, {
   AppButtonSize size = AppButtonSize.medium,
+  bool compactLabels = false,
   required bool loadingDownloads,
+  required bool loadingImports,
+  required VoidCallback onRetriggerImports,
   required VoidCallback onDeleteDownloads,
 }) {
-  final busy = state.isBatchRunning || loadingDownloads;
+  final busy = state.isBatchRunning || loadingDownloads || loadingImports;
   return <Widget>[
     AppButton(
+      key: const Key('movie-subscriptions-batch-retrigger-imports-button'),
+      label: '重新导入',
+      size: size,
+      icon: compactLabels ? null : const Icon(Icons.refresh_rounded),
+      isLoading: loadingImports,
+      onPressed: busy || !state.hasSelection ? null : onRetriggerImports,
+    ),
+    AppButton(
       key: const Key('movie-subscriptions-batch-delete-downloads-button'),
-      label: '删除下载任务',
+      label: compactLabels ? '删除任务' : '删除下载任务',
       size: size,
       variant: AppButtonVariant.danger,
-      icon: const Icon(Icons.delete_outline_rounded),
+      icon: compactLabels ? null : const Icon(Icons.delete_outline_rounded),
       isLoading: loadingDownloads,
       onPressed: busy || !state.hasSelection ? null : onDeleteDownloads,
     ),
     AppButton(
       key: const Key('movie-subscriptions-batch-unsubscribe-button'),
-      label: '取消订阅（${state.selectionCount}）',
+      label: compactLabels
+          ? '取消订阅'
+          : '取消订阅（${state.selectionCount}）',
       size: size,
       variant: AppButtonVariant.danger,
-      icon: const Icon(Icons.bookmark_remove_outlined),
+      icon: compactLabels ? null : const Icon(Icons.bookmark_remove_outlined),
       isLoading: state.isBatchActionRunning(
         MovieSubscriptionBatchAction.unsubscribe,
       ),
@@ -527,6 +588,68 @@ Future<void> _deleteSelectedDownloads(
   } catch (error) {
     if (context.mounted) {
       showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
+    }
+  } finally {
+    if (context.mounted) onLoadingChanged(false);
+  }
+}
+
+/// 批量重新导入所选影片最新一个失败/跳过的下载任务。
+///
+/// 先按影片逐条查询下载任务（与批量删除共用同一查询范式），每部片只取最新
+/// 一个可重提任务，最后一次性提交批量接口；同媒体库仍由后端串行执行。
+Future<void> _retriggerSelectedImports(
+  BuildContext context,
+  WidgetRef ref,
+  MovieSubscriptionManagerState state, {
+  required ValueChanged<bool> onLoadingChanged,
+}) async {
+  onLoadingChanged(true);
+  try {
+    final managerProvider = movieSubscriptionManagerProvider(
+      state.filter.status,
+    );
+    final taskIds = <int>[];
+    final result = await runBatchOperation<String>(
+      context,
+      title: '正在查询下载任务',
+      items: state.selectedMovieNumbers.toList(),
+      action: (number) async {
+        final tasks = await ref.refresh(
+          movieDownloadTasksProvider(number).future,
+        );
+        final retriggerTask = tasks
+            .where((task) => task.canRetriggerImport)
+            .firstOrNull;
+        if (retriggerTask != null) {
+          taskIds.add(retriggerTask.id);
+        }
+      },
+    );
+    if (!context.mounted) return;
+    onLoadingChanged(false);
+    if (result.failed.isNotEmpty) return;
+    if (taskIds.isEmpty) {
+      showToast('所选影片没有可重新导入的任务');
+      return;
+    }
+    final accepted = await ref
+        .read(downloadsApiProvider)
+        .triggerDownloadTaskBatchImport(taskIds);
+    if (!context.mounted) return;
+    ref.invalidate(downloadTaskCenterProvider);
+    await ref.read(managerProvider.notifier).refresh();
+    if (context.mounted) {
+      final skipped = accepted.skippedTaskIds.length;
+      showToast(
+        skipped > 0
+            ? '已提交 ${accepted.acceptedCount} 个重新导入，$skipped 个已跳过'
+            : '已提交 ${accepted.acceptedCount} 个重新导入',
+      );
+    }
+  } catch (error) {
+    if (context.mounted) {
+      showToast(apiErrorMessage(error, fallback: '提交重新导入失败，请稍后重试'));
     }
   } finally {
     if (context.mounted) onLoadingChanged(false);
@@ -775,8 +898,117 @@ class _RowConsumer extends HookConsumerWidget {
     );
     final notifier = ref.read(managerProvider.notifier);
     final deleting = useState(false);
+    final retriggering = useState(false);
     final tasksProvider = movieDownloadTasksProvider(item.movieNumber);
     final tasks = ref.watch(tasksProvider).value;
+    // 重复下载可能留下多个已完成任务；列表按创建时间倒序，取最新一个看文件。
+    final completedTask = tasks
+        ?.where((task) => task.state == 'completed')
+        .firstOrNull;
+    // 与下载任务中心同一规则：导入失败或已跳过的任务可重新导入，取最新一个。
+    final retriggerTask = tasks
+        ?.where((task) => task.canRetriggerImport)
+        .firstOrNull;
+
+    void openFiles() {
+      final task = completedTask!;
+      unawaited(
+        showDownloadTaskFilesDialog(
+          context: context,
+          taskId: task.id,
+          movieNumber: item.movieNumber,
+          title: item.title,
+        ),
+      );
+    }
+
+    Future<void> retriggerImport() async {
+      if (retriggering.value) return;
+      final task = retriggerTask!;
+      retriggering.value = true;
+      try {
+        await ref.read(downloadsApiProvider).triggerDownloadTaskImport(task.id);
+        if (!context.mounted) return;
+        showToast('已提交导入任务');
+        ref.invalidate(downloadTaskCenterProvider);
+        await notifier.refresh();
+      } catch (error) {
+        if (context.mounted) {
+          showToast(apiErrorMessage(error, fallback: '提交导入失败，请稍后重试'));
+        }
+      } finally {
+        if (context.mounted) retriggering.value = false;
+      }
+    }
+
+    Future<void> deleteDownloads() async {
+      deleting.value = true;
+      try {
+        final currentTasks = await ref.refresh(tasksProvider.future);
+        if (!context.mounted) return;
+        if (currentTasks.isEmpty) {
+          showToast('下载任务已不存在');
+          await notifier.refresh();
+          return;
+        }
+        final api = ref.read(downloadsApiProvider);
+        deleting.value = false;
+        var removed = false;
+        await showDownloadTaskDeleteDialog(
+          context,
+          tasks: currentTasks,
+          onDelete: (id, deleteFiles) async {
+            await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
+            removed = true;
+          },
+        );
+        if (!context.mounted) return;
+        if (removed) {
+          ref.invalidate(downloadTaskCenterProvider);
+          await notifier.refresh();
+        }
+      } catch (error) {
+        if (context.mounted) {
+          showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
+        }
+      } finally {
+        if (context.mounted) deleting.value = false;
+      }
+    }
+
+    void searchMagnet() {
+      showMovieMagnetSearchDialog(
+        context: context,
+        movieNumber: item.movieNumber,
+      );
+    }
+
+    // 移动端「更多」：先弹底部操作表，再把选中的动作派发到现有实现。
+    Future<void> openActions() async {
+      final action = await showMovieSubscriptionRowActions(
+        context: context,
+        movieNumber: item.movieNumber,
+        movieTitle: item.title,
+        hasDownloads: tasks?.isNotEmpty == true,
+        hasFiles: completedTask != null,
+        canRetriggerImport: retriggerTask != null,
+      );
+      if (!context.mounted || action == null) return;
+      switch (action) {
+        case MovieSubscriptionRowAction.openDownloads:
+          onOpenDownloads(context, item.movieNumber);
+        case MovieSubscriptionRowAction.viewFiles:
+          openFiles();
+        case MovieSubscriptionRowAction.retriggerImport:
+          await retriggerImport();
+        case MovieSubscriptionRowAction.searchMagnet:
+          searchMagnet();
+        case MovieSubscriptionRowAction.deleteDownloads:
+          await deleteDownloads();
+        case MovieSubscriptionRowAction.unsubscribe:
+          await _unsubscribeRow(ref, item.movieNumber);
+      }
+    }
 
     return MovieSubscriptionRow(
       item: item,
@@ -790,46 +1022,12 @@ class _RowConsumer extends HookConsumerWidget {
       onOpenDownloads: tasks?.isNotEmpty == true
           ? () => onOpenDownloads(context, item.movieNumber)
           : null,
-      onSearchMagnet: () => showMovieMagnetSearchDialog(
-        context: context,
-        movieNumber: item.movieNumber,
-      ),
-      onDeleteDownloads: tasks == null || tasks.isEmpty
-          ? null
-          : () async {
-              deleting.value = true;
-              try {
-                final currentTasks = await ref.refresh(tasksProvider.future);
-                if (!context.mounted) return;
-                if (currentTasks.isEmpty) {
-                  showToast('下载任务已不存在');
-                  await notifier.refresh();
-                  return;
-                }
-                final api = ref.read(downloadsApiProvider);
-                deleting.value = false;
-                var removed = false;
-                await showDownloadTaskDeleteDialog(
-                  context,
-                  tasks: currentTasks,
-                  onDelete: (id, deleteFiles) async {
-                    await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
-                    removed = true;
-                  },
-                );
-                if (!context.mounted) return;
-                if (removed) {
-                  ref.invalidate(downloadTaskCenterProvider);
-                  await notifier.refresh();
-                }
-              } catch (error) {
-                if (context.mounted) {
-                  showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
-                }
-              } finally {
-                if (context.mounted) deleting.value = false;
-              }
-            },
+      onViewFiles: completedTask == null ? null : openFiles,
+      onRetriggerImport: retriggerTask == null ? null : retriggerImport,
+      isRetriggering: retriggering.value,
+      onOpenActions: () => unawaited(openActions()),
+      onSearchMagnet: searchMagnet,
+      onDeleteDownloads: tasks == null || tasks.isEmpty ? null : deleteDownloads,
       onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
     );
   }

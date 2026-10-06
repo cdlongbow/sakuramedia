@@ -20,6 +20,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
+import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -474,7 +475,21 @@ class _DownloadTaskCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                if (!selectionMode && _canRetriggerImport(task)) ...[
+                if (!selectionMode && task.state == 'completed') ...[
+                  AppIconButton(
+                    key: Key('download-task-files-${task.id}'),
+                    icon: const Icon(Icons.folder_open_rounded),
+                    tooltip: '查看文件',
+                    onPressed: () => showDownloadTaskFilesDialog(
+                      context: context,
+                      taskId: task.id,
+                      movieNumber: movieNumber ?? '',
+                      title: displayTitle,
+                    ),
+                  ),
+                  SizedBox(width: context.appSpacing.xs),
+                ],
+                if (!selectionMode && task.canRetriggerImport) ...[
                   AppIconButton(
                     key: Key('download-task-retrigger-import-${task.id}'),
                     icon: const Icon(Icons.refresh_rounded),
@@ -555,11 +570,6 @@ String _shortImportLabel(String status, {required String fallback}) {
     _ => fallback,
   };
 }
-
-/// 只有导入已跑完且没成功的任务才给「重新导入」；pending/running 在途、
-/// completed 已入库，都不需要。
-bool _canRetriggerImport(DownloadTaskDto task) =>
-    task.importStatus == 'failed' || task.importStatus == 'skipped';
 
 Future<void> _triggerImport(
   BuildContext context,

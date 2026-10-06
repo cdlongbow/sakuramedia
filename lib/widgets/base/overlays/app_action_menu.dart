@@ -52,6 +52,7 @@ Future<T?> showAppActionMenu<T>({
   bool useRootNavigator = false,
   Key? drawerKey,
   String? title,
+  String? titleSubtitle,
   bool showCancelRow = true,
 }) {
   final visibleItems = items.where((item) => item.visible).toList();
@@ -65,6 +66,7 @@ Future<T?> showAppActionMenu<T>({
       items: visibleItems,
       drawerKey: drawerKey,
       title: title,
+      titleSubtitle: titleSubtitle,
       showCancelRow: showCancelRow,
     );
   }
@@ -224,6 +226,7 @@ Future<T?> _showDrawerMenu<T>({
   required List<AppMenuItem<T>> items,
   required Key? drawerKey,
   required String? title,
+  required String? titleSubtitle,
   required bool showCancelRow,
 }) {
   final screenHeight = MediaQuery.sizeOf(context).height;
@@ -233,9 +236,13 @@ Future<T?> _showDrawerMenu<T>({
             ? _drawerItemMinHeight
             : _drawerItemWithSubtitleHeight);
   });
+  final hasHeader = title != null || titleSubtitle != null;
+  final headerHeight = hasHeader
+      ? _drawerTitleHeight + (titleSubtitle == null ? 0 : 18)
+      : 0;
   final estimatedHeight =
       _drawerTopSpacing +
-      (title == null ? 0 : _drawerTitleHeight) +
+      headerHeight +
       itemsHeight +
       (showCancelRow ? _cancelGapHeight + _drawerItemMinHeight : 0);
   final heightFactor = (estimatedHeight / screenHeight).clamp(0.24, 0.92);
@@ -249,6 +256,7 @@ Future<T?> _showDrawerMenu<T>({
     builder: (drawerContext, close) => _AppActionMenuDrawer<T>(
       items: items,
       title: title,
+      titleSubtitle: titleSubtitle,
       showCancelRow: showCancelRow,
       onSelected: close,
     ),
@@ -266,6 +274,7 @@ Future<T?> _showDrawerMenu<T>({
     builder: (drawerContext) => _AppActionMenuDrawer<T>(
       items: items,
       title: title,
+      titleSubtitle: titleSubtitle,
       showCancelRow: showCancelRow,
       onSelected: (value) => Navigator.of(drawerContext).pop(value),
     ),
@@ -276,12 +285,14 @@ class _AppActionMenuDrawer<T> extends StatelessWidget {
   const _AppActionMenuDrawer({
     required this.items,
     required this.title,
+    required this.titleSubtitle,
     required this.showCancelRow,
     required this.onSelected,
   });
 
   final List<AppMenuItem<T>> items;
   final String? title;
+  final String? titleSubtitle;
   final bool showCancelRow;
   final ValueChanged<T?> onSelected;
 
@@ -290,6 +301,7 @@ class _AppActionMenuDrawer<T> extends StatelessWidget {
     final spacing = context.appSpacing;
     final componentTokens = Theme.of(context).appComponentTokens;
     final title = this.title;
+    final titleSubtitle = this.titleSubtitle;
 
     // 高度估算偏低或系统放大字体时，靠滚动兜底而不是溢出。
     return SingleChildScrollView(
@@ -302,11 +314,16 @@ class _AppActionMenuDrawer<T> extends StatelessWidget {
               spacing.lg,
               spacing.lg,
               spacing.lg,
-              title == null ? spacing.xs : spacing.sm,
+              (title == null && titleSubtitle == null)
+                  ? spacing.xs
+                  : spacing.sm,
             ),
-            child: title == null
-                ? const SizedBox.shrink()
-                : Text(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (title != null)
+                  Text(
                     title,
                     style: resolveAppTextStyle(
                       context,
@@ -315,6 +332,21 @@ class _AppActionMenuDrawer<T> extends StatelessWidget {
                       tone: AppTextTone.primary,
                     ),
                   ),
+                if (titleSubtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    titleSubtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      tone: AppTextTone.muted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
           for (final item in items)
             _AppDrawerRow<T>(

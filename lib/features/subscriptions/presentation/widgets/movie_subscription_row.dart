@@ -22,6 +22,10 @@ class MovieSubscriptionRow extends StatelessWidget {
     required this.onSearchMagnet,
     required this.onUnsubscribe,
     this.onDeleteDownloads,
+    this.onViewFiles,
+    this.onRetriggerImport,
+    this.isRetriggering = false,
+    this.onOpenActions,
     required this.mobile,
   });
 
@@ -34,8 +38,14 @@ class MovieSubscriptionRow extends StatelessWidget {
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
   final VoidCallback? onDeleteDownloads;
+  final VoidCallback? onViewFiles;
+  final VoidCallback? onRetriggerImport;
+  final bool isRetriggering;
 
-  /// 移动端布局：操作图标不挤在信息行尾，另起一行右对齐。
+  /// 移动端「更多操作」入口：打开底部操作表；桌面端仍用行内图标。
+  final VoidCallback? onOpenActions;
+
+  /// 移动端布局：操作收进「更多」按钮，具体动作放底部操作表。
   final bool mobile;
 
   @override
@@ -84,6 +94,10 @@ class MovieSubscriptionRow extends StatelessWidget {
             isPending: isPending,
             mobile: mobile,
             onOpenDownloads: onOpenDownloads,
+            onViewFiles: onViewFiles,
+            onRetriggerImport: onRetriggerImport,
+            isRetriggering: isRetriggering,
+            onOpenActions: onOpenActions,
             onSearchMagnet: onSearchMagnet,
             onUnsubscribe: onUnsubscribe,
             onDeleteDownloads: onDeleteDownloads,
@@ -314,6 +328,10 @@ class _FooterLine extends StatelessWidget {
     required this.onSearchMagnet,
     required this.onUnsubscribe,
     this.onDeleteDownloads,
+    this.onViewFiles,
+    this.onRetriggerImport,
+    this.isRetriggering = false,
+    this.onOpenActions,
   });
 
   final MovieSubscriptionListItemDto item;
@@ -324,6 +342,10 @@ class _FooterLine extends StatelessWidget {
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
   final VoidCallback? onDeleteDownloads;
+  final VoidCallback? onViewFiles;
+  final VoidCallback? onRetriggerImport;
+  final bool isRetriggering;
+  final VoidCallback? onOpenActions;
 
   @override
   Widget build(BuildContext context) {
@@ -357,8 +379,8 @@ class _FooterLine extends StatelessWidget {
         ),
       ],
     );
-    // 移动端卡片窄（封面 116），操作图标和 facts 同行会把文字挤没；操作另起
-    // 一行右对齐，四个动作也放得下。
+    // 移动端卡片窄（封面 116），操作图标和 facts 同行会把文字挤没；操作收进
+    // 一个「更多」按钮，具体动作放底部操作表（带中文标签），不让用户猜图标。
     if (mobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -374,11 +396,13 @@ class _FooterLine extends StatelessWidget {
             else
               Align(
                 alignment: Alignment.centerRight,
-                child: _RowActions(
-                  onOpenDownloads: onOpenDownloads,
-                  onSearchMagnet: onSearchMagnet,
-                  onUnsubscribe: onUnsubscribe,
-                  onDeleteDownloads: onDeleteDownloads,
+                child: AppIconButton(
+                  key: const Key('movie-subscription-row-more'),
+                  icon: const Icon(Icons.more_horiz_rounded),
+                  size: AppIconButtonSize.compact,
+                  tooltip: '更多操作',
+                  semanticLabel: '更多操作',
+                  onPressed: onOpenActions,
                 ),
               ),
           ],
@@ -395,6 +419,9 @@ class _FooterLine extends StatelessWidget {
           else
             _RowActions(
               onOpenDownloads: onOpenDownloads,
+              onViewFiles: onViewFiles,
+              onRetriggerImport: onRetriggerImport,
+              isRetriggering: isRetriggering,
               onSearchMagnet: onSearchMagnet,
               onUnsubscribe: onUnsubscribe,
               onDeleteDownloads: onDeleteDownloads,
@@ -411,12 +438,18 @@ class _RowActions extends StatelessWidget {
     required this.onSearchMagnet,
     required this.onUnsubscribe,
     this.onDeleteDownloads,
+    this.onViewFiles,
+    this.onRetriggerImport,
+    this.isRetriggering = false,
   });
 
   final VoidCallback? onOpenDownloads;
   final VoidCallback onSearchMagnet;
   final VoidCallback onUnsubscribe;
   final VoidCallback? onDeleteDownloads;
+  final VoidCallback? onViewFiles;
+  final VoidCallback? onRetriggerImport;
+  final bool isRetriggering;
 
   @override
   Widget build(BuildContext context) {
@@ -427,15 +460,33 @@ class _RowActions extends StatelessWidget {
           AppIconButton(
             key: const Key('movie-subscription-row-downloads'),
             icon: const Icon(Icons.download_outlined),
-            size: AppIconButtonSize.regular,
+            size: AppIconButtonSize.compact,
             tooltip: '查看下载任务',
             semanticLabel: '查看下载任务',
             onPressed: onOpenDownloads,
           ),
+        if (onViewFiles != null)
+          AppIconButton(
+            key: const Key('movie-subscription-row-files'),
+            icon: const Icon(Icons.folder_open_rounded),
+            size: AppIconButtonSize.compact,
+            tooltip: '查看文件',
+            semanticLabel: '查看文件',
+            onPressed: onViewFiles,
+          ),
+        if (onRetriggerImport != null)
+          AppIconButton(
+            key: const Key('movie-subscription-row-retrigger-import'),
+            icon: const Icon(Icons.refresh_rounded),
+            size: AppIconButtonSize.compact,
+            tooltip: '重新导入',
+            semanticLabel: '重新导入',
+            onPressed: isRetriggering ? null : onRetriggerImport,
+          ),
         AppIconButton(
           key: const Key('movie-subscription-row-magnet-search'),
           icon: const Icon(Icons.search_rounded),
-          size: AppIconButtonSize.regular,
+          size: AppIconButtonSize.compact,
           tooltip: '磁力搜索',
           semanticLabel: '磁力搜索',
           onPressed: onSearchMagnet,
@@ -444,7 +495,7 @@ class _RowActions extends StatelessWidget {
           AppIconButton(
             key: const Key('movie-subscription-row-delete-downloads'),
             icon: const Icon(Icons.delete_outline_rounded),
-            size: AppIconButtonSize.regular,
+            size: AppIconButtonSize.compact,
             tooltip: '删除下载任务',
             semanticLabel: '删除下载任务',
             onPressed: onDeleteDownloads,
@@ -452,7 +503,7 @@ class _RowActions extends StatelessWidget {
         AppIconButton(
           key: const Key('movie-subscription-row-unsubscribe'),
           icon: const Icon(Icons.bookmark_remove_outlined),
-          size: AppIconButtonSize.regular,
+          size: AppIconButtonSize.compact,
           tooltip: '取消订阅',
           semanticLabel: '取消订阅',
           onPressed: onUnsubscribe,

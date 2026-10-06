@@ -269,6 +269,7 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
           onChanged: (value) => setState(() => _values[field.name] = value),
         );
       case _JobParamKind.enumValue:
+        final options = _visibleOptions(field);
         return AppSelectField<dynamic>(
           key: Key('activity-job-param-${field.name}'),
           label: label,
@@ -277,17 +278,17 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
           items: [
             if (!field.required)
               const DropdownMenuItem<dynamic>(value: null, child: Text('未设置')),
-            ...field.enumValues.map(
-              (value) => DropdownMenuItem<dynamic>(
-                value: value,
-                child: Text(_displayValue(value)),
+            ...options.map(
+              (option) => DropdownMenuItem<dynamic>(
+                value: option.value,
+                child: Text(option.label ?? _displayValue(option.value)),
               ),
             ),
           ],
           validator: field.required
               ? (value) => value == null ? '请选择${field.label}' : null
               : null,
-          onChanged: (value) => setState(() => _values[field.name] = value),
+          onChanged: (value) => _setValue(field.name, value),
         );
     }
   }
@@ -334,6 +335,50 @@ class _JobParamsDialogState extends State<_JobParamsDialog> {
         ),
       ],
     );
+  }
+
+  dynamic _currentValue(String name) {
+    if (_values.containsKey(name)) {
+      return _values[name];
+    }
+    return _controllers[name]?.text.trim();
+  }
+
+  List<_JobParamOption> _visibleOptions(_JobParamDefinition field) {
+    final options = field.options;
+    final parentName = field.optionsDependOn;
+    if (parentName == null) {
+      return options;
+    }
+    final parentValue = _currentValue(parentName);
+    if (parentValue == null || parentValue == '') {
+      return options;
+    }
+    return [
+      for (final option in options)
+        if (option.when.isEmpty || option.when.contains(parentValue)) option,
+    ];
+  }
+
+  void _setValue(String name, dynamic value) {
+    setState(() {
+      _values[name] = value;
+      for (final field in _fields) {
+        if (field.optionsDependOn != name) {
+          continue;
+        }
+        final current = _values[field.name];
+        if (current == null) {
+          continue;
+        }
+        final visibleValues = _visibleOptions(
+          field,
+        ).map((option) => option.value);
+        if (!visibleValues.contains(current)) {
+          _values[field.name] = null;
+        }
+      }
+    });
   }
 
   String? _validateTextField(_JobParamDefinition field) {
@@ -448,10 +493,24 @@ class _JobParamDefinition {
 
   String? get type => _resolveSchemaType(schema);
 
-  List<dynamic> get enumValues {
-    final value = schema['enum'];
-    return value is List ? List<dynamic>.from(value) : const <dynamic>[];
+  List<_JobParamOption> get options => _parseOptions(schema);
+
+  String? get optionsDependOn {
+    final value = schema['x-options-by'];
+    return value is String && value.trim().isNotEmpty ? value.trim() : null;
   }
+}
+
+class _JobParamOption {
+  const _JobParamOption({
+    required this.value,
+    this.label,
+    this.when = const <String>[],
+  });
+
+  final dynamic value;
+  final String? label;
+  final List<String> when;
 }
 
 List<_JobParamDefinition> _buildDefinitions(Map<String, dynamic> schema) {
@@ -475,9 +534,47 @@ List<_JobParamDefinition> _buildDefinitions(Map<String, dynamic> schema) {
   ];
 }
 
-_JobParamKind _resolveKind(Map<String, dynamic> schema, bool required) {
+List<_JobParamOption> _parseOptions(Map<String, dynamic> schema) {
+  final oneOf = schema['oneOf'];
+  if (oneOf is List) {
+    final options = <_JobParamOption>[];
+    for (final entry in oneOf) {
+      final entryMap = asMapOrNull(entry);
+      if (entryMap == null || !entryMap.containsKey('const')) {
+        return const <_JobParamOption>[];
+      }
+      final title = entryMap['title'];
+      options.add(
+        _JobParamOption(
+          value: entryMap['const'],
+          label: title is String && title.trim().isNotEmpty
+              ? title.trim()
+              : null,
+          when: _stringList(entryMap['x-when']),
+        ),
+      );
+    }
+    return options;
+  }
   final enumValues = schema['enum'];
-  if (enumValues is List && enumValues.isNotEmpty) {
+  if (enumValues is List) {
+    return [for (final value in enumValues) _JobParamOption(value: value)];
+  }
+  return const <_JobParamOption>[];
+}
+
+List<String> _stringList(dynamic value) {
+  if (value is! List) {
+    return const <String>[];
+  }
+  return [
+    for (final item in value)
+      if (item is String && item.isNotEmpty) item,
+  ];
+}
+
+_JobParamKind _resolveKind(Map<String, dynamic> schema, bool required) {
+  if (_parseOptions(schema).isNotEmpty) {
     return _JobParamKind.enumValue;
   }
   final type = _resolveSchemaType(schema);

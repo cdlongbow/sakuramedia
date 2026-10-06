@@ -60,6 +60,8 @@ const String mobilePornboxPath = '/mobile/pornbox';
 const String mobileSettingsMediaLibrariesPath =
     '/mobile/settings/media-libraries';
 const String mobileSettingsPluginsPath = '/mobile/settings/plugins';
+const String mobileSettingsPluginMarketPath =
+    '/mobile/settings/plugins/market';
 const String mobileSettingsDownloadersPath = '/mobile/settings/downloaders';
 const String mobileSettingsIndexersPath = '/mobile/settings/indexers';
 const String mobileSettingsSystemMaintenancePath =

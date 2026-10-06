@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/image_search/presentation/image_search_draf
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
+import 'package:sakuramedia/features/plugins/data/plugin_market_source.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -28,6 +29,7 @@ import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../support/test_api_bundle.dart';
+import '../features/plugins/support/plugin_market_test_data.dart';
 
 const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
     <_MobileSettingsRouteCase>[
@@ -65,6 +67,11 @@ const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
         path: mobileSettingsPluginsPath,
         title: '插件',
         pageKey: Key('mobile-settings-plugins'),
+      ),
+      _MobileSettingsRouteCase(
+        path: mobileSettingsPluginMarketPath,
+        title: '插件市场',
+        pageKey: Key('mobile-plugin-market'),
       ),
       _MobileSettingsRouteCase(
         path: mobileSettingsSystemMaintenancePath,
@@ -1312,6 +1319,17 @@ void main() {
           path: '/system/plugins',
           body: const <Map<String, dynamic>>[],
         );
+      } else if (routeCase.path == mobileSettingsPluginMarketPath) {
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/system/plugins',
+          body: const <Map<String, dynamic>>[],
+        );
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: kPluginMarketIndexUrl,
+          body: pluginMarketIndexJson(),
+        );
       } else if (routeCase.path == mobileSettingsSystemMaintenancePath) {
         _enqueueMobileSystemMaintenanceResponses(bundle);
       } else if (routeCase.path == mobileSettingsUsernamePath) {
@@ -2022,6 +2040,62 @@ void main() {
     expect(find.byKey(const Key('mobile-bottom-navigation')), findsNothing);
   });
 
+  testWidgets('mobile plugins page opens the plugin market', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore(
+      platform: AppPlatform.mobile,
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    final router = buildMobileRouter(sessionStore: sessionStore);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/latest',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 12,
+        'total': 0,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: const <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/plugins',
+      body: const <Map<String, dynamic>>[],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: kPluginMarketIndexUrl,
+      body: pluginMarketIndexJson(),
+    );
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(mobileSettingsPluginsPath);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('mobile-plugins-market-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      mobileSettingsPluginMarketPath,
+    );
+    expect(find.byKey(const Key('mobile-plugin-market')), findsOneWidget);
+    expect(find.text('演示插件'), findsOneWidget);
+  });
+
   // 侧滑打开抽屉只在「概览根路由 + 停在第一个 tab」时放开:边缘拖拽区盖住多宽,
   // 下面的 TabBarView 就有多宽收不到手势,只有第一个 tab 右滑本就无处可去。
   testWidgets('mobile overview enables drawer edge swipe only on the first '
@@ -2390,6 +2464,17 @@ void main() {
           method: 'GET',
           path: '/system/plugins',
           body: const <Map<String, dynamic>>[],
+        );
+      } else if (routeCase.path == mobileSettingsPluginMarketPath) {
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/system/plugins',
+          body: const <Map<String, dynamic>>[],
+        );
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: kPluginMarketIndexUrl,
+          body: pluginMarketIndexJson(),
         );
       } else if (routeCase.path == mobileSettingsSystemMaintenancePath) {
         _enqueueMobileSystemMaintenanceResponses(bundle);

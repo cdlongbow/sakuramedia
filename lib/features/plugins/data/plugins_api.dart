@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -5,12 +6,14 @@ import 'package:sakuramedia/core/format/release_version.dart';
 import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
+import 'package:sakuramedia/features/plugins/data/dto/plugin_market_dto.dart';
 
 /// `/system/plugins` 管理接口与插件私有配置读写。
 class PluginsApi {
   const PluginsApi({required ApiClient apiClient}) : _apiClient = apiClient;
 
   static const _releaseCheckTimeout = Duration(seconds: 10);
+  static const _marketIndexTimeout = Duration(seconds: 15);
 
   final ApiClient _apiClient;
 
@@ -22,12 +25,37 @@ class PluginsApi {
   Future<void> install({
     required Uint8List fileBytes,
     required String fileName,
+    String? sha256,
   }) async {
     final formData = FormData.fromMap(<String, dynamic>{
       'file': MultipartFile.fromBytes(fileBytes, filename: fileName),
       'enable': 'true',
+      if (sha256 != null) 'sha256': sha256,
     });
     await _apiClient.post('/system/plugins', data: formData);
+  }
+
+  /// 拉取插件市场索引；直连索引仓库，不携带 SakuraMedia 登录令牌。
+  ///
+  /// GitHub raw 返回的是 `text/plain` 而非 JSON content-type，dio 不会
+  /// 自动解析，这里取原始文本后自行解码。
+  Future<PluginMarketCatalogDto> fetchMarketCatalog(String indexUrl) async {
+    final text = await _apiClient.getText(
+      indexUrl,
+      requiresAuth: false,
+      connectTimeout: _marketIndexTimeout,
+      receiveTimeout: _marketIndexTimeout,
+    );
+    final decoded = jsonDecode(text);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('插件市场索引不是 JSON 对象');
+    }
+    return PluginMarketCatalogDto.fromJson(decoded);
+  }
+
+  /// 下载市场插件的 Release 安装包。
+  Future<Uint8List> downloadMarketRelease(PluginMarketReleaseDto release) {
+    return _apiClient.getBytes(release.downloadUrl, requiresAuth: false);
   }
 
   /// 直接查询插件声明的 GitHub Release API；不会携带 SakuraMedia 登录令牌。

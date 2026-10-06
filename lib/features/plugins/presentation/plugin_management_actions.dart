@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
+import 'package:sakuramedia/features/plugins/data/dto/plugin_market_dto.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_zip_picker.dart';
+import 'package:sakuramedia/features/plugins/presentation/providers/plugin_market_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
 import 'package:sakuramedia/theme.dart';
@@ -171,5 +174,99 @@ class PluginManagementActions {
       return;
     }
     await ref.read(pluginsProvider.notifier).reload();
+  }
+
+  /// 从插件市场下载并安装未安装的插件。
+  Future<void> installFromMarket(PluginMarketItemDto plugin) async {
+    final release = plugin.latest;
+    if (release == null) {
+      return;
+    }
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: '安装插件',
+      message:
+          '将从 ${plugin.repo} 下载 v${release.version} 安装包并安装「${plugin.displayName}」。'
+          '${plugin.official ? '' : '这是社区插件，未经官方审计，请确认来源可信。'}',
+      confirmLabel: '安装',
+      dialogKey: Key('plugin-market-install-confirm-dialog-${plugin.pluginId}'),
+      confirmKey: Key(
+        'plugin-market-install-confirm-button-${plugin.pluginId}',
+      ),
+      cancelKey: Key('plugin-market-install-cancel-button-${plugin.pluginId}'),
+      variant: _confirmVariant,
+    );
+    if (!confirmed || !context.mounted) {
+      return;
+    }
+    try {
+      await ref.read(pluginMarketProvider.notifier).install(plugin);
+      if (context.mounted) {
+        showToast(buildRestartRequiredMessage('插件已安装'));
+      }
+    } catch (error) {
+      if (context.mounted) {
+        showToast(apiErrorMessage(error, fallback: '安装插件失败'));
+      }
+    }
+  }
+
+  /// 将已安装插件更新到市场索引里的最新版本。
+  Future<void> upgradeFromMarket(
+    PluginMarketItemDto plugin,
+    String installedVersion,
+  ) async {
+    final release = plugin.latest;
+    if (release == null) {
+      return;
+    }
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: '更新插件',
+      message:
+          '将「${plugin.displayName}」从 v$installedVersion 更新到 v${release.version}。'
+          '更新完成后，需手动重启容器才会生效。',
+      confirmLabel: '更新',
+      dialogKey: Key('plugin-market-upgrade-confirm-dialog-${plugin.pluginId}'),
+      confirmKey: Key(
+        'plugin-market-upgrade-confirm-button-${plugin.pluginId}',
+      ),
+      cancelKey: Key('plugin-market-upgrade-cancel-button-${plugin.pluginId}'),
+      variant: _confirmVariant,
+    );
+    if (!confirmed || !context.mounted) {
+      return;
+    }
+    try {
+      await ref.read(pluginMarketProvider.notifier).upgrade(plugin);
+      if (context.mounted) {
+        showToast(buildRestartRequiredMessage('插件已更新'));
+      }
+    } catch (error) {
+      if (context.mounted) {
+        showToast(apiErrorMessage(error, fallback: '更新插件失败'));
+      }
+    }
+  }
+
+  /// 复制市场条目的项目主页地址。
+  Future<void> copyHomepageFromMarket(PluginMarketItemDto plugin) async {
+    final url = plugin.homepageUrl;
+    if (url == null) {
+      return;
+    }
+    final copied = await copyTextToClipboard(url);
+    if (context.mounted) {
+      showToast(copied ? '项目主页已复制' : '复制失败');
+    }
+  }
+
+  /// 刷新插件市场索引。
+  Future<void> refreshMarket() async {
+    final state = ref.read(pluginMarketProvider).value;
+    if (state != null && state.busyPluginIds.isNotEmpty) {
+      return;
+    }
+    await ref.read(pluginMarketProvider.notifier).reload();
   }
 }

@@ -4,11 +4,12 @@ import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
 Map<String, dynamic> pluginSummaryJson({
   bool enabled = true,
   String? releaseApiUrl,
+  String version = '1.0.0',
 }) {
   return <String, dynamic>{
     'plugin_id': 'demo_plugin',
     'display_name': '演示插件',
-    'version': '1.0.0',
+    'version': version,
     'host_api_version': 1,
     'enabled': enabled,
     'load_status': 'ok',

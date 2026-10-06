@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/plugins/presentation/pages/shared/plugin_se
 import 'package:sakuramedia/features/plugins/presentation/plugin_management_actions.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
+import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -238,19 +239,35 @@ class _MobilePluginsPageState extends ConsumerState<MobilePluginsPage> {
               spacing.md,
               spacing.md,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                key: const Key('mobile-plugins-install-button'),
-                label: '安装插件',
-                variant: AppButtonVariant.primary,
-                icon: const Icon(Icons.upload_file_outlined),
-                isLoading: state?.isInstalling == true,
-                onPressed:
-                    asyncPlugins.isLoading || asyncPlugins.hasError || busy
-                    ? null
-                    : _actions.install,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    key: const Key('mobile-plugins-market-button'),
+                    label: '插件市场',
+                    variant: AppButtonVariant.secondary,
+                    icon: const Icon(Icons.storefront_outlined),
+                    onPressed: () =>
+                        const MobileSettingsPluginMarketRouteData().push(
+                          context,
+                        ),
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                Expanded(
+                  child: AppButton(
+                    key: const Key('mobile-plugins-install-button'),
+                    label: '安装插件',
+                    variant: AppButtonVariant.primary,
+                    icon: const Icon(Icons.upload_file_outlined),
+                    isLoading: state?.isInstalling == true,
+                    onPressed:
+                        asyncPlugins.isLoading || asyncPlugins.hasError || busy
+                        ? null
+                        : _actions.install,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

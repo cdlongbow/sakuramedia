@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
+import 'package:sakuramedia/features/plugins/presentation/pages/desktop/plugin_market_section.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/desktop/plugin_settings_dialog.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_management_actions.dart';
 import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
@@ -22,9 +23,10 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// 系统设置里的「插件」页：列表、zip 安装、启停、删除与 JSON 配置编辑。
+/// 系统设置里的「插件」页：分「已安装」「插件市场」两个分栏。
 class DesktopPluginsSection extends ConsumerStatefulWidget {
   const DesktopPluginsSection({super.key, required this.active});
 
@@ -35,12 +37,34 @@ class DesktopPluginsSection extends ConsumerStatefulWidget {
       _DesktopPluginsSectionState();
 }
 
-class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection> {
+class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
   PluginManagementActions get _actions =>
       PluginManagementActions(context: context, ref: ref);
 
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   void _openSettings(PluginSummaryDto plugin) {
     unawaited(showPluginSettingsDialog(context, plugin: plugin));
+  }
+
+  Future<void> _onRefresh() {
+    if (_tabController.index == 1) {
+      return _actions.refreshMarket();
+    }
+    return _actions.refresh();
   }
 
   @override
@@ -49,29 +73,49 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection> {
       return const SizedBox.shrink();
     }
     final asyncPlugins = ref.watch(pluginsProvider);
-    final content = asyncPlugins.hasError
-        ? AppSectionError(
-            title: '插件加载失败',
-            message: apiErrorMessage(
-              asyncPlugins.error!,
-              fallback: '插件加载失败，请稍后重试。',
-            ),
-            onRetry: _actions.refresh,
-          )
-        : Builder(
-            builder: (context) {
-              final isLoading = asyncPlugins.value == null;
-              // loading 用占位插件渲染真实列表行，由 [AppSkeletonizer] 灰化。
-              final state = isLoading
-                  ? pluginsPlaceholderState()
-                  : asyncPlugins.value!;
-              return AppSkeletonizer(
-                enabled: isLoading,
-                child: _buildLoaded(context, state),
-              );
-            },
-          );
-    return AppPageRefreshScope(onRefresh: _actions.refresh, child: content);
+    final spacing = context.appSpacing;
+    return AppPageRefreshScope(
+      onRefresh: _onRefresh,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTabBar(
+            key: const Key('plugins-tab-bar'),
+            controller: _tabController,
+            onTap: (_) => setState(() {}),
+            tabs: const [Tab(text: '已安装'), Tab(text: '插件市场')],
+          ),
+          SizedBox(height: spacing.lg),
+          if (_tabController.index == 0)
+            _buildInstalled(context, asyncPlugins)
+          else
+            const DesktopPluginMarketSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstalled(
+    BuildContext context,
+    AsyncValue<PluginsState> asyncPlugins,
+  ) {
+    if (asyncPlugins.hasError) {
+      return AppSectionError(
+        title: '插件加载失败',
+        message: apiErrorMessage(
+          asyncPlugins.error!,
+          fallback: '插件加载失败，请稍后重试。',
+        ),
+        onRetry: _actions.refresh,
+      );
+    }
+    final isLoading = asyncPlugins.value == null;
+    // loading 用占位插件渲染真实列表行，由 [AppSkeletonizer] 灰化。
+    final state = isLoading ? pluginsPlaceholderState() : asyncPlugins.value!;
+    return AppSkeletonizer(
+      enabled: isLoading,
+      child: _buildLoaded(context, state),
+    );
   }
 
   Widget _buildLoaded(BuildContext context, PluginsState state) {

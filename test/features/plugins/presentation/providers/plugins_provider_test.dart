@@ -85,7 +85,7 @@ void main() {
     api.listHandler = () async => <PluginSummaryDto>[];
     await container.read(pluginsProvider.future);
 
-    api.installHandler = (_, __) async {};
+    api.installHandler = (_, __, ___) async {};
     api.listHandler = () async => <PluginSummaryDto>[
       pluginSummaryDto(id: 'demo_plugin'),
     ];
@@ -177,7 +177,7 @@ void main() {
     () async {
       api.listHandler = () async => <PluginSummaryDto>[];
       await container.read(pluginsProvider.future);
-      api.installHandler = (_, __) async {};
+      api.installHandler = (_, __, ___) async {};
       api.listHandler = () async => throw StateError('refresh failed');
 
       final refreshed = await container
@@ -211,7 +211,7 @@ class _FakePluginsApi extends PluginsApi {
   _FakePluginsApi({required super.apiClient});
 
   Future<List<PluginSummaryDto>> Function()? listHandler;
-  Future<void> Function(Uint8List, String)? installHandler;
+  Future<void> Function(Uint8List, String, String?)? installHandler;
   Future<PluginReleaseUpdate?> Function(PluginSummaryDto)?
   checkForUpdateHandler;
   Future<Uint8List> Function(PluginReleaseUpdate)? downloadUpdateHandler;
@@ -227,8 +227,9 @@ class _FakePluginsApi extends PluginsApi {
   Future<void> install({
     required Uint8List fileBytes,
     required String fileName,
+    String? sha256,
   }) {
-    return installHandler!(fileBytes, fileName);
+    return installHandler!(fileBytes, fileName, sha256);
   }
 
   @override

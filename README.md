@@ -55,6 +55,7 @@
 
 - 帮助撰写和改进Wiki
 - 开发新的插件扩展新功能，可以查看[插件开发文档](https://tinypinglite.github.io/sakuramedia/guide/plugin-development.html)
+- 将自己开发的插件上架插件市场：向 [sakuramedia-plugin-market](https://github.com/tinypinglite/sakuramedia-plugin-market) 提交 Pull Request，附上插件用途与仓库地址（仓库需公开、Release 提供安装包）。
 - Bug修复 / 新功能 PR
 
 

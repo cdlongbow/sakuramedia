@@ -88,4 +88,71 @@ void main() {
       ),
     );
   });
+
+  test('reports the request target for absolute url failures', () async {
+    const url =
+        'https://raw.githubusercontent.com/example/market/main/index.json';
+    adapter.enqueueResponder(
+      method: 'GET',
+      path: url,
+      responder: (options, _) async {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.connectionError,
+          message: 'Connection failed',
+        );
+      },
+    );
+
+    await expectLater(
+      () => apiClient.get(url, requiresAuth: false),
+      throwsA(
+        isA<ApiException>()
+            .having(
+              (ApiException error) => error.transportFailureKind,
+              'transportFailureKind',
+              ApiTransportFailureKind.connection,
+            )
+            .having(
+              (ApiException error) => error.baseUrl,
+              'baseUrl',
+              'https://raw.githubusercontent.com',
+            ),
+      ),
+    );
+  });
+
+  test('does not map non-network unknown failures to connection', () async {
+    adapter.enqueueResponder(
+      method: 'GET',
+      path: '/status',
+      responder: (options, _) async {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.unknown,
+          error: TypeError(),
+          message:
+              "type 'String' is not a subtype of type "
+              "'Map<String, dynamic>?' in type cast",
+        );
+      },
+    );
+
+    await expectLater(
+      () => apiClient.get('/status'),
+      throwsA(
+        isA<ApiException>()
+            .having(
+              (ApiException error) => error.transportFailureKind,
+              'transportFailureKind',
+              isNull,
+            )
+            .having(
+              (ApiException error) => error.message,
+              'message',
+              contains('not a subtype'),
+            ),
+      ),
+    );
+  });
 }

@@ -22,6 +22,7 @@ import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mob
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/mobile/mobile_system_maintenance_page.dart';
+import 'package:sakuramedia/features/plugins/presentation/pages/mobile/mobile_plugin_market_page.dart';
 import 'package:sakuramedia/features/plugins/presentation/pages/mobile/mobile_plugins_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/mobile/clip_collection_play_page.dart';
@@ -281,6 +282,28 @@ class MobileSettingsPluginsRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobilePluginsPage();
+  }
+}
+
+@TypedGoRoute<MobileSettingsPluginMarketRouteData>(
+  path: mobileSettingsPluginMarketPath,
+)
+class MobileSettingsPluginMarketRouteData extends _MobileSubpageRouteData
+    with $MobileSettingsPluginMarketRouteData {
+  const MobileSettingsPluginMarketRouteData();
+
+  @override
+  String get pageName => 'mobile-settings-plugin-market';
+
+  @override
+  String get title => '插件市场';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobilePluginMarketPage();
   }
 }
 

@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/plugins/data/dto/plugin_dto.dart';
+import 'package:sakuramedia/features/plugins/data/dto/plugin_market_dto.dart';
+import 'package:sakuramedia/features/plugins/data/plugin_market_source.dart';
 import 'package:sakuramedia/features/plugins/data/plugins_api.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 import '../../../support/logged_in_session_store.dart';
+import '../support/plugin_market_test_data.dart';
 import '../support/plugin_test_data.dart';
 
 void main() {
@@ -245,6 +249,107 @@ void main() {
       final request = adapter.requests.last;
       expect(request.method, 'PUT');
       expect(request.body, <String, dynamic>{'overlap_days': 14});
+    });
+
+    test(
+      'fetches the market catalog from a text/plain raw response '
+      'without sending the SakuraMedia token',
+      () async {
+        // GitHub raw 返回 text/plain，dio 不会自动按 JSON 解析；
+        // 用真实 content-type 复现，防止再次退化为类型转换错误。
+        adapter.enqueueResponder(
+          method: 'GET',
+          path: kPluginMarketIndexUrl,
+          responder: (options, _) async {
+            return ResponseBody.fromString(
+              jsonEncode(pluginMarketIndexJson()),
+              200,
+              headers: const <String, List<String>>{
+                Headers.contentTypeHeader: <String>[
+                  'text/plain; charset=utf-8',
+                ],
+              },
+            );
+          },
+        );
+
+        final catalog = await api.fetchMarketCatalog(kPluginMarketIndexUrl);
+
+        expect(catalog.schemaVersion, 1);
+        final item = catalog.plugins.single;
+        expect(item.pluginId, 'demo_plugin');
+        expect(item.official, isTrue);
+        expect(item.latest!.version, '1.1.0');
+        expect(item.latest!.hostApiVersion, 10);
+        expect(item.latest!.sha256, hasLength(64));
+        final request = adapter.requests.single;
+        expect(request.path, kPluginMarketIndexUrl);
+        expect(request.headers.containsKey('Authorization'), isFalse);
+        expect(request.connectTimeout, const Duration(seconds: 15));
+        expect(request.receiveTimeout, const Duration(seconds: 15));
+      },
+    );
+
+    test('parses a JSON content-type market response too', () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: kPluginMarketIndexUrl,
+        body: pluginMarketIndexJson(),
+      );
+
+      final catalog = await api.fetchMarketCatalog(kPluginMarketIndexUrl);
+
+      expect(catalog.plugins.single.pluginId, 'demo_plugin');
+    });
+
+    test('downloads a market release zip without the token', () async {
+      final release = PluginMarketReleaseDto(
+        version: '1.1.0',
+        hostApiVersion: 10,
+        downloadUrl:
+            'https://github.com/example/demo_plugin/releases/download/'
+            'v1.1.0/demo_plugin-1.1.0.zip',
+      );
+      adapter.enqueueBytes(
+        method: 'GET',
+        path: release.downloadUrl,
+        body: Uint8List.fromList(<int>[80, 75, 3, 4]),
+      );
+
+      final bytes = await api.downloadMarketRelease(release);
+
+      expect(bytes, <int>[80, 75, 3, 4]);
+      expect(
+        adapter.requests.single.headers.containsKey('Authorization'),
+        isFalse,
+      );
+    });
+
+    test('installs a market package with sha256 verification', () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/plugins',
+        statusCode: 201,
+        body: <String, dynamic>{
+          'plugin_id': 'demo_plugin',
+          'version': '1.1.0',
+          'pending_restart': <String>['api', 'aps'],
+        },
+      );
+
+      await api.install(
+        fileBytes: Uint8List.fromList(<int>[80, 75, 3, 4]),
+        fileName: 'demo_plugin-1.1.0.zip',
+        sha256:
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      );
+
+      final formData = adapter.requests.single.body as FormData;
+      expect(formData.files.single.value.filename, 'demo_plugin-1.1.0.zip');
+      expect(
+        formData.fields.singleWhere((entry) => entry.key == 'sha256').value,
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      );
     });
   });
 }

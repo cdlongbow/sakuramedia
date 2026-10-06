@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -73,6 +74,27 @@ class ApiClient {
       receiveTimeout: receiveTimeout,
     );
     return _asJsonMap(response.data);
+  }
+
+  /// 请求文本响应，不按 JSON 解析（无论响应 `Content-Type`）。
+  ///
+  /// 用于 content-type 非 JSON 但内容是 JSON 的接口（如 GitHub raw
+  /// 返回 `text/plain`）；调用方拿到原始字符串后自行解析。
+  Future<String> getText(
+    String pathOrUrl, {
+    bool requiresAuth = true,
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
+  }) async {
+    final response = await _request<String>(
+      method: 'GET',
+      path: pathOrUrl,
+      requiresAuth: requiresAuth,
+      responseType: ResponseType.plain,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
+    );
+    return response.data ?? '';
   }
 
   Future<List<Map<String, dynamic>>> getList(
@@ -454,7 +476,7 @@ class ApiClient {
       return ApiException(
         message: _transportFailureMessage(transportFailureKind),
         transportFailureKind: transportFailureKind,
-        baseUrl: _normalizedBaseUrl,
+        baseUrl: _requestTarget(error.requestOptions),
       );
     }
     final parsedData = _decodeResponseData(error.response?.data);
@@ -477,7 +499,9 @@ class ApiClient {
       case DioExceptionType.transformTimeout:
         return ApiTransportFailureKind.timeout;
       case DioExceptionType.unknown:
-        if (error.response == null) {
+        // 只有真实网络栈异常才算连接失败；类型转换、解析等非网络异常
+        // 不能误报为「无法连接」，否则会把排查方向带偏。
+        if (error.response == null && error.error is SocketException) {
           return ApiTransportFailureKind.connection;
         }
         return null;
@@ -501,6 +525,22 @@ class ApiClient {
       return null;
     }
     return baseUrl;
+  }
+
+  /// 传输失败提示里展示的目标地址：取实际请求的 `scheme://host[:port]`。
+  ///
+  /// 直连外部服务（插件市场索引、GitHub Release）失败时不能显示会话里的
+  /// 后端地址，否则会误导用户去排查后端。
+  String? _requestTarget(RequestOptions options) {
+    final uri = options.uri;
+    if (uri.host.isEmpty) {
+      return _normalizedBaseUrl;
+    }
+    try {
+      return uri.origin;
+    } on StateError {
+      return _normalizedBaseUrl;
+    }
   }
 
   Map<String, dynamic> _asJsonMap(dynamic data) {

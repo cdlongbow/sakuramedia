@@ -693,6 +693,147 @@ void main() {
       );
     });
 
+    testWidgets('renders api keys list in account tab', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle);
+      _enqueueAccount(
+        bundle,
+        username: 'account',
+        apiKeys: const <Map<String, Object?>>[
+          {
+            'id': 3,
+            'name': 'MCP server',
+            'key_hint': 'sk-AbCd1234',
+            'created_at': '2026-10-07T10:00:00',
+            'last_used_at': null,
+          },
+        ],
+      );
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-account-security'),
+      );
+
+      expect(find.text('API 密钥'), findsWidgets);
+      expect(find.text('MCP server'), findsOneWidget);
+      expect(find.textContaining('sk-AbCd1234'), findsOneWidget);
+      expect(find.textContaining('从未使用'), findsOneWidget);
+      expect(
+        find.byKey(const Key('configuration-api-key-delete-3')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('generates api key and shows one-time secret', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle);
+      _enqueueAccount(bundle, username: 'account');
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-account-security'),
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const Key('configuration-api-keys-create-button')),
+      );
+      await tester.tap(
+        find.byKey(const Key('configuration-api-keys-create-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('生成 API 密钥'), findsOneWidget);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/account/api-keys',
+        statusCode: 201,
+        body: <String, dynamic>{
+          'id': 5,
+          'name': '',
+          'key_hint': 'sk-OneTimeKey',
+          'created_at': '2026-10-07T10:00:00',
+          'last_used_at': null,
+          'key': 'sk-OneTimeKeySecretValue',
+        },
+      );
+      await tester.tap(
+        find.byKey(const Key('configuration-api-key-generate-submit')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('密钥已生成'), findsOneWidget);
+      expect(find.text('sk-OneTimeKeySecretValue'), findsOneWidget);
+      expect(find.textContaining('仅显示一次'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('configuration-api-key-done-button')),
+      );
+      await tester.pumpAndSettle();
+
+      // 列表已就地更新为新密钥。
+      expect(find.textContaining('sk-OneTimeKey'), findsOneWidget);
+      expect(
+        find.byKey(const Key('configuration-api-key-delete-5')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('deletes api key after confirmation', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle);
+      _enqueueAccount(
+        bundle,
+        username: 'account',
+        apiKeys: const <Map<String, Object?>>[
+          {
+            'id': 7,
+            'name': 'MCP server',
+            'key_hint': 'sk-Del12345',
+            'created_at': '2026-10-07T10:00:00',
+            'last_used_at': null,
+          },
+        ],
+      );
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-account-security'),
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const Key('configuration-api-key-delete-7')),
+      );
+      await tester.tap(
+        find.byKey(const Key('configuration-api-key-delete-7')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除 API 密钥'), findsOneWidget);
+
+      bundle.adapter.enqueueJson(
+        method: 'DELETE',
+        path: '/account/api-keys/7',
+        statusCode: 204,
+      );
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+
+      expect(bundle.adapter.hitCount('DELETE', '/account/api-keys/7'), 1);
+      expect(find.text('MCP server'), findsNothing);
+      expect(
+        find.byKey(const Key('configuration-api-key-delete-7')),
+        findsNothing,
+      );
+    });
+
     testWidgets('validates required password fields before submit', (
       WidgetTester tester,
     ) async {
@@ -1984,6 +2125,7 @@ void _enqueueAccount(
   TestApiBundle bundle, {
   String method = 'GET',
   required String username,
+  List<Map<String, Object?>> apiKeys = const <Map<String, Object?>>[],
 }) {
   bundle.adapter.enqueueJson(
     method: method,
@@ -1993,6 +2135,12 @@ void _enqueueAccount(
       'created_at': '2026-03-08T09:00:00Z',
       'last_login_at': '2026-03-08T10:00:00Z',
     },
+  );
+  // 账号安全页同时加载 API 密钥列表；默认给空列表兜底。
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/account/api-keys',
+    body: apiKeys,
   );
 }
 

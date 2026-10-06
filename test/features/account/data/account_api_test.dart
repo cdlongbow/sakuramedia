@@ -97,4 +97,71 @@ void main() {
       ),
     );
   });
+
+  test('listApiKeys maps response list', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/account/api-keys',
+      body: <dynamic>[
+        <String, dynamic>{
+          'id': 3,
+          'name': 'MCP server',
+          'key_hint': 'sk-AbCd1234',
+          'created_at': '2026-10-07T10:00:00',
+          'last_used_at': null,
+        },
+        <String, dynamic>{
+          'id': 2,
+          'name': '',
+          'key_hint': 'sk-ZzZz9999',
+          'created_at': '2026-10-06T10:00:00',
+          'last_used_at': '2026-10-07T11:00:00',
+        },
+      ],
+    );
+
+    final keys = await accountApi.listApiKeys();
+
+    expect(keys, hasLength(2));
+    expect(keys[0].id, 3);
+    expect(keys[0].name, 'MCP server');
+    expect(keys[0].keyHint, 'sk-AbCd1234');
+    expect(keys[0].lastUsedAt, isNull);
+    expect(keys[1].lastUsedAt, DateTime.parse('2026-10-07T11:00:00'));
+  });
+
+  test('createApiKey posts optional name and parses one-time secret', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/account/api-keys',
+      statusCode: 201,
+      body: <String, dynamic>{
+        'id': 9,
+        'name': 'MCP',
+        'key_hint': 'sk-AbCd1234',
+        'created_at': '2026-10-07T10:00:00',
+        'last_used_at': null,
+        'key': 'sk-AbCd1234EfGh5678',
+      },
+    );
+
+    final created = await accountApi.createApiKey(name: 'MCP');
+
+    expect(created.id, 9);
+    expect(created.key, 'sk-AbCd1234EfGh5678');
+    expect(adapter.requests.single.body, <String, dynamic>{'name': 'MCP'});
+  });
+
+  test('deleteApiKey accepts 204 response', () async {
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/account/api-keys/9',
+      statusCode: 204,
+    );
+
+    await accountApi.deleteApiKey(9);
+
+    expect(adapter.requests.single.method, 'DELETE');
+    expect(adapter.requests.single.path, '/account/api-keys/9');
+  });
 }

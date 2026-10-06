@@ -31,4 +31,21 @@ class AccountApi {
       },
     );
   }
+
+  Future<List<ApiKeyDto>> listApiKeys() async {
+    final response = await _apiClient.getList('/account/api-keys');
+    return response.map(ApiKeyDto.fromJson).toList(growable: false);
+  }
+
+  Future<ApiKeyCreatedDto> createApiKey({String name = ''}) async {
+    final response = await _apiClient.post(
+      '/account/api-keys',
+      data: <String, dynamic>{'name': name},
+    );
+    return ApiKeyCreatedDto.fromJson(response);
+  }
+
+  Future<void> deleteApiKey(int keyId) async {
+    await _apiClient.deleteNoContent('/account/api-keys/$keyId');
+  }
 }

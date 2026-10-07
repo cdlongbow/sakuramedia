@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/features/account/presentation/pages/mobile/change_password_page.dart';
-import 'package:sakuramedia/features/account/presentation/pages/mobile/change_username_page.dart';
+import 'package:sakuramedia/features/account/presentation/pages/mobile/account_security_page.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/notifications_page.dart';
@@ -562,39 +561,18 @@ class MobileSettingsAppearanceRouteData extends _MobileSubpageRouteData
   }
 }
 
-@TypedGoRoute<MobileSettingsUsernameRouteData>(path: mobileSettingsUsernamePath)
-class MobileSettingsUsernameRouteData extends _MobileSubpageRouteData
-    with $MobileSettingsUsernameRouteData {
-  const MobileSettingsUsernameRouteData();
+@TypedGoRoute<MobileSettingsAccountSecurityRouteData>(
+  path: mobileSettingsAccountSecurityPath,
+)
+class MobileSettingsAccountSecurityRouteData extends _MobileSubpageRouteData
+    with $MobileSettingsAccountSecurityRouteData {
+  const MobileSettingsAccountSecurityRouteData();
 
   @override
-  String get pageName => 'mobile-settings-username';
+  String get pageName => 'mobile-settings-account-security';
 
   @override
-  String get title => '修改用户名';
-
-  @override
-  String get defaultLocation => mobileOverviewPath;
-
-  @override
-  EdgeInsetsGeometry get bodyPadding => AppPageInsets.zero;
-
-  @override
-  Widget buildSubpage(BuildContext context, GoRouterState state) {
-    return const MobileChangeUsernamePage();
-  }
-}
-
-@TypedGoRoute<MobileSettingsPasswordRouteData>(path: mobileSettingsPasswordPath)
-class MobileSettingsPasswordRouteData extends _MobileSubpageRouteData
-    with $MobileSettingsPasswordRouteData {
-  const MobileSettingsPasswordRouteData();
-
-  @override
-  String get pageName => 'mobile-settings-password';
-
-  @override
-  String get title => '修改密码';
+  String get title => '账号安全';
 
   @override
   String get defaultLocation => mobileOverviewPath;
@@ -604,7 +582,7 @@ class MobileSettingsPasswordRouteData extends _MobileSubpageRouteData
 
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
-    return const MobileChangePasswordPage();
+    return const MobileAccountSecurityPage();
   }
 }
 
@@ -1212,11 +1190,8 @@ void _handleOverviewDrawerSelection(BuildContext hostContext, String key) {
     case 'appearance':
       const MobileSettingsAppearanceRouteData().push(hostContext);
       return;
-    case 'username':
-      const MobileSettingsUsernameRouteData().push(hostContext);
-      return;
-    case 'password':
-      const MobileSettingsPasswordRouteData().push(hostContext);
+    case 'account-security':
+      const MobileSettingsAccountSecurityRouteData().push(hostContext);
       return;
     case 'logout':
       hostContext.logOut();

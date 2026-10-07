@@ -115,18 +115,11 @@ class MobileOverviewDrawer extends ConsumerWidget {
   static bool get _supportsExternalPlayer =>
       defaultTargetPlatform == TargetPlatform.android;
 
-  static const _MobileOverviewDrawerMenuItem _usernameItem =
+  static const _MobileOverviewDrawerMenuItem _accountSecurityItem =
       _MobileOverviewDrawerMenuItem(
-        key: 'username',
-        icon: Icons.person_outline_rounded,
-        label: '修改用户名',
-      );
-
-  static const _MobileOverviewDrawerMenuItem _passwordItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'password',
-        icon: Icons.lock_outline_rounded,
-        label: '修改密码',
+        key: 'account-security',
+        icon: Icons.security_rounded,
+        label: '账号安全',
       );
 
   @override
@@ -280,11 +273,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _usernameItem,
-                          ),
-                          _buildMenuEntry(
-                            context: context,
-                            item: _passwordItem,
+                            item: _accountSecurityItem,
                           ),
                         ],
                       ),

@@ -26,8 +26,7 @@ List<RouteBase> get $appRoutes => [
   $mobileSettingsSystemMaintenanceRouteData,
   $mobileSettingsExternalPlayerRouteData,
   $mobileSettingsAppearanceRouteData,
-  $mobileSettingsUsernameRouteData,
-  $mobileSettingsPasswordRouteData,
+  $mobileSettingsAccountSecurityRouteData,
   $mobileMoviePlayerRouteData,
   $mobileCastRemoteRouteData,
   $mobileVideoPlayerRouteData,
@@ -647,45 +646,20 @@ mixin $MobileSettingsAppearanceRouteData on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-RouteBase get $mobileSettingsUsernameRouteData => GoRouteData.$route(
-  path: '/mobile/settings/username',
+RouteBase get $mobileSettingsAccountSecurityRouteData => GoRouteData.$route(
+  path: '/mobile/settings/account-security',
   hasOverriddenOnExit: false,
-  factory: $MobileSettingsUsernameRouteData._fromState,
+  factory: $MobileSettingsAccountSecurityRouteData._fromState,
 );
 
-mixin $MobileSettingsUsernameRouteData on GoRouteData {
-  static MobileSettingsUsernameRouteData _fromState(GoRouterState state) =>
-      const MobileSettingsUsernameRouteData();
+mixin $MobileSettingsAccountSecurityRouteData on GoRouteData {
+  static MobileSettingsAccountSecurityRouteData _fromState(
+    GoRouterState state,
+  ) => const MobileSettingsAccountSecurityRouteData();
 
   @override
-  String get location => GoRouteData.$location('/mobile/settings/username');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
-RouteBase get $mobileSettingsPasswordRouteData => GoRouteData.$route(
-  path: '/mobile/settings/password',
-  hasOverriddenOnExit: false,
-  factory: $MobileSettingsPasswordRouteData._fromState,
-);
-
-mixin $MobileSettingsPasswordRouteData on GoRouteData {
-  static MobileSettingsPasswordRouteData _fromState(GoRouterState state) =>
-      const MobileSettingsPasswordRouteData();
-
-  @override
-  String get location => GoRouteData.$location('/mobile/settings/password');
+  String get location =>
+      GoRouteData.$location('/mobile/settings/account-security');
 
   @override
   void go(BuildContext context) => context.go(location);

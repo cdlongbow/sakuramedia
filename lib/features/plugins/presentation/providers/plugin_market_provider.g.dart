@@ -36,7 +36,7 @@ final class PluginMarketProvider
   PluginMarket create() => PluginMarket();
 }
 
-String _$pluginMarketHash() => r'9d6f3055bfa56ad232d66bf734ce1cdc7115b459';
+String _$pluginMarketHash() => r'90b41ff2d2b943fadb619bedfcedb37b96ebffde';
 
 /// 插件市场索引与市场安装 / 更新操作的会话级共享状态。
 

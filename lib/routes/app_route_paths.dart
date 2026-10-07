@@ -69,8 +69,8 @@ const String mobileSettingsSystemMaintenancePath =
 const String mobileSettingsExternalPlayerPath =
     '/mobile/settings/external-player';
 const String mobileSettingsAppearancePath = '/mobile/settings/appearance';
-const String mobileSettingsUsernamePath = '/mobile/settings/username';
-const String mobileSettingsPasswordPath = '/mobile/settings/password';
+const String mobileSettingsAccountSecurityPath =
+    '/mobile/settings/account-security';
 
 const String loginPath = '/login';
 

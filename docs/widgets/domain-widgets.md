@@ -67,6 +67,10 @@ moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；
 - `lib/widgets/domain/playlists/`：`PlaylistBannerCard`。
 - `lib/widgets/domain/search/`：`CatalogSearchField`、`CatalogSearchContent`、`CatalogSearchStreamStatusCard`。`CatalogSearchContent` 固定搜索框和影片/女优页签，流式进度卡与结果一起滚动。`CatalogSearchField` 的后缀搜索图标可用 `isSearching` 切到转圈并禁用点击、用 `searchButtonTooltip` 定制文案；需要「输入框 + 搜索」统一外观时用它，不要再另拼输入框和独立按钮。
 
+## account
+
+- `lib/widgets/domain/account/`：`ApiKeyGeneratePanel` 是桌面账号安全区与移动端账号安全页共用的 API 密钥生成流程（备注名 → 生成 → 一次性明文展示与复制）。`keyPrefix`（`configuration` / `mobile`）派生本流程的控件 Key，桌面套 `AppDesktopDialog`、移动端塞进底部抽屉；数据由 account feature 的 `apiKeysProvider` 提供。
+
 ## media import and batch
 
 - `lib/widgets/domain/media_import/`：`MediaImportSourcePicker` 和 `MediaLibrarySelectorField` 由桌面、移动端的 JAV / 视频导入表单共用。移动端路径与目录选择按钮分行显示，文件行支持触摸和长名称；浏览、分页、重试与选择回调保持一致。

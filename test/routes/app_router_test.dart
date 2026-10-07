@@ -79,14 +79,9 @@ const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
         pageKey: Key('mobile-settings-system-maintenance'),
       ),
       _MobileSettingsRouteCase(
-        path: mobileSettingsUsernamePath,
-        title: '修改用户名',
-        pageKey: Key('mobile-settings-username'),
-      ),
-      _MobileSettingsRouteCase(
-        path: mobileSettingsPasswordPath,
-        title: '修改密码',
-        pageKey: Key('mobile-settings-password'),
+        path: mobileSettingsAccountSecurityPath,
+        title: '账号安全',
+        pageKey: Key('mobile-settings-account-security'),
       ),
       _MobileSettingsRouteCase(
         path: mobileMediaManagementPath,
@@ -1332,7 +1327,7 @@ void main() {
         );
       } else if (routeCase.path == mobileSettingsSystemMaintenancePath) {
         _enqueueMobileSystemMaintenanceResponses(bundle);
-      } else if (routeCase.path == mobileSettingsUsernamePath) {
+      } else if (routeCase.path == mobileSettingsAccountSecurityPath) {
         _enqueueAccountProfile(bundle);
       } else if (routeCase.path == mobileMediaManagementPath) {
         _enqueueMobileMediaManagementResponses(bundle);
@@ -2478,7 +2473,7 @@ void main() {
         );
       } else if (routeCase.path == mobileSettingsSystemMaintenancePath) {
         _enqueueMobileSystemMaintenanceResponses(bundle);
-      } else if (routeCase.path == mobileSettingsUsernamePath) {
+      } else if (routeCase.path == mobileSettingsAccountSecurityPath) {
         _enqueueAccountProfile(bundle);
       } else if (routeCase.path == mobileMediaManagementPath) {
         _enqueueMobileMediaManagementResponses(bundle);
@@ -4367,6 +4362,12 @@ void _enqueueAccountProfile(TestApiBundle bundle) {
       'created_at': '2026-03-08T09:00:00Z',
       'last_login_at': '2026-03-08T10:00:00Z',
     },
+  );
+  // 账号安全页同时加载 API 密钥列表。
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/account/api-keys',
+    body: const <dynamic>[],
   );
 }
 

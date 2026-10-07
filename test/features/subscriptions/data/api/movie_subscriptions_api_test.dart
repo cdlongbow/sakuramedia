@@ -208,6 +208,37 @@ void main() {
     expect(items[6].canResetSearch, isTrue);
   });
 
+  test('已导入但媒体被删除的 import_failed 行单独显示为媒体已删除', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-subscriptions',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'movie_number': 'A-3',
+            'status': 'import_failed',
+            'import_status': 'completed',
+            'import_status_label': '已导入：符合条件的媒体文件已入库',
+          },
+          <String, dynamic>{
+            'movie_number': 'A-4',
+            'status': 'import_failed',
+            'import_status': 'failed',
+            'import_status_label': '导入失败：没有扫描到可导入的媒体文件',
+          },
+        ],
+        total: 2,
+      ),
+    );
+
+    final items = (await api.getSubscriptions()).items;
+
+    expect(items[0].isImportedMediaRemoved, isTrue);
+    expect(items[0].displayStatusLabel, '媒体已删除');
+    expect(items[1].isImportedMediaRemoved, isFalse);
+    expect(items[1].displayStatusLabel, '导入失败');
+  });
+
   test('import_failed 与 failed 是两个不同状态，文案不能混', () {
     expect(MovieSubscriptionStatus.importFailed.apiValue, 'import_failed');
     expect(MovieSubscriptionStatus.importFailed.label, '导入失败');

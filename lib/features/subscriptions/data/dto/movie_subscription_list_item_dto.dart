@@ -18,6 +18,7 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
     this.attemptLimit = 0,
     this.lastSearchedAt,
     this.lastError,
+    this.importStatus,
     this.importStatusLabel,
     this.deadDownloadTaskCount = 0,
     this.mediaCount = 0,
@@ -38,6 +39,7 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
   final int attemptLimit;
   final DateTime? lastSearchedAt;
   final String? lastError;
+  final String? importStatus;
   final String? importStatusLabel;
   final int deadDownloadTaskCount;
   final int mediaCount;
@@ -61,6 +63,7 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
       attemptLimit: asInt(json['attempt_limit']),
       lastSearchedAt: asDateTime(json['last_searched_at']),
       lastError: asStringOrNull(json['last_error'], trim: true),
+      importStatus: asStringOrNull(json['import_status'], trim: true),
       importStatusLabel: asStringOrNull(json['import_status_label'], trim: true),
       deadDownloadTaskCount: asInt(json['dead_download_task_count']),
       mediaCount: asInt(json['media_count']),
@@ -69,7 +72,15 @@ class MovieSubscriptionListItemDto with MovieCoverSelection {
 
   String get displayTitle => title.trim().isNotEmpty ? title : movieNumber;
 
-  String get displayStatusLabel => status.label;
+  /// 已成功导入（import_status=completed）但媒体已从库中删除：状态仍落在
+  /// importFailed（台账行还在、库里没 Media），但归因不是"导入失败"，
+  /// 展示层单独区分文案与颜色。
+  bool get isImportedMediaRemoved =>
+      status == MovieSubscriptionStatus.importFailed &&
+      importStatus == 'completed';
+
+  String get displayStatusLabel =>
+      isImportedMediaRemoved ? '媒体已删除' : status.label;
 
   bool get canResetSearch =>
       status == MovieSubscriptionStatus.missing ||

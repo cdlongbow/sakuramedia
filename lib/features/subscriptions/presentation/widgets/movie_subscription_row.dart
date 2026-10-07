@@ -79,7 +79,9 @@ class MovieSubscriptionRow extends StatelessWidget {
             SizedBox(height: spacing.sm),
             _LastErrorLine(
               item: item,
-              message: '提示：${item.importStatusLabel}',
+              message: item.isImportedMediaRemoved
+                  ? '提示：该影片曾成功导入，媒体已从库中删除'
+                  : '提示：${item.importStatusLabel}',
               keySuffix: 'import-hint',
             ),
           ],
@@ -205,7 +207,7 @@ class _HeadingLine extends StatelessWidget {
         AppBadge(
           key: Key('movie-subscription-row-status-${item.movieNumber}'),
           label: item.displayStatusLabel,
-          tone: _statusBadgeTone(item.status),
+          tone: _statusBadgeTone(item),
           size: AppBadgeSize.compact,
         ),
       ],
@@ -213,16 +215,21 @@ class _HeadingLine extends StatelessWidget {
   }
 }
 
-AppBadgeTone _statusBadgeTone(MovieSubscriptionStatus status) => switch (status) {
-  MovieSubscriptionStatus.imported => AppBadgeTone.success,
-  MovieSubscriptionStatus.importFailed => AppBadgeTone.error,
-  MovieSubscriptionStatus.downloading => AppBadgeTone.info,
-  MovieSubscriptionStatus.exhausted => AppBadgeTone.warning,
-  MovieSubscriptionStatus.failed => AppBadgeTone.error,
-  MovieSubscriptionStatus.missing => AppBadgeTone.neutral,
-  MovieSubscriptionStatus.pending => AppBadgeTone.info,
-  MovieSubscriptionStatus.unknown => AppBadgeTone.neutral,
-};
+AppBadgeTone _statusBadgeTone(MovieSubscriptionListItemDto item) {
+  if (item.isImportedMediaRemoved) {
+    return AppBadgeTone.neutral;
+  }
+  return switch (item.status) {
+    MovieSubscriptionStatus.imported => AppBadgeTone.success,
+    MovieSubscriptionStatus.importFailed => AppBadgeTone.error,
+    MovieSubscriptionStatus.downloading => AppBadgeTone.info,
+    MovieSubscriptionStatus.exhausted => AppBadgeTone.warning,
+    MovieSubscriptionStatus.failed => AppBadgeTone.error,
+    MovieSubscriptionStatus.missing => AppBadgeTone.neutral,
+    MovieSubscriptionStatus.pending => AppBadgeTone.info,
+    MovieSubscriptionStatus.unknown => AppBadgeTone.neutral,
+  };
+}
 
 class _SearchProgressLine extends StatelessWidget {
   const _SearchProgressLine({required this.item});

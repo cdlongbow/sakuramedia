@@ -90,6 +90,21 @@ void main() {
   });
 
   testWidgets(
+    'shows media-removed hint for an imported record whose media was deleted',
+    (tester) async {
+      final item = _item('ABP-123')
+        ..['status'] = 'import_failed'
+        ..['import_status'] = 'completed'
+        ..['import_status_label'] = '已导入：符合条件的媒体文件已入库';
+      _enqueuePage(adapter, [item]);
+      await _pumpPage(tester, sessionStore, apiClient);
+
+      expect(find.text('媒体已删除'), findsOneWidget);
+      expect(find.text('提示：该影片曾成功导入，媒体已从库中删除'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'tabs retain loaded pages and scroll until explicitly refreshed',
     (tester) async {
       _enqueuePage(

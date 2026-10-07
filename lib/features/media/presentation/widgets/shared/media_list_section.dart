@@ -70,6 +70,7 @@ class MediaListSection extends StatelessWidget {
     this.transferringItemId,
     this.onRetryThumbnails,
     this.retryingThumbnailMediaId,
+    this.onOpenRowActions,
   });
 
   final ScrollController scrollController;
@@ -129,6 +130,9 @@ class MediaListSection extends StatelessWidget {
   /// 当前正在重试缩略图的媒体 ID，用于只显示对应卡片的 loading。
   final ValueListenable<int?>? retryingThumbnailMediaId;
 
+  /// 移动端单项「更多」入口：桌面端不用（行内平铺图标，hover 有 tooltip）。
+  final Future<void> Function(MediaListItemDto item)? onOpenRowActions;
+
   @override
   Widget build(BuildContext context) {
     final scrollView = CustomScrollView(
@@ -151,6 +155,7 @@ class MediaListSection extends StatelessWidget {
           transferringItemId: transferringItemId,
           onRetryThumbnails: onRetryThumbnails,
           retryingThumbnailMediaId: retryingThumbnailMediaId,
+          onOpenRowActions: onOpenRowActions,
         ),
       ],
     );
@@ -404,7 +409,14 @@ class _MediaListHeader extends ConsumerWidget {
         onBatchTransfer: onBatchTransfer,
         canResetThumbnails:
             filter.thumbnailGenerationState ==
-            MediaBrowseThumbnailGenerationFilter.terminal,
+                MediaBrowseThumbnailGenerationFilter.terminal ||
+            filter.thumbnailGenerationState ==
+                MediaBrowseThumbnailGenerationFilter.succeeded,
+        resetThumbnailsLabel:
+            filter.thumbnailGenerationState ==
+                MediaBrowseThumbnailGenerationFilter.succeeded
+            ? '重新生成缩略图'
+            : '重试缩略图',
         onBatchResetThumbnails: onBatchResetThumbnails,
         onRefresh: () => unawaited((onRefresh ?? () => _defaultRefresh(ref))()),
       ),
@@ -481,6 +493,7 @@ class _MediaListBodySliver extends ConsumerWidget {
     required this.transferringItemId,
     required this.onRetryThumbnails,
     required this.retryingThumbnailMediaId,
+    required this.onOpenRowActions,
   });
 
   final String keyPrefix;
@@ -498,6 +511,7 @@ class _MediaListBodySliver extends ConsumerWidget {
   final ValueListenable<int?>? transferringItemId;
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
   final ValueListenable<int?>? retryingThumbnailMediaId;
+  final Future<void> Function(MediaListItemDto item)? onOpenRowActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -525,6 +539,7 @@ class _MediaListBodySliver extends ConsumerWidget {
             transferringItemId: transferringItemId,
             onRetryThumbnails: onRetryThumbnails,
             retryingThumbnailMediaId: retryingThumbnailMediaId,
+            onOpenRowActions: onOpenRowActions,
           )
         : _MediaRowConsumer(
             keyPrefix: keyPrefix,
@@ -593,6 +608,7 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
     required this.transferringItemId,
     required this.onRetryThumbnails,
     required this.retryingThumbnailMediaId,
+    required this.onOpenRowActions,
   });
 
   final String keyPrefix;
@@ -610,6 +626,7 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
   final ValueListenable<int?>? transferringItemId;
   final Future<void> Function(MediaListItemDto item)? onRetryThumbnails;
   final ValueListenable<int?>? retryingThumbnailMediaId;
+  final Future<void> Function(MediaListItemDto item)? onOpenRowActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -629,10 +646,14 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
         : librariesById[item.libraryId];
 
     Widget buildCard(int? deletingId, int? transferringId, int? retryingId) {
+      final isRegenerateThumbnails =
+          item.thumbnailGenerationState ==
+          MediaThumbnailGenerationState.succeeded;
       final isRetryable =
           !selectionMode &&
-          item.thumbnailGenerationState ==
-              MediaThumbnailGenerationState.terminal;
+          (item.thumbnailGenerationState ==
+                  MediaThumbnailGenerationState.terminal ||
+              isRegenerateThumbnails);
       final isRetrying = retryingId == item.id;
       final busy =
           isDeleting ||
@@ -681,6 +702,10 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
             : null,
         isRetryingThumbnails: isRetrying,
         canRetryThumbnails: isRetryable && !busy,
+        retryThumbnailsLabel: isRegenerateThumbnails ? '重新生成缩略图' : '重试缩略图',
+        onOpenActions: selectionMode || onOpenRowActions == null
+            ? null
+            : () => unawaited(onOpenRowActions!(item)),
       );
     }
 
@@ -728,13 +753,16 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
         (asyncState) => asyncState.value?.selectionCount ?? 0,
       ),
     );
-    final canResetThumbnails = ref.watch(
+    final resetThumbnailsMode = ref.watch(
       mediaBrowseProvider.select(
-        (asyncState) =>
-            asyncState.value?.filter.thumbnailGenerationState ==
-            MediaBrowseThumbnailGenerationFilter.terminal,
+        (asyncState) => asyncState.value?.filter.thumbnailGenerationState,
       ),
     );
+    final resetThumbnailsLabel = switch (resetThumbnailsMode) {
+      MediaBrowseThumbnailGenerationFilter.terminal => '重试',
+      MediaBrowseThumbnailGenerationFilter.succeeded => '重新生成',
+      _ => null,
+    };
     final busy = isDeleting || isTransferring || isResettingThumbnails;
     return AppSelectionBottomBar(
       leading: Text(
@@ -751,6 +779,7 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
         AppButton(
           key: Key('$keyPrefix-batch-transfer-button'),
           label: '迁移',
+          size: AppButtonSize.small,
           icon: const Icon(Icons.drive_file_move_outline),
           isLoading: isTransferring,
           onPressed: busy || selectionCount == 0 ? null : onBatchTransfer,
@@ -758,16 +787,22 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
         AppButton(
           key: Key('$keyPrefix-batch-delete-button'),
           label: '删除',
+          size: AppButtonSize.small,
           variant: AppButtonVariant.danger,
           icon: const Icon(Icons.delete_outline_rounded),
           isLoading: isDeleting,
           onPressed: busy || selectionCount == 0 ? null : onBatchDelete,
         ),
-        if (canResetThumbnails && onBatchResetThumbnails != null)
+        if (resetThumbnailsLabel != null && onBatchResetThumbnails != null)
           AppButton(
             key: Key('$keyPrefix-batch-reset-thumbnails-button'),
-            label: '重试',
-            icon: const Icon(Icons.refresh_rounded),
+            label: resetThumbnailsLabel,
+            size: AppButtonSize.small,
+            // 「重新生成」比「重试」长，去掉图标保证 4 字完整显示。
+            icon: resetThumbnailsMode ==
+                    MediaBrowseThumbnailGenerationFilter.terminal
+                ? const Icon(Icons.refresh_rounded)
+                : null,
             isLoading: isResettingThumbnails,
             onPressed: busy || selectionCount == 0
                 ? null
@@ -828,10 +863,14 @@ class _MediaRowConsumer extends ConsumerWidget {
         : librariesById[item.libraryId];
 
     Widget buildCard(int? deletingId, int? transferringId, int? retryingId) {
+      final isRegenerateThumbnails =
+          item.thumbnailGenerationState ==
+          MediaThumbnailGenerationState.succeeded;
       final isRetryable =
           !selectionMode &&
-          item.thumbnailGenerationState ==
-              MediaThumbnailGenerationState.terminal;
+          (item.thumbnailGenerationState ==
+                  MediaThumbnailGenerationState.terminal ||
+              isRegenerateThumbnails);
       final isRetrying = retryingId == item.id;
       final busy =
           isDeleting ||
@@ -874,6 +913,7 @@ class _MediaRowConsumer extends ConsumerWidget {
             : null,
         isRetryingThumbnails: isRetrying,
         canRetryThumbnails: isRetryable && !busy,
+        retryThumbnailsLabel: isRegenerateThumbnails ? '重新生成缩略图' : '重试缩略图',
         showUpdatedAt: true,
       );
     }
@@ -917,6 +957,7 @@ class _MediaListActionBar extends ConsumerWidget {
     required this.onBatchDelete,
     required this.onBatchTransfer,
     required this.canResetThumbnails,
+    required this.resetThumbnailsLabel,
     required this.onBatchResetThumbnails,
     required this.onRefresh,
   });
@@ -936,6 +977,7 @@ class _MediaListActionBar extends ConsumerWidget {
   final Future<void> Function() onBatchDelete;
   final Future<void> Function() onBatchTransfer;
   final bool canResetThumbnails;
+  final String resetThumbnailsLabel;
   final Future<void> Function()? onBatchResetThumbnails;
   final VoidCallback onRefresh;
 
@@ -996,7 +1038,7 @@ class _MediaListActionBar extends ConsumerWidget {
             onBatchResetThumbnails != null)
           AppButton(
             key: const Key('media-management-batch-reset-thumbnails-button'),
-            label: '重试缩略图（$selectionCount）',
+            label: '$resetThumbnailsLabel（$selectionCount）',
             size: AppButtonSize.small,
             icon: const Icon(Icons.refresh_rounded),
             isLoading: isResettingThumbnails,

@@ -16,8 +16,9 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
 /// 封面贴左整高、由卡片圆角裁剪，桌面用宽图（16:9）、移动用窄竖图；
 /// 卡片只有一层（白底、细边、无阴影），选中只换边框色。
 ///
-/// 单项「删除 / 迁移 / 重试缩略图」是平铺的图标动作（不再收进「更多」菜单），
-/// 移动端空间紧，操作另起一行右对齐。
+/// 单项「删除 / 迁移 / 重试缩略图」：桌面端平铺图标动作（hover 有 tooltip）；
+/// 移动端收进卡片右下角的「更多」按钮，动作放带中文标签的底部操作表
+/// （对齐订阅管理行卡），避免无标签图标让用户猜。
 class MediaListItemCard extends StatelessWidget {
   const MediaListItemCard({
     super.key,
@@ -37,6 +38,8 @@ class MediaListItemCard extends StatelessWidget {
     this.onRetryThumbnails,
     this.isRetryingThumbnails = false,
     this.canRetryThumbnails = true,
+    this.retryThumbnailsLabel = '重试缩略图',
+    this.onOpenActions,
     this.showUpdatedAt = false,
   });
 
@@ -56,6 +59,10 @@ class MediaListItemCard extends StatelessWidget {
   final VoidCallback? onRetryThumbnails;
   final bool isRetryingThumbnails;
   final bool canRetryThumbnails;
+  final String retryThumbnailsLabel;
+
+  /// 移动端「更多」入口：为 null 时不显示（选择态、无可用动作）。
+  final VoidCallback? onOpenActions;
   final bool showUpdatedAt;
 
   @override
@@ -97,6 +104,8 @@ class MediaListItemCard extends StatelessWidget {
         onRetryThumbnails: onRetryThumbnails,
         isRetryingThumbnails: isRetryingThumbnails,
         canRetryThumbnails: canRetryThumbnails,
+        retryThumbnailsLabel: retryThumbnailsLabel,
+        onOpenActions: onOpenActions,
         showUpdatedAt: showUpdatedAt,
       ),
     );
@@ -120,6 +129,8 @@ class _MediaListItemBody extends StatelessWidget {
     required this.onRetryThumbnails,
     required this.isRetryingThumbnails,
     required this.canRetryThumbnails,
+    required this.retryThumbnailsLabel,
+    required this.onOpenActions,
     required this.showUpdatedAt,
   });
 
@@ -136,9 +147,11 @@ class _MediaListItemBody extends StatelessWidget {
   final VoidCallback? onRetryThumbnails;
   final bool isRetryingThumbnails;
   final bool canRetryThumbnails;
+  final String retryThumbnailsLabel;
+  final VoidCallback? onOpenActions;
   final bool showUpdatedAt;
 
-  /// 缩略图重试：平铺图标动作；重试中换成小转圈。
+  /// 缩略图重试 / 重新生成：平铺图标动作；执行中换成小转圈。
   Widget? _retryAction(BuildContext context) {
     final retry = onRetryThumbnails;
     if (retry == null) {
@@ -150,8 +163,8 @@ class _MediaListItemBody extends StatelessWidget {
     return AppIconButton(
       key: Key('$keyPrefix-retry-thumbnails-${item.id}'),
       icon: const Icon(Icons.refresh_rounded),
-      tooltip: '重试缩略图',
-      semanticLabel: '重试缩略图',
+      tooltip: retryThumbnailsLabel,
+      semanticLabel: retryThumbnailsLabel,
       onPressed: canRetryThumbnails ? retry : null,
     );
   }
@@ -204,17 +217,43 @@ class _MediaListItemBody extends StatelessWidget {
     );
   }
 
+  /// 移动端「更多」：桌面端那排无标签图标收进底部操作表；执行中换成小转圈。
+  ///
+  /// 只有传入了 [onOpenActions] 才启用（媒体管理列表）；单动作场景（如失效媒体
+  /// 列表只有一个删除）没有操作表，继续沿用平铺图标。
+  ///
+  /// 全局忙（其它条目正在删除 / 迁移 / 重置）时三类动作都不可用，入口与桌面端
+  /// 被禁用的行内图标一致置灰，避免打开一张所有动作都点不动的操作表。
+  Widget _mobileActions() {
+    if (isDeleting || isTransferring || isRetryingThumbnails) {
+      return const AppInlineSpinner();
+    }
+    final hasAvailableAction =
+        (onRetryThumbnails != null && canRetryThumbnails) ||
+        canDelete ||
+        canTransfer;
+    return AppIconButton(
+      key: Key('$keyPrefix-row-actions-${item.id}'),
+      icon: const Icon(Icons.more_horiz_rounded),
+      size: AppIconButtonSize.compact,
+      tooltip: '更多操作',
+      semanticLabel: '更多操作',
+      onPressed: hasAvailableAction ? onOpenActions : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final subtitle = item.displaySubtitle;
     final retryAction = _retryAction(context);
-    final actions = _actions(context, retryAction);
+    final actions = mobile && onOpenActions != null
+        ? _mobileActions()
+        : _actions(context, retryAction);
     final pathLine = MediaListItemPathLine(
       keyPrefix: keyPrefix,
       item: item,
-      // 行内重试占用了行尾，就不再挤「更新 …」。
-      showUpdatedAt: showUpdatedAt && retryAction == null,
+      showUpdatedAt: showUpdatedAt,
       trailing: mobile ? null : actions,
     );
     return Column(

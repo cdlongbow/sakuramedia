@@ -543,22 +543,40 @@ void main() {
     });
   });
 
-  test('resetFailedMediaThumbnails posts selected media IDs', () async {
+  test('resetMediaThumbnails posts selected media IDs without force', () async {
     adapter.enqueueJson(
       method: 'POST',
       path: '/media/thumbnail-generation/reset',
       body: <String, dynamic>{'reset_count': 2},
     );
 
-    final resetCount = await mediaApi.resetFailedMediaThumbnails(
-      mediaIds: [12, 34],
-    );
+    final resetCount = await mediaApi.resetMediaThumbnails(mediaIds: [12, 34]);
 
     expect(resetCount, 2);
     expect(adapter.requests.single.method, 'POST');
     expect(adapter.requests.single.path, '/media/thumbnail-generation/reset');
     expect(adapter.requests.single.body, <String, dynamic>{
       'media_ids': <int>[12, 34],
+      'force': false,
+    });
+  });
+
+  test('resetMediaThumbnails posts force when regenerating', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+
+    final resetCount = await mediaApi.resetMediaThumbnails(
+      mediaIds: [12],
+      force: true,
+    );
+
+    expect(resetCount, 1);
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'media_ids': <int>[12],
+      'force': true,
     });
   });
 

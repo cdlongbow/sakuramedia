@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +14,7 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/pages/mobile/media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 import '../../../../../support/fake_http_client_adapter.dart';
 
@@ -152,7 +156,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const Key('mobile-media-management-delete-1')),
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
       findsNothing,
     );
   });
@@ -282,11 +286,19 @@ void main() {
     );
 
     expect(
-      find.byKey(const Key('mobile-media-management-delete-1')),
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
       findsOneWidget,
     );
     await tester.tap(
-      find.byKey(const Key('mobile-media-management-delete-1')),
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('media-management-row-actions')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('media-management-row-action-delete')),
     );
     await tester.pumpAndSettle();
 
@@ -309,6 +321,101 @@ void main() {
       findsNothing,
     );
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('disables the more button of other rows while an action is in flight', (
+    tester,
+  ) async {
+    final deleteCompleter = Completer<void>();
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: [_mediaItemJson(1), _mediaItemJson(2)]),
+    );
+    adapter.enqueueResponder(
+      method: 'DELETE',
+      path: '/media/1',
+      responder: (options, requestBody) async {
+        await deleteCompleter.future;
+        return ResponseBody.fromBytes(
+          const <int>[],
+          204,
+          headers: const <String, List<String>>{},
+        );
+      },
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-row-action-delete')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-delete-confirm-1')),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
+      findsNothing,
+      reason: '正在删除的条目：入口换成 loading',
+    );
+    expect(
+      tester
+          .widget<AppInteractiveSurface>(
+            find.byKey(const Key('mobile-media-management-row-actions-2')),
+          )
+          .enabled,
+      isFalse,
+      reason: '删除在途时其它条目的「更多」入口应禁用，避免开出所有动作都点不动的操作表',
+    );
+
+    deleteCompleter.complete();
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('shows labeled management actions in the row more sheet', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'terminal')],
+      ),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('media-management-row-actions')),
+      findsOneWidget,
+    );
+    expect(find.text('ABC-1'), findsWidgets);
+    expect(find.text('重试缩略图'), findsOneWidget);
+    expect(find.text('迁移'), findsOneWidget);
+    expect(find.text('删除媒体'), findsOneWidget);
+    expect(find.text('删除该媒体及其文件，不可恢复'), findsOneWidget);
   });
 
   testWidgets('retries a terminal thumbnail from its mobile card', (
@@ -338,12 +445,12 @@ void main() {
       apiClient: apiClient,
     );
 
-    expect(
-      find.byKey(const Key('mobile-media-management-retry-thumbnails-1')),
-      findsOneWidget,
-    );
     await tester.tap(
-      find.byKey(const Key('mobile-media-management-retry-thumbnails-1')),
+      find.byKey(const Key('mobile-media-management-row-actions-1')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-management-row-action-retry-thumbnails')),
     );
     await tester.pumpAndSettle();
 
@@ -354,6 +461,7 @@ void main() {
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
+      'force': false,
     });
     expect(
       find.byKey(const Key('mobile-media-management-row-1')),
@@ -541,6 +649,7 @@ void main() {
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
+      'force': false,
     });
     expect(
       find.byKey(const Key('mobile-media-management-row-1')),
@@ -548,6 +657,145 @@ void main() {
     );
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('regenerates selected succeeded thumbnails on mobile', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'succeeded')],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(
+        items: [_mediaItemJson(1, thumbnailGenerationState: 'succeeded')],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _mediaPage(items: const []),
+    );
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(
+      find.byKey(const Key('mobile-media-management-filter-trigger')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-thumbnail-generation-filter-succeeded')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(
+      find.byKey(const Key('mobile-media-management-row-1')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('重新生成'), findsOneWidget);
+    await tester.tap(
+      find.byKey(
+        const Key('mobile-media-management-batch-reset-thumbnails-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('将删除已选 1 项现有的缩略图'), findsOneWidget);
+    await tester.tap(
+      find.byKey(
+        const Key('media-management-batch-reset-thumbnails-confirm-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+      'force': true,
+    });
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets(
+    'regenerates a succeeded thumbnail from its mobile card after confirmation',
+    (tester) async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(
+          items: [_mediaItemJson(1, thumbnailGenerationState: 'succeeded')],
+        ),
+      );
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/media/thumbnail-generation/reset',
+        body: <String, dynamic>{'reset_count': 1},
+      );
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _mediaPage(items: const []),
+      );
+      await _pumpPage(
+        tester,
+        sessionStore: sessionStore,
+        mediaApi: mediaApi,
+        apiClient: apiClient,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('mobile-media-management-row-actions-1')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('media-management-row-action-retry-thumbnails')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(
+          const Key('media-management-single-regenerate-thumbnails-dialog'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(
+          const Key(
+            'media-management-single-regenerate-thumbnails-confirm-button',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final resetRequest = adapter.requests.singleWhere(
+        (request) =>
+            request.method == 'POST' &&
+            request.path == '/media/thumbnail-generation/reset',
+      );
+      expect(resetRequest.body, <String, dynamic>{
+        'media_ids': <int>[1],
+        'force': true,
+      });
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
 }
 
 Future<void> _pumpPage(

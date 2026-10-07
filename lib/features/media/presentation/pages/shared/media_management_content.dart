@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
 import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
@@ -15,6 +16,7 @@ import 'package:sakuramedia/features/media/presentation/providers/multi_version_
 import 'package:sakuramedia/features/media/presentation/widgets/shared/duplicate_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/invalid_media_section.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_section.dart';
+import 'package:sakuramedia/features/media/presentation/widgets/shared/media_management_row_actions.dart';
 import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_transfer_target_dialog.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_version_movies_section.dart';
@@ -212,14 +214,24 @@ class MediaManagementContent extends HookConsumerWidget {
                       transferringMediaId: transferringMediaId,
                     ),
                     transferringItemId: transferringMediaId,
-                    onRetryThumbnails: (item) => _resetThumbnails(
+                    onRetryThumbnails: (item) => _handleItemThumbnailAction(
                       context,
                       ref,
-                      mediaIds: [item.id],
-                      isResettingThumbnails: isResettingThumbnails,
-                      retryingThumbnailMediaId: retryingThumbnailMediaId,
+                      item,
+                      isResettingThumbnails,
+                      retryingThumbnailMediaId,
                     ),
                     retryingThumbnailMediaId: retryingThumbnailMediaId,
+                    onOpenRowActions: (item) => _openMediaRowActions(
+                      context,
+                      ref,
+                      item,
+                      isResettingThumbnails: isResettingThumbnails,
+                      retryingThumbnailMediaId: retryingThumbnailMediaId,
+                      isTransferring: isTransferring,
+                      transferringMediaId: transferringMediaId,
+                      deletingMediaId: deletingMediaId,
+                    ),
                   ),
                 ),
                 AppKeepAlive(
@@ -490,6 +502,10 @@ class MediaManagementContent extends HookConsumerWidget {
     final browseState = ref.read(mediaBrowseProvider).value;
     if (browseState == null || browseState.selectedIds.isEmpty) return;
     final selectedIds = browseState.selectedIds.toList(growable: false);
+    // 「已完成」筛选下的同一入口是破坏性的重新生成：删除已有缩略图后再生成。
+    final force =
+        browseState.filter.thumbnailGenerationState ==
+        MediaBrowseThumbnailGenerationFilter.succeeded;
 
     final confirmed = await showAppConfirmDialog(
       context,
@@ -500,9 +516,11 @@ class MediaManagementContent extends HookConsumerWidget {
       cancelKey: const Key(
         'media-management-batch-reset-thumbnails-cancel-button',
       ),
-      title: '重试缩略图',
-      message: '将把已选 ${selectedIds.length} 项重新加入缩略图生成队列。确认继续吗？',
-      confirmLabel: '重试',
+      title: force ? '重新生成缩略图' : '重试缩略图',
+      message: force
+          ? '将删除已选 ${selectedIds.length} 项现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？'
+          : '将把已选 ${selectedIds.length} 项重新加入缩略图生成队列。确认继续吗？',
+      confirmLabel: force ? '重新生成' : '重试',
     );
     if (!confirmed || !context.mounted) return;
 
@@ -512,7 +530,99 @@ class MediaManagementContent extends HookConsumerWidget {
       mediaIds: selectedIds,
       isResettingThumbnails: isResettingThumbnails,
       selectionMode: selectionMode,
+      force: force,
     );
+  }
+
+  /// 单项缩略图操作分发：失败态直接重试（保持原行为）；已完成态先确认再删除重生成。
+  Future<void> _handleItemThumbnailAction(
+    BuildContext context,
+    WidgetRef ref,
+    MediaListItemDto item,
+    ValueNotifier<bool> isResettingThumbnails,
+    ValueNotifier<int?> retryingThumbnailMediaId,
+  ) async {
+    final force =
+        item.thumbnailGenerationState == MediaThumbnailGenerationState.succeeded;
+    if (force) {
+      final confirmed = await showAppConfirmDialog(
+        context,
+        dialogKey: const Key(
+          'media-management-single-regenerate-thumbnails-dialog',
+        ),
+        confirmKey: const Key(
+          'media-management-single-regenerate-thumbnails-confirm-button',
+        ),
+        cancelKey: const Key(
+          'media-management-single-regenerate-thumbnails-cancel-button',
+        ),
+        title: '重新生成缩略图',
+        message: '将删除该媒体现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？',
+        confirmLabel: '重新生成',
+      );
+      if (!confirmed || !context.mounted) return;
+    }
+    await _resetThumbnails(
+      context,
+      ref,
+      mediaIds: [item.id],
+      isResettingThumbnails: isResettingThumbnails,
+      retryingThumbnailMediaId: retryingThumbnailMediaId,
+      force: force,
+    );
+  }
+
+  /// 移动端卡片「更多」：先弹带中文标签的底部操作表，再把动作派发到现有实现。
+  ///
+  /// 桌面端不用：行内平铺图标 + hover tooltip 已经自解释。
+  Future<void> _openMediaRowActions(
+    BuildContext context,
+    WidgetRef ref,
+    MediaListItemDto item, {
+    required ValueNotifier<bool> isResettingThumbnails,
+    required ValueNotifier<int?> retryingThumbnailMediaId,
+    required ValueNotifier<bool> isTransferring,
+    required ValueNotifier<int?> transferringMediaId,
+    required ValueNotifier<int?> deletingMediaId,
+  }) async {
+    final state = item.thumbnailGenerationState;
+    final retryLabel = switch (state) {
+      MediaThumbnailGenerationState.terminal => '重试缩略图',
+      MediaThumbnailGenerationState.succeeded => '重新生成缩略图',
+      _ => null,
+    };
+    final action = await showMediaManagementRowActions(
+      context: context,
+      title: item.displayHeading,
+      titleSubtitle: item.displaySubtitle,
+      retryThumbnailsLabel: retryLabel,
+      retryThumbnailsSubtitle: switch (state) {
+        MediaThumbnailGenerationState.terminal => '重新加入缩略图生成队列',
+        MediaThumbnailGenerationState.succeeded => '删除已有缩略图并重新生成',
+        _ => null,
+      },
+    );
+    if (!context.mounted || action == null) return;
+    switch (action) {
+      case MediaManagementRowAction.retryThumbnails:
+        await _handleItemThumbnailAction(
+          context,
+          ref,
+          item,
+          isResettingThumbnails,
+          retryingThumbnailMediaId,
+        );
+      case MediaManagementRowAction.transfer:
+        await _submitTransfer(
+          context,
+          ref,
+          mediaIds: [item.id],
+          isTransferring: isTransferring,
+          transferringMediaId: transferringMediaId,
+        );
+      case MediaManagementRowAction.delete:
+        await _openSingleDeleteDialog(context, ref, item, deletingMediaId);
+    }
   }
 
   /// 批量与单项共用的缩略图重置：置忙、重置、清选、刷新，并按结果提示。
@@ -526,6 +636,7 @@ class MediaManagementContent extends HookConsumerWidget {
     required ValueNotifier<bool> isResettingThumbnails,
     ValueNotifier<bool>? selectionMode,
     ValueNotifier<int?>? retryingThumbnailMediaId,
+    bool force = false,
   }) async {
     if (isResettingThumbnails.value) return;
     isResettingThumbnails.value = true;
@@ -533,7 +644,7 @@ class MediaManagementContent extends HookConsumerWidget {
     try {
       final resetCount = await ref
           .read(mediaApiProvider)
-          .resetFailedMediaThumbnails(mediaIds: mediaIds);
+          .resetMediaThumbnails(mediaIds: mediaIds, force: force);
       if (!context.mounted) return;
       ref.read(mediaBrowseProvider.notifier).clearSelection();
       selectionMode?.value = false;
@@ -544,13 +655,20 @@ class MediaManagementContent extends HookConsumerWidget {
       if (refreshMessage != null) {
         showToast('已重置 $resetCount 项，但列表刷新失败：$refreshMessage');
       } else if (resetCount == 0) {
-        showToast('媒体已无可重试的失败状态');
+        showToast(force ? '没有可重新生成的媒体' : '媒体已无可重试的失败状态');
+      } else if (force) {
+        showToast('已提交 $resetCount 项缩略图重新生成，生成完成后自动恢复');
       } else {
         showToast('已重置 $resetCount 项缩略图，已重新加入生成队列');
       }
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '重试缩略图失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: force ? '重新生成缩略图失败，请稍后重试。' : '重试缩略图失败，请稍后重试。',
+          ),
+        );
       }
     } finally {
       if (context.mounted) {

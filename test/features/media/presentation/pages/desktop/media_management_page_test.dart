@@ -474,6 +474,7 @@ void main() {
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
+      'force': false,
     });
     expect(find.byKey(const Key('media-management-row-1')), findsNothing);
     await tester.pump(const Duration(seconds: 3));
@@ -691,10 +692,146 @@ void main() {
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
+      'force': false,
     });
     expect(find.byKey(const Key('media-management-row-1')), findsNothing);
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('regenerates selected succeeded thumbnails in force mode', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(1, thumbnailGenerationState: 'succeeded'),
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: _page(
+        total: 1,
+        items: [
+          _duplicateMediaItemJson(1, thumbnailGenerationState: 'succeeded'),
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/thumbnail-generation/reset',
+      body: <String, dynamic>{'reset_count': 1},
+    );
+    adapter.enqueueJson(method: 'GET', path: '/media', body: _emptyPage());
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      apiClient: apiClient,
+    );
+
+    await tester.tap(find.byKey(const Key('media-management-filter-trigger')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('media-thumbnail-generation-filter-succeeded')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-filter-trigger')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('media-management-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('media-management-row-1')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('重新生成缩略图（1）'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('media-management-batch-reset-thumbnails-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('将删除已选 1 项现有的缩略图'), findsOneWidget);
+    await tester.tap(
+      find.byKey(
+        const Key('media-management-batch-reset-thumbnails-confirm-button'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final resetRequest = adapter.requests.singleWhere(
+      (request) =>
+          request.method == 'POST' &&
+          request.path == '/media/thumbnail-generation/reset',
+    );
+    expect(resetRequest.body, <String, dynamic>{
+      'media_ids': <int>[1],
+      'force': true,
+    });
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets(
+    'regenerates a succeeded thumbnail from its media card after confirmation',
+    (tester) async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/media',
+        body: _page(
+          total: 1,
+          items: [
+            _duplicateMediaItemJson(1, thumbnailGenerationState: 'succeeded'),
+          ],
+        ),
+      );
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/media/thumbnail-generation/reset',
+        body: <String, dynamic>{'reset_count': 1},
+      );
+      adapter.enqueueJson(method: 'GET', path: '/media', body: _emptyPage());
+      await _pumpPage(
+        tester,
+        sessionStore: sessionStore,
+        mediaApi: mediaApi,
+        apiClient: apiClient,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('media-management-retry-thumbnails-1')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(
+          const Key('media-management-single-regenerate-thumbnails-dialog'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(
+          const Key(
+            'media-management-single-regenerate-thumbnails-confirm-button',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final resetRequest = adapter.requests.singleWhere(
+        (request) =>
+            request.method == 'POST' &&
+            request.path == '/media/thumbnail-generation/reset',
+      );
+      expect(resetRequest.body, <String, dynamic>{
+        'media_ids': <int>[1],
+        'force': true,
+      });
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
 
   testWidgets('enters selection mode from the header button and toggles rows', (
     tester,

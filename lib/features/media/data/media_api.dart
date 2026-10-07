@@ -61,10 +61,17 @@ class MediaApi {
     );
   }
 
-  Future<int> resetFailedMediaThumbnails({required List<int> mediaIds}) async {
+  /// `POST /media/thumbnail-generation/reset`。
+  ///
+  /// [force] 为 `false` 时只把「生成失败」重新排队；为 `true` 时删除已有缩略图
+  /// 产物后重新生成（生成完成前这些媒体的缩略图不可用）。
+  Future<int> resetMediaThumbnails({
+    required List<int> mediaIds,
+    bool force = false,
+  }) async {
     final response = await _apiClient.post(
       '/media/thumbnail-generation/reset',
-      data: <String, dynamic>{'media_ids': mediaIds},
+      data: <String, dynamic>{'media_ids': mediaIds, 'force': force},
     );
     return asInt(response['reset_count']);
   }

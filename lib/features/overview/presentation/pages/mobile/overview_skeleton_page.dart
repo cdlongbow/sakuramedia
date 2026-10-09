@@ -30,7 +30,7 @@ import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_rail.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
@@ -358,47 +358,20 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   }
 
   Widget _buildLatestMoviesSection() {
-    if (!_isLoadingLatestMovies && _latestMoviesErrorMessage != null) {
-      return AppEmptyState(
-        message: _latestMoviesErrorMessage!,
-        onRetry: _loadLatestMovies,
-      );
-    }
-    final movies = _isLoadingLatestMovies
-        ? movieListItemPlaceholders(count: _latestMoviePageSize)
-        : _latestMovies;
-    if (movies.isEmpty) {
-      return const AppEmptyState(message: '暂无入库影片，去搜索看看吧');
-    }
-
-    final cardWidth = context.appComponentTokens.mobileLatestMovieCardWidth;
-    final cardHeight =
-        cardWidth / context.appComponentTokens.movieCardAspectRatio;
-
     // loading 用占位影片渲染真实卡片，由 [AppSkeletonizer] 灰化。
     return AppSkeletonizer(
       enabled: _isLoadingLatestMovies,
-      child: SizedBox(
-        height: cardHeight,
-        child: ListView.separated(
-          key: const Key('mobile-overview-latest-movies-list'),
-          scrollDirection: Axis.horizontal,
-          itemCount: movies.length,
-          separatorBuilder: (context, index) =>
-              SizedBox(width: context.appSpacing.sm),
-          itemBuilder: (context, index) {
-            final movie = movies[index];
-            return SizedBox(
-              width: cardWidth,
-              child: MovieSummaryCard(
-                movie: movie,
-                onTap: () => MobileMovieDetailRouteData(
-                  movieNumber: movie.movieNumber,
-                ).push(context),
-              ),
-            );
-          },
-        ),
+      child: MovieSummaryRail(
+        scrollViewKey: const Key('mobile-overview-latest-movies-list'),
+        items: _isLoadingLatestMovies
+            ? movieListItemPlaceholders(count: _latestMoviePageSize)
+            : _latestMovies,
+        errorMessage: _latestMoviesErrorMessage,
+        onErrorRetry: _loadLatestMovies,
+        emptyMessage: '暂无入库影片，去搜索看看吧',
+        onMovieTap: (movie) => MobileMovieDetailRouteData(
+          movieNumber: movie.movieNumber,
+        ).push(context),
       ),
     );
   }

@@ -26,17 +26,17 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
+import 'package:sakuramedia/widgets/domain/moments/moment_rail.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_rail.dart';
 
 class MobileOverviewDiscoverTab extends ConsumerWidget {
   const MobileOverviewDiscoverTab({super.key});
 
-  static const int _dailyPreviewCount = 6;
-  static const int _followPreviewCount = 6;
-  static const int _hotActressPreviewCount = 6;
-  static const int _momentPreviewCount = 4;
+  static const int _dailyPreviewCount = 10;
+  static const int _followPreviewCount = 10;
+  static const int _hotActressPreviewCount = 10;
+  static const int _momentPreviewCount = 10;
   static const int _dailyPageSize = 10;
   static const int _followPageSize = 10;
   static const int _hotActressPageSize = 10;
@@ -122,7 +122,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
         SizedBox(height: context.appSpacing.md),
         AppSkeletonizer(
           enabled: isLoading,
-          child: MovieSummaryGrid(
+          child: MovieSummaryRail(
             items: isLoading
                 ? movieListItemPlaceholders(count: _followPreviewCount)
                 : paged?.items.take(_followPreviewCount).toList() ?? const [],
@@ -202,7 +202,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     final isLoading = hotActress.isLoading && hotActress.items.isEmpty;
     return AppSkeletonizer(
       enabled: isLoading,
-      child: MovieSummaryGrid(
+      child: MovieSummaryRail(
         items: isLoading
             ? movieListItemPlaceholders(count: _hotActressPreviewCount)
             : hotActress.items
@@ -261,7 +261,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     final isLoading = daily.isLoading && daily.items.isEmpty;
     return AppSkeletonizer(
       enabled: isLoading,
-      child: MovieSummaryGrid(
+      child: MovieSummaryRail(
         items: isLoading
             ? movieListItemPlaceholders(count: _dailyPreviewCount)
             : daily.items
@@ -309,11 +309,11 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     DiscoveryPreviewState<MomentRecommendationDto> moment,
   ) {
     if (moment.isLoading && moment.items.isEmpty) {
-      // loading 用占位时刻渲染真实网格，由 [AppSkeletonizer] 灰化；
-      // 刷新保留旧推荐时继续显示旧网格。
+      // loading 用占位时刻渲染真实 rail，由 [AppSkeletonizer] 灰化；
+      // 刷新保留旧推荐时继续显示旧 rail。
       return AppSkeletonizer(
         enabled: true,
-        child: MomentGrid(
+        child: MomentRail(
           items: momentListPlaceholders(count: _momentPreviewCount),
           onItemTap: (_) {},
         ),
@@ -329,7 +329,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
     if (moment.items.isEmpty) {
       return const AppEmptyState(message: '暂无推荐时刻，播放时添加标记，等定时任务处理后展示');
     }
-    return MomentGrid(
+    return MomentRail(
       items: moment.items
           .take(_momentPreviewCount)
           .map((item) => item.toMomentListItem())

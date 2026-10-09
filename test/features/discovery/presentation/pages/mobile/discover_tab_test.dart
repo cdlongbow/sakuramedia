@@ -40,7 +40,7 @@ void main() {
         find.byKey(const Key('mobile-discover-summary-card')),
         findsNothing,
       );
-      expect(find.byKey(const Key('movie-summary-grid')), findsNWidgets(3));
+      expect(find.byKey(const Key('movie-summary-rail')), findsNWidgets(3));
       expect(find.text('女优上新'), findsOneWidget);
       expect(
         find.byKey(const Key('movie-summary-card-FOLLOW-001')),
@@ -56,7 +56,7 @@ void main() {
         find.byKey(const Key('movie-summary-card-ABC-001')),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('moment-grid')), findsOneWidget);
+      expect(find.byKey(const Key('moment-rail')), findsOneWidget);
       expect(find.byKey(const Key('moment-card-1')), findsOneWidget);
       expect(
         find.byKey(const Key('mobile-discover-load-more-hot-actress')),

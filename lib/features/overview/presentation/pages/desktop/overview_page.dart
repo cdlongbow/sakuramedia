@@ -18,7 +18,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_rail.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 
 class DesktopOverviewPage extends ConsumerWidget {
@@ -29,8 +29,9 @@ class DesktopOverviewPage extends ConsumerWidget {
   /// 宽屏时「观看趋势 + 存储分布」并排；窄窗口堆叠。
   static const double _twoColumnMinWidth = 960;
 
-  /// 预览分区的行数上限（「最近添加」「最近播放」各三行，更多内容进各自页面）。
-  static const int _previewMaxRows = 3;
+  /// 预览分区的占位项数量（「最近添加」「最近播放」各一行横向 rail，
+  /// 更多内容进各自页面）。
+  static const int _previewItemCount = 12;
 
   Future<void> _refreshOverview(WidgetRef ref) async {
     final recentPlaylist = ref.read(recentlyPlayedPlaylistProvider).value;
@@ -167,7 +168,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                   child: SizedBox(height: context.appSpacing.md),
                 ),
                 SliverToBoxAdapter(
-                  child: _buildMovieGrid(
+                  child: _buildMovieRail(
                     context,
                     ref: ref,
                     scope: _latestScope,
@@ -199,7 +200,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                     child: SizedBox(height: context.appSpacing.md),
                   ),
                   SliverToBoxAdapter(
-                    child: _buildMovieGrid(
+                    child: _buildMovieRail(
                       context,
                       ref: ref,
                       scope: recentScope!,
@@ -224,7 +225,7 @@ class DesktopOverviewPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildMovieGrid(
+  Widget _buildMovieRail(
     BuildContext context, {
     required WidgetRef ref,
     required MovieSummaryScope scope,
@@ -235,10 +236,10 @@ class DesktopOverviewPage extends ConsumerWidget {
   }) {
     return AppSkeletonizer(
       enabled: isLoading,
-      child: MovieSummaryGrid(
+      child: MovieSummaryRail(
         items: isLoading
-            ? movieListItemPlaceholders(count: 12)
-            : summary?.paged.items ?? const [],
+            ? movieListItemPlaceholders(count: _previewItemCount)
+            : summary?.paged.items.take(_previewItemCount).toList() ?? const [],
         errorMessage: errorMessage,
         onMovieTap: (movie) => context.pushDesktopMovieDetail(
           movieNumber: movie.movieNumber,
@@ -256,7 +257,6 @@ class DesktopOverviewPage extends ConsumerWidget {
         isMovieSubscriptionUpdating: (movie) =>
             summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
         emptyMessage: emptyMessage,
-        maxRows: _previewMaxRows,
       ),
     );
   }

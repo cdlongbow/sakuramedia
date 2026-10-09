@@ -39,8 +39,8 @@ void main() {
         find.byKey(const Key('desktop-discover-summary-card')),
         findsNothing,
       );
-      // 女优上新、热门新片、今日推荐各一个影片网格。
-      expect(find.byKey(const Key('movie-summary-grid')), findsNWidgets(3));
+      // 女优上新、热门新片、今日推荐各一个影片横向 rail。
+      expect(find.byKey(const Key('movie-summary-rail')), findsNWidgets(3));
       expect(find.text('女优上新'), findsOneWidget);
       expect(
         find.byKey(const Key('movie-summary-card-FOL-001')),
@@ -64,7 +64,7 @@ void main() {
         find.byKey(const Key('movie-summary-card-ABC-001')),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('moment-grid')), findsOneWidget);
+      expect(find.byKey(const Key('moment-rail')), findsOneWidget);
       expect(find.byKey(const Key('moment-card-1')), findsOneWidget);
       expect(
         find.byKey(const Key('desktop-discover-load-more-daily')),

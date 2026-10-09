@@ -5,7 +5,6 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
@@ -52,9 +51,7 @@ void main() {
             surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'preview',
             selectedPreviewUrl: null,
-            isCollection: false,
             isSubscribed: false,
-            isCollectionUpdating: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
             statItems: const [],
@@ -62,13 +59,14 @@ void main() {
             isSimilarMoviesLoading: false,
             onInspectorTap: _noop,
             onPlaylistTap: () => edits++,
-            onCollectionToggle: _noop,
             onMediaSelect: (_) {},
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    // 标题行：番号打头 + 同行标题。
+    expect(find.text('ABC-001 Sample Movie'), findsOneWidget);
     expect(find.text('上次看到 32:18'), findsOneWidget);
     expect(find.text('片单1'), findsOneWidget);
     expect(find.text('共 3 个'), findsOneWidget);
@@ -107,9 +105,7 @@ void main() {
                     surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                     selectedPreviewKey: 'movie-preview',
                     selectedPreviewUrl: null,
-                    isCollection: false,
                     isSubscribed: false,
-                    isCollectionUpdating: false,
                     isSubscriptionUpdating: false,
                     selectedMediaId: 100,
                     statItems: const [],
@@ -120,7 +116,6 @@ void main() {
                         : MovieDetailBottomInfoBarVariant.desktopCard,
                     onInspectorTap: _noop,
                     onPlaylistTap: _noop,
-                    onCollectionToggle: _noop,
                     onMediaSelect: (_) {},
                     onActorTap: (_) => actorTaps++,
                     onTagTap: (_) => tagTaps++,
@@ -166,9 +161,7 @@ void main() {
             surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
-            isCollection: false,
             isSubscribed: false,
-            isCollectionUpdating: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
             statItems: const <MovieDetailStatItem>[],
@@ -176,7 +169,6 @@ void main() {
             isSimilarMoviesLoading: false,
             onInspectorTap: _noop,
             onPlaylistTap: _noop,
-            onCollectionToggle: _noop,
             onMediaSelect: (_) {},
           ),
         ),
@@ -223,9 +215,7 @@ void main() {
                 surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                 selectedPreviewKey: 'movie-preview',
                 selectedPreviewUrl: null,
-                isCollection: false,
                 isSubscribed: false,
-                isCollectionUpdating: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: 100,
                 statItems: const <MovieDetailStatItem>[],
@@ -236,7 +226,6 @@ void main() {
                     : MovieDetailBottomInfoBarVariant.desktopCard,
                 onInspectorTap: _noop,
                 onPlaylistTap: _noop,
-                onCollectionToggle: _noop,
                 onMediaSelect: (_) {},
               ),
             ),
@@ -293,9 +282,7 @@ void main() {
                 surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
                 selectedPreviewKey: 'movie-preview',
                 selectedPreviewUrl: null,
-                isCollection: false,
                 isSubscribed: false,
-                isCollectionUpdating: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: 100,
                 statItems: const <MovieDetailStatItem>[],
@@ -303,7 +290,6 @@ void main() {
                 isSimilarMoviesLoading: false,
                 onInspectorTap: _noop,
                 onPlaylistTap: _noop,
-                onCollectionToggle: _noop,
                 onMediaSelect: (_) {},
                 onSeriesTap: () => tapCount += 1,
               ),
@@ -350,9 +336,7 @@ void main() {
             surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
-            isCollection: false,
             isSubscribed: false,
-            isCollectionUpdating: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
             statItems: const <MovieDetailStatItem>[],
@@ -360,7 +344,6 @@ void main() {
             isSimilarMoviesLoading: false,
             onInspectorTap: _noop,
             onPlaylistTap: _noop,
-            onCollectionToggle: _noop,
             onMediaSelect: (_) {},
             onSeriesTap: _noop,
           ),
@@ -379,14 +362,12 @@ void main() {
         MaterialApp(
           theme: sakuraMobileThemeData,
           home: Scaffold(
-            body: MovieDetailPageContent(
-              movie: _movieDetail(),
-              surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+          body: MovieDetailPageContent(
+            movie: _movieDetail(summary: '这是一段简介全文'),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
               selectedPreviewKey: 'movie-preview',
               selectedPreviewUrl: null,
-              isCollection: false,
               isSubscribed: false,
-              isCollectionUpdating: false,
               isSubscriptionUpdating: false,
               selectedMediaId: 100,
               statItems: const <MovieDetailStatItem>[
@@ -403,7 +384,6 @@ void main() {
                   MovieDetailBottomInfoBarVariant.mobileFullWidth,
               onInspectorTap: _noop,
               onPlaylistTap: _noop,
-              onCollectionToggle: _noop,
               onMediaSelect: (_) {},
             ),
           ),
@@ -414,12 +394,21 @@ void main() {
       await tester.pumpAndSettle();
 
       final sectionGap = AppComponentTokens.mobile().movieDetailSectionGap;
-      final seriesBottom = tester.getBottomLeft(find.text('系列 · Attackers')).dy;
-      final makerTop = tester.getTopLeft(find.text('厂商 · S1 NO.1 STYLE')).dy;
-      final makerBottom = tester
-          .getBottomLeft(find.text('厂商 · S1 NO.1 STYLE'))
-          .dy;
-      final directorTop = tester.getTopLeft(find.text('导演 · 紋℃')).dy;
+      // 厂商/导演行已下线（进信息块 meta 行），行内只剩系列；简介全文保留在下方。
+      expect(find.text('系列 · Attackers'), findsOneWidget);
+      final inlineMeta = find.byKey(
+        const Key('movie-detail-inline-meta-group'),
+      );
+      expect(
+        find.descendant(of: inlineMeta, matching: find.text('厂商 · S1 NO.1 STYLE')),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: inlineMeta, matching: find.text('导演 · 紋℃')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('movie-detail-summary')), findsOneWidget);
+      expect(find.text('这是一段简介全文'), findsOneWidget);
       final metaGroupBottom = tester
           .getBottomLeft(
             find.byKey(const Key('movie-detail-inline-meta-group')),
@@ -429,10 +418,6 @@ void main() {
       final tagWrapBottom = tester.getBottomLeft(find.byType(MovieTagWrap)).dy;
       final actorTop = tester.getTopLeft(find.text('演员')).dy;
 
-      expect(makerTop - seriesBottom, sakuraMobileThemeData.appSpacing.sm);
-      expect(directorTop - makerBottom, sakuraMobileThemeData.appSpacing.sm);
-      expect(makerTop - seriesBottom, lessThan(sectionGap));
-      expect(directorTop - makerBottom, lessThan(sectionGap));
       expect(tagTop - metaGroupBottom, sectionGap);
       expect(actorTop - tagWrapBottom, sectionGap);
       expect(find.text('媒体源'), findsOneWidget);
@@ -441,7 +426,41 @@ void main() {
     },
   );
 
-  testWidgets('movie detail places merge playback below the hero', (
+  testWidgets('movie detail forwards hero fit to the hero card', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: _movieDetail(),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            heroImageFit: BoxFit.cover,
+            isSubscribed: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            statItems: const <MovieDetailStatItem>[],
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorTap: _noop,
+            onPlaylistTap: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final hero = tester.widget<MovieDetailHeroCard>(
+      find.byType(MovieDetailHeroCard),
+    );
+    expect(hero.heroFit, BoxFit.cover);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('movie detail places merge playback below the hero photo', (
     WidgetTester tester,
   ) async {
     var tapCount = 0;
@@ -454,9 +473,7 @@ void main() {
             surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
             selectedPreviewKey: 'movie-preview',
             selectedPreviewUrl: null,
-            isCollection: false,
             isSubscribed: false,
-            isCollectionUpdating: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
             statItems: const <MovieDetailStatItem>[],
@@ -464,8 +481,8 @@ void main() {
             isSimilarMoviesLoading: false,
             onInspectorTap: _noop,
             onPlaylistTap: _noop,
-            onCollectionToggle: _noop,
             onMediaSelect: (_) {},
+            onPlayTap: _noop,
             mergePlaybackLabel: '合并播放 · 2 段',
             onMergePlaybackTap: () => tapCount += 1,
           ),
@@ -479,20 +496,111 @@ void main() {
     final heroBottom = tester
         .getBottomLeft(find.byType(MovieDetailHeroCard))
         .dy;
-    final actionTop = tester.getTopLeft(action).dy;
-    final numberTop = tester
-        .getTopLeft(find.byKey(const Key('movie-detail-number')))
-        .dy;
-    final button = tester.widget<AppButton>(action);
+    final actionRect = tester.getRect(action);
+    final playRect = tester.getRect(
+      find.byKey(const Key('movie-detail-hero-play-button')),
+    );
 
-    expect(actionTop, greaterThanOrEqualTo(heroBottom));
-    expect(actionTop, lessThan(numberTop));
-    expect(button.variant, AppButtonVariant.primary);
+    // 分体键在照片下方的信息块里：与播放键同一行、位于右侧，整个在 Hero 之下。
+    expect(actionRect.top, greaterThanOrEqualTo(heroBottom));
+    expect(actionRect.top, closeTo(playRect.top, 1.0));
+    expect(actionRect.left, greaterThan(playRect.left));
+    expect(find.byTooltip('合并播放 · 2 段'), findsOneWidget);
 
     await tester.tap(action);
     await tester.pump();
 
     expect(tapCount, 1);
+  });
+
+  // 信息行展示语义的固化（有意精简，勿当回归改回）：
+  // - 零值项整段隐藏（旧 NumberBar 会显示「想看人数 0」）；
+  // - 评分保留一位小数（旧实现两位去尾零，4.57 会显示 4.57）；
+  // - 不再展示「评分人数」（scoreNumber 无 UI 消费方）。
+  testWidgets('meta row hides zero values and keeps one-decimal score', (
+    tester,
+  ) async {
+    final movie = _movieDetail(
+      score: 4.57,
+      heat: 0,
+      watchedCount: 0,
+      wantWatchCount: 0,
+      commentCount: 0,
+      scoreNumber: 88,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: movie,
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            isSubscribed: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            statItems: const <MovieDetailStatItem>[],
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorTap: _noop,
+            onPlaylistTap: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final metaRow = find.byKey(const Key('movie-detail-hero-overlay-meta'));
+    expect(metaRow, findsOneWidget);
+    expect(
+      find.descendant(of: metaRow, matching: find.text('4.6')),
+      findsOneWidget,
+      reason: '评分一位小数',
+    );
+    expect(
+      find.descendant(of: metaRow, matching: find.text('4.57')),
+      findsNothing,
+    );
+    expect(find.textContaining('想看 · 0'), findsNothing);
+    expect(find.textContaining('看过 · 0'), findsNothing);
+    expect(find.textContaining('评分人数'), findsNothing);
+    expect(find.text('88'), findsNothing, reason: 'scoreNumber 不再单独展示');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('meta row hides zero score and keeps positive counts', (
+    tester,
+  ) async {
+    final movie = _movieDetail(score: 0, wantWatchCount: 23);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: movie,
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            isSubscribed: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            statItems: const <MovieDetailStatItem>[],
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorTap: _noop,
+            onPlaylistTap: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('0.0'), findsNothing, reason: '零评分隐藏');
+    expect(find.textContaining('想看 · 23'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 
@@ -506,6 +614,13 @@ MovieDetailDto _movieDetail({
   List<MovieActorDto>? actors,
   List<MovieTagDto>? tags,
   List<MovieRankingDto> rankings = const [],
+  String summary = '',
+  double score = 4.5,
+  int heat = 12,
+  int watchedCount = 12,
+  int wantWatchCount = 23,
+  int commentCount = 45,
+  int scoreNumber = 45,
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
@@ -519,16 +634,16 @@ MovieDetailDto _movieDetail({
     coverImage: null,
     releaseDate: null,
     durationMinutes: 120,
-    score: 4.5,
-    heat: 12,
-    watchedCount: 12,
-    wantWatchCount: 23,
-    commentCount: 45,
-    scoreNumber: 45,
+    score: score,
+    heat: heat,
+    watchedCount: watchedCount,
+    wantWatchCount: wantWatchCount,
+    commentCount: commentCount,
+    scoreNumber: scoreNumber,
     isCollection: false,
     isSubscribed: false,
     canPlay: false,
-    summary: '',
+    summary: summary,
     thinCoverImage: null,
     plotImages: const <MovieImageDto>[],
     actors: actors ?? const <MovieActorDto>[

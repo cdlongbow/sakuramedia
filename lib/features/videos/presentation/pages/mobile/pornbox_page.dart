@@ -26,7 +26,9 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_summary
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -34,7 +36,6 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -304,6 +305,8 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
   @override
   Widget build(BuildContext context) {
+    // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，
+    // 不重建合集区、顶栏与网格（见 PagedLoadMoreFooterSliver）。
     final videosAsync = ref.watch(videoSummaryProvider(_scope));
     final summary = videosAsync.value;
     final paged =
@@ -352,7 +355,19 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                         ? '视频列表加载失败，请稍后重试'
                         : null,
                   ),
-                  SliverToBoxAdapter(child: _buildFooter(context, paged)),
+                  // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                  // 隐藏时保留 lg 底部边距（原语义）。
+                  PagedLoadMoreFooterSliver(
+                    hiddenSpacing: PagedFooterSpacing.lg,
+                    watchFooter: (ref) => ref.watch(
+                      videoSummaryProvider(
+                        _scope,
+                      ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                    ),
+                    onLoadMore: (ref) => unawaited(
+                      ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -633,31 +648,14 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     return 16 / 9;
   }
 
-  Widget _buildFooter(
-    BuildContext context,
-    PagedListState<VideoItemListItemDto> paged,
-  ) {
-    final showFooter =
-        paged.items.isNotEmpty &&
-        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
-    if (!showFooter) {
-      return SizedBox(height: context.appSpacing.lg);
-    }
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-      child: AppPagedLoadMoreFooter(
-        isLoading: paged.isLoadingMore,
-        errorMessage: paged.loadMoreErrorMessage,
-        onRetry: () =>
-            ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
-      ),
-    );
-  }
-
   // --------------------------------------------------------- 选择模式
 
   Widget _buildBatchBar(BuildContext context) {
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.videoCollectionAdd,
+      BatchOperationType.videoDelete,
+    ]);
     return AppSelectionBottomBar(
       key: const Key('mobile-pornbox-batch-bottom-bar'),
       actions: [
@@ -665,15 +663,16 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
           key: const Key('mobile-pornbox-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? _batchAddToCollection : null,
+          onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('mobile-pornbox-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),
       ],
     );
   }
 }
+

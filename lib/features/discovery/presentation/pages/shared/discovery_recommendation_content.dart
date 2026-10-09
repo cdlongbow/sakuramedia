@@ -18,11 +18,11 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
@@ -67,11 +67,31 @@ class DiscoveryMoviesContent extends StatelessWidget {
       initialLoadErrorText: '推荐影片加载失败，请稍后重试',
       loadMoreErrorText: '加载更多推荐影片失败，请点击重试',
       emptyMessage: '暂无推荐影片，去搜索看看吧',
-      watch: (ref) => ref.watch(provider),
+      // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，不重建网格。
+      watch: (ref) => ref.watch(
+        provider.select(
+          (asyncValue) => asyncValue.whenData(withoutLoadMoreStatus),
+        ),
+      ),
       loadMore: (ref) => ref.read(provider.notifier).loadMore(),
       reload: (ref) => ref.read(provider.notifier).reload(),
       refresh: (ref) => ref.read(provider.notifier).refresh(),
       movieOf: (item) => item.movie,
+      watchLoadMoreFooter: (ref) => ref.watch(
+        provider.select((asyncState) {
+          final paged = asyncState.value;
+          if (paged == null || paged.isEmpty) {
+            return (isLoading: false, errorMessage: null, hasItems: false);
+          }
+          return (
+            isLoading: paged.isLoadingMore,
+            errorMessage: paged.loadMoreErrorMessage,
+            hasItems: true,
+          );
+        }),
+      ),
+      readLoadMoreError: (ref) =>
+          ref.read(provider).value?.loadMoreErrorMessage,
     );
   }
 }
@@ -110,11 +130,31 @@ class HotActressReleasesContent extends StatelessWidget {
       initialLoadErrorText: '热门新片加载失败，请稍后重试',
       loadMoreErrorText: '加载更多热门新片失败，请点击重试',
       emptyMessage: '暂无热门新片，待更多影片积累热度后展示',
-      watch: (ref) => ref.watch(provider),
+      // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，不重建网格。
+      watch: (ref) => ref.watch(
+        provider.select(
+          (asyncValue) => asyncValue.whenData(withoutLoadMoreStatus),
+        ),
+      ),
       loadMore: (ref) => ref.read(provider.notifier).loadMore(),
       reload: (ref) => ref.read(provider.notifier).reload(),
       refresh: (ref) => ref.read(provider.notifier).refresh(),
       movieOf: (item) => item.movie,
+      watchLoadMoreFooter: (ref) => ref.watch(
+        provider.select((asyncState) {
+          final paged = asyncState.value;
+          if (paged == null || paged.isEmpty) {
+            return (isLoading: false, errorMessage: null, hasItems: false);
+          }
+          return (
+            isLoading: paged.isLoadingMore,
+            errorMessage: paged.loadMoreErrorMessage,
+            hasItems: true,
+          );
+        }),
+      ),
+      readLoadMoreError: (ref) =>
+          ref.read(provider).value?.loadMoreErrorMessage,
       useDefaultSubscriptionActions: true,
       secondaryLabelOf: (item) {
         final name = item.hotActressName.trim();
@@ -135,6 +175,8 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
     required this.loadMoreErrorText,
     required this.emptyMessage,
     required this.watch,
+    required this.watchLoadMoreFooter,
+    required this.readLoadMoreError,
     required this.loadMore,
     required this.reload,
     required this.refresh,
@@ -153,6 +195,15 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
   final String loadMoreErrorText;
   final String emptyMessage;
   final AsyncValue<PagedListState<T>> Function(WidgetRef ref) watch;
+
+  /// loadMore 状态的窄订阅：页脚用它 watch，只在 loading/失败/条目空否变化时重建。
+  final ({bool isLoading, String? errorMessage, bool hasItems}) Function(
+    WidgetRef ref,
+  )
+  watchLoadMoreFooter;
+
+  /// 读 loadMore 失败存续（不订阅）：滚动守卫用它判断失败存续期间不自动重试。
+  final String? Function(WidgetRef ref) readLoadMoreError;
   final Future<void> Function(WidgetRef ref) loadMore;
   final Future<void> Function(WidgetRef ref) reload;
   final Future<String?> Function(WidgetRef ref) refresh;
@@ -167,33 +218,34 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
     final paged = async.value ?? PagedListState<T>();
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
-        // 对齐旧 PagedLoadController:loadMore 失败存续期间滚动不自动重试，
+        // 对齐旧 PagedLoadController：loadMore 失败存续期间滚动不自动重试，
         // 恢复分页的唯一入口是 footer 的重试按钮。
-        if (paged.loadMoreErrorMessage == null) {
+        // 读独立取值（不订阅，避免翻页状态触发本体重建）。
+        if (readLoadMoreError(ref) == null) {
           unawaited(loadMore(ref));
         }
       },
       triggerOffset: 300,
     );
 
-    final showFooter =
-        paged.isNotEmpty &&
-        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
       slivers: [
         _buildBody(context, ref, async, paged),
-        if (showFooter)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: context.appSpacing.md),
-              child: AppPagedLoadMoreFooter(
-                isLoading: paged.isLoadingMore,
-                errorMessage: paged.loadMoreErrorMessage ?? loadMoreErrorText,
-                onRetry: () => unawaited(loadMore(ref)),
-              ),
-            ),
-          ),
+        // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
+        PagedLoadMoreFooterSliver(
+          watchFooter: (ref) {
+            final footer = watchLoadMoreFooter(ref);
+            if (!footer.hasItems) {
+              return null;
+            }
+            return (
+              isLoading: footer.isLoading,
+              errorMessage: footer.errorMessage ?? loadMoreErrorText,
+            );
+          },
+          onLoadMore: (ref) => unawaited(loadMore(ref)),
+        ),
       ],
     );
 
@@ -318,38 +370,48 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = momentRecommendationFeedProvider(pageSize);
-    final async = ref.watch(provider);
+    // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，不重建网格。
+    final async = ref.watch(
+      provider.select(
+        (asyncValue) => asyncValue.whenData(withoutLoadMoreStatus),
+      ),
+    );
     final paged =
         async.value ?? const PagedListState<MomentRecommendationDto>();
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
         // 同影片页：loadMore 失败存续期间滚动不自动重试。
-        if (paged.loadMoreErrorMessage == null) {
+        // 读实时状态（build 闭包里的 paged 已做 loadMore 中立化）。
+        final loadMoreError =
+            ref.read(provider).value?.loadMoreErrorMessage;
+        if (loadMoreError == null) {
           unawaited(ref.read(provider.notifier).loadMore());
         }
       },
       triggerOffset: 300,
     );
 
-    final showFooter =
-        paged.isNotEmpty &&
-        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
       slivers: [
         _buildBody(context, ref, async, paged),
-        if (showFooter)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: context.appSpacing.md),
-              child: AppPagedLoadMoreFooter(
-                isLoading: paged.isLoadingMore,
-                errorMessage: paged.loadMoreErrorMessage,
-                onRetry: () =>
-                    unawaited(ref.read(provider.notifier).loadMore()),
-              ),
-            ),
+        // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
+        PagedLoadMoreFooterSliver(
+          watchFooter: (ref) => ref.watch(
+            provider.select((s) {
+              final moments = s.value;
+              if (moments == null || moments.isEmpty) {
+                return null;
+              }
+              return (
+                isLoading: moments.isLoadingMore,
+                errorMessage: moments.loadMoreErrorMessage,
+              );
+            }),
           ),
+          onLoadMore: (ref) =>
+              unawaited(ref.read(provider.notifier).loadMore()),
+        ),
       ],
     );
 

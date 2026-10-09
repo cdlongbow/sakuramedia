@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_play_split_layout.dart';
@@ -53,7 +54,8 @@ class VideoPlayerContent extends ConsumerStatefulWidget {
   ConsumerState<VideoPlayerContent> createState() => _VideoPlayerContentState();
 }
 
-class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
+class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent>
+    with PlayerAppFullscreenStateMixin<VideoPlayerContent> {
   final ValueNotifier<int?> _activeThumbnailIndex = ValueNotifier<int?>(null);
 
   late final MediaPlaybackProgressController _progressController;
@@ -98,7 +100,12 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
   }
 
   @override
+  bool get applySystemFullscreenForAppFullscreen =>
+      !widget.useTouchOptimizedControls;
+
+  @override
   void dispose() {
+    disposePlayerAppFullscreen();
     _thumbnailRequestVersion++;
     _positionSubscription?.cancel();
     _playingSubscription?.cancel();
@@ -395,7 +402,14 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, body: _buildBody(context));
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: PlayerAppFullscreenScope(
+        isFullscreen: isAppFullscreen,
+        onToggle: toggleAppFullscreen,
+        child: _buildBody(context),
+      ),
+    );
   }
 
   Widget _buildBody(BuildContext context) {
@@ -418,7 +432,10 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
     return CollectionPlaySplitLayout(
       keyPrefix: 'video-single',
       collapsible: true,
-      left: _buildPlayerSurface(controller),
+      left: PlayerAppFullscreenDoubleTap(
+        enabled: !widget.useTouchOptimizedControls,
+        child: _buildPlayerSurface(controller),
+      ),
       right: _buildThumbnailPanel(),
     );
   }
@@ -431,12 +448,15 @@ class _VideoPlayerContentState extends ConsumerState<VideoPlayerContent> {
         const MaterialDesktopVolumeButton(),
       const MaterialPositionIndicator(),
       const Spacer(),
-      const MaterialFullscreenButton(),
+      // 触摸控件下本页未实现应用内全屏布局（按钮只会翻转图标），仅在桌面显示；
+      // 桌面端按钮叠加系统窗口全屏。
+      if (!widget.useTouchOptimizedControls) const PlayerAppFullscreenButton(),
     ];
     return ThemedVideoPlayer(
       videoController: videoController,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       guardInitialSeek: true,
+      disableNativeFullscreen: true,
       resumePosition: _resumePosition,
       onResumePromptResolved: _resolveResumePrompt,
       playbackSessionKey: widget.videoId,

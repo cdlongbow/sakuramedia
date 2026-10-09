@@ -20,8 +20,9 @@ part 'movie_detail_provider.g.dart';
 /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
 /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
 ///
-/// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-///   写入 `errorMessage`。
+/// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
 /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
 ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
 /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -52,8 +53,25 @@ class MovieDetail extends _$MovieDetail {
   /// 页面接线 [RiverpodPageCache.obtain] 时收集的 keepAlive link。
   KeepAliveLink? get cacheLink => _cacheLink;
 
+  /// 页面进入时调用：冷启动（无缓存影片）走骨架加载；暖重进（保活命中，
+  /// [RiverpodPageCache] 跨导航留住了 `movie`）走静默刷新——不置 `isLoading`、
+  /// 不清空已展示的相似影片，旧内容常驻直到新数据到达。
+  ///
+  /// 全站统一规则：保活 provider 的首载必须暖保护，整页骨架只在无数据时出现。
+  /// 暖路径失败时保留旧内容（不覆盖 `errorMessage`）；明确的手动刷新走 [refresh]。
   Future<void> load() async {
     if (_isDisposed) return;
+    if (state.movie != null) {
+      try {
+        await refresh();
+      } catch (_) {
+        // 暖重进的后台同步失败：保留旧内容，不打扰用户。
+        return;
+      }
+      // 与过去每次进入都上报保持一致：静默刷新成功也计一次浏览。
+      reportView();
+      return;
+    }
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,

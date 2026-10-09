@@ -12,7 +12,6 @@ class MomentGrid extends StatelessWidget {
     this.onItemOpenMovie,
     this.onItemAddToCollection,
     this.onItemDelete,
-    this.maxRows,
     this.selectionMode = false,
     this.isSelected,
     this.onSelectedChanged,
@@ -34,9 +33,6 @@ class MomentGrid extends StatelessWidget {
   /// 卡片悬停面板里的「删除」回调；不传则不显示。
   final ValueChanged<MomentListItem>? onItemDelete;
 
-  /// 首页等预览区可限制为固定行数；列表页保持不传以展示全部项目。
-  final int? maxRows;
-
   final bool selectionMode;
   final bool Function(MomentListItem item)? isSelected;
   final ValueChanged<MomentListItem>? onSelectedChanged;
@@ -48,7 +44,6 @@ class MomentGrid extends StatelessWidget {
       gridKey: const Key('moment-grid'),
       items: items,
       childAspectRatio: 16 / 9,
-      maxRows: maxRows,
       itemBuilder: (context, item, _) => MomentCard(
         item: item,
         onTap: () => onItemTap(item),

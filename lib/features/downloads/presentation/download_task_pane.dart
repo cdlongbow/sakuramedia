@@ -10,10 +10,12 @@ import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_placeholders.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
@@ -33,7 +35,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_too
 import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_left_cover_card.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -47,27 +49,61 @@ Widget buildDownloadTaskHeader({
   required BuildContext context,
   required WidgetRef ref,
 }) {
-  final state = ref.watch(downloadTaskCenterProvider).value;
-  if (state == null) return const SizedBox.shrink();
+  // 只订阅头部渲染所需的字段：进度轮询 tick 不重建头部。
+  final header = ref.watch(
+    downloadTaskCenterProvider.select((asyncState) {
+      final state = asyncState.value;
+      return (
+        hasValue: state != null,
+        selectionMode: state?.selectionMode ?? false,
+        selectionCount: state?.selectionCount ?? 0,
+        loadedCount: state?.paged.items.length ?? 0,
+        hasSelection: state?.hasSelection ?? false,
+        filterUpdate:
+            state?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+        hasItems: state?.paged.items.isNotEmpty ?? false,
+        filter: state?.filter ?? DownloadTaskFilterState.initial,
+        clientOptions:
+            state?.clientOptions ?? const <DownloadClientOption>[],
+      );
+    }),
+  );
+  if (!header.hasValue) return const SizedBox.shrink();
   final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (state.selectionMode)
+      if (header.selectionMode)
         isMobile
-            ? _MobileSelectionHeader(state: state)
-            : _DesktopSelectionHeader(state: state)
+            ? _MobileSelectionHeader(
+                selectionCount: header.selectionCount,
+                loadedCount: header.loadedCount,
+              )
+            : _DesktopSelectionHeader(
+                selectionCount: header.selectionCount,
+                loadedCount: header.loadedCount,
+              )
       else if (isMobile)
-        _DownloadFilterBar(state: state)
+        _DownloadFilterBar(
+          filter: header.filter,
+          clientOptions: header.clientOptions,
+          hasItems: header.hasItems,
+        )
       else
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _DownloadFilterBar(state: state)),
+            Expanded(
+              child: _DownloadFilterBar(
+                filter: header.filter,
+                clientOptions: header.clientOptions,
+                hasItems: header.hasItems,
+              ),
+            ),
             SizedBox(width: context.appSpacing.md),
             AppSelectionEntryButton(
               key: const Key('download-tasks-selection-entry'),
-              onPressed: state.paged.items.isEmpty
+              onPressed: header.loadedCount == 0
                   ? null
                   : () => ref
                         .read(downloadTaskCenterProvider.notifier)
@@ -77,8 +113,8 @@ Widget buildDownloadTaskHeader({
         ),
       AppFilterUpdateBar(
         key: const Key('download-tasks-reloading-indicator'),
-        state: state.paged.filterUpdate,
-        hasPreviousItems: state.paged.items.isNotEmpty,
+        state: header.filterUpdate,
+        hasPreviousItems: header.hasItems,
         onRetry: () => unawaited(
           ref.read(downloadTaskCenterProvider.notifier).retryFilter(),
         ),
@@ -115,18 +151,21 @@ Widget wrapDownloadTaskSelectionBar({
 
 /// 桌面多选态顶栏：原地改写筛选行，批量动作与移动贴底条共用。
 class _DesktopSelectionHeader extends ConsumerWidget {
-  const _DesktopSelectionHeader({required this.state});
+  const _DesktopSelectionHeader({
+    required this.selectionCount,
+    required this.loadedCount,
+  });
 
-  final DownloadTaskCenterState state;
+  final int selectionCount;
+  final int loadedCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(downloadTaskCenterProvider.notifier);
-    final loadedCount = state.paged.items.length;
-    final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
+    final allSelected = loadedCount > 0 && selectionCount >= loadedCount;
     return AppSelectionHeaderToolbar(
       key: const Key('download-tasks-selection-header'),
-      countLabel: '已选 ${state.selectionCount} 个',
+      countLabel: '已选 $selectionCount 个',
       countKey: const Key('download-tasks-selection-count'),
       selectAllLabel: allSelected ? '取消全选' : '全选（$loadedCount）',
       selectAllKey: const Key('download-tasks-select-all-button'),
@@ -134,7 +173,12 @@ class _DesktopSelectionHeader extends ConsumerWidget {
       exitKey: const Key('download-tasks-selection-exit'),
       onExit: notifier.exitSelectionMode,
       actions: <Widget>[
-        _buildBatchDeleteButton(context, ref, state, size: AppButtonSize.small),
+        _buildBatchDeleteButton(
+          context,
+          ref,
+          selectionCount,
+          size: AppButtonSize.small,
+        ),
       ],
     );
   }
@@ -143,18 +187,21 @@ class _DesktopSelectionHeader extends ConsumerWidget {
 /// 移动端多选态顶栏：与订阅管理 / PornBox 的 `AppListHeader.selection` 同一套，
 /// 危险动作下沉到贴底条 [_MobileSelectionBar]。
 class _MobileSelectionHeader extends ConsumerWidget {
-  const _MobileSelectionHeader({required this.state});
+  const _MobileSelectionHeader({
+    required this.selectionCount,
+    required this.loadedCount,
+  });
 
-  final DownloadTaskCenterState state;
+  final int selectionCount;
+  final int loadedCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(downloadTaskCenterProvider.notifier);
-    final loadedCount = state.paged.items.length;
-    final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
+    final allSelected = loadedCount > 0 && selectionCount >= loadedCount;
     return AppListHeader.selection(
       key: const Key('download-tasks-selection-header'),
-      selectionLabel: '已选 ${state.selectionCount} 个',
+      selectionLabel: '已选 $selectionCount 个',
       selectionExitButtonKey: const Key('download-tasks-selection-exit'),
       onExitSelection: notifier.exitSelectionMode,
       actionSlots: <Widget>[
@@ -175,10 +222,19 @@ class _MobileSelectionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(downloadTaskCenterProvider).value;
-    if (state == null) return const SizedBox.shrink();
+    final selectionCount = ref.watch(
+      downloadTaskCenterProvider.select(
+        (asyncState) => asyncState.value?.selectionCount ?? 0,
+      ),
+    );
     return AppSelectionBottomBar(
-      actions: <Widget>[_buildBatchDeleteButton(context, ref, state)],
+      actions: <Widget>[
+        _buildBatchDeleteButton(
+          context,
+          ref,
+          selectionCount,
+        ),
+      ],
     );
   }
 }
@@ -186,16 +242,19 @@ class _MobileSelectionBar extends ConsumerWidget {
 Widget _buildBatchDeleteButton(
   BuildContext context,
   WidgetRef ref,
-  DownloadTaskCenterState state, {
+  int selectionCount, {
   AppButtonSize size = AppButtonSize.medium,
 }) {
+  final submitting = watchBatchOperationSubmitting(ref, const [
+    BatchOperationType.downloadTaskDelete,
+  ]);
   return AppButton(
     key: const Key('download-tasks-batch-delete-button'),
-    label: '删除所选（${state.selectionCount}）',
+    label: '删除所选（$selectionCount）',
     size: size,
     variant: AppButtonVariant.danger,
     icon: const Icon(Icons.delete_outline_rounded),
-    onPressed: state.hasSelection
+    onPressed: selectionCount > 0 && !submitting
         ? () => unawaited(_deleteSelectedTasks(context, ref))
         : null,
   );
@@ -241,17 +300,78 @@ Future<void> _deleteTask(
   }
 }
 
-List<Widget> buildDownloadTaskSlivers({
-  required BuildContext context,
-  required WidgetRef ref,
-}) {
-  final asyncState = ref.watch(downloadTaskCenterProvider);
+List<Widget> buildDownloadTaskSlivers() {
+  // 列表本体与页脚各自独立订阅：进度 tick 只重建变化的行，
+  // 翻页状态翻转只重建页脚，不重建整个列表。
+  return <Widget>[
+    const _DownloadTasksBodySliver(),
+    // 无更多且无失败时不占位；「还有更多」时页脚常驻（空闲也留好间距）。
+    // 空列表与页脚互斥：hasMore 但 items 为空时渲染的是空态文案
+    // （见 _DownloadTasksBodySliver），不再出现「加载更多」。
+    PagedLoadMoreFooterSliver(
+      topSpacing: PagedFooterSpacing.lg,
+      padWhenIdle: true,
+      bottomSpacing: PagedFooterSpacing.xl,
+      watchFooter: (ref) => ref.watch(
+        downloadTaskCenterProvider.select((asyncState) {
+          final paged = asyncState.value?.paged;
+          if (paged == null ||
+              paged.items.isEmpty ||
+              (!paged.hasMore && paged.loadMoreErrorMessage == null)) {
+            return null;
+          }
+          return (
+            isLoading: paged.isLoadingMore,
+            errorMessage: paged.loadMoreErrorMessage,
+          );
+        }),
+      ),
+      onLoadMore: (ref) =>
+          unawaited(ref.read(downloadTaskCenterProvider.notifier).loadMore()),
+    ),
+  ];
+}
 
-  if (asyncState.isLoading && !asyncState.hasValue) {
-    // loading 用占位任务渲染真实任务卡，由 [AppSkeletonizer] 灰化。
-    final placeholders = downloadTaskPlaceholders();
-    return <Widget>[
-      AppSkeletonizer.sliver(
+/// 按 task id 取行快照（行卡独立订阅用）；缺失返回 null，调用方回退 prop。
+DownloadTaskRowState? _rowById(DownloadTaskCenterState? state, int taskId) {
+  final items = state?.paged.items;
+  if (items == null) return null;
+  for (final row in items) {
+    if (row.task.id == taskId) return row;
+  }
+  return null;
+}
+
+/// 下载任务列表本体：只订阅结构（条目 id 序列）与四态。
+///
+/// 进度 tick 只改变行内数据（条目序列不变），不重建列表；
+/// 各行通过 [_DownloadTaskCard] 独立订阅自己的行状态。
+class _DownloadTasksBodySliver extends ConsumerWidget {
+  const _DownloadTasksBodySliver();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final body = ref.watch(
+      downloadTaskCenterProvider.select((asyncState) {
+        final state = asyncState.value;
+        return (
+          isLoading: asyncState.isLoading,
+          hasValue: asyncState.hasValue,
+          hasError: asyncState.hasError,
+          error: asyncState.error,
+          ids: state?.paged.items.map((row) => row.task.id).join(','),
+          filterUpdate:
+              state?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+          isEmpty: state?.paged.items.isEmpty ?? true,
+          filterIsDefault: state?.filter.isDefault ?? true,
+        );
+      }),
+    );
+
+    if (body.isLoading && !body.hasValue) {
+      // loading 用占位任务渲染真实任务卡，由 [AppSkeletonizer] 灰化。
+      final placeholders = downloadTaskPlaceholders();
+      return AppSkeletonizer.sliver(
         enabled: true,
         child: SliverList(
           delegate: SliverChildBuilderDelegate((context, index) {
@@ -266,33 +386,32 @@ List<Widget> buildDownloadTaskSlivers({
             );
           }, childCount: placeholders.length),
         ),
-      ),
-    ];
-  }
-  if (asyncState.hasError && !asyncState.hasValue) {
-    return <Widget>[
-      SliverToBoxAdapter(
+      );
+    }
+    if (body.hasError && !body.hasValue) {
+      return SliverToBoxAdapter(
         child: AppEmptyState(
           message: apiErrorMessage(
-            asyncState.error!,
+            body.error!,
             fallback: '下载任务加载失败，请稍后重试',
           ),
           onRetry: () => ref.invalidate(downloadTaskCenterProvider),
         ),
-      ),
-    ];
-  }
+      );
+    }
 
-  final state = asyncState.requireValue;
-  final slivers = <Widget>[];
-
-  final items = state.paged.items;
-  if (items.isEmpty) {
-    if (state.paged.filterUpdate.hasFailed) return slivers;
-    // 有筛选时给一个可以「清除筛选」的重试入口，避免用户困惑「明明有任务却看不到」。
-    final hasFilter = !state.filter.isDefault;
-    slivers.add(
-      SliverToBoxAdapter(
+    // 条目快照只读不订阅：结构变化（增删/重排）时本体重建，快照即新；
+    // 进度 tick 不重建本体，各行独立订阅（见 _DownloadTaskCard）。
+    final items =
+        ref.read(downloadTaskCenterProvider).value?.paged.items ??
+        const <DownloadTaskRowState>[];
+    if (items.isEmpty) {
+      if (body.filterUpdate.hasFailed) {
+        return const SliverToBoxAdapter(child: SizedBox.shrink());
+      }
+      // 有筛选时给一个可以「清除筛选」的重试入口，避免用户困惑「明明有任务却看不到」。
+      final hasFilter = !body.filterIsDefault;
+      return SliverToBoxAdapter(
         child: AppEmptyState(
           message: hasFilter ? '没有符合筛选条件的下载任务' : '暂无下载任务',
           icon: hasFilter ? Icons.search_off_rounded : Icons.download_outlined,
@@ -306,13 +425,10 @@ List<Widget> buildDownloadTaskSlivers({
           retryLabel: '清除筛选',
           retryKey: const Key('download-empty-clear-filter'),
         ),
-      ),
-    );
-    return slivers;
-  }
+      );
+    }
 
-  slivers.add(
-    SliverList(
+    return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final row = items[index];
         final isLast = index == items.length - 1;
@@ -321,29 +437,8 @@ List<Widget> buildDownloadTaskSlivers({
           child: RepaintBoundary(child: _DownloadTaskCard(row: row)),
         );
       }, childCount: items.length),
-    ),
-  );
-
-  if (state.paged.hasMore || state.paged.loadMoreErrorMessage != null) {
-    slivers.add(
-      SliverToBoxAdapter(
-        child: Column(
-          children: [
-            SizedBox(height: context.appSpacing.lg),
-            AppPagedLoadMoreFooter(
-              isLoading: state.paged.isLoadingMore,
-              errorMessage: state.paged.loadMoreErrorMessage,
-              onRetry: () => unawaited(
-                ref.read(downloadTaskCenterProvider.notifier).loadMore(),
-              ),
-            ),
-            SizedBox(height: context.appSpacing.xl),
-          ],
-        ),
-      ),
     );
   }
-  return slivers;
 }
 
 class _DownloadTaskCard extends ConsumerWidget {
@@ -353,23 +448,43 @@ class _DownloadTaskCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 首屏骨架渲染占位行时 provider 还没有 value，退回初始状态取空选择 / 空客户端名。
-    final state =
-        ref.watch(downloadTaskCenterProvider).value ??
-        DownloadTaskCenterState.initial;
+    final taskId = row.task.id;
+    // 行内数据独立订阅：进度 tick 只重建本行，不重建整个列表。
+    // 首屏骨架的占位行在 provider 无 value 时回退到传入的 row。
+    final liveRow = ref.watch(
+      downloadTaskCenterProvider.select(
+        (asyncState) => _rowById(asyncState.value, taskId),
+      ),
+    );
+    final selection = ref.watch(
+      downloadTaskCenterProvider.select(
+        (asyncState) => (
+          mode: asyncState.value?.selectionMode ?? false,
+          selected: asyncState.value?.isSelected(taskId) ?? false,
+          pending: asyncState.value?.isTaskPending(taskId) ?? false,
+        ),
+      ),
+    );
+    final task = liveRow?.task ?? row.task;
+    final clientName = ref.watch(
+      downloadTaskCenterProvider.select(
+        (asyncState) =>
+            asyncState.value?.clientNameOf(task.clientId) ??
+            '客户端 #${task.clientId}',
+      ),
+    );
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
-    final task = row.task;
-    final progress = row.progress.clamp(0.0, 1.0);
-    final taskState = row.state;
-    final isPending = state.isTaskPending(task.id);
+    final progress = (liveRow?.progress ?? row.progress).clamp(0.0, 1.0);
+    final taskState = liveRow?.state ?? row.state;
+    final isPending = selection.pending;
     final isImportRunning = task.importStatus == 'running';
     final movieNumber = task.movieNumber;
     final hasMovieNumber = (movieNumber ?? '').isNotEmpty;
     final displayTitle = _resolveDisplayTitle(task);
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
-    final selectionMode = state.selectionMode;
-    final isSelected = state.isSelected(task.id);
+    final selectionMode = selection.mode;
+    final isSelected = selection.selected;
     final thinCoverUrl = task.movieThinCover?.origin.trim() ?? '';
     final wideCoverUrl = task.movieCover?.origin.trim() ?? '';
     final coverUrl = isMobile && thinCoverUrl.isNotEmpty
@@ -486,7 +601,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
-                        state.clientNameOf(task.clientId),
+                        clientName,
                         style: _footnoteTextStyle(context),
                       ),
                       if (formatUpdatedAtLabel(task.createdAt) != null)
@@ -698,41 +813,58 @@ AppBadgeTone _toneForImportStatus(String state) {
 /// 遵循「筛选状态驱动」范式：所有变更走 `notifier.applyFilter(...)`。
 /// 搜索输入沿用项目其它筛选栏习惯——**不做打字 debounce**，仅回车/失焦提交。
 class _DownloadFilterBar extends StatelessWidget {
-  const _DownloadFilterBar({required this.state});
+  const _DownloadFilterBar({
+    required this.filter,
+    required this.clientOptions,
+    required this.hasItems,
+  });
 
-  final DownloadTaskCenterState state;
+  final DownloadTaskFilterState filter;
+  final List<DownloadClientOption> clientOptions;
+  final bool hasItems;
 
   @override
   Widget build(BuildContext context) {
     if (AppPlatformScope.maybeOf(context) == AppPlatform.mobile) {
-      return _MobileDownloadFilterEntry(state: state);
+      return _MobileDownloadFilterEntry(
+        filter: filter,
+        clientOptions: clientOptions,
+        hasItems: hasItems,
+      );
     }
-    return _DesktopDownloadFilterBar(state: state);
+    return _DesktopDownloadFilterBar(
+      filter: filter,
+      clientOptions: clientOptions,
+    );
   }
 }
 
 class _DesktopDownloadFilterBar extends HookConsumerWidget {
-  const _DesktopDownloadFilterBar({required this.state});
+  const _DesktopDownloadFilterBar({
+    required this.filter,
+    required this.clientOptions,
+  });
 
-  final DownloadTaskCenterState state;
+  final DownloadTaskFilterState filter;
+  final List<DownloadClientOption> clientOptions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final searchController = useTextEditingController(
-      text: state.filter.search,
+      text: filter.search,
     );
     // 若外部通过其它入口（如「清除筛选」）改了 filter.search，同步进输入框；
     // 用户正在输入时（controller.text 与最近同步值不一致）避免打断。
-    final attachedSearch = useRef<String>(state.filter.search);
+    final attachedSearch = useRef<String>(filter.search);
     useEffect(() {
-      final external = state.filter.search;
+      final external = filter.search;
       if (external != attachedSearch.value &&
           external != searchController.text) {
         searchController.text = external;
       }
       attachedSearch.value = external;
       return null;
-    }, [state.filter.search]);
+    }, [filter.search]);
 
     final layoutTokens = context.appLayoutTokens;
     final filterTextStyle = resolveAppTextStyle(
@@ -741,10 +873,9 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
       weight: AppTextWeight.regular,
       tone: AppTextTone.tertiary,
     );
-    final clientOptions = state.clientOptions;
 
     Future<void> submitSearch(String value) async {
-      final next = state.filter.copyWith(search: value.trim());
+      final next = filter.copyWith(search: value.trim());
       attachedSearch.value = next.search;
       await ref.read(downloadTaskCenterProvider.notifier).applyFilter(next);
     }
@@ -769,7 +900,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
           width: layoutTokens.filterFieldWidthMd,
           child: AppSelectField<DownloadTaskStateFilter>(
             key: const Key('download-filter-state'),
-            value: state.filter.stateFilter,
+            value: filter.stateFilter,
             size: AppSelectFieldSize.compact,
             textStyle: filterTextStyle,
             items: DownloadTaskStateFilter.values
@@ -783,7 +914,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
             onChanged: (value) => ref
                 .read(downloadTaskCenterProvider.notifier)
                 .applyFilter(
-                  state.filter.copyWith(
+                  filter.copyWith(
                     stateFilter: value ?? DownloadTaskStateFilter.downloading,
                   ),
                 ),
@@ -794,7 +925,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
             width: layoutTokens.filterFieldWidthMd,
             child: AppSelectField<int?>(
               key: const Key('download-filter-client'),
-              value: state.filter.clientId,
+              value: filter.clientId,
               size: AppSelectFieldSize.compact,
               textStyle: filterTextStyle,
               items: <DropdownMenuItem<int?>>[
@@ -807,7 +938,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
               ],
               onChanged: (value) => ref
                   .read(downloadTaskCenterProvider.notifier)
-                  .applyFilter(state.filter.copyWith(clientId: value)),
+                  .applyFilter(filter.copyWith(clientId: value)),
             ),
           ),
       ],
@@ -816,19 +947,24 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
 }
 
 class _MobileDownloadFilterEntry extends ConsumerWidget {
-  const _MobileDownloadFilterEntry({required this.state});
+  const _MobileDownloadFilterEntry({
+    required this.filter,
+    required this.clientOptions,
+    required this.hasItems,
+  });
 
-  final DownloadTaskCenterState state;
+  final DownloadTaskFilterState filter;
+  final List<DownloadClientOption> clientOptions;
+  final bool hasItems;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filter = state.filter;
     final isSelected = !filter.isDefault;
     return Row(
       children: [
         Expanded(
           child: Text(
-            _downloadFilterSummary(filter, state.clientOptions),
+            _downloadFilterSummary(filter, clientOptions),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: resolveAppTextStyle(
@@ -842,11 +978,11 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
         SizedBox(width: context.appSpacing.md),
         AppSelectionEntryButton(
           key: const Key('download-tasks-selection-entry'),
-          onPressed: state.paged.items.isEmpty
-              ? null
-              : () => ref
+          onPressed: hasItems
+              ? () => ref
                     .read(downloadTaskCenterProvider.notifier)
-                    .enterSelectionMode(),
+                    .enterSelectionMode()
+              : null,
         ),
         SizedBox(width: context.appSpacing.sm),
         AppButton(
@@ -858,7 +994,7 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
           onPressed: () => _showMobileDownloadFilterDrawer(
             context,
             current: filter,
-            clientOptions: state.clientOptions,
+            clientOptions: clientOptions,
             onChanged: (next) => unawaited(
               ref.read(downloadTaskCenterProvider.notifier).applyFilter(next),
             ),

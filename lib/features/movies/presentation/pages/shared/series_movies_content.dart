@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/series_import/series_import_dialog.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -18,7 +19,6 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
@@ -199,7 +199,6 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   Widget build(BuildContext context) {
     final moviesAsync = ref.watch(movieSummaryProvider(_scope));
     final summary = moviesAsync.value;
-    final paged = summary?.paged;
     if (widget.hoistTitleToSubpageShell) {
       _reportTitleToShell(summary);
     }
@@ -229,21 +228,17 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
             SliverMainAxisGroup(
               slivers: [
                 _buildMoviesArea(context, moviesAsync),
-                if (paged != null &&
-                    paged.items.isNotEmpty &&
-                    (paged.isLoadingMore || paged.loadMoreErrorMessage != null))
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: context.appSpacing.md),
-                      child: AppPagedLoadMoreFooter(
-                        isLoading: paged.isLoadingMore,
-                        errorMessage: paged.loadMoreErrorMessage,
-                        onRetry: () => ref
-                            .read(movieSummaryProvider(_scope).notifier)
-                            .loadMore(),
-                      ),
-                    ),
+                // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                PagedLoadMoreFooterSliver(
+                  watchFooter: (ref) => ref.watch(
+                    movieSummaryProvider(
+                      _scope,
+                    ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
                   ),
+                  onLoadMore: (ref) => unawaited(
+                    ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
+                  ),
+                ),
               ],
             ),
             widget.enableRefresh ? _handleRefresh : null,
@@ -389,3 +384,4 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     return trimmed;
   }
 }
+

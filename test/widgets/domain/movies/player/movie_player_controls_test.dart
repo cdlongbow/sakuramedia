@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_subtitle_button.dart';
 
@@ -83,7 +83,7 @@ void main() {
           controls[5].key,
           const Key('movie-player-mobile-subtitle-button'),
         );
-        expect(controls[6], isA<MaterialFullscreenButton>());
+        expect(controls[6], isA<PlayerAppFullscreenButton>());
       },
     );
 
@@ -112,7 +112,7 @@ void main() {
         ),
         isEmpty,
       );
-      expect(controls[4], isA<MaterialFullscreenButton>());
+      expect(controls[4], isA<PlayerAppFullscreenButton>());
     });
 
     test('desktop bottom controls place speed before subtitle button', () {
@@ -137,7 +137,7 @@ void main() {
       expect(speedButton, isA<MoviePlayerSpeedButton>());
       expect(speedButton.hasExplicitSelection, isFalse);
       expect(controls[5], isA<MoviePlayerSubtitleButton>());
-      expect(controls[6], isA<MaterialFullscreenButton>());
+      expect(controls[6], isA<PlayerAppFullscreenButton>());
     });
   });
 }

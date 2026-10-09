@@ -7,6 +7,7 @@ enum MovieDetailActionType {
   castToDevice,
   openInspector,
   toggleSubscription,
+  toggleCollectionType,
   toggleBlacklist,
   refreshMetadata,
   recomputeHeat,
@@ -31,6 +32,7 @@ class MovieDetailActionDescriptor {
 List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
   required MovieDetailDto movie,
   required bool isSubscribed,
+  required bool isCollection,
   required bool isBlacklisted,
   bool canCast = false,
   String? castSessionLabel,
@@ -56,6 +58,13 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
             : Icons.favorite_rounded,
         tone: isSubscribed ? AppTextTone.error : AppTextTone.primary,
       ),
+    MovieDetailActionDescriptor(
+      type: MovieDetailActionType.toggleCollectionType,
+      label: isCollection ? '标记为单体' : '标记为合集',
+      icon: isCollection
+          ? Icons.video_library_outlined
+          : Icons.collections_bookmark_outlined,
+    ),
     if (isBlacklisted || !isSubscribed)
       MovieDetailActionDescriptor(
         type: MovieDetailActionType.toggleBlacklist,

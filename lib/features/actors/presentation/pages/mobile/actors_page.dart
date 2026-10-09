@@ -13,13 +13,13 @@ import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
@@ -132,9 +132,6 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     final initialErrorMessage = actorsAsync.hasError && summary == null
         ? '女优列表加载失败，请稍后重试'
         : null;
-    final showFooter =
-        items.isNotEmpty &&
-        (paged!.isLoadingMore || paged.loadMoreErrorMessage != null);
 
     return ColoredBox(
       color: context.appColors.surfaceCard,
@@ -232,19 +229,17 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                             : '当前筛选条件下暂无匹配女优',
                       ),
                     ),
-                  if (showFooter)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: context.appSpacing.md),
-                        child: AppPagedLoadMoreFooter(
-                          isLoading: paged.isLoadingMore,
-                          errorMessage: paged.loadMoreErrorMessage,
-                          onRetry: () => ref
-                              .read(actorSummaryProvider(_scope).notifier)
-                              .loadMore(),
-                        ),
-                      ),
+                  // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                  PagedLoadMoreFooterSliver(
+                    watchFooter: (ref) => ref.watch(
+                      actorSummaryProvider(
+                        _scope,
+                      ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
                     ),
+                    onLoadMore: (ref) => unawaited(
+                      ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -274,3 +269,4 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     );
   }
 }
+

@@ -6,6 +6,14 @@
 - `MoviePlayerSurface` / `MoviePlayerSurfaceController`：`lib/widgets/domain/movies/player/`，影片播放页使用的完整播放器 surface。
 - `QuickPlayDialog` / `showVideoQuickPlayDialog`：`lib/widgets/domain/media/quick_play_dialog.dart`，从卡片或动作菜单快速播放。
 
+## 应用内全屏
+
+带右侧面板的播放页不能用 media_kit 的原生全屏（它 push 的独立路由只含 `Video`，面板会丢）：
+
+- `PlayerAppFullscreenScope` / `PlayerAppFullscreenButton` / `PlayerAppFullscreenDoubleTap` / `PlayerAppFullscreenStateMixin`：`lib/widgets/base/media/video/player_app_fullscreen.dart`，在当前路由内切换布局 + 叠加系统窗口全屏，Esc 退出。
+- 播放页 `State` mix `PlayerAppFullscreenStateMixin`，用 scope 暴露状态，并在 `dispose` 首行调 `disposePlayerAppFullscreen()`；`ThemedVideoPlayer` / `MoviePlayerSurface` 传 `disableNativeFullscreen: true` 关掉 media_kit 的双击全屏，避免两套全屏打架。
+- 无 scope 时按钮回退 media_kit 原生全屏（快播弹窗等无面板场景行为不变）。
+
 播放器的媒体来源、字幕、续播、控制条和进度上报由播放器 surface、feature Provider 和页面共同完成。不要在列表卡片里直接复制播放器配置。
 
 ## 缩略图

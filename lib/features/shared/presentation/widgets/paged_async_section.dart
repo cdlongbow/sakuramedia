@@ -53,6 +53,7 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     required this.skeletonBuilder,
     this.footerTopSpacing,
     this.emptyBuilder,
+    this.showLoadMoreFooter = true,
   });
 
   final AsyncValue<S> asyncState;
@@ -77,6 +78,14 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
   /// 都没有时，"没有卡住的订阅"是**好消息**，该顺手给一个「查看全部订阅」的去处，
   /// 而不是甩一行灰字。[emptyMessage] 仍需提供，作为无 builder 时的兜底文案。
   final WidgetBuilder? emptyBuilder;
+
+  /// 是否渲染内置「加载更多」footer。
+  ///
+  /// 默认 true；传 false 时列表本体照常输出，但 loadMore 的 loading / 失败提示
+  /// 不在这里渲染——调用方应自行追加 footer，并把 [asyncState] 中 loadMore 相关
+  /// 字段清成中立值（如 `copyWith(isLoadingMore: false, loadMoreErrorMessage: null)`），
+  /// 让「开始/结束加载」不再重建整个列表 sliver。
+  final bool showLoadMoreFooter;
 
   @override
   Widget build(BuildContext context) {
@@ -111,13 +120,16 @@ class SliverPagedAsyncSection<S, T> extends StatelessWidget {
     final spacing = context.appSpacing;
     final items = paged.items;
     final showFooter =
-        paged.isLoadingMore || paged.loadMoreErrorMessage != null;
+        showLoadMoreFooter &&
+        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final delegate = SliverChildBuilderDelegate(
       (context, index) => Padding(
         padding: EdgeInsets.only(bottom: itemSpacing),
         child: itemBuilder(context, items[index], index),
       ),
       childCount: items.length,
+      // 调用方没有行申请 keep-alive；AutomaticKeepAlive 只增加每行的元素开销。
+      addAutomaticKeepAlives: false,
     );
     final itemSliver = SliverList(delegate: delegate);
 

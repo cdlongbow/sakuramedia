@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operations_api_provider.dart';
 
 const Map<BatchOperationType, String> _operationLabels = {
@@ -26,6 +27,9 @@ const int maxBatchOperationItems = 1000;
 ///
 /// 任务进度与结果在活动中心查看；提交成功后列表不会即时变化，需用户手动刷新。
 /// 返回是否提交成功，调用方据此决定是否退出多选态。
+///
+/// 同一批操作（类型 + 目标合集 + id 列表一致）在途期间重复调用会被拒绝，
+/// 避免连点确认重复提交后端任务。
 Future<bool> submitBatchOperation(
   BuildContext context,
   WidgetRef ref, {
@@ -44,6 +48,18 @@ Future<bool> submitBatchOperation(
     }
     return false;
   }
+  final submissionKey = batchOperationSubmissionKey(
+    operation: operation,
+    ids: ids,
+    targetCollectionId: targetCollectionId,
+  );
+  final submissions = ref.read(batchOperationSubmissionProvider.notifier);
+  if (!submissions.begin(submissionKey)) {
+    if (context.mounted) {
+      showToast('$label正在提交中，请稍候');
+    }
+    return false;
+  }
   try {
     await ref
         .read(batchOperationsApiProvider)
@@ -58,9 +74,13 @@ Future<bool> submitBatchOperation(
       showToast(apiErrorMessage(error, fallback: '$label提交失败，请稍后重试'));
     }
     return false;
+  } finally {
+    submissions.end(submissionKey);
   }
   if (context.mounted) {
-    showToast('已提交$label（${ids.length} 项），可在活动中心查看进度');
+    showToast(
+      '已提交$label（${ids.length} 项），可在活动中心查看进度，完成后请刷新列表',
+    );
   }
   return true;
 }

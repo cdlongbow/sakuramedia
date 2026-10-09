@@ -25,6 +25,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicat
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 
 /// 切片合集连播共享实现：media_kit 播放器（原生 Playlist 自动连播）占满画面，
@@ -50,10 +51,16 @@ class ClipCollectionPlayContent extends ConsumerStatefulWidget {
 
 class _ClipCollectionPlayContentState
     extends ConsumerState<ClipCollectionPlayContent>
-    with CollectionPlaybackPageMixin<ClipCollectionPlayContent> {
+    with
+        CollectionPlaybackPageMixin<ClipCollectionPlayContent>,
+        PlayerAppFullscreenStateMixin<ClipCollectionPlayContent> {
   List<MediaClipDto> _clips = const <MediaClipDto>[];
   bool _isLoading = true;
   String? _errorMessage;
+
+  @override
+  bool get applySystemFullscreenForAppFullscreen =>
+      !widget.useTouchOptimizedControls;
 
   @override
   void initState() {
@@ -64,6 +71,7 @@ class _ClipCollectionPlayContentState
 
   @override
   void dispose() {
+    disposePlayerAppFullscreen();
     disposePlayback();
     super.dispose();
   }
@@ -177,7 +185,14 @@ class _ClipCollectionPlayContentState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, body: _buildBody(context));
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: PlayerAppFullscreenScope(
+        isFullscreen: isAppFullscreen,
+        onToggle: toggleAppFullscreen,
+        child: _buildBody(context),
+      ),
+    );
   }
 
   String _currentClipTitle() {
@@ -218,7 +233,12 @@ class _ClipCollectionPlayContentState
       panelAvailable: filmstrip != null,
       left: Stack(
         children: [
-          Positioned.fill(child: _buildPlayerSurface(context, videoController)),
+          Positioned.fill(
+            child: PlayerAppFullscreenDoubleTap(
+              enabled: !widget.useTouchOptimizedControls,
+              child: _buildPlayerSurface(context, videoController),
+            ),
+          ),
           EpisodeSelectorOverlay(
             isOpen: isEpisodePanelOpen,
             itemCount: _clips.length,
@@ -261,6 +281,7 @@ class _ClipCollectionPlayContentState
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       videoKey: const Key('clip-collection-play-video'),
       displaySeekBar: false,
+      disableNativeFullscreen: true,
       reservePanelToggleSpace: true,
       topControls: [
         ...buildMoviePlayerTopControls(

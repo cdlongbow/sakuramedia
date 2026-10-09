@@ -19,23 +19,14 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = variant == MovieDetailBottomInfoBarVariant.mobileFullWidth;
-    final borderRadius = isMobile
+    // 沉浸背景上只留一层透明行：去卡片底/边框/阴影，靠页面模糊罩保证可读。
+    final borderRadius = variant == MovieDetailBottomInfoBarVariant.mobileFullWidth
         ? BorderRadius.vertical(top: context.appRadius.smBorder.topLeft)
         : context.appRadius.xsBorder;
-    final decoration = isMobile
-        ? BoxDecoration(
-            borderRadius: borderRadius,
-            boxShadow: context.appShadows.card,
-          )
-        : BoxDecoration(
-            borderRadius: context.appRadius.smBorder,
-            border: Border.all(color: context.appColors.borderSubtle),
-          );
 
     return Material(
       key: const Key('movie-detail-fixed-info-bar'),
-      color: context.appColors.surfaceCard,
+      color: Colors.transparent,
       borderRadius: borderRadius,
       child: AppInteractiveSurface(
         onTap: onTap,
@@ -48,7 +39,6 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
             horizontal: context.appSpacing.sm,
             vertical: 0,
           ),
-          decoration: decoration,
           child: Row(
             children: [
               Expanded(child: MovieDetailStatRow(items: items)),

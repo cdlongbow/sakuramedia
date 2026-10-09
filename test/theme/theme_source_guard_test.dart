@@ -65,6 +65,7 @@ bool _isImmersiveMediaFile(String path) {
     'lib/features/clips/presentation/pages/mobile/clip_player_page.dart',
     'lib/features/image_search/presentation/widgets/image_search_result_card.dart',
     'lib/features/movies/presentation/pages/shared/movie_merged_play_content.dart',
+    'lib/features/movies/presentation/pages/shared/movie_player_content.dart',
     'lib/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart',
     'lib/features/movies/presentation/widgets/detail/movie_media_point_gallery.dart',
     'lib/features/videos/presentation/pages/shared/video_collection_play_content.dart',

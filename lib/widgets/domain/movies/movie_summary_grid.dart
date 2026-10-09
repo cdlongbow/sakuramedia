@@ -1,12 +1,8 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
-import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_card_wiring.dart';
 
 class MovieSummaryGrid extends ConsumerWidget {
   const MovieSummaryGrid({
@@ -25,7 +21,6 @@ class MovieSummaryGrid extends ConsumerWidget {
     this.selectionMode = false,
     this.isMovieSelected,
     this.onMovieSelectedChanged,
-    this.maxRows,
   });
 
   final List<MovieListItemDto> items;
@@ -53,45 +48,28 @@ class MovieSummaryGrid extends ConsumerWidget {
   final void Function(MovieListItemDto movie, bool selected)?
   onMovieSelectedChanged;
 
-  /// 首页等预览区可限制为固定行数；列表页保持不传以展示全部项目。
-  final int? maxRows;
+  MovieSummaryCardWiring get _wiring => MovieSummaryCardWiring(
+    onMovieTap: onMovieTap,
+    onMovieMenuRequest: onMovieMenuRequest,
+    onMovieSubscriptionTap: onMovieSubscriptionTap,
+    onMovieToggleCollectionType: onMovieToggleCollectionType,
+    onMovieBlacklist: onMovieBlacklist,
+    isMovieSubscriptionUpdating: isMovieSubscriptionUpdating,
+    useDefaultSubscriptionActions: useDefaultSubscriptionActions,
+    secondaryLabelForMovie: secondaryLabelForMovie,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usesDefaultSubscriptionActions =
-        useDefaultSubscriptionActions && onMovieSubscriptionTap == null;
-    final updatingMovieNumbers = usesDefaultSubscriptionActions
-        ? ref.watch(movieSubscriptionToggleProvider)
-        : const <String>{};
     return AppAdaptiveCardGrid<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
       errorMessage: errorMessage,
       emptyMessage: emptyMessage,
-      maxRows: maxRows,
-      itemBuilder: (context, movie, index) => MovieSummaryCard(
-        movie: movie,
-        onTap: onMovieTap == null ? null : () => onMovieTap!(movie),
-        onRequestMenu: onMovieMenuRequest == null
-            ? null
-            : (globalPosition) => onMovieMenuRequest!(movie, globalPosition),
-        onSubscriptionTap: onMovieSubscriptionTap != null
-            ? () => onMovieSubscriptionTap!(movie)
-            : usesDefaultSubscriptionActions
-            ? () => unawaited(
-                _toggleDefaultMovieSubscription(ref, context, movie),
-              )
-            : null,
-        onToggleCollectionType: onMovieToggleCollectionType == null
-            ? null
-            : () => onMovieToggleCollectionType!(movie),
-        onBlacklist: onMovieBlacklist == null
-            ? null
-            : () => onMovieBlacklist!(movie),
-        isSubscriptionUpdating:
-            isMovieSubscriptionUpdating?.call(movie) ??
-            updatingMovieNumbers.contains(movie.movieNumber),
-        secondaryLabel: secondaryLabelForMovie?.call(movie),
+      itemBuilder: (context, movie, index) => _wiring.build(
+        context,
+        ref,
+        movie,
         selectionMode: selectionMode,
         isSelected: isMovieSelected?.call(movie) ?? false,
         onSelectedChanged: onMovieSelectedChanged == null
@@ -146,41 +124,28 @@ class MovieSummarySliver extends ConsumerWidget {
   final void Function(MovieListItemDto movie, bool selected)?
   onMovieSelectedChanged;
 
+  MovieSummaryCardWiring get _wiring => MovieSummaryCardWiring(
+    onMovieTap: onMovieTap,
+    onMovieMenuRequest: onMovieMenuRequest,
+    onMovieSubscriptionTap: onMovieSubscriptionTap,
+    onMovieToggleCollectionType: onMovieToggleCollectionType,
+    onMovieBlacklist: onMovieBlacklist,
+    isMovieSubscriptionUpdating: isMovieSubscriptionUpdating,
+    useDefaultSubscriptionActions: useDefaultSubscriptionActions,
+    secondaryLabelForMovie: secondaryLabelForMovie,
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usesDefaultSubscriptionActions =
-        useDefaultSubscriptionActions && onMovieSubscriptionTap == null;
-    final updatingMovieNumbers = usesDefaultSubscriptionActions
-        ? ref.watch(movieSubscriptionToggleProvider)
-        : const <String>{};
     return AppAdaptiveCardSliver<MovieListItemDto>(
       gridKey: const Key('movie-summary-grid'),
       items: items,
       errorMessage: errorMessage,
       emptyMessage: emptyMessage,
-      itemBuilder: (context, movie, index) => MovieSummaryCard(
-        movie: movie,
-        onTap: onMovieTap == null ? null : () => onMovieTap!(movie),
-        onRequestMenu: onMovieMenuRequest == null
-            ? null
-            : (globalPosition) => onMovieMenuRequest!(movie, globalPosition),
-        onSubscriptionTap: onMovieSubscriptionTap != null
-            ? () => onMovieSubscriptionTap!(movie)
-            : usesDefaultSubscriptionActions
-            ? () => unawaited(
-                _toggleDefaultMovieSubscription(ref, context, movie),
-              )
-            : null,
-        onToggleCollectionType: onMovieToggleCollectionType == null
-            ? null
-            : () => onMovieToggleCollectionType!(movie),
-        onBlacklist: onMovieBlacklist == null
-            ? null
-            : () => onMovieBlacklist!(movie),
-        isSubscriptionUpdating:
-            isMovieSubscriptionUpdating?.call(movie) ??
-            updatingMovieNumbers.contains(movie.movieNumber),
-        secondaryLabel: secondaryLabelForMovie?.call(movie),
+      itemBuilder: (context, movie, index) => _wiring.build(
+        context,
+        ref,
+        movie,
         selectionMode: selectionMode,
         isSelected: isMovieSelected?.call(movie) ?? false,
         onSelectedChanged: onMovieSelectedChanged == null
@@ -189,15 +154,4 @@ class MovieSummarySliver extends ConsumerWidget {
       ),
     );
   }
-}
-
-Future<void> _toggleDefaultMovieSubscription(
-  WidgetRef ref,
-  BuildContext context,
-  MovieListItemDto movie,
-) async {
-  final result = await ref
-      .read(movieSubscriptionToggleProvider.notifier)
-      .toggle(movieNumber: movie.movieNumber, isSubscribed: movie.isSubscribed);
-  if (context.mounted) showMovieSubscriptionFeedback(result);
 }

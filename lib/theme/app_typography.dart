@@ -341,14 +341,15 @@ TextStyle resolveAppTextStyle(
   double? height,
   double? letterSpacing,
 }) {
-  final fontWeight = resolveAppTextWeight(context, weight);
+  // Theme.of 只查一次：列表行高频调用，避免重复的继承依赖查询。
+  final theme = Theme.of(context);
   return TextStyle(
     fontFamily: !kIsWeb && defaultTargetPlatform == TargetPlatform.windows
         ? kAppWindowsFontFamily
         : null,
-    fontSize: resolveAppTextFontSize(context, size),
-    fontWeight: fontWeight,
-    color: resolveAppTextToneColor(context, tone),
+    fontSize: theme.appTextScale.sizeOf(size),
+    fontWeight: theme.appTextWeights.weightFor(weight),
+    color: theme.appTextPalette.colorFor(tone),
     height: height,
     letterSpacing: letterSpacing,
   );

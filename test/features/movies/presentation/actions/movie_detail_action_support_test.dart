@@ -26,27 +26,56 @@ void main() {
       final actions = buildMovieDetailActionDescriptors(
         movie: movie,
         isSubscribed: false,
+        isCollection: false,
         isBlacklisted: false,
       );
 
       expect(actions.map((action) => action.type), <MovieDetailActionType>[
         MovieDetailActionType.openInspector,
         MovieDetailActionType.toggleSubscription,
+        MovieDetailActionType.toggleCollectionType,
         MovieDetailActionType.toggleBlacklist,
         MovieDetailActionType.refreshMetadata,
         MovieDetailActionType.recomputeHeat,
       ]);
+      expect(
+        actions
+            .firstWhere(
+              (action) =>
+                  action.type == MovieDetailActionType.toggleCollectionType,
+            )
+            .label,
+        '标记为合集',
+      );
 
       final blacklistedActions = buildMovieDetailActionDescriptors(
         movie: movie,
         isSubscribed: false,
+        isCollection: true,
         isBlacklisted: true,
       );
       expect(
         blacklistedActions.map((action) => action.type),
         isNot(contains(MovieDetailActionType.toggleSubscription)),
       );
-      expect(blacklistedActions[1].label, '取消屏蔽');
+      expect(
+        blacklistedActions
+            .firstWhere(
+              (action) =>
+                  action.type == MovieDetailActionType.toggleCollectionType,
+            )
+            .label,
+        '标记为单体',
+      );
+      expect(
+        blacklistedActions
+            .firstWhere(
+              (action) =>
+                  action.type == MovieDetailActionType.toggleBlacklist,
+            )
+            .label,
+        '取消屏蔽',
+      );
     },
   );
 
@@ -54,6 +83,7 @@ void main() {
     final actions = buildMovieDetailActionDescriptors(
       movie: _movieDetail(javdbId: ''),
       isSubscribed: false,
+      isCollection: false,
       isBlacklisted: false,
       canCast: true,
     );
@@ -66,6 +96,7 @@ void main() {
     final actions = buildMovieDetailActionDescriptors(
       movie: _movieDetail(javdbId: ''),
       isSubscribed: false,
+      isCollection: false,
       isBlacklisted: false,
       castSessionLabel: '投屏中 · 客厅电视',
     );
@@ -75,15 +106,20 @@ void main() {
   });
 
   test(
-    'movieDetailRemoteActionSpecFor has no remote spec for openInspector',
+    'movieDetailRemoteActionSpecFor has no remote spec for local actions',
     () {
-      expect(
-        movieDetailRemoteActionSpecFor(
-          action: MovieDetailActionType.openInspector,
-          movieNumber: 'ABC-001',
-        ),
-        isNull,
-      );
+      for (final action in [
+        MovieDetailActionType.openInspector,
+        MovieDetailActionType.toggleCollectionType,
+      ]) {
+        expect(
+          movieDetailRemoteActionSpecFor(
+            action: action,
+            movieNumber: 'ABC-001',
+          ),
+          isNull,
+        );
+      }
     },
   );
 

@@ -148,7 +148,9 @@ class NotificationCenter extends _$NotificationCenter {
             category: filter.category,
           );
       if (!ref.mounted || !_filterRequests.isCurrent(requestId)) return;
-      final notifications = _sortNotifications(response.items);
+      final notifications = _withInFlightReadOverrides(
+        _sortNotifications(response.items),
+      );
       _nextPage = response.page + 1;
       state = state.copyWith(
         notifications: notifications,
@@ -190,10 +192,10 @@ class NotificationCenter extends _$NotificationCenter {
           );
       if (!ref.mounted || generation != _notificationFilterGeneration) return;
       final ids = state.notifications.map((item) => item.id).toSet();
-      final notifications = <ActivityNotificationDto>[
+      final notifications = _withInFlightReadOverrides(<ActivityNotificationDto>[
         ...state.notifications,
         ...response.items.where((item) => ids.add(item.id)),
-      ];
+      ]);
       _nextPage = response.page + 1;
       state = state.copyWith(
         notifications: notifications,
@@ -273,8 +275,9 @@ class NotificationCenter extends _$NotificationCenter {
           .markAllNotificationsRead();
       if (ref.mounted) state = state.copyWith(unreadCount: result.unreadCount);
     } catch (_) {
-      if (ref.mounted)
+      if (ref.mounted) {
         state = state.copyWith(notifications: previous, unreadCount: unread);
+      }
     } finally {
       if (ref.mounted) state = state.copyWith(isMarkingAllRead: false);
     }
@@ -300,7 +303,9 @@ class NotificationCenter extends _$NotificationCenter {
           results[1] as PaginatedResponseDto<ActivityNotificationDto>;
       if (!ref.mounted) return;
       if (state.filter == filter && state.filterUpdate.isIdle) {
-        final items = _sortNotifications(notifications.items);
+        final items = _withInFlightReadOverrides(
+          _sortNotifications(notifications.items),
+        );
         if (_nextPage > 2) {
           // 已翻页：只按 id 就地刷新首页命中的条目，保留已加载的后续页。
           // 整体替换会把列表截回第一页并重置 _nextPage，页面在底部滚动时表现为
@@ -353,7 +358,9 @@ class NotificationCenter extends _$NotificationCenter {
       .getBootstrap(notificationCategory: state.filter.category);
 
   void _applyBootstrapState(ActivityBootstrapDto response) {
-    final notifications = _sortNotifications(response.notifications.items);
+    final notifications = _withInFlightReadOverrides(
+      _sortNotifications(response.notifications.items),
+    );
     _nextPage = response.notifications.page + 1;
     state = state.copyWith(
       notifications: notifications,
@@ -388,6 +395,16 @@ class NotificationCenter extends _$NotificationCenter {
     return null;
   }
 
+  /// 服务端快照落地前的在途已读保护：本地已置读、请求尚未回执的条目，
+  /// 若快照仍是未读（轮询发起早于已读提交），直接写回会把刚读过的行翻回未读。
+  /// 已读回执只更新 [unreadCount]，不修复列表条目，所以这里统一覆盖。
+  List<ActivityNotificationDto> _withInFlightReadOverrides(
+    List<ActivityNotificationDto> items,
+  ) {
+    if (_inFlightReadIds.isEmpty) return items;
+    return _setLocalRead(items, _inFlightReadIds, isRead: true);
+  }
+
   /// 已翻页时的轮询合并：按 id 就地更新已加载条目，不增删条目、不重置
   /// [_nextPage] / [NotificationCenterState.hasMore]。
   List<ActivityNotificationDto> _patchLoadedNotifications(
@@ -398,9 +415,9 @@ class NotificationCenter extends _$NotificationCenter {
       for (final item in freshItems) item.id: item,
     };
     if (freshById.isEmpty) return currentItems;
-    return <ActivityNotificationDto>[
+    return _withInFlightReadOverrides(<ActivityNotificationDto>[
       for (final item in currentItems) freshById[item.id] ?? item,
-    ];
+    ]);
   }
 
   List<ActivityNotificationDto> _sortNotifications(

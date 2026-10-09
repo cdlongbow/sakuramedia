@@ -91,6 +91,49 @@ class NotificationCenterState {
       ),
     );
   }
+
+  /// 内容相等：Riverpod 默认按 `==` 决定要不要通知订阅者（`updateShouldNotify`），
+  /// 全等时跳过通知，30 秒轮询 tick / 已读回执无实质变化就不会凭空重建。
+  /// 必须覆盖全部字段：漏比的字段会静默丢掉该字段的更新。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is NotificationCenterState &&
+        other.initialized == initialized &&
+        other.isInitialLoading == isInitialLoading &&
+        other.initialErrorMessage == initialErrorMessage &&
+        other.unreadCount == unreadCount &&
+        other.connectionState == connectionState &&
+        other.connectionMessage == connectionMessage &&
+        other.filter == filter &&
+        other.filterUpdate == filterUpdate &&
+        other.hasMore == hasMore &&
+        other.isLoadingMore == isLoadingMore &&
+        other.isRefreshing == isRefreshing &&
+        other.loadMoreErrorMessage == loadMoreErrorMessage &&
+        other.refreshErrorMessage == refreshErrorMessage &&
+        other.isMarkingAllRead == isMarkingAllRead &&
+        listEquals(other.notifications, notifications);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    initialized,
+    isInitialLoading,
+    initialErrorMessage,
+    unreadCount,
+    connectionState,
+    connectionMessage,
+    filter,
+    filterUpdate,
+    hasMore,
+    isLoadingMore,
+    isRefreshing,
+    loadMoreErrorMessage,
+    refreshErrorMessage,
+    isMarkingAllRead,
+    Object.hashAll(notifications),
+  );
 }
 
 const Object _sentinel = Object();

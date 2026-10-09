@@ -91,6 +91,10 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
   bool showBufferingIndicator = true,
   Widget? bottomSeekBar,
   bool reserveTopRightToggle = false,
+  // 带右侧面板的播放页传 false：禁用 media_kit 双击进原生全屏路由
+  // （该路由只含 Video，会丢右侧面板），改由应用内全屏接管。
+  // 无面板场景（快播弹窗等）保持默认 true，行为不变。
+  bool toggleFullscreenOnDoublePress = true,
 }) {
   final overlayTokens = theme.appOverlayTokens;
   final topBarTrailingInset =
@@ -99,6 +103,7 @@ MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
           ? overlayTokens.playerBackBadgeMinHeight + theme.appSpacing.sm
           : 0);
   return MaterialDesktopVideoControlsThemeData(
+    toggleFullscreenOnDoublePress: toggleFullscreenOnDoublePress,
     bufferingIndicatorBuilder: showBufferingIndicator
         ? buildMoviePlayerBufferingIndicator
         : (_) => const SizedBox.shrink(),

@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/rankings/presentation/providers/ranking_sum
 import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -20,7 +21,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_over
 import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -199,10 +199,6 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
     final summary =
         ref.watch(rankingSummaryProvider(_scope)).value ??
         RankingSummaryState.initial;
-    final showFooter =
-        summary.paged.items.isNotEmpty &&
-        (summary.paged.isLoadingMore ||
-            summary.paged.loadMoreErrorMessage != null);
     final hasNoSources = summary.filters.hasNoSources;
 
     return AppPageRefreshScope(
@@ -287,19 +283,19 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                               toggleSelect(movie.movieNumber),
                         ),
                       ),
-                    if (showFooter)
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: context.appSpacing.md),
-                          child: AppPagedLoadMoreFooter(
-                            isLoading: summary.paged.isLoadingMore,
-                            errorMessage: summary.paged.loadMoreErrorMessage,
-                            onRetry: () => ref
-                                .read(rankingSummaryProvider(_scope).notifier)
-                                .loadMore(),
-                          ),
-                        ),
+                    // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                    PagedLoadMoreFooterSliver(
+                      watchFooter: (ref) => ref.watch(
+                        rankingSummaryProvider(
+                          _scope,
+                        ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
                       ),
+                      onLoadMore: (ref) => unawaited(
+                        ref
+                            .read(rankingSummaryProvider(_scope).notifier)
+                            .loadMore(),
+                      ),
+                    ),
                   ],
                 ),
               ],

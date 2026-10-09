@@ -41,6 +41,7 @@ class ThemedVideoPlayer extends StatefulWidget {
     this.onResumePromptResolved,
     this.playbackSessionKey,
     this.reservePanelToggleSpace = false,
+    this.disableNativeFullscreen = false,
   });
 
   final VideoController videoController;
@@ -86,6 +87,11 @@ class ThemedVideoPlayer extends StatefulWidget {
   /// 移动端窗口态顶栏为开关预留一格，使最右侧的「视频信息」按钮左移、不与之重叠。
   /// 仅在 [useTouchOptimizedControls] 的移动主题生效；全屏态不预留（无该开关）。
   final bool reservePanelToggleSpace;
+
+  /// 带右侧面板的播放页传 `true`：禁用 media_kit 双击进原生全屏路由
+  /// （该路由只含 Video，会丢右侧面板），全屏改由应用内状态接管。
+  /// 无面板场景保持 `false`，行为不变。
+  final bool disableNativeFullscreen;
 
   @override
   State<ThemedVideoPlayer> createState() => _ThemedVideoPlayerState();
@@ -266,6 +272,7 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
       displaySeekBar: widget.displaySeekBar,
       showBufferingIndicator: showBufferingIndicator,
       reserveTopRightToggle: widget.reservePanelToggleSpace,
+      toggleFullscreenOnDoublePress: !widget.disableNativeFullscreen,
     );
     final desktopFullscreenThemeData = buildMoviePlayerDesktopControlsThemeData(
       theme: theme,
@@ -273,6 +280,7 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
       bottomControls: fullscreenBottom,
       displaySeekBar: widget.displaySeekBar,
       showBufferingIndicator: showBufferingIndicator,
+      toggleFullscreenOnDoublePress: !widget.disableNativeFullscreen,
     );
     final mobileThemeData = buildMoviePlayerMobileControlsThemeData(
       theme: theme,

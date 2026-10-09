@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.dart';
@@ -12,6 +13,10 @@ import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.da
 /// [includeEpisodeButton] 为 `false` 时省略「选集」按钮（全屏态用，浮层在全屏不可见）。
 /// [progressIndicator] 非空时替换默认的 [MaterialPositionIndicator]（时间文字），
 /// 用于合并模式接管整段进度条 + 时间显示（占满中间剩余空间，含 [Expanded] 自身）。
+///
+/// 触摸版不带全屏按钮：现有接入的页面（切片 / 视频合集连播、影片合播）在移动端
+/// 均未实现应用内全屏的布局切换，按钮只会翻转图标、画面无变化；桌面端仍提供
+/// 全屏按钮（叠加系统窗口全屏）。日后某页在触摸端补齐布局切换时，在该页自行加回。
 List<Widget> buildCollectionPlayBottomControls({
   required bool useTouchOptimizedControls,
   required VoidCallback onOpenEpisodes,
@@ -34,7 +39,6 @@ List<Widget> buildCollectionPlayBottomControls({
           onPressed: onOpenEpisodes,
           icon: const Icon(Icons.playlist_play_rounded),
         ),
-      const MaterialFullscreenButton(),
     ];
   }
   return <Widget>[
@@ -53,7 +57,9 @@ List<Widget> buildCollectionPlayBottomControls({
         onPressed: onOpenEpisodes,
         icon: const Icon(Icons.playlist_play_rounded),
       ),
-    const MaterialFullscreenButton(),
+    PlayerAppFullscreenButton(
+      useTouchOptimizedControls: useTouchOptimizedControls,
+    ),
   ];
 }
 

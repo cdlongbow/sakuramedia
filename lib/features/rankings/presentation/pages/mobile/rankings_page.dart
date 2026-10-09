@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/rankings/presentation/providers/ranking_sum
 import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
@@ -21,7 +22,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -163,10 +163,6 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
   }
 
   Widget _buildScrollView(BuildContext context, RankingSummaryState summary) {
-    final showFooter =
-        summary.paged.items.isNotEmpty &&
-        (summary.paged.isLoadingMore ||
-            summary.paged.loadMoreErrorMessage != null);
     final hasNoSources = summary.filters.hasNoSources;
     return AppAdaptiveRefreshScrollView(
       key: const PageStorageKey<String>('mobile:rankings:list'),
@@ -220,19 +216,17 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
                       toggleSelect(movie.movieNumber),
                 ),
               ),
-            if (showFooter)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: context.appSpacing.md),
-                  child: AppPagedLoadMoreFooter(
-                    isLoading: summary.paged.isLoadingMore,
-                    errorMessage: summary.paged.loadMoreErrorMessage,
-                    onRetry: () => ref
-                        .read(rankingSummaryProvider(_scope).notifier)
-                        .loadMore(),
-                  ),
-                ),
+            // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+            PagedLoadMoreFooterSliver(
+              watchFooter: (ref) => ref.watch(
+                rankingSummaryProvider(
+                  _scope,
+                ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
               ),
+              onLoadMore: (ref) => unawaited(
+                ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
+              ),
+            ),
           ],
         ),
       ],
@@ -300,5 +294,3 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
     }
   }
 }
-
-

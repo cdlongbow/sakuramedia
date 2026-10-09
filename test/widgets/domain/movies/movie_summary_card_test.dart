@@ -949,7 +949,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('窄卡四个动作加排名徽标不溢出', (WidgetTester tester) async {
+  testWidgets('窄卡四个动作不溢出且悬停时不显示排名', (WidgetTester tester) async {
     final sessionStore = SessionStore.inMemory();
     await sessionStore.saveBaseUrl('https://api.example.com');
 
@@ -985,6 +985,12 @@ void main() {
       ),
     );
 
+    // 收起态常显排名。
+    expect(
+      find.byKey(const Key('movie-summary-card-rank-ABC-033')),
+      findsOneWidget,
+    );
+
     await _hoverCard(tester, 'ABC-033');
 
     expect(
@@ -1003,9 +1009,10 @@ void main() {
       find.byKey(const Key('movie-summary-card-blacklist-ABC-033')),
       findsOneWidget,
     );
+    // 排名只在收起态显示，悬停面板不再重复。
     expect(
       find.byKey(const Key('movie-summary-card-rank-ABC-033')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(tester.takeException(), isNull);
   });

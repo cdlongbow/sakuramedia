@@ -61,8 +61,11 @@ void main() {
 
     await pumpPage(tester);
 
-    expect(find.text('Movie 1'), findsOneWidget);
-    expect(find.text('ABC-001'), findsWidgets);
+    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-detail-hero-overlay-title')),
+      findsOneWidget,
+    );
     final content = tester.widget<MovieDetailPageContent>(
       find.byType(MovieDetailPageContent),
     );

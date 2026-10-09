@@ -158,6 +158,61 @@ class ActivityCenterState {
       taskNextPage: taskNextPage ?? this.taskNextPage,
     );
   }
+
+  /// 内容相等：Riverpod 默认按 `==` 决定要不要通知订阅者（`updateShouldNotify`），
+  /// 全等时跳过通知，3 秒轮询 tick 无实质变化就不会凭空重建整页。
+  /// 必须覆盖全部字段：漏比的字段会静默丢掉该字段的更新。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ActivityCenterState &&
+        other.initialized == initialized &&
+        other.isInitialLoading == isInitialLoading &&
+        other.initialErrorMessage == initialErrorMessage &&
+        other.activeTab == activeTab &&
+        other.connectionState == connectionState &&
+        other.connectionMessage == connectionMessage &&
+        other.taskFilter == taskFilter &&
+        other.taskFilterUpdate == taskFilterUpdate &&
+        listEquals(other.activeTaskRuns, activeTaskRuns) &&
+        listEquals(other.taskRuns, taskRuns) &&
+        listEquals(other.jobs, jobs) &&
+        other.hasMoreTasks == hasMoreTasks &&
+        other.isLoadingMoreTasks == isLoadingMoreTasks &&
+        other.isLoadingJobs == isLoadingJobs &&
+        other.isRefreshingTaskHistory == isRefreshingTaskHistory &&
+        other.taskLoadMoreErrorMessage == taskLoadMoreErrorMessage &&
+        other.jobErrorMessage == jobErrorMessage &&
+        other.taskRefreshErrorMessage == taskRefreshErrorMessage &&
+        setEquals(other.triggeringTaskKeys, triggeringTaskKeys) &&
+        other.highlightedTaskRunId == highlightedTaskRunId &&
+        other.taskNextPage == taskNextPage;
+  }
+
+  @override
+  int get hashCode => Object.hashAll(<Object?>[
+    initialized,
+    isInitialLoading,
+    initialErrorMessage,
+    activeTab,
+    connectionState,
+    connectionMessage,
+    taskFilter,
+    taskFilterUpdate,
+    Object.hashAll(activeTaskRuns),
+    Object.hashAll(taskRuns),
+    Object.hashAll(jobs),
+    hasMoreTasks,
+    isLoadingMoreTasks,
+    isLoadingJobs,
+    isRefreshingTaskHistory,
+    taskLoadMoreErrorMessage,
+    jobErrorMessage,
+    taskRefreshErrorMessage,
+    Object.hashAllUnordered(triggeringTaskKeys),
+    highlightedTaskRunId,
+    taskNextPage,
+  ]);
 }
 
 const Object _unset = Object();

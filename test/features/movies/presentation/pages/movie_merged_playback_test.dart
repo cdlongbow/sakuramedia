@@ -307,7 +307,7 @@ void main() {
           const Key('movie-detail-merge-playback-button'),
         );
         expect(mergeButton, findsOneWidget);
-        expect(find.text('合并播放 · 2 段'), findsOneWidget);
+        expect(find.byTooltip('合并播放 · 2 段'), findsOneWidget);
         expect(tester.takeException(), isNull);
         if (!external) {
           bundle.adapter.enqueueJson(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:sakuramedia/core/json/json_parse.dart';
 
 class TaskRunDto {
@@ -222,6 +224,53 @@ class TaskRunDto {
       updatedAt: asDateTime(json['updated_at']),
     );
   }
+
+  /// 值相等：任务中心轮询拿它判断快照是否实质变化，未变则不写回 state，
+  /// 避免 3 秒 tick 凭空重建订阅者。必须覆盖全部字段。
+  ///
+  /// [resultSummary] 只做 JSON 文本比对（同一次快照序列化稳定），避免深比较成本。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TaskRunDto &&
+        other.id == id &&
+        other.taskKey == taskKey &&
+        other.taskName == taskName &&
+        other.triggerType == triggerType &&
+        other.state == state &&
+        other.progressCurrent == progressCurrent &&
+        other.progressTotal == progressTotal &&
+        other.progressText == progressText &&
+        other.resultText == resultText &&
+        _jsonMapsEqual(other.resultSummary, resultSummary) &&
+        other.errorMessage == errorMessage &&
+        other.startedAt == startedAt &&
+        other.finishedAt == finishedAt &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    taskKey,
+    state,
+    progressCurrent,
+    progressTotal,
+    progressText,
+    resultText,
+    errorMessage,
+    startedAt,
+    finishedAt,
+    createdAt,
+    updatedAt,
+  );
+}
+
+bool _jsonMapsEqual(Map<String, dynamic>? a, Map<String, dynamic>? b) {
+  if (identical(a, b)) return true;
+  if (a == null || b == null) return false;
+  return jsonEncode(a) == jsonEncode(b);
 }
 
 const Object _sentinel = Object();

@@ -8,6 +8,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
@@ -420,6 +421,11 @@ class _VideoCollectionDetailContentState
     final itemIds = state.items.map((it) => it.itemId);
     final allSelected = isAllSelected(itemIds);
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.videoCollectionAdd,
+      BatchOperationType.videoCollectionRemove,
+      BatchOperationType.videoDelete,
+    ]);
     if (_isMobile) {
       return AppListHeader.selection(
         selectionLabel: '已选 $selectedCount 个',
@@ -450,7 +456,7 @@ class _VideoCollectionDetailContentState
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection
+          onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
               : null,
         ),
@@ -459,14 +465,18 @@ class _VideoCollectionDetailContentState
           label: '从合集移除',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
           label: '删除视频',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
       exitKey: Key('${widget.keyPrefix}-exit-selection-button'),
@@ -479,6 +489,11 @@ class _VideoCollectionDetailContentState
     VideoCollectionDetailState state,
   ) {
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.videoCollectionAdd,
+      BatchOperationType.videoCollectionRemove,
+      BatchOperationType.videoDelete,
+    ]);
     return AppSelectionBottomBar(
       key: Key('${widget.keyPrefix}-batch-bottom-bar'),
       actions: [
@@ -486,7 +501,7 @@ class _VideoCollectionDetailContentState
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection
+          onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
               : null,
         ),
@@ -494,13 +509,17 @@ class _VideoCollectionDetailContentState
           key: Key('${widget.keyPrefix}-batch-remove-button'),
           label: '移除',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
     );

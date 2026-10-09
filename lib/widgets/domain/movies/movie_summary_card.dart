@@ -18,9 +18,10 @@ import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart'
 /// 影片摘要卡：整卡即封面，与全站封面卡片共用同一套悬停披露范式。
 ///
 /// - 收起态：番号（+ 推荐理由）、排名徽标压在底部渐变上常显；触摸端没有
-///   hover，停留在这层；
+///   hover，停留在这层；排名只在这层显示；
 /// - 桌面悬停：底部渐显压暗层（180ms ease-out），标题/时长/日期与整行动作
-///   （播放 / 订阅 / 标记合集-单体 / 屏蔽影片）淡入，收起态主键层淡出；系统开启
+///   （播放 / 订阅 / 标记合集-单体 / 屏蔽影片）淡入，收起态主键层（含排名徽标）
+///   淡出；系统开启
 ///   「减弱动态效果」时退化为瞬时切换；
 /// - 参数与全站封面卡一致：`lg` 圆角、`surfaceCard` 底色、常驻 1px 边框与常驻
 ///   卡片阴影；按下反馈与 [AppInteractiveSurface] 一致（整体变淡 0.7）。
@@ -262,8 +263,9 @@ class MovieSummaryCard extends StatelessWidget {
     );
   }
 
-  /// 悬停面板：番号 + 推荐理由、标题（两行）、时长·日期与整行动作按钮，
-  /// 行尾保留排名徽标；与全站封面卡片共用同一套底部披露层。
+  /// 悬停面板：番号行（番号 + 行尾时长·日期）、推荐理由、标题（两行）
+  /// 与动作按钮；排名只在收起态显示，这里不再重复；
+  /// 与全站封面卡片共用同一套底部披露层。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
     final showBadges = showStatusBadges && !selectionMode;
@@ -308,16 +310,35 @@ class MovieSummaryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          movie.movieNumber,
-          key: Key('movie-summary-card-number-${movie.movieNumber}'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: resolveCoverOverlayTextStyle(
-            context,
-            size: AppTextSize.s12,
-            weight: AppTextWeight.semibold,
-          ),
+        Row(
+          children: [
+            Text(
+              movie.movieNumber,
+              key: Key('movie-summary-card-number-${movie.movieNumber}'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: resolveCoverOverlayTextStyle(
+                context,
+                size: AppTextSize.s12,
+                weight: AppTextWeight.semibold,
+              ),
+            ),
+            SizedBox(width: spacing.xs),
+            // 时长占剩余宽度：标准卡下完整显示，窄卡不够时尾部 ellipsis，
+            // 永不把 Row 撑爆（见 thin-cover 回归测试）。
+            Expanded(
+              child: Text(
+                _metaLine(movie),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: resolveCoverOverlayTextStyle(
+                  context,
+                  size: AppTextSize.s10,
+                  opacity: 0.64,
+                ),
+              ),
+            ),
+          ],
         ),
         if (secondaryLabel case final label?) ...[
           SizedBox(height: spacing.xs / 2),
@@ -343,29 +364,10 @@ class MovieSummaryCard extends StatelessWidget {
             opacity: 0.78,
           ),
         ),
-        SizedBox(height: spacing.xs),
-        Text(
-          _metaLine(movie),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: resolveCoverOverlayTextStyle(
-            context,
-            size: AppTextSize.s10,
-            opacity: 0.64,
-          ),
-        ),
-        SizedBox(height: spacing.sm),
-        // 动作独占一行：4 个动作 + 排名挤在一行会在标准卡宽
-        // （movieCardTargetWidth 220）折行，排名独立成行后动作始终单行。
-        AppCoverHoverActionBar(actions: actions),
-        if (actions.isNotEmpty) SizedBox(height: spacing.xs),
-        if (rank case final rank?)
-          Row(
-            children: [
-              const Spacer(),
-              _RankBadge(rank: rank, movieNumber: movie.movieNumber),
-            ],
-          ),
+        if (actions.isNotEmpty) ...[
+          SizedBox(height: spacing.xs),
+          AppCoverHoverActionBar(actions: actions),
+        ],
       ],
     );
   }

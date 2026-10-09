@@ -176,4 +176,36 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'app top bar hides search and refresh when hideActions is true',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: AppTopBar(
+                currentPath: '/desktop/library/movies/ABC-001',
+                config: const DesktopTopBarConfig(
+                  title: '影片详情',
+                  fallbackPath: '/desktop/library/movies',
+                  isBackEnabled: true,
+                ),
+                onRefresh: () {},
+                overlay: true,
+                hideActions: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('topbar-search-button')), findsNothing);
+      expect(find.byKey(const Key('topbar-refresh-button')), findsNothing);
+      // 返回与标题保留。
+      expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
+      expect(find.text('影片详情'), findsOneWidget);
+    },
+  );
 }

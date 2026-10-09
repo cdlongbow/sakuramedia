@@ -12,7 +12,9 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 class MobileRecentlySubscribedMoviesPage extends StatelessWidget {
   const MobileRecentlySubscribedMoviesPage({super.key});
 
-  static const _scope = MovieSummaryScope.recentlySubscribed(pageSize: 18);
+  // 与概览「最近订阅」分区用同一 scope（默认 pageSize），共享 provider 实例，
+  // 避免从分区进「更多」时用不同 pageSize 再拉一份首页数据。
+  static const _scope = MovieSummaryScope.recentlySubscribed();
 
   @override
   Widget build(BuildContext context) {

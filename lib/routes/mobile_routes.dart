@@ -1478,6 +1478,12 @@ class MobileMovieDetailRouteData extends _MobileSubpageRouteData
   String get defaultLocation => mobileMoviesPath;
 
   @override
+  bool get immersive => true;
+
+  @override
+  EdgeInsetsGeometry get bodyPadding => AppPageInsets.zero;
+
+  @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return MobileMovieDetailPage(movieNumber: movieNumber);
   }
@@ -1535,6 +1541,7 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
   String get title;
   String get defaultLocation;
   EdgeInsetsGeometry get bodyPadding => AppPageInsets.compactStandard;
+  bool get immersive => false;
 
   Widget buildSubpage(BuildContext context, GoRouterState state);
 
@@ -1553,6 +1560,7 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
         defaultLocation: defaultLocation,
         currentPath: state.uri.path,
         bodyPadding: bodyPadding,
+        immersive: immersive,
         child: buildSubpage(context, state),
       ),
     );

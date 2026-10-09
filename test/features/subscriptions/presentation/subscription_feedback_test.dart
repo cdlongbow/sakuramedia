@@ -23,7 +23,7 @@ void main() {
         movieSubscriptionFeedbackMessage(
           const MovieSubscriptionToggleResult.blockedByMedia(),
         ),
-        '该影片存在媒体，默认不能取消订阅',
+        '请删除媒体后再取消订阅',
       );
       expect(
         movieSubscriptionFeedbackMessage(

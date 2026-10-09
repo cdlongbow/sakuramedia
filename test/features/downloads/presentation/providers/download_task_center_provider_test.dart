@@ -388,6 +388,64 @@ void main() {
 
     subscription.close();
   });
+
+  test('polling with identical snapshot does not notify item listeners', () async {
+    var notifications = 0;
+    final subscription = container.listen(
+      downloadTaskCenterProvider.select(
+        (s) => s.value?.paged.items.first.progress,
+      ),
+      (_, __) {
+        notifications++;
+      },
+    );
+    addTearDown(subscription.close);
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    // startPolling 拉一次快照让轮询进入 polling 态，先行消耗掉状态翻转的通知。
+    _enqueueTaskPage(bundle, [taskJson(id: 1)], total: 1);
+    await controller.startPolling();
+    controller.pausePolling();
+    final afterPause = notifications;
+    // 与当前快照逐字段相同的响应：轮询应跳过写回，行级订阅收不到新的通知。
+    _enqueueTaskPage(bundle, [taskJson(id: 1)], total: 1);
+    await controller.resumePolling();
+
+    expect(notifications, afterPause);
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.single.task.id, 1);
+  });
+
+  test('polling with changed progress notifies item listeners', () async {
+    var notifications = 0;
+    final subscription = container.listen(
+      downloadTaskCenterProvider.select(
+        (s) => s.value?.paged.items.first.progress,
+      ),
+      (_, __) {
+        notifications++;
+      },
+    );
+    addTearDown(subscription.close);
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    _enqueueTaskPage(bundle, [taskJson(id: 1)], total: 1);
+    await controller.startPolling();
+    controller.pausePolling();
+    final afterPause = notifications;
+    _enqueueTaskPage(bundle, [taskJson(id: 1, progress: 0.9)], total: 1);
+    await controller.resumePolling();
+
+    expect(notifications, greaterThan(afterPause));
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.paged.items.single.progress, 0.9);
+  });
 }
 
 Map<String, dynamic> taskJson({

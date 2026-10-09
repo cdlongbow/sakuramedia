@@ -813,6 +813,10 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       case MovieDetailActionType.toggleBlacklist:
       case MovieDetailActionType.recomputeHeat:
         await executeMovieAction(action);
+      case MovieDetailActionType.toggleCollectionType:
+        await toggleMovieCollectionType(
+          isCollection: isCollectionOverride ?? movie.isCollection,
+        );
     }
   }
 

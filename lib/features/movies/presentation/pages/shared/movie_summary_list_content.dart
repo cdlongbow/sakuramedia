@@ -11,19 +11,18 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
-import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
@@ -254,18 +253,31 @@ class _MovieSummaryListContentState
 
   @override
   Widget build(BuildContext context) {
-    final moviesAsync = ref.watch(movieSummaryProvider(widget.scope));
-    final summary = moviesAsync.value;
-    final paged = summary?.paged;
-    final filter = summary?.filter.movie ?? MovieFilterState.initial;
-    final items = paged?.items ?? const [];
-    final isInitialLoading = moviesAsync.isLoading && summary == null;
-    final initialErrorMessage = moviesAsync.hasError && summary == null
+    // 只订阅渲染所需的字段：loadMore 的 loading/失败走独立页脚
+    // （[PagedLoadMoreFooterSliver]），翻页状态翻转不重建列表本体。
+    final view = ref.watch(
+      movieSummaryProvider(widget.scope).select(
+        (asyncState) => (
+          filter: asyncState.value?.filter.movie ?? MovieFilterState.initial,
+          total: asyncState.value?.paged.total ?? 0,
+          items: asyncState.value?.paged.items ?? const [],
+          filterUpdate:
+              asyncState.value?.paged.filterUpdate ??
+              const FilterUpdateState.idle(),
+          isInitialLoading: asyncState.isLoading && asyncState.value == null,
+          hasErrorNoValue: asyncState.hasError && asyncState.value == null,
+          updating:
+              asyncState.value?.subscriptionUpdatingMovieNumbers ??
+              const <String>{},
+        ),
+      ),
+    );
+    final filter = view.filter;
+    final items = view.items;
+    final isInitialLoading = view.isInitialLoading;
+    final initialErrorMessage = view.hasErrorNoValue
         ? widget.scope.initialLoadErrorText
         : null;
-    final showFooter =
-        items.isNotEmpty &&
-        (paged!.isLoadingMore || paged.loadMoreErrorMessage != null);
 
     final tagSelectionScope = widget.tagSelectionScope;
     final tagSelection = tagSelectionScope == null
@@ -310,7 +322,7 @@ class _MovieSummaryListContentState
         MovieSummaryListHeaderArgs(
           filterState: filter,
           onApply: _applyFilter,
-          total: paged?.total ?? 0,
+          total: view.total,
           tagSelection: tagSelection,
         ),
       );
@@ -336,7 +348,7 @@ class _MovieSummaryListContentState
         informationSlots: [
           AppListHeaderInfo(
             key: widget.totalKey,
-            label: '${paged?.total ?? 0} 部',
+            label: '${view.total} 部',
           ),
         ],
         actionSlots: [buildEnterSelectionButton()],
@@ -354,7 +366,7 @@ class _MovieSummaryListContentState
               widget.headerLeading!,
             ?header,
             AppFilterUpdateBar(
-              state: paged?.filterUpdate ?? const FilterUpdateState.idle(),
+              state: view.filterUpdate,
               hasPreviousItems: items.isNotEmpty,
               onRetry: () => unawaited(
                 ref
@@ -367,15 +379,14 @@ class _MovieSummaryListContentState
         ),
         child: AppFilterResultLoadingOverlay(
           surfaceColor: widget.surfaceColor,
-          isLoading: paged?.filterUpdate.isLoading ?? false,
+          isLoading: view.filterUpdate.isLoading,
           hasPreviousItems: items.isNotEmpty,
           child: widget.bodyBuilder(
             context,
             _scrollController,
             SliverMainAxisGroup(
               slivers: [
-                if (!(paged?.filterUpdate.hasFailed ?? false) ||
-                    items.isNotEmpty)
+                if (!view.filterUpdate.hasFailed || items.isNotEmpty)
                   AppSkeletonizer.sliver(
                     enabled: isInitialLoading,
                     child: MovieSummarySliver(
@@ -412,8 +423,7 @@ class _MovieSummaryListContentState
                           _hoverFeatureActions.toggleCollectionType,
                       onMovieBlacklist: _hoverFeatureActions.blacklist,
                       isMovieSubscriptionUpdating: (movie) =>
-                          summary?.isSubscriptionUpdating(movie.movieNumber) ??
-                          false,
+                          view.updating.contains(movie.movieNumber),
                       emptyMessage:
                           widget.emptyMessage ??
                           (filter.isDefault ? '暂无影片，去搜索看看吧' : '当前筛选条件下暂无匹配影片'),
@@ -423,19 +433,19 @@ class _MovieSummaryListContentState
                           toggleSelect(movie.movieNumber),
                     ),
                   ),
-                if (showFooter)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: context.appSpacing.md),
-                      child: AppPagedLoadMoreFooter(
-                        isLoading: paged.isLoadingMore,
-                        errorMessage: paged.loadMoreErrorMessage,
-                        onRetry: () => ref
-                            .read(movieSummaryProvider(widget.scope).notifier)
-                            .loadMore(),
-                      ),
-                    ),
+                // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
+                PagedLoadMoreFooterSliver(
+                  watchFooter: (ref) => ref.watch(
+                    movieSummaryProvider(
+                      widget.scope,
+                    ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
                   ),
+                  onLoadMore: (ref) => unawaited(
+                    ref
+                        .read(movieSummaryProvider(widget.scope).notifier)
+                        .loadMore(),
+                  ),
+                ),
               ],
             ),
             widget.enableRefresh ? _handleRefresh : null,

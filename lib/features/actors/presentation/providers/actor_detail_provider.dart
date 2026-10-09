@@ -24,6 +24,10 @@ class ActorDetail extends _$ActorDetail {
   }
 
   /// 顶栏主动刷新失败时保留当前详情并向页面抛错，以延续原 toast 语义。
+  ///
+  /// 自身不上报浏览：与 movie 详情一致，只由页面手势刷新（下拉 / 顶栏，
+  /// refresh 成功后显式调 [reportView]）与首载 [build] 上报；后台同步
+  /// （如管理页改名后重拉）走这里，不应把用户没打开的详情顶进「最近浏览」。
   Future<void> refresh() async {
     final current = state.value;
     if (current?.actor == null || state.isLoading) {
@@ -35,12 +39,19 @@ class ActorDetail extends _$ActorDetail {
     if (!ref.mounted) {
       return;
     }
+    state = AsyncData(current!.copyWith(actor: actor, errorMessage: null));
+  }
+
+  /// 页面手势刷新（下拉 / 顶栏）成功后显式调用，计入一次浏览。
+  void reportView() {
+    if (!ref.mounted) {
+      return;
+    }
     reportRecentView(
       ref,
       entityType: RecentViewEntityType.actor,
       entityId: actorId,
     );
-    state = AsyncData(current!.copyWith(actor: actor, errorMessage: null));
   }
 
   void replaceActor(ActorDetailDto actor) {

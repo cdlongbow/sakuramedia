@@ -21,6 +21,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
@@ -75,13 +76,18 @@ class MoviePlayerContent extends ConsumerStatefulWidget {
   ConsumerState<MoviePlayerContent> createState() => _MoviePlayerContentState();
 }
 
-class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
+class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent>
+    with PlayerAppFullscreenStateMixin<MoviePlayerContent> {
   late final MoviePlayerScope _scope;
   late final MoviePlayer _controller;
   late final MultiSplitViewController _splitController;
   late final MoviePlayerSurfaceController _surfaceController;
 
   MoviePlayerState get _playerState => ref.read(moviePlayerProvider(_scope));
+
+  @override
+  bool get applySystemFullscreenForAppFullscreen =>
+      !widget.useTouchOptimizedControls;
 
   @override
   void initState() {
@@ -109,6 +115,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
 
   @override
   void dispose() {
+    disposePlayerAppFullscreen();
     unawaited(_controller.flushPlaybackProgress());
     _surfaceController.dispose();
     _splitController.dispose();
@@ -156,7 +163,10 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
           dividerHandleBuffer: widget.dividerHandleBuffer,
           collapsible: true,
           panelAvailable: playerState.selectedMedia != null,
-          leftChild: _buildPlayerSurface(context, primaryResolvedUrl),
+          leftChild: PlayerAppFullscreenDoubleTap(
+            enabled: !widget.useTouchOptimizedControls,
+            child: _buildPlayerSurface(context, primaryResolvedUrl),
+          ),
           rightChild: playerState.selectedMedia == null
               ? const SizedBox.expand()
               : _buildThumbnailPanel(),
@@ -164,15 +174,30 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
       }
     }
 
+    // 应用内全屏：去圆角纯黑铺满，分栏与右侧面板保留；Player 实例不重建。
+    // 注意：全屏/窗口态必须保持同一种 widget 类型 + 同一个 key，
+    // 否则 Flutter 会把子树整个 unmount 重建，MoviePlayerSurface 内的
+    // Player 会被 dispose 后重新 open，表现为进/退全屏都从头播放。
+    final fullscreen = isAppFullscreen;
     return Scaffold(
-      backgroundColor: colors.movieDetailHeroBackgroundStart,
-      body: DecoratedBox(
-        key: const Key('movie-player-page-frame'),
-        decoration: BoxDecoration(
-          color: colors.movieDetailHeroBackgroundStart.withValues(alpha: 0.92),
-          borderRadius: context.appRadius.lgBorder,
+      backgroundColor: fullscreen
+          ? Colors.black
+          : colors.movieDetailHeroBackgroundStart,
+      body: PlayerAppFullscreenScope(
+        isFullscreen: fullscreen,
+        onToggle: toggleAppFullscreen,
+        child: DecoratedBox(
+          key: const Key('movie-player-page-frame'),
+          decoration: BoxDecoration(
+            color: fullscreen
+                ? Colors.black
+                : colors.movieDetailHeroBackgroundStart.withValues(alpha: 0.92),
+            borderRadius: fullscreen
+                ? BorderRadius.zero
+                : context.appRadius.lgBorder,
+          ),
+          child: content,
         ),
-        child: content,
       ),
     );
   }
@@ -209,6 +234,7 @@ class _MoviePlayerContentState extends ConsumerState<MoviePlayerContent> {
       onSubtitleReloadRequested: _controller.loadSubtitles,
       onBackPressed: _handleBack,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
+      disableNativeFullscreen: true,
       mediaInfo: _buildMediaInfo(),
       thumbnails: _playerState.thumbnails,
     );

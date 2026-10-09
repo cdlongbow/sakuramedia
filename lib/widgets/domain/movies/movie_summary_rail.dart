@@ -1,15 +1,11 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
-import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_scroll_rail.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_summary_card_wiring.dart';
 
 /// 影片摘要的横向 rail 版本：首页/发现预览区专用。
 ///
@@ -62,6 +58,17 @@ class MovieSummaryRail extends ConsumerWidget {
   /// 与影片详情「相似影片」保持同一密度。
   static const double _desktopCardWidthFactor = 0.75;
 
+  MovieSummaryCardWiring get _wiring => MovieSummaryCardWiring(
+    onMovieTap: onMovieTap,
+    onMovieMenuRequest: onMovieMenuRequest,
+    onMovieSubscriptionTap: onMovieSubscriptionTap,
+    onMovieToggleCollectionType: onMovieToggleCollectionType,
+    onMovieBlacklist: onMovieBlacklist,
+    isMovieSubscriptionUpdating: isMovieSubscriptionUpdating,
+    useDefaultSubscriptionActions: useDefaultSubscriptionActions,
+    secondaryLabelForMovie: secondaryLabelForMovie,
+  );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (errorMessage != null) {
@@ -78,12 +85,6 @@ class MovieSummaryRail extends ConsumerWidget {
         : tokens.movieCardTargetWidth * _desktopCardWidthFactor;
     final cardHeight = cardWidth / tokens.movieCardAspectRatio;
 
-    final usesDefaultSubscriptionActions =
-        useDefaultSubscriptionActions && onMovieSubscriptionTap == null;
-    final updatingMovieNumbers = usesDefaultSubscriptionActions
-        ? ref.watch(movieSubscriptionToggleProvider)
-        : const <String>{};
-
     return AppScrollRail(
       height: cardHeight,
       itemCount: items.length,
@@ -92,44 +93,9 @@ class MovieSummaryRail extends ConsumerWidget {
         final movie = items[index];
         return SizedBox(
           width: cardWidth,
-          child: MovieSummaryCard(
-            movie: movie,
-            onTap: onMovieTap == null ? null : () => onMovieTap!(movie),
-            onRequestMenu: onMovieMenuRequest == null
-                ? null
-                : (globalPosition) =>
-                      onMovieMenuRequest!(movie, globalPosition),
-            onSubscriptionTap: onMovieSubscriptionTap != null
-                ? () => onMovieSubscriptionTap!(movie)
-                : usesDefaultSubscriptionActions
-                ? () => unawaited(
-                    _toggleDefaultMovieSubscription(ref, context, movie),
-                  )
-                : null,
-            onToggleCollectionType: onMovieToggleCollectionType == null
-                ? null
-                : () => onMovieToggleCollectionType!(movie),
-            onBlacklist: onMovieBlacklist == null
-                ? null
-                : () => onMovieBlacklist!(movie),
-            isSubscriptionUpdating:
-                isMovieSubscriptionUpdating?.call(movie) ??
-                updatingMovieNumbers.contains(movie.movieNumber),
-            secondaryLabel: secondaryLabelForMovie?.call(movie),
-          ),
+          child: _wiring.build(context, ref, movie),
         );
       },
     );
   }
-}
-
-Future<void> _toggleDefaultMovieSubscription(
-  WidgetRef ref,
-  BuildContext context,
-  MovieListItemDto movie,
-) async {
-  final result = await ref
-      .read(movieSubscriptionToggleProvider.notifier)
-      .toggle(movieNumber: movie.movieNumber, isSubscribed: movie.isSubscribed);
-  if (context.mounted) showMovieSubscriptionFeedback(result);
 }

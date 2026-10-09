@@ -139,25 +139,43 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
                       child: Container(
                         key: const Key('desktop-shell-content-surface'),
                         color: context.appColors.surfaceElevated,
-                        child: Column(
-                          children: [
-                            AppTopBar(
-                              currentPath: widget.currentPath,
-                              config: widget.topBarConfig,
-                              shellNavigatorKey: widget.shellNavigatorKey,
-                              onRefresh: current == null
-                                  ? null
-                                  : () => _runRefresh(current),
-                              isRefreshing: current != null && _isRefreshing,
-                            ),
-                            Expanded(
-                              child: _DesktopShellBody(
-                                layout: widget.layout,
+                        child: widget.layout == AppShellLayout.immersive
+                            ? _DesktopImmersiveBody(
+                                topBar: AppTopBar(
+                                  currentPath: widget.currentPath,
+                                  config: widget.topBarConfig,
+                                  shellNavigatorKey: widget.shellNavigatorKey,
+                                  onRefresh: current == null
+                                      ? null
+                                      : () => _runRefresh(current),
+                                  isRefreshing:
+                                      current != null && _isRefreshing,
+                                  overlay: true,
+                                  hideActions: true,
+                                ),
                                 child: widget.child,
+                              )
+                            : Column(
+                                children: [
+                                  AppTopBar(
+                                    currentPath: widget.currentPath,
+                                    config: widget.topBarConfig,
+                                    shellNavigatorKey:
+                                        widget.shellNavigatorKey,
+                                    onRefresh: current == null
+                                        ? null
+                                        : () => _runRefresh(current),
+                                    isRefreshing:
+                                        current != null && _isRefreshing,
+                                  ),
+                                  Expanded(
+                                    child: _DesktopShellBody(
+                                      layout: widget.layout,
+                                      child: widget.child,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -200,10 +218,34 @@ class _DesktopShellBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (layout) {
       AppShellLayout.standard => Padding(
-        padding: AppPageInsets.desktopStandard,
+        // 顶部贴顶栏：去掉 24px 顶边距，左右和底部保持桌面标准边距。
+        padding: const EdgeInsets.only(
+          left: AppPageInsets.desktop,
+          right: AppPageInsets.desktop,
+          bottom: AppPageInsets.desktop,
+        ),
         child: child,
       ),
       AppShellLayout.fullscreen => child,
+      AppShellLayout.immersive => child,
     };
+  }
+}
+
+/// 沉浸布局：页面全幅铺底，顶栏透明悬浮在内容之上。
+class _DesktopImmersiveBody extends StatelessWidget {
+  const _DesktopImmersiveBody({required this.topBar, required this.child});
+
+  final Widget topBar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(child: child),
+        Positioned(top: 0, left: 0, right: 0, child: topBar),
+      ],
+    );
   }
 }

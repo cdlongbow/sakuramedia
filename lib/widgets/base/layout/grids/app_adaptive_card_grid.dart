@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -42,12 +41,10 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
     this.childAspectRatio,
     this.mainAxisExtent,
     this.tileAspect,
-    this.maxRows,
   }) : assert(
          layout == AppAdaptiveCardGridLayout.fixedAspect || tileAspect != null,
          'masonry 布局必须提供 tileAspect',
-       ),
-       assert(maxRows == null || maxRows > 0, 'maxRows 必须大于 0');
+       );
 
   /// GridView / MasonryGridView 的 Key(测试锚点),caller 传 'movie-summary-grid' 等。
   final Key? gridKey;
@@ -84,11 +81,6 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
 
   /// masonry 专用:每个 tile 的宽高比(通常来自 item 元数据)。
   final double Function(int index)? tileAspect;
-
-  /// 限制可见行数。用于首页预览等「只展示一行，更多内容进入详情页」的场景。
-  ///
-  /// 保持为空时展示全部 [items]，与既有列表行为一致。
-  final int? maxRows;
 
   @override
   Widget build(BuildContext context) {
@@ -135,16 +127,13 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
           minColumns: minColumns,
           maxColumns: maxColumns ?? componentTokens.cardGridMaxColumns,
         );
-        final visibleItemCount =
-            maxRows == null ? itemCount : math.min(itemCount, columns * maxRows!);
-
         switch (layout) {
           case AppAdaptiveCardGridLayout.fixedAspect:
             return GridView.builder(
               key: gridKey,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: visibleItemCount,
+              itemCount: itemCount,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
                 crossAxisSpacing: spacing,
@@ -163,7 +152,7 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
               crossAxisCount: columns,
               mainAxisSpacing: spacing,
               crossAxisSpacing: spacing,
-              itemCount: visibleItemCount,
+              itemCount: itemCount,
               itemBuilder:
                   (context, index) => AspectRatio(
                     aspectRatio: tileAspect!(index),
@@ -293,6 +282,8 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 buildTile,
                 childCount: itemCount,
+                // 网格 tile 均未申请 keep-alive；AutomaticKeepAlive 只增加元素开销。
+                addAutomaticKeepAlives: false,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,

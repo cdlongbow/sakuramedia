@@ -52,6 +52,7 @@ class MoviePlayerSurface extends ConsumerStatefulWidget {
     this.mediaSourceKind = MoviePlayerMediaSourceKind.unknown,
     this.mediaInfo,
     this.thumbnails = const <MovieMediaThumbnailDto>[],
+    this.disableNativeFullscreen = false,
   });
 
   final String movieNumber;
@@ -77,6 +78,10 @@ class MoviePlayerSurface extends ConsumerStatefulWidget {
   final bool useTouchOptimizedControls;
   final MoviePlayerMediaSourceKind mediaSourceKind;
   final MoviePlayerMediaInfo? mediaInfo;
+
+  /// 带右侧面板的播放页传 `true`：禁用 media_kit 双击进原生全屏路由
+  /// （该路由只含 Video，会丢右侧面板），全屏改由应用内状态接管。
+  final bool disableNativeFullscreen;
 
   /// 右侧时间轴面板同一份缩略图，供桌面进度条 hover 预览使用。
   final List<MovieMediaThumbnailDto> thumbnails;
@@ -689,6 +694,7 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       topControls: topControls,
       bottomControls: bottomControls,
       reserveTopRightToggle: reserveTopRightToggle,
+      toggleFullscreenOnDoublePress: !widget.disableNativeFullscreen,
       bottomSeekBar: widget.useTouchOptimizedControls
           ? null
           : MoviePlayerSeekBarPreview(

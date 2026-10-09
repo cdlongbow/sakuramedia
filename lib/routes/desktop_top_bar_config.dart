@@ -310,7 +310,12 @@ AppShellLayout resolveDesktopShellLayout({
   }
 
   if (currentPath.startsWith('/desktop/library/movies/')) {
-    return AppShellLayout.standard;
+    // 播放器（…/player）保持原布局，只有影片详情页走沉浸。
+    final suffix = currentPath.substring('/desktop/library/movies/'.length);
+    if (suffix.contains('/')) {
+      return AppShellLayout.standard;
+    }
+    return AppShellLayout.immersive;
   }
 
   if (currentPath.startsWith('/desktop/library/actors/')) {

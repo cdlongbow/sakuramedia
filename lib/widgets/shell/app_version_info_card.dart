@@ -1,117 +1,38 @@
-import 'dart:async';
-
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_version_info_state.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
+import 'package:sakuramedia/app/providers/app_update_check_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
-import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
+import 'package:sakuramedia/widgets/shell/app_version_info_parts.dart';
 
-class AppVersionInfoCard extends ConsumerStatefulWidget {
+/// 移动抽屉里的版本信息卡片：完整信息内联展示。
+///
+/// 更新检查状态与桌面侧栏页脚共用 [appUpdateCheckProvider]（每小时轮询，
+/// 失败静默），watch 即触发检查。
+class AppVersionInfoCard extends ConsumerWidget {
   const AppVersionInfoCard({super.key, this.cardKey});
 
   final Key? cardKey;
 
   @override
-  ConsumerState<AppVersionInfoCard> createState() => _AppVersionInfoCardState();
-}
-
-class _AppVersionInfoCardState extends ConsumerState<AppVersionInfoCard> {
-  Timer? _updateCheckTimer;
-  String? _frontendUpdateVersion;
-  String? _backendUpdateVersion;
-  bool _isCheckingUpdates = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        unawaited(_checkForUpdates());
-      }
-    });
-    _updateCheckTimer = Timer.periodic(const Duration(hours: 1), (_) {
-      unawaited(_checkForUpdates());
-    });
-  }
-
-  @override
-  void dispose() {
-    _updateCheckTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _checkForUpdates() async {
-    if (_isCheckingUpdates) {
-      return;
-    }
-    _isCheckingUpdates = true;
-    try {
-      await ref.read(appVersionInfoProvider.notifier).load();
-      if (!mounted) {
-        return;
-      }
-      final frontendVersion =
-          ref.read(appVersionInfoProvider).value?.frontendVersion ?? '';
-      final backendVersion =
-          ref.read(appVersionInfoProvider).value?.backendVersion ?? '';
-      final statusApi = ref.read(statusApiProvider);
-      if (frontendVersion.isNotEmpty) {
-        try {
-          final updateVersion = await statusApi.checkFrontendUpdate(
-            frontendVersion,
-          );
-          if (mounted) {
-            setState(() => _frontendUpdateVersion = updateVersion);
-          }
-        } catch (_) {}
-      }
-      if (backendVersion.isNotEmpty) {
-        try {
-          final updateVersion = await statusApi.checkBackendUpdate(
-            backendVersion,
-          );
-          if (mounted) {
-            setState(() => _backendUpdateVersion = updateVersion);
-          }
-        } catch (_) {}
-      }
-      if (!mounted) {
-        return;
-      }
-
-      try {
-        final plugins = ref.read(pluginsProvider);
-        final notifier = ref.read(pluginsProvider.notifier);
-        if (plugins.hasError) {
-          await notifier.reload();
-        } else {
-          await ref.read(pluginsProvider.future);
-        }
-        await notifier.checkUpdates();
-      } catch (_) {}
-    } finally {
-      _isCheckingUpdates = false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final versionInfo =
         ref.watch(appVersionInfoProvider).value ?? AppVersionInfoState.initial;
     final pluginUpdateCount =
         ref.watch(pluginsProvider).value?.updates.length ?? 0;
+    final updates = ref.watch(appUpdateCheckProvider);
     final frontendVersion = versionInfo.frontendVersionLabel;
     final backendVersion = versionInfo.backendVersionLabel;
-    final hasFrontendUpdate = _frontendUpdateVersion != null;
-    final hasBackendUpdate = _backendUpdateVersion != null;
     final hasUpdates =
-        hasFrontendUpdate || hasBackendUpdate || pluginUpdateCount > 0;
+        updates.hasFrontendUpdate ||
+        updates.hasBackendUpdate ||
+        pluginUpdateCount > 0;
 
     return Container(
-      key: widget.cardKey ?? const Key('sidebar-version-info'),
+      key: cardKey ?? const Key('sidebar-version-info'),
       padding: EdgeInsets.all(context.appSpacing.md),
       decoration: BoxDecoration(
         color: context.appColors.surfaceCard,
@@ -143,125 +64,21 @@ class _AppVersionInfoCardState extends ConsumerState<AppVersionInfoCard> {
             ],
           ),
           SizedBox(height: context.appSpacing.sm),
-          _VersionRow(label: '客户端', value: frontendVersion),
+          AppVersionRow(label: '客户端', value: frontendVersion),
           SizedBox(height: context.appSpacing.xs),
-          _VersionRow(label: '服务端', value: backendVersion),
+          AppVersionRow(label: '服务端', value: backendVersion),
           if (hasUpdates) ...[
             SizedBox(height: context.appSpacing.sm),
             Divider(height: 1, color: context.appColors.divider),
             SizedBox(height: context.appSpacing.sm),
-            _VersionUpdateNotice(
-              frontendUpdateVersion: _frontendUpdateVersion,
-              backendUpdateVersion: _backendUpdateVersion,
+            AppVersionUpdateNotice(
+              frontendUpdateVersion: updates.frontendUpdateVersion,
+              backendUpdateVersion: updates.backendUpdateVersion,
               pluginUpdateCount: pluginUpdateCount,
             ),
           ],
         ],
       ),
-    );
-  }
-}
-
-class _VersionUpdateNotice extends StatelessWidget {
-  const _VersionUpdateNotice({
-    required this.frontendUpdateVersion,
-    required this.backendUpdateVersion,
-    required this.pluginUpdateCount,
-  });
-
-  final String? frontendUpdateVersion;
-  final String? backendUpdateVersion;
-  final int pluginUpdateCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final details = <String>[
-      if (frontendUpdateVersion != null) '客户端 $frontendUpdateVersion',
-      if (backendUpdateVersion != null) '服务端 $backendUpdateVersion',
-      if (pluginUpdateCount > 0) '$pluginUpdateCount 个插件',
-    ].join(' · ');
-
-    return Container(
-      key: const Key('sidebar-update-notice'),
-      padding: EdgeInsets.all(context.appSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.appColors.selectionSurface,
-        borderRadius: context.appRadius.smBorder,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.system_update_rounded,
-            size: context.appComponentTokens.iconSizeSm,
-            color: context.appTextPalette.accent,
-          ),
-          SizedBox(width: context.appSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '发现可用更新',
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.medium,
-                    tone: AppTextTone.accent,
-                  ),
-                ),
-                SizedBox(height: context.appSpacing.xs),
-                Text(
-                  details,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s10,
-                    tone: AppTextTone.accent,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VersionRow extends StatelessWidget {
-  const _VersionRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s12,
-            tone: AppTextTone.muted,
-          ),
-        ),
-        SizedBox(width: context.appSpacing.sm),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            overflow: TextOverflow.ellipsis,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.medium,
-              tone: AppTextTone.tertiary,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

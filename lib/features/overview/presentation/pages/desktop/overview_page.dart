@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
@@ -36,7 +37,7 @@ class DesktopOverviewPage extends ConsumerWidget {
   /// rail，更多内容进各自页面）。
   static const int _previewItemCount = 12;
 
-  Future<void> _refreshOverview(WidgetRef ref) async {
+  Future<void> _refreshOverview(BuildContext context, WidgetRef ref) async {
     final recentPlaylist = ref.read(recentlyPlayedPlaylistProvider).value;
     final futures = <Future<void>>[
       // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),卡片不闪骨架。
@@ -59,7 +60,23 @@ class DesktopOverviewPage extends ConsumerWidget {
     }
     ref.invalidate(recentlyPlayedPlaylistProvider);
     ref.invalidate(recentViewsProvider);
-    await Future.wait<void>(futures);
+    try {
+      await Future.wait<void>([
+        ...futures,
+        // invalidate 的两个 provider 也要等重建完成：否则刷新指示器先于
+        // 「最近播放」「最近浏览」重载结束，rail 里还是旧快照。
+        ref.read(recentlyPlayedPlaylistProvider.future).then<void>((_) {}),
+        ref
+            .read(
+              recentViewsProvider(RecentViewsSection.previewLimit).future,
+            )
+            .then<void>((_) {}),
+      ]);
+    } catch (_) {
+      if (context.mounted) {
+        showToast('刷新失败');
+      }
+    }
   }
 
   Future<void> _toggleMovieSubscription(
@@ -91,7 +108,7 @@ class DesktopOverviewPage extends ConsumerWidget {
         : ref.watch(movieSummaryProvider(recentScope));
 
     return AppPageRefreshScope(
-      onRefresh: () => _refreshOverview(ref),
+      onRefresh: () => _refreshOverview(context, ref),
       child: ColoredBox(
         color: context.appColors.surfaceElevated,
         child: CustomScrollView(

@@ -39,6 +39,7 @@ import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicat
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 
 /// 视频合集连播共享实现：media_kit 播放器（原生 Playlist 自动连播）占满画面，
 /// 底部控制条「选集」按钮唤出右侧滑出的剧集面板（当前高亮 / 点击跳转）。
@@ -74,7 +75,9 @@ class VideoCollectionPlayContent extends ConsumerStatefulWidget {
 
 class _VideoCollectionPlayContentState
     extends ConsumerState<VideoCollectionPlayContent>
-    with CollectionPlaybackPageMixin<VideoCollectionPlayContent> {
+    with
+        CollectionPlaybackPageMixin<VideoCollectionPlayContent>,
+        PlayerAppFullscreenStateMixin<VideoCollectionPlayContent> {
   List<VideoItemListItemDto> _videos = const <VideoItemListItemDto>[];
   List<String> _playUrls = <String>[];
   List<int> _collectionItemIds = <int>[];
@@ -88,6 +91,10 @@ class _VideoCollectionPlayContentState
   String? _errorMessage;
 
   @override
+  bool get applySystemFullscreenForAppFullscreen =>
+      !widget.useTouchOptimizedControls;
+
+  @override
   void initState() {
     super.initState();
     currentIndex = widget.startIndex;
@@ -96,6 +103,7 @@ class _VideoCollectionPlayContentState
 
   @override
   void dispose() {
+    disposePlayerAppFullscreen();
     _playerOverlayEntry?.remove();
     _playerOverlayEntry?.dispose();
     _queueRevision.dispose();
@@ -395,6 +403,7 @@ class _VideoCollectionPlayContentState
       if (mounted && _videos.isEmpty && panelContext.mounted) {
         Navigator.of(panelContext).pop();
         await _videoKey.currentState?.exitFullscreen();
+        exitAppFullscreen();
       }
     }
   }
@@ -530,7 +539,14 @@ class _VideoCollectionPlayContentState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, body: _buildBody(context));
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: PlayerAppFullscreenScope(
+        isFullscreen: isAppFullscreen,
+        onToggle: toggleAppFullscreen,
+        child: _buildBody(context),
+      ),
+    );
   }
 
   Widget _buildBody(BuildContext context) {
@@ -560,7 +576,10 @@ class _VideoCollectionPlayContentState
     // 保留局部 Overlay，让播放信息抽屉仍限制在播放器区域；显式刷新现有 entry。
     _playerOverlayEntry ??= OverlayEntry(
       builder: (overlayContext) => Positioned.fill(
-        child: _buildPlayerSurface(overlayContext, videoController),
+        child: PlayerAppFullscreenDoubleTap(
+          enabled: !widget.useTouchOptimizedControls,
+          child: _buildPlayerSurface(overlayContext, videoController),
+        ),
       ),
     );
     _playerOverlayEntry!.markNeedsBuild();
@@ -615,6 +634,7 @@ class _VideoCollectionPlayContentState
       videoController: videoController,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
       guardInitialSeek: true,
+      disableNativeFullscreen: true,
       playbackSessionKey: _videos.isEmpty
           ? null
           : _videos[currentIndex.clamp(0, _videos.length - 1)].id,

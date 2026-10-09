@@ -42,6 +42,7 @@ class AppMobileSubpageShell extends StatefulWidget {
     required this.child,
     this.currentPath,
     this.bodyPadding = AppPageInsets.compactStandard,
+    this.immersive = false,
   });
 
   final String title;
@@ -49,6 +50,9 @@ class AppMobileSubpageShell extends StatefulWidget {
   final Widget child;
   final String? currentPath;
   final EdgeInsetsGeometry bodyPadding;
+
+  /// 沉浸详情：透明底 + 返回栏悬浮在内容之上（影片详情用）。
+  final bool immersive;
 
   @override
   State<AppMobileSubpageShell> createState() => _AppMobileSubpageShellState();
@@ -68,6 +72,7 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   Widget build(BuildContext context) {
     final router = GoRouter.maybeOf(context);
     final navigator = Navigator.maybeOf(context);
+    final immersive = widget.immersive;
     final content = PopScope<void>(
       canPop: _canPop(router, navigator),
       onPopInvokedWithResult: (didPop, _) {
@@ -78,19 +83,52 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         key: const Key('mobile-subpage-system-overlay'),
-        value: resolveMobileSystemOverlayStyle(context),
+        value: immersive
+            ? const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness: Brightness.light,
+              )
+            : resolveMobileSystemOverlayStyle(context),
         child: ColoredBox(
           key: const Key('mobile-subpage-root-surface'),
-          color: context.appColors.surfaceCard,
+          color: immersive ? Colors.transparent : context.appColors.surfaceCard,
           child: SafeArea(
             key: const Key('mobile-subpage-safe-area'),
+            // 沉浸时顶边不留安全区：封面从状态栏下开始铺。
+            top: !immersive,
             child: Scaffold(
-              backgroundColor: context.appColors.surfaceCard,
+              backgroundColor: immersive
+                  ? Colors.transparent
+                  : context.appColors.surfaceCard,
+              extendBodyBehindAppBar: immersive,
               appBar: AppBar(
                 key: const Key('mobile-subpage-topbar'),
-                backgroundColor: context.appColors.surfaceCard,
+                backgroundColor: immersive
+                    ? Colors.transparent
+                    : context.appColors.surfaceCard,
                 elevation: 0,
                 scrolledUnderElevation: 0,
+                flexibleSpace: immersive
+                    ? DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              context.appColors.mediaOverlayStrong.withValues(
+                                alpha: 0.55,
+                              ),
+                              context.appColors.mediaOverlayStrong.withValues(
+                                alpha: 0,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : null,
                 leadingWidth:
                     context.appComponentTokens.mobileSubpageLeadingWidth,
                 titleSpacing: 0, // 默认 16
@@ -98,7 +136,12 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
                   iconSize: context.appComponentTokens.iconSizeSm,
                   key: const Key('mobile-subpage-back-button'),
                   onPressed: () => _handleBack(context),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: immersive
+                        ? context.appTextPalette.onMedia
+                        : null,
+                  ),
                   tooltip: '返回',
                 ),
                 title: ValueListenableBuilder<String?>(
@@ -117,7 +160,9 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
                         context,
                         size: AppTextSize.s14,
                         weight: AppTextWeight.medium,
-                        tone: AppTextTone.primary,
+                        tone: immersive
+                            ? AppTextTone.onMedia
+                            : AppTextTone.primary,
                       ),
                     );
                   },

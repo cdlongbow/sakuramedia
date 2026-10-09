@@ -55,15 +55,21 @@ void main() {
       'Old actor',
     );
     await _waitForViewHistoryPosts(bundle, 1);
-    // 详情加载与刷新都各上报一次浏览（fire-and-forget）。
+    // 首载上报一次浏览（fire-and-forget）。
     expect(bundle.adapter.hitCount('POST', '/view-history'), 1);
-    await container.read(actorDetailProvider(1).notifier).refresh();
-    await _waitForViewHistoryPosts(bundle, 2);
+    final notifier = container.read(actorDetailProvider(1).notifier);
+    await notifier.refresh();
 
     expect(
       container.read(actorDetailProvider(1)).requireValue.actor?.summary.name,
       'New actor',
     );
+    // refresh 自身不上报（与 movie 详情一致）：后台同步也走 refresh，
+    // 上报会污染「最近浏览」。页面手势刷新成功后显式调 reportView()。
+    expect(bundle.adapter.hitCount('POST', '/view-history'), 1);
+
+    notifier.reportView();
+    await _waitForViewHistoryPosts(bundle, 2);
     expect(bundle.adapter.hitCount('POST', '/view-history'), 2);
     expect(bundle.adapter.requests.last.body, <String, dynamic>{
       'entity_type': 'actor',

@@ -491,6 +491,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         ref.read(movieSummaryProvider(_scope).notifier).refresh(),
         if (_hasLoadedMovieYears) _loadMovieYears(force: true),
       ]);
+      // 手势刷新成功计一次浏览（与 movie 详情页一致；provider 的 refresh
+      // 自身不上报，避免后台同步顶进「最近浏览」）。
+      ref.read(actorDetailProvider(widget.actorId).notifier).reportView();
       if (mounted) {
         setState(() {
           _isActorSubscribedOverride = null;

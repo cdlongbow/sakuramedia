@@ -13,8 +13,10 @@ import 'package:sakuramedia/features/media/presentation/providers/media_librarie
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -73,12 +75,26 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
               toggleSelect(id);
             },
           ),
+          // loadMore 的 loading / 失败提示独立订阅：翻页状态翻转只重建这个
+          // footer，不重建上面的列表本体。
+          PagedLoadMoreFooterSliver(
+            watchFooter: (ref) => ref.watch(
+              invalidMediaProvider.select(
+                (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+              ),
+            ),
+            onLoadMore: (ref) =>
+                unawaited(ref.read(invalidMediaProvider.notifier).loadMore()),
+          ),
           SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
         ],
       ),
     );
 
     if (!widget.mobile || !selectionMode) return content;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.mediaDelete,
+    ]);
     return Column(
       children: [
         Expanded(child: content),
@@ -99,7 +115,7 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
               label: '删除',
               variant: AppButtonVariant.danger,
               icon: const Icon(Icons.delete_outline_rounded),
-              onPressed: selectedCount == 0
+              onPressed: selectedCount == 0 || submitting
                   ? null
                   : () => _batchDelete(selectedIds.toList(growable: false)),
             ),
@@ -193,6 +209,9 @@ class _InvalidMediaHeader extends ConsumerWidget {
 
     // 桌面没有显式「选择模式」：选中任意一条即出现批量操作条。
     if (!mobile && selectedCount > 0) {
+      final submitting = watchBatchOperationSubmitting(ref, const [
+        BatchOperationType.mediaDelete,
+      ]);
       return AppSelectionHeaderToolbar(
         countKey: const Key('invalid-media-selection-count'),
         selectAllKey: const Key('invalid-media-select-all-button'),
@@ -208,7 +227,7 @@ class _InvalidMediaHeader extends ConsumerWidget {
             variant: AppButtonVariant.danger,
             size: AppButtonSize.small,
             icon: const Icon(Icons.delete_outline_rounded),
-            onPressed: selectedCount == 0
+            onPressed: selectedCount == 0 || submitting
                 ? null
                 : () => onBatchDelete(selectedIds.toList(growable: false)),
           ),
@@ -286,9 +305,13 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // loadMore 的 loading / 失败只影响页脚：这里清成中立值，翻页状态翻转
+    // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
       invalidMediaProvider.select(
-        (asyncState) => asyncState.whenData((state) => state.paged),
+        (asyncState) => asyncState.whenData(
+          (state) => withoutLoadMoreStatus(state.paged),
+        ),
       ),
     );
     return SliverPagedAsyncSection<
@@ -335,6 +358,8 @@ class _InvalidMediaBodySliver extends ConsumerWidget {
         onToggleSelect: () => onToggleSelect(item.id),
         onEnterSelection: () => onEnterSelection(item.id),
       ),
+      // 页脚由 PagedLoadMoreFooterSliver 独立渲染。
+      showLoadMoreFooter: false,
     );
   }
 }

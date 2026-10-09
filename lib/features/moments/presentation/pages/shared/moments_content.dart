@@ -20,8 +20,10 @@ import 'package:sakuramedia/features/moments/presentation/providers/moments_prov
 import 'package:sakuramedia/features/moments/presentation/providers/moments_state.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -32,7 +34,6 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -101,6 +102,11 @@ class MomentsContent extends HookConsumerWidget {
     final selectionMode = useState(false);
     final selectedPointIds = useState<Set<int>>(<int>{});
     final selectedCount = selectedPointIds.value.length;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.momentCollectionAdd,
+      BatchOperationType.momentCollectionRemove,
+      BatchOperationType.mediaPointDelete,
+    ]);
 
     void exitSelection() {
       selectionMode.value = false;
@@ -147,16 +153,19 @@ class MomentsContent extends HookConsumerWidget {
     final scrollController = usePagedLoadMoreScroll(
       onReachBottom: () {
         // 对齐旧基类：loadMore 失败存续期间滚动不自动重试。
-        if (paged.loadMoreErrorMessage == null) {
+        // 读实时状态（build 闭包里的 paged 已做 loadMore 中立化）。
+        final loadMoreError = ref
+            .read(momentsProvider)
+            .value
+            ?.paged
+            .loadMoreErrorMessage;
+        if (loadMoreError == null) {
           unawaited(ref.read(momentsProvider.notifier).loadMore());
         }
       },
       triggerOffset: 300,
     );
 
-    final showFooter =
-        paged.isNotEmpty &&
-        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final sliver = SliverMainAxisGroup(
       key: rootKey,
       slivers: [
@@ -199,6 +208,7 @@ class MomentsContent extends HookConsumerWidget {
                 exitSelection,
               ),
             ),
+            submitting: submitting,
           ),
         ),
         _buildBody(
@@ -215,18 +225,16 @@ class MomentsContent extends HookConsumerWidget {
             }
           },
         ),
-        if (showFooter)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: context.appSpacing.md),
-              child: AppPagedLoadMoreFooter(
-                isLoading: paged.isLoadingMore,
-                errorMessage: paged.loadMoreErrorMessage,
-                onRetry: () =>
-                    unawaited(ref.read(momentsProvider.notifier).loadMore()),
-              ),
+        // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+        PagedLoadMoreFooterSliver(
+          watchFooter: (ref) => ref.watch(
+            momentsProvider.select(
+              (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
             ),
           ),
+          onLoadMore: (ref) =>
+              unawaited(ref.read(momentsProvider.notifier).loadMore()),
+        ),
       ],
     );
 
@@ -260,7 +268,7 @@ class MomentsContent extends HookConsumerWidget {
                     key: Key('$keyPrefix-batch-add-collection-button'),
                     label: '加入合集',
                     variant: AppButtonVariant.secondary,
-                    onPressed: selectedCount == 0
+                    onPressed: selectedCount == 0 || submitting
                         ? null
                         : () => unawaited(
                             _batchAddToCollection(
@@ -276,7 +284,7 @@ class MomentsContent extends HookConsumerWidget {
                     key: Key('$keyPrefix-batch-delete-button'),
                     label: '删除',
                     variant: AppButtonVariant.danger,
-                    onPressed: selectedCount == 0
+                    onPressed: selectedCount == 0 || submitting
                         ? null
                         : () => unawaited(
                             _batchDelete(
@@ -443,6 +451,7 @@ class MomentsContent extends HookConsumerWidget {
     required VoidCallback onToggleAll,
     required VoidCallback onBatchAddToCollection,
     required VoidCallback onBatchDelete,
+    required bool submitting,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,6 +483,7 @@ class MomentsContent extends HookConsumerWidget {
             onBatchAddToCollection: onBatchAddToCollection,
             onBatchDelete: onBatchDelete,
             onExitSelection: onExitSelection,
+            submitting: submitting,
           ),
         if (!selectionMode)
           _buildHeader(
@@ -498,6 +508,7 @@ class MomentsContent extends HookConsumerWidget {
     required VoidCallback onBatchAddToCollection,
     required VoidCallback onBatchDelete,
     required VoidCallback onExitSelection,
+    required bool submitting,
   }) {
     final ids = items.map((item) => item.pointId).toSet();
     final allSelected = ids.isNotEmpty && ids.every(selectedPointIds.contains);
@@ -530,14 +541,16 @@ class MomentsContent extends HookConsumerWidget {
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? onBatchAddToCollection : null,
+          onPressed: hasSelection && !submitting
+              ? onBatchAddToCollection
+              : null,
         ),
         AppButton(
           key: Key('$keyPrefix-selection-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? onBatchDelete : null,
+          onPressed: hasSelection && !submitting ? onBatchDelete : null,
         ),
       ],
       exitKey: Key('$keyPrefix-exit-selection-button'),

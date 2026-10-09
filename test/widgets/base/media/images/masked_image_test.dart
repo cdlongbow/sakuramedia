@@ -174,6 +174,80 @@ void main() {
       );
     },
   );
+
+  testWidgets('masked image paints placeholder with placeholderColor', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    const customColor = Color(0xFF123456);
+
+    await tester.pumpWidget(
+      _TestApp(
+        sessionStore: sessionStore,
+        child: const MaskedImage(
+          url: '/covers/a.jpg',
+          placeholderColor: customColor,
+        ),
+      ),
+    );
+
+    // 远端图尚未到达首帧：占位用传入的底色，而不是默认 surfaceMuted。
+    expect(
+      find.descendant(
+        of: find.byType(MaskedImage),
+        matching: find.byWidgetPredicate(
+          (widget) => widget is ColoredBox && widget.color == customColor,
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('masked image skips reveal animation when animateReveal false', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+
+    await tester.pumpWidget(
+      _TestApp(
+        sessionStore: sessionStore,
+        child: const MaskedImage(url: '/covers/a.jpg', animateReveal: false),
+      ),
+    );
+
+    // 背景图关闭淡入：加载中直接显示占位，不挂 AnimatedSwitcher。
+    expect(
+      find.descendant(
+        of: find.byType(MaskedImage),
+        matching: find.byType(AnimatedSwitcher),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('masked image reveals first frame through switcher by default', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+
+    await tester.pumpWidget(
+      _TestApp(
+        sessionStore: sessionStore,
+        child: const MaskedImage(url: '/covers/a.jpg'),
+      ),
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(MaskedImage),
+        matching: find.byType(AnimatedSwitcher),
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 class _TestApp extends StatelessWidget {

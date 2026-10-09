@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/moments/presentation/actions/moment_preview
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -248,6 +249,11 @@ class _MomentCollectionDetailContentState
     final pointIds = state.points.map((point) => point.pointId);
     final allSelected = isAllSelected(pointIds);
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.momentCollectionAdd,
+      BatchOperationType.momentCollectionRemove,
+      BatchOperationType.mediaPointDelete,
+    ]);
     if (_isMobile) {
       return AppListHeader.selection(
         selectionLabel: '已选 $selectedCount 个',
@@ -276,14 +282,18 @@ class _MomentCollectionDetailContentState
           label: '从合集移除',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('$_keyPrefix-batch-delete-button'),
           label: '删除时刻',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
       exitKey: Key('$_keyPrefix-exit-selection-button'),
@@ -296,6 +306,11 @@ class _MomentCollectionDetailContentState
     MomentCollectionDetailState state,
   ) {
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.momentCollectionAdd,
+      BatchOperationType.momentCollectionRemove,
+      BatchOperationType.mediaPointDelete,
+    ]);
     return AppSelectionBottomBar(
       key: Key('$_keyPrefix-batch-bottom-bar'),
       actions: [
@@ -303,7 +318,7 @@ class _MomentCollectionDetailContentState
           key: Key('$_keyPrefix-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection
+          onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
               : null,
         ),
@@ -311,13 +326,17 @@ class _MomentCollectionDetailContentState
           key: Key('$_keyPrefix-batch-remove-button'),
           label: '移除',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('$_keyPrefix-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
     );

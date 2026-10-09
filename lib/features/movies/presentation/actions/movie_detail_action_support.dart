@@ -55,6 +55,7 @@ MovieDetailRemoteActionSpec? movieDetailRemoteActionSpecFor({
     case MovieDetailActionType.castToDevice:
       return null;
     case MovieDetailActionType.toggleSubscription:
+    case MovieDetailActionType.toggleCollectionType:
     case MovieDetailActionType.toggleBlacklist:
       return null;
     case MovieDetailActionType.refreshMetadata:

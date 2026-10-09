@@ -69,7 +69,7 @@ void main() {
       find.byKey(const Key('mobile-movie-detail-page-surface')),
       findsOneWidget,
     );
-    expect(find.text('Movie 1'), findsOneWidget);
+    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
     final content = tester.widget<MovieDetailPageContent>(
       find.byType(MovieDetailPageContent),
     );
@@ -88,10 +88,16 @@ void main() {
 
     await pumpPage(tester);
 
-    await tester.ensureVisible(
-      find.byKey(const Key('movie-clip-strip-card-1')),
+    final clipCard = find.byKey(const Key('movie-clip-strip-card-1'));
+    await tester.ensureVisible(clipCard);
+    // 卡片滚到视口中央：底部悬浮信息栏会盖住贴边的内容，居中后 tap 才落在卡上。
+    await Scrollable.ensureVisible(
+      tester.element(clipCard),
+      alignment: 0.5,
+      duration: const Duration(milliseconds: 200),
     );
-    await tester.tap(find.byKey(const Key('movie-clip-strip-card-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(clipCard);
     await tester.pumpAndSettle();
 
     expect(

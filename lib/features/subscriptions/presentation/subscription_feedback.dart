@@ -17,7 +17,7 @@ String? movieSubscriptionFeedbackMessage(MovieSubscriptionToggleResult result) {
     case MovieSubscriptionToggleStatus.unsubscribed:
       return '已取消订阅影片';
     case MovieSubscriptionToggleStatus.blockedByMedia:
-      return '该影片存在媒体，默认不能取消订阅';
+      return '请删除媒体后再取消订阅';
     case MovieSubscriptionToggleStatus.failed:
       return result.message;
     case MovieSubscriptionToggleStatus.ignored:

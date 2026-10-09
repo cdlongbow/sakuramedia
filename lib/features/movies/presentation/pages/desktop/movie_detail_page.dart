@@ -109,8 +109,9 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       },
       child: Builder(
         builder: (context) {
-          if (detailState.isLoading) {
+          if (detailState.isLoading && detailState.movie == null) {
             // loading 用占位影片渲染真实详情布局，由 [AppSkeletonizer] 灰化。
+            // 暖重进（保活命中已有影片）不进骨架，旧内容常驻直到静默刷新完成。
             return AppSkeletonizer(
               enabled: true,
               child: MovieDetailPageContent(
@@ -118,9 +119,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 movie: movieDetailPlaceholder(),
                 selectedPreviewKey: '',
                 selectedPreviewUrl: null,
-                isCollection: false,
                 isSubscribed: false,
-                isCollectionUpdating: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: null,
                 statItems: const [],
@@ -128,7 +127,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 isSimilarMoviesLoading: false,
                 onInspectorTap: () {},
                 onPlaylistTap: () {},
-                onCollectionToggle: null,
                 onMediaSelect: (_) {},
                 clips: clipPlaceholders(count: 4),
                 subtitleItems: movieSubtitlePlaceholders(),
@@ -174,9 +172,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             mediaItemsOverride: derived.visibleMediaItems,
             selectedPreviewKey: detailState.selectedPreviewKey,
             selectedPreviewUrl: detailState.selectedPreviewUrl,
-            isCollection: isCollection,
             isSubscribed: isSubscribed,
-            isCollectionUpdating: isCollectionUpdating,
             isSubscriptionUpdating: isSubscriptionUpdating,
             isMoreActionsUpdating: activeMovieAction != null,
             selectedMediaId: selectedMedia?.mediaId,
@@ -202,6 +198,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                     globalPosition,
                     movie,
                     isSubscribed,
+                    isCollection,
                     isBlacklisted,
                     selectedMedia,
                   ),
@@ -221,9 +218,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
               );
               if (mounted) await reloadPlaylistMembership();
             },
-            onCollectionToggle: isActionControlsLocked
-                ? null
-                : () => toggleMovieCollectionType(isCollection: isCollection),
             onMediaSelect: selectMedia,
             mergePlaybackLabel: mergePlaybackLabel,
             onMergePlaybackTap:
@@ -336,6 +330,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     Offset globalPosition,
     MovieDetailDto movie,
     bool isSubscribed,
+    bool isCollection,
     bool isBlacklisted,
     MovieMediaItemDto? selectedMedia,
   ) async {
@@ -345,6 +340,7 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       actions: buildMovieDetailActionDescriptors(
         movie: movie,
         isSubscribed: isSubscribed,
+        isCollection: isCollection,
         isBlacklisted: isBlacklisted,
         canCast:
             isCastPlatformSupported &&

@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_play_split_layout.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_page_mixin.dart';
@@ -52,7 +53,9 @@ class MovieMergedPlayContent extends ConsumerStatefulWidget {
 }
 
 class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
-    with CollectionPlaybackPageMixin<MovieMergedPlayContent> {
+    with
+        CollectionPlaybackPageMixin<MovieMergedPlayContent>,
+        PlayerAppFullscreenStateMixin<MovieMergedPlayContent> {
   final _videoKey = GlobalKey<VideoState>();
   List<MovieMediaItemDto> _medias = const [];
   bool _isLoading = true;
@@ -65,7 +68,12 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
   }
 
   @override
+  bool get applySystemFullscreenForAppFullscreen =>
+      !widget.useTouchOptimizedControls;
+
+  @override
   void dispose() {
+    disposePlayerAppFullscreen();
     disposePlayback();
     super.dispose();
   }
@@ -281,11 +289,14 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
         keyPrefix: 'movie-merged',
         collapsible: true,
         panelAvailable: filmstrip != null,
-        left: ThemedVideoPlayer(
-          videoKey: _videoKey,
-          videoController: videoController!,
-          useTouchOptimizedControls: widget.useTouchOptimizedControls,
-          guardInitialSeek: true,
+        left: PlayerAppFullscreenDoubleTap(
+          enabled: !widget.useTouchOptimizedControls,
+          child: ThemedVideoPlayer(
+            videoKey: _videoKey,
+            videoController: videoController!,
+            useTouchOptimizedControls: widget.useTouchOptimizedControls,
+            guardInitialSeek: true,
+            disableNativeFullscreen: true,
           playbackSessionKey: _medias[currentIndex].mediaId,
           displaySeekBar: false,
           topControls: [
@@ -318,12 +329,20 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
               onSeekGlobalSeconds: seekToGlobalSeconds,
             ),
           ),
+          ),
         ),
         right: buildFilmstripPanel(
           onThumbnailMenuRequested: _showThumbnailActions,
         ),
       );
     }
-    return Scaffold(backgroundColor: Colors.black, body: body);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: PlayerAppFullscreenScope(
+        isFullscreen: isAppFullscreen,
+        onToggle: toggleAppFullscreen,
+        child: body,
+      ),
+    );
   }
 }

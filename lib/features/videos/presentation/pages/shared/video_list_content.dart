@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
+import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_filter_sections.dart';
@@ -21,12 +25,12 @@ class VideoListContent extends StatelessWidget {
   const VideoListContent({
     super.key,
     required this.paged,
+    required this.videoProvider,
     required this.headerKey,
     required this.isInitialLoading,
     required this.initialErrorMessage,
     required this.filterState,
     required this.onFilterChanged,
-    required this.onLoadMore,
     required this.onRetryFilter,
     required this.onVideoTap,
     this.onVideoPlay,
@@ -45,12 +49,12 @@ class VideoListContent extends StatelessWidget {
   });
 
   final PagedListState<VideoItemListItemDto> paged;
+  final VideoSummaryProvider videoProvider;
   final GlobalKey headerKey;
   final bool isInitialLoading;
   final String? initialErrorMessage;
   final VideoFilterState filterState;
   final ValueChanged<VideoFilterState> onFilterChanged;
-  final VoidCallback onLoadMore;
   final VoidCallback onRetryFilter;
   final ValueChanged<VideoItemListItemDto> onVideoTap;
 
@@ -95,9 +99,6 @@ class VideoListContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showFooter =
-        paged.items.isNotEmpty &&
-        (paged.isLoadingMore || paged.loadMoreErrorMessage != null);
     final selectionHeader = selectionMode
         ? selectionHeaderBuilder?.call(context)
         : null;
@@ -161,18 +162,18 @@ class VideoListContent extends StatelessWidget {
               emptyMessage: emptyMessage,
             ),
           ),
-        if (showFooter)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: context.appSpacing.md),
-              child: AppPagedLoadMoreFooter(
-                isLoading: paged.isLoadingMore,
-                errorMessage: paged.loadMoreErrorMessage,
-                onRetry: onLoadMore,
-              ),
+        // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+        PagedLoadMoreFooterSliver(
+          watchFooter: (ref) => ref.watch(
+            videoProvider.select(
+              (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
             ),
           ),
+          onLoadMore: (ref) =>
+              unawaited(ref.read(videoProvider.notifier).loadMore()),
+        ),
       ],
     );
   }
 }
+

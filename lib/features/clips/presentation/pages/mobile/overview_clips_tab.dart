@@ -21,7 +21,9 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_overview
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -160,8 +162,18 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
                   child: _buildClipsHeader(context, clips),
                 ),
                 _buildClipsSliver(context, clipsAsync, clips),
-                SliverToBoxAdapter(
-                  child: _buildFooter(context, clipsState?.paged),
+                // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                // 隐藏时保留 lg 底部边距（原语义）。
+                PagedLoadMoreFooterSliver(
+                  hiddenSpacing: PagedFooterSpacing.lg,
+                  watchFooter: (ref) => ref.watch(
+                    clipsOverviewProvider.select(
+                      (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                    ),
+                  ),
+                  onLoadMore: (ref) => unawaited(
+                    ref.read(clipsOverviewProvider.notifier).loadMore(),
+                  ),
                 ),
               ],
             ),
@@ -277,8 +289,17 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
     final spacing = context.appSpacing;
     final hasClips = clips.isNotEmpty;
-    final summary = ref.watch(clipsOverviewProvider).value;
-    final currentSort = summary?.filter.sort ?? ClipsFilter.defaultSort;
+    final summary = ref.watch(
+      clipsOverviewProvider.select(
+        (asyncState) => (
+          sort: asyncState.value?.filter.sort ?? ClipsFilter.defaultSort,
+          filterUpdate:
+              asyncState.value?.paged.filterUpdate ??
+              const FilterUpdateState.idle(),
+        ),
+      ),
+    );
+    final currentSort = summary.sort;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -304,8 +325,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
           _buildSelectionHeader(context, clips)
         else
           AppListHeader(
-            filterUpdate:
-                summary?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+            filterUpdate: summary.filterUpdate,
             hasPreviousFilterItems: hasClips,
             onRetryFilter: () => unawaited(
               ref.read(clipsOverviewProvider.notifier).retryFilter(),
@@ -428,40 +448,6 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     );
   }
 
-  Widget _buildFooter(
-    BuildContext context,
-    PagedListState<MediaClipDto>? paged,
-  ) {
-    if (paged?.loadMoreErrorMessage != null) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-        child: Center(
-          child: AppButton(
-            key: const Key('mobile-clips-load-more-retry'),
-            label: '加载更多失败，点击重试',
-            variant: AppButtonVariant.secondary,
-            size: AppButtonSize.small,
-            onPressed: () =>
-                unawaited(ref.read(clipsOverviewProvider.notifier).loadMore()),
-          ),
-        ),
-      );
-    }
-    if (paged?.isLoadingMore ?? false) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return SizedBox(height: context.appSpacing.lg);
-  }
-
   // ----------------------------------------------------------- 选择栏
 
   /// 选择模式下的顶栏：退出 / 计数 / 全选。批量动作下沉到贴底的
@@ -488,6 +474,10 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   Widget _buildBatchBar(BuildContext context) {
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.clipCollectionAdd,
+      BatchOperationType.clipDelete,
+    ]);
     return AppSelectionBottomBar(
       key: const Key('mobile-clips-batch-bottom-bar'),
       actions: [
@@ -495,13 +485,13 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
           key: const Key('mobile-clips-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? _batchAddToCollection : null,
+          onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('mobile-clips-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),
       ],
     );
@@ -667,3 +657,4 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (submitted) exitSelection();
   }
 }
+

@@ -19,6 +19,7 @@ import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -52,7 +53,12 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
       includeVr: includeVr.value,
       includeFc2: includeFc2.value,
     );
-    final asyncState = ref.watch(provider);
+    // 列表本体忽略 loadMore 状态：翻页 loading/失败只重建独立页脚。
+    final asyncState = ref.watch(
+      provider.select(
+        (asyncValue) => asyncValue.whenData(withoutLoadMoreStatus),
+      ),
+    );
     final spacing = context.appSpacing;
     final selectionMode = useState(false);
     final selectedIds = useState(<int>{});
@@ -314,6 +320,15 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),
             itemBuilder: (context, group, index) =>
                 buildGroup(context, group),
+            // 页脚由 PagedLoadMoreFooterSliver 独立渲染。
+            showLoadMoreFooter: false,
+          ),
+          PagedLoadMoreFooterSliver(
+            watchFooter: (ref) => ref.watch(
+              provider.select((s) => pagedLoadMoreFooterSnapshot(s.value)),
+            ),
+            onLoadMore: (ref) =>
+                unawaited(ref.read(provider.notifier).loadMore()),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.xxl)),
         ],

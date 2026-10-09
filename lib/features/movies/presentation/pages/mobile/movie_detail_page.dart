@@ -106,8 +106,9 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
       color: context.appColors.surfaceCard,
       child: Builder(
         builder: (context) {
-          if (detailState.isLoading) {
+          if (detailState.isLoading && detailState.movie == null) {
             // loading 用占位影片渲染真实详情布局，由 [AppSkeletonizer] 灰化。
+            // 暖重进（保活命中已有影片）不进骨架，旧内容常驻直到静默刷新完成。
             return AppSkeletonizer(
               enabled: true,
               child: MovieDetailPageContent(
@@ -115,9 +116,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
                 movie: movieDetailPlaceholder(),
                 selectedPreviewKey: '',
                 selectedPreviewUrl: null,
-                isCollection: false,
                 isSubscribed: false,
-                isCollectionUpdating: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: null,
                 statItems: const [],
@@ -125,7 +124,6 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
                 isSimilarMoviesLoading: false,
                 onInspectorTap: () {},
                 onPlaylistTap: () {},
-                onCollectionToggle: null,
                 onMediaSelect: (_) {},
                 clips: clipPlaceholders(count: 4),
                 subtitleItems: movieSubtitlePlaceholders(),
@@ -172,12 +170,12 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             mediaItemsOverride: derived.visibleMediaItems,
             selectedPreviewKey: detailState.selectedPreviewKey,
             selectedPreviewUrl: detailState.selectedPreviewUrl,
-            isCollection: isCollection,
+            // 移动端 Hero 铺满裁切，桌面端保持 contain 不动。
+            heroImageFit: BoxFit.cover,
             bottomInfoBarVariant:
                 MovieDetailBottomInfoBarVariant.mobileFullWidth,
             isSubscribed: isSubscribed,
             isSubscriptionUpdating: isSubscriptionUpdating,
-            isCollectionUpdating: isCollectionUpdating,
             isMoreActionsUpdating: activeMovieAction != null,
             selectedMediaId: selectedMedia?.mediaId,
             statItems: buildMovieDetailStatItems(context, movie),
@@ -205,6 +203,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
                 : (_) => _showMovieActionDrawer(
                     movie,
                     isSubscribed,
+                    isCollection,
                     isBlacklisted,
                     selectedMedia,
                   ),
@@ -221,9 +220,6 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
               );
               if (mounted) await reloadPlaylistMembership();
             },
-            onCollectionToggle: isActionControlsLocked
-                ? null
-                : () => toggleMovieCollectionType(isCollection: isCollection),
             onMediaSelect: selectMedia,
             mergePlaybackLabel: mergePlaybackLabel,
             onMergePlaybackTap:
@@ -381,6 +377,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
   Future<void> _showMovieActionDrawer(
     MovieDetailDto movie,
     bool isSubscribed,
+    bool isCollection,
     bool isBlacklisted,
     MovieMediaItemDto? selectedMedia,
   ) async {
@@ -389,6 +386,7 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
       actions: buildMovieDetailActionDescriptors(
         movie: movie,
         isSubscribed: isSubscribed,
+        isCollection: isCollection,
         isBlacklisted: isBlacklisted,
         canCast:
             isCastPlatformSupported &&

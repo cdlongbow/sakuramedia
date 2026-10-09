@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_summary
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
@@ -280,6 +281,8 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
 
   @override
   Widget build(BuildContext context) {
+    // 中立化 loadMore 状态：翻页 loading/失败只重建独立页脚，
+    // 不重建合集区、顶栏与网格（页脚见 VideoListContent 内的 _VideoListFooterSliver）。
     final videosAsync = ref.watch(videoSummaryProvider(_scope));
     final summary = videosAsync.value;
     final paged = summary?.paged;
@@ -317,6 +320,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
               VideoListContent(
                 headerKey: _listHeaderKey,
                 paged: paged ?? const PagedListState<VideoItemListItemDto>(),
+                videoProvider: videoSummaryProvider(_scope),
                 isInitialLoading: videosAsync.isLoading && summary == null,
                 initialErrorMessage: videosAsync.hasError && summary == null
                     ? '视频列表加载失败，请稍后重试'
@@ -326,8 +330,6 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 onRetryFilter: () => unawaited(
                   ref.read(videoSummaryProvider(_scope).notifier).retryFilter(),
                 ),
-                onLoadMore: () =>
-                    ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
                 contentKey: const Key('videos-page-list'),
                 totalKey: const Key('videos-page-total'),
                 sectionSpacing: context.appSpacing.lg,
@@ -367,6 +369,10 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     final videoIds = _loadedVideos.map((v) => v.id);
     final allSelected = isAllSelected(videoIds);
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.videoCollectionAdd,
+      BatchOperationType.videoDelete,
+    ]);
 
     return AppSelectionHeaderToolbar(
       countLabel: '已选 $selectedCount 个',
@@ -382,14 +388,14 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchAddToCollection : null,
+          onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('videos-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),
       ],
       exitKey: const Key('videos-exit-selection-button'),

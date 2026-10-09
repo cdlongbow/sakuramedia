@@ -4,6 +4,13 @@ import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dar
 
 enum AppIconButtonSize { mini, compact, regular }
 
+/// AppIconButton(compact) 的设计边长：iconSizeMd(20) + xs(4) × 2 = 28。
+///
+/// 布局计算需要常量时用（如侧栏收起按钮宽度、顶栏动作槽宽、封面悬停圆钮直径
+/// ——它们按同一档视觉尺寸对齐）；运行时实际尺寸见 [AppIconButton] 内部的
+/// `context.appComponentTokens` 求值，两者同源。
+const double appCompactIconButtonSize = 28;
+
 class AppIconButton extends StatelessWidget {
   const AppIconButton({
     Key? key,

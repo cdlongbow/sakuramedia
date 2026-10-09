@@ -31,7 +31,13 @@ class AppPlatformScope extends InheritedWidget {
   }
 }
 
-enum AppShellLayout { standard, fullscreen }
+enum AppShellLayout {
+  standard,
+  fullscreen,
+
+  /// 沉浸详情：内容全幅，顶栏透明悬浮在内容之上（影片详情用）。
+  immersive,
+}
 
 AppPlatform resolveAppPlatform({AppPlatform? override}) {
   if (override != null) {

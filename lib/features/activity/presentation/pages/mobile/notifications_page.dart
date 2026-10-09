@@ -4,7 +4,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
-import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
@@ -13,7 +12,7 @@ import 'package:sakuramedia/features/activity/presentation/notification_card.dar
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -122,8 +121,11 @@ class _MobileNotificationsPageState
   }
 
   /// 仅在快照「脏」且数据就绪时重拍未读快照;期间冻结,保证浏览稳定。
-  void _ensureSnapshot(NotificationCenterState state) {
-    if (!_snapshotDirty || state.isInitialLoading) {
+  /// 用 ref.read 取实时数据（不订阅），调用方在 setState 后或重建时触发。
+  void _ensureSnapshot() {
+    if (!_snapshotDirty) return;
+    final state = ref.read(notificationCenterProvider);
+    if (state.isInitialLoading) {
       return;
     }
     _unreadSnapshotIds = state.notifications
@@ -173,8 +175,21 @@ class _MobileNotificationsPageState
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(notificationCenterProvider);
-    _ensureSnapshot(state);
+    // 只订阅头部与快照所需的字段：轮询 tick 与已读回执只重建变化的行/页脚，
+    // 不重建整页（见 _MobileNotificationsBodySliver / _MobileNotificationsFooterSliver）。
+    final header = ref.watch(
+      notificationCenterProvider.select((state) {
+        return (
+          unreadCount: state.unreadCount,
+          isMarkingAllRead: state.isMarkingAllRead,
+          unreadIds: state.notifications
+              .where((item) => !item.isRead)
+              .map((item) => item.id)
+              .join(','),
+        );
+      }),
+    );
+    _ensureSnapshot();
     _scheduleAutoLoadOnListChange();
     final spacing = context.appSpacing;
 
@@ -182,7 +197,11 @@ class _MobileNotificationsPageState
       key: const Key('mobile-notifications-page'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildHeader(context, state),
+        _buildHeader(
+          context,
+          unreadCount: header.unreadCount,
+          isMarkingAllRead: header.isMarkingAllRead,
+        ),
         SizedBox(height: spacing.sm),
         Expanded(
           child: AppAdaptiveRefreshScrollView(
@@ -190,14 +209,38 @@ class _MobileNotificationsPageState
             onRefresh: _handleRefresh,
             // 收敛视口外预构建,避免「无感已读」把未展示的卡片提前标已读。
             cacheExtent: 0,
-            slivers: _buildSlivers(context, state),
+            slivers: <Widget>[
+              _MobileNotificationsBodySliver(
+                segment: _segment,
+                unreadSnapshotIds: _unreadSnapshotIds,
+              ),
+              // 页脚常驻：loading / 失败时显示行，空闲只留上下间距（与原逻辑一致）。
+              PagedLoadMoreFooterSliver(
+                topSpacing: PagedFooterSpacing.md,
+                bottomSpacing: PagedFooterSpacing.xl,
+                padWhenIdle: true,
+                watchFooter: (ref) => ref.watch(
+                  notificationCenterProvider.select(
+                    (state) => (
+                      isLoading: state.isLoadingMore,
+                      errorMessage: state.loadMoreErrorMessage,
+                    ),
+                  ),
+                ),
+                onLoadMore: (ref) => unawaited(
+                  ref
+                      .read(notificationCenterProvider.notifier)
+                      .loadMoreNotifications(),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context, NotificationCenterState state) {
+  Widget _buildHeader(BuildContext context, {required int unreadCount, required bool isMarkingAllRead}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -219,107 +262,168 @@ class _MobileNotificationsPageState
           label: '全部已读',
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
-          isLoading: state.isMarkingAllRead,
-          onPressed: state.unreadCount > 0 && !state.isMarkingAllRead
+          isLoading: isMarkingAllRead,
+          onPressed: unreadCount > 0 && !isMarkingAllRead
               ? _handleMarkAllRead
               : null,
         ),
       ],
     );
   }
+}
 
-  List<Widget> _buildSlivers(
-    BuildContext context,
-    NotificationCenterState state,
-  ) {
-    final notifier = ref.read(notificationCenterProvider.notifier);
-    if (state.isInitialLoading && state.notifications.isEmpty) {
-      return <Widget>[_buildSkeletonSliver(context)];
-    }
-    if (state.initialErrorMessage != null && state.notifications.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: AppEmptyState(
-            key: const Key('mobile-notifications-error'),
-            message: state.initialErrorMessage!,
-            onRetry: notifier.reloadAll,
-          ),
-        ),
-      ];
-    }
-
-    final visible = _visibleNotifications(state);
-    if (visible.isEmpty) {
-      return <Widget>[
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: AppEmptyState(
-            key: const Key('mobile-notifications-empty'),
-            message: _segment == _NotificationSegment.unread
-                ? '没有未读消息'
-                : '暂无消息',
-          ),
-        ),
-      ];
-    }
-
-    return <Widget>[
-      SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final item = visible[index];
-          final isLast = index == visible.length - 1;
-          // 卡片被构建(展示)即视为已读,帧后上报避免在 build 中改状态。
-          if (!item.isRead) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notifier.onNotificationDisplayed(item.id);
-            });
-          }
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: isLast ? 0 : context.appSpacing.sm,
-            ),
-            child: RepaintBoundary(
-              child: MobileNotificationCard(
-                notification: item,
-                isUnread: _unreadSnapshotIds.contains(item.id),
-              ),
-            ),
-          );
-        }, childCount: visible.length),
-      ),
-      SliverToBoxAdapter(
-        child: Column(
-          children: [
-            SizedBox(height: context.appSpacing.md),
-            AppPagedLoadMoreFooter(
-              isLoading: state.isLoadingMore,
-              errorMessage: state.loadMoreErrorMessage,
-              onRetry: notifier.loadMoreNotifications,
-            ),
-            SizedBox(height: context.appSpacing.xl),
-          ],
-        ),
-      ),
+/// 按分段与快照过滤可见通知（列表本体订阅用）。
+List<ActivityNotificationDto> _visibleNotifications(
+  List<ActivityNotificationDto> notifications, {
+  required _NotificationSegment segment,
+  required Set<int> unreadSnapshotIds,
+}) {
+  if (segment == _NotificationSegment.unread) {
+    return <ActivityNotificationDto>[
+      for (final item in notifications)
+        if (unreadSnapshotIds.contains(item.id)) item,
     ];
   }
+  return notifications;
+}
 
-  List<ActivityNotificationDto> _visibleNotifications(
-    NotificationCenterState state,
-  ) {
-    final all = state.notifications;
-    if (_segment == _NotificationSegment.all) {
-      return all;
+/// 移动端通知列表本体：只订阅可见条目 id 序列与四态。
+///
+/// 轮询 tick / 已读回执只改变行内数据（序列不变），不重建列表；
+/// 各行通过 [_MobileNotificationRowItem] 独立订阅自己的通知对象。
+class _MobileNotificationsBodySliver extends ConsumerWidget {
+  const _MobileNotificationsBodySliver({
+    required this.segment,
+    required this.unreadSnapshotIds,
+  });
+
+  final _NotificationSegment segment;
+  final Set<int> unreadSnapshotIds;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final body = ref.watch(
+      notificationCenterProvider.select((state) {
+        return (
+          visibleIds: _visibleNotifications(
+            state.notifications,
+            segment: segment,
+            unreadSnapshotIds: unreadSnapshotIds,
+          ).map((item) => item.id).join(','),
+          isInitialLoading: state.isInitialLoading,
+          initialError: state.initialErrorMessage,
+          hasNotifications: state.notifications.isNotEmpty,
+        );
+      }),
+    );
+    if (body.isInitialLoading && !body.hasNotifications) {
+      return const _MobileNotificationsSkeletonSliver();
     }
-    return all
-        .where((item) => _unreadSnapshotIds.contains(item.id))
-        .toList(growable: false);
+    if (body.initialError != null && !body.hasNotifications) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: AppEmptyState(
+          key: const Key('mobile-notifications-error'),
+          message: body.initialError!,
+          onRetry: ref.read(notificationCenterProvider.notifier).reloadAll,
+        ),
+      );
+    }
+    if (body.visibleIds.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: AppEmptyState(
+          key: const Key('mobile-notifications-empty'),
+          message: segment == _NotificationSegment.unread
+              ? '没有未读消息'
+              : '暂无消息',
+        ),
+      );
+    }
+    // 可见条目快照只读不订阅：序列变化时本体重建，快照即新；
+    // 行内变化（已读翻转）由各行独立订阅。
+    final notifications = ref.read(notificationCenterProvider).notifications;
+    final visible = _visibleNotifications(
+      notifications,
+      segment: segment,
+      unreadSnapshotIds: unreadSnapshotIds,
+    );
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final item = visible[index];
+        final isLast = index == visible.length - 1;
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: isLast ? 0 : context.appSpacing.sm,
+          ),
+          child: RepaintBoundary(
+            child: _MobileNotificationRowItem(
+              itemId: item.id,
+              snapshotUnread: unreadSnapshotIds.contains(item.id),
+              fallback: item,
+              isLast: isLast,
+            ),
+          ),
+        );
+      }, childCount: visible.length),
+    );
   }
+}
 
-  Widget _buildSkeletonSliver(BuildContext context) {
+/// 移动端通知单行：独立订阅自己的通知对象（已读翻转只重建本行）。
+///
+/// 高亮红点走冻结快照（[snapshotUnread]），浏览期间稳定；
+/// 已读上报沿用「构建即上报 + 帧后调用」语义。
+class _MobileNotificationRowItem extends ConsumerWidget {
+  const _MobileNotificationRowItem({
+    required this.itemId,
+    required this.snapshotUnread,
+    required this.fallback,
+    required this.isLast,
+  });
+
+  final int itemId;
+  final bool snapshotUnread;
+  final ActivityNotificationDto fallback;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final item =
+        ref.watch(
+          notificationCenterProvider.select(
+            (state) => _notificationById(state.notifications, itemId),
+          ),
+        ) ??
+        fallback;
+    if (!item.isRead) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(notificationCenterProvider.notifier).onNotificationDisplayed(item.id);
+      });
+    }
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: isLast ? 0 : context.appSpacing.sm,
+      ),
+      child: RepaintBoundary(
+        child: MobileNotificationCard(
+          notification: item,
+          isUnread: snapshotUnread,
+        ),
+      ),
+    );
+  }
+}
+
+/// 移动端通知骨架：静态占位，无 provider 订阅。
+class _MobileNotificationsSkeletonSliver extends StatelessWidget {
+  const _MobileNotificationsSkeletonSliver();
+
+  @override
+  Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final placeholders = activityNotificationPlaceholders(
-      count: _skeletonCount,
+      count: _MobileNotificationsPageState._skeletonCount,
     );
     // loading 用占位通知渲染真实卡片，由 [AppSkeletonizer] 灰化。
     return AppSkeletonizer.sliver(
@@ -328,18 +432,31 @@ class _MobileNotificationsPageState
         delegate: SliverChildBuilderDelegate(
           (context, index) => Padding(
             padding: EdgeInsets.only(
-              bottom: index == _skeletonCount - 1 ? 0 : spacing.sm,
+              bottom: index == _MobileNotificationsPageState._skeletonCount - 1
+                  ? 0
+                  : spacing.sm,
             ),
             child: MobileNotificationCard(
               notification: placeholders[index],
               isUnread: false,
             ),
           ),
-          childCount: _skeletonCount,
+          childCount: _MobileNotificationsPageState._skeletonCount,
         ),
       ),
     );
   }
+}
+
+/// 按 id 取通知快照（行卡独立订阅用）；缺席返回 null，调用方回退占位。
+ActivityNotificationDto? _notificationById(
+  List<ActivityNotificationDto> notifications,
+  int id,
+) {
+  for (final item in notifications) {
+    if (item.id == id) return item;
+  }
+  return null;
 }
 
 /// 移动端通知卡片(纯展示)。未读由 [isUnread] 显式驱动(= 在本次未读快照中),

@@ -74,7 +74,107 @@ void main() {
       'entity_id': 5,
     });
   });
+
+  test('load 暖重进不闪骨架：不置 isLoading、不清空相似影片', () async {
+    bundle.adapter
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: <dynamic>[_similarJson()],
+      )
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: <dynamic>[_similarJson()],
+      );
+    final subscription = container.listen(
+      movieDetailProvider('ABC-001'),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+    final notifier = container.read(movieDetailProvider('ABC-001').notifier);
+
+    await notifier.load();
+    expect(container.read(movieDetailProvider('ABC-001')).movie, isNotNull);
+    expect(
+      container.read(movieDetailProvider('ABC-001')).similarMovies,
+      hasLength(1),
+    );
+
+    // 记录暖重进期间所有状态：isLoading 不得为 true，相似列表不得被清空。
+    final seen = <MovieDetailState>[];
+    final warmSubscription = container.listen<MovieDetailState>(
+      movieDetailProvider('ABC-001'),
+      (_, next) => seen.add(next),
+    );
+    addTearDown(warmSubscription.close);
+
+    await notifier.load();
+    await _settle();
+
+    expect(seen.any((state) => state.isLoading), isFalse);
+    expect(seen.any((state) => state.similarMovies.isEmpty), isFalse);
+    expect(
+      container.read(movieDetailProvider('ABC-001')).similarMovies,
+      hasLength(1),
+    );
+    // 暖重进照样静默刷新并上报，与过去每次进入上报保持一致。
+    expect(bundle.adapter.hitCount('GET', '/movies/ABC-001'), 2);
+    await _waitForViewHistoryPosts(bundle, 2);
+    expect(bundle.adapter.hitCount('POST', '/view-history'), 2);
+  });
+
+  test('load 暖重进失败保留旧内容', () async {
+    bundle.adapter
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      )
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001',
+        statusCode: 500,
+        body: const <String, dynamic>{'detail': 'boom'},
+      );
+    final subscription = container.listen(
+      movieDetailProvider('ABC-001'),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+    final notifier = container.read(movieDetailProvider('ABC-001').notifier);
+
+    await notifier.load();
+    expect(container.read(movieDetailProvider('ABC-001')).movie, isNotNull);
+
+    // 暖重进的后台同步失败：旧内容常驻，不进 error。
+    await notifier.load();
+    await _settle();
+
+    final state = container.read(movieDetailProvider('ABC-001'));
+    expect(state.movie, isNotNull);
+    expect(state.isLoading, isFalse);
+    expect(state.errorMessage, isNull);
+  });
 }
+
+Map<String, dynamic> _similarJson() => <String, dynamic>{
+  'javdb_id': 'MovieS1',
+  'movie_number': 'SIM-001',
+  'title': 'Similar movie',
+  'cover_image': null,
+  'release_date': '2024-01-02',
+  'duration_minutes': 120,
+  'heat': 18,
+  'is_subscribed': true,
+  'can_play': true,
+  'similarity_score': 0.91,
+};
 
 Map<String, dynamic> _lastViewHistoryBody(TestApiBundle bundle) {
   return bundle.adapter.requests

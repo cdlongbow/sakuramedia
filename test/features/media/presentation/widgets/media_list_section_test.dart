@@ -164,6 +164,106 @@ void main() {
       reason: '大跨度反向跳转应在一帧内恢复顶部可见项，而非测量中间所有行',
     );
   });
+
+  testWidgets('加载更多失败时页脚显示错误并可重试', (tester) async {
+    final sessionStore = SessionStore.inMemory();
+    await sessionStore.saveBaseUrl('https://api.example.com');
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: <String, dynamic>{
+        'items': List<Map<String, dynamic>>.generate(
+          5,
+          (index) => _mediaItemJson(index + 1),
+        ),
+        'page': 1,
+        'page_size': 30,
+        'total': 10,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      body: const <dynamic>[],
+    );
+    // 第二页先失败：页脚错误；再重试成功：页脚消失、追加条目。
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      statusCode: 500,
+      body: <String, dynamic>{'detail': 'boom'},
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: <String, dynamic>{
+        'items': List<Map<String, dynamic>>.generate(
+          5,
+          (index) => _mediaItemJson(index + 6),
+        ),
+        'page': 2,
+        'page_size': 30,
+        'total': 10,
+      },
+    );
+
+    final scrollController = ScrollController();
+    addTearDown(scrollController.dispose);
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionStoreProvider.overrideWithValue(sessionStore),
+          mediaApiProvider.overrideWithValue(bundle.mediaApi),
+          mediaLibrariesApiProvider.overrideWithValue(bundle.mediaLibrariesApi),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: MediaListSection(
+              scrollController: scrollController,
+              isDeleting: false,
+              isTransferring: false,
+              onBatchDelete: _noOp,
+              onBatchTransfer: _noOp,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MediaListSection)),
+    );
+
+    await tester.runAsync(
+      () => container.read(mediaBrowseProvider.notifier).loadMore(),
+    );
+    await tester.pump();
+    expect(find.text('加载更多媒体失败，请点击重试'), findsOneWidget);
+
+    scrollController.jumpTo(scrollController.position.maxScrollExtent);
+    await tester.pump();
+    await tester.tap(find.text('重试'));
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('加载更多媒体失败，请点击重试'), findsNothing);
+    expect(
+      container.read(mediaBrowseProvider).requireValue.paged.items,
+      hasLength(10),
+      reason: '重试成功后应追加第二页条目',
+    );
+  });
 }
 
 Future<void> _noOp() async {}

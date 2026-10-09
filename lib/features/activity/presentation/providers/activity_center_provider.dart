@@ -413,6 +413,7 @@ class ActivityCenter extends _$ActivityCenter
       if (isDisposed || !_pollingEnabled) return;
       final now = current;
       if (generation != _taskFilterGeneration || !now.taskFilterUpdate.isIdle) {
+        // 筛选过渡期只刷新活动区；无变化时 state 相等，Riverpod 不通知。
         state = AsyncData(now.copyWith(activeTaskRuns: activeTaskRuns));
         return;
       }

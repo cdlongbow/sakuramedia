@@ -445,6 +445,34 @@ void main() {
       expect(find.text('还没有屏蔽任何影片'), findsOneWidget);
     });
 
+    testWidgets('loads the next page of blacklisted movies on scroll', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle, libraries: const []);
+      _enqueueBlacklistedMoviesPage(bundle, page: 1);
+      _enqueueBlacklistedMoviesPage(bundle, page: 2);
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-blacklisted-movies'),
+      );
+      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+
+      // 滚到底自动加载下一页（不再有手动「加载更多」按钮）。
+      await tester.drag(
+        find.text('已屏蔽的影片不会出现在普通列表和推荐中。右键影片可取消屏蔽。'),
+        const Offset(0, -3000),
+      );
+      await tester.pumpAndSettle();
+
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
+      final secondPage = bundle.adapter.requests
+          .where((request) => request.path == '/movies')
+          .last;
+      expect(secondPage.uri.queryParameters['page'], '2');
+    });
+
     testWidgets('unblacklists a movie from its context menu', (
       WidgetTester tester,
     ) async {
@@ -2201,6 +2229,34 @@ void _enqueueAdvancedConfig(TestApiBundle bundle) {
     method: 'GET',
     path: '/config',
     body: _buildAdvancedConfigResponseJson(),
+  );
+}
+
+/// 屏蔽影片分页响应：每页 24 条、共 48 条（足够滚一屏）。
+void _enqueueBlacklistedMoviesPage(TestApiBundle bundle, {required int page}) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies',
+    body: <String, dynamic>{
+      'items': <Map<String, dynamic>>[
+        for (var index = 0; index < 24; index++)
+          <String, dynamic>{
+            'id': (page - 1) * 24 + index + 1,
+            'javdb_id': 'javdb-BL-$page-$index',
+            'movie_number': 'BL-$page-$index',
+            'title': 'Blocked Movie $page-$index',
+            'cover_image': null,
+            'release_date': '2026-01-01',
+            'duration_minutes': 120,
+            'heat': 10,
+            'is_subscribed': false,
+            'can_play': false,
+          },
+      ],
+      'page': page,
+      'page_size': 24,
+      'total': 48,
+    },
   );
 }
 

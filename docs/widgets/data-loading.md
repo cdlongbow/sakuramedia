@@ -5,6 +5,7 @@
 - `AppPullToRefresh`：`lib/widgets/base/layout/scrolling/app_pull_to_refresh.dart`，移动下拉刷新。
 - `AppAdaptiveRefreshScrollView`：根据平台组合刷新和滚动行为。
 - `AppPagedLoadMoreFooter`：分页底部的加载中、失败重试和已完成状态；加载动画随平台自适应。
+- `PagedLoadMoreFooterSliver`：`lib/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart`，分页列表共用的「加载更多」页脚。它自己 `select` loadMore 的 loading / 失败状态，列表本体的 `select` 用同文件的 `withoutLoadMoreStatus` 把这两个字段清成中性值，于是翻页状态翻转只重建页脚。注意中立化只对自带内容相等的值（`PagedListState` / record）生效；整段 section state 需要它自己实现 `==`。
 - `AppFilterTotalHeader`：筛选结果总数信息。
 - `AppSelectableTextScrollConfiguration`：包裹含可选文本的滚动区域，把鼠标排除在拖拽滚动之外，避免列表滚动抢走鼠标文本选择；触摸、触控板、滚轮和滚动条不受影响。
 

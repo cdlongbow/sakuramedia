@@ -255,6 +255,74 @@ void main() {
       1,
     );
   });
+
+  test('polling with identical snapshot does not notify listeners', () async {
+    var notifications = 0;
+    final subscription = container.listen(activityCenterProvider, (_, __) {
+      notifications++;
+    });
+    addTearDown(subscription.close);
+    _enqueueJobs(bundle);
+    _enqueueBootstrap(bundle, activeTaskId: 8, historyTaskId: 9);
+    await container.read(activityCenterProvider.future);
+
+    final controller = container.read(activityCenterProvider.notifier);
+    controller.pausePolling();
+    // pause 会写 pollingState 从 polling 切 idle（记一次通知），基线取其后。
+    final afterPause = notifications;
+    expect(afterPause, greaterThan(0));
+    // 与当前快照逐字段相同的响应：轮询应跳过写回，不产生新的通知。
+    _enqueueTaskHistory(bundle, id: 9);
+    _enqueueActiveTasks(bundle, id: 8);
+    await controller.resumePolling();
+
+    expect(notifications, afterPause);
+    final state = container.read(activityCenterProvider).requireValue;
+    expect(state.activeTaskRuns.single.id, 8);
+    expect(state.taskRuns.single.id, 9);
+  });
+
+  test('polling with changed progress notifies listeners once', () async {
+    var notifications = 0;
+    final subscription = container.listen(activityCenterProvider, (_, __) {
+      notifications++;
+    });
+    addTearDown(subscription.close);
+    _enqueueJobs(bundle);
+    _enqueueBootstrap(bundle, activeTaskId: 8, historyTaskId: 9);
+    await container.read(activityCenterProvider.future);
+
+    final controller = container.read(activityCenterProvider.notifier);
+    controller.pausePolling();
+    final afterPause = notifications;
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          _taskRunJson(id: 9, state: 'completed'),
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs/active',
+      body: <Map<String, dynamic>>[
+        _taskRunJson(id: 8, state: 'running', progressCurrent: 7),
+      ],
+    );
+    await controller.resumePolling();
+
+    expect(notifications, greaterThan(afterPause));
+    final state = container.read(activityCenterProvider).requireValue;
+    expect(
+      state.activeTaskRuns.singleWhere((task) => task.id == 8).progressCurrent,
+      7,
+    );
+  });
 }
 
 void _enqueueTaskHistory(TestApiBundle bundle, {required int id}) {

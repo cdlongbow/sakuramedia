@@ -20,22 +20,16 @@ enum BatchOperationType {
 }
 
 /// `POST /batch-operations` 的受理结果：任务已进入后端队列。
+///
+/// 只保留 `task_run_id`：它是「提交后自动同步」这一后续扩展的唯一抓手
+/// （见 `lib/features/AGENTS.md` 的批量操作条目）；`task_key` 固定为
+/// `batch_operation`、`state` 固定为 `pending`，当前无消费方，不再解析。
 class BatchOperationAcceptedDto {
-  const BatchOperationAcceptedDto({
-    required this.taskRunId,
-    required this.taskKey,
-    required this.state,
-  });
+  const BatchOperationAcceptedDto({required this.taskRunId});
 
   final int taskRunId;
-  final String taskKey;
-  final String state;
 
   factory BatchOperationAcceptedDto.fromJson(Map<String, dynamic> json) {
-    return BatchOperationAcceptedDto(
-      taskRunId: asInt(json['task_run_id']),
-      taskKey: json['task_key'] as String? ?? '',
-      state: json['state'] as String? ?? '',
-    );
+    return BatchOperationAcceptedDto(taskRunId: asInt(json['task_run_id']));
   }
 }

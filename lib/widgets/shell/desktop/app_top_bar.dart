@@ -36,6 +36,8 @@ class AppTopBar extends ConsumerWidget {
     this.shellNavigatorKey,
     this.onRefresh,
     this.isRefreshing = false,
+    this.overlay = false,
+    this.hideActions = false,
   });
 
   final String currentPath;
@@ -43,6 +45,12 @@ class AppTopBar extends ConsumerWidget {
   final GlobalKey<NavigatorState>? shellNavigatorKey;
   final VoidCallback? onRefresh;
   final bool isRefreshing;
+
+  /// 悬浮在沉浸内容之上：透明底 + 顶部压暗保证可读，无分隔线。
+  final bool overlay;
+
+  /// 隐藏搜索/刷新动作（详情页用不到，快捷键刷新不受影响）。
+  final bool hideActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,7 +69,18 @@ class AppTopBar extends ConsumerWidget {
 
     return Container(
       key: const Key('desktop-shell-topbar'),
-      decoration: BoxDecoration(color: context.appColors.surfaceElevated),
+      decoration: overlay
+          ? BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  context.appColors.mediaOverlayStrong.withValues(alpha: 0.55),
+                  context.appColors.mediaOverlayStrong.withValues(alpha: 0),
+                ],
+              ),
+            )
+          : BoxDecoration(color: context.appColors.surfaceElevated),
       child: Column(
         children: [
           SizedBox(
@@ -84,6 +103,9 @@ class AppTopBar extends ConsumerWidget {
                       icon: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: context.appComponentTokens.iconSizeXs,
+                        color: overlay
+                            ? context.appTextPalette.onMedia
+                            : null,
                       ),
                     ),
                   ),
@@ -99,28 +121,31 @@ class AppTopBar extends ConsumerWidget {
                           context,
                           size: AppTextSize.s14,
                           weight: AppTextWeight.semibold,
-                          tone: AppTextTone.primary,
+                          tone: overlay
+                              ? AppTextTone.onMedia
+                              : AppTextTone.primary,
                         ),
                       ),
                     ),
                   ),
                 ),
-                _TopBarSearchEntry(currentPath: currentPath),
-                SizedBox(width: spacing.xs),
-                if (onRefresh != null)
-                  _TopBarRefreshButton(
-                    onPressed: onRefresh!,
-                    isRefreshing: isRefreshing,
+                if (!hideActions) ...[
+                  _TopBarSearchEntry(
+                    currentPath: currentPath,
+                    overlay: overlay,
                   ),
+                  SizedBox(width: spacing.xs),
+                  if (onRefresh != null)
+                    _TopBarRefreshButton(
+                      onPressed: onRefresh!,
+                      isRefreshing: isRefreshing,
+                      overlay: overlay,
+                    ),
+                ],
                 SizedBox(width: rightInset),
                 if (usesAppWindowsCaption) const AppWindowsCaption(),
               ],
             ),
-          ),
-          Divider(
-            key: const Key('topbar-header-divider'),
-            height: 1,
-            color: context.appColors.borderSubtle,
           ),
         ],
       ),
@@ -154,9 +179,10 @@ class AppTopBar extends ConsumerWidget {
 /// 时同样收起。
 /// 以图搜图 / 文字搜图入口沿用旧侧边栏搜索框的行为，挂在展开输入框后缀。
 class _TopBarSearchEntry extends ConsumerStatefulWidget {
-  const _TopBarSearchEntry({required this.currentPath});
+  const _TopBarSearchEntry({required this.currentPath, this.overlay = false});
 
   final String currentPath;
+  final bool overlay;
 
   @override
   ConsumerState<_TopBarSearchEntry> createState() => _TopBarSearchEntryState();
@@ -278,6 +304,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
         icon: Icon(
           Icons.search_rounded,
           size: context.appComponentTokens.iconSizeSm,
+          color: widget.overlay ? context.appTextPalette.onMedia : null,
         ),
       ),
     );
@@ -311,7 +338,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
                   tightSuffix: true,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: context.appFormTokens.fieldHorizontalPadding,
-                    vertical: 10,
+                    vertical: _compactSearchFieldVerticalPadding,
                   ),
                   // 34 高的字段上 8px 圆角偏圆，收紧到 4 更方。
                   borderRadius: context.appRadius.xsBorder,
@@ -335,16 +362,24 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
 
 /// 顶栏右侧动作按钮（搜索切换 / 刷新）的占位宽度，与 AppIconButton(compact)
 /// 同宽，两个图标之间只留 Row 里的固定小间距，避免中间空出一大段。
-const double _topBarActionSlotWidth = 28;
+const double _topBarActionSlotWidth = appCompactIconButtonSize;
+
+/// 顶栏搜索框收紧后的垂直内边距：字段高 = max(28, 字高 14 + 2×10) = 34。
+///
+/// 没有等于 10 的间距 token（xs=4 / md=12），收到这里的命名常量，
+/// 避免在 `EdgeInsets` 里出现裸数字（theme_source_guard 禁令）。
+const double _compactSearchFieldVerticalPadding = 10;
 
 class _TopBarRefreshButton extends StatelessWidget {
   const _TopBarRefreshButton({
     required this.onPressed,
     required this.isRefreshing,
+    this.overlay = false,
   });
 
   final VoidCallback onPressed;
   final bool isRefreshing;
+  final bool overlay;
 
   @override
   Widget build(BuildContext context) {
@@ -361,11 +396,17 @@ class _TopBarRefreshButton extends StatelessWidget {
             height: iconSize,
             child: CircularProgressIndicator.adaptive(
               backgroundColor: switch (Theme.of(context).platform) {
-                TargetPlatform.iOS || TargetPlatform.macOS => context.appTextPalette.muted,
+                TargetPlatform.iOS || TargetPlatform.macOS => overlay
+                    ? context.appTextPalette.onMedia
+                    : context.appTextPalette.muted,
                 _ => null,
               },
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color?>(context.appTextPalette.muted),
+              valueColor: AlwaysStoppedAnimation<Color?>(
+                overlay
+                    ? context.appTextPalette.onMedia
+                    : context.appTextPalette.muted,
+              ),
             ),
           ),
         ),
@@ -379,7 +420,11 @@ class _TopBarRefreshButton extends StatelessWidget {
         tooltip: '刷新',
         onPressed: onPressed,
         padding: EdgeInsets.zero,
-        icon: Icon(Icons.refresh_rounded, size: iconSize),
+        icon: Icon(
+          Icons.refresh_rounded,
+          size: iconSize,
+          color: overlay ? context.appTextPalette.onMedia : null,
+        ),
       ),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart'
+    show appCompactIconButtonSize;
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 /// 封面卡片的桌面悬停披露层：收起态只显示封面，指针悬停时底部渐显压暗层、
@@ -269,8 +271,15 @@ class AppCoverHoverActionBar extends StatelessWidget {
   }
 }
 
-/// 悬停面板动作行里的圆形图标按钮。
+/// 悬停动作按钮直径：与 [appCompactIconButtonSize] 同档（28）。
 ///
+/// `buttonHeightXs` 在 mobile 那套是 32，与桌面顶栏动作槽对不齐，所以这里
+/// 统一引用全局紧凑图标按钮尺寸常量。
+const double _hoverActionDiameter = appCompactIconButtonSize;
+
+/// 悬停面板动作行里的圆形图标按钮（直径 28，与顶栏动作槽同档）。
+///
+/// 图标用 `iconSizeSm`（18）：32→28 后沿用原先 20/32 的图文比例。
 /// [primary] 为播放等主操作：白底实心圆 + 品牌色图标；其余动作为半透明白底 +
 /// 白图标，保证在压暗渐变上可读。按下反馈走 [AppInteractiveSurface]（整体变淡
 /// 0.7，与全站可点元素一致）；`onTap` 为 `null` 时只作占位（不响应点击）。
@@ -298,8 +307,8 @@ class AppCoverHoverActionButton extends StatelessWidget {
       enabled: onTap != null,
       onTap: onTap,
       child: Container(
-        width: tokens.iconSize2xl,
-        height: tokens.iconSize2xl,
+        width: _hoverActionDiameter,
+        height: _hoverActionDiameter,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: primary ? Colors.white : Colors.white.withValues(alpha: 0.16),
@@ -307,7 +316,7 @@ class AppCoverHoverActionButton extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          size: tokens.iconSizeMd,
+          size: tokens.iconSizeSm,
           color: primary
               ? context.appTextPalette.primary
               : context.appTextPalette.onMedia,

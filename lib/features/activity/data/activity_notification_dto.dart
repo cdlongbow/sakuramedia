@@ -119,6 +119,46 @@ class ActivityNotificationDto {
       relatedResourceId: asIntOrNull(json['related_resource_id']),
     );
   }
+
+  /// 值相等：轮询/已读回写用它判断是否实质变化，未变则跳过写回，
+  /// 避免定时 tick 凭空重建订阅者。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ActivityNotificationDto &&
+        other.id == id &&
+        other.category == category &&
+        other.title == title &&
+        other.content == content &&
+        other.eventType == eventType &&
+        other.dedupeKey == dedupeKey &&
+        other.resourceType == resourceType &&
+        other.resourceId == resourceId &&
+        other.isRead == isRead &&
+        other.createdAt == createdAt &&
+        other.updatedAt == updatedAt &&
+        other.relatedTaskRunId == relatedTaskRunId &&
+        other.relatedResourceType == relatedResourceType &&
+        other.relatedResourceId == relatedResourceId;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    category,
+    title,
+    content,
+    eventType,
+    dedupeKey,
+    resourceType,
+    resourceId,
+    isRead,
+    createdAt,
+    updatedAt,
+    relatedTaskRunId,
+    relatedResourceType,
+    relatedResourceId,
+  );
 }
 
 const Object _sentinel = Object();

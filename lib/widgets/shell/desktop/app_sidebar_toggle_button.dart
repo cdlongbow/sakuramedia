@@ -6,7 +6,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
 /// AppIconButton(compact) 按钮边长：iconSizeMd(20) + xs(4) × 2。
-const double sidebarToggleButtonSize = 28;
+const double sidebarToggleButtonSize = appCompactIconButtonSize;
 
 /// 收起/展开按钮在窗口坐标系里的固定水平位置：macOS 排在红绿灯区
 ///（[desktopMacTrafficLightInsetWidth] + [desktopTitleBarControlGap]），

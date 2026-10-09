@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_librarie
 import 'package:sakuramedia/features/media/presentation/widgets/media_browse_filter_toolbar.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -156,6 +157,18 @@ class MediaListSection extends StatelessWidget {
           onRetryThumbnails: onRetryThumbnails,
           retryingThumbnailMediaId: retryingThumbnailMediaId,
           onOpenRowActions: onOpenRowActions,
+        ),
+        // loadMore 的 loading / 失败提示独立订阅：翻页状态翻转只重建这个
+        // footer，不重建上面的列表本体。
+        // 页脚独立订阅 loadMore 状态：翻页 loading/失败翻转只重建它。
+        PagedLoadMoreFooterSliver(
+          watchFooter: (ref) => ref.watch(
+            mediaBrowseProvider.select(
+              (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+            ),
+          ),
+          onLoadMore: (ref) =>
+              unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
         ),
       ],
     );
@@ -517,9 +530,13 @@ class _MediaListBodySliver extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 多选集合变化时 paged 段保持相等，因此列表 sliver 不会整体重建；
     // 每一行通过 [_MediaRowConsumer] 只订阅自己的选中态。
+    // loadMore 的 loading / 失败只影响页脚：这里清成中立值，翻页状态翻转
+    // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
       mediaBrowseProvider.select(
-        (asyncState) => asyncState.whenData((state) => state.paged),
+        (asyncState) => asyncState.whenData(
+          (state) => withoutLoadMoreStatus(state.paged),
+        ),
       ),
     );
 
@@ -587,6 +604,8 @@ class _MediaListBodySliver extends ConsumerWidget {
       onLoadMore: () =>
           unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
       itemBuilder: (context, item, _) => buildRow(context, item),
+      // 页脚由 PagedLoadMoreFooterSliver 独立渲染。
+      showLoadMoreFooter: false,
     );
   }
 }

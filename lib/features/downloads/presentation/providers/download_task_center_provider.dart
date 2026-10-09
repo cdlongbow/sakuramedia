@@ -269,6 +269,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         // 已翻页：只按 task id 就地刷新首页条目的进度/状态，保留已加载的后续页。
         // 整体替换会把列表截回第一页，并与飞行中的 loadMore 错位——它的响应会
         // 带着旧页码写回，导致 currentPage 越界后反复请求空页、底部转圈不消失。
+        // 快照无实质变化时 state 相等，Riverpod 不通知。
         state = AsyncData(
           current.copyWith(
             pollingState: DownloadTaskPollingState.polling,

@@ -551,13 +551,13 @@ void main() {
     expect(layout, AppShellLayout.standard);
   });
 
-  test('desktop shell layout keeps movie detail on standard inset layout', () {
+  test('desktop shell layout keeps movie detail on immersive layout', () {
     final layout = resolveDesktopShellLayout(
       currentPath: '/desktop/library/movies/ABC-001',
       routeSpecs: desktopRouteSpecs,
     );
 
-    expect(layout, AppShellLayout.standard);
+    expect(layout, AppShellLayout.immersive);
   });
 
   test('desktop shell layout keeps actor detail on standard inset layout', () {
@@ -1605,11 +1605,12 @@ void main() {
       find.byKey(const Key('movie-detail-fixed-info-bar')),
     );
     final appSize = tester.getSize(find.byType(MaterialApp).first);
-    expect(infoBarRect.left, AppPageInsets.compact);
-    expect(infoBarRect.right, appSize.width - AppPageInsets.compact);
+    // 影片详情走沉浸布局：内容全幅无内边距，底部栏左右顶边。
+    expect(infoBarRect.left, 0);
+    expect(infoBarRect.right, appSize.width);
     expect(
       infoBarRect.bottom,
-      closeTo(appSize.height - AppPageInsets.compact, 0.1),
+      closeTo(appSize.height, 0.1),
     );
   });
 
@@ -3014,7 +3015,7 @@ void main() {
     expect(find.byKey(const Key('app-topbar-title')), findsOneWidget);
     expect(find.text('影片详情'), findsOneWidget);
     expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
-    expect(find.text('ABC-001'), findsWidgets);
+    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
   });
 
   testWidgets('desktop router opens actor detail route inside shell', (
@@ -3215,7 +3216,8 @@ void main() {
     final detailStart = tester.getTopLeft(
       find.byKey(const Key('movie-detail-page')),
     );
-    expect(detailStart.dx, overviewStart.dx);
+    // 影片详情走沉浸布局：内容全幅，左缘比标准内边距页面更靠左。
+    expect(detailStart.dx, lessThan(overviewStart.dx));
   });
 
   testWidgets('tapping a latest movie card navigates to desktop detail route', (

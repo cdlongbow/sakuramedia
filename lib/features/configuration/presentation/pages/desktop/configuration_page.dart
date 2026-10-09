@@ -97,6 +97,8 @@ class _DesktopConfigurationPageState
           label: '屏蔽影片',
           icon: Icons.block_outlined,
         ),
+        // 列表页自持滚动容器（滚到底加载下一页），不再套外层滚动视图。
+        selfScrolling: true,
         builder: (active) => BlacklistedMoviesSection(active: active),
       ),
       _ConfigurationTab(
@@ -234,9 +236,12 @@ class _DesktopConfigurationPageState
                   sizing: StackFit.expand,
                   children: [
                     for (var i = 0; i < _tabs.length; i++)
-                      _ConfigurationTabScrollView(
-                        child: _tabs[i].builder(i == _selectedIndex),
-                      ),
+                      if (_tabs[i].selfScrolling)
+                        _tabs[i].builder(i == _selectedIndex)
+                      else
+                        _ConfigurationTabScrollView(
+                          child: _tabs[i].builder(i == _selectedIndex),
+                        ),
                   ],
                 ),
               ),
@@ -250,10 +255,17 @@ class _DesktopConfigurationPageState
 
 /// 系统设置单个分类页：分类描述 + 内容构建器。
 class _ConfigurationTab {
-  const _ConfigurationTab({required this.category, required this.builder});
+  const _ConfigurationTab({
+    required this.category,
+    required this.builder,
+    this.selfScrolling = false,
+  });
 
   final _ConfigurationCategory category;
   final Widget Function(bool active) builder;
+
+  /// 内容自带滚动容器（分页列表）时为 true，外层不再包 [_ConfigurationTabScrollView]。
+  final bool selfScrolling;
 }
 
 /// 系统设置左侧分类项描述。

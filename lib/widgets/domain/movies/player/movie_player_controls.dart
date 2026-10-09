@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
+import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_mobile_drawers.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
@@ -57,7 +58,7 @@ List<Widget> buildMoviePlayerMobileBottomControls({
         onSpeedButtonPressed: onSpeedButtonPressed,
         onSubtitleButtonPressed: onSubtitleButtonPressed,
       ),
-    const MaterialFullscreenButton(),
+    const PlayerAppFullscreenButton(useTouchOptimizedControls: true),
   ];
 }
 
@@ -86,6 +87,6 @@ List<Widget> buildMoviePlayerDesktopBottomControls({
       onSubtitleSelected: onSubtitleSelected,
       onReloadRequested: onSubtitleReloadRequested,
     ),
-    const MaterialFullscreenButton(),
+    const PlayerAppFullscreenButton(),
   ];
 }

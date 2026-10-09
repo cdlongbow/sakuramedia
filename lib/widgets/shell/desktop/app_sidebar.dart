@@ -7,7 +7,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
-import 'package:sakuramedia/widgets/shell/app_version_info_card.dart';
+import 'package:sakuramedia/widgets/shell/desktop/sidebar_version_footer.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
 
 class AppSidebar extends ConsumerWidget {
@@ -81,14 +81,6 @@ class AppSidebar extends ConsumerWidget {
                       )
                     : const SizedBox.shrink(),
               ),
-              Divider(
-                key: const Key('sidebar-header-divider'),
-                height: 1,
-                color: _sidebarDividerColor(
-                  appColors,
-                  useDesktopSidebarGlass,
-                ),
-              ),
               Expanded(
                 child: _SidebarNavScrollArea(
                   horizontalPadding: context.appSpacing.sm,
@@ -111,7 +103,7 @@ class AppSidebar extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(height: context.appSpacing.sm),
-                    const AppVersionInfoCard(),
+                    const SidebarVersionFooter(),
                     SizedBox(height: context.appSpacing.sm),
                     AppSidebarItem(
                       key: const Key('sidebar-logout-button'),
@@ -183,6 +175,8 @@ class _SidebarSectionHeader extends StatelessWidget {
 /// 侧边栏一级导航的滚动区。当内容溢出、底部仍可下滑时，在底部叠一层
 /// 透明→底色的渐隐遮罩，提示「下面还有内容」；滚到底自动消失。
 /// 遮罩为纯装饰（[IgnorePointer]），不拦截对底部菜单项的点击。
+/// 桌面侧栏不需要滚动条：用 [ScrollConfiguration] 关掉全局
+/// [MaterialScrollBehavior] 自动叠加的滚动条，保留滚轮/拖拽滚动。
 class _SidebarNavScrollArea extends StatefulWidget {
   const _SidebarNavScrollArea({
     required this.horizontalPadding,
@@ -250,12 +244,19 @@ class _SidebarNavScrollAreaState extends State<_SidebarNavScrollArea> {
       },
       child: Stack(
         children: [
-          SingleChildScrollView(
-            controller: _controller,
-            padding: EdgeInsets.symmetric(horizontal: widget.horizontalPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: widget.children,
+          ScrollConfiguration(
+            behavior: ScrollConfiguration.of(
+              context,
+            ).copyWith(scrollbars: false),
+            child: SingleChildScrollView(
+              controller: _controller,
+              padding: EdgeInsets.symmetric(
+                horizontal: widget.horizontalPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: widget.children,
+              ),
             ),
           ),
           Positioned(

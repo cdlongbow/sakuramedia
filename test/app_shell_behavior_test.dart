@@ -53,11 +53,14 @@ void main() {
     expect(find.text('SakuraMedia'), findsNothing);
     expect(find.text('SA'), findsNothing);
     expect(find.byKey(const Key('sidebar-version-info')), findsOneWidget);
-    expect(find.text('系统版本'), findsOneWidget);
-    expect(find.text('客户端'), findsOneWidget);
-    expect(find.text('0.2.3'), findsOneWidget);
-    expect(find.text('服务端'), findsOneWidget);
-    expect(find.text('v0.2.0'), findsOneWidget);
+    // 版本区收敛为单行页脚：双版本号常驻一行，完整信息收进弹窗。
+    expect(find.text('0.2.3 · v0.2.0'), findsOneWidget);
+    expect(
+      find.byTooltip('客户端 0.2.3 · 服务端 v0.2.0'),
+      findsOneWidget,
+    );
+    expect(find.text('系统版本'), findsNothing);
+    expect(find.byKey(const Key('sidebar-version-dialog')), findsNothing);
 
     await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
     await tester.pumpAndSettle();
@@ -140,8 +143,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('sidebar-update-notice')), findsOneWidget);
+    // 常态：页脚单行 + 有更新 badge，详情收进弹窗、点行才展开。
+    expect(find.byKey(const Key('sidebar-version-info')), findsOneWidget);
+    expect(
+      find.byKey(const Key('sidebar-version-update-badge')),
+      findsOneWidget,
+    );
     expect(find.text('有更新'), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-update-notice')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sidebar-version-info')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('sidebar-version-dialog')), findsOneWidget);
+    expect(find.text('系统版本'), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-update-notice')), findsOneWidget);
     expect(find.text('发现可用更新'), findsOneWidget);
     expect(find.text('客户端 v0.3.0 · 服务端 v0.3.0 · 1 个插件'), findsOneWidget);
     final colors = sakuraThemeData.extension<AppColors>()!;
@@ -151,10 +167,17 @@ void main() {
     final updateNoticeDecoration = updateNotice.decoration! as BoxDecoration;
     expect(updateNoticeDecoration.color, colors.selectionSurface);
     final updateBadge = find.descendant(
-      of: find.byKey(const Key('sidebar-version-info')),
+      of: find.byKey(const Key('sidebar-version-dialog')),
       matching: find.byType(AppBadge),
     );
-    expect(tester.widget<AppBadge>(updateBadge).tone, AppBadgeTone.primary);
+    expect(tester.widget<AppBadge>(updateBadge.first).tone, AppBadgeTone.primary);
+
+    // 弹窗里的插件更新入口存在（跳转逻辑与系统诊断「去修复」同构；
+    // 实际跳转的目标页渲染不在本测试覆盖范围，这里不点击跳转）。
+    expect(
+      find.byKey(const Key('sidebar-version-dialog-go-plugins')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('desktop sidebar groups nav items into 浏览/管理 sections', (
@@ -233,7 +256,7 @@ void main() {
     expect(fadeOpacity().opacity, 0);
   });
 
-  testWidgets('topbar divider aligns with sidebar divider', (
+  testWidgets('topbar header aligns with sidebar header', (
     WidgetTester tester,
   ) async {
     final sessionStore = await _buildLoggedInSessionStore();
@@ -249,16 +272,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final sidebarDivider = tester.getTopLeft(
-      find.byKey(const Key('sidebar-header-divider')),
+    expect(find.byKey(const Key('sidebar-header-divider')), findsNothing);
+    expect(find.byKey(const Key('topbar-header-divider')), findsNothing);
+
+    final sidebarHeader = tester.getRect(
+      find.byKey(const Key('sidebar-header')),
     );
-    final topbarDivider = tester.getTopLeft(
-      find.byKey(const Key('topbar-header-divider')),
+    final topbarHeader = tester.getRect(
+      find.byKey(const Key('topbar-header')),
     );
-    expect(sidebarDivider.dy, topbarDivider.dy);
+    expect(sidebarHeader.top, topbarHeader.top);
+    expect(sidebarHeader.height, topbarHeader.height);
   });
 
-  testWidgets('desktop glass sidebar lines stay subtle in dark mode', (
+  testWidgets('desktop glass sidebar border stays subtle in dark mode', (
     WidgetTester tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
@@ -286,16 +313,8 @@ void main() {
               .color;
       expect(borderColor.toARGB32(), 0x15FFFFFF);
 
-      final headerDivider = tester.widget<Divider>(
-        find.byKey(const Key('sidebar-header-divider')),
-      );
-      expect(headerDivider.color!.toARGB32(), 0x15FFFFFF);
-      expect(headerDivider.color!.a, lessThan(0.12));
-
-      final topbarDivider = tester.widget<Divider>(
-        find.byKey(const Key('topbar-header-divider')),
-      );
-      expect(topbarDivider.color, const Color(0x1FFFFFFF));
+      expect(find.byKey(const Key('sidebar-header-divider')), findsNothing);
+      expect(find.byKey(const Key('topbar-header-divider')), findsNothing);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -348,7 +367,8 @@ void main() {
     expect(find.text('概览'), findsWidgets);
     expect(find.byKey(const Key('topbar-header')), findsOneWidget);
     expect(find.byKey(const Key('sidebar-header')), findsOneWidget);
-    expect(find.byKey(const Key('sidebar-header-divider')), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-header-divider')), findsNothing);
+    expect(find.byKey(const Key('topbar-header-divider')), findsNothing);
 
     // 展开态：按钮固定在窗口左上角，红绿灯预留区（76pt）右侧 8pt，
     // 垂直居中于标题栏。

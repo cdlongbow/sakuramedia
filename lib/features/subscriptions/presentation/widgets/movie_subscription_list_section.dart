@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/downloads_
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 import 'dart:async';
@@ -108,8 +109,13 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
         effectiveScrollController.jumpTo(0);
       }
     });
-    final paged = ref.watch(
-      managerProvider.select((asyncState) => asyncState.value?.paged),
+    final pagedView = ref.watch(
+      managerProvider.select(
+        (asyncState) => (
+          isLoading: asyncState.value?.paged.filterUpdate.isLoading ?? false,
+          hasPreviousItems: asyncState.value?.paged.items.isNotEmpty ?? false,
+        ),
+      ),
     );
     final resultView = AppFixedHeaderLayout(
       header: _ListHeader(
@@ -121,8 +127,8 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
         surfaceColor: mobile
             ? context.appColors.surfaceCard
             : context.appColors.surfaceElevated,
-        isLoading: paged?.filterUpdate.isLoading ?? false,
-        hasPreviousItems: paged?.items.isNotEmpty ?? false,
+        isLoading: pagedView.isLoading,
+        hasPreviousItems: pagedView.hasPreviousItems,
         child: CustomScrollView(
           key: PageStorageKey(managerProvider),
           controller: effectiveScrollController,
@@ -134,6 +140,17 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
               onOpenMovie: onOpenMovie,
               onOpenDownloads: onOpenDownloads,
               mobile: mobile,
+            ),
+            // loadMore 的 loading / 失败提示独立订阅：翻页状态翻转只重建这个
+            // footer，不重建上面的列表本体。
+            PagedLoadMoreFooterSliver(
+              watchFooter: (ref) => ref.watch(
+                managerProvider.select(
+                  (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                ),
+              ),
+              onLoadMore: (ref) =>
+                  unawaited(ref.read(managerProvider.notifier).loadMore()),
             ),
           ],
         ),
@@ -704,9 +721,13 @@ class _ListBodySliver extends ConsumerWidget {
     );
     // 只订阅 paged 段：多选 / 进行中集合变化时它保持相等，列表 sliver 不整体重建，
     // 每行由 [_RowConsumer] 各自订阅自己的选中 / pending 态。
+    // loadMore 的 loading / 失败只影响页脚：这里清成中立值，翻页状态翻转
+    // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
       managerProvider.select(
-        (asyncState) => asyncState.whenData((state) => state.paged),
+        (asyncState) => asyncState.whenData(
+          (state) => withoutLoadMoreStatus(state.paged),
+        ),
       ),
     );
     final notifier = ref.read(managerProvider.notifier);
@@ -757,6 +778,8 @@ class _ListBodySliver extends ConsumerWidget {
         onOpenMovie: onOpenMovie,
         onOpenDownloads: onOpenDownloads,
       ),
+      // 页脚由 [PagedLoadMoreFooterSliver] 独立渲染。
+      showLoadMoreFooter: false,
     );
   }
 }

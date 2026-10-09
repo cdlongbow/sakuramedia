@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -56,7 +57,12 @@ class DuplicateMediaSection extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = duplicateMediaProvider(kind);
-    final asyncState = ref.watch(provider);
+    // 列表本体忽略 loadMore 状态：翻页 loading/失败只重建独立页脚。
+    final asyncState = ref.watch(
+      provider.select(
+        (asyncValue) => asyncValue.whenData(withoutLoadMoreStatus),
+      ),
+    );
     final groups = asyncState.value?.items ?? const <DuplicateMediaGroupDto>[];
     final spacing = context.appSpacing;
     final selectionMode = useState(false);
@@ -300,6 +306,19 @@ class DuplicateMediaSection extends HookConsumerWidget {
             onReload: () => unawaited(ref.read(provider.notifier).reload()),
             onLoadMore: () => unawaited(ref.read(provider.notifier).loadMore()),
             itemBuilder: (context, group, index) => buildGroup(context, group),
+            // 页脚由 [PagedLoadMoreFooterSliver] 独立渲染。
+            showLoadMoreFooter: false,
+          ),
+          // 页脚独立订阅 loadMore 状态：翻页 loading/失败翻转只重建它。
+          PagedLoadMoreFooterSliver(
+            watchFooter: (ref) => ref.watch(
+              duplicateMediaProvider(
+                kind,
+              ).select((s) => pagedLoadMoreFooterSnapshot(s.value)),
+            ),
+            onLoadMore: (ref) => unawaited(
+              ref.read(duplicateMediaProvider(kind).notifier).loadMore(),
+            ),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.xxl)),
         ],
@@ -334,9 +353,17 @@ class _DuplicateMediaHeader extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState = ref.watch(duplicateMediaProvider(kind));
-    final total = asyncState.value?.total ?? 0;
-    final isInitialLoading = asyncState.isLoading && !asyncState.hasValue;
+    // 头部只订阅总数与首载状态：翻页 loading/失败不重建头部。
+    final header = ref.watch(
+      duplicateMediaProvider(kind).select(
+        (asyncState) => (
+          total: asyncState.value?.total ?? 0,
+          isInitialLoading: asyncState.isLoading && !asyncState.hasValue,
+        ),
+      ),
+    );
+    final total = header.total;
+    final isInitialLoading = header.isInitialLoading;
     final selectedKind = useState(kind);
     void applyKind(MediaListItemKind next) {
       selectedKind.value = next;

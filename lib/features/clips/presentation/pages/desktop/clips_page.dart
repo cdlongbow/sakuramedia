@@ -21,7 +21,9 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_overview
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
@@ -166,8 +168,18 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                     clips,
                     isInitialLoading: clipsAsync.isLoading && clips.isEmpty,
                   ),
-                  SliverToBoxAdapter(
-                    child: _buildFooter(context, clipsState?.paged),
+                  // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                  // 隐藏时保留 lg 底部边距（原语义）。
+                  PagedLoadMoreFooterSliver(
+                    hiddenSpacing: PagedFooterSpacing.lg,
+                    watchFooter: (ref) => ref.watch(
+                      clipsOverviewProvider.select(
+                        (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                      ),
+                    ),
+                    onLoadMore: (ref) => unawaited(
+                      ref.read(clipsOverviewProvider.notifier).loadMore(),
+                    ),
                   ),
                 ],
               ),
@@ -284,8 +296,18 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
     final spacing = context.appSpacing;
     final hasClips = clips.isNotEmpty;
-    final summary = ref.watch(clipsOverviewProvider).value;
-    final currentSort = summary?.filter.sort ?? ClipsFilter.defaultSort;
+    // 顶栏只订阅排序与筛选更新态：翻页 loading/失败不重建顶栏。
+    final headerView = ref.watch(
+      clipsOverviewProvider.select(
+        (asyncState) => (
+          sort: asyncState.value?.filter.sort ?? ClipsFilter.defaultSort,
+          filterUpdate:
+              asyncState.value?.paged.filterUpdate ??
+              const FilterUpdateState.idle(),
+        ),
+      ),
+    );
+    final currentSort = headerView.sort;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -311,8 +333,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           _buildSelectionHeader(context, clips)
         else
           AppListHeader(
-            filterUpdate:
-                summary?.paged.filterUpdate ?? const FilterUpdateState.idle(),
+            filterUpdate: headerView.filterUpdate,
             hasPreviousFilterItems: hasClips,
             onRetryFilter: () => unawaited(
               ref.read(clipsOverviewProvider.notifier).retryFilter(),
@@ -375,6 +396,10 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     final clipIds = clips.map((c) => c.clipId);
     final allSelected = isAllSelected(clipIds);
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.clipCollectionAdd,
+      BatchOperationType.clipDelete,
+    ]);
     return AppSelectionHeaderToolbar(
       countLabel: '已选 $selectedCount 个',
       selectAllLabel: allSelected ? '取消全选' : '全选',
@@ -386,14 +411,14 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
           label: '加入合集',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchAddToCollection : null,
+          onPressed: hasSelection && !submitting ? _batchAddToCollection : null,
         ),
         AppButton(
           key: const Key('clips-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? _batchDelete : null,
+          onPressed: hasSelection && !submitting ? _batchDelete : null,
         ),
       ],
       exitKey: const Key('clips-exit-selection-button'),
@@ -451,40 +476,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         },
       ),
     );
-  }
-
-  Widget _buildFooter(
-    BuildContext context,
-    PagedListState<MediaClipDto>? paged,
-  ) {
-    if (paged?.loadMoreErrorMessage != null) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-        child: Center(
-          child: AppButton(
-            key: const Key('clips-load-more-retry'),
-            label: '加载更多失败，点击重试',
-            variant: AppButtonVariant.secondary,
-            size: AppButtonSize.small,
-            onPressed: () =>
-                unawaited(ref.read(clipsOverviewProvider.notifier).loadMore()),
-          ),
-        ),
-      );
-    }
-    if (paged?.isLoadingMore ?? false) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: context.appSpacing.md),
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return SizedBox(height: context.appSpacing.lg);
   }
 
   // ----------------------------------------------------------- 单条动作
@@ -655,3 +646,4 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     if (submitted) exitSelection();
   }
 }
+

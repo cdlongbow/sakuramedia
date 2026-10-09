@@ -15,6 +15,7 @@ import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -359,6 +360,11 @@ class _ClipCollectionDetailContentState
     final clipIds = state.clips.map((clip) => clip.clipId);
     final allSelected = isAllSelected(clipIds);
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.clipCollectionAdd,
+      BatchOperationType.clipCollectionRemove,
+      BatchOperationType.clipDelete,
+    ]);
     if (_isMobile) {
       return AppListHeader.selection(
         selectionLabel: '已选 $selectedCount 个',
@@ -389,14 +395,18 @@ class _ClipCollectionDetailContentState
           label: '从合集移除',
           variant: AppButtonVariant.secondary,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
           label: '删除切片',
           variant: AppButtonVariant.danger,
           size: AppButtonSize.small,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
       exitKey: Key('${widget.keyPrefix}-exit-selection-button'),
@@ -406,6 +416,11 @@ class _ClipCollectionDetailContentState
 
   Widget _buildBatchBar(BuildContext context, ClipCollectionDetailState state) {
     final hasSelection = selectedCount > 0;
+    final submitting = watchBatchOperationSubmitting(ref, const [
+      BatchOperationType.clipCollectionAdd,
+      BatchOperationType.clipCollectionRemove,
+      BatchOperationType.clipDelete,
+    ]);
     return AppSelectionBottomBar(
       key: Key('${widget.keyPrefix}-batch-bottom-bar'),
       actions: [
@@ -413,7 +428,7 @@ class _ClipCollectionDetailContentState
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
           label: '加入合集',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection
+          onPressed: hasSelection && !submitting
               ? () => _batchAddToOtherCollection(state)
               : null,
         ),
@@ -421,13 +436,17 @@ class _ClipCollectionDetailContentState
           key: Key('${widget.keyPrefix}-batch-remove-button'),
           label: '移除',
           variant: AppButtonVariant.secondary,
-          onPressed: hasSelection ? () => _batchRemove(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchRemove(state)
+              : null,
         ),
         AppButton(
           key: Key('${widget.keyPrefix}-batch-delete-button'),
           label: '删除',
           variant: AppButtonVariant.danger,
-          onPressed: hasSelection ? () => _batchDelete(state) : null,
+          onPressed: hasSelection && !submitting
+              ? () => _batchDelete(state)
+              : null,
         ),
       ],
     );

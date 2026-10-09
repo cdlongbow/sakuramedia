@@ -28,6 +28,39 @@ class DownloadTaskRowState {
 
   double get progress => task.progress;
   String get state => task.state;
+
+  /// 行级相等：轮询快照用它判断某行是否实质变化，未变行不重建。
+  ///
+  /// 只比展示相关字段（封面比 origin，`resultSummary` 之类的深结构不在行内展示）；
+  /// 漏比只会导致多一次重建（现状），不会漏更新。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DownloadTaskRowState &&
+        other.task.id == task.id &&
+        other.task.clientId == task.clientId &&
+        other.task.movieNumber == task.movieNumber &&
+        other.task.name == task.name &&
+        other.task.remoteId == task.remoteId &&
+        other.task.state == task.state &&
+        other.task.progress == task.progress &&
+        other.task.importStatus == task.importStatus &&
+        other.task.importStatusLabel == task.importStatusLabel &&
+        other.task.createdAt == task.createdAt &&
+        other.task.updatedAt == task.updatedAt &&
+        other.task.movieTitle == task.movieTitle &&
+        other.task.movieCover?.origin == task.movieCover?.origin &&
+        other.task.movieThinCover?.origin == task.movieThinCover?.origin;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    task.id,
+    task.state,
+    task.progress,
+    task.importStatus,
+    task.updatedAt,
+  );
 }
 
 @immutable
@@ -90,5 +123,57 @@ class DownloadTaskCenterState {
       selectionMode: selectionMode ?? this.selectionMode,
       selectedTaskIds: selectedTaskIds ?? this.selectedTaskIds,
     );
+  }
+
+  /// 内容相等：Riverpod 默认按 `==` 决定要不要通知订阅者（`updateShouldNotify`），
+  /// 全等时跳过通知，30 秒轮询 tick 无实质变化就不会凭空重建整页。
+  /// 必须覆盖全部字段：漏比的字段会静默丢掉该字段的更新。
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is DownloadTaskCenterState &&
+        _samePaged(other.paged, paged) &&
+        other.filter == filter &&
+        other.pollingState == pollingState &&
+        listEquals(other.clientOptions, clientOptions) &&
+        mapEquals(other.clientNames, clientNames) &&
+        setEquals(other.pendingActionTaskIds, pendingActionTaskIds) &&
+        other.selectionMode == selectionMode &&
+        setEquals(other.selectedTaskIds, selectedTaskIds);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    filter,
+    pollingState,
+    selectionMode,
+    Object.hashAll(clientOptions),
+    Object.hashAllUnordered(
+      clientNames.entries.map((entry) => Object.hash(entry.key, entry.value)),
+    ),
+    Object.hashAllUnordered(pendingActionTaskIds),
+    Object.hashAllUnordered(selectedTaskIds),
+    paged.currentPage,
+    paged.total,
+    paged.hasMore,
+    paged.filterUpdate,
+    paged.isLoadingMore,
+    paged.loadMoreErrorMessage,
+    Object.hashAll(paged.items),
+  );
+
+  /// [PagedListState] 的相等但不比 `syncedAt`：下载列表不展示该时间戳，
+  /// 而每轮轮询都会刷新它（比了就等于每轮都通知）。
+  static bool _samePaged(
+    PagedListState<DownloadTaskRowState> a,
+    PagedListState<DownloadTaskRowState> b,
+  ) {
+    return a.currentPage == b.currentPage &&
+        a.total == b.total &&
+        a.hasMore == b.hasMore &&
+        a.filterUpdate == b.filterUpdate &&
+        a.isLoadingMore == b.isLoadingMore &&
+        a.loadMoreErrorMessage == b.loadMoreErrorMessage &&
+        listEquals(a.items, b.items);
   }
 }

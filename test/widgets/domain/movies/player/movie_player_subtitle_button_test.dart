@@ -612,6 +612,100 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'menu survives a subtitle state push from the build phase',
+      (WidgetTester tester) async {
+        final subtitleStateNotifier = ValueNotifier<MoviePlayerSubtitleState>(
+          const MoviePlayerSubtitleState(
+            options: <MoviePlayerSubtitleOption>[
+              MoviePlayerSubtitleOption(
+                subtitleId: 501,
+                label: 'ABC-001.zh.srt',
+                resolvedUrl: 'https://example.com/subtitles/501.srt',
+              ),
+            ],
+            selectedSubtitleId: null,
+            isLoading: false,
+            fetchStatus: 'succeeded',
+            errorMessage: null,
+          ),
+        );
+        final isApplyingNotifier = ValueNotifier<bool>(false);
+        addTearDown(subtitleStateNotifier.dispose);
+        addTearDown(isApplyingNotifier.dispose);
+
+        // 打开菜单后，播放器在 layout 阶段（LayoutBuilder 的 buildScope）同步把新
+        // 字幕状态推进 ValueNotifier——即 MoviePlayerSurface.didUpdateWidget 的做法。
+        var pushOnBuild = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              backgroundColor: Colors.black,
+              body: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (pushOnBuild) {
+                    pushOnBuild = false;
+                    subtitleStateNotifier.value =
+                        const MoviePlayerSubtitleState(
+                          options: <MoviePlayerSubtitleOption>[
+                            MoviePlayerSubtitleOption(
+                              subtitleId: 501,
+                              label: 'ABC-001.zh.srt',
+                              resolvedUrl: 'https://example.com/subtitles/501.srt',
+                            ),
+                          ],
+                          selectedSubtitleId: 501,
+                          isLoading: false,
+                          fetchStatus: 'succeeded',
+                          errorMessage: null,
+                        );
+                  }
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 96),
+                      child: MoviePlayerSubtitleButton(
+                        subtitleStateListenable: subtitleStateNotifier,
+                        isApplyingListenable: isApplyingNotifier,
+                        onSubtitleSelected: (_) async {},
+                        onReloadRequested: () async {},
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('movie-player-subtitle-button')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('movie-player-subtitle-menu')),
+          findsOneWidget,
+        );
+
+        pushOnBuild = true;
+        // 改窗口尺寸驱动 LayoutBuilder 在 layout 阶段重建，回调里同步推状态。
+        await tester.binding.setSurfaceSize(const Size(900, 700));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pump();
+        await tester.pump();
+
+        // 浮层挂在顶层 Overlay，重建必须推迟到帧末，不能在构建期 markNeedsBuild。
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byKey(const Key('movie-player-subtitle-menu')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const Key('movie-player-subtitle-menu-item-check-501')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }
 

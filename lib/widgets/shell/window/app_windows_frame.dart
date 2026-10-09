@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/app/app_window_fullscreen.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// Transparent resize handles for the frameless Windows window.
@@ -49,8 +50,14 @@ class _AppWindowsFrameState extends State<AppWindowsFrame> with WindowListener {
   }
 
   @override
-  Widget build(BuildContext context) => DragToResizeArea(
-    enableResizeEdges: _canResize ? null : const [],
+  Widget build(BuildContext context) => ValueListenableBuilder<bool>(
+    valueListenable: desktopWindowFullscreenActive,
+    builder: (context, appFullscreen, child) => DragToResizeArea(
+      // 应用内全屏（播放器全屏）时窗口自己铺满显示器，别再给拖拽边缘留热区，
+      // 否则鼠标从屏幕边缘划过去会把窗口从全屏里拖出来。
+      enableResizeEdges: appFullscreen || !_canResize ? const [] : null,
+      child: child!,
+    ),
     child: widget.child,
   );
 }

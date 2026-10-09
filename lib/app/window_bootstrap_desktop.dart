@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/app_window_fullscreen.dart';
 import 'package:sakuramedia/app/appearance_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,14 +15,9 @@ const String _prefsWidthKey = 'desktop_window:width';
 const String _prefsHeightKey = 'desktop_window:height';
 const String _prefsMaximizedKey = 'desktop_window:maximized';
 
-const MethodChannel _windowEffectsChannel = MethodChannel(
-  'sakuramedia/window_effects',
-);
 const MethodChannel _windowAppearanceChannel = MethodChannel(
   'sakuramedia/window_appearance',
 );
-
-int? _windowsBuildNumber;
 
 Future<void> bootstrapDesktopWindow() async {
   await windowManager.ensureInitialized();
@@ -44,9 +39,11 @@ Future<void> bootstrapDesktopWindow() async {
     size: restored.size,
     minimumSize: _minimumWindowSize,
     center: true,
-    backgroundColor: isMacOS || isWindows
+    // macOS 走系统毛玻璃（透明窗口）；其它桌面是无边框不透明窗口：内容铺满
+    // 整窗，窗口底色只在重绘间隙露出来，取内容面色。
+    backgroundColor: isMacOS
         ? Colors.transparent
-        : initialColors.surfaceCard,
+        : initialColors.surfaceElevated,
     skipTaskbar: false,
     titleBarStyle: isMacOS || isWindows
         ? TitleBarStyle.hidden
@@ -58,18 +55,11 @@ Future<void> bootstrapDesktopWindow() async {
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     if (isWindows) {
-      // Hidden title bars still reserve native side/bottom resize borders.
+      // 无边框：客户区铺满整窗、没有系统留的 resize 带；改尺寸热区由
+      // AppWindowsFrame 的透明边缘补回，全屏见 app_window_fullscreen.dart。
       await windowManager.setAsFrameless();
-      // Frameless windows default to no shadow; enable the native DWM shadow
-      // after switching modes (setHasShadow is a no-op on framed Windows).
+      // 无边框窗口默认没有系统阴影，用 DWM 的 1px 扩展边把阴影找回来。
       await windowManager.setHasShadow(true);
-      await acrylic.Window.initialize();
-      _windowsBuildNumber = await _windowEffectsChannel.invokeMethod<int>(
-        'getWindowsBuildNumber',
-      );
-      // Apply after window_manager's frame setup: Acrylic extends the DWM
-      // backdrop across the client area, visible through the sidebar only.
-      await _applyWindowsBackdrop(effective);
     }
     if (isMacOS) {
       await _applyMacAppearance(effective);
@@ -84,15 +74,13 @@ Future<void> bootstrapDesktopWindow() async {
   windowManager.addListener(_DesktopWindowStatePersistor());
 }
 
-/// 切换明暗时同步桌面窗口外观（Windows 亚克力参数 / macOS 毛玻璃外观 / 窗口底色）。
+/// 切换明暗时同步桌面窗口外观（macOS 毛玻璃外观 / 其它平台窗口底色）。
 Future<void> applyDesktopWindowBrightness(Brightness brightness) async {
   if (resolveAppPlatform() != AppPlatform.desktop) {
     return;
   }
   try {
     switch (defaultTargetPlatform) {
-      case TargetPlatform.windows:
-        await _applyWindowsBackdrop(brightness);
       case TargetPlatform.macOS:
         await _applyMacAppearance(brightness);
       case _:
@@ -100,28 +88,12 @@ Future<void> applyDesktopWindowBrightness(Brightness brightness) async {
           AppColors.of(
             themeColor: AppThemeColor.burgundy,
             brightness: brightness,
-          ).surfaceCard,
+          ).surfaceElevated,
         );
     }
   } catch (_) {
     // 原生外观更新失败不影响应用内主题切换。
   }
-}
-
-Future<void> _applyWindowsBackdrop(Brightness brightness) async {
-  final colors = AppColors.of(
-    themeColor: AppThemeColor.burgundy,
-    brightness: brightness,
-  );
-  await acrylic.Window.setEffect(
-    // Acrylic stalls native window dragging on Windows 10. Aero keeps
-    // the sidebar blurred without that compositor performance issue.
-    effect: (_windowsBuildNumber ?? 0) >= 22000
-        ? acrylic.WindowEffect.acrylic
-        : acrylic.WindowEffect.aero,
-    color: colors.windowsSidebarGlassTint,
-    dark: brightness == Brightness.dark,
-  );
 }
 
 Future<void> _applyMacAppearance(Brightness brightness) async {
@@ -180,6 +152,9 @@ Future<_PersistedWindowState> _readPersistedWindowState() async {
 class _DesktopWindowStatePersistor extends WindowListener {
   @override
   Future<void> onWindowResized() async {
+    // 应用内全屏是自己把窗口铺满显示器，不是用户想要的窗口尺寸：别把整屏
+    // 矩形写进 prefs（退出时的还原本也不需要写，prefs 里已有进入前的值）。
+    if (desktopWindowFullscreenActive.value) return;
     if (await windowManager.isMaximized()) return;
     final size = await windowManager.getSize();
     try {

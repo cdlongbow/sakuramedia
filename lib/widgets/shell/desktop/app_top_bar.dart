@@ -143,7 +143,7 @@ class AppTopBar extends ConsumerWidget {
                     ),
                 ],
                 SizedBox(width: rightInset),
-                if (usesAppWindowsCaption) const AppWindowsCaption(),
+                if (usesAppWindowsCaption) AppWindowsCaption(overlay: overlay),
               ],
             ),
           ),

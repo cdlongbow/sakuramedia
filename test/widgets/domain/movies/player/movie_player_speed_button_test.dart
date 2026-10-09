@@ -227,6 +227,62 @@ void main() {
       expect(labelRichText.text.style?.decoration, isNull);
       expect(labelRichText.text.style?.fontFamily, isNot('monospace'));
     });
+
+    testWidgets(
+      'menu survives a rate push from the build phase',
+      (WidgetTester tester) async {
+        // 菜单开着时父级在 build 阶段（LayoutBuilder 的 buildScope）下发新速率——
+        // 即 surface 收到 rate 流/协调器通知后重建，把 currentRate 传给按钮。
+        var currentRate = 1.0;
+        var pushOnBuild = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              backgroundColor: Colors.black,
+              body: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (pushOnBuild) {
+                    pushOnBuild = false;
+                    currentRate = 1.5;
+                  }
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 96),
+                      child: MoviePlayerSpeedButton(
+                        currentRate: currentRate,
+                        hasExplicitSelection: true,
+                        onRateSelected: (_) async {},
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('movie-player-speed-button')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('movie-player-speed-menu')), findsOneWidget);
+
+        pushOnBuild = true;
+        // 改窗口尺寸驱动 LayoutBuilder 在 layout 阶段重建，回调里下发新速率。
+        await tester.binding.setSurfaceSize(const Size(900, 700));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pump();
+        await tester.pump();
+
+        // 浮层挂在顶层 Overlay，重建必须推迟到帧末，不能在构建期 markNeedsBuild。
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('movie-player-speed-menu')), findsOneWidget);
+        expect(
+          find.byKey(const Key('movie-player-speed-menu-item-check-1_5')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }
 

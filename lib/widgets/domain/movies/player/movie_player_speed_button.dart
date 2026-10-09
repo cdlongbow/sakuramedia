@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/overlays/overlay_entry_rebuild.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
 
 const List<double> kMoviePlayerPlaybackRates = <double>[
@@ -68,7 +69,7 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
     _displayHasExplicitSelection = widget.hasExplicitSelection;
     if ((oldWidget.currentRate - widget.currentRate).abs() >= 0.001 ||
         oldWidget.hasExplicitSelection != widget.hasExplicitSelection) {
-      _overlayEntry?.markNeedsBuild();
+      requestOverlayEntryRebuild(_overlayEntry);
     }
   }
 
@@ -131,7 +132,7 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
       return;
     }
     if (_overlayEntry != null) {
-      _overlayEntry!.markNeedsBuild();
+      requestOverlayEntryRebuild(_overlayEntry);
       return;
     }
     final overlay = Overlay.of(context);
@@ -271,7 +272,7 @@ class _MoviePlayerSpeedButtonState extends State<MoviePlayerSpeedButton> {
                                   return;
                                 }
                                 _hoveredRate = rate;
-                                _overlayEntry?.markNeedsBuild();
+                                requestOverlayEntryRebuild(_overlayEntry);
                               },
                               onRateSelected: _handleRateSelected,
                             ),

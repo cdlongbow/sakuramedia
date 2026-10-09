@@ -13,6 +13,10 @@
 - 版本更新检查状态由 `appUpdateCheckProvider`（`lib/app/providers/app_update_check_provider.dart`）统一提供：每小时轮询、单项失败静默保留旧值；桌面页脚与移动卡片共用，不要再在组件内各写一份 Timer。
 - `AppMobileShell`、`AppMobileSubpageShell`：`lib/widgets/shell/mobile/`，移动一级入口和子页面容器。
 - `AppWindowDragArea`：`lib/widgets/shell/window/`，桌面窗口拖拽区。
+- `AppWindowsFrame`：`app_windows_frame.dart`，无边框 Windows 窗口的透明拖拽改尺寸边缘；
+  最大化、系统全屏以及播放器应用内全屏（`desktopWindowFullscreenActive`，见
+  `lib/app/app_window_fullscreen.dart`）时收起热区，避免把窗口从全屏里拖出来。
+  Windows 窗口是不透明的（没有系统毛玻璃），窗口底色只在重绘间隙可见。
 
 新页面先选择对应平台 shell，再在内容区编排 feature 页面；不要在 feature 页面重新搭一套应用级导航。
 

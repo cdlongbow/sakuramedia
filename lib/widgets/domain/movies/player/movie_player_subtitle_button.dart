@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/overlays/overlay_entry_rebuild.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
 
 const Duration _subtitleMenuCloseDelay = Duration(milliseconds: 80);
@@ -81,7 +82,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
       _isApplying = widget.isApplyingListenable.value;
       widget.isApplyingListenable.addListener(_handleApplyingStateChanged);
     }
-    _overlayEntry?.markNeedsBuild();
+    requestOverlayEntryRebuild(_overlayEntry);
   }
 
   @override
@@ -96,7 +97,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
   void _handleSubtitleStateChanged() {
     _subtitleState = widget.subtitleStateListenable.value;
     _refreshMenuGeometry();
-    _overlayEntry?.markNeedsBuild();
+    requestOverlayEntryRebuild(_overlayEntry);
     if (mounted) {
       setState(() {});
     }
@@ -107,7 +108,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
     if (_isApplying) {
       _removeOverlay();
     } else {
-      _overlayEntry?.markNeedsBuild();
+      requestOverlayEntryRebuild(_overlayEntry);
     }
     if (mounted) {
       setState(() {});
@@ -166,7 +167,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
       return;
     }
     if (_overlayEntry != null) {
-      _overlayEntry!.markNeedsBuild();
+      requestOverlayEntryRebuild(_overlayEntry);
       return;
     }
 
@@ -326,7 +327,7 @@ class _MoviePlayerSubtitleButtonState extends State<MoviePlayerSubtitleButton> {
                                   return;
                                 }
                                 _hoveredSubtitleId = subtitleId;
-                                _overlayEntry?.markNeedsBuild();
+                                requestOverlayEntryRebuild(_overlayEntry);
                               },
                               onSubtitleSelected: _handleSubtitleSelected,
                             ),

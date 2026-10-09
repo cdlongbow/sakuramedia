@@ -155,7 +155,7 @@ docker compose up -d
 
 ### 4. 访问
 
-客户端可从 [GitHub Releases](https://github.com/tinypinglite/sakuramedia/releases/latest) 下载。默认用户名和密码是 `account` 和 `account`，登录后建议立即修改密码。桌面端和移动端首次登录时填写后端地址，例如：
+客户端可从 [GitHub Releases](https://github.com/tinypinglite/sakuramedia/releases/latest) 下载（iOS 端要求 iOS 15.0 及以上）。默认用户名和密码是 `account` 和 `account`，登录后建议立即修改密码。桌面端和移动端首次登录时填写后端地址，例如：
 
 ```text
 http://你的IP:38000

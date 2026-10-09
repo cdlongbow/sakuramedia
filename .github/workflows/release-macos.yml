@@ -35,8 +35,10 @@ jobs:
         shell: bash
         run: |
           # 从 git tag 注入版本：v0.3.7 -> 0.3.7；pubspec 的 version 仅占位，实际以 tag 为准
+          # beta tag 的预发布段不符合 CFBundleShortVersionString，平台版本号只取数字主号。
           VERSION="${GITHUB_REF_NAME#v}"
-          flutter build macos --release --build-name="$VERSION"
+          BUILD_NAME="${VERSION%%-*}"
+          flutter build macos --release --build-name="$BUILD_NAME"
 
       - name: Package unsigned dmg
         run: |
@@ -95,7 +97,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: sakuramedia ${{ github.ref_name }}
-          generate_release_notes: true
+          # beta 的正文用审过的 Release Notes，正式版继续叠加自动生成的变更列表。
+          generate_release_notes: ${{ !contains(github.ref_name, '-') }}
           files: |
             dist/${{ env.DMG_NAME }}
             dist/${{ env.DMG_NAME }}.sha256

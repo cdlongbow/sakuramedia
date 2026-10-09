@@ -36,9 +36,12 @@ jobs:
         shell: bash
         run: |
           # 从 git tag 注入版本：v0.3.7 -> 0.3.7；pubspec 的 version 仅占位，实际以 tag 为准
+          # beta tag（如 v0.10.0-beta.1）的预发布段不符合 CFBundleShortVersionString，
+          # 平台版本号只取数字主号，beta 身份由 Release 与安装包文件名承载。
           # --build-number 用 run_number 保证 CFBundleVersion 单调递增
           VERSION="${GITHUB_REF_NAME#v}"
-          flutter build ios --release --no-codesign --build-name="$VERSION" --build-number="${{ github.run_number }}"
+          BUILD_NAME="${VERSION%%-*}"
+          flutter build ios --release --no-codesign --build-name="$BUILD_NAME" --build-number="${{ github.run_number }}"
 
       - name: Pre-sign and collect SideStore-ready iOS IPA
         run: |

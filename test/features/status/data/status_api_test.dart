@@ -211,6 +211,20 @@ void main() {
     expect(adapter.requests, isEmpty);
   });
 
+  test('offers the stable release to a client running a beta', () async {
+    const releaseUrl =
+        'https://api.github.com/repos/tinypinglite/sakuramedia/releases/latest';
+    adapter.enqueueJson(
+      method: 'GET',
+      path: releaseUrl,
+      body: <String, dynamic>{'tag_name': 'v0.10.0'},
+    );
+
+    final updateVersion = await statusApi.checkFrontendUpdate('0.10.0-beta.1');
+
+    expect(updateVersion, 'v0.10.0');
+  });
+
   test('treats an invalid release tag as no update', () async {
     const releaseUrl =
         'https://api.github.com/repos/tinypinglite/sakuramediabe/releases/latest';

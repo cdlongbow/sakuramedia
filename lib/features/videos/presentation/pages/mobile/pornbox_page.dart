@@ -24,6 +24,8 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,7 +36,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_over
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
@@ -221,16 +222,6 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
   // --------------------------------------------------------- 批量动作
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个视频');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   Future<void> _batchAddToCollection() async {
     final selected = _selectedVideos();
     if (selected.isEmpty) {
@@ -243,27 +234,17 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(videoCollectionsApiProvider);
-    final result = await runBatchOperation<VideoItemListItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (video) =>
-          api.addCollectionItem(collectionId: target.id, videoItemId: video.id),
+      ref,
+      operation: BatchOperationType.videoCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((video) => video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    for (final video in result.succeeded) {
-      ref
-          .read(videoMutationEventsProvider.notifier)
-          .reportCollectionMembershipChanged(
-            videoId: video.id,
-            collectionId: target.id,
-          );
-    }
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchDelete() async {
@@ -283,21 +264,16 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     if (!mounted || !confirmed) {
       return;
     }
-    final api = ref.read(videosApiProvider);
-    final result = await runBatchOperation<VideoItemListItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除视频',
-      items: selected,
-      action: (video) => api.deleteVideo(video.id),
+      ref,
+      operation: BatchOperationType.videoDelete,
+      ids: selected.map((video) => video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    for (final video in result.succeeded) {
-      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
-    }
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   // --------------------------------------------------------- 合集动作

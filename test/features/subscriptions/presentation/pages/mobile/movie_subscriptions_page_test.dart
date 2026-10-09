@@ -9,6 +9,8 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operations_api.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operations_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
@@ -408,19 +410,27 @@ void main() {
     expect(find.textContaining('1 个下载任务'), findsOneWidget);
 
     adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/download-tasks/41',
-      statusCode: 204,
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
     );
-    adapter.setFallbackJson(
-      method: 'GET',
-      path: '/download-tasks',
-      body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100},
-    );
-    _enqueuePage(adapter, [_item('ABP-123')]);
     await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
-    expect(adapter.hitCount('DELETE', '/download-tasks/41'), 1);
+    final submit = adapter.requests
+        .where((r) => r.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'download_task_delete',
+      'ids': [41],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/download-tasks/41'), 0);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -499,6 +509,9 @@ Future<void> _pumpPage(
       overrides: [
         downloadsApiProvider.overrideWithValue(
           DownloadsApi(apiClient: apiClient),
+        ),
+        batchOperationsApiProvider.overrideWithValue(
+          BatchOperationsApi(apiClient: apiClient),
         ),
         sessionStoreProvider.overrideWithValue(sessionStore),
         movieSubscriptionsApiProvider.overrideWithValue(

@@ -20,6 +20,8 @@ import 'package:sakuramedia/features/media/presentation/widgets/shared/media_man
 import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_transfer_target_dialog.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_version_movies_section.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -27,7 +29,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 
 /// 删除媒体后同步 videos 域缓存的统一入口（共享规则见
 /// `media_video_mutation_report.dart`）。
@@ -333,54 +334,19 @@ class MediaManagementContent extends HookConsumerWidget {
     if (!confirmed || !context.mounted) return;
 
     isDeleting.value = true;
-    late final BatchRunResult<int> result;
-    Object? firstError;
-    try {
-      final mediaApi = ref.read(mediaApiProvider);
-      result = await runBatchOperation<int>(
-        context,
-        title: '正在删除媒体',
-        items: selectedIds,
-        action: (mediaId) async {
-          try {
-            await mediaApi.deleteMedia(mediaId: mediaId);
-          } catch (error) {
-            firstError ??= error;
-            rethrow;
-          }
-        },
-      );
-    } finally {
-      if (context.mounted) {
-        isDeleting.value = false;
-      }
+    final submitted = await submitBatchOperation(
+      context,
+      ref,
+      operation: BatchOperationType.mediaDelete,
+      ids: selectedIds,
+    );
+    if (!context.mounted) {
+      return;
     }
-    final okIds = result.succeeded;
-    final failedIds = result.failed;
-
-    if (okIds.isNotEmpty) {
-      ref.read(mediaBrowseProvider.notifier).removeItemsByIds(okIds);
-      final itemsById = {
-        for (final item in browseState.paged.items) item.id: item,
-      };
-      _reportDeletedPornboxVideos(
-        ref,
-        okIds.map((id) => itemsById[id]).whereType<MediaListItemDto>(),
-      );
-      if (context.mounted) {
-        selectionMode.value = false;
-      }
-    }
-    if (!context.mounted) return;
-    if (failedIds.isEmpty) {
-      showToast('已删除 ${okIds.length} 项媒体');
-    } else {
-      final resolvedError = firstError;
-      final errorMessage = resolvedError == null
-          ? '未知错误'
-          : apiErrorMessage(resolvedError, fallback: '批量删除失败');
-      showToast('已删除 ${okIds.length} 项，${failedIds.length} 项失败：$errorMessage');
-      unawaited(ref.read(mediaBrowseProvider.notifier).refresh());
+    isDeleting.value = false;
+    if (submitted) {
+      ref.read(mediaBrowseProvider.notifier).clearSelection();
+      selectionMode.value = false;
     }
   }
 

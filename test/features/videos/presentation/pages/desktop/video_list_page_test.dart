@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -239,6 +240,119 @@ void main() {
     expect(lastRequest.uri.queryParameters['uncollected'], 'true');
     expect(find.text('1 个'), findsOneWidget);
   });
+
+  void enqueueBatchAccepted() {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
+  }
+
+  testWidgets('批量删除视频提交 video_delete 且 ids 是 video id', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad();
+    enqueueBatchAccepted();
+
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('videos-enter-selection-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('video-summary-card-select-1')));
+    await tester.tap(find.byKey(const Key('video-summary-card-select-2')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('videos-batch-delete-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('videos-batch-delete-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'video_delete',
+      'ids': [1, 2],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/videos/1'), 0);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const Key('video-summary-card-1')), findsOneWidget);
+    expect(find.byType(AppSelectionHeaderToolbar), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('批量加入视频合集提交 video_collection_add 且 ids 是 video id', (
+    WidgetTester tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/video-collections',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 7,
+          'name': '我的合集',
+          'description': '',
+          'item_count': 1,
+          'cover_image': null,
+        },
+      ],
+    );
+    adapter.enqueueJson(method: 'GET', path: '/videos', body: _videosJson(total: 2));
+    enqueueBatchAccepted();
+
+    await _pumpVideoListPage(
+      tester,
+      sessionStore: sessionStore,
+      apiClient: apiClient,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('videos-enter-selection-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('video-summary-card-select-1')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('videos-batch-add-collection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pick-collection-7')));
+    await tester.pumpAndSettle();
+
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'video_collection_add',
+      'ids': [1],
+      'target_collection_id': 7,
+      'delete_files': false,
+    });
+    expect(
+      adapter.hitCount('POST', '/video-collections/7/items'),
+      0,
+    );
+    expect(find.byType(AppSelectionHeaderToolbar), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpVideoListPage(
@@ -256,6 +370,7 @@ Future<void> _pumpVideoListPage(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        apiClientProvider.overrideWithValue(apiClient),
         sessionStoreProvider.overrideWithValue(sessionStore),
         videosApiProvider.overrideWithValue(VideosApi(apiClient: apiClient)),
         videoCollectionsApiProvider.overrideWithValue(

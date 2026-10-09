@@ -433,13 +433,16 @@ void main() {
       findsOneWidget,
     );
 
-    for (final id in [401, 402]) {
-      bundle.adapter.enqueueJson(
-        method: 'DELETE',
-        path: '/download-tasks/$id',
-        statusCode: 204,
-      );
-    }
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
     await tester.tap(
       find.byKey(const Key('download-tasks-batch-delete-button')),
     );
@@ -448,14 +451,23 @@ void main() {
     await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
 
-    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/401'), 1);
-    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/402'), 1);
-    expect(find.byKey(const Key('download-task-401')), findsNothing);
+    final submit = bundle.adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'download_task_delete',
+      'ids': [401, 402],
+      'delete_files': false,
+    });
+    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/401'), 0);
+    expect(bundle.adapter.hitCount('DELETE', '/download-tasks/402'), 0);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const Key('download-task-401')), findsOneWidget);
     expect(
       find.byKey(const Key('download-tasks-batch-delete-button')),
       findsNothing,
     );
-    expect(find.text('已删除 2 个下载任务'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(seconds: 3));
   });

@@ -7,7 +7,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/moment_collection_placeholders.dart';
-import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_overview_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
@@ -19,6 +18,8 @@ import 'package:sakuramedia/features/moments/presentation/moment_listing_models.
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_provider.dart';
 import 'package:sakuramedia/features/moments/presentation/providers/moments_state.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,7 +35,6 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
@@ -783,28 +783,15 @@ class MomentsContent extends HookConsumerWidget {
     if (selected.isEmpty) return;
     final target = await showPickMomentCollectionDialog(context);
     if (!context.mounted || target == null) return;
-    final result = await runBatchOperation<MomentListItem>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (item) => ref
-          .read(momentCollectionsApiProvider)
-          .addPoint(collectionId: target.id, pointId: item.pointId),
+      ref,
+      operation: BatchOperationType.momentCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((item) => item.pointId).toList(growable: false),
     );
     if (!context.mounted) return;
-    if (result.succeeded.isNotEmpty) {
-      ref
-          .read(momentCollectionMutationEventsProvider.notifier)
-          .reportChanged(target.id);
-    }
-    if (result.failed.isEmpty) {
-      showToast('已加入合集 ${result.succeeded.length} 个时刻');
-    } else {
-      showToast(
-        '加入合集完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-    onFinished();
+    if (submitted) onFinished();
   }
 
   Future<void> _batchDelete(
@@ -828,26 +815,14 @@ class MomentsContent extends HookConsumerWidget {
       confirmKey: Key('$keyPrefix-batch-delete-confirm-button'),
     );
     if (!context.mounted || !confirmed) return;
-    final result = await runBatchOperation<MomentListItem>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除时刻',
-      items: selected,
-      action: (item) => ref
-          .read(mediaApiProvider)
-          .deleteMediaPointById(pointId: item.pointId),
+      ref,
+      operation: BatchOperationType.mediaPointDelete,
+      ids: selected.map((item) => item.pointId).toList(growable: false),
     );
     if (!context.mounted) return;
-    onFinished();
-    if (result.succeeded.isNotEmpty) {
-      unawaited(_refreshAfterPointDelete(ref));
-    }
-    if (result.failed.isEmpty) {
-      showToast('已删除 ${result.succeeded.length} 个时刻');
-    } else {
-      showToast(
-        '删除时刻完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
+    if (submitted) onFinished();
   }
 
   Future<void> _refreshAfterPointDelete(WidgetRef ref) async {

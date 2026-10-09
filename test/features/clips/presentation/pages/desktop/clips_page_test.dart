@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
@@ -16,6 +17,9 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_too
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
+
+import '../../../../../support/logged_in_session_store.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   testWidgets('initial loading keeps the desktop clips layout as skeletons', (
@@ -160,6 +164,81 @@ void main() {
 
     expect(find.byType(AppListHeader), findsOneWidget);
     expect(find.byType(AppSelectionHeaderToolbar), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('批量加入合集提交 clip_collection_add 且 ids 是 clip_id', (
+    WidgetTester tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 900);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final sessionStore = await buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...bundle.riverpodOverrides(),
+          clipsOverviewProvider.overrideWith(_PopulatedClipsOverview.new),
+          clipCollectionsOverviewProvider.overrideWith(
+            _PopulatedClipCollectionsOverview.new,
+          ),
+        ],
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraDesktopThemeData,
+            home: const Scaffold(body: DesktopClipsPage()),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('clips-enter-selection-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('clip-grid-card-tap-1')));
+    await tester.pumpAndSettle();
+    expect(find.text('已选 1 个'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('clips-batch-add-collection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pick-clip-collection-7')));
+    await tester.pumpAndSettle();
+
+    final submit = bundle.adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'clip_collection_add',
+      'ids': [1],
+      'target_collection_id': 7,
+      'delete_files': false,
+    });
+    expect(
+      bundle.adapter.hitCount('PUT', '/clip-collections/7/clips/1'),
+      0,
+    );
+    expect(find.text('已选 1 个'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);
   });
 }

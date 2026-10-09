@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,7 +12,6 @@ import 'package:sakuramedia/features/downloads/presentation/download_task_filter
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 
@@ -692,65 +690,43 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final first = Completer<ResponseBody>();
-    bundle.adapter.enqueueResponder(
-      method: 'DELETE',
-      path: '/download-tasks/401',
-      responder: (_, _) => first.future,
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
     );
-    for (final id in [402, 403]) {
-      bundle.adapter.enqueueJson(
-        method: 'DELETE',
-        path: '/download-tasks/$id',
-        statusCode: 204,
-      );
-    }
     await tester.tap(
       find.descendant(
         of: find.byKey(const Key('download-task-delete-dialog')),
         matching: find.text('删除'),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('正在删除下载任务'), findsOneWidget);
-    expect(find.text('处理中 0/3'), findsOneWidget);
-    expect(
-      tester
-          .widget<LinearProgressIndicator>(
-            find.descendant(
-              of: find.byType(AppDesktopDialog),
-              matching: find.byType(LinearProgressIndicator),
-            ),
-          )
-          .value,
-      0,
-    );
-
-    first.complete(ResponseBody.fromBytes([], 204));
     await tester.pumpAndSettle();
 
-    final deletes = bundle.adapter.requests
-        .where((request) => request.method == 'DELETE')
+    final submit = bundle.adapter.requests
+        .where((request) => request.path == '/batch-operations')
         .toList();
-    expect(deletes.map((request) => request.path), [
-      '/download-tasks/401',
-      '/download-tasks/402',
-      '/download-tasks/403',
-    ]);
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'download_task_delete',
+      'ids': [401, 402, 403],
+      'delete_files': true,
+    });
     expect(
-      deletes.every(
-        (request) => request.uri.queryParameters['delete_files'] == 'true',
-      ),
-      isTrue,
+      bundle.adapter.requests.where((request) => request.method == 'DELETE'),
+      isEmpty,
     );
-    expect(find.byKey(const Key('download-task-401')), findsNothing);
-    expect(find.byKey(const Key('download-task-403')), findsNothing);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const Key('download-task-401')), findsOneWidget);
     expect(
       find.byKey(const Key('download-tasks-selection-header')),
       findsNothing,
     );
-    expect(find.text('已删除 3 个下载任务'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
 

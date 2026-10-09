@@ -208,6 +208,67 @@ void main() {
     },
   );
 
+  test(
+    'batch operation task displays succeeded/failed counts instead of wire keys',
+    () async {
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/system/task-runs',
+        body: <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              ..._taskRunJson(id: 44, state: 'completed'),
+              'task_key': 'batch_operation',
+              'result_text':
+                  'operation=media_delete total=3 succeeded_count=2 failed_count=1',
+              'result_summary': <String, dynamic>{
+                'operation': 'media_delete',
+                'total': 3,
+                'succeeded_count': 2,
+                'failed_count': 1,
+              },
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      );
+
+      final response = await bundle.activityApi.getTaskRuns();
+
+      expect(response.items.single.displaySummary, '成功 2 项 · 失败 1 项');
+    },
+  );
+
+  test('batch operation task without failures only shows the succeeded count', () async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/system/task-runs',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          <String, dynamic>{
+            ..._taskRunJson(id: 45, state: 'completed'),
+            'task_key': 'batch_operation',
+            'result_summary': <String, dynamic>{
+              'operation': 'media_delete',
+              'total': 2,
+              'succeeded_count': 2,
+              'failed_count': 0,
+            },
+          },
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+
+    final response = await bundle.activityApi.getTaskRuns();
+
+    expect(response.items.single.displaySummary, '成功 2 项');
+  });
+
   test('notification mutations use the current response contract', () async {
     bundle.adapter.enqueueJson(
       method: 'POST',

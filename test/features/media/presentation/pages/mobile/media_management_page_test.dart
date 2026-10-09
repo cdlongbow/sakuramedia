@@ -13,6 +13,8 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/pages/mobile/media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operations_api.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operations_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
@@ -512,8 +514,16 @@ void main() {
         'total': 2,
       },
     );
-    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
-    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
     await _pumpPage(
       tester,
       sessionStore: sessionStore,
@@ -546,8 +556,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(adapter.hitCount('DELETE', '/media/1'), 1);
-    expect(adapter.hitCount('DELETE', '/media/2'), 1);
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'media_delete',
+      'ids': [1, 2],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/media/1'), 0);
+    expect(adapter.hitCount('DELETE', '/media/2'), 0);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -813,6 +832,9 @@ Future<void> _pumpPage(
       overrides: [
         sessionStoreProvider.overrideWithValue(sessionStore),
         mediaApiProvider.overrideWithValue(mediaApi),
+        batchOperationsApiProvider.overrideWithValue(
+          BatchOperationsApi(apiClient: apiClient),
+        ),
         mediaLibrariesApiProvider.overrideWithValue(
           _EmptyMediaLibrariesApi(apiClient: apiClient),
         ),

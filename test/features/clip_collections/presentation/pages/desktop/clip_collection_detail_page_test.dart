@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
@@ -102,6 +103,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          apiClientProvider.overrideWithValue(apiClient),
           sessionStoreProvider.overrideWithValue(sessionStore),
           clipCollectionsApiProvider.overrideWithValue(
             ClipCollectionsApi(apiClient: apiClient),
@@ -258,6 +260,101 @@ void main() {
       find.byKey(const Key('clip-collection-grid-delete-1')),
       findsOneWidget,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  void enqueueBatchAccepted() {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
+  }
+
+  testWidgets('批量移出成员提交 clip_collection_remove 且 ids 是 clip_id', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad();
+    enqueueBatchAccepted();
+    await pumpPage(tester);
+
+    await tester.tap(
+      find.byKey(const Key('clip-collection-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<int>(1)));
+    await tester.tap(find.byKey(const ValueKey<int>(2)));
+    await tester.pumpAndSettle();
+    expect(find.text('已选 2 个'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('clip-collection-batch-remove-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('clip-collection-batch-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'clip_collection_remove',
+      'ids': [1, 2],
+      'target_collection_id': 1,
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/clip-collections/1/clips/1'), 0);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const ValueKey<int>(1)), findsOneWidget);
+    expect(find.text('已选 2 个'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('批量删除切片提交 clip_delete 且 ids 是 clip_id', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad();
+    enqueueBatchAccepted();
+    await pumpPage(tester);
+
+    await tester.tap(
+      find.byKey(const Key('clip-collection-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<int>(1)));
+    await tester.tap(find.byKey(const ValueKey<int>(2)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('clip-collection-batch-delete-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('clip-collection-batch-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'clip_delete',
+      'ids': [1, 2],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/media-clips/1'), 0);
+    expect(find.text('已选 2 个'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);
   });
 }

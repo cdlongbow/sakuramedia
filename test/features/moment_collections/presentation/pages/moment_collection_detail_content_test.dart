@@ -319,23 +319,13 @@ void main() {
     await tester.pumpAndSettle();
 
     adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/moment-collections/7/points/10',
-      statusCode: 204,
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections/7',
-      body: _collectionJson(pointCount: 1),
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections/7/points',
-      body: <String, dynamic>{
-        'items': <Map<String, dynamic>>[_pointJson(11, 0)],
-        'page': 1,
-        'page_size': 50,
-        'total': 1,
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
       },
     );
 
@@ -348,10 +338,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(adapter.hitCount('DELETE', '/moment-collections/7/points/10'), 1);
-    expect(find.byKey(const ValueKey<int>(10)), findsNothing);
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'moment_collection_remove',
+      'ids': [10],
+      'target_collection_id': 7,
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/moment-collections/7/points/10'), 0);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const ValueKey<int>(10)), findsOneWidget);
     expect(tester.takeException(), isNull);
-    // 让批量完成的 toast 计时器结束，避免测试结束时仍有 pending timer。
+    // 让批量提交的 toast 计时器结束，避免测试结束时仍有 pending timer。
     await tester.pump(const Duration(seconds: 3));
   });
 

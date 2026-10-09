@@ -6,6 +6,8 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
@@ -30,7 +32,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -782,16 +783,6 @@ class _VideoCollectionDetailContentState
     VideoCollectionDetailState state,
   ) => state.items.where((it) => isSelected(it.itemId)).toList(growable: false);
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个视频');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   Future<void> _batchAddToOtherCollection(
     VideoCollectionDetailState state,
   ) async {
@@ -809,29 +800,17 @@ class _VideoCollectionDetailContentState
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(videoCollectionsApiProvider);
-    final result = await runBatchOperation<VideoCollectionItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (item) => api.addCollectionItem(
-        collectionId: target.id,
-        videoItemId: item.video.id,
-      ),
+      ref,
+      operation: BatchOperationType.videoCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((item) => item.video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 合集封面/计数变化：逐条广播给列表页的合集横滑区。
-    final broadcaster = _mutationBroadcaster;
-    for (final item in result.succeeded) {
-      broadcaster.reportCollectionMembershipChanged(
-        videoId: item.video.id,
-        collectionId: target.id,
-      );
-    }
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchRemove(VideoCollectionDetailState state) async {
@@ -851,36 +830,17 @@ class _VideoCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final notifier = ref.read(_providerRef.notifier);
-    final result = await runBatchOperation<VideoCollectionItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在从合集移除',
-      items: selected,
-      action: (item) async {
-        final error = await notifier.removeItem(item.itemId);
-        if (error != null) {
-          throw Exception(error);
-        }
-      },
+      ref,
+      operation: BatchOperationType.videoCollectionRemove,
+      targetCollectionId: widget.collectionId,
+      ids: selected.map((item) => item.itemId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与成员，校准本页头部计数（collection.itemCount）与列表。
-    await notifier.refresh();
-    if (!mounted) {
-      return;
-    }
-    // 广播给列表页的合集横滑区（封面/计数变化）。
-    final broadcaster = _mutationBroadcaster;
-    for (final item in result.succeeded) {
-      broadcaster.reportCollectionMembershipChanged(
-        videoId: item.video.id,
-        collectionId: widget.collectionId,
-      );
-    }
-    _showBatchToast('移除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchDelete(VideoCollectionDetailState state) async {
@@ -900,28 +860,16 @@ class _VideoCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final videosApi = ref.read(videosApiProvider);
-    final result = await runBatchOperation<VideoCollectionItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除视频',
-      items: selected,
-      action: (item) => videosApi.deleteVideo(item.video.id),
+      ref,
+      operation: BatchOperationType.videoDelete,
+      ids: selected.map((item) => item.video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与成员，校准本页头部计数与列表。
-    await ref.read(_providerRef.notifier).refresh();
-    if (!mounted) {
-      return;
-    }
-    // 广播删除信号：列表页网格精准移除 + 合集横滑区刷新。
-    final broadcaster = _mutationBroadcaster;
-    for (final item in result.succeeded) {
-      broadcaster.reportDeleted(item.video.id);
-    }
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   /// 批量确认按钮 Key：桌面两端共用 `$keyPrefix-batch-confirm-button`，

@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,7 +111,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
     testWidgets(
-      'batch ${mobile ? "mobile" : "desktop"}: keep one, show progress, continue on failure and retry',
+      'batch ${mobile ? "mobile" : "desktop"}: keep one and submit backend task',
       (tester) async {
         await _pump(tester, bundle, mobile: mobile);
         await tester.tap(find.byKey(const Key('batch-duplicates-select')));
@@ -150,22 +147,15 @@ void main() {
         await _select(tester, 1);
         await _select(tester, 4);
         expect(find.text('已选 3 个'), findsOneWidget);
-        final first = Completer<ResponseBody>();
-        final third = Completer<ResponseBody>();
-        bundle.adapter.enqueueResponder(
-          method: 'DELETE',
-          path: '/media/1',
-          responder: (_, __) => first.future,
-        );
         bundle.adapter.enqueueJson(
-          method: 'DELETE',
-          path: '/media/2',
-          statusCode: 503,
-        );
-        bundle.adapter.enqueueResponder(
-          method: 'DELETE',
-          path: '/media/4',
-          responder: (_, __) => third.future,
+          method: 'POST',
+          path: '/batch-operations',
+          statusCode: 202,
+          body: {
+            'task_run_id': 7,
+            'task_key': 'batch_operation',
+            'state': 'pending',
+          },
         );
         await tester.tap(
           find.byKey(const Key('batch-duplicates-batch-delete')),
@@ -175,84 +165,36 @@ void main() {
         await tester.tap(
           find.byKey(const Key('batch-duplicates-batch-confirm')),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-        expect(find.text('处理中 0/3'), findsOneWidget);
-        expect(
-          tester
-              .widget<LinearProgressIndicator>(
-                find.byType(LinearProgressIndicator),
-              )
-              .value,
-          0,
-        );
-        first.complete(ResponseBody.fromBytes([], 204));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 100));
-        expect(find.text('处理中 2/3'), findsOneWidget);
-        expect(
-          tester
-              .widget<LinearProgressIndicator>(
-                find.byType(LinearProgressIndicator),
-              )
-              .value,
-          closeTo(2 / 3, 0.001),
-        );
-        expect(bundle.adapter.hitCount('GET', '/media/duplicates'), 1);
-        third.complete(ResponseBody.fromBytes([], 204));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-        expect(find.text('成功 2 个，失败 1 个'), findsOneWidget);
-        await tester.tap(find.byKey(const Key('batch-progress-close-button')));
         await tester.pumpAndSettle();
-        expect(bundle.adapter.hitCount('GET', '/media/duplicates'), 1);
-        expect(find.text('已选 1 个'), findsOneWidget);
-        expect(
-          tester
-              .widget<Checkbox>(
-                find.byKey(const Key('batch-duplicate-select-2')),
-              )
-              .value,
-          isTrue,
-        );
-        expect(
-          tester
-              .widget<Checkbox>(
-                find.byKey(const Key('batch-duplicate-select-3')),
-              )
-              .onChanged,
-          isNull,
-        );
-        for (final id in [3, 5, 6]) {
+
+        final submit = bundle.adapter.requests
+            .where((request) => request.path == '/batch-operations')
+            .toList();
+        expect(submit, hasLength(1));
+        expect(submit.single.body, {
+          'operation': 'media_delete',
+          'ids': [1, 2, 4],
+          'delete_files': false,
+        });
+        expect(find.textContaining('已提交批量删除媒体'), findsOneWidget);
+        // 提交后前端不再逐条 DELETE；列表由任务完成后手动刷新。
+        for (final id in [1, 2, 3, 4, 5, 6]) {
           expect(bundle.adapter.hitCount('DELETE', '/media/$id'), 0);
         }
-        bundle.adapter.enqueueJson(
-          method: 'DELETE',
-          path: '/media/2',
-          statusCode: 204,
-        );
-        await tester.tap(
-          find.byKey(const Key('batch-duplicates-batch-delete')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.byKey(const Key('batch-duplicates-batch-confirm')),
-        );
-        await tester.pumpAndSettle();
-        expect(find.text('正在删除重复媒体'), findsNothing);
-        expect(find.byKey(const Key('batch-duplicate-file-2')), findsNothing);
+        expect(bundle.adapter.hitCount('GET', '/media/duplicates'), 1);
+        expect(find.text('已选 0 个'), findsNothing);
         expect(
           find.byKey(const Key('batch-duplicates-select')),
           findsOneWidget,
         );
-        expect(bundle.adapter.hitCount('DELETE', '/media/2'), 2);
+        await tester.pump(const Duration(seconds: 3));
         expect(tester.takeException(), isNull);
       },
     );
   }
 
   testWidgets(
-    'clear and cancel selection send no delete; changed groups abort confirmation',
+    'clear and cancel selection send no batch operation; changed groups abort confirmation',
     (tester) async {
       await _pump(tester, bundle, mobile: false);
       await tester.tap(find.byKey(const Key('batch-duplicates-select')));
@@ -267,7 +209,7 @@ void main() {
         find.byKey(const Key('batch-duplicates-exit-selection')),
       );
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('DELETE', '/media/1'), 0);
+      expect(bundle.adapter.hitCount('POST', '/batch-operations'), 0);
       await tester.tap(find.byKey(const Key('batch-duplicates-select')));
       await tester.pumpAndSettle();
       await _select(tester, 1);
@@ -290,7 +232,7 @@ void main() {
       await refresh;
       await tester.tap(find.byKey(const Key('batch-duplicates-batch-confirm')));
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('DELETE', '/media/1'), 0);
+      expect(bundle.adapter.hitCount('POST', '/batch-operations'), 0);
       expect(find.text('重复媒体已变化，请重新选择，至少保留一个副本'), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
     },

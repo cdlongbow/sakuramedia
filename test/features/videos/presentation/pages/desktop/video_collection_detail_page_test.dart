@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/videos_api_pr
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart';
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
@@ -99,6 +100,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          apiClientProvider.overrideWithValue(apiClient),
           sessionStoreProvider.overrideWithValue(sessionStore),
           videosApiProvider.overrideWithValue(VideosApi(apiClient: apiClient)),
           videoCollectionsApiProvider.overrideWithValue(
@@ -244,6 +246,59 @@ void main() {
       find.byKey(const Key('video-collection-grid-delete-1')),
       findsOneWidget,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('批量移出成员提交 video_collection_remove 且 ids 是成员 item_id', (
+    WidgetTester tester,
+  ) async {
+    enqueueInitialLoad();
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
+    await pumpPage(tester);
+
+    await tester.tap(
+      find.byKey(const Key('video-collection-enter-selection-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey<int>(1)));
+    await tester.tap(find.byKey(const ValueKey<int>(2)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('video-collection-batch-remove-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('video-collection-batch-confirm-button')),
+    );
+    await tester.pumpAndSettle();
+
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'video_collection_remove',
+      'ids': [1, 2],
+      'target_collection_id': 1,
+      'delete_files': false,
+    });
+    expect(
+      adapter.hitCount('DELETE', '/video-collections/1/items/1'),
+      0,
+    );
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const ValueKey<int>(1)), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);
   });
 }

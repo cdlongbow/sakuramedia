@@ -9,7 +9,7 @@ void main() {
     testWidgets('shows blacklist warning for $importStatus tasks', (
       tester,
     ) async {
-      late Future<bool> dialogResult;
+      late Future<bool?> dialogResult;
       await tester.pumpWidget(
         MaterialApp(
           theme: sakuraDesktopThemeData,
@@ -20,7 +20,6 @@ void main() {
                   dialogResult = showDownloadTaskDeleteDialog(
                     context,
                     tasks: [_task(importStatus)],
-                    onDelete: (_, __) async {},
                   );
                 },
                 child: const Text('open'),
@@ -36,12 +35,12 @@ void main() {
       expect(find.textContaining('会加入资源黑名单'), findsOneWidget);
       await tester.tap(find.text('取消'));
       await tester.pumpAndSettle();
-      expect(await dialogResult, isFalse);
+      expect(await dialogResult, isNull);
     });
   }
 
   testWidgets('hides blacklist warning for completed tasks', (tester) async {
-    late Future<bool> dialogResult;
+    late Future<bool?> dialogResult;
     await tester.pumpWidget(
       MaterialApp(
         theme: sakuraDesktopThemeData,
@@ -52,7 +51,6 @@ void main() {
                 dialogResult = showDownloadTaskDeleteDialog(
                   context,
                   tasks: [_task('completed')],
-                  onDelete: (_, __) async {},
                 );
               },
               child: const Text('open'),
@@ -68,7 +66,42 @@ void main() {
     expect(find.textContaining('会加入资源黑名单'), findsNothing);
     await tester.tap(find.text('取消'));
     await tester.pumpAndSettle();
-    expect(await dialogResult, isFalse);
+    expect(await dialogResult, isNull);
+  });
+
+  testWidgets('returns the captured delete-files option on confirm', (
+    tester,
+  ) async {
+    late Future<bool?> dialogResult;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraDesktopThemeData,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () {
+                dialogResult = showDownloadTaskDeleteDialog(
+                  context,
+                  tasks: [_task('completed')],
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('download-task-delete-files-checkbox')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('删除'));
+    await tester.pumpAndSettle();
+
+    expect(await dialogResult, isTrue);
   });
 }
 

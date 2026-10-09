@@ -7,7 +7,6 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_placeholders.dart';
-import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_api_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collections_overview_provider.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/add_to_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/create_clip_collection_dialog.dart';
@@ -20,6 +19,8 @@ import 'package:sakuramedia/features/clips/presentation/providers/clips_api_prov
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,7 +35,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_stat
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -613,16 +613,6 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
 
   // ----------------------------------------------------------- 批量动作
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个切片');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   Future<void> _batchAddToCollection() async {
     final selected = _selectedClips();
     if (selected.isEmpty) {
@@ -635,26 +625,17 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(clipCollectionsApiProvider);
-    final result = await runBatchOperation<MediaClipDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (clip) =>
-          api.addClipToCollection(collectionId: target.id, clipId: clip.clipId),
+      ref,
+      operation: BatchOperationType.clipCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((clip) => clip.clipId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
-    for (final clip in result.succeeded) {
-      broadcaster.reportCollectionMembershipChanged(
-        clipId: clip.clipId,
-        collectionId: target.id,
-      );
-    }
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchDelete() async {
@@ -674,21 +655,15 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (!mounted || !confirmed) {
       return;
     }
-    final api = ref.read(clipsApiProvider);
-    final result = await runBatchOperation<MediaClipDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除切片',
-      items: selected,
-      action: (clip) => api.deleteClip(clipId: clip.clipId),
+      ref,
+      operation: BatchOperationType.clipDelete,
+      ids: selected.map((clip) => clip.clipId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    final broadcaster = ref.read(clipMutationEventsProvider.notifier);
-    for (final clip in result.succeeded) {
-      broadcaster.reportDeleted(clip.clipId);
-    }
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 }

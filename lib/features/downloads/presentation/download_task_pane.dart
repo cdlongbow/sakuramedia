@@ -12,6 +12,8 @@ import 'package:sakuramedia/features/downloads/presentation/download_placeholder
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
@@ -199,24 +201,44 @@ Widget _buildBatchDeleteButton(
   );
 }
 
-/// 批量删除所选下载任务：复用下载任务删除弹窗（确认 +「同时删除下载器文件」），
-/// `showProgress` 下逐条 `DELETE /download-tasks/{id}` 并展示进度条；成功项随删
-/// 随从列表移除，失败项保留在列表里等用户处理。
+/// 批量删除所选下载任务：确认后提交后端批量操作任务，进度与结果在活动中心查看。
 Future<void> _deleteSelectedTasks(BuildContext context, WidgetRef ref) async {
   final notifier = ref.read(downloadTaskCenterProvider.notifier);
   final tasks = notifier.selectedLoadedTasks();
   if (tasks.isEmpty) return;
-  final confirmed = await showDownloadTaskDeleteDialog(
+  final deleteFiles = await showDownloadTaskDeleteDialog(context, tasks: tasks);
+  if (!context.mounted || deleteFiles == null) return;
+  final submitted = await submitBatchOperation(
     context,
-    tasks: tasks,
-    showProgress: true,
-    onDelete: (id, deleteFiles) =>
-        notifier.deleteTask(id, deleteFiles: deleteFiles),
+    ref,
+    operation: BatchOperationType.downloadTaskDelete,
+    ids: tasks.map((task) => task.id).toList(growable: false),
+    deleteFiles: deleteFiles,
   );
-  if (!context.mounted || !confirmed) return;
-  final removed = tasks.length - notifier.selectedLoadedTasks().length;
-  notifier.exitSelectionMode();
-  if (removed > 0) showToast('已删除 $removed 个下载任务');
+  if (!context.mounted) return;
+  if (submitted) notifier.exitSelectionMode();
+}
+
+/// 单条删除保持同步：确认后直接调用删除接口，不做排队。
+Future<void> _deleteTask(
+  BuildContext context,
+  WidgetRef ref,
+  DownloadTaskDto task,
+) async {
+  final deleteFiles = await showDownloadTaskDeleteDialog(
+    context,
+    tasks: [task],
+  );
+  if (!context.mounted || deleteFiles == null) return;
+  try {
+    await ref
+        .read(downloadTaskCenterProvider.notifier)
+        .deleteTask(task.id, deleteFiles: deleteFiles);
+  } catch (error) {
+    if (context.mounted) {
+      showToast(apiErrorMessage(error, fallback: '删除失败'));
+    }
+  }
 }
 
 List<Widget> buildDownloadTaskSlivers({
@@ -508,13 +530,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                     tooltip: isImportRunning ? '任务正在导入，无法删除' : '删除',
                     onPressed: (isPending || isImportRunning)
                         ? null
-                        : () => showDownloadTaskDeleteDialog(
-                            context,
-                            tasks: [task],
-                            onDelete: (id, deleteFiles) => ref
-                                .read(downloadTaskCenterProvider.notifier)
-                                .deleteTask(id, deleteFiles: deleteFiles),
-                          ),
+                        : () => unawaited(_deleteTask(context, ref, task)),
                   ),
               ],
             ),

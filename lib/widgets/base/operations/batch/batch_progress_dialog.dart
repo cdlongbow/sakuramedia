@@ -13,14 +13,15 @@ class BatchRunResult<T> {
   int get total => succeeded.length + failed.length;
 }
 
-/// 顺序执行一组单条任务，并用进度弹窗呈现过程。
+/// 顺序执行一组**本地**单条任务，并用进度弹窗呈现过程（只读查询等轻量循环专用；
+/// 会产生副作用的批量操作已改走后端批量任务，见 `submitBatchOperation`）。
 ///
 /// - 逐条 `await action(item)`，某条抛异常即记为失败并**跳过继续**，不中断剩余项。
 /// - 全部成功时进度弹窗自动关闭；有失败则停留展示「X 成功 / Y 失败」，等用户手动关闭。
 /// - 返回 [BatchRunResult]，调用方据此移除/刷新成功项。
 ///
 /// 若用户中途强行关闭（理论上 barrier 不可点关，仅兜底），返回当前已统计的结果。
-Future<BatchRunResult<T>> runBatchOperation<T>(
+Future<BatchRunResult<T>> runLocalBatchOperation<T>(
   BuildContext context, {
   required String title,
   required List<T> items,

@@ -1,21 +1,17 @@
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 
-Future<bool> showDownloadTaskDeleteDialog(
+/// 下载任务删除确认弹窗：返回用户勾选的「同时删除下载器文件」选项；
+/// 取消返回 `null`。实际删除由调用方提交批量操作任务执行。
+Future<bool?> showDownloadTaskDeleteDialog(
   BuildContext context, {
   required List<DownloadTaskDto> tasks,
-  required Future<void> Function(int taskId, bool deleteFiles) onDelete,
-  bool showProgress = false,
 }) async {
   var deleteFiles = false;
-  final remaining = tasks.toList();
   final blacklistableTaskCount = tasks
       .where(
         (task) =>
@@ -29,7 +25,6 @@ Future<bool> showDownloadTaskDeleteDialog(
     message: '是否删除 ${tasks.length} 个下载任务？',
     danger: true,
     confirmLabel: '删除',
-    failureFallback: '删除失败',
     extraContent: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -44,36 +39,9 @@ Future<bool> showDownloadTaskDeleteDialog(
         _DeleteFilesCheckbox(onChanged: (value) => deleteFiles = value),
       ],
     ),
-    onConfirm: showProgress
-        ? null
-        : () async {
-            final confirmedDeleteFiles = deleteFiles;
-            while (remaining.isNotEmpty) {
-              try {
-                await onDelete(remaining.first.id, confirmedDeleteFiles);
-                remaining.removeAt(0);
-              } catch (error) {
-                final importing =
-                    error is ApiException &&
-                    error.error?.code == 'download_task_import_running';
-                throw ApiException(
-                  message: importing
-                      ? '任务正在导入，无法删除'
-                      : apiErrorMessage(error, fallback: '删除失败'),
-                );
-              }
-            }
-          },
   );
-  if (!confirmed || !showProgress || !context.mounted) return confirmed;
-  final confirmedDeleteFiles = deleteFiles;
-  await runBatchOperation<DownloadTaskDto>(
-    context,
-    title: '正在删除下载任务',
-    items: tasks,
-    action: (task) => onDelete(task.id, confirmedDeleteFiles),
-  );
-  return true;
+  if (!confirmed) return null;
+  return deleteFiles;
 }
 
 class _DeleteFilesCheckbox extends HookWidget {

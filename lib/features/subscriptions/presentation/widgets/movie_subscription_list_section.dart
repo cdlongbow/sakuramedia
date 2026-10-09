@@ -3,6 +3,8 @@ import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 import 'dart:async';
@@ -537,7 +539,7 @@ List<Widget> _buildBatchActions(
   ];
 }
 
-/// 批量删除所选影片的下载任务：查询 → 确认 → 逐个删除 → 刷新列表。
+/// 批量删除所选影片的下载任务：查询 → 确认 → 提交后端批量任务。
 /// 桌面顶栏与移动贴底条的共用实现。
 Future<void> _deleteSelectedDownloads(
   BuildContext context,
@@ -547,11 +549,8 @@ Future<void> _deleteSelectedDownloads(
 }) async {
   onLoadingChanged(true);
   try {
-    final managerProvider = movieSubscriptionManagerProvider(
-      state.filter.status,
-    );
     final tasks = <DownloadTaskDto>[];
-    final result = await runBatchOperation<String>(
+    final result = await runLocalBatchOperation<String>(
       context,
       title: '正在查询下载任务',
       items: state.selectedMovieNumbers.toList(),
@@ -568,23 +567,18 @@ Future<void> _deleteSelectedDownloads(
       showToast('所选影片没有下载任务');
       return;
     }
-    final api = ref.read(downloadsApiProvider);
-    var removed = 0;
-    await showDownloadTaskDeleteDialog(
+    final deleteFiles = await showDownloadTaskDeleteDialog(
       context,
       tasks: tasks,
-      showProgress: true,
-      onDelete: (id, deleteFiles) async {
-        await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
-        removed++;
-      },
     );
-    if (!context.mounted) return;
-    if (removed > 0) {
-      ref.invalidate(downloadTaskCenterProvider);
-      await ref.read(managerProvider.notifier).refresh();
-      if (context.mounted) showToast('已删除 $removed 个下载任务');
-    }
+    if (!context.mounted || deleteFiles == null) return;
+    await submitBatchOperation(
+      context,
+      ref,
+      operation: BatchOperationType.downloadTaskDelete,
+      ids: tasks.map((task) => task.id).toList(growable: false),
+      deleteFiles: deleteFiles,
+    );
   } catch (error) {
     if (context.mounted) {
       showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
@@ -610,7 +604,7 @@ Future<void> _retriggerSelectedImports(
       state.filter.status,
     );
     final taskIds = <int>[];
-    final result = await runBatchOperation<String>(
+    final result = await runLocalBatchOperation<String>(
       context,
       title: '正在查询下载任务',
       items: state.selectedMovieNumbers.toList(),
@@ -951,22 +945,19 @@ class _RowConsumer extends HookConsumerWidget {
           await notifier.refresh();
           return;
         }
-        final api = ref.read(downloadsApiProvider);
         deleting.value = false;
-        var removed = false;
-        await showDownloadTaskDeleteDialog(
+        final deleteFiles = await showDownloadTaskDeleteDialog(
           context,
           tasks: currentTasks,
-          onDelete: (id, deleteFiles) async {
-            await api.deleteDownloadTask(id, deleteFiles: deleteFiles);
-            removed = true;
-          },
         );
-        if (!context.mounted) return;
-        if (removed) {
-          ref.invalidate(downloadTaskCenterProvider);
-          await notifier.refresh();
-        }
+        if (!context.mounted || deleteFiles == null) return;
+        await submitBatchOperation(
+          context,
+          ref,
+          operation: BatchOperationType.downloadTaskDelete,
+          ids: currentTasks.map((task) => task.id).toList(growable: false),
+          deleteFiles: deleteFiles,
+        );
       } catch (error) {
         if (context.mounted) {
           showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));

@@ -21,6 +21,8 @@ import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_actions_dialog.dart';
@@ -30,7 +32,6 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -220,16 +221,6 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   List<VideoItemListItemDto> _selectedVideos() =>
       _loadedVideos.where((v) => isSelected(v.id)).toList(growable: false);
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个视频');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   Future<void> _batchDelete() async {
     final selected = _selectedVideos();
     if (selected.isEmpty) {
@@ -246,23 +237,16 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     if (!mounted || !confirmed) {
       return;
     }
-    final api = ref.read(videosApiProvider);
-    final result = await runBatchOperation<VideoItemListItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除视频',
-      items: selected,
-      action: (video) => api.deleteVideo(video.id),
+      ref,
+      operation: BatchOperationType.videoDelete,
+      ids: selected.map((video) => video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 逐条广播删除信号（同步连发）：列表 provider 精准移除，
-    // 页面监听用微任务合并成一次合集横滑区刷新。
-    for (final video in result.succeeded) {
-      ref.read(videoMutationEventsProvider.notifier).reportDeleted(video.id);
-    }
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchAddToCollection() async {
@@ -274,28 +258,17 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(videoCollectionsApiProvider);
-    final result = await runBatchOperation<VideoItemListItemDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (video) =>
-          api.addCollectionItem(collectionId: target.id, videoItemId: video.id),
+      ref,
+      operation: BatchOperationType.videoCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((video) => video.id).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 合集成员/封面变化：逐条广播，由页面监听合并刷新合集横滑区。
-    for (final video in result.succeeded) {
-      ref
-          .read(videoMutationEventsProvider.notifier)
-          .reportCollectionMembershipChanged(
-            videoId: video.id,
-            collectionId: target.id,
-          );
-    }
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _handlePageRefresh() async {

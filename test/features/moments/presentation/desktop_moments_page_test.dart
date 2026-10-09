@@ -128,9 +128,14 @@ void main() {
     _enqueueMomentCollectionsResponse(bundle);
     _enqueueMomentCollectionsResponse(bundle);
     bundle.adapter.enqueueJson(
-      method: 'PUT',
-      path: '/moment-collections/7/points/10',
-      statusCode: 204,
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
     );
 
     await _pumpMomentsApp(tester, bundle: bundle, sessionStore: sessionStore);
@@ -156,9 +161,19 @@ void main() {
     await tester.tap(find.byKey(const Key('pick-moment-collection-7')));
     await tester.pumpAndSettle();
 
+    final submit = bundle.adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'moment_collection_add',
+      'ids': [10],
+      'target_collection_id': 7,
+      'delete_files': false,
+    });
     expect(
       bundle.adapter.hitCount('PUT', '/moment-collections/7/points/10'),
-      1,
+      0,
     );
     expect(find.text('已选 1 个'), findsNothing);
     await tester.pump(const Duration(seconds: 3));
@@ -171,24 +186,14 @@ void main() {
     _enqueueMomentCollectionsResponse(bundle);
     _enqueueMomentsPageResponses(bundle, sort: 'created_at:desc');
     bundle.adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/media-points/10',
-      statusCode: 204,
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/media-points',
-      body: <String, dynamic>{
-        'items': const <dynamic>[],
-        'page': 1,
-        'page_size': 20,
-        'total': 0,
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
       },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/moment-collections',
-      body: const <dynamic>[],
     );
 
     await _pumpMomentsApp(tester, bundle: bundle, sessionStore: sessionStore);
@@ -212,9 +217,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(bundle.adapter.hitCount('DELETE', '/media-points/10'), 1);
-    expect(find.text('ABC-001'), findsNothing);
-    expect(find.text('0 个时刻'), findsOneWidget);
+    final submit = bundle.adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'media_point_delete',
+      'ids': [10],
+      'delete_files': false,
+    });
+    expect(bundle.adapter.hitCount('DELETE', '/media-points/10'), 0);
+    // 提交后列表不即时变化，等任务完成后手动刷新。
+    expect(find.byKey(const Key('moment-card-10')), findsOneWidget);
     expect(find.text('已选 1 个'), findsNothing);
     await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);

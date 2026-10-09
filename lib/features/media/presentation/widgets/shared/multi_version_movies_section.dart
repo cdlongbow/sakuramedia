@@ -10,15 +10,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
-import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_placeholders.dart';
 import 'package:sakuramedia/features/media/presentation/providers/multi_version_movies_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -26,6 +24,8 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 
 class MultiVersionMoviesSection extends HookConsumerWidget {
@@ -95,23 +95,15 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
         return;
       }
       deleting.value = true;
-      final notifier = ref.read(provider.notifier);
-      final api = ref.read(mediaApiProvider);
-      try {
-        final result = await runBatchOperation<MediaListItemDto>(
-          context,
-          title: '正在删除影片版本',
-          items: selected,
-          action: (item) => api.deleteMedia(mediaId: item.id),
-        );
-        await notifier.refreshAfterDelete(result.succeeded);
-        if (!context.mounted) return;
-        selectedIds.value = result.failed.map((item) => item.id).toSet();
-        if (result.failed.isEmpty) exitSelection();
-        if (scrollController.hasClients) scrollController.jumpTo(0);
-      } finally {
-        if (context.mounted) deleting.value = false;
-      }
+      final submitted = await submitBatchOperation(
+        context,
+        ref,
+        operation: BatchOperationType.mediaDelete,
+        ids: selected.map((item) => item.id).toList(growable: false),
+      );
+      if (!context.mounted) return;
+      deleting.value = false;
+      if (submitted) exitSelection();
     }
 
     final deleteButton = AppButton(

@@ -11,6 +11,8 @@ import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/pages/desktop/media_management_page.dart';
 import 'package:sakuramedia/features/media/presentation/pages/shared/media_management_content.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operations_api.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operations_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/theme.dart';
 
@@ -221,8 +223,16 @@ void main() {
         items: [_invalidMediaJson(1), _invalidMediaJson(2)],
       ),
     );
-    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
-    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
     await _pumpPage(
       tester,
       sessionStore: sessionStore,
@@ -249,8 +259,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(adapter.hitCount('DELETE', '/media/1'), 1);
-    expect(adapter.hitCount('DELETE', '/media/2'), 1);
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'media_delete',
+      'ids': [1, 2],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/media/1'), 0);
+    expect(adapter.hitCount('DELETE', '/media/2'), 0);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -321,7 +340,9 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('batch deleting only broadcasts PornBox members', (tester) async {
+  testWidgets('batch delete submits backend task for selected media', (
+    tester,
+  ) async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/media',
@@ -333,8 +354,16 @@ void main() {
         ],
       ),
     );
-    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
-    adapter.enqueueJson(method: 'DELETE', path: '/media/2', statusCode: 204);
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
     await _pumpPage(
       tester,
       sessionStore: sessionStore,
@@ -342,7 +371,6 @@ void main() {
       apiClient: apiClient,
     );
 
-    final events = _watchVideoMutationEvents(tester);
     await tester.tap(
       find.byKey(const Key('media-management-enter-selection-button')),
     );
@@ -360,15 +388,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(adapter.hitCount('DELETE', '/media/1'), 1);
-    expect(adapter.hitCount('DELETE', '/media/2'), 1);
-    expect(events, hasLength(1));
-    expect(events.single.kind, VideoMutationKind.deleted);
-    expect(events.single.videoId, 101);
+    final submit = adapter.requests
+        .where((request) => request.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'media_delete',
+      'ids': [1, 2],
+      'delete_files': false,
+    });
+    expect(adapter.hitCount('DELETE', '/media/1'), 0);
+    expect(adapter.hitCount('DELETE', '/media/2'), 0);
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('batch delete keeps partial failures visible until closed', (
+  testWidgets('batch delete submit failure keeps selection and shows toast', (
     tester,
   ) async {
     adapter.enqueueJson(
@@ -379,25 +413,16 @@ void main() {
         items: [_duplicateMediaItemJson(1), _duplicateMediaItemJson(2)],
       ),
     );
-    adapter.enqueueJson(method: 'DELETE', path: '/media/1', statusCode: 204);
     adapter.enqueueJson(
-      method: 'DELETE',
-      path: '/media/2',
+      method: 'POST',
+      path: '/batch-operations',
       statusCode: 500,
       body: <String, dynamic>{
         'error': <String, dynamic>{
-          'code': 'delete_failed',
-          'message': '删除失败',
+          'code': 'server_error',
+          'message': '服务异常',
         },
       },
-    );
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/media',
-      body: _page(
-        total: 1,
-        items: [_duplicateMediaItemJson(2)],
-      ),
     );
     await _pumpPage(
       tester,
@@ -421,14 +446,10 @@ void main() {
     await tester.tap(
       find.byKey(const Key('media-management-batch-delete-confirm-button')),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-
-    expect(find.text('成功 1 个，失败 1 个'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('batch-progress-close-button')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('1 项失败'), findsOneWidget);
+    expect(find.text('服务异常'), findsOneWidget);
+    expect(find.text('共 2 条 · 已选 2 项'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -1014,6 +1035,9 @@ Future<void> _pumpPage(
       overrides: [
         sessionStoreProvider.overrideWithValue(sessionStore),
         mediaApiProvider.overrideWithValue(mediaApi),
+        batchOperationsApiProvider.overrideWithValue(
+          BatchOperationsApi(apiClient: apiClient),
+        ),
         mediaLibrariesApiProvider.overrideWithValue(
           _EmptyMediaLibrariesApi(apiClient: apiClient),
         ),

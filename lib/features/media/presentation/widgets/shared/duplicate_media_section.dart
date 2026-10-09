@@ -10,6 +10,8 @@ import 'package:sakuramedia/features/media/presentation/media_placeholders.dart'
 import 'package:sakuramedia/features/media/presentation/providers/duplicate_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_file_group_card.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_collection_chips.dart';
@@ -21,7 +23,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
@@ -98,25 +99,15 @@ class DuplicateMediaSection extends HookConsumerWidget {
         return;
       }
       deleting.value = true;
-      final notifier = ref.read(provider.notifier);
-      final browseNotifier = ref.read(mediaBrowseProvider.notifier);
-      try {
-        final result = await runBatchOperation<MediaListItemDto>(
-          context,
-          title: '正在删除重复媒体',
-          items: selected,
-          action: (item) async {
-            await notifier.deleteDuplicateMedia(mediaId: item.id);
-            browseNotifier.removeItemsByIds([item.id]);
-          },
-        );
-        if (!context.mounted) return;
-        selectedIds.value = result.failed.map((item) => item.id).toSet();
-        if (result.failed.isEmpty) exitSelection();
-        if (scrollController.hasClients) scrollController.jumpTo(0);
-      } finally {
-        if (context.mounted) deleting.value = false;
-      }
+      final submitted = await submitBatchOperation(
+        context,
+        ref,
+        operation: BatchOperationType.mediaDelete,
+        ids: selected.map((item) => item.id).toList(growable: false),
+      );
+      if (!context.mounted) return;
+      deleting.value = false;
+      if (submitted) exitSelection();
     }
 
     final deleteButton = AppButton(

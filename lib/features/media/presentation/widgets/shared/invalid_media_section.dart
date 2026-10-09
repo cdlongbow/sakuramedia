@@ -11,6 +11,8 @@ import 'package:sakuramedia/features/media/presentation/media_placeholders.dart'
 import 'package:sakuramedia/features/media/presentation/providers/invalid_media_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_libraries_provider.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_card.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
 import 'package:sakuramedia/theme.dart';
@@ -25,7 +27,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_stat
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 
 /// 「失效媒体」列表：后端只提供列表和删除，因此每条记录直接允许删除；
 /// 支持多选批量删除（桌面点卡片即选中，移动长按进入选择态）。
@@ -122,22 +123,14 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
     );
     if (!confirmed || !mounted) return;
 
-    final notifier = ref.read(invalidMediaProvider.notifier);
-    final result = await runBatchOperation<int>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除失效媒体',
-      items: mediaIds,
-      action: (id) => notifier.deleteInvalidMedia(mediaId: id),
+      ref,
+      operation: BatchOperationType.mediaDelete,
+      ids: mediaIds,
     );
     if (!mounted) return;
-    exitSelection();
-    final succeeded = result.succeeded.length;
-    final failed = result.failed.length;
-    if (failed == 0) {
-      showToast('已删除 $succeeded 项失效媒体');
-    } else {
-      showToast('已删除 $succeeded 项，$failed 项失败');
-    }
+    if (submitted) exitSelection();
   }
 }
 

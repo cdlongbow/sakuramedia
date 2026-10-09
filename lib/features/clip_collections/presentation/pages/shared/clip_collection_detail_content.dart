@@ -13,7 +13,8 @@ import 'package:sakuramedia/features/clip_collections/presentation/providers/cli
 import 'package:sakuramedia/features/clip_collections/presentation/widgets/pick_clip_collection_dialog.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
-import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/collection_playback_handoff_provider.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -29,7 +30,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
@@ -726,16 +726,6 @@ class _ClipCollectionDetailContentState
   List<MediaClipDto> _selectedClips(ClipCollectionDetailState state) =>
       state.clips.where((c) => isSelected(c.clipId)).toList(growable: false);
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个切片');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   /// 「加入其它合集」批量动作是**移动端独有**（桌面切片合集没有此入口），
   /// 按 `useMobileSelectionLayout` 门控展示；行为两端保持原样。
   Future<void> _batchAddToOtherCollection(
@@ -753,26 +743,17 @@ class _ClipCollectionDetailContentState
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(clipCollectionsApiProvider);
-    final result = await runBatchOperation<MediaClipDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (clip) =>
-          api.addClipToCollection(collectionId: target.id, clipId: clip.clipId),
+      ref,
+      operation: BatchOperationType.clipCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((clip) => clip.clipId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    final broadcaster = _mutationBroadcaster;
-    for (final clip in result.succeeded) {
-      broadcaster.reportCollectionMembershipChanged(
-        clipId: clip.clipId,
-        collectionId: target.id,
-      );
-    }
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchRemove(ClipCollectionDetailState state) async {
@@ -792,36 +773,17 @@ class _ClipCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final notifier = ref.read(_providerRef.notifier);
-    final result = await runBatchOperation<MediaClipDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在从合集移除',
-      items: selected,
-      action: (clip) async {
-        final error = await notifier.removeClip(clip.clipId);
-        if (error != null) {
-          throw Exception(error);
-        }
-      },
+      ref,
+      operation: BatchOperationType.clipCollectionRemove,
+      targetCollectionId: widget.collectionId,
+      ids: selected.map((clip) => clip.clipId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与切片，校准本页头部计数与列表。
-    await notifier.refresh();
-    if (!mounted) {
-      return;
-    }
-    // 合集封面 / 计数可能变化，广播给上层合集列表。
-    final broadcaster = _mutationBroadcaster;
-    for (final clip in result.succeeded) {
-      broadcaster.reportCollectionMembershipChanged(
-        clipId: clip.clipId,
-        collectionId: widget.collectionId,
-      );
-    }
-    _showBatchToast('移除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchDelete(ClipCollectionDetailState state) async {
@@ -841,28 +803,16 @@ class _ClipCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final clipsApi = ref.read(clipsApiProvider);
-    final result = await runBatchOperation<MediaClipDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除切片',
-      items: selected,
-      action: (clip) => clipsApi.deleteClip(clipId: clip.clipId),
+      ref,
+      operation: BatchOperationType.clipDelete,
+      ids: selected.map((clip) => clip.clipId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与切片，校准本页头部计数与列表。
-    await ref.read(_providerRef.notifier).refresh();
-    if (!mounted) {
-      return;
-    }
-    // 广播删除信号：「全部切片」网格精准移除 + 上层合集列表刷新。
-    final broadcaster = _mutationBroadcaster;
-    for (final clip in result.succeeded) {
-      broadcaster.reportDeleted(clip.clipId);
-    }
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   /// 批量确认按钮 Key：桌面两端共用 `$keyPrefix-batch-confirm-button`，

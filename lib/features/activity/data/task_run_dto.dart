@@ -77,6 +77,10 @@ class TaskRunDto {
     if (mediaTransferSummary != null) {
       return mediaTransferSummary;
     }
+    final batchOperationSummary = _batchOperationSummary;
+    if (batchOperationSummary != null) {
+      return batchOperationSummary;
+    }
     if (resultText != null && resultText!.trim().isNotEmpty) {
       return resultText;
     }
@@ -84,6 +88,23 @@ class TaskRunDto {
       return progressText;
     }
     return null;
+  }
+
+  /// `batch_operation` 任务完成后的「成功 X 项 · 失败 Y 项」摘要。
+  String? get _batchOperationSummary {
+    if (taskKey != 'batch_operation' || resultSummary == null) {
+      return null;
+    }
+    final succeeded = resultSummary!['succeeded_count'];
+    final failed = resultSummary!['failed_count'];
+    if (succeeded is! int || failed is! int) {
+      return null;
+    }
+    final fragments = <String>[
+      if (succeeded > 0) '成功 $succeeded 项',
+      if (failed > 0) '失败 $failed 项',
+    ];
+    return fragments.isEmpty ? null : fragments.join(' · ');
   }
 
   String? get _mediaTransferSummary {

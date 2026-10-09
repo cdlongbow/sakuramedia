@@ -12,6 +12,8 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/batch_operations_api.dart';
+import 'package:sakuramedia/features/shared/presentation/providers/batch_operations_api_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
@@ -596,7 +598,7 @@ void main() {
   });
 
   for (final deleteFiles in [false, true]) {
-    testWidgets('delete movie tasks with deleteFiles=$deleteFiles and refresh', (tester) async {
+    testWidgets('delete movie tasks with deleteFiles=$deleteFiles submits batch task', (tester) async {
       _enqueuePage(adapter, [_item('ABP-123')]);
       final response = {
         'items': [
@@ -613,27 +615,34 @@ void main() {
         await tester.tap(find.byKey(const Key('download-task-delete-files-checkbox')));
         await tester.pumpAndSettle();
       }
-      for (final id in [41, 42]) {
-        adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/$id', statusCode: 204);
-      }
-      adapter.setFallbackJson(method: 'GET', path: '/download-tasks',
-        body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100});
-      _enqueuePage(adapter, [_item('ABP-123')]);
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/batch-operations',
+        statusCode: 202,
+        body: {
+          'task_run_id': 7,
+          'task_key': 'batch_operation',
+          'state': 'pending',
+        },
+      );
       await tester.tap(find.text('删除'));
       await tester.pumpAndSettle();
-      final deleted = adapter.requests.where((r) => r.method == 'DELETE').toList();
-      expect(deleted.map((r) => r.path), ['/download-tasks/41', '/download-tasks/42']);
-      for (final request in deleted) {
-        expect(request.uri.queryParameters['delete_files'], '$deleteFiles');
-        expect(request.uri.queryParameters['confirm_delete_files'], deleteFiles ? 'true' : null);
-      }
+      final submit = adapter.requests
+          .where((r) => r.path == '/batch-operations')
+          .toList();
+      expect(submit, hasLength(1));
+      expect(submit.single.body, {
+        'operation': 'download_task_delete',
+        'ids': [41, 42],
+        'delete_files': deleteFiles,
+      });
+      expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
       expect(find.byKey(const Key('download-task-delete-dialog')), findsNothing);
-      expect(find.byKey(const Key('movie-subscription-row-delete-downloads')), findsNothing);
-      expect(_listRequests(adapter).length, 2);
+      await tester.pump(const Duration(seconds: 3));
     });
   }
 
-  testWidgets('movie deletion uses the file option captured at confirmation', (tester) async {
+  testWidgets('movie deletion submits the file option captured at confirmation', (tester) async {
     _enqueuePage(adapter, [_item('ABP-123')]);
     adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
       'items': [
@@ -644,27 +653,34 @@ void main() {
     await _pumpPage(tester, sessionStore, apiClient);
     await tester.tap(find.byKey(const Key('movie-subscription-row-delete-downloads')));
     await tester.pumpAndSettle();
-    final first = Completer<ResponseBody>();
-    adapter.enqueueResponder(method: 'DELETE', path: '/download-tasks/41',
-      responder: (_, __) => first.future);
-    adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/42', statusCode: 204);
-    await tester.tap(find.text('删除'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byKey(const Key('download-task-delete-files-checkbox')));
-    await tester.pump();
-    adapter.setFallbackJson(method: 'GET', path: '/download-tasks',
-      body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100});
-    _enqueuePage(adapter, [_item('ABP-123')]);
-    first.complete(ResponseBody.fromBytes([], 204));
     await tester.pumpAndSettle();
-    final deletes = adapter.requests.where((r) => r.method == 'DELETE').toList();
-    expect(deletes, hasLength(2));
-    expect(deletes.every((r) => r.uri.queryParameters['delete_files'] == 'false'), isTrue);
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
+    await tester.tap(find.text('删除'));
+    await tester.pumpAndSettle();
+    final submit = adapter.requests
+        .where((r) => r.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'download_task_delete',
+      'ids': [41, 42],
+      'delete_files': true,
+    });
     expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets('partial deletion preserves dialog and retries only remaining task', (tester) async {
+  testWidgets('movie deletion submit failure shows toast and sends no delete', (tester) async {
     _enqueuePage(adapter, [_item('ABP-123')]);
     adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
       'items': [
@@ -675,22 +691,21 @@ void main() {
     await _pumpPage(tester, sessionStore, apiClient);
     await tester.tap(find.byKey(const Key('movie-subscription-row-delete-downloads')));
     await tester.pumpAndSettle();
-    adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/41', statusCode: 204);
-    adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/42', statusCode: 409,
-      body: {'error': {'code': 'download_task_import_running', 'message': 'importing'}});
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 409,
+      body: {
+        'error': {
+          'code': 'batch_operation_conflict',
+          'message': '任务正在导入，无法删除',
+        },
+      },
+    );
     await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('download-task-delete-dialog')), findsOneWidget);
     expect(find.text('任务正在导入，无法删除'), findsOneWidget);
-    adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/42', statusCode: 204);
-    adapter.setFallbackJson(method: 'GET', path: '/download-tasks',
-      body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100});
-    _enqueuePage(adapter, [_item('ABP-123')]);
-    await tester.tap(find.text('删除'));
-    await tester.pumpAndSettle();
-    expect(adapter.hitCount('DELETE', '/download-tasks/41'), 1);
-    expect(adapter.hitCount('DELETE', '/download-tasks/42'), 2);
-    expect(find.byKey(const Key('download-task-delete-dialog')), findsNothing);
+    expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -720,22 +735,29 @@ void main() {
         await tester.tap(find.byKey(const Key('download-task-delete-files-checkbox')));
         await tester.pumpAndSettle();
       }
-      for (final id in [41, 42, 43]) {
-        adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/$id', statusCode: 204);
-      }
-      adapter.setFallbackJson(method: 'GET', path: '/download-tasks',
-        body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100});
-      _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124'), _item('ABP-125')]);
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/batch-operations',
+        statusCode: 202,
+        body: {
+          'task_run_id': 7,
+          'task_key': 'batch_operation',
+          'state': 'pending',
+        },
+      );
       await tester.tap(find.text('删除'));
       await tester.pumpAndSettle();
-      final deletes = adapter.requests.where((r) => r.method == 'DELETE').toList();
-      expect(deletes.map((r) => r.path), ['/download-tasks/41', '/download-tasks/42', '/download-tasks/43']);
-      for (final request in deletes) {
-        expect(request.uri.queryParameters['delete_files'], '$deleteFiles');
-        expect(request.uri.queryParameters['confirm_delete_files'], deleteFiles ? 'true' : null);
-      }
+      final submit = adapter.requests
+          .where((r) => r.path == '/batch-operations')
+          .toList();
+      expect(submit, hasLength(1));
+      expect(submit.single.body, {
+        'operation': 'download_task_delete',
+        'ids': [41, 42, 43],
+        'delete_files': deleteFiles,
+      });
+      expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
       expect(find.byKey(const Key('download-task-delete-dialog')), findsNothing);
-      expect(_listRequests(adapter).length, 2);
       await tester.pump(const Duration(seconds: 3));
     });
   }
@@ -800,7 +822,7 @@ void main() {
     });
   }
 
-  testWidgets('batch delete shows progress and continues after individual failure', (tester) async {
+  testWidgets('batch delete download tasks cancels or submits with file option', (tester) async {
     _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124'), _item('ABP-125')]);
     adapter.setFallbackJson(method: 'GET', path: '/download-tasks', body: {
       'items': [
@@ -818,41 +840,37 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: find.byKey(const Key('download-task-delete-dialog')), matching: find.text('取消')));
     await tester.pumpAndSettle();
-    expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
+    expect(
+      adapter.requests.where((r) => r.path == '/batch-operations'),
+      isEmpty,
+    );
     await tester.tap(find.byKey(const Key('movie-subscriptions-batch-delete-downloads-button')));
     await tester.pumpAndSettle();
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, false);
     await tester.tap(find.byKey(const Key('download-task-delete-files-checkbox')));
     await tester.pumpAndSettle();
-    final first = Completer<ResponseBody>();
-    final last = Completer<ResponseBody>();
-    adapter.enqueueResponder(method: 'DELETE', path: '/download-tasks/41', responder: (_, _) => first.future);
-    adapter.enqueueJson(method: 'DELETE', path: '/download-tasks/42', statusCode: 409,
-      body: {'error': {'code': 'download_task_import_running', 'message': 'importing'}});
-    adapter.enqueueResponder(method: 'DELETE', path: '/download-tasks/43', responder: (_, _) => last.future);
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/batch-operations',
+      statusCode: 202,
+      body: {
+        'task_run_id': 7,
+        'task_key': 'batch_operation',
+        'state': 'pending',
+      },
+    );
     await tester.tap(find.text('删除'));
     await tester.pumpAndSettle();
-    expect(find.text('处理中 0/3'), findsOneWidget);
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-    expect(find.text('处理中 0/3'), findsOneWidget);
-    first.complete(ResponseBody.fromBytes([], 204));
-    await tester.pumpAndSettle();
-    expect(find.text('处理中 2/3'), findsOneWidget);
-    expect(tester.widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).value, 2 / 3);
-    last.complete(ResponseBody.fromBytes([], 204));
-    await tester.pumpAndSettle();
-    expect(find.text('成功 2 个，失败 1 个'), findsOneWidget);
-    adapter.setFallbackJson(method: 'GET', path: '/download-tasks',
-      body: {'items': [], 'total': 0, 'page': 1, 'page_size': 100});
-    _enqueuePage(adapter, [_item('ABP-123'), _item('ABP-124'), _item('ABP-125')]);
-    await tester.tap(find.byKey(const Key('batch-progress-close-button')));
-    await tester.pumpAndSettle();
-    expect(find.text('正在删除下载任务'), findsNothing);
-    final deletes = adapter.requests.where((r) => r.method == 'DELETE').toList();
-    expect(deletes.map((r) => r.path), ['/download-tasks/41', '/download-tasks/42', '/download-tasks/43']);
-    expect(deletes.every((r) => r.uri.queryParameters['delete_files'] == 'true'), true);
-    expect(_listRequests(adapter).length, 2);
+    final submit = adapter.requests
+        .where((r) => r.path == '/batch-operations')
+        .toList();
+    expect(submit, hasLength(1));
+    expect(submit.single.body, {
+      'operation': 'download_task_delete',
+      'ids': [41, 42, 43],
+      'delete_files': true,
+    });
+    expect(adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -870,6 +888,9 @@ Future<void> _pumpPage(
     ProviderScope(
       overrides: [
         downloadsApiProvider.overrideWithValue(DownloadsApi(apiClient: apiClient)),
+        batchOperationsApiProvider.overrideWithValue(
+          BatchOperationsApi(apiClient: apiClient),
+        ),
         sessionStoreProvider.overrideWithValue(sessionStore),
         movieSubscriptionsApiProvider.overrideWithValue(
           MovieSubscriptionsApi(apiClient: apiClient),

@@ -4,17 +4,17 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/data/dto/moment_collection_dto.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/moment_collection_placeholders.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_detail_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collection_mutation_events_provider.dart';
-import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_moments_to_collection_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/moment_collection_editor.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/pick_moment_collection_dialog.dart';
 import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
+import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -29,7 +29,6 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
-import 'package:sakuramedia/widgets/base/operations/batch/batch_progress_dialog.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
@@ -537,16 +536,6 @@ class _MomentCollectionDetailContentState
       .where((point) => isSelected(point.pointId))
       .toList(growable: false);
 
-  void _showBatchToast(String verb, BatchRunResult<dynamic> result) {
-    if (result.failed.isEmpty) {
-      showToast('已$verb ${result.succeeded.length} 个时刻');
-    } else {
-      showToast(
-        '$verb完成：成功 ${result.succeeded.length} 个，失败 ${result.failed.length} 个',
-      );
-    }
-  }
-
   /// 「加入其它合集」批量动作是**移动端独有**（桌面时刻合集没有此入口），
   /// 按 [isMobile] 门控展示。
   Future<void> _batchAddToOtherCollection(
@@ -563,20 +552,17 @@ class _MomentCollectionDetailContentState
     if (!mounted || target == null) {
       return;
     }
-    final api = ref.read(momentCollectionsApiProvider);
-    final result = await runBatchOperation<MomentCollectionPointDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在加入「${target.name}」',
-      items: selected,
-      action: (point) =>
-          api.addPoint(collectionId: target.id, pointId: point.pointId),
+      ref,
+      operation: BatchOperationType.momentCollectionAdd,
+      targetCollectionId: target.id,
+      ids: selected.map((point) => point.pointId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    _mutationBroadcaster.reportChanged(target.id);
-    _showBatchToast('加入合集', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchRemove(MomentCollectionDetailState state) async {
@@ -594,24 +580,17 @@ class _MomentCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final notifier = ref.read(_providerRef.notifier);
-    final result = await runBatchOperation<MomentCollectionPointDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在从合集移除',
-      items: selected,
-      action: (point) => notifier.removePoint(point.pointId),
+      ref,
+      operation: BatchOperationType.momentCollectionRemove,
+      targetCollectionId: widget.collectionId,
+      ids: selected.map((point) => point.pointId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与时刻，校准本页头部计数与列表。
-    await notifier.refresh();
-    if (!mounted) {
-      return;
-    }
-    _mutationBroadcaster.reportChanged(widget.collectionId);
-    _showBatchToast('移除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<void> _batchDelete(MomentCollectionDetailState state) async {
@@ -629,24 +608,16 @@ class _MomentCollectionDetailContentState
     if (!mounted || !confirmed) {
       return;
     }
-    final mediaApi = ref.read(mediaApiProvider);
-    final result = await runBatchOperation<MomentCollectionPointDto>(
+    final submitted = await submitBatchOperation(
       context,
-      title: '正在删除时刻',
-      items: selected,
-      action: (point) => mediaApi.deleteMediaPointById(pointId: point.pointId),
+      ref,
+      operation: BatchOperationType.mediaPointDelete,
+      ids: selected.map((point) => point.pointId).toList(growable: false),
     );
     if (!mounted) {
       return;
     }
-    // 重新拉取合集与时刻，校准本页头部计数与列表。
-    await ref.read(_providerRef.notifier).refresh();
-    if (!mounted) {
-      return;
-    }
-    _mutationBroadcaster.reportChanged(widget.collectionId);
-    _showBatchToast('删除', result);
-    exitSelection();
+    if (submitted) exitSelection();
   }
 
   Future<bool> _confirm({

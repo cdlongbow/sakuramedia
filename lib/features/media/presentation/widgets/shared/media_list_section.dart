@@ -80,7 +80,7 @@ class MediaListSection extends StatelessWidget {
 
   final bool isTransferring;
 
-  /// 父页批量删除入口：弹二次确认 → 串行循环 `mediaApi.deleteMedia` → 汇总 toast。
+  /// 父页批量删除入口：弹二次确认 → 提交后端批量任务 → 提示已提交。
   final Future<void> Function() onBatchDelete;
 
   final Future<void> Function() onBatchTransfer;

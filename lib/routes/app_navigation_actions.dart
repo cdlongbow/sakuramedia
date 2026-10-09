@@ -70,6 +70,16 @@ extension AppNavigationActions on BuildContext {
     const DesktopLatestMoviesRouteData().push(this);
   }
 
+  void pushDesktopRecentlySubscribedMovies() {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    const DesktopRecentlySubscribedMoviesRouteData().push(this);
+  }
+
+  void pushDesktopRecentViews() {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    const DesktopRecentViewsRouteData().push(this);
+  }
+
   void pushDesktopSystemDiagnostics() {
     GoRouter.optionURLReflectsImperativeAPIs = true;
     const DesktopSystemDiagnosticsRouteData().push(this);

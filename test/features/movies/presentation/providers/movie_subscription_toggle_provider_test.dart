@@ -134,6 +134,8 @@ void main() {
     expect(mediaChanges.map((c) => c.canPlay), [false, false]);
     expect(subscriptionChanges.map((c) => c.movieNumber), ['A-1', 'B-2']);
     expect(subscriptionChanges.every((c) => !c.isSubscribed), isTrue);
+    // 强制取消属于批量清场：广播必须携带来源标记供状态筛选视图即时移除。
+    expect(subscriptionChanges.every((c) => c.fromBatch), isTrue);
     expect(container.read(movieSubscriptionToggleProvider), isEmpty);
   });
 
@@ -238,6 +240,7 @@ void main() {
     await settle();
     expect(result.skippedHasMediaNumbers, ['B-2']);
     expect(subscriptionChanges.single.movieNumber, 'A-1');
+    expect(subscriptionChanges.single.fromBatch, isTrue);
     expect(bundle.adapter.requests.where((r) => r.method == 'DELETE'), isEmpty);
   });
 }

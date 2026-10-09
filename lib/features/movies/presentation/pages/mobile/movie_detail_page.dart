@@ -358,9 +358,11 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
 
   Future<void> _handleRefresh() async {
     try {
-      await ref
-          .read(movieDetailProvider(widget.movieNumber).notifier)
-          .refresh();
+      final detailNotifier = ref.read(
+        movieDetailProvider(widget.movieNumber).notifier,
+      );
+      await detailNotifier.refresh();
+      detailNotifier.reportView();
       if (mounted) {
         resetDetailOverridesAfterRefresh();
       }

@@ -97,7 +97,11 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
       ref.read(movieSubscriptionEventsProvider.notifier).reportBatch([
         for (final number in numbers)
           if (!skipped.contains(number))
-            MovieSubscriptionChange(movieNumber: number, isSubscribed: false),
+            MovieSubscriptionChange(
+              movieNumber: number,
+              isSubscribed: false,
+              fromBatch: true,
+            ),
       ]);
       return MovieSubscriptionBatchToggleResult(
         requestedCount: response.requestedCount,

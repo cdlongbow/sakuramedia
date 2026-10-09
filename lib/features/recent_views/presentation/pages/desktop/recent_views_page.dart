@@ -1,0 +1,52 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/features/recent_views/data/api/recent_views_api.dart';
+import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
+import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_sliver_list.dart';
+import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
+import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+
+/// 「最近浏览」更多页（桌面）：全量时间线列表。
+class DesktopRecentViewsPage extends ConsumerWidget {
+  const DesktopRecentViewsPage({super.key});
+
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(recentViewsProvider);
+    try {
+      await ref.read(recentViewsProvider(RecentViewsApi.listLimit).future);
+    } catch (_) {
+      showToast('刷新失败');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppPageRefreshScope(
+      onRefresh: () => _refresh(ref),
+      child: ColoredBox(
+        color: context.appColors.surfaceElevated,
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(AppPageInsets.desktop),
+              sliver: RecentViewsSliverList(
+                onRetry: () => ref.invalidate(recentViewsProvider),
+                onMovieTap: (movieNumber) => context.pushDesktopMovieDetail(
+                  movieNumber: movieNumber,
+                  fallbackPath: desktopRecentViewsPath,
+                ),
+                onActorTap: (actorId) => context.pushDesktopActorDetail(
+                  actorId: actorId,
+                  fallbackPath: desktopRecentViewsPath,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

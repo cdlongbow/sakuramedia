@@ -9,6 +9,8 @@ import 'package:sakuramedia/features/overview/presentation/providers/mobile_over
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/discovery/presentation/mobile_overview_discover_tab.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/mobile/overview_clips_tab.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -18,6 +20,8 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
+import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
+import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_section.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -202,6 +206,8 @@ class _MobileOverviewMyTab extends ConsumerStatefulWidget {
 
 class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   static const int _latestMoviePageSize = 12;
+  static const int _recentlySubscribedPreviewCount = 12;
+  static const _recentlySubscribedScope = MovieSummaryScope.recentlySubscribed();
 
   late final TextEditingController _searchController;
   late final PlaylistsOverviewScope _playlistsScope;
@@ -313,6 +319,9 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
               SizedBox(height: spacing.xs),
               _buildLatestMoviesSection(),
               SizedBox(height: spacing.sm),
+              _buildRecentlySubscribedSection(),
+              _buildRecentViewsSection(),
+              SizedBox(height: spacing.sm),
               Text(
                 '播放列表',
                 style: resolveAppTextStyle(
@@ -332,9 +341,13 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
   }
 
   Future<void> _handleRefresh() async {
+    ref.invalidate(recentViewsProvider);
     try {
       await Future.wait<void>([
         _refreshLatestMovies(),
+        ref
+            .read(movieSummaryProvider(_recentlySubscribedScope).notifier)
+            .refresh(),
         ref.read(playlistsOverviewProvider(_playlistsScope).notifier).refresh(),
       ]);
     } catch (_) {
@@ -373,6 +386,60 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
           movieNumber: movie.movieNumber,
         ).push(context),
       ),
+    );
+  }
+
+  Widget _buildRecentlySubscribedSection() {
+    final async = ref.watch(movieSummaryProvider(_recentlySubscribedScope));
+    final summary = async.value;
+    final isLoading = async.isLoading && summary == null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSectionHeader(
+          title: '最近订阅',
+          actionLabel: '更多',
+          actionSize: AppTextButtonSize.xSmall,
+          actionKey: const Key('mobile-overview-recently-subscribed-more'),
+          onActionTap: () =>
+              const MobileRecentlySubscribedMoviesRouteData().push(context),
+        ),
+        SizedBox(height: context.appSpacing.xs),
+        // loading 用占位影片渲染真实卡片，由 [AppSkeletonizer] 灰化。
+        AppSkeletonizer(
+          enabled: isLoading,
+          child: MovieSummaryRail(
+            items: isLoading
+                ? movieListItemPlaceholders(
+                    count: _recentlySubscribedPreviewCount,
+                  )
+                : summary?.paged.items
+                      .take(_recentlySubscribedPreviewCount)
+                      .toList() ??
+                      const <MovieListItemDto>[],
+            errorMessage: async.hasError && summary == null
+                ? _recentlySubscribedScope.initialLoadErrorText
+                : null,
+            emptyMessage: '暂无订阅影片',
+            onMovieTap: (movie) => MobileMovieDetailRouteData(
+              movieNumber: movie.movieNumber,
+            ).push(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentViewsSection() {
+    return RecentViewsSection(
+      spacingBefore: context.appSpacing.sm,
+      actionSize: AppTextButtonSize.xSmall,
+      actionKey: const Key('mobile-overview-recent-views-more'),
+      onMoreTap: () => const MobileRecentViewsRouteData().push(context),
+      onMovieTap: (movieNumber) =>
+          MobileMovieDetailRouteData(movieNumber: movieNumber).push(context),
+      onActorTap: (actorId) =>
+          MobileActorDetailRouteData(actorId: actorId).push(context),
     );
   }
 

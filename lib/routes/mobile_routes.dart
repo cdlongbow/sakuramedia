@@ -39,6 +39,8 @@ import 'package:sakuramedia/features/cast/presentation/pages/cast_remote_page.da
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/latest_movies_page.dart';
+import 'package:sakuramedia/features/overview/presentation/pages/mobile/recently_subscribed_movies_page.dart';
+import 'package:sakuramedia/features/recent_views/presentation/pages/mobile/recent_views_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/system_overview_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
 import 'package:sakuramedia/features/search/presentation/pages/mobile/catalog_search_page.dart';
@@ -323,6 +325,48 @@ class MobileLatestMoviesRouteData extends _MobileSubpageRouteData
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
     return const MobileLatestMoviesPage();
+  }
+}
+
+@TypedGoRoute<MobileRecentlySubscribedMoviesRouteData>(
+  path: mobileRecentlySubscribedMoviesPath,
+)
+class MobileRecentlySubscribedMoviesRouteData extends _MobileSubpageRouteData
+    with $MobileRecentlySubscribedMoviesRouteData {
+  const MobileRecentlySubscribedMoviesRouteData();
+
+  @override
+  String get pageName => 'mobile-recently-subscribed-movies';
+
+  @override
+  String get title => '最近订阅';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileRecentlySubscribedMoviesPage();
+  }
+}
+
+@TypedGoRoute<MobileRecentViewsRouteData>(path: mobileRecentViewsPath)
+class MobileRecentViewsRouteData extends _MobileSubpageRouteData
+    with $MobileRecentViewsRouteData {
+  const MobileRecentViewsRouteData();
+
+  @override
+  String get pageName => 'mobile-recent-views';
+
+  @override
+  String get title => '最近浏览';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileRecentViewsPage();
   }
 }
 

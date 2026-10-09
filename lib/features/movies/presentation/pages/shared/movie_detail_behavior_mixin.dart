@@ -229,11 +229,13 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   }
 
   Future<void> refreshAfterMediaDelete({required int deletedMediaId}) async {
+    final detailNotifier = ref.read(movieDetailProvider(movieNumber).notifier);
     try {
-      await ref.read(movieDetailProvider(movieNumber).notifier).refresh();
+      await detailNotifier.refresh();
     } catch (_) {
       return;
     }
+    detailNotifier.reportView();
     if (!mounted) {
       return;
     }

@@ -334,7 +334,7 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
 
       _removeRows(accepted.toSet(), keepSelected: skipped);
       if (accepted.isNotEmpty) {
-        _broadcastUnsubscribed(accepted);
+        _broadcastUnsubscribed(accepted, fromBatch: true);
       }
       return MovieSubscriptionBatchToggleResult(
         requestedCount: response.requestedCount,
@@ -358,9 +358,16 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   ///
   /// 这条广播绕一圈也会回到本页的 [movieSubscriptionEventsProvider] 监听（届时
   /// 行已移除，补丁是空操作），并在那里统一触发计数刷新——所以本方法不自己刷计数。
-  void _broadcastUnsubscribed(List<String> movieNumbers) {
+  ///
+  /// [fromBatch]：批量取消的广播让其它状态筛选视图即时移出对应行；单条取消
+  /// 只翻态不移除。`fromBatch` 为 true 时即使只有一条也走 `reportBatch`
+  /// （`reportChange` 无法携带来源标记）。
+  void _broadcastUnsubscribed(
+    List<String> movieNumbers, {
+    bool fromBatch = false,
+  }) {
     final notifier = ref.read(movieSubscriptionEventsProvider.notifier);
-    if (movieNumbers.length == 1) {
+    if (!fromBatch && movieNumbers.length == 1) {
       notifier.reportChange(
         movieNumber: movieNumbers.single,
         isSubscribed: false,
@@ -369,7 +376,11 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
     }
     notifier.reportBatch(<MovieSubscriptionChange>[
       for (final number in movieNumbers)
-        MovieSubscriptionChange(movieNumber: number, isSubscribed: false),
+        MovieSubscriptionChange(
+          movieNumber: number,
+          isSubscribed: false,
+          fromBatch: fromBatch,
+        ),
     ]);
   }
 

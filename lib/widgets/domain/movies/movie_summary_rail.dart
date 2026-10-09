@@ -8,7 +8,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_subscri
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_hover_scroll_rail.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_scroll_rail.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 /// 影片摘要的横向 rail 版本：首页/发现预览区专用。
@@ -84,7 +84,7 @@ class MovieSummaryRail extends ConsumerWidget {
         ? ref.watch(movieSubscriptionToggleProvider)
         : const <String>{};
 
-    return AppHoverScrollRail(
+    return AppScrollRail(
       height: cardHeight,
       itemCount: items.length,
       scrollViewKey: scrollViewKey,

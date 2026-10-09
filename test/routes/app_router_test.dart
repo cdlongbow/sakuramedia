@@ -973,7 +973,8 @@ void main() {
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
     _enqueueDesktopOverviewResponses(bundle);
-    bundle.adapter.enqueueJson(
+    // 概览「最近订阅」区块也会请求 /movies，用 fallback 兜住两条消费方。
+    bundle.adapter.setFallbackJson(
       method: 'GET',
       path: '/movies',
       body: <String, dynamic>{
@@ -1626,6 +1627,12 @@ void main() {
     );
     final bundle = await createTestApiBundle(sessionStore);
     addTearDown(bundle.dispose);
+    // 「最近订阅」区块把播放列表推到了更下方，拉高视口保证卡片完整露出、
+    // 不落在底部导航的遮挡区里。
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final router = buildMobileRouter(sessionStore: sessionStore);
     bundle.adapter.enqueueJson(
       method: 'GET',
@@ -2739,7 +2746,8 @@ void main() {
       );
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
-      bundle.adapter.enqueueJson(
+      // 概览「最近订阅」区块也会请求 /movies，用 fallback 兜住两条消费方。
+      bundle.adapter.setFallbackJson(
         method: 'GET',
         path: '/movies',
         body: <String, dynamic>{
@@ -3467,7 +3475,8 @@ void main() {
 
       router.go(desktopMoviesPath);
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      // 概览「最近订阅」区块 1 次 + 影片列表页 1 次。
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
 
       await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
       await tester.pumpAndSettle();
@@ -3475,14 +3484,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(router.routeInformationProvider.value.uri.path, desktopMoviesPath);
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
 
       router.go(desktopActorsPath);
       await tester.pumpAndSettle();
       router.go(desktopMoviesPath);
       await tester.pumpAndSettle();
 
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       expect(
         find.byKey(const Key('movie-summary-card-ABC-001')),
         findsOneWidget,
@@ -3497,7 +3506,8 @@ void main() {
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
       _enqueueDesktopOverviewResponses(bundle);
-      bundle.adapter.enqueueJson(
+      // 概览「最近订阅」区块也会请求 /movies，用 fallback 兜住两条消费方。
+      bundle.adapter.setFallbackJson(
         method: 'GET',
         path: '/movies',
         body: <String, dynamic>{
@@ -3644,7 +3654,8 @@ void main() {
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
       _enqueueDesktopOverviewResponses(bundle);
-      bundle.adapter.enqueueJson(
+      // 概览「最近订阅」区块也会请求 /movies，用 fallback 兜住两条消费方。
+      bundle.adapter.setFallbackJson(
         method: 'GET',
         path: '/movies',
         body: <String, dynamic>{
@@ -3691,7 +3702,8 @@ void main() {
 
       router.go('/desktop/search/abc001');
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      // 概览「最近订阅」区块 1 次 + 搜索页 1 次。
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       expect(bundle.adapter.hitCount('GET', '/actors'), 1);
 
       await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
@@ -3703,7 +3715,7 @@ void main() {
         router.routeInformationProvider.value.uri.path,
         '/desktop/search/abc001',
       );
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       expect(bundle.adapter.hitCount('GET', '/actors'), 1);
 
       router.go(desktopActorsPath);
@@ -3711,7 +3723,7 @@ void main() {
       router.go('/desktop/search/abc001');
       await tester.pumpAndSettle();
 
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       expect(bundle.adapter.hitCount('GET', '/actors'), 2);
       expect(
         find.byKey(const Key('movie-summary-card-ABC-001')),
@@ -3815,7 +3827,8 @@ void main() {
 
       router.go(mobileMoviesPath);
       await tester.pumpAndSettle();
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      // 概览「最近订阅」区块 1 次 + 影片列表页 1 次。
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
 
       await tester.tap(find.byKey(const Key('movie-summary-card-ABC-001')));
       await tester.pumpAndSettle();
@@ -3823,14 +3836,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(router.routeInformationProvider.value.uri.path, mobileMoviesPath);
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
 
       router.go(mobileOverviewPath);
       await tester.pumpAndSettle();
       router.go(mobileMoviesPath);
       await tester.pumpAndSettle();
 
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+      expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       expect(
         find.byKey(const Key('movie-summary-card-ABC-001')),
         findsOneWidget,
@@ -4141,7 +4154,9 @@ void _enqueueMobileActorsResponse(TestApiBundle bundle) {
 }
 
 void _enqueueMobileMoviesResponse(TestApiBundle bundle) {
-  bundle.adapter.enqueueJson(
+  // /movies 会被概览「最近订阅」区块和影片列表页共同请求，用 fallback 兜住，
+  // 避免先到者把队列里的一次性响应吃掉。
+  bundle.adapter.setFallbackJson(
     method: 'GET',
     path: '/movies',
     body: <String, dynamic>{

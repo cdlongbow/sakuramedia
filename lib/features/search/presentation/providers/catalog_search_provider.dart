@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
@@ -44,6 +45,12 @@ class CatalogSearch extends _$CatalogSearch {
       final changes = next.value;
       if (changes != null) {
         applyMovieSubscriptionChanges(changes);
+      }
+    });
+    ref.listen(actorSubscriptionEventsProvider, (_, next) {
+      final change = next.value;
+      if (change != null) {
+        applyActorSubscriptionChange(change);
       }
     });
     return CatalogSearchState.initial;
@@ -288,6 +295,9 @@ class CatalogSearch extends _$CatalogSearch {
           )
           .toList(growable: false);
       state = state.copyWith(actorResults: items);
+      _reportActorSubscriptionChange(
+        ActorSubscriptionChange(actorId: actorId, isSubscribed: subscribe),
+      );
       return subscribe
           ? const ActorSubscriptionToggleResult.subscribed()
           : const ActorSubscriptionToggleResult.unsubscribed();
@@ -303,6 +313,22 @@ class CatalogSearch extends _$CatalogSearch {
         _setActorSubscriptionUpdating(actorId, false);
       }
     }
+  }
+
+  void applyActorSubscriptionChange(ActorSubscriptionChange change) {
+    if (_isDisposed) {
+      return;
+    }
+    final index = state.actorResults.indexWhere(
+      (actor) => actor.id == change.actorId,
+    );
+    if (index < 0 ||
+        state.actorResults[index].isSubscribed == change.isSubscribed) {
+      return;
+    }
+    final items = List.of(state.actorResults);
+    items[index] = items[index].copyWith(isSubscribed: change.isSubscribed);
+    state = state.copyWith(actorResults: items);
   }
 
   void applyMovieSubscriptionChanges(List<MovieSubscriptionChange> changes) {
@@ -505,6 +531,18 @@ class CatalogSearch extends _$CatalogSearch {
     if (changed) {
       state = state.copyWith(updatingActorIds: next);
     }
+  }
+
+  void _reportActorSubscriptionChange(ActorSubscriptionChange change) {
+    if (_isDisposed) {
+      return;
+    }
+    ref
+        .read(actorSubscriptionEventsProvider.notifier)
+        .reportChange(
+          actorId: change.actorId,
+          isSubscribed: change.isSubscribed,
+        );
   }
 
   void _reportMovieSubscriptionChange(MovieSubscriptionChange change) {

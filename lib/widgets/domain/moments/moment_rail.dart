@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_hover_scroll_rail.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_scroll_rail.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_card.dart';
 
 /// 时刻的横向 rail 版本：发现预览区专用，16:9 卡片。
@@ -37,7 +37,7 @@ class MomentRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     final cardWidth = isMobile ? _mobileCardWidth : _desktopCardWidth;
-    return AppHoverScrollRail(
+    return AppScrollRail(
       height: cardWidth / _cardAspectRatio,
       itemCount: items.length,
       scrollViewKey: const Key('moment-rail'),

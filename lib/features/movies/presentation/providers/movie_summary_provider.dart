@@ -117,6 +117,12 @@ class MovieSummary extends _$MovieSummary
           page: page,
           pageSize: pageSize,
         ),
+      MovieSummarySource.recentlySubscribed => moviesApi.getMovies(
+        status: MovieStatusFilter.subscribed,
+        sort: 'subscribed_at:desc',
+        page: page,
+        pageSize: pageSize,
+      ),
       MovieSummarySource.blacklisted => moviesApi.getMovies(
         blacklisted: true,
         page: page,
@@ -334,22 +340,26 @@ class MovieSummary extends _$MovieSummary
                 MovieCollectionTypeFilter.single);
   }
 
-  bool get _removesSubscriptionFlipRows {
+  @override
+  bool shouldRemoveSubscriptionChange(MovieSubscriptionChange change) {
+    // 「最近订阅」是订阅集合语义：退订即不再属于该列表。
+    if (scope.source == MovieSummarySource.recentlySubscribed) {
+      return !change.isSubscribed;
+    }
+    // 状态筛选视图：单条心形切换保留行、就地翻态（刷新/重进后自然收敛，
+    // 误触可原地点回来）；批量操作是显式清场，把翻转后不再满足条件的行移出。
+    if (!change.fromBatch) {
+      return false;
+    }
     if (scope.source != MovieSummarySource.movies &&
         scope.source != MovieSummarySource.tags &&
         scope.source != MovieSummarySource.actor) {
       return false;
     }
-    // subscribed 视图：取消订阅的影片不再满足条件；
-    // unsubscribed 视图：订阅的影片不再满足条件。两种视图都就地移除翻转行。
-    return activeFilter.movie.status == MovieStatusFilter.subscribed ||
-        activeFilter.movie.status == MovieStatusFilter.unsubscribed;
+    return switch (activeFilter.movie.status) {
+      MovieStatusFilter.subscribed => !change.isSubscribed,
+      MovieStatusFilter.unsubscribed => change.isSubscribed,
+      _ => false,
+    };
   }
-
-  @override
-  bool shouldRemoveSubscriptionChange(MovieSubscriptionChange change) =>
-      _removesSubscriptionFlipRows &&
-      (activeFilter.movie.status == MovieStatusFilter.subscribed
-          ? !change.isSubscribed
-          : change.isSubscribed);
 }

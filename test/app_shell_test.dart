@@ -36,6 +36,16 @@ void main() {
       expect(find.text('最近添加'), findsOneWidget);
       expect(find.text('ABC-001'), findsOneWidget);
       expect(find.byKey(const Key('overview-asset-movies')), findsOneWidget);
+      expect(find.text('最近订阅'), findsOneWidget);
+      expect(
+        find.byKey(const Key('movie-summary-card-SUB-001')),
+        findsOneWidget,
+      );
+      expect(find.text('最近浏览'), findsOneWidget);
+      expect(
+        find.byKey(const Key('recent-view-card-movie-HIS-001')),
+        findsOneWidget,
+      );
     },
   );
 }
@@ -122,6 +132,48 @@ void _enqueueOverviewResponses(TestApiBundle bundle) {
       'page': 1,
       'page_size': 8,
       'total': 1,
+    },
+  );
+  // 概览「最近订阅」区块与「最近添加」共用 /movies 端点（status/sort 走查询参数）。
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/movies',
+    body: <String, dynamic>{
+      'items': [
+        <String, dynamic>{
+          'javdb_id': 'MovieSub1',
+          'movie_number': 'SUB-001',
+          'title': 'Subscribed Movie 1',
+          'cover_image': null,
+          'release_date': '2024-02-03',
+          'duration_minutes': 110,
+          'is_subscribed': true,
+          'can_play': true,
+        },
+      ],
+      'page': 1,
+      'page_size': 24,
+      'total': 1,
+    },
+  );
+  // 概览「最近浏览」区块。
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/view-history',
+    body: <String, dynamic>{
+      'items': [
+        <String, dynamic>{
+          'entity_type': 'movie',
+          'viewed_at': '2026-10-10T10:00:00',
+          'movie': <String, dynamic>{
+            'movie_number': 'HIS-001',
+            'title': 'History Movie 1',
+            'cover_image': null,
+            'thin_cover_image': null,
+          },
+          'actor': null,
+        },
+      ],
     },
   );
 }

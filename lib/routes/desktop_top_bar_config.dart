@@ -65,6 +65,22 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
     );
   }
 
+  if (currentPath == desktopRecentlySubscribedMoviesPath) {
+    return const DesktopTopBarConfig(
+      title: '最近订阅',
+      fallbackPath: desktopOverviewPath,
+      isBackEnabled: true,
+    );
+  }
+
+  if (currentPath == desktopRecentViewsPath) {
+    return const DesktopTopBarConfig(
+      title: '最近浏览',
+      fallbackPath: desktopOverviewPath,
+      isBackEnabled: true,
+    );
+  }
+
   if (currentPath == desktopHotActressReleasesPath) {
     return const DesktopTopBarConfig(
       title: '热门新片',

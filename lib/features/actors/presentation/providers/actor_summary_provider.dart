@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/actors/presentation/actor_subscription_togg
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
@@ -79,6 +80,14 @@ class ActorSummary extends _$ActorSummary
         _removeActors(actorIds);
       }
     });
+    ref.listen(actorSubscriptionEventsProvider, (_, next) {
+      final change = next.value;
+      if (change != null) {
+        // 订阅翻转保留行、就地翻态：状态筛选视图等刷新/重进自然收敛，
+        // 误触可原地点回来。
+        _patchSubscription(change.actorId, change.isSubscribed);
+      }
+    });
     final paged = await loadInitialPage();
     return ActorSummaryState(paged: paged, filter: activeFilter);
   }
@@ -138,10 +147,12 @@ class ActorSummary extends _$ActorSummary
     }
     if (result.status == ActorSubscriptionToggleStatus.subscribed ||
         result.status == ActorSubscriptionToggleStatus.unsubscribed) {
-      _patchSubscription(
-        actorId,
-        result.status == ActorSubscriptionToggleStatus.subscribed,
-      );
+      final isSubscribed =
+          result.status == ActorSubscriptionToggleStatus.subscribed;
+      _patchSubscription(actorId, isSubscribed);
+      ref
+          .read(actorSubscriptionEventsProvider.notifier)
+          .reportChange(actorId: actorId, isSubscribed: isSubscribed);
     }
     _setSubscriptionUpdating(actorId, false);
     return result;

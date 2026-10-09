@@ -1,0 +1,44 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/features/recent_views/data/api/recent_views_api.dart';
+import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
+import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_sliver_list.dart';
+import 'package:sakuramedia/routes/mobile_routes.dart';
+import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+
+/// 「最近浏览」更多页（移动）：全量时间线列表。
+class MobileRecentViewsPage extends ConsumerWidget {
+  const MobileRecentViewsPage({super.key});
+
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(recentViewsProvider);
+    try {
+      await ref.read(recentViewsProvider(RecentViewsApi.listLimit).future);
+    } catch (_) {
+      showToast('刷新失败');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AppAdaptiveRefreshScrollView(
+      onRefresh: () => _refresh(ref),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(AppPageInsets.compact),
+          sliver: RecentViewsSliverList(
+            onRetry: () => ref.invalidate(recentViewsProvider),
+            onMovieTap: (movieNumber) =>
+                MobileMovieDetailRouteData(movieNumber: movieNumber).push(
+                  context,
+                ),
+            onActorTap: (actorId) =>
+                MobileActorDetailRouteData(actorId: actorId).push(context),
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -68,6 +68,7 @@ void main() {
       MovieSummarySource.tags => '/movies',
       MovieSummarySource.subscribedActorsLatest =>
         '/movies/subscribed-actors/latest',
+      MovieSummarySource.recentlySubscribed => '/movies',
       MovieSummarySource.blacklisted => '/movies',
       MovieSummarySource.actor => '/movies',
       MovieSummarySource.playlist => '/playlists/${scope.resourceId}/movies',
@@ -202,7 +203,7 @@ void main() {
     });
   }
 
-  test('女优已订阅筛选在强制取消完成广播后移除影片', () async {
+  test('女优已订阅筛选在强制取消的批量广播后移除影片', () async {
     const scope = MovieSummaryScope.actor(actorId: 8);
     final movies = [_movie('ABC-001', isSubscribed: true)];
     await prime(scope, movies);
@@ -236,10 +237,13 @@ void main() {
           .canPlay,
       isFalse,
     );
-    subscriptionBroadcaster().reportChange(
-      movieNumber: 'ABC-001',
-      isSubscribed: false,
-    );
+    subscriptionBroadcaster().reportBatch(<MovieSubscriptionChange>[
+      const MovieSubscriptionChange(
+        movieNumber: 'ABC-001',
+        isSubscribed: false,
+        fromBatch: true,
+      ),
+    ]);
     await _settleEvents();
     final state = container.read(movieSummaryProvider(scope)).requireValue;
     expect(state.paged.items, isEmpty);
@@ -555,8 +559,8 @@ void main() {
     expect(state.paged.total, 1);
   });
 
-  test('subscribed 视图取消订阅即移除，unsubscribed 视图订阅即移除', () async {
-    // subscribed 视图：取消订阅的影片不再满足筛选条件。
+  test('状态筛选视图单条翻转保留行并就地更新', () async {
+    // subscribed 视图：取消订阅的影片保留在列表中，只翻转订阅态。
     const subscribedScope = MovieSummaryScope.movies(
       cacheKey: 'desktop:movies:list',
     );
@@ -579,11 +583,13 @@ void main() {
         .read(movieSummaryProvider(subscribedScope))
         .requireValue;
     expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'ABC-001',
       'ABC-002',
     ]);
-    expect(state.paged.total, 1);
+    expect(state.paged.items.first.isSubscribed, isFalse);
+    expect(state.paged.total, 2);
 
-    // unsubscribed 视图：订阅的影片不再满足筛选条件，同样就地移除。
+    // unsubscribed 视图：订阅的影片同样保留，只翻转订阅态。
     const unsubscribedScope = MovieSummaryScope.movies(
       cacheKey: 'desktop:movies:list',
     );
@@ -607,6 +613,59 @@ void main() {
         .requireValue;
     expect(state.paged.items.map((item) => item.movieNumber), <String>[
       'ABC-001',
+      'ABC-002',
+    ]);
+    expect(state.paged.items.last.isSubscribed, isTrue);
+    expect(state.paged.total, 2);
+  });
+
+  test('状态筛选视图批量翻转即时移除不再满足条件的行', () async {
+    const scope = MovieSummaryScope.movies(cacheKey: 'desktop:movies:list');
+    await prime(scope, <Map<String, dynamic>>[
+      _movie('ABC-001', isSubscribed: true),
+      _movie('ABC-002', isSubscribed: true),
+    ]);
+    await container
+        .read(movieSummaryProvider(scope).notifier)
+        .applyMovieFilter(
+          const MovieFilterState(status: MovieStatusFilter.subscribed),
+        );
+
+    subscriptionBroadcaster().reportBatch(<MovieSubscriptionChange>[
+      const MovieSubscriptionChange(
+        movieNumber: 'ABC-001',
+        isSubscribed: false,
+        fromBatch: true,
+      ),
+    ]);
+    await _settleEvents();
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'ABC-002',
+    ]);
+    expect(state.paged.total, 1);
+  });
+
+  test('最近订阅视图按订阅时间倒序请求，取消订阅即移除条目', () async {
+    const scope = MovieSummaryScope.recentlySubscribed();
+    await prime(scope, <Map<String, dynamic>>[
+      _movie('ABC-001', isSubscribed: true),
+      _movie('ABC-002', isSubscribed: true),
+    ]);
+
+    final request = adapter.requests.single;
+    expect(request.path, '/movies');
+    expect(request.uri.queryParameters['status'], 'subscribed');
+    expect(request.uri.queryParameters['sort'], 'subscribed_at:desc');
+
+    subscriptionBroadcaster().reportChange(
+      movieNumber: 'ABC-001',
+      isSubscribed: false,
+    );
+    await _settleEvents();
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'ABC-002',
     ]);
     expect(state.paged.total, 1);
   });
@@ -672,6 +731,16 @@ void main() {
       },
     );
 
+    final broadcastChanges = <MovieSubscriptionChange>[];
+    final subscription = container.listen(
+      movieSubscriptionEventsProvider,
+      (_, next) {
+        if (next.hasValue) {
+          broadcastChanges.addAll(next.requireValue);
+        }
+      },
+    );
+    addTearDown(subscription.close);
     final result = await container
         .read(movieSummaryProvider(scope).notifier)
         .batchToggleSubscription(
@@ -681,6 +750,9 @@ void main() {
 
     expect(result.updatedCount, 1);
     expect(result.skippedHasMediaNumbers, <String>['ABC-002']);
+    // 批量路径广播必须携带来源标记，状态筛选视图据此即时移除。
+    expect(broadcastChanges.single.movieNumber, 'ABC-001');
+    expect(broadcastChanges.single.fromBatch, isTrue);
     final state = container.read(movieSummaryProvider(scope)).requireValue;
     expect(state.paged.items.map((item) => item.isSubscribed), <bool>[
       false,

@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/subscriptions/data/api/movie_subscriptions_api.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_manager_provider.dart';
@@ -116,6 +117,54 @@ void main() {
       1,
     );
   });
+
+  test('批量取消广播携带 fromBatch，单条取消不带', () async {
+    _enqueuePage(adapter, [_item('A-1', 'missing'), _item('A-2', 'missing')]);
+    await container.read(provider.future);
+    final changes = <MovieSubscriptionChange>[];
+    final subscription = container.listen(
+      movieSubscriptionEventsProvider,
+      (_, next) {
+        if (next.hasValue) {
+          changes.addAll(next.requireValue);
+        }
+      },
+    );
+    addTearDown(subscription.close);
+
+    // 单条取消：其它视图只翻态，广播不带来源标记。
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/movies/A-1/subscription',
+      statusCode: 204,
+    );
+    await container.read(provider.notifier).unsubscribe('A-1');
+    await _settleEvent();
+    expect(changes.single.movieNumber, 'A-1');
+    expect(changes.single.fromBatch, isFalse);
+
+    // 批量取消：即使只处理一条也走 reportBatch 并携带来源标记，供状态筛选视图即时移除。
+    changes.clear();
+    container.read(provider.notifier).toggleSelection('A-2');
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/movies/unsubscriptions',
+      body: <String, dynamic>{
+        'requested_count': 1,
+        'updated_count': 1,
+        'skipped': <Map<String, dynamic>>[],
+      },
+    );
+    await container.read(provider.notifier).batchUnsubscribe();
+    await _settleEvent();
+    expect(changes.single.movieNumber, 'A-2');
+    expect(changes.single.fromBatch, isTrue);
+  });
+}
+
+Future<void> _settleEvent() async {
+  await Future<void>.delayed(Duration.zero);
+  await Future<void>.delayed(Duration.zero);
 }
 
 void _enqueuePage(

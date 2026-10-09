@@ -54,12 +54,21 @@ void main() {
       (await container.read(actorDetailProvider(1).future)).actor?.summary.name,
       'Old actor',
     );
+    await _waitForViewHistoryPosts(bundle, 1);
+    // 详情加载与刷新都各上报一次浏览（fire-and-forget）。
+    expect(bundle.adapter.hitCount('POST', '/view-history'), 1);
     await container.read(actorDetailProvider(1).notifier).refresh();
+    await _waitForViewHistoryPosts(bundle, 2);
 
     expect(
       container.read(actorDetailProvider(1)).requireValue.actor?.summary.name,
       'New actor',
     );
+    expect(bundle.adapter.hitCount('POST', '/view-history'), 2);
+    expect(bundle.adapter.requests.last.body, <String, dynamic>{
+      'entity_type': 'actor',
+      'entity_id': 1,
+    });
   });
 
   test('refresh rethrows and keeps existing actor on failure', () async {
@@ -93,6 +102,15 @@ void main() {
       'Old actor',
     );
   });
+}
+
+Future<void> _waitForViewHistoryPosts(TestApiBundle bundle, int expected) async {
+  for (var attempt = 0;
+      attempt < 100 &&
+          bundle.adapter.hitCount('POST', '/view-history') < expected;
+      attempt++) {
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+  }
 }
 
 Map<String, dynamic> _actorJson(String name) => <String, dynamic>{

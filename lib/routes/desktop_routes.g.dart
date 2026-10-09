@@ -447,6 +447,16 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
       factory: $DesktopLatestMoviesRouteData._fromState,
     ),
     GoRouteData.$route(
+      path: '/desktop/library/recently-subscribed',
+      hasOverriddenOnExit: false,
+      factory: $DesktopRecentlySubscribedMoviesRouteData._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/desktop/library/recent-views',
+      hasOverriddenOnExit: false,
+      factory: $DesktopRecentViewsRouteData._fromState,
+    ),
+    GoRouteData.$route(
       path: '/desktop/library/video-collections',
       hasOverriddenOnExit: false,
       factory: $DesktopVideoCollectionsRouteData._fromState,
@@ -980,6 +990,50 @@ mixin $DesktopLatestMoviesRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/library/latest');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopRecentlySubscribedMoviesRouteData on GoRouteData {
+  static DesktopRecentlySubscribedMoviesRouteData _fromState(
+    GoRouterState state,
+  ) => const DesktopRecentlySubscribedMoviesRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/desktop/library/recently-subscribed');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopRecentViewsRouteData on GoRouteData {
+  static DesktopRecentViewsRouteData _fromState(GoRouterState state) =>
+      const DesktopRecentViewsRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/library/recent-views');
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -7,6 +7,8 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_state.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/features/recent_views/data/dto/recent_view_dto.dart';
+import 'package:sakuramedia/features/recent_views/presentation/recent_view_reporter.dart';
 
 export 'package:sakuramedia/features/movies/presentation/providers/movie_detail_state.dart';
 
@@ -67,6 +69,11 @@ class MovieDetail extends _$MovieDetail {
           .read(moviesApiProvider)
           .getMovieDetail(movieNumber: movieNumber);
       if (_isDisposed) return;
+      reportRecentView(
+        ref,
+        entityType: RecentViewEntityType.movie,
+        entityId: movie.id,
+      );
       state = state.copyWith(
         movie: movie,
         selectedPreview: _defaultPreviewFor(movie),
@@ -101,6 +108,21 @@ class MovieDetail extends _$MovieDetail {
       errorMessage: null,
     );
     await similarFuture;
+  }
+
+  /// 页面手势刷新（下拉 / 顶栏 / 详情内删媒体后同步）在 [refresh] 成功后显式调用。
+  ///
+  /// [refresh] 自身不上报：媒体管理页删版本等后台同步也走它，若在内部上报，
+  /// 用户没打开的影片会被顶进「最近浏览」。
+  void reportView() {
+    if (_isDisposed) return;
+    final movie = state.movie;
+    if (movie == null) return;
+    reportRecentView(
+      ref,
+      entityType: RecentViewEntityType.movie,
+      entityId: movie.id,
+    );
   }
 
   /// 外部拿到新 DTO 后就地写入（如 refreshMetadata 成功回写）。

@@ -159,6 +159,7 @@ mixin MovieSubscriptionMutationMixin<
             MovieSubscriptionChange(
               movieNumber: movieNumber,
               isSubscribed: subscribe,
+              fromBatch: true,
             ),
       ]);
     }
@@ -254,15 +255,8 @@ mixin MovieSubscriptionMutationMixin<
     if (changes.isEmpty || isOptimisticPatchDisposed) {
       return;
     }
-    final broadcaster = ref.read(movieSubscriptionEventsProvider.notifier);
-    if (changes.length == 1) {
-      final change = changes.single;
-      broadcaster.reportChange(
-        movieNumber: change.movieNumber,
-        isSubscribed: change.isSubscribed,
-      );
-      return;
-    }
-    broadcaster.reportBatch(changes);
+    // 统一走 reportBatch：单条也保留载荷原字段（如 fromBatch），
+    // 不能折叠成 reportChange 重建对象。
+    ref.read(movieSubscriptionEventsProvider.notifier).reportBatch(changes);
   }
 }

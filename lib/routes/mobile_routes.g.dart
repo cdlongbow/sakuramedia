@@ -15,6 +15,8 @@ List<RouteBase> get $appRoutes => [
   $mobileSettingsPluginsRouteData,
   $mobileSettingsPluginMarketRouteData,
   $mobileLatestMoviesRouteData,
+  $mobileRecentlySubscribedMoviesRouteData,
+  $mobileRecentViewsRouteData,
   $mobileSystemOverviewRouteData,
   $mobileMediaImportRouteData,
   $mobileActivityRouteData,
@@ -319,6 +321,62 @@ mixin $MobileLatestMoviesRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/mobile/library/latest');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileRecentlySubscribedMoviesRouteData => GoRouteData.$route(
+  path: '/mobile/library/recently-subscribed',
+  hasOverriddenOnExit: false,
+  factory: $MobileRecentlySubscribedMoviesRouteData._fromState,
+);
+
+mixin $MobileRecentlySubscribedMoviesRouteData on GoRouteData {
+  static MobileRecentlySubscribedMoviesRouteData _fromState(
+    GoRouterState state,
+  ) => const MobileRecentlySubscribedMoviesRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/mobile/library/recently-subscribed');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileRecentViewsRouteData => GoRouteData.$route(
+  path: '/mobile/library/recent-views',
+  hasOverriddenOnExit: false,
+  factory: $MobileRecentViewsRouteData._fromState,
+);
+
+mixin $MobileRecentViewsRouteData on GoRouteData {
+  static MobileRecentViewsRouteData _fromState(GoRouterState state) =>
+      const MobileRecentViewsRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/library/recent-views');
 
   @override
   void go(BuildContext context) => context.go(location);

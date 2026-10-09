@@ -11,6 +11,8 @@ import 'package:sakuramedia/features/overview/presentation/providers/recently_pl
 import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/storage_usage_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/watch_trend_card.dart';
+import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
+import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_section.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -25,12 +27,13 @@ class DesktopOverviewPage extends ConsumerWidget {
   const DesktopOverviewPage({super.key});
 
   static const _latestScope = MovieSummaryScope.latest();
+  static const _recentlySubscribedScope = MovieSummaryScope.recentlySubscribed();
 
   /// 宽屏时「观看趋势 + 存储分布」并排；窄窗口堆叠。
   static const double _twoColumnMinWidth = 960;
 
-  /// 预览分区的占位项数量（「最近添加」「最近播放」各一行横向 rail，
-  /// 更多内容进各自页面）。
+  /// 预览分区的占位项数量（「最近添加」「最近订阅」「最近播放」各一行横向
+  /// rail，更多内容进各自页面）。
   static const int _previewItemCount = 12;
 
   Future<void> _refreshOverview(WidgetRef ref) async {
@@ -39,6 +42,9 @@ class DesktopOverviewPage extends ConsumerWidget {
       // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),卡片不闪骨架。
       ref.read(overviewSystemInfoProvider.notifier).load(),
       ref.read(movieSummaryProvider(_latestScope).notifier).refresh(),
+      ref
+          .read(movieSummaryProvider(_recentlySubscribedScope).notifier)
+          .refresh(),
     ];
     if (recentPlaylist != null) {
       futures.add(
@@ -52,6 +58,7 @@ class DesktopOverviewPage extends ConsumerWidget {
       );
     }
     ref.invalidate(recentlyPlayedPlaylistProvider);
+    ref.invalidate(recentViewsProvider);
     await Future.wait<void>(futures);
   }
 
@@ -72,6 +79,9 @@ class DesktopOverviewPage extends ConsumerWidget {
     final systemInfoNotifier = ref.read(overviewSystemInfoProvider.notifier);
     final latestAsync = ref.watch(movieSummaryProvider(_latestScope));
     final latest = latestAsync.value;
+    final recentlySubscribedAsync = ref.watch(
+      movieSummaryProvider(_recentlySubscribedScope),
+    );
     final recentPlaylist = ref.watch(recentlyPlayedPlaylistProvider).value;
     final recentScope = recentPlaylist == null
         ? null
@@ -180,6 +190,38 @@ class DesktopOverviewPage extends ConsumerWidget {
                     emptyMessage: '暂无入库影片，去搜索看看吧',
                   ),
                 ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.appSpacing.xxl),
+                ),
+                SliverToBoxAdapter(
+                  child: AppSectionHeader(
+                    title: '最近订阅',
+                    actionLabel: '更多',
+                    actionKey: const Key('overview-recently-subscribed-more'),
+                    onActionTap: () =>
+                        context.pushDesktopRecentlySubscribedMovies(),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: SizedBox(height: context.appSpacing.md),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildMovieRail(
+                    context,
+                    ref: ref,
+                    scope: _recentlySubscribedScope,
+                    summary: recentlySubscribedAsync.value,
+                    isLoading:
+                        recentlySubscribedAsync.isLoading &&
+                        recentlySubscribedAsync.value == null,
+                    errorMessage:
+                        recentlySubscribedAsync.hasError &&
+                            recentlySubscribedAsync.value == null
+                        ? _recentlySubscribedScope.initialLoadErrorText
+                        : null,
+                    emptyMessage: '暂无订阅影片',
+                  ),
+                ),
                 if (recentPlaylist != null && recentScope != null) ...<Widget>[
                   SliverToBoxAdapter(
                     child: SizedBox(height: context.appSpacing.xxl),
@@ -217,6 +259,21 @@ class DesktopOverviewPage extends ConsumerWidget {
                     ),
                   ),
                 ],
+                SliverToBoxAdapter(
+                  child: RecentViewsSection(
+                    spacingBefore: context.appSpacing.xxl,
+                    actionKey: const Key('overview-recent-views-more'),
+                    onMoreTap: () => context.pushDesktopRecentViews(),
+                    onMovieTap: (movieNumber) => context.pushDesktopMovieDetail(
+                      movieNumber: movieNumber,
+                      fallbackPath: desktopOverviewPath,
+                    ),
+                    onActorTap: (actorId) => context.pushDesktopActorDetail(
+                      actorId: actorId,
+                      fallbackPath: desktopOverviewPath,
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

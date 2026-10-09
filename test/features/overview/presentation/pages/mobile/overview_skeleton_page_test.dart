@@ -44,6 +44,25 @@ void main() {
       final sessionStore = await buildSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
+      bundle.adapter.setFallbackJson(
+        method: 'GET',
+        path: '/view-history',
+        body: <String, dynamic>{
+          'items': <dynamic>[
+            <String, dynamic>{
+              'entity_type': 'movie',
+              'viewed_at': '2026-10-10T10:00:00',
+              'movie': <String, dynamic>{
+                'movie_number': 'HIS-001',
+                'title': 'History Movie 1',
+                'cover_image': null,
+                'thin_cover_image': null,
+              },
+              'actor': null,
+            },
+          ],
+        },
+      );
 
       await pumpWithProviders(
         tester,
@@ -54,8 +73,14 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
       expect(readIndex(tester), 0);
+      expect(find.text('最近订阅'), findsOneWidget);
       // 收干净页面内启动的一次性 Timer(标签页里的请求/动画),避免尾部断言。
       await tester.pumpAndSettle();
+      expect(find.text('最近浏览'), findsOneWidget);
+      expect(
+        find.byKey(const Key('recent-view-card-movie-HIS-001')),
+        findsOneWidget,
+      );
     },
   );
 

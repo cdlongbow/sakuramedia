@@ -100,9 +100,11 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     );
     return AppPageRefreshScope(
       onRefresh: () async {
-        await ref
-            .read(movieDetailProvider(widget.movieNumber).notifier)
-            .refresh();
+        final detailNotifier = ref.read(
+          movieDetailProvider(widget.movieNumber).notifier,
+        );
+        await detailNotifier.refresh();
+        detailNotifier.reportView();
         ref.invalidate(movieSubtitlesProvider(widget.movieNumber));
       },
       child: Builder(

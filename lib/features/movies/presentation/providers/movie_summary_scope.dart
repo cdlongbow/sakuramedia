@@ -10,6 +10,7 @@ enum MovieSummarySource {
   movies,
   tags,
   subscribedActorsLatest,
+  recentlySubscribed,
   blacklisted,
   actor,
   playlist,
@@ -52,6 +53,15 @@ class MovieSummaryScope {
          pageSize: pageSize,
          initialLoadErrorText: initialLoadErrorText,
        );
+
+  /// 最近订阅影片：当前仍已订阅的影片，按订阅时间倒序。
+  /// 供概览 /「我的」tab 的「最近订阅」区块与其「更多」页共用。
+  const MovieSummaryScope.recentlySubscribed({int pageSize = 24})
+    : this._(
+        source: MovieSummarySource.recentlySubscribed,
+        pageSize: pageSize,
+        initialLoadErrorText: '最近订阅影片加载失败，请稍后重试',
+      );
 
   const MovieSummaryScope.blacklisted({int pageSize = 24})
     : this._(

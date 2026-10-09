@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/actors/presentation/actor_subscription_togg
 import 'package:sakuramedia/features/actors/presentation/providers/actor_detail_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/widgets/actor_merge_dialog.dart';
 import 'package:sakuramedia/features/actors/presentation/widgets/actor_profile_editor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
@@ -342,6 +343,17 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
 
     if (!mounted) {
       return;
+    }
+
+    if (result.status == ActorSubscriptionToggleStatus.subscribed ||
+        result.status == ActorSubscriptionToggleStatus.unsubscribed) {
+      ref
+          .read(actorSubscriptionEventsProvider.notifier)
+          .reportChange(
+            actorId: widget.actorId,
+            isSubscribed:
+                result.status == ActorSubscriptionToggleStatus.subscribed,
+          );
     }
 
     setState(() {

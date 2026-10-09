@@ -25,6 +25,8 @@ import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop
 import 'package:sakuramedia/features/moment_collections/presentation/pages/desktop/moment_collections_page.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/pages/desktop/moment_collection_detail_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/desktop/latest_movies_page.dart';
+import 'package:sakuramedia/features/overview/presentation/pages/desktop/recently_subscribed_movies_page.dart';
+import 'package:sakuramedia/features/recent_views/presentation/pages/desktop/recent_views_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/system_diagnostics_page.dart';
@@ -364,6 +366,10 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
     ),
     TypedGoRoute<DesktopFollowRouteData>(path: desktopFollowPath),
     TypedGoRoute<DesktopLatestMoviesRouteData>(path: desktopLatestMoviesPath),
+    TypedGoRoute<DesktopRecentlySubscribedMoviesRouteData>(
+      path: desktopRecentlySubscribedMoviesPath,
+    ),
+    TypedGoRoute<DesktopRecentViewsRouteData>(path: desktopRecentViewsPath),
     TypedGoRoute<DesktopVideoCollectionsRouteData>(
       path: desktopVideoCollectionsPath,
     ),
@@ -533,6 +539,32 @@ class DesktopLatestMoviesRouteData extends _DesktopShellPageRouteData
   @override
   Widget buildContent(BuildContext context, GoRouterState state) {
     return const DesktopLatestMoviesPage();
+  }
+}
+
+class DesktopRecentlySubscribedMoviesRouteData extends _DesktopShellPageRouteData
+    with $DesktopRecentlySubscribedMoviesRouteData {
+  const DesktopRecentlySubscribedMoviesRouteData();
+
+  @override
+  String get pageName => 'desktop-recently-subscribed-movies';
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    return const DesktopRecentlySubscribedMoviesPage();
+  }
+}
+
+class DesktopRecentViewsRouteData extends _DesktopShellPageRouteData
+    with $DesktopRecentViewsRouteData {
+  const DesktopRecentViewsRouteData();
+
+  @override
+  String get pageName => 'desktop-recent-views';
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    return const DesktopRecentViewsPage();
   }
 }
 

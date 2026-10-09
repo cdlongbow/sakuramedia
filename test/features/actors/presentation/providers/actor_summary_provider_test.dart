@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_mutation_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_removal_events_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
@@ -254,6 +255,76 @@ void main() {
     final state = container.read(actorSummaryProvider(scope)).requireValue;
     expect(state.paged.items.single.isSubscribed, isTrue);
     expect(state.isSubscriptionUpdating(1), isFalse);
+  });
+
+  test('单条订阅成功后向订阅事件广播变更', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1)]);
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/actors/1/subscription',
+      statusCode: 204,
+    );
+    final changes = <ActorSubscriptionChange>[];
+    final subscription = container.listen(
+      actorSubscriptionEventsProvider,
+      (_, next) {
+        if (next.hasValue) {
+          changes.add(next.requireValue);
+        }
+      },
+    );
+    addTearDown(subscription.close);
+
+    final result = await container
+        .read(actorSummaryProvider(scope).notifier)
+        .toggleSubscription(1);
+
+    expect(result.status.name, 'unsubscribed');
+    expect(changes.single.actorId, 1);
+    expect(changes.single.isSubscribed, isFalse);
+  });
+
+  test('订阅广播在「已订阅」筛选下保留行并就地翻态', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1), _actor(2)], total: 2);
+
+    container
+        .read(actorSubscriptionEventsProvider.notifier)
+        .reportChange(actorId: 2, isSubscribed: false);
+    await _settle();
+
+    // 单条翻转不再即时移除：行保留、心变灰，刷新/重进后自然收敛。
+    final state = container.read(actorSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((actor) => actor.id), <int>[1, 2]);
+    expect(state.paged.items.last.isSubscribed, isFalse);
+    expect(state.paged.total, 2);
+  });
+
+  test('订阅广播在「全部」筛选下就地翻转订阅态', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1)]);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _page(items: <Map<String, dynamic>>[_actor(1)], total: 1),
+    );
+    await container
+        .read(actorSummaryProvider(scope).notifier)
+        .applyFilter(
+          const ActorFilterState(
+            subscriptionStatus: ActorSubscriptionStatus.all,
+          ),
+        );
+
+    container
+        .read(actorSubscriptionEventsProvider.notifier)
+        .reportChange(actorId: 1, isSubscribed: false);
+    await _settle();
+
+    final state = container.read(actorSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.single.isSubscribed, isFalse);
+    expect(state.paged.total, 1);
   });
 
   test('desktop/mobile family 状态隔离', () async {

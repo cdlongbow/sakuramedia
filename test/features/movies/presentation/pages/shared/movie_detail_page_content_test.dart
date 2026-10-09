@@ -4,9 +4,8 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 
@@ -54,10 +53,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const [],
             similarMovies: const [],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: () => edits++,
             onMediaSelect: (_) {},
           ),
@@ -108,13 +106,9 @@ void main() {
                     isSubscribed: false,
                     isSubscriptionUpdating: false,
                     selectedMediaId: 100,
-                    statItems: const [],
                     similarMovies: const [],
                     isSimilarMoviesLoading: false,
-                    bottomInfoBarVariant: mobile
-                        ? MovieDetailBottomInfoBarVariant.mobileFullWidth
-                        : MovieDetailBottomInfoBarVariant.desktopCard,
-                    onInspectorTap: _noop,
+                    onInspectorPaneTap: _ignorePane,
                     onPlaylistTap: _noop,
                     onMediaSelect: (_) {},
                     onActorTap: (_) => actorTaps++,
@@ -131,16 +125,28 @@ void main() {
             expect(find.textContaining('上次看到'), findsNothing);
             expect(find.byType(MoviePlotGallery), findsNothing);
             if (showTags) {
-              await tester.ensureVisible(find.text('剧情'));
+              await tester.scrollUntilVisible(
+                find.text('剧情'),
+                200,
+                scrollable: find.byType(Scrollable).first,
+              );
               await tester.tap(find.text('剧情'));
               expect(tagTaps, 1);
             }
             if (showActors) {
-              await tester.ensureVisible(find.text('演员一'));
+              await tester.scrollUntilVisible(
+                find.text('演员一'),
+                200,
+                scrollable: find.byType(Scrollable).first,
+              );
               await tester.tap(find.text('演员一'));
               expect(actorTaps, 1);
             }
-            await tester.ensureVisible(find.text('媒体源'));
+            await tester.scrollUntilVisible(
+              find.text('媒体源'),
+              200,
+              scrollable: find.byType(Scrollable).first,
+            );
             expect(find.text('媒体源').hitTestable(), findsOneWidget);
             expect(tester.takeException(), isNull);
           },
@@ -164,10 +170,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
           ),
@@ -218,13 +223,9 @@ void main() {
                 isSubscribed: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: 100,
-                statItems: const <MovieDetailStatItem>[],
                 similarMovies: const <MovieListItemDto>[],
                 isSimilarMoviesLoading: false,
-                bottomInfoBarVariant: mobile
-                    ? MovieDetailBottomInfoBarVariant.mobileFullWidth
-                    : MovieDetailBottomInfoBarVariant.desktopCard,
-                onInspectorTap: _noop,
+                onInspectorPaneTap: _ignorePane,
                 onPlaylistTap: _noop,
                 onMediaSelect: (_) {},
               ),
@@ -285,10 +286,9 @@ void main() {
                 isSubscribed: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: 100,
-                statItems: const <MovieDetailStatItem>[],
                 similarMovies: const <MovieListItemDto>[],
                 isSimilarMoviesLoading: false,
-                onInspectorTap: _noop,
+                onInspectorPaneTap: _ignorePane,
                 onPlaylistTap: _noop,
                 onMediaSelect: (_) {},
                 onSeriesTap: () => tapCount += 1,
@@ -339,10 +339,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
             onSeriesTap: _noop,
@@ -358,6 +357,11 @@ void main() {
   testWidgets(
     'movie detail page content keeps grouped meta spacing in mobile theme',
     (WidgetTester tester) async {
+      tester.view.devicePixelRatio = 1;
+      // 正文区块按需构建：撑高视口让简介 / 标签 / 演员同屏，位置比较才有意义。
+      tester.view.physicalSize = const Size(400, 2000);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(
         MaterialApp(
           theme: sakuraMobileThemeData,
@@ -370,19 +374,9 @@ void main() {
               isSubscribed: false,
               isSubscriptionUpdating: false,
               selectedMediaId: 100,
-              statItems: const <MovieDetailStatItem>[
-                MovieDetailStatItem(
-                  icon: Icons.calendar_today_outlined,
-                  label: '26/03/08',
-                  tooltip: '发行日期',
-                  iconColor: Color(0xFF6B625E),
-                ),
-              ],
               similarMovies: const <MovieListItemDto>[],
               isSimilarMoviesLoading: false,
-              bottomInfoBarVariant:
-                  MovieDetailBottomInfoBarVariant.mobileFullWidth,
-              onInspectorTap: _noop,
+              onInspectorPaneTap: _ignorePane,
               onPlaylistTap: _noop,
               onMediaSelect: (_) {},
             ),
@@ -442,10 +436,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
           ),
@@ -476,10 +469,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
             onPlayTap: _noop,
@@ -540,10 +532,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
           ),
@@ -586,10 +577,9 @@ void main() {
             isSubscribed: false,
             isSubscriptionUpdating: false,
             selectedMediaId: 100,
-            statItems: const <MovieDetailStatItem>[],
             similarMovies: const <MovieListItemDto>[],
             isSimilarMoviesLoading: false,
-            onInspectorTap: _noop,
+            onInspectorPaneTap: _ignorePane,
             onPlaylistTap: _noop,
             onMediaSelect: (_) {},
           ),
@@ -600,6 +590,87 @@ void main() {
 
     expect(find.text('0.0'), findsNothing, reason: '零评分隐藏');
     expect(find.textContaining('想看 · 23'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('detail action row opens the matching inspector dialog', (
+    WidgetTester tester,
+  ) async {
+    final openedTabs = <MovieDetailInspectorPane>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: _movieDetail(),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            isSubscribed: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorPaneTap: openedTabs.add,
+            onPlaylistTap: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('movie-detail-hero-review-icon')),
+      findsOneWidget,
+    );
+    // 固定底栏已下线。
+    expect(find.byKey(const Key('movie-detail-fixed-info-bar')), findsNothing);
+
+    for (final key in const <String>[
+      'movie-detail-hero-review-icon',
+      'movie-detail-hero-magnet-search-icon',
+      'movie-detail-hero-thumbnail-icon',
+    ]) {
+      await tester.ensureVisible(find.byKey(Key(key)));
+      await tester.tap(find.byKey(Key(key)));
+    }
+    await tester.pump();
+
+    expect(openedTabs, <MovieDetailInspectorPane>[
+      MovieDetailInspectorPane.review,
+      MovieDetailInspectorPane.magnetSearch,
+      MovieDetailInspectorPane.thumbnail,
+    ]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('detail meta line carries the release date', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraMobileThemeData,
+        home: Scaffold(
+          body: MovieDetailPageContent(
+            movie: _movieDetail(releaseDate: DateTime(2024, 1, 2)),
+            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+            selectedPreviewKey: 'movie-preview',
+            selectedPreviewUrl: null,
+            isSubscribed: false,
+            isSubscriptionUpdating: false,
+            selectedMediaId: 100,
+            similarMovies: const <MovieListItemDto>[],
+            isSimilarMoviesLoading: false,
+            onInspectorPaneTap: _ignorePane,
+            onPlaylistTap: _noop,
+            onMediaSelect: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('上映 · 2024/01/02'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -621,6 +692,7 @@ MovieDetailDto _movieDetail({
   int wantWatchCount = 23,
   int commentCount = 45,
   int scoreNumber = 45,
+  DateTime? releaseDate,
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
@@ -632,7 +704,7 @@ MovieDetailDto _movieDetail({
     makerName: 'S1 NO.1 STYLE',
     directorName: '紋℃',
     coverImage: null,
-    releaseDate: null,
+    releaseDate: releaseDate,
     durationMinutes: 120,
     score: score,
     heat: heat,
@@ -693,3 +765,5 @@ MovieDetailDto _movieDetail({
 }
 
 void _noop() {}
+
+void _ignorePane(MovieDetailInspectorPane _) {}

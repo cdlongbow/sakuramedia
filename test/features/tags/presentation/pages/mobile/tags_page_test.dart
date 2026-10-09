@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -51,6 +55,30 @@ void main() {
       .where((request) => request.uri.path == '/movies')
       .map((request) => request.uri.queryParameters['tag_match'])
       .toList(growable: false);
+
+  ResponseBody moviesResponse(String movieNumber) => ResponseBody.fromString(
+    jsonEncode(<String, dynamic>{
+      'items': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'javdb_id': 'MovieA-$movieNumber',
+          'movie_number': movieNumber,
+          'title': 'Movie $movieNumber',
+          'cover_image': null,
+          'release_date': '2024-01-02',
+          'duration_minutes': 120,
+          'is_subscribed': false,
+          'can_play': true,
+        },
+      ],
+      'page': 1,
+      'page_size': 24,
+      'total': 1,
+    }),
+    200,
+    headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    },
+  );
 
   Widget wrap(Widget child) {
     return ProviderScope(
@@ -220,6 +248,109 @@ void main() {
       expect(movieTagMatches(), <String?>['or', 'and']);
     },
   );
+
+  testWidgets('详情跳入的预选标签首拉不等防抖，加载中显示骨架而不是空态', (
+    WidgetTester tester,
+  ) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 1, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
+    final held = Completer<ResponseBody>();
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/movies',
+      responder: (_, _) => held.future,
+    );
+    addTearDown(() {
+      if (!held.isCompleted) held.complete(moviesResponse('REAL-777'));
+    });
+
+    await tester.pumpWidget(wrap(const MobileTagsPage(initialTagId: 1)));
+    await tester.pump();
+    // 250ms 防抖窗口内就已经发出首拉。
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+
+    // 请求在途时是占位骨架，不是「该标签下暂无影片」。
+    expect(find.text('该标签下暂无影片'), findsNothing);
+    expect(
+      find.byKey(const Key('movie-summary-card-ABC-001')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-summary-card-REAL-777')),
+      findsNothing,
+    );
+
+    held.complete(moviesResponse('REAL-777'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('movie-summary-card-REAL-777')), findsOneWidget);
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
+    expect(find.text('该标签下暂无影片'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('一级入口首次选标签：防抖窗口和请求在途都是骨架，不是空态', (
+    WidgetTester tester,
+  ) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 1, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
+    final held = Completer<ResponseBody>();
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/movies',
+      responder: (_, _) => held.future,
+    );
+    addTearDown(() {
+      if (!held.isCompleted) held.complete(moviesResponse('REAL-777'));
+    });
+
+    await tester.pumpWidget(wrap(const MobileTagsPage()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-selector-trigger')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-option-1')));
+
+    // 250ms 防抖窗口内：占位骨架，而不是「该标签下暂无影片」。
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(bundle.adapter.hitCount('GET', '/movies'), 0);
+    expect(find.text('该标签下暂无影片'), findsNothing);
+    expect(
+      find.byKey(const Key('movie-summary-card-ABC-001')),
+      findsOneWidget,
+    );
+
+    // 请求在途：仍保持骨架，居中的筛选进度层不再叠上来遮住它。
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(bundle.adapter.hitCount('GET', '/movies'), 1);
+    expect(
+      find.byKey(const Key('movie-summary-card-ABC-001')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('app-filter-result-loading-overlay')),
+      findsNothing,
+    );
+
+    held.complete(moviesResponse('REAL-777'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('movie-summary-card-REAL-777')), findsOneWidget);
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
+    expect(find.text('该标签下暂无影片'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('影片筛选走底部抽屉，而不是桌面就地浮层', (WidgetTester tester) async {
     bundle.adapter

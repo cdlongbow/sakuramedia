@@ -11,7 +11,9 @@ import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_s
 /// 把标签选择值显式同步到标签影片 provider。
 ///
 /// `MovieSummaryProvider` 初次无标签时不会请求；本组件在选中标签后才应用
-/// tag filter，并在后续选择/match mode 变化时重拉第一页。
+/// tag filter，并在后续选择/match mode 变化时重拉第一页。带预选标签的入口
+/// （影片详情跳入）已由 `MovieSummaryScope.tags` 把条件带进首拉，这里的首次
+/// 同步因筛选值相等而短路，不会产生第二次请求。
 class TagMovieSummaryContent extends ConsumerStatefulWidget {
   const TagMovieSummaryContent({
     super.key,

@@ -25,6 +25,9 @@ import 'package:sakuramedia/theme.dart';
 /// 新增可选 `alignment`——直接传给 `Image.alignment`，用于横图裁竖封面时需要 topCenter 等场景。
 /// 新增可选 `placeholderColor` / `animateReveal`——有连续底色的场景（如影片详情）
 /// 让占位与底色同色、背景图关闭淡入，把「骨架 → 占位 → 图片」两次跳变收成一次。
+/// 新增可选 `onImageSized`——首帧到达时回调解码尺寸，供调用方按图片实际绘制
+/// 矩形做对齐（如影片详情 hero 的左右羽化）；命中内存缓存时可用
+/// [resolveCachedMaskedImageSize] 在 build 期同步拿到同一个尺寸，首帧就对齐。
 class MaskedImage extends ConsumerStatefulWidget {
   const MaskedImage({
     super.key,
@@ -35,6 +38,7 @@ class MaskedImage extends ConsumerStatefulWidget {
     this.memCacheHeight,
     this.placeholderColor,
     this.animateReveal = true,
+    this.onImageSized,
   });
 
   static const int _decodeSizeUpperBound = 1024;
@@ -58,6 +62,14 @@ class MaskedImage extends ConsumerStatefulWidget {
   /// 解码完成后直接显示，避免与前景图两次先后闪烁。
   final bool animateReveal;
 
+  /// 首帧（或换图后新帧）到达时回调解码后的图片尺寸。
+  ///
+  /// 给需要按图片**实际绘制矩形**对齐的场景用（如影片详情 hero 的左右羽化：
+  /// `BoxFit.contain` 下图片居中、两侧留白宽度由图片宽高比决定，
+  /// 按整条容器宽度算羽化会落空）。回调统一挪到帧后，调用方可直接 `setState`。
+  /// 不传时行为与之前完全一致（不挂监听、不多解码）。
+  final ValueChanged<Size>? onImageSized;
+
   @override
   ConsumerState<MaskedImage> createState() => _MaskedImageState();
 }
@@ -79,6 +91,57 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
   /// （frame == null）时用它继续展示旧图；新图首帧到达后再淡入。
   /// 首进（无旧帧）时为 null，走占位分支，与过去行为一致。
   ImageProvider<Object>? _lastCompletedProvider;
+
+  /// [MaskedImage.onImageSized] 用的旁路监听：挂在同一个 provider 上，
+  /// 只为了拿解码尺寸，不额外解码（provider 相同 → 命中同一条缓存）。
+  ImageStream? _sizeStream;
+  ImageStreamListener? _sizeListener;
+  ImageProvider<Object>? _sizeListenerProvider;
+
+  @override
+  void dispose() {
+    final listener = _sizeListener;
+    if (listener != null) {
+      _sizeStream?.removeListener(listener);
+    }
+    super.dispose();
+  }
+
+  /// provider 变化时重挂尺寸监听。
+  void _syncSizeListener(ImageProvider<Object> provider) {
+    if (widget.onImageSized == null ||
+        identical(provider, _sizeListenerProvider)) {
+      return;
+    }
+    final listener = _sizeListener ??= ImageStreamListener(
+      _handleImageSized,
+      // 尺寸回调是尽力而为：加载失败交给 Image 自己的 errorBuilder。
+      onError: (_, _) {},
+    );
+    _sizeStream?.removeListener(listener);
+    _sizeListenerProvider = provider;
+    _sizeStream = provider.resolve(createLocalImageConfiguration(context))
+      ..addListener(listener);
+  }
+
+  void _handleImageSized(ImageInfo info, bool synchronousCall) {
+    final onImageSized = widget.onImageSized;
+    if (onImageSized == null) {
+      return;
+    }
+    final size = Size(
+      info.image.width.toDouble(),
+      info.image.height.toDouble(),
+    );
+    // 缓存命中时这里可能在 build 期间同步触发，统一挪到帧后，
+    // 调用方才能安全 setState。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      widget.onImageSized?.call(size);
+    });
+  }
 
   void _rebuildBaseProviderIfNeeded(String baseUrl) {
     final resolvedUrl = resolveMediaUrl(rawUrl: widget.url, baseUrl: baseUrl);
@@ -108,16 +171,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
     }
     _lastDecodeWidth = width;
     _lastDecodeHeight = height;
-    if (width == null && height == null) {
-      _wrappedProvider = _baseProvider;
-    } else {
-      _wrappedProvider = ResizeImage(
-        _baseProvider!,
-        width: width,
-        height: height,
-        allowUpscaling: false,
-      );
-    }
+    _wrappedProvider = _wrapDecodeHint(_baseProvider!, width, height);
     return _wrappedProvider;
   }
 
@@ -139,6 +193,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
         if (provider == null) {
           return _MaskedImagePlaceholder(color: widget.placeholderColor);
         }
+        _syncSizeListener(provider);
 
         Widget imageContent = Image(
           image: provider,
@@ -233,34 +288,99 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
     );
   }
 
-  ({int? width, int? height}) _resolveDecodeHint(
-    BuildContext context,
-    BoxConstraints constraints,
-  ) {
-    final dpr = MediaQuery.devicePixelRatioOf(context);
+}
 
-    int? cacheWidth;
-    if (constraints.hasBoundedWidth &&
-        constraints.maxWidth.isFinite &&
-        constraints.maxWidth > 0) {
-      final rawWidth = (constraints.maxWidth * dpr).round();
-      cacheWidth = rawWidth.clamp(1, MaskedImage._decodeSizeUpperBound);
-    }
-
-    int? cacheHeight;
-    if (constraints.hasBoundedHeight &&
-        constraints.maxHeight.isFinite &&
-        constraints.maxHeight > 0) {
-      final rawHeight = (constraints.maxHeight * dpr).round();
-      cacheHeight = rawHeight.clamp(1, MaskedImage._decodeSizeUpperBound);
-    }
-
-    if (cacheWidth != null && cacheHeight != null) {
-      return (width: cacheWidth, height: null);
-    }
-
-    return (width: cacheWidth, height: cacheHeight);
+/// 同步取「已解码尺寸」：命中内存图片缓存时立即可用（**不触发新解码**），
+/// 未命中（首次加载 / 已被淘汰 / URL 解析不出）返回 null。
+///
+/// 给必须**首帧**就按图片实际绘制矩形对齐的调用方用（影片详情 hero 的左右羽化）：
+/// 在 build 期调用它，首帧的绘制矩形就已经正确；否则只能等
+/// [MaskedImage.onImageSized] 的帧后回调，羽化会晚一帧才出现，并多触发一次重排。
+///
+/// [constraints] 必须与 [MaskedImage] 实际拿到的约束一致（同样的约束 → 同一个
+/// 解码尺寸提示 → 同一条缓存）；[memCacheWidth] / [memCacheHeight] 也要与
+/// 传给 [MaskedImage] 的值一致才可能命中。未命中时调用方按「尺寸未知」处理即可。
+Size? resolveCachedMaskedImageSize(
+  BuildContext context,
+  BoxConstraints constraints, {
+  required String url,
+  int? memCacheWidth,
+  int? memCacheHeight,
+}) {
+  final baseUrl = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(baseUrlProvider);
+  final resolvedUrl = resolveMediaUrl(rawUrl: url, baseUrl: baseUrl);
+  if (resolvedUrl == null) {
+    return null;
   }
+  final decodeHint = _resolveDecodeHint(context, constraints);
+  final provider = _wrapDecodeHint(
+    buildRemoteImageProvider(resolvedUrl),
+    memCacheWidth ?? decodeHint.width,
+    memCacheHeight ?? decodeHint.height,
+  );
+
+  Size? size;
+  final listener = ImageStreamListener(
+    (info, _) => size = Size(
+      info.image.width.toDouble(),
+      info.image.height.toDouble(),
+    ),
+    // 尺寸探测是尽力而为：失败按未命中处理，交给 Image 自己的 errorBuilder。
+    onError: (_, _) {},
+  );
+  // 命中缓存时 addListener 会同步派发首帧，这里就已经拿到尺寸；
+  // 未命中则立刻摘掉监听，不干扰同一条 pending 加载（缓存自己持有监听）。
+  final stream = provider.resolve(createLocalImageConfiguration(context));
+  stream.addListener(listener);
+  stream.removeListener(listener);
+  return size;
+}
+
+/// [MaskedImage] 的布局 → 解码尺寸提示：宽度有界按宽度、否则按高度，上限
+/// [MaskedImage._decodeSizeUpperBound]；两者都有界时只按宽度（保持宽高比）。
+({int? width, int? height}) _resolveDecodeHint(
+  BuildContext context,
+  BoxConstraints constraints,
+) {
+  final dpr = MediaQuery.devicePixelRatioOf(context);
+
+  int? cacheWidth;
+  if (constraints.hasBoundedWidth &&
+      constraints.maxWidth.isFinite &&
+      constraints.maxWidth > 0) {
+    final rawWidth = (constraints.maxWidth * dpr).round();
+    cacheWidth = rawWidth.clamp(1, MaskedImage._decodeSizeUpperBound);
+  }
+
+  int? cacheHeight;
+  if (constraints.hasBoundedHeight &&
+      constraints.maxHeight.isFinite &&
+      constraints.maxHeight > 0) {
+    final rawHeight = (constraints.maxHeight * dpr).round();
+    cacheHeight = rawHeight.clamp(1, MaskedImage._decodeSizeUpperBound);
+  }
+
+  if (cacheWidth != null && cacheHeight != null) {
+    return (width: cacheWidth, height: null);
+  }
+
+  return (width: cacheWidth, height: cacheHeight);
+}
+
+/// 按解码尺寸提示包一层 [ResizeImage]（与 [MaskedImage] 内部同规则）；
+/// 两者都为空时直接用 base provider。
+ImageProvider<Object> _wrapDecodeHint(
+  ImageProvider<Object> base,
+  int? width,
+  int? height,
+) {
+  if (width == null && height == null) {
+    return base;
+  }
+  return ResizeImage(base, width: width, height: height, allowUpscaling: false);
 }
 
 /// 首帧到达后「占位 → 图片」的切换时长。

@@ -50,7 +50,10 @@ class MovieSummary extends _$MovieSummary
   String get loadMoreErrorText => '加载更多失败，请点击重试';
 
   @override
-  MovieSummaryFilter get initialFilter => MovieSummaryFilter.initial;
+  MovieSummaryFilter get initialFilter => MovieSummaryFilter(
+    tagIds: scope.initialTagIds,
+    tagMatch: scope.initialTagMatch,
+  );
 
   @override
   PagedListState<MovieListItemDto> pagedOf(MovieSummaryState state) =>

@@ -261,6 +261,7 @@ class _MovieSummaryListContentState
           filter: asyncState.value?.filter.movie ?? MovieFilterState.initial,
           total: asyncState.value?.paged.total ?? 0,
           items: asyncState.value?.paged.items ?? const [],
+          currentPage: asyncState.value?.paged.currentPage ?? 0,
           filterUpdate:
               asyncState.value?.paged.filterUpdate ??
               const FilterUpdateState.idle(),
@@ -274,7 +275,14 @@ class _MovieSummaryListContentState
     );
     final filter = view.filter;
     final items = view.items;
-    final isInitialLoading = view.isInitialLoading;
+    // 首屏骨架：还没有任何服务端结果时都算首拉，不要先用空态冒充「这个标签下
+    // 没有影片」。除 AsyncValue 仍在 loading，还包括标签页那种「先建 provider
+    // （未请求，currentPage == 0）再由 post-frame 补上标签条件」的入口——补条件
+    // 前后骨架不中断。真正拉过的空结果 currentPage >= 1，仍走空态。
+    final isInitialLoading =
+        items.isEmpty &&
+        !view.hasErrorNoValue &&
+        (view.isInitialLoading || view.currentPage == 0);
     final initialErrorMessage = view.hasErrorNoValue
         ? widget.scope.initialLoadErrorText
         : null;
@@ -379,7 +387,8 @@ class _MovieSummaryListContentState
         ),
         child: AppFilterResultLoadingOverlay(
           surfaceColor: widget.surfaceColor,
-          isLoading: view.filterUpdate.isLoading,
+          // 结果区已经在渲染骨架时，不再叠居中的筛选进度层，避免遮住骨架。
+          isLoading: view.filterUpdate.isLoading && !isInitialLoading,
           hasPreviousItems: items.isNotEmpty,
           child: widget.bodyBuilder(
             context,

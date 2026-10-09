@@ -32,6 +32,8 @@ class _DesktopTagsPageState extends ConsumerState<DesktopTagsPage> {
   late final MovieSummaryScope _movieScope = MovieSummaryScope.tags(
     instanceKey: _selectionScope.instanceKey,
     cacheKey: _selectionScope.cacheKey,
+    initialTagIds: _selectionScope.initialSelectedTagIds,
+    initialTagMatch: _selectionScope.initialMatchMode,
   );
   RiverpodPageHandle? _pageCacheHandle;
 

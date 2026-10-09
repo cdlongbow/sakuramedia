@@ -403,6 +403,50 @@ void main() {
     expect(withAge['actor_age_max'], '35');
   });
 
+  test('带预选标签的标签 scope 首拉即请求，同值同步不重复请求', () async {
+    const scope = MovieSummaryScope.tags(
+      instanceKey: 'mobile:tags:detail:7',
+      initialTagIds: <int>[7],
+      initialTagMatch: TagMatchMode.and,
+    );
+    await prime(scope, <Map<String, dynamic>>[_movie('ABC-001')]);
+
+    final first = adapter.requests.last.uri.queryParameters;
+    expect(first['tag_ids'], '7');
+    expect(first['tag_match'], 'and');
+    expect(adapter.requests.length, 1);
+
+    // 页面首帧后的 post-frame 同步条件相同，应短路、不产生第二次请求。
+    await container.read(movieSummaryProvider(scope).notifier).applyTagFilter(
+      tagIds: <int>[7],
+      tagMatch: TagMatchMode.and,
+    );
+    expect(adapter.requests.length, 1);
+  });
+
+  test('无预选标签的标签 scope 首建不请求，选择后才首拉', () async {
+    const scope = MovieSummaryScope.tags(instanceKey: 'desktop:tags:list');
+    container.listen(movieSummaryProvider(scope), (_, _) {});
+    final state = await container.read(movieSummaryProvider(scope).future);
+
+    expect(adapter.requests, isEmpty);
+    expect(state.paged.currentPage, 0);
+    expect(state.paged.items, isEmpty);
+
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: <Map<String, dynamic>>[_movie('ABC-001')], total: 1),
+    );
+    await container.read(movieSummaryProvider(scope).notifier).applyTagFilter(
+      tagIds: <int>[7],
+      tagMatch: TagMatchMode.or,
+    );
+    final tagged = adapter.requests.last.uri.queryParameters;
+    expect(tagged['tag_ids'], '7');
+    expect(tagged['tag_match'], 'or');
+  });
+
   test('女优作品叠加标签筛选，清空标签后请求不再带 tag_ids', () async {
     const actorScope = MovieSummaryScope.actor(actorId: 8);
     await prime(actorScope, <Map<String, dynamic>>[_movie('ABC-001')]);

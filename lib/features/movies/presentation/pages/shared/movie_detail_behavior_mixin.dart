@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_p
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
@@ -42,7 +43,7 @@ import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.da
 ///
 /// **仍留在页面侧**（差异纯粹在呈现层，不放 mixin）：
 /// - `_confirmDeleteMedia`——桌面弹 dialog、移动弹 bottom drawer
-/// - `_openInspector`——桌面对话框 / 移动底部抽屉
+/// - `_openInspector`——桌面对话框 / 移动底部抽屉，按入口键传功能
 /// - `_openMediaPointPreview`——预览浮层弹出方式两端不同
 /// - `_handleRefresh`（移动）
 /// - `_searchSimilarFromPoint`（桌面/移动 launcher 不同）
@@ -805,8 +806,6 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
             selectedMedia: selectedMedia,
           );
         }
-      case MovieDetailActionType.openInspector:
-        await openInspector(movie, selectedMedia);
       case MovieDetailActionType.refreshMetadata:
         await confirmRefreshMetadata();
       case MovieDetailActionType.toggleSubscription:
@@ -859,8 +858,9 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
 
   Future<void> openInspector(
     MovieDetailDto movie,
-    MovieMediaItemDto? selectedMedia,
-  );
+    MovieMediaItemDto? selectedMedia, {
+    required MovieDetailInspectorPane pane,
+  });
 
   Future<void> openMediaPointPreview(
     MovieMediaItemDto mediaItem,

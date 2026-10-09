@@ -15,11 +15,10 @@ import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dar
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_bottom_info_bar.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_info_block.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_section.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_stat_row.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_clip_strip.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_item_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
@@ -28,14 +27,19 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_si
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
+/// 详情正文滚动容器的装配入口：正文以 slivers 形式交出（移动端要套下拉刷新
+/// 容器），默认走 [CustomScrollView]。
 typedef MovieDetailScrollViewBuilder =
     Widget Function(
       BuildContext context,
-      Widget content,
+      List<Widget> slivers,
       ScrollPhysics? scrollPhysics,
     );
 
 class MovieDetailPageContent extends StatelessWidget {
+  /// 正文滚动容器（桌面 [CustomScrollView] / 移动端下拉刷新容器）的测试锚点。
+  static const Key scrollViewKey = Key('movie-detail-scroll-view');
+
   const MovieDetailPageContent({
     this.showSimilarMovies = true,
     super.key,
@@ -46,10 +50,9 @@ class MovieDetailPageContent extends StatelessWidget {
     required this.isSubscribed,
     required this.isSubscriptionUpdating,
     required this.selectedMediaId,
-    required this.statItems,
     required this.similarMovies,
     required this.isSimilarMoviesLoading,
-    required this.onInspectorTap,
+    required this.onInspectorPaneTap,
     required this.onPlaylistTap,
     required this.onMediaSelect,
     this.isDeletingSelectedMedia = false,
@@ -86,7 +89,6 @@ class MovieDetailPageContent extends StatelessWidget {
     this.onRetrySubtitles,
     this.onOpenSubtitle,
     this.contentPadding = EdgeInsets.zero,
-    this.bottomInfoBarVariant = MovieDetailBottomInfoBarVariant.desktopCard,
     this.scrollPhysics,
     this.scrollViewBuilder,
     this.isMoreActionsUpdating = false,
@@ -103,10 +105,11 @@ class MovieDetailPageContent extends StatelessWidget {
   final bool isSubscriptionUpdating;
   final bool isMoreActionsUpdating;
   final int? selectedMediaId;
-  final List<MovieDetailStatItem> statItems;
   final List<MovieListItemDto> similarMovies;
   final bool isSimilarMoviesLoading;
-  final VoidCallback onInspectorTap;
+
+  /// 点击操作列的评论 / 磁力搜索 / 缩略图键：打开对应功能的弹窗。
+  final ValueChanged<MovieDetailInspectorPane> onInspectorPaneTap;
   final VoidCallback onPlaylistTap;
   final ValueChanged<MovieMediaItemDto> onMediaSelect;
   final bool isDeletingSelectedMedia;
@@ -158,7 +161,6 @@ class MovieDetailPageContent extends StatelessWidget {
   final Future<void> Function()? onRetrySubtitles;
   final Future<void> Function(MovieSubtitleItemDto item)? onOpenSubtitle;
   final EdgeInsetsGeometry contentPadding;
-  final MovieDetailBottomInfoBarVariant bottomInfoBarVariant;
   final ScrollPhysics? scrollPhysics;
   final MovieDetailScrollViewBuilder? scrollViewBuilder;
 
@@ -170,6 +172,11 @@ class MovieDetailPageContent extends StatelessWidget {
   final BoxFit heroImageFit;
 
   final bool showSimilarMovies;
+
+  /// 当前是否真的有封面图：桌面用视口上限加高、信息块上叠只对「有封面」生效，
+  /// 没有封面时不为一块纯色占位撑满一屏。
+  bool get _hasCover =>
+      selectedPreviewUrl != null && selectedPreviewUrl!.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -193,54 +200,24 @@ class MovieDetailPageContent extends StatelessWidget {
               final heroHeight = _resolveHeroHeight(
                 constraints,
                 viewportHeight,
+                heroImageFit,
+                hasCover: _hasCover,
               );
-          final scrollBottomPadding =
-              bottomInfoBarVariant ==
-                  MovieDetailBottomInfoBarVariant.mobileFullWidth
-              ? context.appComponentTokens.movieDetailBottomBarMinHeight
-              : context.appComponentTokens.movieDetailBottomBarMinHeight +
-                    context.appSpacing.sm;
-
-          final content = Padding(
-            padding: EdgeInsets.only(bottom: scrollBottomPadding),
-            child: Padding(
-              padding: contentPadding,
-              child: _buildDetailBody(context: context, heroHeight: heroHeight),
-            ),
-          );
-          final scrollableContent =
-              scrollViewBuilder?.call(context, content, scrollPhysics) ??
-              SingleChildScrollView(physics: scrollPhysics, child: content);
-
-          if (bottomInfoBarVariant ==
-              MovieDetailBottomInfoBarVariant.desktopCard) {
-            return Column(
-              children: [
-                Expanded(child: scrollableContent),
-                SizedBox(height: context.appSpacing.xs),
-                MovieDetailBottomInfoBar(
-                  items: statItems,
-                  onTap: onInspectorTap,
-                ),
-              ],
-            );
-          }
-
-            return Stack(
-              children: [
-                Positioned.fill(child: scrollableContent),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: MovieDetailBottomInfoBar(
-                    items: statItems,
-                    onTap: onInspectorTap,
-                    variant: MovieDetailBottomInfoBarVariant.mobileFullWidth,
+              final slivers = <Widget>[
+                SliverPadding(
+                  padding: contentPadding,
+                  sliver: _buildDetailBody(
+                    context: context,
+                    heroHeight: heroHeight,
                   ),
                 ),
-              ],
-            );
+              ];
+              return scrollViewBuilder?.call(context, slivers, scrollPhysics) ??
+                  CustomScrollView(
+                    key: scrollViewKey,
+                    physics: scrollPhysics,
+                    slivers: slivers,
+                  );
             },
           ),
         ),
@@ -334,166 +311,206 @@ class MovieDetailPageContent extends StatelessWidget {
       ...movie.actors.where((actor) => !actor.isFemale),
     ];
 
-    return Column(
+    // 首屏两块（Hero / 信息块）整幅铺满，其余正文区块统一左右留白。
+    // 两块常驻构建（都在首帧视口内）；[Key('movie-detail-page')] 挂在盒模型上，
+    // 测试里的 getTopLeft 才能取到页面左缘。
+    // 首屏两块叠一层：信息块上提 [_desktopHeroInfoOverlapFactor] × Hero 高，
+    // 前面一段压在封面下沿（只 PC）。封面高度不变，页面总高随之缩短。
+    final infoOverlap = _resolveHeroInfoOverlap(
+      heroHeight,
+      heroImageFit,
+      hasCover: _hasCover,
+    );
+    final header = Column(
       key: const Key('movie-detail-page'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MovieDetailHeroCard(
-          height: heroHeight,
-          mainImageKey: selectedPreviewKey,
-          mainImageUrl: selectedPreviewUrl,
-          heroFit: heroImageFit,
-          veilColor: surfaceColor,
+        Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: heroHeight,
+              child: MovieDetailHeroCard(
+                height: heroHeight,
+                mainImageKey: selectedPreviewKey,
+                mainImageUrl: selectedPreviewUrl,
+                heroFit: heroImageFit,
+                veilColor: surfaceColor,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: heroHeight - infoOverlap),
+              child: SizedBox(
+                // 撑满可用宽度：Stack 里只有这一个非定位子节点，它决定整块宽度。
+                width: double.infinity,
+                child: MovieDetailInfoBlock(
+                  overlayTitle: _resolveOverlayTitle(movie),
+                  metaItems: _resolveMetaItems(context, movie),
+                  fileSizeLabel: _resolveFileSizeLabel(
+                    mediaItems,
+                    selectedMediaId,
+                  ),
+                  watchLabel: watchLabel,
+                  watchTooltip: watchedAt == null
+                      ? watchLabel
+                      : '$watchLabel · ${DateFormat('yyyy年M月d日 HH:mm').format(watchedAt)}',
+                  isSubscribed: isSubscribed,
+                  onSubscriptionTap: onSubscriptionTap,
+                  isSubscriptionUpdating: isSubscriptionUpdating,
+                  onPlaylistTap: onPlaylistTap,
+                  playlistTooltip: movie.playlists.isEmpty
+                      ? '加入播放列表'
+                      : '管理播放列表',
+                  onMoreActionsTap: onMoreActionsTap,
+                  isMoreActionsUpdating: isMoreActionsUpdating,
+                  isPlayLoading: isPlayLoading,
+                  onPlayTap: onPlayTap,
+                  mergePlaybackLabel: normalizedMergePlaybackLabel.isEmpty
+                      ? null
+                      : normalizedMergePlaybackLabel,
+                  onMergePlaybackTap: onMergePlaybackTap,
+                  isMergePlaybackLoading: isMergePlaybackLoading,
+                  onInspectorPaneTap: onInspectorPaneTap,
+                ),
+              ),
+            ),
+          ],
         ),
-        MovieDetailInfoBlock(
-          overlayTitle: _resolveOverlayTitle(movie),
-          metaItems: _resolveMetaItems(context, movie),
-          fileSizeLabel: _resolveFileSizeLabel(mediaItems, selectedMediaId),
-          watchLabel: watchLabel,
-          watchTooltip: watchedAt == null
-              ? watchLabel
-              : '$watchLabel · ${DateFormat('yyyy年M月d日 HH:mm').format(watchedAt)}',
-          isSubscribed: isSubscribed,
-          onSubscriptionTap: onSubscriptionTap,
-          isSubscriptionUpdating: isSubscriptionUpdating,
-          onPlaylistTap: onPlaylistTap,
-          playlistTooltip: movie.playlists.isEmpty ? '加入播放列表' : '管理播放列表',
-          onMoreActionsTap: onMoreActionsTap,
-          isMoreActionsUpdating: isMoreActionsUpdating,
-          isPlayLoading: isPlayLoading,
-          onPlayTap: onPlayTap,
-          mergePlaybackLabel: normalizedMergePlaybackLabel.isEmpty
-              ? null
-              : normalizedMergePlaybackLabel,
-          onMergePlaybackTap: onMergePlaybackTap,
-          isMergePlaybackLoading: isMergePlaybackLoading,
+      ],
+    );
+
+    final sections = <Widget>[
+      if (movie.plotImages.isNotEmpty) ...[
+        SizedBox(height: context.appSpacing.lg),
+        MoviePlotGallery(
+          plotImages: movie.plotImages,
+          onRequestImageMenu: onRequestPlotImageMenu,
+          onOpenPreview: onOpenPlotPreview,
         ),
+      ],
+      SizedBox(height: context.appComponentTokens.movieDetailSectionGap),
+      if (movie.preferredDescription.isNotEmpty)
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: context.appSpacing.lg),
+          padding: EdgeInsets.only(
+            bottom: context.appComponentTokens.movieDetailSectionGap,
+          ),
+          child: Text(
+            movie.preferredDescription,
+            key: const Key('movie-detail-summary'),
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s14,
+              weight: AppTextWeight.regular,
+              tone: AppTextTone.secondary,
+            ),
+          ),
+        ),
+      if (movie.playlists.isNotEmpty) _buildPlaylistMembership(context),
+      ..._buildInlineMetaItems(context, movie, onSeriesTap),
+      if (movie.rankings.isNotEmpty)
+        MovieDetailSection(
+          title: '榜单',
+          titleKey: const Key('movie-rankings-title'),
+          child: MovieRankingList(rankings: movie.rankings),
+        ),
+      if (movie.tags.isNotEmpty)
+        MovieDetailSection(
+          title: '标签',
+          child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
+        ),
+      if (orderedActors.isNotEmpty)
+        MovieDetailSection(
+          title: '演员',
+          child: MovieActorWrap(actors: orderedActors, onActorTap: onActorTap),
+        ),
+      if (mediaItems.isNotEmpty)
+        MovieDetailSection(
+          title: '媒体源',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-        if (movie.plotImages.isNotEmpty) ...[
-          SizedBox(height: context.appSpacing.lg),
-          MoviePlotGallery(
-            plotImages: movie.plotImages,
-            onRequestImageMenu: onRequestPlotImageMenu,
-            onOpenPreview: onOpenPlotPreview,
-          ),
-        ],
-        SizedBox(height: context.appComponentTokens.movieDetailSectionGap),
-        if (movie.preferredDescription.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: context.appComponentTokens.movieDetailSectionGap,
-            ),
-            child: Text(
-              movie.preferredDescription,
-              key: const Key('movie-detail-summary'),
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s14,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.secondary,
+              MovieMediaItemList(
+                mediaItems: mediaItems,
+                selectedMediaId: selectedMediaId,
+                onSelect: onMediaSelect,
+                isDeletingSelectedMedia: isDeletingSelectedMedia,
+                onDeleteSelectedMedia: onDeleteSelectedMedia,
+                onOpenPointPreview: onOpenMediaPointPreview,
+                onRequestPointMenu: onRequestMediaPointMenu,
               ),
-            ),
-          ),
-        if (movie.playlists.isNotEmpty) _buildPlaylistMembership(context),
-        ..._buildInlineMetaItems(context, movie, onSeriesTap),
-        if (movie.rankings.isNotEmpty)
-          MovieDetailSection(
-            title: '榜单',
-            titleKey: const Key('movie-rankings-title'),
-            child: MovieRankingList(rankings: movie.rankings),
-          ),
-        if (movie.tags.isNotEmpty)
-          MovieDetailSection(
-            title: '标签',
-            child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
-          ),
-        if (orderedActors.isNotEmpty)
-          MovieDetailSection(
-            title: '演员',
-            child: MovieActorWrap(
-              actors: orderedActors,
-              onActorTap: onActorTap,
-            ),
-          ),
-        if (mediaItems.isNotEmpty)
-          MovieDetailSection(
-            title: '媒体源',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MovieMediaItemList(
-                  mediaItems: mediaItems,
-                  selectedMediaId: selectedMediaId,
-                  onSelect: onMediaSelect,
-                  isDeletingSelectedMedia: isDeletingSelectedMedia,
-                  onDeleteSelectedMedia: onDeleteSelectedMedia,
-                  onOpenPointPreview: onOpenMediaPointPreview,
-                  onRequestPointMenu: onRequestMediaPointMenu,
-                ),
-              ],
-            ),
-          ),
-        if (isSubtitlesLoading ||
-            subtitleErrorMessage?.trim().isNotEmpty == true ||
-            subtitleItems.isNotEmpty)
-          MovieDetailSection(
-            title: subtitleItems.isEmpty
-                ? '字幕'
-                : '字幕 · ${subtitleItems.length}',
-            titleKey: const Key('movie-subtitles-title'),
-            child: MovieSubtitleSection(
-              items: subtitleItems,
-              isLoading: isSubtitlesLoading,
-              errorMessage: subtitleErrorMessage,
-              onRetry: onRetrySubtitles,
-              onOpenSubtitle: onOpenSubtitle,
-            ),
-          ),
-        if (isClipsLoading || clipsErrorMessage != null || clips.isNotEmpty)
-          MovieDetailSection(
-            title: '切片',
-            titleKey: const Key('movie-clips-title'),
-            child: MovieClipStrip(
-              clips: clips,
-              isLoading: isClipsLoading,
-              errorMessage: clipsErrorMessage,
-              onRetry: onRetryClips,
-              onOpenClipActions: onOpenClipActions ?? (_) {},
-              onPlayClip: onPlayClip ?? (_) {},
-              onRenameClip: onRenameClip ?? (_) {},
-              onDeleteClip: onDeleteClip ?? (_) {},
-              onAddClipToCollection: onAddClipToCollection ?? (_) {},
-            ),
-          ),
-        if (showSimilarMovies &&
-            (isSimilarMoviesLoading ||
-                similarMoviesErrorMessage?.trim().isNotEmpty == true ||
-                similarMovies.isNotEmpty))
-          MovieDetailSection(
-            title: '相似影片',
-            titleKey: const Key('movie-similar-movies-title'),
-            child: MovieSimilarMovieStrip(
-              movies: similarMovies,
-              isLoading: isSimilarMoviesLoading,
-              errorMessage: similarMoviesErrorMessage,
-              onRetry: onRetrySimilarMovies,
-              onMovieTap: onSimilarMovieTap,
-              onMovieMenuRequest: (movie, globalPosition) =>
-                  requestMovieCollectionMenu(
-                    context,
-                    movie.movieNumber,
-                    globalPosition,
-                    isSubscribed: movie.isSubscribed,
-                  ),
-              onMovieToggleCollectionType: hoverActions.toggleCollectionType,
-              onMovieBlacklist: hoverActions.blacklist,
-            ),
-          ),
             ],
+          ),
+        ),
+      if (isSubtitlesLoading ||
+          subtitleErrorMessage?.trim().isNotEmpty == true ||
+          subtitleItems.isNotEmpty)
+        MovieDetailSection(
+          title: subtitleItems.isEmpty ? '字幕' : '字幕 · ${subtitleItems.length}',
+          titleKey: const Key('movie-subtitles-title'),
+          child: MovieSubtitleSection(
+            items: subtitleItems,
+            isLoading: isSubtitlesLoading,
+            errorMessage: subtitleErrorMessage,
+            onRetry: onRetrySubtitles,
+            onOpenSubtitle: onOpenSubtitle,
+          ),
+        ),
+      if (isClipsLoading || clipsErrorMessage != null || clips.isNotEmpty)
+        MovieDetailSection(
+          title: '切片',
+          titleKey: const Key('movie-clips-title'),
+          child: MovieClipStrip(
+            clips: clips,
+            isLoading: isClipsLoading,
+            errorMessage: clipsErrorMessage,
+            onRetry: onRetryClips,
+            onOpenClipActions: onOpenClipActions ?? (_) {},
+            onPlayClip: onPlayClip ?? (_) {},
+            onRenameClip: onRenameClip ?? (_) {},
+            onDeleteClip: onDeleteClip ?? (_) {},
+            onAddClipToCollection: onAddClipToCollection ?? (_) {},
+          ),
+        ),
+      if (showSimilarMovies &&
+          (isSimilarMoviesLoading ||
+              similarMoviesErrorMessage?.trim().isNotEmpty == true ||
+              similarMovies.isNotEmpty))
+        MovieDetailSection(
+          title: '相似影片',
+          titleKey: const Key('movie-similar-movies-title'),
+          child: MovieSimilarMovieStrip(
+            movies: similarMovies,
+            isLoading: isSimilarMoviesLoading,
+            errorMessage: similarMoviesErrorMessage,
+            onRetry: onRetrySimilarMovies,
+            onMovieTap: onSimilarMovieTap,
+            onMovieMenuRequest: (movie, globalPosition) =>
+                requestMovieCollectionMenu(
+                  context,
+                  movie.movieNumber,
+                  globalPosition,
+                  isSubscribed: movie.isSubscribed,
+                ),
+            onMovieToggleCollectionType: hoverActions.toggleCollectionType,
+            onMovieBlacklist: hoverActions.blacklist,
+          ),
+        ),
+    ];
+
+    return SliverMainAxisGroup(
+      slivers: <Widget>[
+        SliverToBoxAdapter(child: header),
+        // 正文区块按需构建：详情区块多、每块都带图（剧照 / 演员头像 / 媒体缩略图 /
+        // 切片 / 相似影片），急切建整页会让「进入详情页」的第一帧变成几十毫秒的
+        // 大帧；交给 [SliverList.builder] 后首帧只建首屏需要的部分，屏幕外的图
+        // 也不再提前解析 provider。
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: context.appSpacing.lg),
+          sliver: SliverList.builder(
+            itemCount: sections.length,
+            itemBuilder: (context, index) => sections[index],
           ),
         ),
       ],
@@ -620,17 +637,57 @@ double _resolveViewportHeight(
   return MediaQuery.sizeOf(context).height;
 }
 
-/// Hero 按宽度比例加高：桌面宽屏取宽 × 0.36（300~440），移动窄屏取宽 × 0.72
-///（260~380，纯照片区）；宽度无界时退回视口高 × 0.42。
-double _resolveHeroHeight(BoxConstraints constraints, double viewportHeight) {
+/// Hero 目标高度。
+///
+/// 桌面完整显示（`contain`）且有封面时取视口高 × [MovieDetailHeroCard.desktopViewportHeightFactor]
+/// ——上限跟着视口走，封面按宽度铺满后的自然高度更小时 Hero 再收缩到图片高度，
+/// 两侧留白尽量少；没有封面时不值得为一块纯色占位撑满一屏，保持固定高度配方。
+/// 移动沉浸全幅（`cover`）保持窄屏配方，取宽 × 0.72（260~380，纯照片区）；
+/// 宽度无界时退回视口高 × 0.42。
+double _resolveHeroHeight(
+  BoxConstraints constraints,
+  double viewportHeight,
+  BoxFit fit, {
+  required bool hasCover,
+}) {
   final maxWidth = constraints.maxWidth;
   if (maxWidth.isFinite && maxWidth > 0) {
     if (maxWidth >= MovieDetailInfoBlock.wideBreakpoint) {
+      if (fit == BoxFit.contain && hasCover) {
+        return viewportHeight * MovieDetailHeroCard.desktopViewportHeightFactor;
+      }
       return (maxWidth * 0.36).clamp(300.0, 440.0).toDouble();
     }
     return (maxWidth * 0.72).clamp(260.0, 380.0).toDouble();
   }
   return (viewportHeight * 0.42).clamp(260.0, 440.0).toDouble();
+}
+
+/// 首屏信息块压在封面下沿的比例（只桌面 / PC）：基数是 Hero 高度。
+///
+/// 压的位置落在封面的「底部化开带」里：封面在这一带由实到透，压上去的文字底下
+/// 只剩一层淡淡的封面颜色（化开带高度 = `Hero高 × 0.28 + 56`），标题和按钮这时
+/// 可读，也就不需要额外叠渐变遮罩。取比例而不是固定像素：改
+/// [MovieDetailHeroCard.desktopViewportHeightFactor] 时，压的深浅不会跟着变。
+///
+/// 0.25 ≈ 压在封面下部的四分之一处（封面高 490 时约 122px，此时信息块顶端
+/// 封面还剩 ~35% 不透明度）；调小 → 只把标题和最上面一排按钮压上去；
+/// 调大 → 更靠上、压在更实的封面上（要么同时调大
+/// [MovieDetailHeroCard.meltBandFactor]，要么叠一层渐变遮罩）；调 0 → 回到
+///「信息块在封面下方」的老样子。移动端（沉浸全幅）不叠。
+const double _desktopHeroInfoOverlapFactor = 0.10;
+
+/// 见 [_desktopHeroInfoOverlapFactor]。没有封面（骨架 / 该影片无图）时不叠；
+/// 上限夹到 Hero 高度，避免比例调大后信息块被提到封面之上。
+double _resolveHeroInfoOverlap(
+  double heroHeight,
+  BoxFit fit, {
+  required bool hasCover,
+}) {
+  if (fit != BoxFit.contain || !hasCover) {
+    return 0;
+  }
+  return (heroHeight * _desktopHeroInfoOverlapFactor).clamp(0.0, heroHeight);
 }
 
 /// 压在封面上的标题：番号打头（同行同字号），标题为空或与番号相同时只剩番号。
@@ -643,7 +700,7 @@ String _resolveOverlayTitle(MovieDetailDto movie) {
   return '$number $title';
 }
 
-/// 标题下的元信息段：评分｜评论数｜想看｜看过｜热度｜厂商｜导演，
+/// 标题下的元信息段：评分｜评论数｜想看｜看过｜热度｜上映日期｜厂商｜导演，
 /// 有值的段才出现（零值/空串隐藏）。
 List<MovieDetailMetaItem> _resolveMetaItems(
   BuildContext context,
@@ -673,6 +730,10 @@ List<MovieDetailMetaItem> _resolveMetaItems(
         iconColor: colors.movieDetailHeatIcon,
         text: '${movie.heat}',
       ),
+    if (movie.releaseDate != null)
+      MovieDetailMetaItem(
+        text: '上映 · ${DateFormat('yyyy/MM/dd').format(movie.releaseDate!)}',
+      ),
     if (movie.makerName.trim().isNotEmpty)
       MovieDetailMetaItem(text: '厂商 · ${movie.makerName.trim()}'),
     if (movie.directorName.trim().isNotEmpty)
@@ -688,9 +749,7 @@ String? _resolveFileSizeLabel(
   if (selectedMediaId == null) return null;
   for (final item in mediaItems) {
     if (item.mediaId == selectedMediaId) {
-      return item.fileSizeBytes > 0
-          ? formatFileSize(item.fileSizeBytes)
-          : null;
+      return item.fileSizeBytes > 0 ? formatFileSize(item.fileSizeBytes) : null;
     }
   }
   return null;
@@ -736,7 +795,9 @@ class _MovieDetailBackground extends StatelessWidget {
           ),
         ),
         ColoredBox(
-          color: baseColor.withValues(alpha: MovieDetailVeil.veilAlpha),
+          color: baseColor.withValues(
+            alpha: MovieDetailVeil.veilAlphaFor(Theme.of(context).brightness),
+          ),
         ),
       ],
     );
@@ -763,56 +824,4 @@ class MovieDetailErrorState extends StatelessWidget {
       ],
     );
   }
-}
-
-List<MovieDetailStatItem> buildMovieDetailStatItems(
-  BuildContext context,
-  MovieDetailDto movie,
-) {
-  final releaseLabel = movie.releaseDate == null
-      ? '--'
-      : DateFormat('yy/MM/dd').format(movie.releaseDate!);
-  final durationLabel = movie.durationMinutes > 0
-      ? '${movie.durationMinutes} 分钟'
-      : '--';
-  final scoreLabel = movie.score > 0 ? movie.score.toStringAsFixed(1) : '--';
-  final commentCountLabel = movie.commentCount > 0
-      ? '${movie.commentCount}'
-      : '--';
-  final wantWatchCountLabel = movie.wantWatchCount > 0
-      ? '${movie.wantWatchCount}'
-      : '--';
-
-  return [
-    MovieDetailStatItem(
-      icon: Icons.calendar_today_outlined,
-      label: releaseLabel,
-      tooltip: '发行日期',
-      iconColor: context.appColors.movieDetailReleaseDateIcon,
-    ),
-    MovieDetailStatItem(
-      icon: Icons.schedule_outlined,
-      label: durationLabel,
-      tooltip: '影片时长',
-      iconColor: context.appColors.movieDetailDurationIcon,
-    ),
-    MovieDetailStatItem(
-      icon: Icons.star_outline_rounded,
-      label: scoreLabel,
-      tooltip: '评分',
-      iconColor: context.appColors.movieDetailScoreIcon,
-    ),
-    MovieDetailStatItem(
-      icon: Icons.chat_bubble_outline_rounded,
-      label: commentCountLabel,
-      tooltip: '评论数',
-      iconColor: context.appColors.movieDetailCommentCountIcon,
-    ),
-    MovieDetailStatItem(
-      icon: Icons.favorite_border_rounded,
-      label: wantWatchCountLabel,
-      tooltip: '想看人数',
-      iconColor: context.appColors.movieDetailWantWatchCountIcon,
-    ),
-  ];
 }

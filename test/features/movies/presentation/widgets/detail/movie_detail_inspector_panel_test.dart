@@ -26,7 +26,6 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 
 /// 与应用全局 `kAppScrollDragDevices`（`lib/app/app.dart`）保持一致的指针集合，
@@ -123,12 +122,19 @@ class _FakeDownloadsApi extends DownloadsApi {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets(
-    'inspector releases its three providers when the panel unmounts',
-    (WidgetTester tester) async {
+  testWidgets('inspector releases the provider of its own function on unmount', (
+    WidgetTester tester,
+  ) async {
+    // 每个弹窗只收编自己那一个 provider 的 KeepAliveLink；逐个功能验一遍，
+    // 防止某条分支漏 close。
+    Future<void> expectReleased({
+      required MovieDetailInspectorPane pane,
+      required bool Function(ProviderContainer container) exists,
+    }) async {
       final container = await _pumpInspectorPanel(
         tester,
         panelHeight: 480,
+        pane: pane,
         fetchMovieReviews:
             ({
               required String movieNumber,
@@ -139,13 +145,7 @@ void main() {
       );
       await tester.pump();
 
-      // 打开期间三者都被面板收编的 KeepAliveLink 保活：切 Tab 不丢已加载数据。
-      expect(container.exists(movieDetailReviewProvider('ABC-001')), isTrue);
-      expect(container.exists(movieDetailMagnetProvider('ABC-001')), isTrue);
-      expect(
-        container.exists(movieDetailThumbnailProvider(mediaId: null)),
-        isTrue,
-      );
+      expect(exists(container), isTrue);
 
       // 只换掉面板、保留同一个 scope：ProviderScope 卸载时会 cancel 掉 riverpod
       // 的 vsync timer，整棵树拆掉的话待释放队列永远不会结算。
@@ -160,15 +160,26 @@ void main() {
 
       // 回归守卫：link 必须由面板在 dispose 里 close。provider 自持 link 而无人
       // close 会形成「link 不关 → 永不 dispose → onDispose 里的 close 永不执行」
-      // 的死锁式泄漏，打开过检查器的影片会常驻到登出。
-      expect(container.exists(movieDetailReviewProvider('ABC-001')), isFalse);
-      expect(container.exists(movieDetailMagnetProvider('ABC-001')), isFalse);
-      expect(
-        container.exists(movieDetailThumbnailProvider(mediaId: null)),
-        isFalse,
-      );
-    },
-  );
+      // 的死锁式泄漏，打开过弹窗的影片会常驻到登出。
+      expect(exists(container), isFalse);
+    }
+
+    await expectReleased(
+      pane: MovieDetailInspectorPane.review,
+      exists: (container) =>
+          container.exists(movieDetailReviewProvider('ABC-001')),
+    );
+    await expectReleased(
+      pane: MovieDetailInspectorPane.magnetSearch,
+      exists: (container) =>
+          container.exists(movieDetailMagnetProvider('ABC-001')),
+    );
+    await expectReleased(
+      pane: MovieDetailInspectorPane.thumbnail,
+      exists: (container) =>
+          container.exists(movieDetailThumbnailProvider(mediaId: null)),
+    );
+  });
 
   testWidgets(
     'movie detail inspector review loading skeleton keeps at least three items',
@@ -394,33 +405,6 @@ void main() {
     },
   );
 
-  testWidgets(
-    'movie detail inspector aligns compact tabs with review toolbar content',
-    (WidgetTester tester) async {
-      await _pumpInspectorPanel(
-        tester,
-        panelHeight: 480,
-        fetchMovieReviews:
-            ({
-              required String movieNumber,
-              required int page,
-              required int pageSize,
-              required MovieReviewSort sort,
-            }) async {
-              return <MovieReviewDto>[_buildReview(prefix: 'hot')];
-            },
-      );
-      await tester.pumpAndSettle();
-
-      final firstTabRect = tester.getRect(find.byType(Tab).first);
-      final hotSortRect = tester.getRect(
-        find.byKey(const Key('movie-detail-review-sort-hotly')),
-      );
-
-      expect(firstTabRect.left, hotSortRect.left);
-    },
-  );
-
   testWidgets('movie detail review content can be selected and copied', (
     WidgetTester tester,
   ) async {
@@ -534,11 +518,12 @@ void main() {
   );
 
   testWidgets(
-    'movie detail inspector magnet tab shows sort controls and updates direction semantics',
+    'movie detail magnet dialog shows sort controls and updates direction semantics',
     (WidgetTester tester) async {
       await _pumpInspectorPanel(
         tester,
         panelHeight: 480,
+        pane: MovieDetailInspectorPane.magnetSearch,
         fetchMovieReviews:
             ({
               required String movieNumber,
@@ -567,8 +552,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('磁力搜索'));
-      await tester.pumpAndSettle();
       await tester.tap(
         find.byKey(const Key('movie-detail-magnet-search-button')),
       );
@@ -600,66 +583,6 @@ void main() {
     },
   );
 
-  testWidgets(
-    'inspector keeps a selected downloader after visiting other tabs',
-    (WidgetTester tester) async {
-      const candidate = DownloadCandidateDto(
-        sourceUri: 'provider://dmhy/abcdef',
-        indexerName: 'dmhy',
-        indexerKind: 'bt',
-        resolvedClientId: 2,
-        resolvedClientName: 'qb-main',
-        downloadClients: <DownloadCandidateClientDto>[
-          DownloadCandidateClientDto(id: 2, name: 'qb-main'),
-          DownloadCandidateClientDto(id: 3, name: '115-main'),
-        ],
-        movieNumber: 'ABC-001',
-        title: 'ABC-001 中文字幕',
-        sizeBytes: 1024,
-        seeders: 8,
-      );
-      final clientSelector = find.byKey(
-        Key('movie-detail-magnet-client-${candidate.submitKey}'),
-      );
-
-      await _pumpInspectorPanel(
-        tester,
-        panelHeight: 520,
-        fetchMovieReviews:
-            ({
-              required String movieNumber,
-              required int page,
-              required int pageSize,
-              required MovieReviewSort sort,
-            }) async => const <MovieReviewDto>[],
-        searchCandidates:
-            ({required String movieNumber, String? indexerKind}) async =>
-                const <DownloadCandidateDto>[candidate],
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('磁力搜索'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('movie-detail-magnet-search-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(clientSelector);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('115-main').last);
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('评论'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('缩略图'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('磁力搜索'));
-      await tester.pumpAndSettle();
-
-      expect(tester.widget<AppSelectField<int>>(clientSelector).value, 3);
-    },
-  );
-
   testWidgets('magnet candidate submits the explicitly selected downloader', (
     WidgetTester tester,
   ) async {
@@ -683,6 +606,7 @@ void main() {
     await _pumpInspectorPanel(
       tester,
       panelHeight: 520,
+      pane: MovieDetailInspectorPane.magnetSearch,
       fetchMovieReviews:
           ({
             required String movieNumber,
@@ -706,8 +630,6 @@ void main() {
             );
           },
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('磁力搜索'));
     await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('movie-detail-magnet-search-button')),
@@ -751,6 +673,7 @@ void main() {
     await _pumpInspectorPanel(
       tester,
       panelHeight: 640,
+      pane: MovieDetailInspectorPane.magnetSearch,
       fetchMovieReviews:
           ({
             required String movieNumber,
@@ -775,8 +698,6 @@ void main() {
               ],
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('磁力搜索'));
-    await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const Key('movie-detail-magnet-search-button')),
     );
@@ -796,11 +717,12 @@ void main() {
   });
 
   testWidgets(
-    'movie detail inspector thumbnail tab toggles clip selection mode',
+    'movie detail thumbnail dialog toggles clip selection mode',
     (WidgetTester tester) async {
       await _pumpInspectorPanel(
         tester,
         panelHeight: 520,
+        pane: MovieDetailInspectorPane.thumbnail,
         fetchMovieReviews:
             ({
               required String movieNumber,
@@ -811,9 +733,6 @@ void main() {
               return const <MovieReviewDto>[];
             },
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('缩略图'));
       await tester.pumpAndSettle();
 
       final toggleFinder = find.byKey(
@@ -873,13 +792,39 @@ void main() {
       isFalse,
     );
   });
+
+  testWidgets('inspector shows only the requested function', (
+    WidgetTester tester,
+  ) async {
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 560,
+      pane: MovieDetailInspectorPane.magnetSearch,
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => const <MovieReviewDto>[],
+    );
+    await tester.pumpAndSettle();
+
+    // 弹窗只装一个功能：磁力搜索工具条在，评论列表不在；标题就是功能名。
+    expect(
+      find.byKey(const Key('movie-detail-magnet-search-button')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('movie-detail-review-list')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
-/// 返回承载面板的 [ProviderContainer]（用 [UncontrolledProviderScope] 注入，
-/// 容器由本函数持有并在 tearDown 释放），便于断言 provider 的存活/释放。
+
 Future<ProviderContainer> _pumpInspectorPanel(
   WidgetTester tester, {
   required double panelHeight,
+  MovieDetailInspectorPane pane = MovieDetailInspectorPane.review,
   TargetPlatform? platform,
   bool useAppScrollConfiguration = false,
   required _FetchMovieReviews fetchMovieReviews,
@@ -937,9 +882,15 @@ Future<ProviderContainer> _pumpInspectorPanel(
                   behavior: const MaterialScrollBehavior().copyWith(
                     dragDevices: _appDragDevices,
                   ),
-                  child: _inspectorPanelScaffold(panelHeight: panelHeight),
+                  child: _inspectorPanelScaffold(
+                    panelHeight: panelHeight,
+                    pane: pane,
+                  ),
                 )
-              : _inspectorPanelScaffold(panelHeight: panelHeight),
+              : _inspectorPanelScaffold(
+                  panelHeight: panelHeight,
+                  pane: pane,
+                ),
         ),
       ),
     ),
@@ -948,7 +899,10 @@ Future<ProviderContainer> _pumpInspectorPanel(
   return container;
 }
 
-Widget _inspectorPanelScaffold({required double panelHeight}) {
+Widget _inspectorPanelScaffold({
+  required double panelHeight,
+  MovieDetailInspectorPane pane = MovieDetailInspectorPane.review,
+}) {
   return Scaffold(
     body: Center(
       child: SizedBox(
@@ -957,6 +911,7 @@ Widget _inspectorPanelScaffold({required double panelHeight}) {
         child: MovieDetailInspectorPanel(
           movieNumber: 'ABC-001',
           selectedMedia: null,
+          pane: pane,
         ),
       ),
     ),

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_info_block.dart';
 
-/// 照片下方信息块：标题 + 右信息列 + 左操作列（分体播放 + 三键）。
+/// 照片下方信息块：标题 + 右信息列 + 左操作列（分体播放 + 六键）。
 void main() {
   testWidgets('movie detail info block shows subscription as heart key', (
     WidgetTester tester,

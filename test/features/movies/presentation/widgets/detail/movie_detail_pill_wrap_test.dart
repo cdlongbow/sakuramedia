@@ -129,7 +129,7 @@ void main() {
     },
   );
 
-  testWidgets('movie detail pill wrap uses compact radius for pill shape', (
+  testWidgets('movie detail pill wrap uses capsule radius', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -150,6 +150,6 @@ void main() {
         .whereType<BoxDecoration>()
         .firstWhere((decoration) => decoration.borderRadius != null);
 
-    expect(pillDecoration.borderRadius, sakuraThemeData.appRadius.xsBorder);
+    expect(pillDecoration.borderRadius, sakuraThemeData.appRadius.pillBorder);
   });
 }

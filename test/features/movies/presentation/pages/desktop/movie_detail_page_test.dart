@@ -120,10 +120,16 @@ void main() {
 
     await pumpPage(tester);
 
-    await tester.ensureVisible(
-      find.byKey(const Key('movie-clip-strip-card-1')),
+    // 正文区块按需构建：切片在首屏下方，先滚到视口内再对齐到完全可见。
+    final clipCard = find.byKey(const Key('movie-clip-strip-card-1'));
+    await tester.scrollUntilVisible(
+      clipCard,
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const Key('movie-clip-strip-card-1')));
+    await tester.ensureVisible(clipCard);
+    await tester.pumpAndSettle();
+    await tester.tap(clipCard);
     await tester.pumpAndSettle();
 
     expect(

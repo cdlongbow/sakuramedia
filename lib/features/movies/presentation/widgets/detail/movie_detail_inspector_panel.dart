@@ -23,7 +23,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
@@ -31,13 +30,23 @@ import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_tab.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_magnet_search_content.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
+/// 检查器承载的功能：评论 / 磁力搜索 / 缩略图。
+///
+/// 每个入口只弹**一个功能**的弹窗，面板内不再放页签——入口键已经决定了要看
+/// 什么，再摆一排 tab 等于同一件事问两遍。
+enum MovieDetailInspectorPane { review, magnetSearch, thumbnail }
+
+/// 单个功能的弹窗内容：一行标题 + 对应功能内容。
+///
+/// 三个 provider 都是 autoDispose family，面板负责收编并关闭它们在本弹窗
+/// 生命周期内的 `KeepAliveLink`（见 [_MovieDetailInspectorPanelState]）。
 class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
   const MovieDetailInspectorPanel({
     super.key,
     required this.movieNumber,
     required this.selectedMedia,
+    required this.pane,
     this.thumbnailPreviewPresentation = MoviePlotPreviewPresentation.dialog,
     this.onSearchSimilar,
     this.onPlay,
@@ -45,6 +54,9 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
 
   final String movieNumber;
   final MovieMediaItemDto? selectedMedia;
+
+  /// 本弹窗承载的功能（由入口键决定，弹窗内不可切换）。
+  final MovieDetailInspectorPane pane;
   final MoviePlotPreviewPresentation thumbnailPreviewPresentation;
   final Future<void> Function(
     MovieMediaThumbnailDto thumbnail,
@@ -60,19 +72,14 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
 }
 
 class _MovieDetailInspectorPanelState
-    extends ConsumerState<MovieDetailInspectorPanel>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  /// 检查器三 provider 的 `KeepAliveLink` 收编表（key → link，去重用）。
+    extends ConsumerState<MovieDetailInspectorPanel> {
+  /// 本弹窗对应 provider 的 `KeepAliveLink`。
   ///
-  /// 三者都是 autoDispose family，build 里自持 `ref.keepAlive()`——link 必须
-  /// 由**面板**关闭：面板打开期间保活（切 Tab 不丢已加载的评论/磁力/缩略图），
-  /// [dispose] 时逐个 close → provider 释放。若无人 close 会形成「link 不关 →
-  /// provider 永不 dispose → onDispose 里的 close 永不执行」的死锁式泄漏
-  /// （见 `lib/features/AGENTS.md`「状态与数据」）。缩略图按 mediaId 分实例，
-  /// 切换媒体源时新实例也要登记，故用 map 而非三个字段。
-  final Map<String, KeepAliveLink> _retainedLinks = <String, KeepAliveLink>{};
+  /// 三个 provider 都是 autoDispose family，build 里自持 `ref.keepAlive()`——
+  /// link 必须由**面板**关闭：弹窗打开期间保活，[dispose] 时 close → provider
+  /// 释放。若无人 close 会形成「link 不关 → provider 永不 dispose → onDispose
+  /// 里的 close 永不执行」的死锁式泄漏（见 `lib/features/AGENTS.md`「状态与数据」）。
+  KeepAliveLink? _retainedLink;
 
   MovieDetailReview get _reviewController =>
       ref.read(movieDetailReviewProvider(widget.movieNumber).notifier);
@@ -87,48 +94,37 @@ class _MovieDetailInspectorPanelState
     movieDetailThumbnailProvider(mediaId: widget.selectedMedia?.mediaId),
   );
 
-  void _retainLink(String key, KeepAliveLink? link) {
-    if (link == null || _retainedLinks.containsKey(key)) return;
-    _retainedLinks[key] = link;
-  }
-
-  /// 登记当前 mediaId 对应的缩略图实例（初次挂载与切换媒体源时都要调）。
-  void _retainThumbnailLink() {
-    final mediaId = widget.selectedMedia?.mediaId;
-    _retainLink('thumbnail:$mediaId', _thumbnailController.cacheLink);
-  }
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
     // 收编在 initState 同步做（不等 post-frame）：link 是 provider 在 build 里
     // 自持的，只要 provider 被创建就已存在——晚一帧收编，中途被销毁就没人 close。
-    _retainLink('review', _reviewController.cacheLink);
-    _retainLink('magnet', _magnetController.cacheLink);
-    _retainThumbnailLink();
+    switch (widget.pane) {
+      case MovieDetailInspectorPane.review:
+        _retainedLink = _reviewController.cacheLink;
+      case MovieDetailInspectorPane.magnetSearch:
+        _retainedLink = _magnetController.cacheLink;
+      case MovieDetailInspectorPane.thumbnail:
+        _retainedLink = _thumbnailController.cacheLink;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(_reviewController.loadInitial());
-      unawaited(_thumbnailController.loadIfNeeded());
+      switch (widget.pane) {
+        case MovieDetailInspectorPane.review:
+          unawaited(_reviewController.loadInitial());
+        case MovieDetailInspectorPane.magnetSearch:
+          // 磁力搜索等用户点「搜索资源」，不预加载。
+          break;
+        case MovieDetailInspectorPane.thumbnail:
+          unawaited(_thumbnailController.loadIfNeeded());
+      }
     });
   }
 
   @override
-  void didUpdateWidget(covariant MovieDetailInspectorPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedMedia?.mediaId != widget.selectedMedia?.mediaId) {
-      _retainThumbnailLink();
-    }
-  }
-
-  @override
   void dispose() {
-    for (final link in _retainedLinks.values) {
-      link.close();
-    }
-    _retainedLinks.clear();
-    _tabController.dispose();
+    _retainedLink?.close();
+    _retainedLink = null;
     super.dispose();
   }
 
@@ -219,50 +215,53 @@ class _MovieDetailInspectorPanelState
     );
   }
 
+  String get _title => switch (widget.pane) {
+    MovieDetailInspectorPane.review => '评论',
+    MovieDetailInspectorPane.magnetSearch => '磁力搜索',
+    MovieDetailInspectorPane.thumbnail => '缩略图',
+  };
+
+  Widget _buildContent() {
+    return switch (widget.pane) {
+      MovieDetailInspectorPane.review => _MovieDetailReviewTab(
+        movieNumber: widget.movieNumber,
+      ),
+      MovieDetailInspectorPane.magnetSearch => MovieMagnetSearchContent(
+        movieNumber: widget.movieNumber,
+      ),
+      MovieDetailInspectorPane.thumbnail => MediaThumbnailTab(
+        mediaId: widget.selectedMedia?.mediaId,
+        thumbnailPreviewPresentation: widget.thumbnailPreviewPresentation,
+        onThumbnailMenuRequested: _showThumbnailActions,
+        onCreateClip: _handleCreateClip,
+      ),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       key: const Key('movie-detail-inspector-panel'),
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: AppTabBar(
-                variant: AppTabBarVariant.compact,
-                controller: _tabController,
-                tabs: const <Widget>[
-                  Tab(text: '评论'),
-                  Tab(text: '磁力搜索'),
-                  Tab(text: '缩略图'),
-                ],
-              ),
+        // 标题右侧给关闭按钮留位（移动端抽屉没有关闭按钮，留白无害）。
+        Padding(
+          padding: EdgeInsetsDirectional.only(
+            end: context.appComponentTokens.buttonHeightMd,
+          ),
+          child: Text(
+            _title,
+            key: const Key('movie-detail-inspector-title'),
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s16,
+              weight: AppTextWeight.semibold,
+              tone: AppTextTone.primary,
             ),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              AppKeepAlive(
-                child: _MovieDetailReviewTab(movieNumber: widget.movieNumber),
-              ),
-              AppKeepAlive(
-                child: MovieMagnetSearchContent(
-                  movieNumber: widget.movieNumber,
-                ),
-              ),
-              AppKeepAlive(
-                child: MediaThumbnailTab(
-                  mediaId: widget.selectedMedia?.mediaId,
-                  thumbnailPreviewPresentation:
-                      widget.thumbnailPreviewPresentation,
-                  onThumbnailMenuRequested: _showThumbnailActions,
-                  onCreateClip: _handleCreateClip,
-                ),
-              ),
-            ],
           ),
         ),
+        SizedBox(height: context.appSpacing.md),
+        Expanded(child: _buildContent()),
       ],
     );
   }

@@ -113,6 +113,27 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
             defaultTargetPlatform == TargetPlatform.windows);
 
     final current = _current;
+    final immersive = widget.layout == AppShellLayout.immersive;
+    // 内容区在 standard / fullscreen / immersive 三态共用**同一棵树**：只改内边距
+    // 数值与顶栏的悬浮开关。navigator 因此不换父级——换父级会让整条路由栈
+    // （含背后已缓存的列表页）在切布局那一帧被重新激活并重排，进详情页会明显变慢。
+    final titleBarHeight = context.appComponentTokens.desktopTitleBarHeight;
+    final EdgeInsets contentPadding;
+    if (immersive) {
+      // 顶栏透明悬浮在内容之上，内容全幅铺底。
+      contentPadding = EdgeInsets.zero;
+    } else if (widget.layout == AppShellLayout.standard) {
+      // 顶栏在流内占位：内容整体下移一个顶栏高度，四周保留桌面标准内边距。
+      contentPadding = EdgeInsets.only(
+        top: titleBarHeight,
+        left: AppPageInsets.desktop,
+        right: AppPageInsets.desktop,
+        bottom: AppPageInsets.desktop,
+      );
+    } else {
+      // fullscreen：顶栏在流内占位，内容不再额外留白。
+      contentPadding = EdgeInsets.only(top: titleBarHeight);
+    }
     return AppPageRefreshRegistrarScope(
       registrar: _registrar,
       child: CallbackShortcuts(
@@ -139,43 +160,33 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
                       child: Container(
                         key: const Key('desktop-shell-content-surface'),
                         color: context.appColors.surfaceElevated,
-                        child: widget.layout == AppShellLayout.immersive
-                            ? _DesktopImmersiveBody(
-                                topBar: AppTopBar(
-                                  currentPath: widget.currentPath,
-                                  config: widget.topBarConfig,
-                                  shellNavigatorKey: widget.shellNavigatorKey,
-                                  onRefresh: current == null
-                                      ? null
-                                      : () => _runRefresh(current),
-                                  isRefreshing:
-                                      current != null && _isRefreshing,
-                                  overlay: true,
-                                  hideActions: true,
-                                ),
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Padding(
+                                padding: contentPadding,
                                 child: widget.child,
-                              )
-                            : Column(
-                                children: [
-                                  AppTopBar(
-                                    currentPath: widget.currentPath,
-                                    config: widget.topBarConfig,
-                                    shellNavigatorKey:
-                                        widget.shellNavigatorKey,
-                                    onRefresh: current == null
-                                        ? null
-                                        : () => _runRefresh(current),
-                                    isRefreshing:
-                                        current != null && _isRefreshing,
-                                  ),
-                                  Expanded(
-                                    child: _DesktopShellBody(
-                                      layout: widget.layout,
-                                      child: widget.child,
-                                    ),
-                                  ),
-                                ],
                               ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: AppTopBar(
+                                currentPath: widget.currentPath,
+                                config: widget.topBarConfig,
+                                shellNavigatorKey: widget.shellNavigatorKey,
+                                onRefresh: current == null
+                                    ? null
+                                    : () => _runRefresh(current),
+                                isRefreshing:
+                                    current != null && _isRefreshing,
+                                overlay: immersive,
+                                hideActions: immersive,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -204,48 +215,6 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _DesktopShellBody extends StatelessWidget {
-  const _DesktopShellBody({required this.layout, required this.child});
-
-  final AppShellLayout layout;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (layout) {
-      AppShellLayout.standard => Padding(
-        // 顶部贴顶栏：去掉 24px 顶边距，左右和底部保持桌面标准边距。
-        padding: const EdgeInsets.only(
-          left: AppPageInsets.desktop,
-          right: AppPageInsets.desktop,
-          bottom: AppPageInsets.desktop,
-        ),
-        child: child,
-      ),
-      AppShellLayout.fullscreen => child,
-      AppShellLayout.immersive => child,
-    };
-  }
-}
-
-/// 沉浸布局：页面全幅铺底，顶栏透明悬浮在内容之上。
-class _DesktopImmersiveBody extends StatelessWidget {
-  const _DesktopImmersiveBody({required this.topBar, required this.child});
-
-  final Widget topBar;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(child: child),
-        Positioned(top: 0, left: 0, right: 0, child: topBar),
-      ],
     );
   }
 }

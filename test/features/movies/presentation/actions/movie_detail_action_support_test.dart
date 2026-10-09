@@ -31,7 +31,6 @@ void main() {
       );
 
       expect(actions.map((action) => action.type), <MovieDetailActionType>[
-        MovieDetailActionType.openInspector,
         MovieDetailActionType.toggleSubscription,
         MovieDetailActionType.toggleCollectionType,
         MovieDetailActionType.toggleBlacklist,
@@ -108,10 +107,7 @@ void main() {
   test(
     'movieDetailRemoteActionSpecFor has no remote spec for local actions',
     () {
-      for (final action in [
-        MovieDetailActionType.openInspector,
-        MovieDetailActionType.toggleCollectionType,
-      ]) {
+      for (final action in [MovieDetailActionType.toggleCollectionType]) {
         expect(
           movieDetailRemoteActionSpecFor(
             action: action,

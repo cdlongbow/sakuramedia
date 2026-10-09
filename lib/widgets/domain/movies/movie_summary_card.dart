@@ -120,7 +120,7 @@ class MovieSummaryCard extends StatelessWidget {
                           : onSubscriptionTap,
                     ),
                   ),
-                  if (movie.canPlay)
+                  if (_showPlayableBadge)
                     _StatusBadge(
                       key: Key(
                         'movie-summary-card-status-playable-${movie.movieNumber}',
@@ -129,7 +129,7 @@ class MovieSummaryCard extends StatelessWidget {
                       iconColor: context.appTextPalette.onMedia,
                       background: colors.movieCardPlayableBadgeBackground,
                     ),
-                  if (movie.maxMediaWidth >= 3840)
+                  if (_showResolutionBadge)
                     _ResolutionBadge(
                       movie: movie,
                       movieNumber: movie.movieNumber,
@@ -389,14 +389,27 @@ class MovieSummaryCard extends StatelessWidget {
     heatText.dispose();
     final statusWidth =
         tokens.movieCardStatusBadgeSize +
-        (!selectionMode && movie.canPlay
+        (_showPlayableBadge
             ? spacing.xs + tokens.movieCardStatusBadgeSize
             : 0) +
-        (!selectionMode && movie.maxMediaWidth >= 3840
+        (_showResolutionBadge
             ? spacing.xs + spacing.sm + tokens.movieCardStatusBadgeSize
             : 0);
     return statusWidth + heatWidth + spacing.xs * 3 > cardWidth;
   }
+
+  /// 可播放标：只有在没有清晰度标时才画。清晰度标只在存在有效媒体时出现，
+  /// 而有效媒体即 `canPlay`（见 `MovieListItemDto.maxMediaWidth` 的解析与后端
+  /// `playable_exists_expression`），4K/8K 卡上再画播放标是重复信息。
+  bool get _showPlayableBadge =>
+      showStatusBadges &&
+      !selectionMode &&
+      movie.canPlay &&
+      movie.maxMediaWidth < 3840;
+
+  /// 清晰度标：有效媒体最高宽度 ≥7680 为 8K、≥3840 为 4K 档。
+  bool get _showResolutionBadge =>
+      showStatusBadges && !selectionMode && movie.maxMediaWidth >= 3840;
 
   /// 播放：走统一播放入口，并把当前路由作为应用内播放页的返回落点。
   void _handlePlay(BuildContext context) {
@@ -420,7 +433,7 @@ class MovieSummaryCard extends StatelessWidget {
   }
 }
 
-/// 清晰度胶囊：毛玻璃底 + 4K/8K 粗体字，与订阅心、播放标同排。
+/// 清晰度胶囊：毛玻璃底 + 4K/8K 粗体字，与订阅心同排（这种情况下不再画播放标）。
 class _ResolutionBadge extends StatelessWidget {
   const _ResolutionBadge({required this.movie, required this.movieNumber});
 

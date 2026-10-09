@@ -13,7 +13,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
 
-/// 可嵌入详情检查器或独立弹窗的影片磁力搜索内容。
+/// 可嵌入影片详情功能弹窗或独立弹窗的影片磁力搜索内容。
 ///
 /// 状态归 [movieDetailMagnetProvider]；Provider 的保活链接由承载它的页面或弹窗
 /// 管理，避免共享展示组件持有跨页面生命周期。

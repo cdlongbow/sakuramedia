@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/image_search/presentation/image_search_draf
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/features/plugins/data/plugin_market_source.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
@@ -1601,16 +1602,14 @@ void main() {
     final detailPage = _findPageByName(tester, 'mobile-movie-detail');
     expect(detailPage, isA<CupertinoPage<void>>());
 
-    final infoBarRect = tester.getRect(
-      find.byKey(const Key('movie-detail-fixed-info-bar')),
-    );
+    final heroRect = tester.getRect(find.byType(MovieDetailHeroCard));
     final appSize = tester.getSize(find.byType(MaterialApp).first);
-    // 影片详情走沉浸布局：内容全幅无内边距，底部栏左右顶边。
-    expect(infoBarRect.left, 0);
-    expect(infoBarRect.right, appSize.width);
+    // 影片详情走沉浸布局：内容全幅无内边距，封面左右顶边；入口条在页面内。
+    expect(heroRect.left, 0);
+    expect(heroRect.right, appSize.width);
     expect(
-      infoBarRect.bottom,
-      closeTo(appSize.height, 0.1),
+      find.byKey(const Key('movie-detail-hero-review-icon')),
+      findsOneWidget,
     );
   });
 

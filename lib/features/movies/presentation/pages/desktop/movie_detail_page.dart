@@ -36,6 +36,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_merge_playback_candidate_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_viewer.dart';
@@ -122,10 +123,9 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                 isSubscribed: false,
                 isSubscriptionUpdating: false,
                 selectedMediaId: null,
-                statItems: const [],
                 similarMovies: movieListItemPlaceholders(count: 4),
                 isSimilarMoviesLoading: false,
-                onInspectorTap: () {},
+                onInspectorPaneTap: (_) {},
                 onPlaylistTap: () {},
                 onMediaSelect: (_) {},
                 clips: clipPlaceholders(count: 4),
@@ -176,7 +176,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
             isSubscriptionUpdating: isSubscriptionUpdating,
             isMoreActionsUpdating: activeMovieAction != null,
             selectedMediaId: selectedMedia?.mediaId,
-            statItems: buildMovieDetailStatItems(context, movie),
             similarMovies: detailState.similarMovies,
             isSimilarMoviesLoading: detailState.isSimilarMoviesLoading,
             similarMoviesErrorMessage: detailState.similarMoviesErrorMessage,
@@ -273,7 +272,8 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
                     closeCurrentRouteOnSearch: true,
                   ),
             ),
-            onInspectorTap: () => openInspector(movie, selectedMedia),
+            onInspectorPaneTap: (pane) =>
+                openInspector(movie, selectedMedia, pane: pane),
             clips: clipsState.clips,
             isClipsLoading: clipsState.isLoading,
             clipsErrorMessage: clipsState.errorMessage,
@@ -363,12 +363,14 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
   @override
   Future<void> openInspector(
     MovieDetailDto movie,
-    MovieMediaItemDto? selectedMedia,
-  ) {
+    MovieMediaItemDto? selectedMedia, {
+    required MovieDetailInspectorPane pane,
+  }) {
     return showMovieDetailInspectorDialog(
       context: context,
       movieNumber: movie.movieNumber,
       selectedMedia: selectedMedia,
+      pane: pane,
     );
   }
 

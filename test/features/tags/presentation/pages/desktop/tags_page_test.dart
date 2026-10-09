@@ -201,6 +201,10 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+    // 预选标签首拉不等 250ms 防抖窗口。
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(movieTagMatches(), <String?>['or']);
     await settleFilterRequest(tester);
 
     // 预选标签首拉影片默认走 or。

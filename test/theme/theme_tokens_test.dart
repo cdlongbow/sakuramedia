@@ -130,10 +130,9 @@ void main() {
     expect(componentTokens.listGroupHeaderCoverHeight, 68);
     expect(componentTokens.movieDetailSectionGap, 16);
     expect(componentTokens.movieDetailSectionTitleGap, 8);
-    expect(componentTokens.movieDetailPillHorizontalPadding, 5);
-    expect(componentTokens.movieDetailPillVerticalPadding, 2);
+    expect(componentTokens.movieDetailPillHorizontalPadding, 8);
+    expect(componentTokens.movieDetailPillVerticalPadding, 4);
     expect(componentTokens.movieDetailPillGap, 6);
-    expect(componentTokens.movieDetailBottomBarMinHeight, 42);
     expect(componentTokens.playlistBannerHeight, 100);
     expect(componentTokens.playlistDialogWidth, 520);
     expect(componentTokens.mobileBottomNavHeight, 52);
@@ -229,10 +228,6 @@ void main() {
     expect(sakuraMobileThemeData.appComponentTokens.switchTrackWidth, 44);
     expect(sakuraMobileThemeData.appComponentTokens.switchTrackHeight, 24);
     expect(sakuraMobileThemeData.appComponentTokens.switchThumbDiameter, 18);
-    expect(
-      sakuraMobileThemeData.appComponentTokens.movieDetailBottomBarMinHeight,
-      48,
-    );
     expect(sakuraMobileThemeData.appComponentTokens.mobileBottomNavHeight, 56);
     expect(
       sakuraMobileThemeData.appComponentTokens.mobileFollowMovieCardHeight,

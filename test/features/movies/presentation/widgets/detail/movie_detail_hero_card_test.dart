@@ -1,6 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/core/media/app_image_provider.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
@@ -118,6 +122,38 @@ void main() {
   });
 
   testWidgets(
+    'movie detail hero feathers cover sides on the first frame when cached',
+    (WidgetTester tester) async {
+      // 预热内存图片缓存，模拟「重复进入详情页」：封面已经解码好了。
+      // key 与 Hero 里 MaskedImage 的解析规则一致：宽度有界 → 只按宽度、上限 1024。
+      // 先清一遍：同文件前序用例留下的 pending 项会让 putIfAbsent 直接返回它。
+      PaintingBinding.instance.imageCache.clear();
+      final image = await _decodeCoverImage(width: 800, height: 538);
+      final warmProvider = ResizeImage(
+        buildRemoteImageProvider('https://api.example.com/covers/main.jpg'),
+        width: (1200 * tester.view.devicePixelRatio).round().clamp(1, 1024),
+        allowUpscaling: false,
+      );
+      PaintingBinding.instance.imageCache.putIfAbsent(
+        await warmProvider.obtainKey(ImageConfiguration.empty),
+        () => OneFrameImageStreamCompleter(
+          SynchronousFuture<ImageInfo>(ImageInfo(image: image)),
+        ),
+      );
+      addTearDown(PaintingBinding.instance.imageCache.clear);
+
+      await tester.pumpWidget(_buildApp(sessionStore: sessionStore));
+
+      // 首帧就该带上左右羽化，不用再 pump 一次等 onImageSized 的帧后回调。
+      expect(
+        find.byKey(const Key('movie-detail-hero-side-mask')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'movie detail hero card shows placeholder when main image is absent',
     (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -169,4 +205,17 @@ Widget _buildApp({required SessionStore sessionStore}) {
       ),
     ),
   );
+}
+
+/// 纯色测试图：只为给内存图片缓存里放一张已解码的封面。
+Future<ui.Image> _decodeCoverImage({
+  required int width,
+  required int height,
+}) async {
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder).drawRect(
+    Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
+    Paint()..color = const Color(0xFF6B2D2A),
+  );
+  return recorder.endRecording().toImage(width, height);
 }

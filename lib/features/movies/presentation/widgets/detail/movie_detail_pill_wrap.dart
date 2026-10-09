@@ -61,19 +61,21 @@ class _MovieDetailPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final isInteractive = item.onTap != null;
     final primary = Theme.of(context).colorScheme.primary;
-    final staticBorderColor = primary.withValues(alpha: 0.22);
-    final backgroundColor = isInteractive
-        ? (item.isSelected
-              ? primary.withValues(alpha: 0.14)
-              : context.appColors.surfaceMuted)
-        : primary.withValues(alpha: 0.12);
-    final foregroundColor = isInteractive
-        ? (item.isSelected ? primary : context.appTextPalette.primary)
-        : primary;
-    final borderColor = isInteractive
-        ? (item.isSelected ? primary : context.appColors.borderSubtle)
-        : staticBorderColor;
-    final radius = context.appRadius.xsBorder;
+    // 描边胶囊（对齐封面卡上「热度」徽标那套语言）：只有一层半透明底色，靠 1px
+    // 边框成形，底下的封面底色透上来（当前 0.2，调小更透、调大更实）。
+    // 选中态给品牌底色。
+    final backgroundColor = item.isSelected
+        ? primary.withValues(alpha: 0.14)
+        : context.appColors.surfaceCard.withValues(alpha: 0.2);
+    final foregroundColor = item.isSelected
+        ? primary
+        : (isInteractive ? context.appTextPalette.primary : primary);
+    // 边框取正文色的淡化版：`borderSubtle` / `borderStrong` 是给纯白底配的，
+    // 压在详情页的带色底上会糊到看不见。
+    final borderColor = item.isSelected
+        ? primary
+        : context.appTextPalette.primary.withValues(alpha: 0.26);
+    final radius = context.appRadius.pillBorder;
     final tokens = context.appComponentTokens;
     final content = Padding(
       padding: EdgeInsets.symmetric(

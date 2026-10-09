@@ -43,7 +43,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
-import 'package:sakuramedia/widgets/domain/movies/movie_magnet_search_dialog.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
 
 /// 订阅管理页的列表主体：顶栏（筛选 / 计数 / 操作）+ 行卡片列表。
 ///

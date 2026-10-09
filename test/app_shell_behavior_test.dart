@@ -13,6 +13,8 @@ import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/desktop_routes.dart'
+    show desktopShellNavigatorKey;
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 
@@ -445,6 +447,73 @@ void main() {
       sakuraThemeData.extension<AppColors>()!.surfaceElevated,
     );
     debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('desktop shell keeps one content tree across layouts', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueOverviewResponses(bundle);
+    _enqueueMovieDetailResponse(bundle);
+
+    final router = await _pumpDesktopAppWithRouter(
+      tester,
+      bundle: bundle,
+      sessionStore: sessionStore,
+      statusApi: bundle.statusApi,
+      moviesApi: bundle.moviesApi,
+      actorsApi: bundle.actorsApi,
+    );
+    await tester.pumpAndSettle();
+
+    Rect contentSurface() => tester.getRect(
+      find.byKey(const Key('desktop-shell-content-surface')),
+    );
+    Rect navigatorRect() {
+      final box =
+          desktopShellNavigatorKey.currentContext!.findRenderObject()!
+              as RenderBox;
+      return box.localToGlobal(Offset.zero) & box.size;
+    }
+
+    List<Type> navigatorAncestors() {
+      final types = <Type>[];
+      desktopShellNavigatorKey.currentContext!.visitAncestorElements((
+        element,
+      ) {
+        types.add(element.widget.runtimeType);
+        return true;
+      });
+      return types;
+    }
+
+    final topBarRect = tester.getRect(find.byKey(const Key('topbar-header')));
+    final standardAncestors = navigatorAncestors();
+    final standardNavigator = navigatorRect();
+
+    // standard：内容在顶栏下方，四周留桌面标准内边距。
+    expect(standardNavigator.top, moreOrLessEquals(topBarRect.bottom));
+    expect(
+      standardNavigator.left,
+      moreOrLessEquals(contentSurface().left + AppPageInsets.desktop),
+    );
+
+    router.go('/desktop/library/movies/ABC-001');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    // immersive：内容全幅铺底，顶栏悬浮其上。
+    final immersiveNavigator = navigatorRect();
+    expect(immersiveNavigator.top, moreOrLessEquals(contentSurface().top));
+    expect(immersiveNavigator.left, moreOrLessEquals(contentSurface().left));
+    expect(immersiveNavigator.width, moreOrLessEquals(contentSurface().width));
+    // 关键不变量：navigator 的父级链两态完全一致——切布局只换内边距数值与顶栏
+    // 参数，不换父级。换父级会让整条路由栈（含背后缓存的列表页）在那一帧被
+    // 重新激活并重排，进详情页因此多出几十毫秒。
+    expect(navigatorAncestors(), standardAncestors);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('desktop sidebar decoration adapts for macOS glass effect', (
@@ -942,6 +1011,37 @@ bool _topBarSearchFieldHasFocus(WidgetTester tester) {
     ),
   );
   return editable.focusNode.hasFocus;
+}
+
+void _enqueueMovieDetailResponse(TestApiBundle bundle) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies/ABC-001',
+    body: <String, dynamic>{
+      'javdb_id': 'MovieA1',
+      'movie_number': 'ABC-001',
+      'title': 'Movie 1',
+      'cover_image': null,
+      'release_date': '2024-01-02',
+      'duration_minutes': 120,
+      'score': 4.5,
+      'watched_count': 12,
+      'want_watch_count': 23,
+      'comment_count': 34,
+      'score_number': 45,
+      'is_collection': false,
+      'is_subscribed': true,
+      'can_play': true,
+      'series_id': 7,
+      'series_name': 'Attackers',
+      'summary': '',
+      'actors': <dynamic>[],
+      'tags': <dynamic>[],
+      'thin_cover_image': null,
+      'plot_images': <dynamic>[],
+      'media_items': <dynamic>[],
+    },
+  );
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {

@@ -77,7 +77,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     required this.movieDetailPillHorizontalPadding,
     required this.movieDetailPillVerticalPadding,
     required this.movieDetailPillGap,
-    required this.movieDetailBottomBarMinHeight,
     required this.movieDetailMediaRowMinHeight,
     required this.movieDetailMoreEntryHeight,
     required this.movieDetailDialogWidth,
@@ -162,10 +161,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieDetailActorCardWidth = 84,
       movieDetailSectionGap = 16,
       movieDetailSectionTitleGap = 8,
-      movieDetailPillHorizontalPadding = 5,
-      movieDetailPillVerticalPadding = 2,
+      movieDetailPillHorizontalPadding = 8,
+      movieDetailPillVerticalPadding = 4,
       movieDetailPillGap = 6,
-      movieDetailBottomBarMinHeight = 42,
       movieDetailMediaRowMinHeight = 88,
       movieDetailMoreEntryHeight = 56,
       movieDetailDialogWidth = 960,
@@ -247,10 +245,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieDetailActorCardWidth = 84,
       movieDetailSectionGap = 16,
       movieDetailSectionTitleGap = 8,
-      movieDetailPillHorizontalPadding = 6,
-      movieDetailPillVerticalPadding = 3,
+      movieDetailPillHorizontalPadding = 9,
+      movieDetailPillVerticalPadding = 5,
       movieDetailPillGap = 6,
-      movieDetailBottomBarMinHeight = 48,
       movieDetailMediaRowMinHeight = 92,
       movieDetailMoreEntryHeight = 60,
       movieDetailDialogWidth = 960,
@@ -357,7 +354,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   final double movieDetailPillHorizontalPadding;
   final double movieDetailPillVerticalPadding;
   final double movieDetailPillGap;
-  final double movieDetailBottomBarMinHeight;
   final double movieDetailMediaRowMinHeight;
   final double movieDetailMoreEntryHeight;
   final double movieDetailDialogWidth;
@@ -445,7 +441,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
     double? movieDetailPillHorizontalPadding,
     double? movieDetailPillVerticalPadding,
     double? movieDetailPillGap,
-    double? movieDetailBottomBarMinHeight,
     double? movieDetailMediaRowMinHeight,
     double? movieDetailMoreEntryHeight,
     double? movieDetailDialogWidth,
@@ -566,8 +561,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieDetailPillVerticalPadding:
           movieDetailPillVerticalPadding ?? this.movieDetailPillVerticalPadding,
       movieDetailPillGap: movieDetailPillGap ?? this.movieDetailPillGap,
-      movieDetailBottomBarMinHeight:
-          movieDetailBottomBarMinHeight ?? this.movieDetailBottomBarMinHeight,
       movieDetailMediaRowMinHeight:
           movieDetailMediaRowMinHeight ?? this.movieDetailMediaRowMinHeight,
       movieDetailMoreEntryHeight:
@@ -847,11 +840,6 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       movieDetailPillGap: lerpDouble(
         movieDetailPillGap,
         other.movieDetailPillGap,
-        t,
-      )!,
-      movieDetailBottomBarMinHeight: lerpDouble(
-        movieDetailBottomBarMinHeight,
-        other.movieDetailBottomBarMinHeight,
         t,
       )!,
       movieDetailMediaRowMinHeight: lerpDouble(

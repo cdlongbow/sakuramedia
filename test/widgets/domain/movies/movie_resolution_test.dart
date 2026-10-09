@@ -104,26 +104,28 @@ void main() {
               final quality = tester.getRect(
                 find.byKey(const Key('movie-summary-card-resolution-TEST')),
               );
-              final playable = tester.getRect(
-                find.byKey(
-                  const Key('movie-summary-card-status-playable-TEST'),
-                ),
-              );
               final heat = tester.getRect(
                 find.byKey(const Key('movie-summary-card-heat-TEST')),
               );
-              // 左上角一行：订阅心、播放标、清晰度胶囊依次排列。
-              expect(quality.left, greaterThan(playable.right));
-              expect(quality.top, playable.top);
-              // 卡片只有 120 宽，热度折到下一行，不压住角标。
-              expect(quality.overlaps(heat), isFalse);
-              expect(playable.overlaps(heat), isFalse);
               final subscription = tester.getRect(
                 find.byKey(const Key('movie-summary-card-subscription-TEST')),
               );
+              // 左上角一行：订阅心、清晰度胶囊依次排列。
+              expect(quality.left, greaterThan(subscription.right));
+              expect(quality.top, subscription.top);
+              // 卡片只有 120 宽，热度折到下一行，不压住角标。
+              expect(quality.overlaps(heat), isFalse);
+              expect(subscription.overlaps(heat), isFalse);
               expect(heat.left, subscription.left);
               expect(heat.top, greaterThan(quality.bottom));
             }
+            // 清晰度蕴含可播放：4K/8K 卡不再重复显示可播放标。
+            expect(
+              find.byKey(const Key('movie-summary-card-status-playable-TEST')),
+              width < 3840 && !hidden && !selection
+                  ? findsOneWidget
+                  : findsNothing,
+            );
             expect(tester.takeException(), isNull);
             if (!hidden && !selection) {
               await tester.tap(

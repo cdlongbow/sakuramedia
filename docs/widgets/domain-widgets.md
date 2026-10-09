@@ -18,13 +18,13 @@
 
 路径：`lib/widgets/domain/movies/`
 
-包含 `MovieSummaryCard`、`MovieSummaryGrid`、`MovieFilterSections`、`MovieBatchSelection`、`SubscriptionHeartBadge` 和 `MovieMagnetSearchContent` / `showMovieMagnetSearchDialog`。后两者复用影片磁力搜索的候选资源、下载器选择与提交交互；状态由 movies feature 的 Provider 提供。影片详情内部组件仍位于 `features/movies/presentation/widgets/detail/`。
+包含 `MovieSummaryCard`、`MovieSummaryGrid`、`MovieFilterSections`、`MovieBatchSelection`、`SubscriptionHeartBadge` 和 `MovieMagnetSearchContent`。后者复用影片磁力搜索的候选资源、下载器选择与提交交互；状态由 movies feature 的 Provider 提供。磁力搜索的弹窗壳（含订阅列表入口 `showMovieMagnetSearchDialog`）在 `features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart`，与详情页三个入口共用同一个单功能面板。影片详情内部组件仍位于 `features/movies/presentation/widgets/detail/`。
 
 `SubscriptionHeartBadge` 点击时经 `core/platform/haptic_feedback.dart` 播放一次选择触感（iOS / Android），桌面端无副作用。
 
 `MovieSummaryCard` 整卡即封面：收起态番号（+ 推荐理由）与排名徽标压在底部渐变上常显，触摸端停留在这层；指针悬停时与全站封面卡共用同一套底部披露层（180ms ease-out），标题/时长/日期与整行动作按钮（播放 / 订阅 / 标记合集-单体 / 屏蔽影片，按回调与订阅状态显隐，放不下时自动折行）淡入，收起态主键层淡出；排名徽标只在收起态显示。卡片参数与全站封面卡一致（`lg` 圆角、`surfaceCard` 底色、常驻 1px 边框与卡片阴影）。系统开启「减弱动态效果」时退化为瞬时切换。右键与长按打开影片操作菜单（原「更多」按钮已移除）。`MovieSummaryGrid` / `MovieSummarySliver` / `MovieSummaryRail` 共用 `MovieSummaryCardWiring` 装配卡片回调，改卡片交互只改这一处。
 
-`MovieSummaryCard` 在左上可播放图标后显示有效媒体的最高分辨率角标：宽度 ≥7680 为 8K，3840 ≤宽度 <7680 为 4K 档；低于 4K、缺失或无效媒体不显示。选择模式及隐藏状态角标时一并隐藏。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
+`MovieSummaryCard` 左上角在订阅心后显示有效媒体的最高分辨率角标：宽度 ≥7680 为 8K，3840 ≤宽度 <7680 为 4K 档；低于 4K、缺失或无效媒体不显示。清晰度角标只在存在有效媒体时出现，而有效媒体即 `canPlay`，所以 4K/8K 卡上不再重复显示可播放标，可播放标只出现在低于 4K 的可播放卡上；两者都受选择模式与 `showStatusBadges` 控制。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
 
 批量取消订阅遇到已有媒体时，未处理清单提供“删除媒体并强制取消订阅”入口。确认后先读取媒体总数，再按顺序删除；弹窗进度条显示已删除数量和当前影片，全部删除后显示批量取消订阅阶段。删除失败会停止。反馈返回最终合并结果，多选状态仅保留未处理番号。
 

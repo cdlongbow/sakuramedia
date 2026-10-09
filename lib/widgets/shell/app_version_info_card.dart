@@ -10,9 +10,8 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 
 class AppVersionInfoCard extends ConsumerStatefulWidget {
-  const AppVersionInfoCard({super.key, this.isCompact = false, this.cardKey});
+  const AppVersionInfoCard({super.key, this.cardKey});
 
-  final bool isCompact;
   final Key? cardKey;
 
   @override
@@ -110,123 +109,58 @@ class _AppVersionInfoCardState extends ConsumerState<AppVersionInfoCard> {
     final hasBackendUpdate = _backendUpdateVersion != null;
     final hasUpdates =
         hasFrontendUpdate || hasBackendUpdate || pluginUpdateCount > 0;
-    final tooltipLabel = [
-      versionInfo.tooltipLabel,
-      if (hasFrontendUpdate) '客户端可更新至 $_frontendUpdateVersion',
-      if (hasBackendUpdate) '服务端可更新至 $_backendUpdateVersion',
-      if (pluginUpdateCount > 0) '$pluginUpdateCount 个插件可更新',
-    ].join('\n');
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final shouldUseCompact =
-            widget.isCompact || constraints.maxWidth < _versionCardMinWidth;
-        if (shouldUseCompact) {
-          return Tooltip(
-            message: tooltipLabel,
-            waitDuration: const Duration(milliseconds: 300),
-            child: Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    key: const Key('sidebar-version-info-collapsed'),
-                    width: context.appSidebarTokens.itemHeight,
-                    height: context.appSidebarTokens.itemHeight,
-                    decoration: BoxDecoration(
-                      color: hasUpdates
-                          ? context.appColors.selectionSurface
-                          : context.appColors.surfaceMuted,
-                      borderRadius: context.appRadius.smBorder,
-                    ),
-                    child: Icon(
-                      hasUpdates
-                          ? Icons.system_update_rounded
-                          : Icons.info_outline_rounded,
-                      size: context.appComponentTokens.iconSizeSm,
-                      color: hasUpdates
-                          ? context.appTextPalette.accent
-                          : context.appTextPalette.muted,
-                    ),
-                  ),
-                  if (hasUpdates)
-                    Positioned(
-                      top: -context.appSpacing.xs,
-                      right: -context.appSpacing.xs,
-                      child: Container(
-                        key: const Key('sidebar-version-update-dot'),
-                        width: context.appComponentTokens.iconSize3xs,
-                        height: context.appComponentTokens.iconSize3xs,
-                        decoration: BoxDecoration(
-                          color: context.appTextPalette.accent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: context.appColors.selectionSurface,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Container(
-          key: widget.cardKey ?? const Key('sidebar-version-info'),
-          padding: EdgeInsets.all(context.appSpacing.md),
-          decoration: BoxDecoration(
-            color: context.appColors.surfaceCard,
-            borderRadius: context.appRadius.mdBorder,
-            border: Border.all(color: context.appColors.borderSubtle),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      key: widget.cardKey ?? const Key('sidebar-version-info'),
+      padding: EdgeInsets.all(context.appSpacing.md),
+      decoration: BoxDecoration(
+        color: context.appColors.surfaceCard,
+        borderRadius: context.appRadius.mdBorder,
+        border: Border.all(color: context.appColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '系统版本',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s12,
-                        weight: AppTextWeight.medium,
-                        tone: AppTextTone.tertiary,
-                      ),
-                    ),
+              Expanded(
+                child: Text(
+                  '系统版本',
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s12,
+                    weight: AppTextWeight.medium,
+                    tone: AppTextTone.tertiary,
                   ),
-                  if (hasUpdates)
-                    const AppBadge(
-                      label: '有更新',
-                      tone: AppBadgeTone.primary,
-                      size: AppBadgeSize.compact,
-                    ),
-                ],
-              ),
-              SizedBox(height: context.appSpacing.sm),
-              _VersionRow(label: '客户端', value: frontendVersion),
-              SizedBox(height: context.appSpacing.xs),
-              _VersionRow(label: '服务端', value: backendVersion),
-              if (hasUpdates) ...[
-                SizedBox(height: context.appSpacing.sm),
-                Divider(height: 1, color: context.appColors.divider),
-                SizedBox(height: context.appSpacing.sm),
-                _VersionUpdateNotice(
-                  frontendUpdateVersion: _frontendUpdateVersion,
-                  backendUpdateVersion: _backendUpdateVersion,
-                  pluginUpdateCount: pluginUpdateCount,
                 ),
-              ],
+              ),
+              if (hasUpdates)
+                const AppBadge(
+                  label: '有更新',
+                  tone: AppBadgeTone.primary,
+                  size: AppBadgeSize.compact,
+                ),
             ],
           ),
-        );
-      },
+          SizedBox(height: context.appSpacing.sm),
+          _VersionRow(label: '客户端', value: frontendVersion),
+          SizedBox(height: context.appSpacing.xs),
+          _VersionRow(label: '服务端', value: backendVersion),
+          if (hasUpdates) ...[
+            SizedBox(height: context.appSpacing.sm),
+            Divider(height: 1, color: context.appColors.divider),
+            SizedBox(height: context.appSpacing.sm),
+            _VersionUpdateNotice(
+              frontendUpdateVersion: _frontendUpdateVersion,
+              backendUpdateVersion: _backendUpdateVersion,
+              pluginUpdateCount: pluginUpdateCount,
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
-
-const double _versionCardMinWidth = 144;
 
 class _VersionUpdateNotice extends StatelessWidget {
   const _VersionUpdateNotice({

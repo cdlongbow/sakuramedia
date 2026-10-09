@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
@@ -9,15 +10,17 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(
-          body: AppTopBar(
-            currentPath: '/desktop/library/movies/ABC-001',
-            config: DesktopTopBarConfig(
-              title: '影片详情',
-              fallbackPath: '/desktop/library/movies',
-              isBackEnabled: true,
+      ProviderScope(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(
+            body: AppTopBar(
+              currentPath: '/desktop/library/movies/ABC-001',
+              config: DesktopTopBarConfig(
+                title: '影片详情',
+                fallbackPath: '/desktop/library/movies',
+                isBackEnabled: true,
+              ),
             ),
           ),
         ),
@@ -40,19 +43,60 @@ void main() {
     expect(tooltip.message, '返回');
   });
 
+  testWidgets('app top bar search and refresh use sm icon token', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: AppTopBar(
+              currentPath: '/desktop/library/movies',
+              config: const DesktopTopBarConfig(
+                title: '影片',
+                fallbackPath: null,
+                isBackEnabled: false,
+              ),
+              onRefresh: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final searchIcon = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const Key('topbar-search-button')),
+        matching: find.byIcon(Icons.search_rounded),
+      ),
+    );
+    expect(searchIcon.size, AppComponentTokens.defaults().iconSizeSm);
+
+    final refreshIcon = tester.widget<Icon>(
+      find.descendant(
+        of: find.byKey(const Key('topbar-refresh-button')),
+        matching: find.byIcon(Icons.refresh_rounded),
+      ),
+    );
+    expect(refreshIcon.size, AppComponentTokens.defaults().iconSizeSm);
+  });
+
   testWidgets('app top bar hides refresh button when onRefresh is null', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: const Scaffold(
-          body: AppTopBar(
-            currentPath: '/desktop/library/movies',
-            config: DesktopTopBarConfig(
-              title: '影片',
-              fallbackPath: null,
-              isBackEnabled: false,
+      ProviderScope(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(
+            body: AppTopBar(
+              currentPath: '/desktop/library/movies',
+              config: DesktopTopBarConfig(
+                title: '影片',
+                fallbackPath: null,
+                isBackEnabled: false,
+              ),
             ),
           ),
         ),
@@ -71,17 +115,19 @@ void main() {
   ) async {
     var callCount = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraThemeData,
-        home: Scaffold(
-          body: AppTopBar(
-            currentPath: '/desktop/library/movies',
-            config: const DesktopTopBarConfig(
-              title: '影片',
-              fallbackPath: null,
-              isBackEnabled: false,
+      ProviderScope(
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: AppTopBar(
+              currentPath: '/desktop/library/movies',
+              config: const DesktopTopBarConfig(
+                title: '影片',
+                fallbackPath: null,
+                isBackEnabled: false,
+              ),
+              onRefresh: () => callCount++,
             ),
-            onRefresh: () => callCount++,
           ),
         ),
       ),
@@ -103,18 +149,20 @@ void main() {
     'app top bar renders spinner when controlled isRefreshing is true',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: sakuraThemeData,
-          home: Scaffold(
-            body: AppTopBar(
-              currentPath: '/desktop/library/movies',
-              config: const DesktopTopBarConfig(
-                title: '影片',
-                fallbackPath: null,
-                isBackEnabled: false,
+        ProviderScope(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: AppTopBar(
+                currentPath: '/desktop/library/movies',
+                config: const DesktopTopBarConfig(
+                  title: '影片',
+                  fallbackPath: null,
+                  isBackEnabled: false,
+                ),
+                onRefresh: () {},
+                isRefreshing: true,
               ),
-              onRefresh: () {},
-              isRefreshing: true,
             ),
           ),
         ),

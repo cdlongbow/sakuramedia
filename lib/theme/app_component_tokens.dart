@@ -8,9 +8,9 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
   ///
   /// 卡片列表页、合集列表和合集详情都从这里取值（桌面/移动两套构造器共用）。
   /// 调整卡片密度时只改这三个目标列宽常量，界面其余部分不需要再动。
-  static const double defaultCardGridPortraitTargetWidth = 240;
-  static const double defaultCardGridMixedTargetWidth = 320;
-  static const double defaultCardGridLandscapeTargetWidth = 320;
+  static const double defaultCardGridPortraitTargetWidth = 180;
+  static const double defaultCardGridMixedTargetWidth = 240;
+  static const double defaultCardGridLandscapeTargetWidth = 240;
   static const int defaultCardGridMaxColumns = 8;
 
   const AppComponentTokens({
@@ -101,7 +101,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
 
   const AppComponentTokens.defaults()
     : desktopTitleBarHeight = 56,
-      desktopMacTrafficLightInsetWidth = 52,
+      desktopMacTrafficLightInsetWidth = 76,
       desktopTitleBarControlGap = 8,
       movieCardTargetWidth = 220,
       movieThumbnailTargetWidth = 128,
@@ -188,7 +188,7 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
 
   const AppComponentTokens.mobile()
     : desktopTitleBarHeight = 56,
-      desktopMacTrafficLightInsetWidth = 52,
+      desktopMacTrafficLightInsetWidth = 76,
       desktopTitleBarControlGap = 8,
       movieCardTargetWidth = 220,
       movieThumbnailTargetWidth = 128,
@@ -272,6 +272,8 @@ class AppComponentTokens extends ThemeExtension<AppComponentTokens> {
       moviePlayerThumbnailAspectRatio = 16 / 9;
 
   final double desktopTitleBarHeight;
+  /// macOS 红绿灯区宽度：原生侧 close 中心对齐侧栏菜单图标（29pt）后，
+  /// zoom 右缘约在 76pt；收起/展开按钮与收起态顶栏留白从此处起算。
   final double desktopMacTrafficLightInsetWidth;
   final double desktopTitleBarControlGap;
   final double movieCardTargetWidth;

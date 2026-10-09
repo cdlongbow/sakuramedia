@@ -12,7 +12,8 @@ class AppSidebarTokens extends ThemeExtension<AppSidebarTokens> {
 
   const AppSidebarTokens.defaults()
     : expandedWidth = 220,
-      collapsedWidth = 72,
+      // 收起 = 完全隐藏，内容区占满窗口宽度。
+      collapsedWidth = 0,
       itemHeight = 44;
 
   final double expandedWidth;

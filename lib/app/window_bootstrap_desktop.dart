@@ -51,7 +51,9 @@ Future<void> bootstrapDesktopWindow() async {
     titleBarStyle: isMacOS || isWindows
         ? TitleBarStyle.hidden
         : TitleBarStyle.normal,
-    windowButtonVisibility: true,
+    // macOS 红绿灯改为 Flutter 自绘（AppMacTrafficLights），隐藏系统按钮，
+    // 避免与自绘圆点重复；其他平台保持原样。
+    windowButtonVisibility: !isMacOS,
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {

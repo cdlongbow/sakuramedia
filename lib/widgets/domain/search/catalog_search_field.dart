@@ -12,6 +12,7 @@ class CatalogSearchField extends StatelessWidget {
     this.textImageSearchButtonKey,
     this.onlineToggleKey,
     required this.controller,
+    this.focusNode,
     required this.hintText,
     this.onSubmitted,
     this.onSearchTap,
@@ -27,6 +28,9 @@ class CatalogSearchField extends StatelessWidget {
     this.showSearchingIndicator = true,
     this.searchButtonTooltip = '搜索影片或女优',
     this.fillColor,
+    this.contentPadding,
+    this.tightSuffix = false,
+    this.borderRadius,
   });
 
   final Key? fieldKey;
@@ -35,6 +39,10 @@ class CatalogSearchField extends StatelessWidget {
   final Key? textImageSearchButtonKey;
   final Key? onlineToggleKey;
   final TextEditingController controller;
+
+  /// 外部持有的焦点节点；用于快捷键（如 Cmd/Ctrl+K）聚焦输入框。
+  final FocusNode? focusNode;
+
   final String hintText;
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onSearchTap;
@@ -62,15 +70,29 @@ class CatalogSearchField extends StatelessWidget {
   /// 覆盖默认的填充色；用于把搜索框放到比 `surfaceMuted` 更暗的面板（如侧边栏）上时提升对比。
   final Color? fillColor;
 
+  /// 覆盖默认内容内边距；用于塞进固定高度顶栏等紧凑场景。
+  final EdgeInsetsGeometry? contentPadding;
+
+  /// 收紧后缀图标的最小占位约束；紧凑顶栏用它解除 48px 触控热区下限，
+  /// 让输入框高度能压到后缀按钮本身的高度。
+  final bool tightSuffix;
+
+  /// 覆盖默认圆角；紧凑顶栏等场景可收紧得更方。
+  final BorderRadius? borderRadius;
+
   @override
   Widget build(BuildContext context) {
     return AppTextField(
       fieldKey: fieldKey,
       controller: controller,
+      focusNode: focusNode,
       hintText: hintText,
       textInputAction: TextInputAction.search,
       onFieldSubmitted: onSubmitted,
       fillColor: fillColor,
+      contentPadding: contentPadding,
+      tightSuffix: tightSuffix,
+      borderRadius: borderRadius,
       suffix: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -4,7 +4,6 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 
 /// 「最近订阅」全量列表页：概览页分区的「更多」落点，按订阅时间倒序分页加载。
 class DesktopRecentlySubscribedMoviesPage extends StatelessWidget {
@@ -21,11 +20,7 @@ class DesktopRecentlySubscribedMoviesPage extends StatelessWidget {
       sectionSpacing: context.appSpacing.lg,
       registerPageRefresh: true,
       emptyMessage: '暂无订阅影片',
-      headerBuilder: (context, args) => AppFilterTotalHeader(
-        leading: const SizedBox.shrink(),
-        totalText: '${args.total} 部',
-        totalKey: const Key('desktop-recently-subscribed-movies-total'),
-      ),
+      showHeader: false,
       onMovieTap: (context, movieNumber) => context.pushDesktopMovieDetail(
         movieNumber: movieNumber,
         fallbackPath: desktopRecentlySubscribedMoviesPath,

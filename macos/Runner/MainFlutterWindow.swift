@@ -48,6 +48,41 @@ class MainFlutterWindow: NSWindow {
     configureWindowAppearanceChannel()
 
     super.awakeFromNib()
+    configureHiddenStandardWindowButtons()
+  }
+
+  /// 红绿灯由 Flutter 自绘（AppMacTrafficLights），系统按钮保持隐藏：
+  /// window_manager 的 `windowButtonVisibility: false` 已完成首次隐藏，
+  /// 但全屏切换会重建标题栏，进出全屏后再兜底隐藏一次，避免系统悬浮
+  /// 标题栏里出现原生按钮与自绘圆点重复。
+  private func configureHiddenStandardWindowButtons() {
+    hideStandardWindowButtons()
+    for name in [
+      NSWindow.didEnterFullScreenNotification,
+      NSWindow.didExitFullScreenNotification,
+    ] {
+      NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(handleFullScreenTransition),
+        name: name,
+        object: self
+      )
+    }
+  }
+
+  @objc private func handleFullScreenTransition(_ notification: Notification) {
+    DispatchQueue.main.async { [weak self] in
+      self?.hideStandardWindowButtons()
+    }
+  }
+
+  private func hideStandardWindowButtons() {
+    let types: [NSWindow.ButtonType] = [
+      .closeButton, .miniaturizeButton, .zoomButton,
+    ]
+    for type in types {
+      standardWindowButton(type)?.isHidden = true
+    }
   }
 
   private func configureWindowAppearanceChannel() {

@@ -10,7 +10,9 @@ import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar.dart';
+import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_top_bar.dart';
+import 'package:sakuramedia/widgets/shell/window/app_mac_traffic_lights.dart';
 
 class AppDesktopShell extends StatefulWidget {
   const AppDesktopShell({
@@ -125,36 +127,59 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
               ? Colors.transparent
               : context.appColors.surfacePage,
           body: SafeArea(
-            child: Row(
+            child: Stack(
               children: [
-                AppSidebar(
-                  currentPath: widget.currentPath,
-                  navGroups: widget.navGroups,
-                ),
-                Expanded(
-                  child: Container(
-                    key: const Key('desktop-shell-content-surface'),
-                    color: context.appColors.surfaceElevated,
-                    child: Column(
-                      children: [
-                        AppTopBar(
-                          currentPath: widget.currentPath,
-                          config: widget.topBarConfig,
-                          shellNavigatorKey: widget.shellNavigatorKey,
-                          onRefresh: current == null
-                              ? null
-                              : () => _runRefresh(current),
-                          isRefreshing: current != null && _isRefreshing,
-                        ),
-                        Expanded(
-                          child: _DesktopShellBody(
-                            layout: widget.layout,
-                            child: widget.child,
-                          ),
-                        ),
-                      ],
+                Row(
+                  children: [
+                    AppSidebar(
+                      currentPath: widget.currentPath,
+                      navGroups: widget.navGroups,
                     ),
+                    Expanded(
+                      child: Container(
+                        key: const Key('desktop-shell-content-surface'),
+                        color: context.appColors.surfaceElevated,
+                        child: Column(
+                          children: [
+                            AppTopBar(
+                              currentPath: widget.currentPath,
+                              config: widget.topBarConfig,
+                              shellNavigatorKey: widget.shellNavigatorKey,
+                              onRefresh: current == null
+                                  ? null
+                                  : () => _runRefresh(current),
+                              isRefreshing: current != null && _isRefreshing,
+                            ),
+                            Expanded(
+                              child: _DesktopShellBody(
+                                layout: widget.layout,
+                                child: widget.child,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // macOS 红绿灯自绘（系统按钮已隐藏），与收起/展开按钮
+                // 一样固定在窗口坐标系，不随侧栏宽度动画移动。
+                if (defaultTargetPlatform == TargetPlatform.macOS)
+                  Positioned(
+                    left: appMacTrafficLightsLeft,
+                    top: (context.appComponentTokens.desktopTitleBarHeight -
+                            appMacTrafficLightButtonSize) /
+                        2,
+                    child: const AppMacTrafficLights(),
                   ),
+                // 收起/展开按钮固定在窗口左上角（macOS 红绿灯右侧），
+                // 不随侧栏宽度动画和顶栏布局切换移动。
+                Positioned(
+                  left: sidebarToggleButtonLeft(context),
+                  top: (context.appComponentTokens.desktopTitleBarHeight -
+                          sidebarToggleButtonSize) /
+                      2,
+                  child: const AppSidebarToggleButton(),
                 ),
               ],
             ),

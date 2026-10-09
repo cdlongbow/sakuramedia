@@ -1,8 +1,18 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
+import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
+import 'package:sakuramedia/features/image_search/presentation/providers/image_search_state.dart';
+import 'package:sakuramedia/features/status/presentation/providers/server_capabilities_provider.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
+import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
 import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
 
@@ -11,7 +21,14 @@ import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
 /// 刷新按钮是**受控组件**：[onRefresh] 只是「按下的动作」（fire-and-forget），
 /// [isRefreshing] 由外部（[AppDesktopShell]）持有，用来切换按钮 / spinner。
 /// 这样点击按钮和 Cmd/Ctrl+R 快捷键可以共用同一份 in-flight 闸门与错误 toast。
-class AppTopBar extends StatelessWidget {
+///
+/// 侧边栏收起/展开按钮由壳层固定在窗口左上角（macOS 红绿灯右侧），
+/// 不在这里渲染；收起态顶栏前导留白让出按钮占位，保证标题/返回按钮
+/// 排在按钮右侧。
+///
+/// 搜索入口固定在刷新按钮左侧，收起态是搜索图标，点击后输入框从图标
+/// 左侧展开（见 [_TopBarSearchEntry]）。
+class AppTopBar extends ConsumerWidget {
   const AppTopBar({
     super.key,
     required this.currentPath,
@@ -28,12 +45,19 @@ class AppTopBar extends StatelessWidget {
   final bool isRefreshing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSidebarCollapsed = ref.watch(appShellSidebarCollapsedProvider);
     final spacing = context.appSpacing;
     const leftInset = AppPageInsets.desktop;
     const rightInset = AppPageInsets.desktop;
     final backButtonSlotWidth = config.isBackEnabled ? 40.0 : 0.0;
     final titleLeadingGap = config.isBackEnabled ? spacing.sm : 0.0;
+    // 收起态前导留白让出壳层固定的收起/展开按钮占位；与侧栏宽度
+    // 用同款 180ms 线性动画，标题随之平滑滑动而不是跳变。
+    final collapsedLeading =
+        sidebarToggleButtonLeft(context) +
+        sidebarToggleButtonSize +
+        spacing.sm;
 
     return Container(
       key: const Key('desktop-shell-topbar'),
@@ -45,7 +69,10 @@ class AppTopBar extends StatelessWidget {
             height: context.appComponentTokens.desktopTitleBarHeight,
             child: Row(
               children: [
-                SizedBox(width: leftInset),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: isSidebarCollapsed ? collapsedLeading : leftInset,
+                ),
                 if (config.isBackEnabled)
                   SizedBox(
                     width: backButtonSlotWidth,
@@ -78,6 +105,8 @@ class AppTopBar extends StatelessWidget {
                     ),
                   ),
                 ),
+                _TopBarSearchEntry(currentPath: currentPath),
+                SizedBox(width: spacing.xs),
                 if (onRefresh != null)
                   _TopBarRefreshButton(
                     onPressed: onRefresh!,
@@ -118,6 +147,196 @@ class AppTopBar extends StatelessWidget {
   }
 }
 
+/// 顶栏搜索入口。
+///
+/// 收起态只占一个图标位；点击后输入框从图标左侧展开展示，图标原地保留
+/// 作为收起开关。提交后跳转搜索页并收起；输入框聚焦时按 ESC、或路由变化
+/// 时同样收起。
+/// 以图搜图 / 文字搜图入口沿用旧侧边栏搜索框的行为，挂在展开输入框后缀。
+class _TopBarSearchEntry extends ConsumerStatefulWidget {
+  const _TopBarSearchEntry({required this.currentPath});
+
+  final String currentPath;
+
+  @override
+  ConsumerState<_TopBarSearchEntry> createState() => _TopBarSearchEntryState();
+}
+
+class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
+  static const double _fieldWidth = 300;
+  static const Duration _animationDuration = Duration(milliseconds: 180);
+
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode(debugLabel: 'topbar-search');
+  bool _expanded = false;
+
+  @override
+  void didUpdateWidget(covariant _TopBarSearchEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 切页后收起并清空，避免在下一个页面上残留上一次的搜索词。
+    // didUpdateWidget 处于 build 期，不能直接 setState/clear/unfocus，
+    // 推迟到下一帧由 _collapse() 统一处理。
+    if (oldWidget.currentPath != widget.currentPath && _expanded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _collapse();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _openAndFocus() {
+    if (!mounted) {
+      return;
+    }
+    if (!_expanded) {
+      setState(() => _expanded = true);
+    }
+    // 输入框在本帧 setState 后才挂载，聚焦要等挂载完成。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+
+  void _toggle() {
+    if (_expanded) {
+      _collapse();
+      return;
+    }
+    _openAndFocus();
+  }
+
+  void _collapse() {
+    _controller.clear();
+    _focusNode.unfocus();
+    if (mounted) {
+      setState(() => _expanded = false);
+    }
+  }
+
+  void _submit() {
+    final query = _controller.text.trim();
+    if (query.isEmpty) {
+      return;
+    }
+    context.pushDesktopSearch(query: query, fallbackPath: widget.currentPath);
+    _collapse();
+  }
+
+  void _openTextImageSearch() {
+    context.pushDesktopImageSearch(
+      fallbackPath: widget.currentPath,
+      initialInputKind: ImageSearchInputKind.text,
+    );
+  }
+
+  Future<void> _pickAndOpenImageSearch() async {
+    try {
+      final pickedFile = await pickImageSearchFile();
+      if (pickedFile == null || !mounted) {
+        return;
+      }
+      context.pushDesktopImageSearch(
+        fallbackPath: widget.currentPath,
+        initialFileName: pickedFile.fileName,
+        initialFileBytes: pickedFile.bytes,
+        initialMimeType: pickedFile.mimeType,
+      );
+    } on ImageSearchFilePickerException catch (error) {
+      if (mounted) {
+        showToast(error.message);
+      }
+    } catch (_) {
+      if (mounted) {
+        showToast('选择图片失败');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 收起态不订阅能力状态，避免无关重建；展开时才决定是否显示图搜后缀。
+    final imageSearchEnabled =
+        _expanded && ref.watch(imageSearchEnabledProvider);
+    final toggleIcon = SizedBox(
+      width: _topBarActionSlotWidth,
+      child: AppIconButton(
+        key: const Key('topbar-search-button'),
+        tooltip: _expanded ? '收起搜索' : '搜索',
+        semanticLabel: _expanded ? '收起搜索' : '搜索',
+        onPressed: _toggle,
+        padding: EdgeInsets.zero,
+        icon: Icon(
+          Icons.search_rounded,
+          size: context.appComponentTokens.iconSizeSm,
+        ),
+      ),
+    );
+
+    return AnimatedSize(
+      duration: _animationDuration,
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_expanded) ...[
+            SizedBox(
+              width: _fieldWidth,
+              child: CallbackShortcuts(
+                bindings: <ShortcutActivator, VoidCallback>{
+                  const SingleActivator(LogicalKeyboardKey.escape): _collapse,
+                },
+                child: CatalogSearchField(
+                  key: const Key('topbar-search-field'),
+                  fieldKey: const Key('topbar-search-input'),
+                  imageSearchButtonKey: const Key('topbar-search-image'),
+                  textImageSearchButtonKey: const Key(
+                    'topbar-search-text-image',
+                  ),
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  hintText: '如 SSNI-888、三上悠亚',
+                  // 收紧到 34 高：tightSuffix 解除后缀 48px 热区下限后，
+                  // 高度 = max(后缀按钮 28, 字高 14 + 2×10)。
+                  tightSuffix: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: context.appFormTokens.fieldHorizontalPadding,
+                    vertical: 10,
+                  ),
+                  // 34 高的字段上 8px 圆角偏圆，收紧到 4 更方。
+                  borderRadius: context.appRadius.xsBorder,
+                  showSearchButton: false,
+                  showImageSearchButton: imageSearchEnabled,
+                  showTextImageSearchButton: imageSearchEnabled,
+                  onSubmitted: (_) => _submit(),
+                  onImageSearchTap: _pickAndOpenImageSearch,
+                  onTextImageSearchTap: _openTextImageSearch,
+                ),
+              ),
+            ),
+            SizedBox(width: context.appSpacing.xs),
+          ],
+          toggleIcon,
+        ],
+      ),
+    );
+  }
+}
+
+/// 顶栏右侧动作按钮（搜索切换 / 刷新）的占位宽度，与 AppIconButton(compact)
+/// 同宽，两个图标之间只留 Row 里的固定小间距，避免中间空出一大段。
+const double _topBarActionSlotWidth = 28;
+
 class _TopBarRefreshButton extends StatelessWidget {
   const _TopBarRefreshButton({
     required this.onPressed,
@@ -130,12 +349,12 @@ class _TopBarRefreshButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.appComponentTokens;
-    final iconSize = tokens.iconSizeXs;
+    final iconSize = tokens.iconSizeSm;
 
     if (isRefreshing) {
       return SizedBox(
         key: const Key('topbar-refresh-button-loading'),
-        width: 40,
+        width: _topBarActionSlotWidth,
         child: Center(
           child: SizedBox(
             width: iconSize,
@@ -154,7 +373,7 @@ class _TopBarRefreshButton extends StatelessWidget {
     }
 
     return SizedBox(
-      width: 40,
+      width: _topBarActionSlotWidth,
       child: AppIconButton(
         key: const Key('topbar-refresh-button'),
         tooltip: '刷新',

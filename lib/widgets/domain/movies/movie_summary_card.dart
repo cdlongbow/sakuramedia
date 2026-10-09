@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/platform/haptic_feedback.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/actions/movie_inspector_launcher.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
@@ -18,7 +17,7 @@ import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart'
 
 /// 影片摘要卡：整卡即封面，与全站封面卡片共用同一套悬停披露范式。
 ///
-/// - 收起态：番号（+ 推荐理由）、排名徽标与 ⓘ 压在底部渐变上常显；触摸端没有
+/// - 收起态：番号（+ 推荐理由）、排名徽标压在底部渐变上常显；触摸端没有
 ///   hover，停留在这层；
 /// - 桌面悬停：底部渐显压暗层（180ms ease-out），标题/时长/日期与整行动作
 ///   （播放 / 订阅 / 标记合集-单体 / 屏蔽影片）淡入，收起态主键层淡出；系统开启
@@ -26,9 +25,8 @@ import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart'
 /// - 参数与全站封面卡一致：`lg` 圆角、`surfaceCard` 底色、常驻 1px 边框与常驻
 ///   卡片阴影；按下反馈与 [AppInteractiveSurface] 一致（整体变淡 0.7）。
 ///
-/// 右端的 ⓘ 打开详情检查器（评论 / 磁力 / 缩略图；桌面弹对话框、移动弹底部抽屉），
-/// 点击后先取一次影片详情以带出默认媒体；右键与长按仍打开影片操作菜单。
-class MovieSummaryCard extends StatefulWidget {
+/// 右键与长按打开影片操作菜单。
+class MovieSummaryCard extends StatelessWidget {
   const MovieSummaryCard({
     super.key,
     required this.movie,
@@ -68,53 +66,23 @@ class MovieSummaryCard extends StatefulWidget {
   final ValueChanged<bool>? onSelectedChanged;
 
   @override
-  State<MovieSummaryCard> createState() => _MovieSummaryCardState();
-}
-
-class _MovieSummaryCardState extends State<MovieSummaryCard> {
-  bool _inspectorLoading = false;
-
-  MovieListItemDto get movie => widget.movie;
-
-  /// 先取默认媒体让缩略图页签可用（取不到也能开），再按平台弹出弹窗。
-  Future<void> _openInspector() async {
-    if (_inspectorLoading) {
-      return;
-    }
-    setState(() => _inspectorLoading = true);
-    final media = await fetchDefaultInspectorMedia(
-      context,
-      movieNumber: movie.movieNumber,
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() => _inspectorLoading = false);
-    showMovieInspector(
-      context,
-      movieNumber: movie.movieNumber,
-      selectedMedia: media,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
     final spacing = context.appSpacing;
     final handlesSubscriptionTapAtCardLevel =
-        !widget.selectionMode &&
-        widget.onSubscriptionTap != null &&
-        (widget.onTap != null || widget.onRequestMenu != null);
-    final showCluster = widget.showStatusBadges && !widget.selectionMode;
-    final showHeat = widget.showStatusBadges && movie.heat > 0;
+        !selectionMode &&
+        onSubscriptionTap != null &&
+        (onTap != null || onRequestMenu != null);
+    final showCluster = showStatusBadges && !selectionMode;
+    final showHeat = showStatusBadges && movie.heat > 0;
 
     final card = AppCoverCard(
       key: Key('movie-summary-card-${movie.movieNumber}'),
       coverAspectRatio: componentTokens.movieCardAspectRatio,
-      hoverEnabled: !widget.selectionMode,
-      selectionMode: widget.selectionMode,
-      isSelected: widget.isSelected,
+      hoverEnabled: !selectionMode,
+      selectionMode: selectionMode,
+      isSelected: isSelected,
       cover: _MovieCover(
         movieNumber: movie.movieNumber,
         thinCoverImage: movie.thinCoverImage,
@@ -145,10 +113,10 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
                         'movie-summary-card-subscription-loading-${movie.movieNumber}',
                       ),
                       isSubscribed: movie.isSubscribed,
-                      isUpdating: widget.isSubscriptionUpdating,
+                      isUpdating: isSubscriptionUpdating,
                       onTap: handlesSubscriptionTapAtCardLevel
                           ? null
-                          : widget.onSubscriptionTap,
+                          : onSubscriptionTap,
                     ),
                   ),
                   if (movie.canPlay)
@@ -185,19 +153,19 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
       },
     );
 
-    if (widget.selectionMode) {
+    if (selectionMode) {
       return AppInteractiveSurface(
         key: Key('movie-summary-card-checkbox-${movie.movieNumber}'),
-        enabled: widget.onSelectedChanged != null,
-        onTap: () => widget.onSelectedChanged?.call(!widget.isSelected),
+        enabled: onSelectedChanged != null,
+        onTap: () => onSelectedChanged?.call(!isSelected),
         child: card,
       );
     }
-    if (widget.onTap == null && widget.onRequestMenu == null) {
+    if (onTap == null && onRequestMenu == null) {
       return card;
     }
     return AppImageActionTrigger(
-      onTap: handlesSubscriptionTapAtCardLevel ? null : widget.onTap,
+      onTap: handlesSubscriptionTapAtCardLevel ? null : onTap,
       onTapAt: handlesSubscriptionTapAtCardLevel
           ? (localPosition) {
               final hitPadding =
@@ -210,21 +178,21 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
                   hitPadding;
               if (localPosition.dx <= hitExtent &&
                   localPosition.dy <= hitExtent) {
-                if (!widget.isSubscriptionUpdating) {
+                if (!isSubscriptionUpdating) {
                   triggerSelectionHaptic();
-                  widget.onSubscriptionTap!();
+                  onSubscriptionTap!();
                 }
               } else {
-                widget.onTap?.call();
+                onTap?.call();
               }
             }
           : null,
-      onRequestMenu: widget.onRequestMenu,
+      onRequestMenu: onRequestMenu,
       child: card,
     );
   }
 
-  /// 收起态主键层：番号（+ 推荐理由）、排名徽标与 ⓘ 压在底部渐变上常显；
+  /// 收起态主键层：番号（+ 推荐理由）、排名徽标压在底部渐变上常显；
   /// 悬停展开时由 [AppCoverHoverInfo] 淡出，信息在悬停面板里继续提供。
   Widget _buildCollapsedOverlay(BuildContext context) {
     final spacing = context.appSpacing;
@@ -242,7 +210,7 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
     final Widget info;
     // 推荐理由（如「热门：某某女优」）在触摸端没有悬停可触发，常显为第二行，
     // 否则移动端会彻底看不到它。
-    if (widget.secondaryLabel case final label?) {
+    if (secondaryLabel case final label?) {
       info = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +232,6 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
     } else {
       info = number;
     }
-    final rank = widget.rank;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -283,17 +250,9 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
             child: Row(
               children: [
                 Expanded(child: info),
-                if (rank != null) ...[
+                if (rank case final rank?) ...[
                   SizedBox(width: spacing.sm),
                   _RankBadge(rank: rank, movieNumber: movie.movieNumber),
-                ],
-                if (!widget.selectionMode) ...[
-                  SizedBox(width: spacing.xs),
-                  _CardInfoButton(
-                    movieNumber: movie.movieNumber,
-                    isLoading: _inspectorLoading,
-                    onTap: () => unawaited(_openInspector()),
-                  ),
                 ],
               ],
             ),
@@ -304,10 +263,10 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
   }
 
   /// 悬停面板：番号 + 推荐理由、标题（两行）、时长·日期与整行动作按钮，
-  /// 行尾保留排名徽标与 ⓘ；与全站封面卡片共用同一套底部披露层。
+  /// 行尾保留排名徽标；与全站封面卡片共用同一套底部披露层。
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
-    final showBadges = widget.showStatusBadges && !widget.selectionMode;
+    final showBadges = showStatusBadges && !selectionMode;
     final actions = <Widget>[
       // 播放是这一层的主操作，用白底实心；选择模式与不可播放时不出。
       if (showBadges && movie.canPlay)
@@ -318,7 +277,7 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
           tooltip: '播放',
           onTap: () => _handlePlay(context),
         ),
-      if (widget.onSubscriptionTap != null)
+      if (onSubscriptionTap != null)
         AppCoverHoverActionButton(
           key: Key(
             'movie-summary-card-subscription-action-${movie.movieNumber}',
@@ -327,27 +286,24 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
               ? Icons.favorite_rounded
               : Icons.favorite_border_rounded,
           tooltip: movie.isSubscribed ? '取消订阅' : '订阅影片',
-          onTap: widget.isSubscriptionUpdating
-              ? null
-              : widget.onSubscriptionTap,
+          onTap: isSubscriptionUpdating ? null : onSubscriptionTap,
         ),
-      if (widget.onToggleCollectionType != null)
+      if (onToggleCollectionType != null)
         AppCoverHoverActionButton(
           key: Key('movie-summary-card-collection-type-${movie.movieNumber}'),
           icon: Icons.category_outlined,
           tooltip: '标记为合集/单体',
-          onTap: widget.onToggleCollectionType,
+          onTap: onToggleCollectionType,
         ),
       // 已订阅影片不可屏蔽，与右键菜单的显隐规则一致。
-      if (widget.onBlacklist != null && !movie.isSubscribed)
+      if (onBlacklist != null && !movie.isSubscribed)
         AppCoverHoverActionButton(
           key: Key('movie-summary-card-blacklist-${movie.movieNumber}'),
           icon: Icons.block_rounded,
           tooltip: '屏蔽影片',
-          onTap: widget.onBlacklist,
+          onTap: onBlacklist,
         ),
     ];
-    final rank = widget.rank;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -363,7 +319,7 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
             weight: AppTextWeight.semibold,
           ),
         ),
-        if (widget.secondaryLabel case final label?) ...[
+        if (secondaryLabel case final label?) ...[
           SizedBox(height: spacing.xs / 2),
           Text(
             label,
@@ -399,24 +355,17 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
           ),
         ),
         SizedBox(height: spacing.sm),
-        // 动作独占一行：4 个动作 + 排名 + 信息按钮挤在一行会在标准卡宽
-        // （movieCardTargetWidth 220）折行，排名与信息按钮独立成行后动作始终单行。
+        // 动作独占一行：4 个动作 + 排名挤在一行会在标准卡宽
+        // （movieCardTargetWidth 220）折行，排名独立成行后动作始终单行。
         AppCoverHoverActionBar(actions: actions),
         if (actions.isNotEmpty) SizedBox(height: spacing.xs),
-        Row(
-          children: [
-            const Spacer(),
-            if (rank != null) ...[
+        if (rank case final rank?)
+          Row(
+            children: [
+              const Spacer(),
               _RankBadge(rank: rank, movieNumber: movie.movieNumber),
-              SizedBox(width: spacing.xs),
             ],
-            _CardInfoButton(
-              movieNumber: movie.movieNumber,
-              isLoading: _inspectorLoading,
-              onTap: () => unawaited(_openInspector()),
-            ),
-          ],
-        ),
+          ),
       ],
     );
   }
@@ -438,10 +387,10 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
     heatText.dispose();
     final statusWidth =
         tokens.movieCardStatusBadgeSize +
-        (!widget.selectionMode && movie.canPlay
+        (!selectionMode && movie.canPlay
             ? spacing.xs + tokens.movieCardStatusBadgeSize
             : 0) +
-        (!widget.selectionMode && movie.maxMediaWidth >= 3840
+        (!selectionMode && movie.maxMediaWidth >= 3840
             ? spacing.xs + spacing.sm + tokens.movieCardStatusBadgeSize
             : 0);
     return statusWidth + heatWidth + spacing.xs * 3 > cardWidth;
@@ -466,58 +415,6 @@ class _MovieSummaryCardState extends State<MovieSummaryCard> {
     } on Object {
       return null;
     }
-  }
-}
-
-/// 卡片信息行右端的详情检查器入口：常显，点击打开评论 / 磁力 / 缩略图弹窗。
-class _CardInfoButton extends StatelessWidget {
-  const _CardInfoButton({
-    required this.movieNumber,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  final String movieNumber;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final tokens = context.appComponentTokens;
-    final size = tokens.movieCardStatusBadgeSize;
-    return GestureDetector(
-      key: Key('movie-summary-card-inspector-$movieNumber'),
-      behavior: HitTestBehavior.opaque,
-      onTap: isLoading ? null : onTap,
-      child: MouseRegion(
-        cursor: isLoading ? SystemMouseCursors.basic : SystemMouseCursors.click,
-        child: Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: colors.mediaOverlayStrong,
-            borderRadius: context.appRadius.pillBorder,
-            border: Border.all(color: colors.mediaOverlayBorder),
-          ),
-          child: isLoading
-              ? SizedBox(
-                  width: tokens.iconSize3xs,
-                  height: tokens.iconSize3xs,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: context.appTextPalette.onMedia,
-                  ),
-                )
-              : Icon(
-                  Icons.info_outline_rounded,
-                  size: tokens.iconSizeXs,
-                  color: context.appTextPalette.onMedia,
-                ),
-        ),
-      ),
-    );
   }
 }
 

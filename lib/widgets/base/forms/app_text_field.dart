@@ -26,6 +26,7 @@ class AppTextField extends StatelessWidget {
     this.isDense = true,
     this.contentPadding,
     this.fillColor,
+    this.borderRadius,
     this.style,
   });
 
@@ -57,6 +58,10 @@ class AppTextField extends StatelessWidget {
   /// 覆盖默认的填充色（默认 `context.appColors.surfaceMuted`）。
   /// 用于把输入框放到比 `surfaceMuted` 更暗的面板上（如侧边栏）需要提升对比度的场景。
   final Color? fillColor;
+
+  /// 覆盖默认圆角（`context.appRadius.smBorder`）；紧凑顶栏等场景可收紧到
+  /// 更方的 [AppRadius.xsBorder]。
+  final BorderRadius? borderRadius;
 
   /// 覆盖默认正文样式（默认 `resolveAppTextStyle(context, size: AppTextSize.s14)`）。
   /// 用于 JSON / 代码等需要等宽字体的编辑区。
@@ -109,7 +114,7 @@ class AppTextField extends StatelessWidget {
     final colors = context.appColors;
 
     OutlineInputBorder border(Color color) => OutlineInputBorder(
-      borderRadius: context.appRadius.smBorder,
+      borderRadius: borderRadius ?? context.appRadius.smBorder,
       borderSide: BorderSide(color: color),
     );
 

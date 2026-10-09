@@ -214,9 +214,71 @@ void main() {
     );
     expect(
       find.byKey(const Key('desktop-latest-movies-total')),
+      findsNothing,
+    );
+    expect(find.text('1 部'), findsNothing);
+    expect(find.text('ABC-001'), findsOneWidget);
+  });
+
+  testWidgets('desktop recent views route renders the mixed poster grid', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/view-history',
+      body: <String, dynamic>{
+        'items': [
+          <String, dynamic>{
+            'entity_type': 'movie',
+            'viewed_at': '2026-10-10T10:00:00',
+            'movie': <String, dynamic>{
+              'movie_number': 'HIS-001',
+              'title': 'History Movie 1',
+              'cover_image': null,
+              'thin_cover_image': null,
+            },
+            'actor': null,
+          },
+          <String, dynamic>{
+            'entity_type': 'actor',
+            'viewed_at': '2026-10-10T09:00:00',
+            'movie': null,
+            'actor': <String, dynamic>{
+              'id': 7,
+              'javdb_id': 'actor-7',
+              'name': '浏览女优',
+              'profile_image': null,
+            },
+          },
+        ],
+      },
+    );
+    final router = buildAppRouter(AppPlatform.desktop, sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopRecentViewsPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('recent-views-grid')), findsOneWidget);
+    expect(
+      find.byKey(const Key('recent-view-card-movie-HIS-001')),
       findsOneWidget,
     );
-    expect(find.text('ABC-001'), findsOneWidget);
+    expect(find.byKey(const Key('recent-view-card-actor-7')), findsOneWidget);
+    expect(find.text('还没有浏览记录'), findsNothing);
   });
 
   test('desktop top bar config disables back on overview', () {

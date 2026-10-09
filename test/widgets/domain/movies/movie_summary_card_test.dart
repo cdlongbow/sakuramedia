@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -13,9 +12,6 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
-
-import '../../../support/logged_in_session_store.dart';
-import '../../../support/test_api_bundle.dart';
 
 void main() {
   testWidgets('movie summary card prefers thin cover image', (
@@ -106,14 +102,14 @@ void main() {
       icons.where((icon) => icon.icon == Icons.play_arrow_rounded).single.color,
       AppTextPalette.defaults().onMedia,
     );
-    final subscriptionIcon =
-        icons.where((icon) => icon.icon == Icons.favorite_rounded).single;
+    final subscriptionIcon = icons
+        .where((icon) => icon.icon == Icons.favorite_rounded)
+        .single;
     expect(subscriptionIcon.color, AppColors.defaults().subscriptionHeartIcon);
     expect(subscriptionIcon.size, AppComponentTokens.defaults().iconSizeXl);
-    final heatIcon =
-        icons
-            .where((icon) => icon.icon == Icons.local_fire_department_rounded)
-            .single;
+    final heatIcon = icons
+        .where((icon) => icon.icon == Icons.local_fire_department_rounded)
+        .single;
     expect(heatIcon.color, AppColors.defaults().movieDetailHeatIcon);
     final heatBadgeContainer = tester.widget<Container>(
       find.byKey(const Key('movie-summary-card-heat-ABC-001')),
@@ -152,10 +148,7 @@ void main() {
                     id: 1,
                     origin: '/cover-origin.jpg',
                   ),
-                  thinCoverImage: const MovieImageDto(
-                    id: 2,
-                    origin: '',
-                  ),
+                  thinCoverImage: const MovieImageDto(id: 2, origin: ''),
                   releaseDate: DateTime(2024, 1, 1),
                   durationMinutes: 120,
                   heat: 42,
@@ -430,33 +423,25 @@ void main() {
       expect(subscriptionRect.left - cardRect.left, closeTo(edgeInset, 0.1));
 
       // 热度在顶部一行，rank 在底部信息条里。
-      final heatBottom =
-          tester
-              .getBottomLeft(
-                find.byKey(const Key('movie-summary-card-heat-OFJE-777')),
-              )
-              .dy;
-      final rankTop =
-          tester
-              .getTopLeft(
-                find.byKey(const Key('movie-summary-card-rank-OFJE-777')),
-              )
-              .dy;
+      final heatBottom = tester
+          .getBottomLeft(
+            find.byKey(const Key('movie-summary-card-heat-OFJE-777')),
+          )
+          .dy;
+      final rankTop = tester
+          .getTopLeft(find.byKey(const Key('movie-summary-card-rank-OFJE-777')))
+          .dy;
       expect(heatBottom, lessThan(rankTop));
 
       // rank 与番号同排居中。
-      final numberCenter =
-          tester
-              .getCenter(
-                find.byKey(const Key('movie-summary-card-number-OFJE-777')),
-              )
-              .dy;
-      final rankCenter =
-          tester
-              .getCenter(
-                find.byKey(const Key('movie-summary-card-rank-OFJE-777')),
-              )
-              .dy;
+      final numberCenter = tester
+          .getCenter(
+            find.byKey(const Key('movie-summary-card-number-OFJE-777')),
+          )
+          .dy;
+      final rankCenter = tester
+          .getCenter(find.byKey(const Key('movie-summary-card-rank-OFJE-777')))
+          .dy;
       expect((rankCenter - numberCenter).abs(), lessThanOrEqualTo(8));
     },
   );
@@ -756,49 +741,6 @@ void main() {
   );
 
   testWidgets(
-    'movie summary card hides the inspector entry in selection mode',
-    (WidgetTester tester) async {
-      final sessionStore = SessionStore.inMemory();
-      await sessionStore.saveBaseUrl('https://api.example.com');
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: const MovieListItemDto(
-                    javdbId: 'MovieA9',
-                    movieNumber: 'ABC-031',
-                    title: 'Movie 9',
-                    coverImage: null,
-                    releaseDate: null,
-                    durationMinutes: 0,
-                    heat: 0,
-                    isSubscribed: false,
-                    canPlay: true,
-                  ),
-                  selectionMode: true,
-                  onSelectedChanged: (_) {},
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      expect(
-        find.byKey(const Key('movie-summary-card-inspector-ABC-031')),
-        findsNothing,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
     'movie summary card animates the hover panel and drops the menu button',
     (WidgetTester tester) async {
       final sessionStore = SessionStore.inMemory();
@@ -851,10 +793,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Movie 10'), findsOneWidget);
-      expect(
-        find.byKey(const Key('movie-summary-card-inspector-ABC-032')),
-        findsOneWidget,
-      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -906,189 +844,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Movie 13'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'movie summary card opens the inspector dialog from the list entry',
-    (WidgetTester tester) async {
-      var cardTaps = 0;
-      tester.view.physicalSize = const Size(1400, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      final sessionStore = await buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/movies/ABC-040',
-        body: <String, dynamic>{
-          'javdb_id': 'MovieB2',
-          'movie_number': 'ABC-040',
-          'title': 'Movie 11',
-          'cover_image': null,
-          'thin_cover_image': null,
-          'release_date': '2024-01-02',
-          'duration_minutes': 120,
-          'is_subscribed': false,
-          'can_play': true,
-          'media_items': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'media_id': 100,
-              'play_url': '/files/media/movies/ABC-040/video.mp4',
-              'resolution': '1920x1080',
-              'valid': true,
-            },
-          ],
-        },
-      );
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/movies/ABC-040/reviews',
-        body: <dynamic>[],
-      );
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/media/100/thumbnails',
-        body: <dynamic>[],
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: bundle.riverpodOverrides(),
-          child: MaterialApp(
-            theme: sakuraThemeData,
-            home: Scaffold(
-              body: SizedBox(
-                width: 220,
-                child: MovieSummaryCard(
-                  movie: const MovieListItemDto(
-                    javdbId: 'MovieB2',
-                    movieNumber: 'ABC-040',
-                    title: 'Movie 11',
-                    coverImage: null,
-                    releaseDate: null,
-                    durationMinutes: 120,
-                    heat: 0,
-                    isSubscribed: false,
-                    canPlay: true,
-                  ),
-                  onTap: () => cardTaps++,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(
-        find.byKey(const Key('movie-summary-card-inspector-ABC-040')),
-      );
-      await tester.pumpAndSettle();
-
-      // 先取一次影片详情拿默认媒体，再弹出与详情页一致的检查器对话框。
-      expect(bundle.adapter.hitCount('GET', '/movies/ABC-040'), 1);
-      expect(
-        find.byKey(const Key('movie-detail-inspector-dialog')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('movie-detail-inspector-panel')),
-        findsOneWidget,
-      );
-      // 内层按钮必须吃掉这次点击，不能同时打开详情。
-      expect(cardTaps, 0);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'movie summary card opens the inspector bottom sheet on mobile',
-    (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      final sessionStore = await buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/movies/ABC-041',
-        body: <String, dynamic>{
-          'javdb_id': 'MovieB3',
-          'movie_number': 'ABC-041',
-          'title': 'Movie 12',
-          'cover_image': null,
-          'thin_cover_image': null,
-          'release_date': '2024-01-02',
-          'duration_minutes': 120,
-          'is_subscribed': false,
-          'can_play': true,
-          'media_items': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'media_id': 101,
-              'play_url': '/files/media/movies/ABC-041/video.mp4',
-              'resolution': '1920x1080',
-              'valid': true,
-            },
-          ],
-        },
-      );
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/movies/ABC-041/reviews',
-        body: <dynamic>[],
-      );
-      bundle.adapter.setFallbackJson(
-        method: 'GET',
-        path: '/media/101/thumbnails',
-        body: <dynamic>[],
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: bundle.riverpodOverrides(),
-          child: AppPlatformScope(
-            platform: AppPlatform.mobile,
-            child: MaterialApp(
-              theme: sakuraMobileThemeData,
-              home: Scaffold(
-                body: SizedBox(
-                  width: 220,
-                  child: MovieSummaryCard(
-                    movie: const MovieListItemDto(
-                      javdbId: 'MovieB3',
-                      movieNumber: 'ABC-041',
-                      title: 'Movie 12',
-                      coverImage: null,
-                      releaseDate: null,
-                      durationMinutes: 120,
-                      heat: 0,
-                      isSubscribed: false,
-                      canPlay: true,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(
-        find.byKey(const Key('movie-summary-card-inspector-ABC-041')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(const Key('movie-detail-inspector-bottom-sheet')),
-        findsOneWidget,
-      );
       expect(tester.takeException(), isNull);
     },
   );

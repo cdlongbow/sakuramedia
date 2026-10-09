@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -47,20 +48,8 @@ void main() {
     final expandedWidth =
         tester.getSize(find.byKey(const Key('desktop-shell-sidebar'))).width;
     expect(expandedWidth, AppSidebarTokens.defaults().expandedWidth);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('desktop-shell-sidebar')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('topbar-header')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('sidebar-toggle-button')), findsOneWidget);
+    expect(find.byKey(const Key('mac-traffic-lights')), findsNothing);
     expect(find.text('SakuraMedia'), findsNothing);
     expect(find.text('SA'), findsNothing);
     expect(find.byKey(const Key('sidebar-version-info')), findsOneWidget);
@@ -76,6 +65,8 @@ void main() {
     final collapsedWidth =
         tester.getSize(find.byKey(const Key('desktop-shell-sidebar'))).width;
     expect(collapsedWidth, AppSidebarTokens.defaults().collapsedWidth);
+    // 收起 = 完全隐藏：导航内容与版本卡整体卸载；按钮固定在壳层，仍在。
+    expect(find.byKey(const Key('sidebar-toggle-button')), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const Key('desktop-shell-sidebar')),
@@ -83,27 +74,8 @@ void main() {
       ),
       findsNothing,
     );
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('sidebar-header')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('topbar-header')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsNothing,
-    );
-    expect(find.byTooltip('概览'), findsOneWidget);
     expect(find.byKey(const Key('sidebar-version-info')), findsNothing);
-    expect(
-      find.byKey(const Key('sidebar-version-info-collapsed')),
-      findsOneWidget,
-    );
-    expect(find.byTooltip('客户端 0.2.3 · 服务端 v0.2.0'), findsOneWidget);
+    expect(find.byTooltip('概览'), findsNothing);
   });
 
   testWidgets('desktop sidebar highlights available backend and plugin updates', (
@@ -173,7 +145,6 @@ void main() {
     expect(find.text('发现可用更新'), findsOneWidget);
     expect(find.text('客户端 v0.3.0 · 服务端 v0.3.0 · 1 个插件'), findsOneWidget);
     final colors = sakuraThemeData.extension<AppColors>()!;
-    final textPalette = sakuraThemeData.extension<AppTextPalette>()!;
     final updateNotice = tester.widget<Container>(
       find.byKey(const Key('sidebar-update-notice')),
     );
@@ -184,26 +155,6 @@ void main() {
       matching: find.byType(AppBadge),
     );
     expect(tester.widget<AppBadge>(updateBadge).tone, AppBadgeTone.primary);
-
-    await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('sidebar-version-update-dot')), findsOneWidget);
-    final collapsedVersionInfo = tester.widget<Container>(
-      find.byKey(const Key('sidebar-version-info-collapsed')),
-    );
-    final collapsedDecoration =
-        collapsedVersionInfo.decoration! as BoxDecoration;
-    expect(collapsedDecoration.color, colors.selectionSurface);
-    final updateDot = tester.widget<Container>(
-      find.byKey(const Key('sidebar-version-update-dot')),
-    );
-    final updateDotDecoration = updateDot.decoration! as BoxDecoration;
-    expect(updateDotDecoration.color, textPalette.accent);
-    expect(
-      find.byTooltip('客户端 0.2.3 · 服务端 v0.2.0\n客户端可更新至 v0.3.0\n服务端可更新至 v0.3.0\n1 个插件可更新'),
-      findsOneWidget,
-    );
   });
 
   testWidgets('desktop sidebar groups nav items into 浏览/管理 sections', (
@@ -241,14 +192,12 @@ void main() {
     expect(browseHeaderTop, lessThan(manageHeaderTop));
     expect(manageHeaderTop, lessThan(configurationTop));
 
-    // 折叠态：标题文字隐藏，分区键位仍在（以分隔线呈现）。
+    // 收起态：侧栏内容整体卸载。
     await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('浏览'), findsNothing);
-    expect(find.text('管理'), findsNothing);
-    expect(find.byKey(const Key('sidebar-section-浏览')), findsOneWidget);
-    expect(find.byKey(const Key('sidebar-section-管理')), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-section-浏览')), findsNothing);
+    expect(find.byKey(const Key('sidebar-section-管理')), findsNothing);
   });
 
   testWidgets('desktop sidebar shows bottom fade only while nav can scroll', (
@@ -400,27 +349,44 @@ void main() {
     expect(find.byKey(const Key('topbar-header')), findsOneWidget);
     expect(find.byKey(const Key('sidebar-header')), findsOneWidget);
     expect(find.byKey(const Key('sidebar-header-divider')), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('desktop-shell-sidebar')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsOneWidget,
+
+    // 展开态：按钮固定在窗口左上角，红绿灯预留区（76pt）右侧 8pt，
+    // 垂直居中于标题栏。
+    final expandedToggle = tester.getRect(
+      find.byKey(const Key('sidebar-toggle-button')),
     );
+    final headerRect = tester.getRect(
+      find.byKey(const Key('sidebar-header')),
+    );
+    expect(expandedToggle.left, 76 + 8);
+    expect(expandedToggle.center.dy, headerRect.center.dy);
+
+    // 红绿灯自绘：整组左缘 22pt、宽 54pt（close 中心 29pt 对齐菜单图标），
+    // 与收起/展开按钮同线、间隔 8pt。
+    final trafficLights = tester.getRect(
+      find.byKey(const Key('mac-traffic-lights')),
+    );
+    expect(trafficLights.left, 22);
+    expect(trafficLights.width, 54);
+    expect(trafficLights.center.dy, headerRect.center.dy);
+    expect(expandedToggle.left - trafficLights.right, 8);
 
     await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
     await tester.pumpAndSettle();
 
+    // 收起态：侧栏完全隐藏，按钮位置不变。
     expect(
       tester.getSize(find.byKey(const Key('desktop-shell-sidebar'))).width,
-      72,
+      AppSidebarTokens.defaults().collapsedWidth,
     );
+    final collapsedToggle = tester.getRect(
+      find.byKey(const Key('sidebar-toggle-button')),
+    );
+    expect(collapsedToggle.left, 76 + 8);
+    expect(collapsedToggle.center.dy, expandedToggle.center.dy);
     expect(
-      find.descendant(
-        of: find.byKey(const Key('desktop-shell-sidebar')),
-        matching: find.byKey(const Key('sidebar-toggle-button')),
-      ),
-      findsOneWidget,
+      tester.getRect(find.byKey(const Key('mac-traffic-lights'))).left,
+      22,
     );
 
     await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
@@ -560,7 +526,7 @@ void main() {
     );
   });
 
-  testWidgets('desktop sidebar shows search field when expanded', (
+  testWidgets('desktop top bar hosts search entry instead of sidebar', (
     WidgetTester tester,
   ) async {
     final sessionStore = await _buildLoggedInSessionStore();
@@ -577,14 +543,26 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('sidebar-search-field')), findsOneWidget);
-    expect(find.byKey(const Key('sidebar-search-submit')), findsNothing);
-    expect(find.byKey(const Key('sidebar-search-image')), findsOneWidget);
-    expect(find.byKey(const Key('sidebar-search-text-image')), findsOneWidget);
+    // 侧边栏不再承载搜索入口。
+    expect(find.byKey(const Key('sidebar-search-field')), findsNothing);
     expect(find.byKey(const Key('sidebar-search-button')), findsNothing);
+    expect(find.byKey(const Key('sidebar-search-image')), findsNothing);
+    expect(find.byKey(const Key('sidebar-search-text-image')), findsNothing);
+
+    // 顶栏收起态只有图标；点击后展开输入框与两个图搜后缀，并自动聚焦。
+    expect(find.byKey(const Key('topbar-search-button')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-field')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('topbar-search-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-image')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-text-image')), findsOneWidget);
+    expect(_topBarSearchFieldHasFocus(tester), isTrue);
   });
 
-  testWidgets('desktop sidebar text image search opens unified search page', (
+  testWidgets('desktop top bar text image search opens unified search page', (
     WidgetTester tester,
   ) async {
     final sessionStore = await _buildLoggedInSessionStore();
@@ -614,7 +592,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('sidebar-search-text-image')));
+    await tester.tap(find.byKey(const Key('topbar-search-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('topbar-search-text-image')));
     await tester.pumpAndSettle();
 
     expect(
@@ -648,7 +628,7 @@ void main() {
     expect(bundle.adapter.hitCount('POST', '/image-search/text-sessions'), 1);
   });
 
-  testWidgets('desktop sidebar image search button opens image search page', (
+  testWidgets('desktop top bar image search button opens image search page', (
     WidgetTester tester,
   ) async {
     final sessionStore = await _buildLoggedInSessionStore();
@@ -697,7 +677,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('sidebar-search-image')));
+    await tester.tap(find.byKey(const Key('topbar-search-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('topbar-search-image')));
     await tester.pumpAndSettle();
 
     expect(
@@ -730,12 +712,32 @@ void main() {
   });
 
   testWidgets(
-    'desktop sidebar collapsed search button navigates to search page',
+    'desktop top bar search submits query and collapses from collapsed sidebar',
     (WidgetTester tester) async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
       addTearDown(bundle.dispose);
       _enqueueOverviewResponses(bundle);
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 50,
+          'total': 0,
+        },
+      );
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/actors',
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 50,
+          'total': 0,
+        },
+      );
 
       final router = await _pumpDesktopAppWithRouter(
         tester,
@@ -750,14 +752,52 @@ void main() {
       await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('sidebar-search-button')), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('sidebar-search-button')));
+      await tester.tap(find.byKey(const Key('topbar-search-button')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('topbar-search-input')),
+        'SSNI-888',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
 
-      expect(router.routeInformationProvider.value.uri.path, '/desktop/search');
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        '/desktop/search/SSNI-888',
+      );
+      // 提交后收起：只剩图标，没有残留输入框。
+      expect(find.byKey(const Key('topbar-search-button')), findsOneWidget);
+      expect(find.byKey(const Key('topbar-search-field')), findsNothing);
     },
   );
+
+  testWidgets('desktop top bar search collapses on escape', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueOverviewResponses(bundle);
+
+    await _pumpDesktopApp(
+      tester,
+      bundle: bundle,
+      sessionStore: sessionStore,
+      statusApi: bundle.statusApi,
+      moviesApi: bundle.moviesApi,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('topbar-search-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('topbar-search-field')), findsNothing);
+    expect(find.byKey(const Key('topbar-search-button')), findsOneWidget);
+  });
 
   testWidgets('desktop shell uses compact top bar and overview content', (
     WidgetTester tester,
@@ -872,6 +912,16 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
     ),
   );
   return router;
+}
+
+bool _topBarSearchFieldHasFocus(WidgetTester tester) {
+  final editable = tester.widget<EditableText>(
+    find.descendant(
+      of: find.byKey(const Key('topbar-search-input')),
+      matching: find.byType(EditableText),
+    ),
+  );
+  return editable.focusNode.hasFocus;
 }
 
 void _enqueueOverviewResponses(TestApiBundle bundle) {

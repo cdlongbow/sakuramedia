@@ -89,7 +89,7 @@ void main() {
     expect(spacing.xl, 24);
     expect(radius.lg, 16);
     expect(componentTokens.desktopTitleBarHeight, 56);
-    expect(componentTokens.desktopMacTrafficLightInsetWidth, 52);
+    expect(componentTokens.desktopMacTrafficLightInsetWidth, 76);
     expect(componentTokens.desktopTitleBarControlGap, 8);
     expect(componentTokens.movieCardTargetWidth, 220);
     expect(componentTokens.movieThumbnailTargetWidth, 128);
@@ -167,7 +167,7 @@ void main() {
       closeTo(16 / 9, 0.0001),
     );
     expect(sidebarTokens.expandedWidth, 220);
-    expect(sidebarTokens.collapsedWidth, 72);
+    expect(sidebarTokens.collapsedWidth, 0);
     expect(sidebarTokens.itemHeight, 44);
     expect(AppPageInsets.desktopStandard.left, 24);
     expect(AppPageInsets.compactStandard.left, 8);

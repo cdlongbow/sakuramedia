@@ -17,6 +17,7 @@ export 'package:sakuramedia/theme/app_component_tokens.dart';
 export 'package:sakuramedia/theme/app_colors.dart';
 export 'package:sakuramedia/theme/app_form_tokens.dart';
 export 'package:sakuramedia/theme/app_layout_tokens.dart';
+export 'package:sakuramedia/theme/app_mac_traffic_light_colors.dart';
 export 'package:sakuramedia/theme/app_navigation_tokens.dart';
 export 'package:sakuramedia/theme/app_overlay_tokens.dart';
 export 'package:sakuramedia/theme/app_page_insets.dart';

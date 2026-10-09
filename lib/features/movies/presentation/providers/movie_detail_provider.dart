@@ -30,6 +30,7 @@ part 'movie_detail_provider.g.dart';
 class MovieDetail extends _$MovieDetail {
   bool _isDisposed = false;
   KeepAliveLink? _cacheLink;
+  Future<void>? _refreshInFlight;
 
   @override
   MovieDetailState build(String movieNumber) {
@@ -113,7 +114,13 @@ class MovieDetail extends _$MovieDetail {
     await similarFuture;
   }
 
-  Future<void> refresh() async {
+  /// 并发去重：暖重进 [load] 与页面手势刷新可能同时触发；共享在途 Future，
+  /// 避免两个请求乱序返回时旧响应覆盖新响应。
+  Future<void> refresh() => _refreshInFlight ??= _refresh().whenComplete(
+    () => _refreshInFlight = null,
+  );
+
+  Future<void> _refresh() async {
     if (_isDisposed || state.isLoading) return;
     final similarFuture = _loadSimilarMovies();
     final movie = await ref

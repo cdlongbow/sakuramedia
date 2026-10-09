@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
@@ -50,6 +51,7 @@ void main() {
     keepEventsProviderAlive(container, movieSubscriptionEventsProvider);
     keepEventsProviderAlive(container, movieCollectionTypeEventsProvider);
     keepEventsProviderAlive(container, movieMediaEventsProvider);
+    keepEventsProviderAlive(container, actorSubscriptionEventsProvider);
   });
 
   tearDown(() {
@@ -714,6 +716,140 @@ void main() {
     expect(state.paged.total, 1);
   });
 
+  test('最近订阅收到订阅广播后重拉，新订阅影片进入列表', () async {
+    const scope = MovieSummaryScope.recentlySubscribed();
+    await prime(scope, <Map<String, dynamic>>[
+      _movie('ABC-001', isSubscribed: true),
+    ]);
+
+    // 订阅广播触发的暖刷新返回新增影片（列表里没有行可补丁，只能重拉）。
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          _movie('ABC-002', isSubscribed: true),
+          _movie('ABC-001', isSubscribed: true),
+        ],
+        total: 2,
+        pageSize: scope.pageSize,
+      ),
+    );
+
+    subscriptionBroadcaster().reportChange(
+      movieNumber: 'ABC-002',
+      isSubscribed: true,
+    );
+    await _waitFor(() => adapter.hitCount('GET', '/movies') == 2);
+    await _settleEvents();
+
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'ABC-002',
+      'ABC-001',
+    ]);
+  });
+
+  test('已翻页的最近订阅收到订阅广播时保留后续页并前插新片', () async {
+    const scope = MovieSummaryScope.recentlySubscribed();
+    // 第一页 2 条 / total 4：hasMore 为真，可以翻页。
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          _movie('ABC-001', isSubscribed: true),
+          _movie('ABC-002', isSubscribed: true),
+        ],
+        total: 4,
+        pageSize: scope.pageSize,
+      ),
+    );
+    container.listen(movieSummaryProvider(scope), (_, __) {});
+    await container.read(movieSummaryProvider(scope).future);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          _movie('ABC-003', isSubscribed: true),
+          _movie('ABC-004', isSubscribed: true),
+        ],
+        total: 4,
+        pageSize: scope.pageSize,
+        page: 2,
+      ),
+    );
+    await container.read(movieSummaryProvider(scope).notifier).loadMore();
+    expect(
+      container
+          .read(movieSummaryProvider(scope))
+          .requireValue
+          .paged
+          .currentPage,
+      2,
+    );
+
+    // 广播暖刷新返回带新片的第一页。
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(
+        items: <Map<String, dynamic>>[
+          _movie('ABC-005', isSubscribed: true),
+          _movie('ABC-001', isSubscribed: true),
+        ],
+        total: 5,
+        pageSize: scope.pageSize,
+      ),
+    );
+    subscriptionBroadcaster().reportChange(
+      movieNumber: 'ABC-005',
+      isSubscribed: true,
+    );
+    await _waitFor(() => adapter.hitCount('GET', '/movies') == 3);
+    await _settleEvents();
+
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    // 新片前插、与已加载条目去重，且第 2 页不因暖刷新被丢掉。
+    expect(state.paged.items.map((item) => item.movieNumber), <String>[
+      'ABC-005',
+      'ABC-001',
+      'ABC-002',
+      'ABC-003',
+      'ABC-004',
+    ]);
+    expect(state.paged.currentPage, 2);
+    expect(state.paged.total, 5);
+  });
+
+  test('女优上新收到女优订阅广播后重拉列表', () async {
+    const scope = MovieSummaryScope.subscribedActorsLatest();
+    await prime(scope, <Map<String, dynamic>>[_movie('ABC-001')]);
+
+    // 女优退订后重拉：该女优的影片不再返回。
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/subscribed-actors/latest',
+      body: _page(
+        items: const <Map<String, dynamic>>[],
+        total: 0,
+        pageSize: scope.pageSize,
+      ),
+    );
+
+    container
+        .read(actorSubscriptionEventsProvider.notifier)
+        .reportChange(actorId: 3, isSubscribed: false);
+    await _waitFor(
+      () => adapter.hitCount('GET', '/movies/subscribed-actors/latest') == 2,
+    );
+    await _settleEvents();
+
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    expect(state.paged.items, isEmpty);
+  });
+
   test('单条订阅成功后更新本地条目并清除 busy 状态', () async {
     const scope = MovieSummaryScope.latest();
     await prime(scope, <Map<String, dynamic>>[_movie('ABC-001')]);
@@ -810,14 +946,25 @@ Future<void> _settleEvents() async {
   await Future<void>.delayed(Duration.zero);
 }
 
+Future<void> _waitFor(bool Function() condition) async {
+  for (
+    var attempt = 0;
+    attempt < 200 && !condition();
+    attempt++
+  ) {
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+  }
+}
+
 Map<String, dynamic> _page({
   required List<Map<String, dynamic>> items,
   required int total,
   int pageSize = 24,
+  int page = 1,
 }) {
   return <String, dynamic>{
     'items': items,
-    'page': 1,
+    'page': page,
     'page_size': pageSize,
     'total': total,
   };

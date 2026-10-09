@@ -125,7 +125,9 @@ class _MobileNotificationsPageState
   void _ensureSnapshot() {
     if (!_snapshotDirty) return;
     final state = ref.read(notificationCenterProvider);
-    if (state.isInitialLoading) {
+    // 数据就绪前不拍快照：`initial` 的 isInitialLoading 为 false，只看它会把
+    // 空列表固化成快照（深链/冷启动直达本页时未读段与红点会一直空着）。
+    if (!state.initialized || state.isInitialLoading) {
       return;
     }
     _unreadSnapshotIds = state.notifications

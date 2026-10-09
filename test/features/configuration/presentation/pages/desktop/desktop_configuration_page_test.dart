@@ -473,6 +473,68 @@ void main() {
       expect(secondPage.uri.queryParameters['page'], '2');
     });
 
+    testWidgets('does not auto-retry a failed blacklisted page load', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle, libraries: const []);
+      // 首页短页（4/48）不足一屏：进入后会立刻自动补拉下一页。
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies',
+        body: <String, dynamic>{
+          'items': <Map<String, dynamic>>[
+            for (var index = 0; index < 4; index++)
+              <String, dynamic>{
+                'id': index + 1,
+                'javdb_id': 'javdb-BL-short-$index',
+                'movie_number': 'BL-short-$index',
+                'title': 'Blocked Short $index',
+                'cover_image': null,
+                'release_date': '2026-01-01',
+                'duration_minutes': 120,
+                'heat': 10,
+                'is_subscribed': false,
+                'can_play': false,
+              },
+          ],
+          'page': 1,
+          'page_size': 24,
+          'total': 48,
+        },
+      );
+      // 后续翻页请求持续失败。
+      bundle.adapter.setFallbackJson(
+        method: 'GET',
+        path: '/movies',
+        statusCode: 500,
+        body: <String, dynamic>{'error': 'server_error'},
+      );
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await tester.tap(
+        find.byKey(const Key('configuration-tab-blacklisted-movies')),
+      );
+      for (var index = 0; index < 20; index++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      int pageTwoCount() => bundle.adapter.requests
+          .where(
+            (request) =>
+                request.path == '/movies' &&
+                request.uri.queryParameters['page'] == '2',
+          )
+          .length;
+
+      // 第一次自动补拉可以发生；失败后滚动触发的自动重试必须停止
+      // （恢复分页的唯一入口是页脚重试按钮）。
+      expect(pageTwoCount(), 1);
+      for (var index = 0; index < 10; index++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(pageTwoCount(), 1);
+    });
+
     testWidgets('unblacklists a movie from its context menu', (
       WidgetTester tester,
     ) async {

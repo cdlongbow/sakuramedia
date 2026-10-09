@@ -519,6 +519,7 @@ void main() {
       wantWatchCount: 0,
       commentCount: 0,
       scoreNumber: 88,
+      durationMinutes: 0,
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -557,6 +558,7 @@ void main() {
     expect(find.textContaining('想看 · 0'), findsNothing);
     expect(find.textContaining('看过 · 0'), findsNothing);
     expect(find.textContaining('评分人数'), findsNothing);
+    expect(find.textContaining('分钟'), findsNothing, reason: '零值时长隐藏');
     expect(find.text('88'), findsNothing, reason: 'scoreNumber 不再单独展示');
     expect(tester.takeException(), isNull);
   });
@@ -671,6 +673,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('上映 · 2024/01/02'), findsOneWidget);
+    expect(find.text('120 分钟'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -692,6 +695,7 @@ MovieDetailDto _movieDetail({
   int wantWatchCount = 23,
   int commentCount = 45,
   int scoreNumber = 45,
+  int durationMinutes = 120,
   DateTime? releaseDate,
 }) {
   return MovieDetailDto(
@@ -705,7 +709,7 @@ MovieDetailDto _movieDetail({
     directorName: '紋℃',
     coverImage: null,
     releaseDate: releaseDate,
-    durationMinutes: 120,
+    durationMinutes: durationMinutes,
     score: score,
     heat: heat,
     watchedCount: watchedCount,

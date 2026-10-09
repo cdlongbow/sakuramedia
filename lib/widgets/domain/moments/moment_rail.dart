@@ -6,7 +6,7 @@ import 'package:sakuramedia/widgets/domain/moments/moment_card.dart';
 
 /// 时刻的横向 rail 版本：发现预览区专用，16:9 卡片。
 ///
-/// 空态 / 错误态由调用方自行处理（与 [MomentGrid] 在发现页的用法一致）。
+/// 空态 / 错误态由调用方自行处理。
 class MomentRail extends StatelessWidget {
   const MomentRail({
     super.key,

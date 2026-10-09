@@ -31,6 +31,10 @@ class NotificationCenter extends _$NotificationCenter {
   int _notificationFilterGeneration = 0;
   final Set<int> _pendingReadIds = <int>{};
   final Set<int> _inFlightReadIds = <int>{};
+  /// 已读回执失败过的通知：失败回滚为未读后，行重建会再次触发
+  /// [onNotificationDisplayed]，无抑制会形成无退避的重试风暴。
+  /// 只在用户主动刷新（下拉 / 切筛选 / 全部已读）时清空给一次新机会。
+  final Set<int> _failedReadIds = <int>{};
 
   @override
   NotificationCenterState build() {
@@ -70,6 +74,7 @@ class NotificationCenter extends _$NotificationCenter {
     _pollTimer?.cancel();
     _filterRequests.cancel();
     _notificationFilterGeneration++;
+    _failedReadIds.clear();
     state = state.copyWith(
       isInitialLoading: true,
       initialErrorMessage: null,
@@ -112,6 +117,7 @@ class NotificationCenter extends _$NotificationCenter {
   Future<void> applyNotificationFilter(ActivityNotificationFilterState next) {
     if (state.filter == next) return Future<void>.value();
     _notificationFilterGeneration++;
+    _failedReadIds.clear();
     state = state.copyWith(
       filter: next,
       filterUpdate: const FilterUpdateState.waiting(),
@@ -125,6 +131,7 @@ class NotificationCenter extends _$NotificationCenter {
 
   Future<void> refreshNotifications() {
     _notificationFilterGeneration++;
+    _failedReadIds.clear();
     state = state.copyWith(
       isRefreshing: true,
       isLoadingMore: false,
@@ -223,7 +230,8 @@ class NotificationCenter extends _$NotificationCenter {
     if (item == null ||
         item.isRead ||
         _inFlightReadIds.contains(id) ||
-        _pendingReadIds.contains(id)) {
+        _pendingReadIds.contains(id) ||
+        _failedReadIds.contains(id)) {
       return;
     }
     _pendingReadIds.add(id);
@@ -245,6 +253,9 @@ class NotificationCenter extends _$NotificationCenter {
           .markNotificationsRead(ids);
       if (ref.mounted) state = state.copyWith(unreadCount: result.unreadCount);
     } catch (_) {
+      // 失败后抑制自动重试（行回滚为未读会再次触发 onNotificationDisplayed），
+      // 等用户主动刷新再给一次机会。
+      _failedReadIds.addAll(ids);
       if (ref.mounted) {
         state = state.copyWith(
           notifications: _setLocalRead(state.notifications, ids, isRead: false),
@@ -259,6 +270,7 @@ class NotificationCenter extends _$NotificationCenter {
     if (!ref.mounted || state.isMarkingAllRead) return;
     _readDebounce?.cancel();
     _pendingReadIds.clear();
+    _failedReadIds.clear();
     final previous = state.notifications;
     final unread = state.unreadCount;
     state = state.copyWith(
@@ -349,6 +361,7 @@ class NotificationCenter extends _$NotificationCenter {
     _readDebounce?.cancel();
     _pendingReadIds.clear();
     _inFlightReadIds.clear();
+    _failedReadIds.clear();
     _nextPage = 1;
     state = NotificationCenterState.initial;
   }

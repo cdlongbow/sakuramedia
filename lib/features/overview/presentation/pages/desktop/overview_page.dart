@@ -66,11 +66,7 @@ class DesktopOverviewPage extends ConsumerWidget {
         // invalidate 的两个 provider 也要等重建完成：否则刷新指示器先于
         // 「最近播放」「最近浏览」重载结束，rail 里还是旧快照。
         ref.read(recentlyPlayedPlaylistProvider.future).then<void>((_) {}),
-        ref
-            .read(
-              recentViewsProvider(RecentViewsSection.previewLimit).future,
-            )
-            .then<void>((_) {}),
+        ref.read(recentViewsProvider.future).then<void>((_) {}),
       ]);
     } catch (_) {
       if (context.mounted) {

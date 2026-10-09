@@ -53,7 +53,7 @@ final class ActorDetailProvider
   }
 }
 
-String _$actorDetailHash() => r'b850a5e0a8885fa7e93ba084dac33a333d975ca9';
+String _$actorDetailHash() => r'4954906c32a0d76d7fda4bb73855b87aec52abcb';
 
 /// 女优详情按 id 隔离，离开详情页后自动释放。
 

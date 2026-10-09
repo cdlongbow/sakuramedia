@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/media/app_image_provider.dart';
 
 void main() {
@@ -82,6 +85,28 @@ void main() {
           'https://api.example.com/files/images/a.jpg?size=medium&expires=1&signature=s',
         ),
         'https://api.example.com/files/images/a.jpg?size=medium',
+      );
+    });
+  });
+
+  group('debugRemoteImageOverrides', () {
+    tearDown(debugRemoteImageOverrides.clear);
+
+    test('注册的 URL 直接返回注册 provider', () {
+      final fake = MemoryImage(Uint8List.fromList(<int>[1, 2, 3]));
+      debugRemoteImageOverrides['https://api.example.com/cover.png'] = fake;
+      expect(
+        buildRemoteImageProvider('https://api.example.com/cover.png'),
+        same(fake),
+      );
+    });
+
+    test('未注册的 URL 不受注册表影响', () {
+      debugRemoteImageOverrides['https://api.example.com/cover.png'] =
+          MemoryImage(Uint8List(0));
+      expect(
+        buildRemoteImageProvider('https://api.example.com/plot-0.jpg'),
+        isA<NetworkImage>(),
       );
     });
   });

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
-import 'package:sakuramedia/features/recent_views/data/api/recent_views_api.dart';
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_grid_sliver.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -17,7 +16,7 @@ class DesktopRecentViewsPage extends ConsumerWidget {
   Future<void> _refresh(WidgetRef ref) async {
     ref.invalidate(recentViewsProvider);
     try {
-      await ref.read(recentViewsProvider(RecentViewsApi.listLimit).future);
+      await ref.read(recentViewsProvider.future);
     } catch (_) {
       showToast('刷新失败');
     }

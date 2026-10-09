@@ -34,7 +34,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
   /// 全宽标题（番号打头，为 null/空时不显示）。
   final String? overlayTitle;
 
-  /// 标题下的元信息段（评分｜评论｜想看｜看过｜热度｜厂商｜导演），
+  /// 标题下的元信息段（评分｜评论｜想看｜看过｜热度｜上映日期｜时长｜厂商｜导演），
   /// 为空时整行不显示。
   final List<MovieDetailMetaItem> metaItems;
 

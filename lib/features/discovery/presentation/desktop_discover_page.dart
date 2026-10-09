@@ -40,9 +40,9 @@ class DesktopDiscoverPage extends ConsumerStatefulWidget {
 
 class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
   // 推荐三腿与关注女优上新均由 provider 驱动；本 State 只保留页面交互与导航职责。
-  // 预览区预留一屏多的缓冲数据，横向 rail 首屏可滑出约 12 张卡片。
-  static const int _previewPageSize = 24;
-  static const int _railPreviewCount = 12;
+  // 预览 rail 每块只取展示所需的 12 张，溢出内容一律走各自「更多」页；
+  // 请求量与展示量一致，不做跨页预热（更多页走独立 feed provider）。
+  static const int _previewPageSize = 12;
   static const _followScope = MovieSummaryScope.subscribedActorsLatest(
     pageSize: _previewPageSize,
     initialLoadErrorText: '女优上新加载失败，请稍后重试',
@@ -139,8 +139,8 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           enabled: isLoading,
           child: MovieSummaryRail(
             items: isLoading
-                ? movieListItemPlaceholders(count: _railPreviewCount)
-                : paged?.items.take(_railPreviewCount).toList() ?? const [],
+                ? movieListItemPlaceholders(count: _previewPageSize)
+                : paged?.items.take(_previewPageSize).toList() ?? const [],
             errorMessage: followAsync.hasError && follow == null
                 ? _followScope.initialLoadErrorText
                 : null,
@@ -190,9 +190,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
           enabled: hotActress.isLoading && hotActress.items.isEmpty,
           child: MovieSummaryRail(
             items: hotActress.isLoading && hotActress.items.isEmpty
-                ? movieListItemPlaceholders(count: _railPreviewCount)
+                ? movieListItemPlaceholders(count: _previewPageSize)
                 : hotActress.items
-                      .take(_railPreviewCount)
+                      .take(_previewPageSize)
                       .map((item) => item.movie)
                       .toList(growable: false),
             errorMessage: hotActress.errorMessage,
@@ -252,9 +252,9 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       enabled: isLoading,
       child: MovieSummaryRail(
         items: isLoading
-            ? movieListItemPlaceholders(count: _railPreviewCount)
+            ? movieListItemPlaceholders(count: _previewPageSize)
             : daily.items
-                  .take(_railPreviewCount)
+                  .take(_previewPageSize)
                   .map((item) => item.movie)
                   .toList(growable: false),
         emptyMessage: '暂无每日推荐，去搜索看看吧',
@@ -301,7 +301,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       return AppSkeletonizer(
         enabled: true,
         child: MomentRail(
-          items: momentListPlaceholders(count: _railPreviewCount),
+          items: momentListPlaceholders(count: _previewPageSize),
           onItemTap: _ignoreMomentTap,
         ),
       );
@@ -320,7 +320,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
     }
     return MomentRail(
       items: moment.items
-          .take(_railPreviewCount)
+          .take(_previewPageSize)
           .map((item) => item.toMomentListItem())
           .toList(growable: false),
       onItemTap: _openMomentPreview,

@@ -43,9 +43,8 @@ class MovieDetailHeroCard extends StatefulWidget {
     this.heroFit = BoxFit.contain,
   });
 
-  /// 目标高度：`cover` 下就是实际高度；`contain` 下是上限，还会被封面自然高度
-  /// 压下来（见 [_MovieDetailHeroCardState._resolveHeroHeight]）。桌面由页面按
-  /// 视口算 [desktopViewportHeightFactor]，移动是固定的窄屏配方。
+  /// 实际高度：由调用方算好（桌面按视口、移动窄屏配方），页面用 `Positioned`
+  /// 施加紧约束；底部渐隐带与封面绘制矩形都按它计算。
   final double height;
   final String mainImageKey;
   final String? mainImageUrl;
@@ -60,10 +59,8 @@ class MovieDetailHeroCard extends StatefulWidget {
   /// 底部过渡带占 Hero 高的比例：清晰图在带内化开。
   static const double meltBandFactor = 0.28;
 
-  /// 桌面 Hero 目标高度 = 视口高 × 该系数（只封顶，不垫底）。
+  /// 桌面 Hero 高度 = 视口高 × 该系数（只封顶，不垫底）。
   ///
-  /// 上限只负责「别超过一屏多少」：封面按宽度铺满后的自然高度更小时，Hero 收缩到
-  /// 图片高度（超宽封面不再上下留白）；更大时停在限额上，两侧留白尽量少。
   /// 调大 → 封面更大、正文更靠下。
   static const double desktopViewportHeightFactor = 0.60;
 
@@ -95,8 +92,8 @@ class _MovieDetailHeroCardState extends State<MovieDetailHeroCard> {
   }
 
   /// 本次 build 用的封面尺寸：已知直接用；未知时同步查一次内存图片缓存——
-  /// 命中就首帧生效（左右羽化、超宽封面的 Hero 收缩都不用等到下一帧），
-  /// 未命中返回 null，仍由 [MaskedImage.onImageSized] 的帧后回调补。
+  /// 命中就首帧生效（左右羽化不用等到下一帧），未命中返回 null，
+  /// 仍由 [MaskedImage.onImageSized] 的帧后回调补。
   Size? _resolveImageSize(BoxConstraints constraints) {
     final known = _imageSize;
     if (known != null) {
@@ -128,7 +125,7 @@ class _MovieDetailHeroCardState extends State<MovieDetailHeroCard> {
       builder: (context, constraints) {
         final bandWidth = constraints.maxWidth;
         final imageSize = _resolveImageSize(constraints);
-        final height = _resolveHeroHeight(bandWidth, imageSize);
+        final height = widget.height;
         final fadeStart =
             (1.0 -
                     MovieDetailHeroCard.meltBandFactor -
@@ -167,22 +164,6 @@ class _MovieDetailHeroCardState extends State<MovieDetailHeroCard> {
         );
       },
     );
-  }
-
-  /// Hero 实际高度：[widget.height] 是调用方给的目标值（桌面 = 视口上限）。
-  /// `contain` 下再被封面自然高度封顶：按带宽铺满后没那么高的超宽封面，
-  /// Hero 收到图片自己的高度，上下不再留空；拿不到尺寸（首帧之前）就用目标值。
-  double _resolveHeroHeight(double bandWidth, Size? imageSize) {
-    final target = widget.height;
-    if (widget.heroFit != BoxFit.contain ||
-        imageSize == null ||
-        imageSize.isEmpty ||
-        !bandWidth.isFinite ||
-        bandWidth <= 0) {
-      return target;
-    }
-    final natural = bandWidth * imageSize.height / imageSize.width;
-    return natural < target ? natural : target;
   }
 
   Widget _buildHeroImage({

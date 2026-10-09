@@ -41,9 +41,20 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
       activated.value = true;
     }
     final scrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => unawaited(
-        ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
-      ),
+      onReachBottom: () {
+        // loadMore 失败存续期间滚动不自动重试（对齐 moments/discovery）；
+        // 恢复分页的唯一入口是页脚重试按钮。
+        final loadMoreError = ref
+            .read(movieSummaryProvider(_scope))
+            .value
+            ?.paged
+            .loadMoreErrorMessage;
+        if (loadMoreError == null) {
+          unawaited(
+            ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
+          );
+        }
+      },
       enabled: active,
     );
     if (!activated.value) {

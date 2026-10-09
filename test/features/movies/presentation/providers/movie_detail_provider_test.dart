@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
+import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 
 import '../../../../support/test_api_bundle.dart';
 
@@ -160,6 +161,84 @@ void main() {
     expect(state.movie, isNotNull);
     expect(state.isLoading, isFalse);
     expect(state.errorMessage, isNull);
+  });
+
+  test('并发 refresh 共享在途请求', () async {
+    bundle.adapter
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      )
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      );
+    final subscription = container.listen(
+      movieDetailProvider('ABC-001'),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+    final notifier = container.read(movieDetailProvider('ABC-001').notifier);
+
+    await notifier.load();
+    expect(bundle.adapter.hitCount('GET', '/movies/ABC-001'), 1);
+
+    // 两个并发 refresh 共享在途 Future：详情与相似影片都只再发一次。
+    await Future.wait<void>([notifier.refresh(), notifier.refresh()]);
+    expect(bundle.adapter.hitCount('GET', '/movies/ABC-001'), 2);
+    expect(bundle.adapter.hitCount('GET', '/movies/ABC-001/similar'), 2);
+  });
+
+  test('reportView 成功后 invalidate 最近浏览列表', () async {
+    bundle.adapter
+      ..enqueueJson(method: 'GET', path: '/movies/ABC-001', body: _movieJson())
+      ..enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001/similar',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      )
+      ..enqueueJson(method: 'POST', path: '/view-history', statusCode: 204)
+      ..enqueueJson(
+        method: 'GET',
+        path: '/view-history',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      )
+      ..enqueueJson(
+        method: 'GET',
+        path: '/view-history',
+        body: const <String, dynamic>{'items': <dynamic>[]},
+      );
+    final detailSubscription = container.listen(
+      movieDetailProvider('ABC-001'),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(detailSubscription.close);
+    final viewsSubscription = container.listen(
+      recentViewsProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(viewsSubscription.close);
+
+    await container.read(movieDetailProvider('ABC-001').notifier).load();
+    await _waitForViewHistoryPosts(bundle, 1);
+
+    // 上报成功触发的 invalidate 让存活的「最近浏览」重拉一次。
+    for (
+      var attempt = 0;
+      attempt < 100 &&
+          bundle.adapter.hitCount('GET', '/view-history') < 2;
+      attempt++
+    ) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    expect(bundle.adapter.hitCount('GET', '/view-history'), 2);
   });
 }
 

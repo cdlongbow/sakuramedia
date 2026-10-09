@@ -47,11 +47,22 @@ String stableImageCacheKey(String url) {
   return uri.replace(queryParameters: params).toString();
 }
 
+/// 预览/测试注入点：注册过的 URL 直接返回本地图片 provider，绕开
+/// [CachedNetworkImageProvider]（测试环境没有 path_provider / sqflite）。
+/// 生产环境恒为空，行为不变；注册与清理见 `test/support/preview_helpers.dart`。
+@visibleForTesting
+final Map<String, ImageProvider<Object>> debugRemoteImageOverrides =
+    <String, ImageProvider<Object>>{};
+
 /// 统一的远端图片 provider 工厂。
 ///
 /// - 封面/头像：`CachedNetworkImageProvider` + 稳定 cacheKey → 跨签名窗口命中；
 /// - 剧情图/缩略图/搜索图：`NetworkImage` → 只走内存缓存，不落盘。
 ImageProvider<Object> buildRemoteImageProvider(String url) {
+  final override = debugRemoteImageOverrides[url];
+  if (override != null) {
+    return override;
+  }
   if (isTransientImage(url)) {
     return NetworkImage(url);
   }

@@ -8,107 +8,56 @@ part of 'recent_views_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// 最近浏览列表（最新在前，最多后端保留上限条）。
+/// 最近浏览列表（最新在前，一次拉后端保留上限）。
 ///
-/// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
+/// - 单实例：概览区块只展示前若干条、更多页列全，共享同一份数据；
+///   打开更多页不额外请求，刷新只发一次。
 /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
 
 @ProviderFor(RecentViews)
-final recentViewsProvider = RecentViewsFamily._();
+final recentViewsProvider = RecentViewsProvider._();
 
-/// 最近浏览列表（最新在前，最多后端保留上限条）。
+/// 最近浏览列表（最新在前，一次拉后端保留上限）。
 ///
-/// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
+/// - 单实例：概览区块只展示前若干条、更多页列全，共享同一份数据；
+///   打开更多页不额外请求，刷新只发一次。
 /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
 final class RecentViewsProvider
     extends $AsyncNotifierProvider<RecentViews, List<RecentViewEntryDto>> {
-  /// 最近浏览列表（最新在前，最多后端保留上限条）。
+  /// 最近浏览列表（最新在前，一次拉后端保留上限）。
   ///
-  /// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
+  /// - 单实例：概览区块只展示前若干条、更多页列全，共享同一份数据；
+  ///   打开更多页不额外请求，刷新只发一次。
   /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
-  RecentViewsProvider._({
-    required RecentViewsFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'recentViewsProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  RecentViewsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'recentViewsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$recentViewsHash();
 
-  @override
-  String toString() {
-    return r'recentViewsProvider'
-        ''
-        '($argument)';
-  }
-
   @$internal
   @override
   RecentViews create() => RecentViews();
-
-  @override
-  bool operator ==(Object other) {
-    return other is RecentViewsProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
 }
 
-String _$recentViewsHash() => r'ce5fdc4a9a68ec65046aca9ff2728b24b5cff98b';
+String _$recentViewsHash() => r'fd712e1fdd888af2c7e0aa2678c3abf8dd8c4118';
 
-/// 最近浏览列表（最新在前，最多后端保留上限条）。
+/// 最近浏览列表（最新在前，一次拉后端保留上限）。
 ///
-/// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
-/// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
-
-final class RecentViewsFamily extends $Family
-    with
-        $ClassFamilyOverride<
-          RecentViews,
-          AsyncValue<List<RecentViewEntryDto>>,
-          List<RecentViewEntryDto>,
-          FutureOr<List<RecentViewEntryDto>>,
-          int
-        > {
-  RecentViewsFamily._()
-    : super(
-        retry: null,
-        name: r'recentViewsProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// 最近浏览列表（最新在前，最多后端保留上限条）。
-  ///
-  /// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
-  /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
-
-  RecentViewsProvider call(int limit) =>
-      RecentViewsProvider._(argument: limit, from: this);
-
-  @override
-  String toString() => r'recentViewsProvider';
-}
-
-/// 最近浏览列表（最新在前，最多后端保留上限条）。
-///
-/// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
+/// - 单实例：概览区块只展示前若干条、更多页列全，共享同一份数据；
+///   打开更多页不额外请求，刷新只发一次。
 /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
 
 abstract class _$RecentViews extends $AsyncNotifier<List<RecentViewEntryDto>> {
-  late final _$args = ref.$arg as int;
-  int get limit => _$args;
-
-  FutureOr<List<RecentViewEntryDto>> build(int limit);
+  FutureOr<List<RecentViewEntryDto>> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -129,6 +78,6 @@ abstract class _$RecentViews extends $AsyncNotifier<List<RecentViewEntryDto>> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, build);
   }
 }

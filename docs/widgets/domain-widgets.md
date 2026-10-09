@@ -50,11 +50,11 @@
 
 路径：`lib/widgets/domain/moments/`
 
-包含 `MomentCard`、`MomentGrid`、`MomentImage` 和时刻预览适配器
+包含 `MomentCard`、`MomentSliver`、`MomentRail`、`MomentImage` 和时刻预览适配器
 `moment_preview_launcher.dart`（内部复用 `MediaPreviewDialog`）。时刻筛选和数据加载由
 moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；桌面悬停时底部渐显
 单行「番号/视频号 + `JAV · 位置`」与整行动作按钮（播放 / 影片 / 加入合集 / 删除，按
-`MomentGrid` / `MomentSliver` 回调显隐；来源媒体删除时补「来源已删除」并隐藏播放键）。
+网格 / rail 传入的回调显隐；来源媒体删除时补「来源已删除」并隐藏播放键）。
 时刻列表、时刻合集详情与发现推荐时刻统一走 `showMomentPreviewFlow`
 （`moment_preview_flow.dart`）：预览层内联导航（封面进来源影片详情、头像进女优详情、
 图片点按全屏），关闭后统一分发图搜 / 加入合集 / 播放 / 影片详情 / 演员详情；

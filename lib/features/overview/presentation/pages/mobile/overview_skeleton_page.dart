@@ -351,11 +351,7 @@ class _MobileOverviewMyTabState extends ConsumerState<_MobileOverviewMyTab> {
         ref.read(playlistsOverviewProvider(_playlistsScope).notifier).refresh(),
         // invalidate 的「最近浏览」要等重建完成，否则刷新指示器先于
         // rail 重载结束，rail 里还是旧快照。
-        ref
-            .read(
-              recentViewsProvider(RecentViewsSection.previewLimit).future,
-            )
-            .then<void>((_) {}),
+        ref.read(recentViewsProvider.future).then<void>((_) {}),
       ]);
     } catch (_) {
       if (mounted) {

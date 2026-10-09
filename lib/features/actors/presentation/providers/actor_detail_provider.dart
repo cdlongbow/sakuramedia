@@ -12,6 +12,8 @@ part 'actor_detail_provider.g.dart';
 /// 女优详情按 id 隔离，离开详情页后自动释放。
 @Riverpod(retry: kNoAsyncNotifierRetry)
 class ActorDetail extends _$ActorDetail {
+  Future<void>? _refreshInFlight;
+
   @override
   Future<ActorDetailState> build(int actorId) => _fetch();
 
@@ -28,7 +30,14 @@ class ActorDetail extends _$ActorDetail {
   /// 自身不上报浏览：与 movie 详情一致，只由页面手势刷新（下拉 / 顶栏，
   /// refresh 成功后显式调 [reportView]）与首载 [build] 上报；后台同步
   /// （如管理页改名后重拉）走这里，不应把用户没打开的详情顶进「最近浏览」。
-  Future<void> refresh() async {
+  ///
+  /// 并发去重：快速连续触发（下拉 + 顶栏）共享在途 Future，
+  /// 避免两个请求乱序返回时旧响应覆盖新响应。
+  Future<void> refresh() => _refreshInFlight ??= _refresh().whenComplete(
+    () => _refreshInFlight = null,
+  );
+
+  Future<void> _refresh() async {
     final current = state.value;
     if (current?.actor == null || state.isLoading) {
       return;

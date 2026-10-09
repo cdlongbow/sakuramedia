@@ -637,11 +637,10 @@ double _resolveViewportHeight(
   return MediaQuery.sizeOf(context).height;
 }
 
-/// Hero 目标高度。
+/// Hero 高度。
 ///
-/// 桌面完整显示（`contain`）且有封面时取视口高 × [MovieDetailHeroCard.desktopViewportHeightFactor]
-/// ——上限跟着视口走，封面按宽度铺满后的自然高度更小时 Hero 再收缩到图片高度，
-/// 两侧留白尽量少；没有封面时不值得为一块纯色占位撑满一屏，保持固定高度配方。
+/// 桌面完整显示（`contain`）且有封面时取视口高 × [MovieDetailHeroCard.desktopViewportHeightFactor]；
+/// 没有封面时不值得为一块纯色占位撑满一屏，保持固定高度配方。
 /// 移动沉浸全幅（`cover`）保持窄屏配方，取宽 × 0.72（260~380，纯照片区）；
 /// 宽度无界时退回视口高 × 0.42。
 double _resolveHeroHeight(
@@ -670,9 +669,8 @@ double _resolveHeroHeight(
 /// 可读，也就不需要额外叠渐变遮罩。取比例而不是固定像素：改
 /// [MovieDetailHeroCard.desktopViewportHeightFactor] 时，压的深浅不会跟着变。
 ///
-/// 0.25 ≈ 压在封面下部的四分之一处（封面高 490 时约 122px，此时信息块顶端
-/// 封面还剩 ~35% 不透明度）；调小 → 只把标题和最上面一排按钮压上去；
-/// 调大 → 更靠上、压在更实的封面上（要么同时调大
+/// 0.10 ≈ 压在封面下部十分之一处（封面高 490 时约 49px）；调小 → 只把标题
+/// 和最上面一排按钮压上去；调大 → 更靠上、压在更实的封面上（要么同时调大
 /// [MovieDetailHeroCard.meltBandFactor]，要么叠一层渐变遮罩）；调 0 → 回到
 ///「信息块在封面下方」的老样子。移动端（沉浸全幅）不叠。
 const double _desktopHeroInfoOverlapFactor = 0.10;
@@ -700,7 +698,7 @@ String _resolveOverlayTitle(MovieDetailDto movie) {
   return '$number $title';
 }
 
-/// 标题下的元信息段：评分｜评论数｜想看｜看过｜热度｜上映日期｜厂商｜导演，
+/// 标题下的元信息段：评分｜评论数｜想看｜看过｜热度｜上映日期｜时长｜厂商｜导演，
 /// 有值的段才出现（零值/空串隐藏）。
 List<MovieDetailMetaItem> _resolveMetaItems(
   BuildContext context,
@@ -733,6 +731,12 @@ List<MovieDetailMetaItem> _resolveMetaItems(
     if (movie.releaseDate != null)
       MovieDetailMetaItem(
         text: '上映 · ${DateFormat('yyyy/MM/dd').format(movie.releaseDate!)}',
+      ),
+    if (movie.durationMinutes > 0)
+      MovieDetailMetaItem(
+        icon: Icons.schedule_outlined,
+        iconColor: colors.movieDetailDurationIcon,
+        text: '${movie.durationMinutes} 分钟',
       ),
     if (movie.makerName.trim().isNotEmpty)
       MovieDetailMetaItem(text: '厂商 · ${movie.makerName.trim()}'),

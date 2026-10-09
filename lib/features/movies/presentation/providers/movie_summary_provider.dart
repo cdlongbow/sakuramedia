@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
@@ -33,6 +34,7 @@ class MovieSummary extends _$MovieSummary
         OptimisticPatchMixin<MovieSummaryState>,
         MovieSubscriptionMutationMixin<MovieSummaryState, MovieListItemDto> {
   KeepAliveLink? _cacheLink;
+  Future<void>? _broadcastRefreshInFlight;
 
   /// 仅缓存 scope 有值时供页面 LRU 收集；普通波 A 页面仍保持 autoDispose。
   KeepAliveLink? get cacheLink => _cacheLink;
@@ -173,10 +175,26 @@ class MovieSummary extends _$MovieSummary
     attachDisposeGuard();
     ref.listen(movieSubscriptionEventsProvider, (_, next) {
       final changes = next.value;
-      if (changes != null) {
-        applySubscriptionChanges(changes);
+      if (changes == null) {
+        return;
+      }
+      applySubscriptionChanges(changes);
+      // 「最近订阅」无法凭空插入新订阅的影片（列表里没有行可补丁），
+      // 收到订阅广播时暖刷新一次；退订仍走就地移除。
+      if (scope.source == MovieSummarySource.recentlySubscribed &&
+          changes.any((change) => change.isSubscribed)) {
+        _scheduleBroadcastRefresh();
       }
     });
+    if (scope.source == MovieSummarySource.subscribedActorsLatest) {
+      // 影片行没有演员字段，女优订阅变化无法就地摘除/插入；暖刷新收敛。
+      ref.listen(actorSubscriptionEventsProvider, (_, next) {
+        if (next.value == null) {
+          return;
+        }
+        _scheduleBroadcastRefresh();
+      });
+    }
     ref.listen(movieCollectionTypeEventsProvider, (_, next) {
       final change = next.value;
       if (change != null) {
@@ -198,6 +216,61 @@ class MovieSummary extends _$MovieSummary
     }
     final paged = await loadInitialPage();
     return MovieSummaryState(paged: paged, filter: activeFilter);
+  }
+
+  /// 广播触发的暖刷新，并发去重（同影片详情的 refresh 语义：共享在途 Future，
+  /// 快速连发的广播不会各发一次请求）。
+  void _scheduleBroadcastRefresh() {
+    _broadcastRefreshInFlight ??= _warmRefreshFromBroadcast().whenComplete(
+      () => _broadcastRefreshInFlight = null,
+    );
+  }
+
+  /// 广播暖刷新：列表还在第一页时走标准 [refresh]（整体替换，顺带收敛本地
+  /// 补丁不掉的删除）；已翻到后续页时只把第一页合并进来——直接 [refresh] 会用
+  /// 第一页覆盖 `paged`，把「更多」页加载的后续页全部丢掉、滚动位置跳变。
+  Future<void> _warmRefreshFromBroadcast() async {
+    if (isDisposed) return;
+    final current = state.value;
+    if (current == null) {
+      return;
+    }
+    if (pagedOf(current).currentPage <= initialPage) {
+      await refresh();
+      return;
+    }
+    try {
+      final response = await fetchPage(initialPage, pageSize);
+      if (isDisposed) return;
+      final latest = state.value;
+      if (latest == null) return;
+      final paged = pagedOf(latest);
+      final seen = <String>{for (final item in paged.items) item.movieNumber};
+      final fresh = <MovieListItemDto>[
+        for (final item in response.items)
+          if (seen.add(item.movieNumber)) item,
+      ];
+      if (fresh.isEmpty && paged.total == response.total) {
+        return;
+      }
+      final items = List<MovieListItemDto>.unmodifiable(<MovieListItemDto>[
+        ...fresh,
+        ...paged.items,
+      ]);
+      state = AsyncData(
+        applyPaged(
+          latest,
+          paged.copyWith(
+            items: items,
+            total: response.total,
+            hasMore: items.length < response.total,
+            syncedAt: response.syncedAt,
+          ),
+        ),
+      );
+    } catch (_) {
+      // 暖刷新失败静默：保留现有列表，等下一次广播或用户刷新收敛。
+    }
   }
 
   Future<void> applyMovieFilter(MovieFilterState filter) {

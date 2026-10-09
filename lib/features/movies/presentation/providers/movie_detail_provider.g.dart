@@ -14,8 +14,9 @@ part of 'movie_detail_provider.dart';
 /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
 /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
 ///
-/// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-///   写入 `errorMessage`。
+/// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
 /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
 ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
 /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -29,8 +30,9 @@ final movieDetailProvider = MovieDetailFamily._();
 /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
 /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
 ///
-/// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-///   写入 `errorMessage`。
+/// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
 /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
 ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
 /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -42,8 +44,9 @@ final class MovieDetailProvider
   /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
   /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
   ///
-  /// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-  ///   写入 `errorMessage`。
+  /// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+  ///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+  ///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
   /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
   ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
   /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -91,7 +94,7 @@ final class MovieDetailProvider
   }
 }
 
-String _$movieDetailHash() => r'cb27f2e41f845dc21c27a7a802c70b8f27326021';
+String _$movieDetailHash() => r'51d8163a04ec10da264ab65dcd936fe4ad8a764d';
 
 /// 影片详情 provider —— autoDispose family (movieNumber) + `cacheLink` 挂
 /// [RiverpodPageCache]，跨导航保活。
@@ -99,8 +102,9 @@ String _$movieDetailHash() => r'cb27f2e41f845dc21c27a7a802c70b8f27326021';
 /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
 /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
 ///
-/// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-///   写入 `errorMessage`。
+/// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
 /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
 ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
 /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -129,8 +133,9 @@ final class MovieDetailFamily extends $Family
   /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
   /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
   ///
-  /// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-  ///   写入 `errorMessage`。
+  /// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+  ///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+  ///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
   /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
   ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
   /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。
@@ -148,8 +153,9 @@ final class MovieDetailFamily extends $Family
 /// 页面进入时显式调用 [load]，并行加载影片详情和相似影片；[refresh] 保留当前
 /// 详情内容并重新请求；[applyMovie] 用外部拿到的新 DTO 就地更新影片信息。
 ///
-/// - `load()` 会清空旧的相似影片与错误状态，并行拉取 detail / 相似影片；失败时
-///   写入 `errorMessage`。
+/// - `load()` 冷启动（无缓存影片）时清空旧的相似影片与错误状态，并行拉取
+///   detail / 相似影片；失败时写入 `errorMessage`。暖重进（保活命中已有影片）
+///   时走静默刷新：不置 `isLoading`、不清空列表，失败保留旧内容。
 /// - `refresh()` 不置 `isLoading`（统计条不闪骨架），并行重拉后原地写入；
 ///   相似影片仍先置 `isSimilarMoviesLoading` 再写。
 /// - `retryLoadSimilarMovies()`：仅重拉相似影片，不清列表。

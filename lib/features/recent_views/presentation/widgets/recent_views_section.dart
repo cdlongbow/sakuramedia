@@ -32,13 +32,14 @@ class RecentViewsSection extends ConsumerWidget {
   final double spacingBefore;
 
   /// 区块只预览一屏多一点；更全的列表走「更多」页。
+  /// 数据源是共享的单实例列表，这里只做展示截断。
   static const int previewLimit = 20;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries =
-        ref.watch(recentViewsProvider(previewLimit)).value ??
-        const <RecentViewEntryDto>[];
+    final all =
+        ref.watch(recentViewsProvider).value ?? const <RecentViewEntryDto>[];
+    final entries = all.take(previewLimit).toList(growable: false);
     if (entries.isEmpty) {
       return const SizedBox.shrink();
     }

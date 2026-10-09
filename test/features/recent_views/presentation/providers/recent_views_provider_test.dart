@@ -78,12 +78,12 @@ void main() {
       },
     );
     final subscription = container.listen(
-      recentViewsProvider(20),
+      recentViewsProvider,
       (_, _) {},
       fireImmediately: true,
     );
     addTearDown(subscription.close);
-    final entries = await container.read(recentViewsProvider(20).future);
+    final entries = await container.read(recentViewsProvider.future);
     expect(entries, hasLength(2));
 
     container
@@ -94,7 +94,7 @@ void main() {
         .reportChange(actorId: 3, isSubscribed: true);
     await settle();
 
-    final patched = container.read(recentViewsProvider(20)).requireValue;
+    final patched = container.read(recentViewsProvider).requireValue;
     expect(patched[0].movie?.isSubscribed, isTrue);
     expect(patched[1].actor?.isSubscribed, isTrue);
     // 就地补丁，不触发整页重拉。

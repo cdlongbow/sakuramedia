@@ -47,7 +47,7 @@ Future<MovieSubscriptionRowAction?> showMovieSubscriptionRowActions({
         key: const Key('movie-subscription-row-action-files'),
         value: MovieSubscriptionRowAction.viewFiles,
         label: '查看文件',
-        subtitle: '查看最新已完成任务里的文件',
+        subtitle: '查看下载任务里的文件',
         icon: Icons.folder_open_rounded,
         visible: hasFiles,
       ),

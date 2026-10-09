@@ -45,7 +45,7 @@ final class NotificationCenterProvider
 }
 
 String _$notificationCenterHash() =>
-    r'967236c0639250b2cdd5b7e3dc30622a38314897';
+    r'b4a8b2d9bb20fe40712116401607a02d9910f6b5';
 
 /// 全局常驻通知中心，登录后通过通知列表快照轮询。
 

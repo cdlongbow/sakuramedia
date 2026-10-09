@@ -7,7 +7,7 @@ class RecentViewsApi {
   final ApiClient _apiClient;
 
   /// 后端保留上限；一次拉全量，区块取前几条、更多页列全。
-  static const int listLimit = 200;
+  static const int _listLimit = 200;
 
   Future<void> record({
     required RecentViewEntityType entityType,
@@ -22,10 +22,10 @@ class RecentViewsApi {
     );
   }
 
-  Future<List<RecentViewEntryDto>> list({int limit = listLimit}) async {
+  Future<List<RecentViewEntryDto>> list() async {
     final response = await _apiClient.get(
       '/view-history',
-      queryParameters: <String, dynamic>{'limit': limit},
+      queryParameters: <String, dynamic>{'limit': _listLimit},
     );
     final items = response['items'];
     if (items is! List) {

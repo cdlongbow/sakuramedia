@@ -42,6 +42,17 @@ void _reportDeletedPornboxVideos(
   );
 }
 
+/// loadMore 失败存续期间滚动不自动重试（对齐 moments/discovery）；
+/// 恢复分页的唯一入口是页脚重试按钮。
+void _loadMoreUnlessFailed(
+  String? loadMoreError,
+  Future<void> Function() loadMore,
+) {
+  if (loadMoreError == null) {
+    unawaited(loadMore());
+  }
+}
+
 /// 「媒体管理」双端共享内容（桌面 / 移动壳收敛的 content 层）。
 ///
 /// 提供媒体列表、重复媒体、多版本影片和失效媒体管理。
@@ -90,25 +101,35 @@ class MediaManagementContent extends HookConsumerWidget {
     // 四个 tab 各持一个滚动控制器：TabBarView 的页面会被保活，共用一个控制器
     // 会同时挂到多个滚动视图上。
     final listScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () =>
-          unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
+      onReachBottom: () => _loadMoreUnlessFailed(
+        ref.read(mediaBrowseProvider).value?.paged.loadMoreErrorMessage,
+        () => ref.read(mediaBrowseProvider.notifier).loadMore(),
+      ),
     );
     final duplicateScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => unawaited(
+      onReachBottom: () => _loadMoreUnlessFailed(
         ref
+            .read(duplicateMediaProvider(duplicateKind.value))
+            .value
+            ?.loadMoreErrorMessage,
+        () => ref
             .read(duplicateMediaProvider(duplicateKind.value).notifier)
             .loadMore(),
       ),
       keys: [duplicateKind.value],
     );
     final versionsScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () =>
-          unawaited(ref.read(versionsProvider.notifier).loadMore()),
+      onReachBottom: () => _loadMoreUnlessFailed(
+        ref.read(versionsProvider).value?.loadMoreErrorMessage,
+        () => ref.read(versionsProvider.notifier).loadMore(),
+      ),
       keys: [includeVr.value, includeFc2.value],
     );
     final invalidScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () =>
-          unawaited(ref.read(invalidMediaProvider.notifier).loadMore()),
+      onReachBottom: () => _loadMoreUnlessFailed(
+        ref.read(invalidMediaProvider).value?.paged.loadMoreErrorMessage,
+        () => ref.read(invalidMediaProvider.notifier).loadMore(),
+      ),
     );
     ref.listen(mediaBrowseProvider.select((value) => value.value?.filter), (
       previous,

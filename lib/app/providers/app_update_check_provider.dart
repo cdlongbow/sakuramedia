@@ -28,8 +28,10 @@ class AppUpdateCheckState {
 /// 桌面侧栏页脚与移动抽屉版本卡片共用这一份状态；此前两处各写一份
 /// Timer + 检查流程，任何一处改动都要同步另一处。
 ///
-/// 非 keepAlive：两个入口都常驻在各自外壳（侧栏 / 抽屉）内，无人展示时
-/// 随监听者释放并取消轮询，语义与迁移前「widget 挂载时启动计时器」一致。
+/// keepAlive（手写 `NotifierProvider` 默认不自动释放）：桌面侧栏常驻所以
+/// 一直有监听者；移动端首次打开抽屉时创建并首查，之后状态与轮询跨抽屉
+/// 开关保留。不要改成 autoDispose——那会让移动端每次开抽屉都重跑全量
+/// 检查并清空「有更新」标记。
 class AppUpdateCheck extends Notifier<AppUpdateCheckState> {
   bool _isChecking = false;
 
@@ -51,6 +53,9 @@ class AppUpdateCheck extends Notifier<AppUpdateCheckState> {
     _isChecking = true;
     try {
       await ref.read(appVersionInfoProvider.notifier).load();
+      if (!ref.mounted) {
+        return;
+      }
       final frontendVersion =
           ref.read(appVersionInfoProvider).value?.frontendVersion ?? '';
       final backendVersion =

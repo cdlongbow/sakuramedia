@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
-import 'package:sakuramedia/features/recent_views/data/api/recent_views_api.dart';
 import 'package:sakuramedia/features/recent_views/data/dto/recent_view_dto.dart';
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_view_card.dart';
@@ -29,7 +28,7 @@ class RecentViewsGridSliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(recentViewsProvider(RecentViewsApi.listLimit));
+    final async = ref.watch(recentViewsProvider);
     final entries = async.value;
     if (async.hasError && entries == null) {
       return SliverToBoxAdapter(

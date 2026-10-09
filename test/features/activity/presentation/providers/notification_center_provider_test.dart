@@ -61,6 +61,69 @@ void main() {
     expect(bundle.adapter.requests.last.path, '/system/notifications/read-all');
   });
 
+  test('已读回执失败后抑制自动重试，主动刷新恢复', () {
+    fakeAsync((async) {
+      void settle() {
+        async.elapse(Duration.zero);
+        async.flushMicrotasks();
+      }
+
+      final controller = container.read(notificationCenterProvider.notifier);
+      _enqueueBootstrap(bundle, notificationId: 5, unreadCount: 1);
+      controller.reloadAll();
+      settle();
+
+      // 已读回执失败：本地回滚为未读。
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/notifications/read',
+        statusCode: 500,
+        body: <String, dynamic>{'error': 'server_error'},
+      );
+      controller.onNotificationDisplayed(5);
+      async.elapse(const Duration(milliseconds: 500));
+      settle();
+      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
+      expect(
+        container.read(notificationCenterProvider).notifications.single.isRead,
+        isFalse,
+      );
+
+      // 行重建再次触发上报：失败已被抑制，不再形成无退避重试。
+      controller.onNotificationDisplayed(5);
+      async.elapse(const Duration(milliseconds: 500));
+      settle();
+      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
+
+      // 用户主动刷新后清除抑制，重新给一次机会。
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/system/notifications',
+        body: <String, dynamic>{
+          'items': <Map<String, dynamic>>[_notificationJson(id: 5)],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        },
+      );
+      controller.refreshNotifications();
+      settle();
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/notifications/read',
+        body: <String, dynamic>{'updated_count': 1, 'unread_count': 0},
+      );
+      controller.onNotificationDisplayed(5);
+      async.elapse(const Duration(milliseconds: 500));
+      settle();
+      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 2);
+      expect(
+        container.read(notificationCenterProvider).notifications.single.isRead,
+        isTrue,
+      );
+    });
+  });
+
   test('poll keeps loaded pages and patches notifications in place', () {
     fakeAsync((async) {
       void settle() {

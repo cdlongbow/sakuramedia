@@ -6,14 +6,15 @@ import 'package:sakuramedia/features/recent_views/presentation/providers/recent_
 
 part 'recent_views_provider.g.dart';
 
-/// 最近浏览列表（最新在前，最多后端保留上限条）。
+/// 最近浏览列表（最新在前，一次拉后端保留上限）。
 ///
-/// - 按 `limit` 分实例：概览区块看 `limit: 20`，更多页看 `limit: 200`。
+/// - 单实例：概览区块只展示前若干条、更多页列全，共享同一份数据；
+///   打开更多页不额外请求，刷新只发一次。
 /// - 订阅变更广播到达时就地补丁订阅心状态，不整页重拉（浏览历史不因订阅状态变化而增删）。
 @riverpod
 class RecentViews extends _$RecentViews {
   @override
-  Future<List<RecentViewEntryDto>> build(int limit) async {
+  Future<List<RecentViewEntryDto>> build() async {
     ref.listen(movieSubscriptionEventsProvider, (_, next) {
       final changes = next.value;
       if (changes != null) {
@@ -26,7 +27,7 @@ class RecentViews extends _$RecentViews {
         _applyActorSubscriptionChange(change);
       }
     });
-    return ref.watch(recentViewsApiProvider).list(limit: limit);
+    return ref.watch(recentViewsApiProvider).list();
   }
 
   void _applyMovieSubscriptionChanges(List<MovieSubscriptionChange> changes) {

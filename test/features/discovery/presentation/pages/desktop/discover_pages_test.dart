@@ -81,25 +81,25 @@ void main() {
         requestsByPath['/hot-actress-releases']!
             .uri
             .queryParameters['page_size'],
-        '24',
+        '12',
       );
       expect(
         requestsByPath['/movies/subscribed-actors/latest']!
             .uri
             .queryParameters['page_size'],
-        '24',
+        '12',
       );
       expect(
         requestsByPath['/daily-recommendations']!
             .uri
             .queryParameters['page_size'],
-        '24',
+        '12',
       );
       expect(
         requestsByPath['/moment-recommendations']!
             .uri
             .queryParameters['page_size'],
-        '24',
+        '12',
       );
       expect(find.text('近期热度较高'), findsNothing);
       expect(find.text('与你收藏的时刻画面相似'), findsNothing);

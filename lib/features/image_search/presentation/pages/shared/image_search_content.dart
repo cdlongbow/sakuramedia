@@ -1170,7 +1170,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       }
       await ref
           .read(mediaApiProvider)
-          .deleteMediaPoint(mediaId: item.mediaId, pointId: point.pointId);
+          .deleteMediaPoint(pointId: point.pointId);
       if (mounted) {
         showToast('已删除标记');
       }

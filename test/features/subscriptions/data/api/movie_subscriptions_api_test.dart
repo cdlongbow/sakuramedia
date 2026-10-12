@@ -285,7 +285,7 @@ void main() {
   test('resetSearches posts optional movie ids to the reset endpoint', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
+      path: '/movie-subscriptions/search/reset',
       body: <String, dynamic>{'reset_count': 2},
     );
 

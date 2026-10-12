@@ -90,7 +90,7 @@ class MomentCollectionDetail extends _$MomentCollectionDetail
       key: _mutationKey,
       apply: (current) => _dropPoint(current, pointId),
       action: () =>
-          ref.read(mediaApiProvider).deleteMediaPointById(pointId: pointId),
+          ref.read(mediaApiProvider).deleteMediaPoint(pointId: pointId),
     );
   }
 

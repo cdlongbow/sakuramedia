@@ -161,7 +161,7 @@ class ActorsApi {
   }) {
     return _apiClient
         .postSse(
-          '/actors/search/javdb/stream',
+          '/actors/metadata-imports',
           data: <String, dynamic>{'actor_name': actorName},
         )
         .map(_mapActorSearchStreamEvent);

@@ -411,7 +411,6 @@ class _VideoCollectionPlayContentState
   Future<void> _removeEpisode(int videoId, {required bool deleteMedia}) async {
     final index = _videos.indexWhere((video) => video.id == videoId);
     if (index < 0 || _mutatingVideoId != null) return;
-    final itemId = _collectionItemIds[index];
     final videosApi = ref.read(videosApiProvider);
     final collectionsApi = ref.read(videoCollectionsApiProvider);
     final broadcaster = ref.read(videoMutationEventsProvider.notifier);
@@ -424,9 +423,9 @@ class _VideoCollectionPlayContentState
         deleteMedia: deleteMedia,
         persist: () => deleteMedia
             ? videosApi.deleteVideo(videoId)
-            : collectionsApi.removeCollectionItem(
+            : collectionsApi.removeCollectionVideo(
                 collectionId: widget.collectionId,
-                itemId: itemId,
+                videoItemId: videoId,
               ),
         onRemoved: () {
           committed = true;

@@ -590,7 +590,7 @@ void main() {
   test('searchOnlineMoviesStream parses completed SSE result', () async {
     adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: search_started\n'
             'data: {"movie_number":"ABP-123"}\n\n',
@@ -609,7 +609,7 @@ void main() {
 
     final request = adapter.requests.single;
     expect(request.method, 'POST');
-    expect(request.path, '/movies/search/javdb/stream');
+    expect(request.path, '/movies/metadata-imports');
     expect(request.body, <String, dynamic>{'movie_number': 'ABP-123'});
     expect(updates.last.message, '在线搜索已完成');
     expect(updates.last.success, isTrue);
@@ -621,7 +621,7 @@ void main() {
     () async {
       adapter.enqueueSse(
         method: 'POST',
-        path: '/movies/search/javdb/stream',
+        path: '/movies/metadata-imports',
         chunks: <String>[
           'event: search_started\n'
               'data: {"movie_number":"ABP-404"}\n\n',
@@ -643,7 +643,7 @@ void main() {
   test('searchOnlineMoviesStream supports chunked SSE events', () async {
     adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: completed\n',
         'data: {"success":true,"movies":[{"javdb_id":"MovieA1",',
@@ -664,7 +664,7 @@ void main() {
     () async {
       adapter.enqueueSse(
         method: 'POST',
-        path: '/movies/search/javdb/stream',
+        path: '/movies/metadata-imports',
         chunks: <String>[
           'event: completed\n'
               'data: not-json\n\n',

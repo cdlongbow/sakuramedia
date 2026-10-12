@@ -657,7 +657,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         });
         showToast('已添加标记');
       } else {
-        await ref.read(mediaApiProvider).deleteMediaPointById(pointId: pointId);
+        await ref.read(mediaApiProvider).deleteMediaPoint(pointId: pointId);
         if (!mounted) {
           return;
         }

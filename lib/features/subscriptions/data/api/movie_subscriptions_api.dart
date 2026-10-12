@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_s
 /// 写入侧全部不在这里：单条订阅 / 取消订阅走 `MoviesApi.subscribeMovie` /
 /// `unsubscribeMovie`，批量取消订阅走 `MoviesApi.batchUnsubscribeMovies`
 /// （`POST /movies/unsubscriptions`），重置订阅搜索状态走
-/// `/movie-subscriptions/search-resets`。
+/// `/movie-subscriptions/search/reset`。
 class MovieSubscriptionsApi {
   const MovieSubscriptionsApi({required ApiClient apiClient})
     : _apiClient = apiClient;
@@ -63,7 +63,7 @@ class MovieSubscriptionsApi {
     List<int>? movieIds,
   }) async {
     final response = await _apiClient.post(
-      '/movie-subscriptions/search-resets',
+      '/movie-subscriptions/search/reset',
       data: movieIds == null ? null : <String, dynamic>{'movie_ids': movieIds},
     );
     return MovieSubscriptionSearchResetResponseDto.fromJson(response);

@@ -432,7 +432,7 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/thumbnail-generation/reset',
+      path: '/media/thumbnails/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
     adapter.enqueueJson(
@@ -459,7 +459,7 @@ void main() {
     final resetRequest = adapter.requests.singleWhere(
       (request) =>
           request.method == 'POST' &&
-          request.path == '/media/thumbnail-generation/reset',
+          request.path == '/media/thumbnails/reset',
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
@@ -612,7 +612,7 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/thumbnail-generation/reset',
+      path: '/media/thumbnails/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
     adapter.enqueueJson(
@@ -664,7 +664,7 @@ void main() {
     final resetRequest = adapter.requests.singleWhere(
       (request) =>
           request.method == 'POST' &&
-          request.path == '/media/thumbnail-generation/reset',
+          request.path == '/media/thumbnails/reset',
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
@@ -696,7 +696,7 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/thumbnail-generation/reset',
+      path: '/media/thumbnails/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
     adapter.enqueueJson(
@@ -744,7 +744,7 @@ void main() {
     final resetRequest = adapter.requests.singleWhere(
       (request) =>
           request.method == 'POST' &&
-          request.path == '/media/thumbnail-generation/reset',
+          request.path == '/media/thumbnails/reset',
     );
     expect(resetRequest.body, <String, dynamic>{
       'media_ids': <int>[1],
@@ -765,7 +765,7 @@ void main() {
       );
       adapter.enqueueJson(
         method: 'POST',
-        path: '/media/thumbnail-generation/reset',
+        path: '/media/thumbnails/reset',
         body: <String, dynamic>{'reset_count': 1},
       );
       adapter.enqueueJson(
@@ -806,7 +806,7 @@ void main() {
       final resetRequest = adapter.requests.singleWhere(
         (request) =>
             request.method == 'POST' &&
-            request.path == '/media/thumbnail-generation/reset',
+            request.path == '/media/thumbnails/reset',
       );
       expect(resetRequest.body, <String, dynamic>{
         'media_ids': <int>[1],

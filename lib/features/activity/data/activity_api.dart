@@ -60,16 +60,19 @@ class ActivityApi {
 
   /// 批量已读：把 [ids] 对应的通知置已读，返回最新 `unread_count` 供刷新角标。
   Future<NotificationReadResultDto> markNotificationsRead(List<int> ids) async {
-    final response = await _apiClient.post(
-      '/system/notifications/read',
-      data: <String, dynamic>{'ids': ids},
+    final response = await _apiClient.patch(
+      '/system/notifications',
+      data: <String, dynamic>{'ids': ids, 'is_read': true},
     );
     return NotificationReadResultDto.fromJson(response);
   }
 
   /// 一键全部已读，返回最新 `unread_count`（通常为 0）。
   Future<NotificationReadResultDto> markAllNotificationsRead() async {
-    final response = await _apiClient.post('/system/notifications/read-all');
+    final response = await _apiClient.patch(
+      '/system/notifications',
+      data: <String, dynamic>{'all': true, 'is_read': true},
+    );
     return NotificationReadResultDto.fromJson(response);
   }
 
@@ -83,7 +86,7 @@ class ActivityApi {
     Map<String, dynamic>? params,
   }) async {
     final response = await _apiClient.post(
-      '/system/jobs/$taskKey/run',
+      '/system/jobs/$taskKey/runs',
       data: params,
     );
     return ManualJobTriggerResponseDto.fromJson(response);

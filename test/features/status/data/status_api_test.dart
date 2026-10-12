@@ -343,8 +343,8 @@ void main() {
     'testMetadataProvider parses structured error type and probe metadata',
     () async {
       adapter.enqueueJson(
-        method: 'GET',
-        path: '/status/metadata-providers/javdb/test',
+        method: 'POST',
+        path: '/metadata-providers/javdb/test',
         statusCode: 200,
         body: <String, dynamic>{
           'healthy': false,
@@ -402,8 +402,8 @@ void main() {
 
   test('testMetadataProvider parses healthy result', () async {
     adapter.enqueueJson(
-      method: 'GET',
-      path: '/status/metadata-providers/javdb/test',
+      method: 'POST',
+      path: '/metadata-providers/javdb/test',
       statusCode: 200,
       body: <String, dynamic>{
         'healthy': true,
@@ -421,8 +421,8 @@ void main() {
 
   test('testMetadataProvider parses unhealthy result', () async {
     adapter.enqueueJson(
-      method: 'GET',
-      path: '/status/metadata-providers/javdb/test',
+      method: 'POST',
+      path: '/metadata-providers/javdb/test',
       statusCode: 200,
       body: <String, dynamic>{
         'healthy': false,
@@ -440,8 +440,8 @@ void main() {
 
   test('testMetadataProvider converts backend error to ApiException', () async {
     adapter.enqueueJson(
-      method: 'GET',
-      path: '/status/metadata-providers/invalid/test',
+      method: 'POST',
+      path: '/metadata-providers/invalid/test',
       statusCode: 422,
       body: <String, dynamic>{
         'error': <String, dynamic>{

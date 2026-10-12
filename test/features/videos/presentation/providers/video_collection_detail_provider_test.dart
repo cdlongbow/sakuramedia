@@ -118,7 +118,7 @@ void main() {
     enqueueLoad();
     adapter.enqueueJson(
       method: 'DELETE',
-      path: '/video-collections/3/items/100',
+      path: '/video-collections/3/videos/1',
       statusCode: 204,
       body: const <String, dynamic>{},
     );
@@ -128,7 +128,7 @@ void main() {
 
     final error = await container
         .read(videoCollectionDetailProvider(3).notifier)
-        .removeItem(100);
+        .removeItem(100, 1);
 
     expect(error, isNull);
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;
@@ -139,7 +139,7 @@ void main() {
     enqueueLoad();
     adapter.enqueueJson(
       method: 'DELETE',
-      path: '/video-collections/3/items/100',
+      path: '/video-collections/3/videos/1',
       statusCode: 500,
       body: <String, dynamic>{
         'error': <String, dynamic>{'code': 'server_error', 'message': 'boom'},
@@ -151,7 +151,7 @@ void main() {
 
     final error = await container
         .read(videoCollectionDetailProvider(3).notifier)
-        .removeItem(100);
+        .removeItem(100, 1);
 
     expect(error, isNotNull);
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;

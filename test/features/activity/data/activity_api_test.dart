@@ -271,8 +271,8 @@ void main() {
 
   test('notification mutations use the current response contract', () async {
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read',
+      method: 'PATCH',
+      path: '/system/notifications',
       body: <String, dynamic>{'updated_count': 2, 'unread_count': 4},
     );
     final result = await bundle.activityApi.markNotificationsRead(<int>[1, 2]);
@@ -280,11 +280,12 @@ void main() {
     expect(result.unreadCount, 4);
     expect(bundle.adapter.requests.single.body, <String, dynamic>{
       'ids': <int>[1, 2],
+      'is_read': true,
     });
 
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read-all',
+      method: 'PATCH',
+      path: '/system/notifications',
       body: <String, dynamic>{'updated_count': 4, 'unread_count': 0},
     );
     final all = await bundle.activityApi.markAllNotificationsRead();

@@ -7,7 +7,7 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagn
 ///   （httpx `trust_env` 默认开启），由部署方自行决定哪些域名走代理、哪些直连。
 ///
 /// key 与后端 [MetadataProviderErrorType] 的三个取值一一对应，外加一个前端侧的
-/// `probe-request-failed`（调 `/status/metadata-providers/{p}/test` 本身就失败了）。
+/// `probe-request-failed`（调 `/metadata-providers/{p}/test` 本身就失败了）。
 
 const DiagnosticHint _probeRequestFailedHint = DiagnosticHint(
   cause: '检测请求没完成，后端没有响应。',

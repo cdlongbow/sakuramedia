@@ -209,7 +209,7 @@ void main() {
 
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/media_import/run',
+      path: '/system/jobs/media_import/runs',
       body: const <String, dynamic>{
         'task_run_id': 10,
         'task_key': 'media_import',

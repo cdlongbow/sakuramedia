@@ -34,7 +34,7 @@ void main() {
   test('postSse decodes multi-line SSE events', () async {
     adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'id: 7\n'
             'event: search_started\n'
@@ -48,7 +48,7 @@ void main() {
     final events =
         await apiClient
             .postSse(
-              '/movies/search/javdb/stream',
+              '/movies/metadata-imports',
               data: <String, dynamic>{'movie_number': 'ABP-123'},
             )
             .toList();
@@ -92,14 +92,14 @@ void main() {
   test('postSse uses a one-minute receive timeout override', () async {
     adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: completed\n'
             'data: {"success":true,"movies":[]}\n\n',
       ],
     );
 
-    await apiClient.postSse('/movies/search/javdb/stream').toList();
+    await apiClient.postSse('/movies/metadata-imports').toList();
 
     expect(adapter.requests.single.receiveTimeout, const Duration(minutes: 1));
   });
@@ -107,7 +107,7 @@ void main() {
   test('postSse maps non-200 responses to ApiException', () async {
     adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       statusCode: 500,
       chunks: <String>['{"error":{"code":"server_error","message":"boom"}}'],
       headers: const <String, List<String>>{
@@ -116,7 +116,7 @@ void main() {
     );
 
     expect(
-      () => apiClient.postSse('/movies/search/javdb/stream').toList(),
+      () => apiClient.postSse('/movies/metadata-imports').toList(),
       throwsA(isA<ApiException>()),
     );
   });

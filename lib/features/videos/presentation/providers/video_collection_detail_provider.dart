@@ -180,7 +180,7 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
   }
 
   /// 从合集移除成员（乐观更新）；失败回滚并返回错误消息。
-  Future<String?> removeItem(int itemId) async {
+  Future<String?> removeItem(int itemId, int videoItemId) async {
     try {
       return await withOptimisticPatch<String?>(
         key: _mutationKey,
@@ -192,7 +192,10 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
         action: () async {
           await ref
               .read(videoCollectionsApiProvider)
-              .removeCollectionItem(collectionId: collectionId, itemId: itemId);
+              .removeCollectionVideo(
+                collectionId: collectionId,
+                videoItemId: videoItemId,
+              );
           return null;
         },
       );

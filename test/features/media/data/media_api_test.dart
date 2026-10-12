@@ -69,7 +69,7 @@ void main() {
           statusCode: 204,
           body: null,
         );
-        await mediaApi.deleteMediaPointById(pointId: point.pointId);
+        await mediaApi.deleteMediaPoint(pointId: point.pointId);
         expect(adapter.hitCount('DELETE', '/media-points/20'), 1);
       },
     );
@@ -397,10 +397,10 @@ void main() {
     );
   });
 
-  test('createMediaPoint maps POST /media/{media_id}/points', () async {
+  test('createMediaPoint maps POST /media-points', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/100/points',
+      path: '/media-points',
       statusCode: 201,
       body: <String, dynamic>{
         'point_id': 20,
@@ -423,22 +423,25 @@ void main() {
     expect(point.pointId, 20);
     expect(point.thumbnailId, 66);
     expect(point.offsetSeconds, 600);
-    expect(adapter.hitCount('POST', '/media/100/points'), 1);
-    expect(adapter.requests.single.body, <String, dynamic>{'thumbnail_id': 66});
+    expect(adapter.hitCount('POST', '/media-points'), 1);
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'media_id': 100,
+      'thumbnail_id': 66,
+    });
   });
 
   test(
-    'deleteMediaPoint maps DELETE /media/{media_id}/points/{point_id}',
+    'deleteMediaPoint maps DELETE /media-points/{point_id}',
     () async {
       adapter.enqueueJson(
         method: 'DELETE',
-        path: '/media/100/points/20',
+        path: '/media-points/20',
         statusCode: 204,
       );
 
-      await mediaApi.deleteMediaPoint(mediaId: 100, pointId: 20);
+      await mediaApi.deleteMediaPoint(pointId: 20);
 
-      expect(adapter.hitCount('DELETE', '/media/100/points/20'), 1);
+      expect(adapter.hitCount('DELETE', '/media-points/20'), 1);
     },
   );
 
@@ -546,7 +549,7 @@ void main() {
   test('resetMediaThumbnails posts selected media IDs without force', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/thumbnail-generation/reset',
+      path: '/media/thumbnails/reset',
       body: <String, dynamic>{'reset_count': 2},
     );
 
@@ -554,7 +557,7 @@ void main() {
 
     expect(resetCount, 2);
     expect(adapter.requests.single.method, 'POST');
-    expect(adapter.requests.single.path, '/media/thumbnail-generation/reset');
+    expect(adapter.requests.single.path, '/media/thumbnails/reset');
     expect(adapter.requests.single.body, <String, dynamic>{
       'media_ids': <int>[12, 34],
       'force': false,
@@ -564,7 +567,7 @@ void main() {
   test('resetMediaThumbnails posts force when regenerating', () async {
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/thumbnail-generation/reset',
+      path: '/media/thumbnails/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
 

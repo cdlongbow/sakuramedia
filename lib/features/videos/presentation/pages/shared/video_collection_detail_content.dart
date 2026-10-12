@@ -654,11 +654,16 @@ class _VideoCollectionDetailContentState
         break;
       }
     }
-    final error = await ref.read(_providerRef.notifier).removeItem(itemId);
+    if (videoId == null) {
+      return;
+    }
+    final error = await ref
+        .read(_providerRef.notifier)
+        .removeItem(itemId, videoId);
     if (!mounted) {
       return;
     }
-    if (error == null && videoId != null) {
+    if (error == null) {
       // 合集封面/计数可能变化，广播给列表页的合集横滑区。
       _mutationBroadcaster.reportCollectionMembershipChanged(
         videoId: videoId,

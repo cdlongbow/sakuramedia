@@ -114,8 +114,8 @@ void main() {
       },
     );
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read',
+      method: 'PATCH',
+      path: '/system/notifications',
       body: <String, dynamic>{'updated_count': 1, 'unread_count': 0},
     );
 

@@ -61,7 +61,7 @@ class MediaApi {
     );
   }
 
-  /// `POST /media/thumbnail-generation/reset`。
+  /// `POST /media/thumbnails/reset`。
   ///
   /// [force] 为 `false` 时只把「生成失败」重新排队；为 `true` 时删除已有缩略图
   /// 产物后重新生成（生成完成前这些媒体的缩略图不可用）。
@@ -70,7 +70,7 @@ class MediaApi {
     bool force = false,
   }) async {
     final response = await _apiClient.post(
-      '/media/thumbnail-generation/reset',
+      '/media/thumbnails/reset',
       data: <String, dynamic>{'media_ids': mediaIds, 'force': force},
     );
     return asInt(response['reset_count']);
@@ -193,17 +193,13 @@ class MediaApi {
     required int thumbnailId,
   }) async {
     final response = await _apiClient.post(
-      '/media/$mediaId/points',
-      data: <String, dynamic>{'thumbnail_id': thumbnailId},
+      '/media-points',
+      data: <String, dynamic>{'media_id': mediaId, 'thumbnail_id': thumbnailId},
     );
     return MediaPointDto.fromJson(response);
   }
 
-  Future<void> deleteMediaPoint({required int mediaId, required int pointId}) {
-    return _apiClient.deleteNoContent('/media/$mediaId/points/$pointId');
-  }
-
-  Future<void> deleteMediaPointById({required int pointId}) {
+  Future<void> deleteMediaPoint({required int pointId}) {
     return _apiClient.deleteNoContent('/media-points/$pointId');
   }
 

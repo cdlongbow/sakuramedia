@@ -76,7 +76,7 @@ void main() {
 
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/media_video_info_backfill/run',
+      path: '/system/jobs/media_video_info_backfill/runs',
       body: <String, dynamic>{
         'task_run_id': 1,
         'task_key': 'media_video_info_backfill',
@@ -92,14 +92,14 @@ void main() {
     expect(
       bundle.adapter.hitCount(
         'POST',
-        '/system/jobs/media_video_info_backfill/run',
+        '/system/jobs/media_video_info_backfill/runs',
       ),
       1,
     );
 
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/media_file_hash_backfill/run',
+      path: '/system/jobs/media_file_hash_backfill/runs',
       body: <String, dynamic>{
         'task_run_id': 2,
         'task_key': 'media_file_hash_backfill',
@@ -115,14 +115,14 @@ void main() {
     expect(
       bundle.adapter.hitCount(
         'POST',
-        '/system/jobs/media_file_hash_backfill/run',
+        '/system/jobs/media_file_hash_backfill/runs',
       ),
       1,
     );
 
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/media_thumbnail_pack_backfill/run',
+      path: '/system/jobs/media_thumbnail_pack_backfill/runs',
       body: <String, dynamic>{
         'task_run_id': 3,
         'task_key': 'media_thumbnail_pack_backfill',
@@ -139,14 +139,14 @@ void main() {
     expect(
       bundle.adapter.hitCount(
         'POST',
-        '/system/jobs/media_thumbnail_pack_backfill/run',
+        '/system/jobs/media_thumbnail_pack_backfill/runs',
       ),
       1,
     );
 
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/system/jobs/movie_asset_pack_backfill/run',
+      path: '/system/jobs/movie_asset_pack_backfill/runs',
       body: <String, dynamic>{
         'task_run_id': 4,
         'task_key': 'movie_asset_pack_backfill',
@@ -163,7 +163,7 @@ void main() {
     expect(
       bundle.adapter.hitCount(
         'POST',
-        '/system/jobs/movie_asset_pack_backfill/run',
+        '/system/jobs/movie_asset_pack_backfill/runs',
       ),
       1,
     );

@@ -70,7 +70,7 @@ void main() {
     await container.read(provider.future);
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
+      path: '/movie-subscriptions/search/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
     _enqueuePage(adapter, [_item('A-1', 'pending')]);
@@ -92,7 +92,7 @@ void main() {
       MovieSubscriptionStatus.pending,
     );
     final request = adapter.requests.firstWhere(
-      (item) => item.path == '/movie-subscriptions/search-resets',
+      (item) => item.path == '/movie-subscriptions/search/reset',
     );
     expect(request.body, <String, dynamic>{'movie_ids': <int>[1]});
   });
@@ -102,7 +102,7 @@ void main() {
     await container.read(provider.future);
     adapter.enqueueJson(
       method: 'POST',
-      path: '/movie-subscriptions/search-resets',
+      path: '/movie-subscriptions/search/reset',
       body: <String, dynamic>{'reset_count': 1},
     );
     _enqueuePage(adapter, const <Map<String, dynamic>>[]);

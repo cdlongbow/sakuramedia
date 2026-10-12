@@ -175,8 +175,8 @@ void _enqueueIndependentProbes({
   bool joyTagEnabled = true,
 }) {
   _bundle.adapter.enqueueJson(
-    method: 'GET',
-    path: '/status/metadata-providers/javdb/test',
+    method: 'POST',
+    path: '/metadata-providers/javdb/test',
     body: _providerTest(healthy: javdbHealthy, provider: 'javdb'),
   );
   _bundle.adapter.enqueueJson(
@@ -244,7 +244,7 @@ void main() {
       ),
     );
     _bundle.adapter.enqueueJson(
-      method: 'GET',
+      method: 'POST',
       path: '/indexer-settings/test',
       body: _indexerConnectionTest(healthy: true),
     );
@@ -320,7 +320,7 @@ void main() {
     final c = _newController();
     await c.runAll();
 
-    expect(_bundle.adapter.hitCount('GET', '/indexer-settings/test'), 0);
+    expect(_bundle.adapter.hitCount('POST', '/indexer-settings/test'), 0);
     final indexer = _find(c, (i) => i.kind == DiagnosticItemKind.indexer);
     expect(indexer.status, DiagnosticItemStatus.unhealthy);
     expect(indexer.summary, '存在非法 tracker URL');
@@ -354,7 +354,7 @@ void main() {
       ),
     );
     _bundle.adapter.enqueueJson(
-      method: 'GET',
+      method: 'POST',
       path: '/indexer-settings/test',
       body: _indexerConnectionTest(
         healthy: false,
@@ -386,8 +386,8 @@ void main() {
     );
     // javdb 端点直接返回 500
     _bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/status/metadata-providers/javdb/test',
+      method: 'POST',
+      path: '/metadata-providers/javdb/test',
       statusCode: 500,
       body: <String, dynamic>{'message': 'boom'},
     );
@@ -475,8 +475,8 @@ void main() {
         body: <Map<String, dynamic>>[],
       );
       _bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/status/metadata-providers/javdb/test',
+        method: 'POST',
+        path: '/metadata-providers/javdb/test',
         statusCode: 500,
         body: <String, dynamic>{
           'error': <String, dynamic>{'code': 'internal', 'message': 'boom'},

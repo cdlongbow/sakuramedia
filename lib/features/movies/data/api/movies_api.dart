@@ -250,7 +250,7 @@ class MoviesApi {
   }) {
     return _apiClient
         .postSse(
-          '/movies/search/javdb/stream',
+          '/movies/metadata-imports',
           data: <String, dynamic>{'movie_number': movieNumber},
         )
         .map(_mapMovieSearchStreamEvent);
@@ -306,7 +306,7 @@ class MoviesApi {
   }) {
     return _apiClient
         .postSse(
-          '/movies/series/$seriesId/javdb/import/stream',
+          '/movies/series/$seriesId/metadata-imports',
           data: <String, dynamic>{},
         )
         .map(_mapSeriesImportStreamEvent);

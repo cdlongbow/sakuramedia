@@ -186,7 +186,7 @@ void main() {
       await tester.pumpAndSettle();
       bundle.adapter.enqueueJson(
         method: 'DELETE',
-        path: '/video-collections/3/items/100',
+        path: '/video-collections/3/videos/1',
         statusCode: 204,
       );
       await tester.tap(find.byKey(const Key('video-episode-more-1')));

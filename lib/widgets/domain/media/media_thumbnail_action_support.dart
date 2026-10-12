@@ -138,7 +138,6 @@ Future<void> handleMediaThumbnailAction({
           await ref
               .read(mediaApiProvider)
               .deleteMediaPoint(
-                mediaId: thumbnail.mediaId,
                 pointId: point.pointId,
               );
           if (context.mounted) {

@@ -23,7 +23,7 @@ class IndexerSettingsApi {
   }
 
   Future<IndexerConnectionTestResultDto> testConnection() async {
-    final response = await _apiClient.get('/indexer-settings/test');
+    final response = await _apiClient.post('/indexer-settings/test');
     return IndexerConnectionTestResultDto.fromJson(response);
   }
 }

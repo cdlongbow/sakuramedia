@@ -241,7 +241,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
     }
   }
 
-  /// 后端 `/status/metadata-providers/{provider}/test` 目前只支持 JavDB。
+  /// 后端 `/metadata-providers/{provider}/test` 目前只支持 JavDB。
   Future<DiagnosticItemState> _probeMetadataProvider(String provider) async {
     const displayName = 'JavDB';
     const kind = DiagnosticItemKind.javdb;

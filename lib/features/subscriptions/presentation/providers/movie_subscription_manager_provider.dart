@@ -24,7 +24,7 @@ part 'movie_subscription_manager_provider.g.dart';
 ///
 /// 职责边界：
 /// - **读**订阅列表走 `MovieSubscriptionsApi`（本域）；
-/// - **重置**资源查询状态走本域 `/movie-subscriptions/search-resets`；
+/// - **重置**资源查询状态走本域 `/movie-subscriptions/search/reset`；
 /// - **取消订阅**走 `MoviesApi`——后端刻意没在 `/movie-subscriptions` 下平行造写
 ///   端点，这里也不绕过它。
 ///

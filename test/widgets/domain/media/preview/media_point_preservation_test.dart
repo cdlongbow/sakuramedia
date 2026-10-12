@@ -159,7 +159,7 @@ void main() {
     expect(find.text('删除标记'), findsNothing);
     bundle.adapter.enqueueJson(
       method: 'POST',
-      path: '/media/34/points',
+      path: '/media-points',
       statusCode: 201,
       body: {
         'point_id': 99,

@@ -66,9 +66,9 @@ class MediaImportApi {
     required String itemId,
     required String movieNumber,
   }) async {
-    final response = await _apiClient.post(
-      '/imports/$taskRunId/failed-items/$itemId/search',
-      data: <String, dynamic>{'movie_number': movieNumber},
+    final response = await _apiClient.get(
+      '/imports/$taskRunId/failed-items/$itemId/metadata-candidates',
+      queryParameters: <String, dynamic>{'movie_number': movieNumber},
     );
     return ImportMetadataSearchResponseDto.fromJson(response);
   }

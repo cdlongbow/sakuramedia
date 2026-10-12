@@ -289,7 +289,6 @@ class _AddToMomentCollectionDialogState
           await ref
               .read(mediaApiProvider)
               .deleteMediaPoint(
-                mediaId: widget.mediaId!,
                 pointId: createdPoint.pointId,
               );
         } catch (_) {

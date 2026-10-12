@@ -77,8 +77,8 @@ class StatusApi {
   Future<StatusMetadataProviderTestDto> testMetadataProvider(
     String provider,
   ) async {
-    final response = await _apiClient.get(
-      '/status/metadata-providers/$provider/test',
+    final response = await _apiClient.post(
+      '/metadata-providers/$provider/test',
     );
     return StatusMetadataProviderTestDto.fromJson(response);
   }

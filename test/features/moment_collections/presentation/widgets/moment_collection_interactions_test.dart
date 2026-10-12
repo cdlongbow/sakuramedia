@@ -173,7 +173,7 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'POST',
-      path: '/media/34/points',
+      path: '/media-points',
       statusCode: 201,
       body: _pointJson(),
     );
@@ -209,7 +209,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(adapter.hitCount('POST', '/media/34/points'), 1);
+    expect(adapter.hitCount('POST', '/media-points'), 1);
     expect(adapter.hitCount('PUT', '/moment-collections/7/points/12'), 1);
     expect(tester.takeException(), isNull);
   });

@@ -378,7 +378,6 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       await ref
           .read(mediaApiProvider)
           .deleteMediaPoint(
-            mediaId: mediaItem.mediaId,
             pointId: existingPoint.pointId,
           );
       if (!mounted) {

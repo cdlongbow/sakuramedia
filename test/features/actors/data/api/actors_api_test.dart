@@ -382,7 +382,7 @@ void main() {
     () async {
       adapter.enqueueSse(
         method: 'POST',
-        path: '/actors/search/javdb/stream',
+        path: '/actors/metadata-imports',
         chunks: <String>[
           'event: search_started\n'
               'data: {"actor_name":"三上悠亚"}\n\n',
@@ -401,7 +401,7 @@ void main() {
 
       final request = adapter.requests.single;
       expect(request.method, 'POST');
-      expect(request.path, '/actors/search/javdb/stream');
+      expect(request.path, '/actors/metadata-imports');
       expect(request.body, <String, dynamic>{'actor_name': '三上悠亚'});
       expect(updates.any((update) => update.message == '正在下载头像 1/2'), isTrue);
       expect(updates.last.success, isTrue);
@@ -414,7 +414,7 @@ void main() {
     () async {
       adapter.enqueueSse(
         method: 'POST',
-        path: '/actors/search/javdb/stream',
+        path: '/actors/metadata-imports',
         chunks: <String>[
           'event: search_started\n'
               'data: {"actor_name":"mikami"}\n\n',

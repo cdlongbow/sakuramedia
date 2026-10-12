@@ -50,15 +50,15 @@ void main() {
     _enqueueBootstrap(bundle, notificationId: 5, unreadCount: 1);
     await container.read(notificationCenterProvider.notifier).reloadAll();
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/system/notifications/read-all',
+      method: 'PATCH',
+      path: '/system/notifications',
       body: <String, dynamic>{'updated_count': 1, 'unread_count': 0},
     );
 
     await container.read(notificationCenterProvider.notifier).markAllRead();
 
     expect(container.read(notificationCenterProvider).unreadCount, 0);
-    expect(bundle.adapter.requests.last.path, '/system/notifications/read-all');
+    expect(bundle.adapter.requests.last.path, '/system/notifications');
   });
 
   test('已读回执失败后抑制自动重试，主动刷新恢复', () {
@@ -75,15 +75,15 @@ void main() {
 
       // 已读回执失败：本地回滚为未读。
       bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/system/notifications/read',
+        method: 'PATCH',
+        path: '/system/notifications',
         statusCode: 500,
         body: <String, dynamic>{'error': 'server_error'},
       );
       controller.onNotificationDisplayed(5);
       async.elapse(const Duration(milliseconds: 500));
       settle();
-      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
+      expect(bundle.adapter.hitCount('PATCH', '/system/notifications'), 1);
       expect(
         container.read(notificationCenterProvider).notifications.single.isRead,
         isFalse,
@@ -93,7 +93,7 @@ void main() {
       controller.onNotificationDisplayed(5);
       async.elapse(const Duration(milliseconds: 500));
       settle();
-      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 1);
+      expect(bundle.adapter.hitCount('PATCH', '/system/notifications'), 1);
 
       // 用户主动刷新后清除抑制，重新给一次机会。
       bundle.adapter.enqueueJson(
@@ -109,14 +109,14 @@ void main() {
       controller.refreshNotifications();
       settle();
       bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/system/notifications/read',
+        method: 'PATCH',
+        path: '/system/notifications',
         body: <String, dynamic>{'updated_count': 1, 'unread_count': 0},
       );
       controller.onNotificationDisplayed(5);
       async.elapse(const Duration(milliseconds: 500));
       settle();
-      expect(bundle.adapter.hitCount('POST', '/system/notifications/read'), 2);
+      expect(bundle.adapter.hitCount('PATCH', '/system/notifications'), 2);
       expect(
         container.read(notificationCenterProvider).notifications.single.isRead,
         isTrue,

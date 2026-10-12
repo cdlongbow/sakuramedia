@@ -299,7 +299,7 @@ void main() {
     );
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: search_started\n'
             'data: {"movie_number":"ABP-123"}\n\n',
@@ -313,7 +313,7 @@ void main() {
     await controller.submit('abp123', useOnlineSearch: true);
 
     expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
-    expect(bundle.adapter.hitCount('POST', '/movies/search/javdb/stream'), 1);
+    expect(bundle.adapter.hitCount('POST', '/movies/metadata-imports'), 1);
     expect(controller.isOnlineSearchActive, isTrue);
     expect(controller.streamStatus?.message, '在线搜索已完成');
     expect(controller.movieResults.single.movieNumber, 'ABP-123');
@@ -335,7 +335,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/movies/search/javdb/stream',
+        path: '/movies/metadata-imports',
         chunks: <String>[
           'event: completed\n'
               'data: {"success":true,"movies":[],"failed_items":[],"stats":{"total":0,"created_count":0,"already_exists_count":0,"failed_count":0}}\n\n',
@@ -353,7 +353,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/movies/search/javdb/stream',
+        path: '/movies/metadata-imports',
         chunks: <String>[
           'event: completed\n'
               'data: {"success":true,"movies":[{"javdb_id":"MovieA1","movie_number":"ABP-123","title":"Movie 1","cover_image":null,"release_date":null,"duration_minutes":120,"is_subscribed":false,"can_play":true}],"failed_items":[],"stats":{"total":1,"created_count":1,"already_exists_count":0,"failed_count":0}}\n\n',
@@ -364,7 +364,7 @@ void main() {
       await controller.submit('abp123', useOnlineSearch: true);
 
       expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 2);
-      expect(bundle.adapter.hitCount('POST', '/movies/search/javdb/stream'), 2);
+      expect(bundle.adapter.hitCount('POST', '/movies/metadata-imports'), 2);
       expect(controller.movieResults.single.movieNumber, 'ABP-123');
     },
   );
@@ -384,7 +384,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/actors/search/javdb/stream',
+        path: '/actors/metadata-imports',
         chunks: <String>[
           'event: search_started\n'
               'data: {"actor_name":"mikami"}\n\n',
@@ -395,7 +395,7 @@ void main() {
 
       await controller.submit('mikami', useOnlineSearch: true);
 
-      expect(bundle.adapter.hitCount('POST', '/actors/search/javdb/stream'), 1);
+      expect(bundle.adapter.hitCount('POST', '/actors/metadata-imports'), 1);
       expect(controller.isOnlineSearchActive, isTrue);
       expect(controller.actorResults, isEmpty);
       expect(controller.errorMessage, isNull);
@@ -419,7 +419,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/actors/search/javdb/stream',
+        path: '/actors/metadata-imports',
         chunks: <String>[
           'event: completed\n'
               'data: {"success":false,"reason":"actor_not_found","actors":[]}\n\n',
@@ -437,7 +437,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/actors/search/javdb/stream',
+        path: '/actors/metadata-imports',
         chunks: <String>[
           'event: completed\n'
               'data: {"success":true,"actors":[{"id":1,"javdb_id":"ActorA1","name":"三上悠亚","alias_name":"三上悠亚 / 鬼头桃菜","profile_image":null,"is_subscribed":false}]}\n\n',
@@ -448,7 +448,7 @@ void main() {
       await controller.submit('mikami', useOnlineSearch: true);
 
       expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 2);
-      expect(bundle.adapter.hitCount('POST', '/actors/search/javdb/stream'), 2);
+      expect(bundle.adapter.hitCount('POST', '/actors/metadata-imports'), 2);
       expect(controller.actorResults.single.id, 1);
     },
   );
@@ -468,7 +468,7 @@ void main() {
       );
       bundle.adapter.enqueueSse(
         method: 'POST',
-        path: '/movies/search/javdb/stream',
+        path: '/movies/metadata-imports',
         chunks: <String>[
           'event: search_started\n'
               'data: {"movie_number":"ABP-123"}\n\n',
@@ -481,7 +481,7 @@ void main() {
       );
 
       unawaited(controller.submit('abp123', useOnlineSearch: true));
-      await _waitForRequest(bundle, 'POST', '/movies/search/javdb/stream');
+      await _waitForRequest(bundle, 'POST', '/movies/metadata-imports');
 
       await controller.submit('mikami', useOnlineSearch: false);
 
@@ -508,7 +508,7 @@ void main() {
     );
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: completed\n'
             'data: not-json\n\n',

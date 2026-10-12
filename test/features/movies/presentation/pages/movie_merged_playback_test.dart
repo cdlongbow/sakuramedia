@@ -427,21 +427,21 @@ void main() {
           await openFrameMenu();
           bundle.adapter.enqueueJson(
             method: 'POST',
-            path: '/media/2/points',
+            path: '/media-points',
             body: point,
           );
           await tester.tap(find.text('添加标记'));
           await tester.pumpAndSettle();
-          expect(bundle.adapter.hitCount('POST', '/media/2/points'), 1);
+          expect(bundle.adapter.hitCount('POST', '/media-points'), 1);
           await openFrameMenu(points: [point]);
           bundle.adapter.enqueueJson(
             method: 'DELETE',
-            path: '/media/2/points/22',
+            path: '/media-points/22',
             statusCode: 204,
           );
           await tester.tap(find.text('删除标记'));
           await tester.pumpAndSettle();
-          expect(bundle.adapter.hitCount('DELETE', '/media/2/points/22'), 1);
+          expect(bundle.adapter.hitCount('DELETE', '/media-points/22'), 1);
 
           if (mobile) {
             surface().bottomControls

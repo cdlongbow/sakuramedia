@@ -44,7 +44,7 @@ void main() {
   test('completed stream exposes progress, stats and new-movie result', () async {
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/series/7/javdb/import/stream',
+      path: '/movies/series/7/metadata-imports',
       chunks: <String>[
         'event: upsert_started\ndata: {"total":2}\n\n',
         'event: movie_upsert_finished\ndata: {"index":1,"total":2}\n\n',
@@ -77,7 +77,7 @@ void main() {
     notifier = container.read(seriesImportProvider(seriesId).notifier);
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/series/8/javdb/import/stream',
+      path: '/movies/series/8/metadata-imports',
       chunks: <String>[
         'event: completed\ndata: {"success":false,"reason":"javdb_series_not_found"}\n\n',
       ],
@@ -93,7 +93,7 @@ void main() {
 
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/series/8/javdb/import/stream',
+      path: '/movies/series/8/metadata-imports',
       chunks: <String>[
         'event: completed\ndata: {"success":true,"created_count":0}\n\n',
       ],
@@ -118,7 +118,7 @@ void main() {
     notifier = container.read(seriesImportProvider(seriesId).notifier);
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/series/9/javdb/import/stream',
+      path: '/movies/series/9/metadata-imports',
       chunks: <String>['event: search_started\ndata: {}\n\n'],
     );
 
@@ -142,7 +142,7 @@ void main() {
     notifier = container.read(seriesImportProvider(seriesId).notifier);
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/series/10/javdb/import/stream',
+      path: '/movies/series/10/metadata-imports',
       chunks: <String>['event: search_started\ndata: {}\n\n'],
       keepOpen: true,
     );
@@ -151,7 +151,7 @@ void main() {
     await notifier.startImport();
     await _settle();
     expect(
-      bundle.adapter.hitCount('POST', '/movies/series/10/javdb/import/stream'),
+      bundle.adapter.hitCount('POST', '/movies/series/10/metadata-imports'),
       1,
     );
     expect(container.read(seriesImportProvider(seriesId)).isRunning, isTrue);

@@ -1000,7 +1000,7 @@ void main() {
     );
     bundle.adapter.enqueueSse(
       method: 'POST',
-      path: '/movies/search/javdb/stream',
+      path: '/movies/metadata-imports',
       chunks: <String>[
         'event: completed\n'
             'data: {"success":true,"movies":[],"failed_items":[],"stats":{"total":0,"created_count":0,"already_exists_count":0,"failed_count":0}}\n\n',

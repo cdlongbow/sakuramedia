@@ -755,7 +755,7 @@ class MomentsContent extends HookConsumerWidget {
     try {
       await ref
           .read(mediaApiProvider)
-          .deleteMediaPointById(pointId: item.pointId);
+          .deleteMediaPoint(pointId: item.pointId);
       if (!context.mounted) {
         return;
       }

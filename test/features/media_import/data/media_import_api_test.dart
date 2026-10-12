@@ -201,10 +201,10 @@ void main() {
     expect(items.single.lastRetryError, isNull);
   });
 
-  test('searchMetadataCandidates posts the number and parses candidates', () async {
+  test('searchMetadataCandidates queries the number and parses candidates', () async {
     adapter.enqueueJson(
-      method: 'POST',
-      path: '/imports/42/failed-items/failure-1/search',
+      method: 'GET',
+      path: '/imports/42/failed-items/failure-1/metadata-candidates',
       body: <String, dynamic>{
         'movie_number': 'ABC-001',
         'candidates': <Map<String, dynamic>>[
@@ -244,9 +244,10 @@ void main() {
       '/files/images/metadata-search/a/0.jpg',
     );
     expect(response.sourceErrors.single.sourceName, 'Metadata Two');
-    expect(adapter.requests.single.body, <String, dynamic>{
-      'movie_number': 'ABC-001',
-    });
+    expect(
+      adapter.requests.single.uri.queryParameters['movie_number'],
+      'ABC-001',
+    );
   });
 
   test('retryFailedItem posts the candidate and returns the accepted run', () async {

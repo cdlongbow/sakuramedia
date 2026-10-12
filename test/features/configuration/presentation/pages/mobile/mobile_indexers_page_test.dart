@@ -217,7 +217,7 @@ void main() {
   ) async {
     _enqueueIndexersData(_bundle);
     _bundle.adapter.enqueueJson(
-      method: 'GET',
+      method: 'POST',
       path: '/indexer-settings/test',
       body: <String, dynamic>{
         'healthy': true,
@@ -236,7 +236,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(_bundle.adapter.hitCount('GET', '/indexer-settings/test'), 1);
+    expect(_bundle.adapter.hitCount('POST', '/indexer-settings/test'), 1);
     expect(
       find.byKey(const Key('mobile-indexers-connection-test-result')),
       findsOneWidget,
@@ -250,7 +250,7 @@ void main() {
   ) async {
     _enqueueIndexersData(_bundle);
     _bundle.adapter.enqueueJson(
-      method: 'GET',
+      method: 'POST',
       path: '/indexer-settings/test',
       body: <String, dynamic>{
         'healthy': false,
@@ -286,7 +286,7 @@ void main() {
   ) async {
     _enqueueIndexersData(_bundle);
     _bundle.adapter.enqueueJson(
-      method: 'GET',
+      method: 'POST',
       path: '/indexer-settings/test',
       statusCode: 500,
       body: <String, dynamic>{'message': 'service unavailable'},

@@ -51,7 +51,7 @@ class ImportMetadataSourceErrorDto {
   }
 }
 
-/// `POST /imports/{task_run_id}/failed-items/{item_id}/search` 的响应。
+/// `GET /imports/{task_run_id}/failed-items/{item_id}/metadata-candidates` 的响应。
 class ImportMetadataSearchResponseDto {
   const ImportMetadataSearchResponseDto({
     required this.movieNumber,

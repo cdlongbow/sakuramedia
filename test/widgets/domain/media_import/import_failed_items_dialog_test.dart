@@ -115,8 +115,8 @@ void main() {
       ],
     );
     bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/imports/7/failed-items/failure-1/search',
+      method: 'GET',
+      path: '/imports/7/failed-items/failure-1/metadata-candidates',
       body: _searchResponseJson(),
     );
     bundle.adapter.enqueueJson(
@@ -252,8 +252,8 @@ void main() {
     // 搜索请求挂起，停留在加载中状态。
     final searchCompleter = Completer<ResponseBody>();
     bundle.adapter.enqueueResponder(
-      method: 'POST',
-      path: '/imports/7/failed-items/failure-1/search',
+      method: 'GET',
+      path: '/imports/7/failed-items/failure-1/metadata-candidates',
       responder: (_, _) => searchCompleter.future,
     );
 

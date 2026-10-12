@@ -28,6 +28,7 @@ import 'package:sakuramedia/theme.dart';
 /// 新增可选 `onImageSized`——首帧到达时回调解码尺寸，供调用方按图片实际绘制
 /// 矩形做对齐（如影片详情 hero 的左右羽化）；命中内存缓存时可用
 /// [resolveCachedMaskedImageSize] 在 build 期同步拿到同一个尺寸，首帧就对齐。
+/// 新增可选 `filterQuality`——小图放大的假模糊底座传 `FilterQuality.high`。
 class MaskedImage extends ConsumerStatefulWidget {
   const MaskedImage({
     super.key,
@@ -39,6 +40,7 @@ class MaskedImage extends ConsumerStatefulWidget {
     this.placeholderColor,
     this.animateReveal = true,
     this.onImageSized,
+    this.filterQuality = FilterQuality.low,
   });
 
   static const int _decodeSizeUpperBound = 1024;
@@ -69,6 +71,10 @@ class MaskedImage extends ConsumerStatefulWidget {
   /// 按整条容器宽度算羽化会落空）。回调统一挪到帧后，调用方可直接 `setState`。
   /// 不传时行为与之前完全一致（不挂监听、不多解码）。
   final ValueChanged<Size>? onImageSized;
+
+  /// 交给 `Image` 的采样质量：默认 `FilterQuality.low`（与 `Image` 默认一致）。
+  /// 小图放大的假模糊底座传 `FilterQuality.high`，双线性放大到全屏会有块感。
+  final FilterQuality filterQuality;
 
   @override
   ConsumerState<MaskedImage> createState() => _MaskedImageState();
@@ -199,6 +205,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
           image: provider,
           fit: widget.fit,
           alignment: widget.alignment,
+          filterQuality: widget.filterQuality,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
             if (wasSynchronouslyLoaded) {
               _lastCompletedProvider = provider;
@@ -226,6 +233,7 @@ class _MaskedImageState extends ConsumerState<MaskedImage> {
                   image: previous,
                   fit: widget.fit,
                   alignment: widget.alignment,
+                  filterQuality: widget.filterQuality,
                   gaplessPlayback: true,
                   errorBuilder: (context, error, stackTrace) =>
                       _MaskedImagePlaceholder(

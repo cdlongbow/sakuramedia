@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
@@ -769,7 +768,7 @@ String? _resolveFileSizeLabel(
   return null;
 }
 
-/// 整页模糊背景：封面高斯模糊铺底 + 底色罩一层。
+/// 整页底座：封面假模糊铺底 + 底色罩一层。
 /// 配方引用 [MovieDetailVeil]，与 Hero 底座严格同值，底边相接无分割。
 ///
 /// 无封面时退回纯底色，保证加载态/空态不断层。
@@ -789,24 +788,20 @@ class _MovieDetailBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 模糊会在边缘留下透明回透，放大一圈推出可视区。
-        Transform.scale(
-          scale: MovieDetailVeil.backgroundScale,
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(
-              sigmaX: MovieDetailVeil.backgroundBlurSigma,
-              sigmaY: MovieDetailVeil.backgroundBlurSigma,
-            ),
-            child: MaskedImage(
-              url: url!,
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              // 占位与回退底色同色；解码完成后直接显示（罩了重 veil，不再单独淡入，
-              // 避免与前景图两次先后闪烁）。
-              placeholderColor: baseColor,
-              animateReveal: false,
-            ),
-          ),
+        // 不透明打底：沉浸页的壳是透明的，底座必须自己全程不透出下一页。
+        ColoredBox(color: baseColor),
+        // 假模糊（配方见 [MovieDetailVeil.backgroundDecodeWidth]）：小图放大即糊，
+        // 不再实时高斯 + 放大圈，也就没有模糊边缘回透与图层画出页面矩形。
+        MaskedImage(
+          url: url!,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          memCacheWidth: MovieDetailVeil.backgroundDecodeWidth,
+          filterQuality: FilterQuality.high,
+          // 占位与回退底色同色；解码完成后直接显示（罩了重 veil，不再单独淡入，
+          // 避免与前景图两次先后闪烁）。
+          placeholderColor: baseColor,
+          animateReveal: false,
         ),
         ColoredBox(
           color: baseColor.withValues(

@@ -2,11 +2,15 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
-/// 整页模糊底座的共享配方（页面背景引用，底边相接无分割）：
-/// 模糊强度 / 底色罩浓度 / 模糊放大倍数。
+/// 整页底座的共享配方（页面背景引用，底边相接无分割）：
+/// 假模糊解码宽 / 底色罩浓度 / 封面羽化宽度。
 abstract final class MovieDetailVeil {
-  static const double backgroundBlurSigma = 28;
-  static const double backgroundScale = 1.15;
+  /// 假模糊：解码一张这么宽的小图放大到全屏即糊，替代实时高斯模糊。
+  ///
+  /// 实时 `ImageFilter.blur` 要一张全屏 saveLayer + 两趟模糊通道（低端机进
+  /// 详情页 / 切封面的卡顿来源），模糊边缘还会回透、图层又画出页面矩形
+  /// （返回转场的残影来源）；小图放大三样都没有。越小越糊。
+  static const int backgroundDecodeWidth = 8;
 
   /// 底色罩浓度：底座是「模糊封面 + 底色罩」，罩得越实，封面自己的颜色透出越少。
   ///
@@ -27,7 +31,7 @@ abstract final class MovieDetailVeil {
 
 /// 影片详情封面 Hero：纯照片，底部化开后把舞台
 /// 交给页面背景与照片下方的信息块。这里不画任何文字和按钮，
-/// 自身透明（底座就是页面的整页模糊背景，连续一层、无边缘回透）。
+/// 自身透明（底座就是页面的整页底座，连续一层、无边缘回透）。
 ///
 /// 填充方式由 [heroFit] 决定：桌面保持 [BoxFit.contain] 完整显示不裁切，
 /// 移动沉浸全幅传 [BoxFit.cover] 铺满裁切（由 [ClipRect] 裁到框内）。

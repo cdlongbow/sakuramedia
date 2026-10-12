@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:sakuramedia/app/app_platform.dart';
-import 'package:sakuramedia/app/app_window_fullscreen.dart';
 import 'package:sakuramedia/app/appearance_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,13 +53,8 @@ Future<void> bootstrapDesktopWindow() async {
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    if (isWindows) {
-      // 无边框：客户区铺满整窗、没有系统留的 resize 带；改尺寸热区由
-      // AppWindowsFrame 的透明边缘补回，全屏见 app_window_fullscreen.dart。
-      await windowManager.setAsFrameless();
-      // 无边框窗口默认没有系统阴影，用 DWM 的 1px 扩展边把阴影找回来。
-      await windowManager.setHasShadow(true);
-    }
+    // Windows 不调 setAsFrameless：hidden 只藏标题栏，系统边框/resize/阴影
+    // 留给 DWM，老的 Dart 边缘热区不再需要。
     if (isMacOS) {
       await _applyMacAppearance(effective);
     }
@@ -152,10 +146,9 @@ Future<_PersistedWindowState> _readPersistedWindowState() async {
 class _DesktopWindowStatePersistor extends WindowListener {
   @override
   Future<void> onWindowResized() async {
-    // 应用内全屏是自己把窗口铺满显示器，不是用户想要的窗口尺寸：别把整屏
-    // 矩形写进 prefs（退出时的还原本也不需要写，prefs 里已有进入前的值）。
-    if (desktopWindowFullscreenActive.value) return;
+    // 原生全屏/最大化时的尺寸不是用户想要的窗口尺寸：不写 prefs。
     if (await windowManager.isMaximized()) return;
+    if (await windowManager.isFullScreen()) return;
     final size = await windowManager.getSize();
     try {
       final prefs = await SharedPreferences.getInstance();

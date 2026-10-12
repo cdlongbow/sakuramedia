@@ -15,8 +15,6 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/routes/app_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_fullscreen.dart';
-import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
-import 'package:sakuramedia/widgets/shell/window/app_windows_frame.dart';
 
 /// 允许发起拖拽滚动的指针类型集合(应用全局 [ScrollConfiguration] 使用)。
 ///
@@ -228,12 +226,10 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
               child: child ?? const SizedBox.shrink(),
             ),
           );
-          // 无边框 Windows 窗口靠这层透明热区改尺寸（系统边框已去掉）。
-          final framedContent = usesAppWindowsCaption
-              ? AppWindowsFrame(child: content)
-              : content;
+          // Windows 用系统边框 resize（TitleBarStyle.hidden 只藏标题栏），
+          // 不需要 Dart 边缘热区。
           // ignore: deprecated_member_use
-          return MaterialUiCompatibilityBridge(child: framedContent);
+          return MaterialUiCompatibilityBridge(child: content);
         },
       ),
     );

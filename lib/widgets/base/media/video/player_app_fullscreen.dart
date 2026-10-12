@@ -10,8 +10,7 @@ import 'package:sakuramedia/app/app_window_fullscreen.dart';
 /// 背景：media_kit 的全屏会 push 一个只含 [Video] 的独立路由，右侧缩略图
 /// 面板不在该路由内。想要全屏保留面板，就不能走它的全屏，只能在当前路由内
 /// 切换布局（铺满页面）+ 桌面端叠加系统窗口全屏。
-/// 窗口那一半见 `app_window_fullscreen.dart`（Windows 自己铺满显示器，macOS 走
-/// window_manager）。
+/// 窗口那一半见 `app_window_fullscreen.dart`（macOS/Windows 都走原生全屏）。
 ///
 /// 用法：各播放页 `State` 持有一份全屏标记，用 [PlayerAppFullscreenScope]
 /// 把状态暴露给底栏按钮；页面布局按 `isAppFullscreen` 切换。Player /

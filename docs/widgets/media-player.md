@@ -13,13 +13,10 @@
 - `PlayerAppFullscreenScope` / `PlayerAppFullscreenButton` / `PlayerAppFullscreenDoubleTap` / `PlayerAppFullscreenStateMixin`：`lib/widgets/base/media/video/player_app_fullscreen.dart`，在当前路由内切换布局 + 叠加系统窗口全屏，Esc 退出。
 - 播放页 `State` mix `PlayerAppFullscreenStateMixin`，用 scope 暴露状态，并在 `dispose` 首行调 `disposePlayerAppFullscreen()`；`ThemedVideoPlayer` / `MoviePlayerSurface` 传 `disableNativeFullscreen: true` 关掉 media_kit 的双击全屏，避免两套全屏打架。
 - 无 scope 时按钮回退 media_kit 原生全屏（快播弹窗等无面板场景行为不变）。
-- 窗口层那一半在 `lib/app/app_window_fullscreen.dart`：macOS 走 window_manager 的
-  `setFullScreen`；Windows 窗口是无边框的（`setAsFrameless()`），插件对无边框窗口会整段
-  跳过全屏，所以这里自己把窗口 bounds 设成当前显示器的整屏矩形，并临时把窗口置顶
-  （任务栏自身是 topmost 窗口，无边框窗口即使铺满整屏也会被它压在下面），退出时还原原来
-  的置顶状态。移动端 / 测试环境没有窗口插件时吞掉异常。
-- Windows 窗口不透明（没有系统毛玻璃），因此没有切窗口底色的逻辑；全屏期间
-  `desktopWindowFullscreenActive` 会关掉窗口外壳的 resize 热区，避免从屏幕边缘把窗口拖出全屏。
+- 窗口层那一半在 `lib/app/app_window_fullscreen.dart`：macOS / Windows 都走
+  window_manager 的原生 `setFullScreen`（窗口是非无边框的，
+  `TitleBarStyle.hidden` 只藏标题栏、保留系统边框），移动端 / 测试环境没有
+  窗口插件时吞掉异常。
 
 播放器的媒体来源、字幕、续播、控制条和进度上报由播放器 surface、feature Provider 和页面共同完成。不要在列表卡片里直接复制播放器配置。
 

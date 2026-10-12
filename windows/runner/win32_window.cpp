@@ -37,6 +37,34 @@ int Scale(int source, double scale_factor) {
   return static_cast<int>(source * scale_factor);
 }
 
+// Borderless custom frame (rossy/borderless-window style).
+//
+// The window keeps WS_OVERLAPPEDWINDOW (incl. WS_THICKFRAME), so native
+// resize hit-testing, DWM shadow, snap layouts and min/max animations keep
+// working. Returning 0 from WM_NCCALCSIZE makes the client area cover the
+// whole window, so no caption or border is drawn; the Dart side draws its
+// own title bar. When maximized, the client rect is expanded back over the
+// invisible resize borders so content is not cut off and does not bleed
+// under the taskbar.
+void AdjustMaximizedClientRect(NCCALCSIZE_PARAMS* params) {
+  HMONITOR monitor =
+      MonitorFromRect(&params->rgrc[0], MONITOR_DEFAULTTONEAREST);
+  if (!monitor) {
+    return;
+  }
+  MONITORINFO info;
+  info.cbSize = sizeof(info);
+  if (!GetMonitorInfo(monitor, &info)) {
+    return;
+  }
+  LONG l = params->rgrc[0].left - info.rcWork.left;
+  LONG t = params->rgrc[0].top - info.rcWork.top;
+  params->rgrc[0].left -= l;
+  params->rgrc[0].top -= t;
+  params->rgrc[0].right += l;
+  params->rgrc[0].bottom += t;
+}
+
 // Dynamically loads the |EnableNonClientDpiScaling| from the User32 module.
 // This API is only needed for PerMonitor V1 awareness mode.
 void EnableFullDpiSupportIfAvailable(HWND hwnd) {
@@ -179,6 +207,19 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_NCCALCSIZE: {
+      if (!wparam) {
+        break;
+      }
+      if (IsZoomed(hwnd)) {
+        AdjustMaximizedClientRect(
+            reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam));
+      }
+      // Client area covers the whole window: no visible caption or border,
+      // native resize/shadow/snap/animations intact (WS_THICKFRAME kept).
+      return 0;
+    }
+
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();

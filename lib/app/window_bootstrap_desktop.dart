@@ -21,7 +21,6 @@ const MethodChannel _windowAppearanceChannel = MethodChannel(
 Future<void> bootstrapDesktopWindow() async {
   await windowManager.ensureInitialized();
   final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
-  final isWindows = defaultTargetPlatform == TargetPlatform.windows;
 
   final restored = await _readPersistedWindowState();
   final appearance = await _readPersistedAppearance();
@@ -38,23 +37,24 @@ Future<void> bootstrapDesktopWindow() async {
     size: restored.size,
     minimumSize: _minimumWindowSize,
     center: true,
-    // macOS 走系统毛玻璃（透明窗口）；其它桌面是无边框不透明窗口：内容铺满
-    // 整窗，窗口底色只在重绘间隙露出来，取内容面色。
+    // macOS 走系统毛玻璃（透明窗口）；其它桌面是不透明窗口：内容铺满整窗，
+    // 窗口底色只在重绘间隙露出来，取内容面色。
     backgroundColor: isMacOS
         ? Colors.transparent
         : initialColors.surfaceElevated,
     skipTaskbar: false,
-    titleBarStyle: isMacOS || isWindows
-        ? TitleBarStyle.hidden
-        : TitleBarStyle.normal,
+    // macOS 藏原生标题栏（自绘红绿灯）；Windows 用 normal 让 window_manager
+    // 透传 WM_NCCALCSIZE，runner（win32_window.cpp）接管无边框：可见框画没，
+    // WS_THICKFRAME 保留，原生 resize/阴影/Snap/动画都在。
+    titleBarStyle: isMacOS ? TitleBarStyle.hidden : TitleBarStyle.normal,
     // macOS 红绿灯改为 Flutter 自绘（AppMacTrafficLights），隐藏系统按钮，
     // 避免与自绘圆点重复；其他平台保持原样。
     windowButtonVisibility: !isMacOS,
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    // Windows 不调 setAsFrameless：hidden 只藏标题栏，系统边框/resize/阴影
-    // 留给 DWM，老的 Dart 边缘热区不再需要。
+    // Windows 无边框由 runner 原生实现（见 win32_window.cpp），这里不调
+    // setAsFrameless，也不补 Dart 边缘热区。
     if (isMacOS) {
       await _applyMacAppearance(effective);
     }

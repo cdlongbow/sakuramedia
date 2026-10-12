@@ -14,7 +14,8 @@
 - `AppMobileShell`、`AppMobileSubpageShell`：`lib/widgets/shell/mobile/`，移动一级入口和子页面容器。
 - `AppWindowDragArea`：`lib/widgets/shell/window/`，桌面窗口拖拽区。
 - Windows 窗口是不透明的（没有系统毛玻璃），窗口底色只在重绘间隙可见；
-  `TitleBarStyle.hidden` 只藏标题栏、保留系统边框，resize/阴影走 DWM 原生。
+  无边框由 runner 原生实现（`win32_window.cpp` 接管 `WM_NCCALCSIZE`，可见框
+  去掉、`WS_THICKFRAME` 保留），resize/阴影走 DWM 原生。
 
 新页面先选择对应平台 shell，再在内容区编排 feature 页面；不要在 feature 页面重新搭一套应用级导航。
 

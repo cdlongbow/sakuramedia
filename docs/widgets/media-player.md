@@ -14,8 +14,8 @@
 - 播放页 `State` mix `PlayerAppFullscreenStateMixin`，用 scope 暴露状态，并在 `dispose` 首行调 `disposePlayerAppFullscreen()`；`ThemedVideoPlayer` / `MoviePlayerSurface` 传 `disableNativeFullscreen: true` 关掉 media_kit 的双击全屏，避免两套全屏打架。
 - 无 scope 时按钮回退 media_kit 原生全屏（快播弹窗等无面板场景行为不变）。
 - 窗口层那一半在 `lib/app/app_window_fullscreen.dart`：macOS / Windows 都走
-  window_manager 的原生 `setFullScreen`（窗口是非无边框的，
-  `TitleBarStyle.hidden` 只藏标题栏、保留系统边框），移动端 / 测试环境没有
+  window_manager 的原生 `setFullScreen`（Windows 无边框由 runner 的
+  `WM_NCCALCSIZE` 实现，只去可见框、不动窗口样式），移动端 / 测试环境没有
   窗口插件时吞掉异常。
 
 播放器的媒体来源、字幕、续播、控制条和进度上报由播放器 surface、feature Provider 和页面共同完成。不要在列表卡片里直接复制播放器配置。

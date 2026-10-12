@@ -15,6 +15,7 @@ void main() {
   final calls = <MethodCall>[];
 
   setUp(() {
+    calls.clear();
     messenger.setMockMethodCallHandler(channel, (call) async {
       calls.add(call);
       return null;

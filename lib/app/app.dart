@@ -226,8 +226,7 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
               child: child ?? const SizedBox.shrink(),
             ),
           );
-          // Windows 用系统边框 resize（TitleBarStyle.hidden 只藏标题栏），
-          // 不需要 Dart 边缘热区。
+          // Windows 无边框由 runner 原生实现，不需要 Dart 边缘热区。
           // ignore: deprecated_member_use
           return MaterialUiCompatibilityBridge(child: content);
         },

@@ -420,36 +420,49 @@ void main() {
     },
   );
 
-  testWidgets('movie detail forwards hero fit to the hero card', (
+  testWidgets('movie detail picks the hero fit from the layout width', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: sakuraMobileThemeData,
-        home: Scaffold(
-          body: MovieDetailPageContent(
-            movie: _movieDetail(),
-            surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
-            selectedPreviewKey: 'movie-preview',
-            selectedPreviewUrl: null,
-            heroImageFit: BoxFit.cover,
-            isSubscribed: false,
-            isSubscriptionUpdating: false,
-            selectedMediaId: 100,
-            similarMovies: const <MovieListItemDto>[],
-            isSimilarMoviesLoading: false,
-            onInspectorPaneTap: _ignorePane,
-            onPlaylistTap: _noop,
-            onMediaSelect: (_) {},
-          ),
+    const narrow = Size(360, 760);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = narrow;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    Widget buildPage() => MaterialApp(
+      theme: sakuraMobileThemeData,
+      home: Scaffold(
+        body: MovieDetailPageContent(
+          movie: _movieDetail(),
+          surfaceColor: sakuraMobileThemeData.appColors.surfaceCard,
+          selectedPreviewKey: 'movie-preview',
+          selectedPreviewUrl: null,
+          isSubscribed: false,
+          isSubscriptionUpdating: false,
+          selectedMediaId: 100,
+          similarMovies: const <MovieListItemDto>[],
+          isSimilarMoviesLoading: false,
+          onInspectorPaneTap: _ignorePane,
+          onPlaylistTap: _noop,
+          onMediaSelect: (_) {},
         ),
       ),
     );
 
-    final hero = tester.widget<MovieDetailHeroCard>(
-      find.byType(MovieDetailHeroCard),
+    await tester.pumpWidget(buildPage());
+    // 窄布局：沉浸全幅，封面铺满裁切。
+    expect(
+      tester.widget<MovieDetailHeroCard>(find.byType(MovieDetailHeroCard)).heroFit,
+      BoxFit.cover,
     );
-    expect(hero.heroFit, BoxFit.cover);
+
+    tester.view.physicalSize = const Size(1100, 760);
+    await tester.pumpWidget(buildPage());
+    // 宽布局：完整显示不裁切（同宽度的信息块也走双列）。
+    expect(
+      tester.widget<MovieDetailHeroCard>(find.byType(MovieDetailHeroCard)).heroFit,
+      BoxFit.contain,
+    );
     expect(tester.takeException(), isNull);
   });
 

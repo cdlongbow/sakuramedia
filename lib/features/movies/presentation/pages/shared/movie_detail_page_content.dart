@@ -93,7 +93,6 @@ class MovieDetailPageContent extends StatelessWidget {
     this.scrollViewBuilder,
     this.isMoreActionsUpdating = false,
     this.isPlayLoading = false,
-    this.heroImageFit = BoxFit.contain,
   });
 
   final MovieDetailDto movie;
@@ -167,10 +166,6 @@ class MovieDetailPageContent extends StatelessWidget {
   /// 播放动作进行中（合并播放探测/拉起外部播放器），透传给 hero 播放按钮显示 loading。
   final bool isPlayLoading;
 
-  /// Hero 前景图的填充方式：桌面默认 [BoxFit.contain] 完整显示，
-  /// 移动端传 [BoxFit.cover] 铺满裁切。
-  final BoxFit heroImageFit;
-
   final bool showSimilarMovies;
 
   /// 当前是否真的有封面图：桌面用视口上限加高、信息块上叠只对「有封面」生效，
@@ -197,10 +192,11 @@ class MovieDetailPageContent extends StatelessWidget {
                 context,
                 constraints,
               );
+              final heroFit = _resolveHeroFit(constraints);
               final heroHeight = _resolveHeroHeight(
                 constraints,
                 viewportHeight,
-                heroImageFit,
+                heroFit,
                 hasCover: _hasCover,
               );
               final slivers = <Widget>[
@@ -209,6 +205,7 @@ class MovieDetailPageContent extends StatelessWidget {
                   sliver: _buildDetailBody(
                     context: context,
                     heroHeight: heroHeight,
+                    heroFit: heroFit,
                   ),
                 ),
               ];
@@ -297,6 +294,7 @@ class MovieDetailPageContent extends StatelessWidget {
   Widget _buildDetailBody({
     required BuildContext context,
     required double heroHeight,
+    required BoxFit heroFit,
   }) {
     final hoverActions = movieCardHoverFeatureActions(context);
     final progress = _latestProgress;
@@ -318,7 +316,7 @@ class MovieDetailPageContent extends StatelessWidget {
     // 前面一段压在封面下沿（只 PC）。封面高度不变，页面总高随之缩短。
     final infoOverlap = _resolveHeroInfoOverlap(
       heroHeight,
-      heroImageFit,
+      heroFit,
       hasCover: _hasCover,
     );
     final header = Column(
@@ -336,7 +334,7 @@ class MovieDetailPageContent extends StatelessWidget {
                 height: heroHeight,
                 mainImageKey: selectedPreviewKey,
                 mainImageUrl: selectedPreviewUrl,
-                heroFit: heroImageFit,
+                heroFit: heroFit,
                 veilColor: surfaceColor,
               ),
             ),
@@ -635,6 +633,18 @@ double _resolveViewportHeight(
     return constraints.maxHeight;
   }
   return MediaQuery.sizeOf(context).height;
+}
+
+/// Hero 前景图的填充方式：**跟随布局宽窄**，而不是跟随平台或页面。
+///
+/// 宽布局（≥ [MovieDetailInfoBlock.wideBreakpoint]，桌面壳层与平板都是）走
+/// [BoxFit.contain]：完整显示不裁切，并启用「信息块压封面下沿」；窄布局
+/// （手机、窄窗口）走 [BoxFit.cover]：沉浸全幅铺满裁切。
+BoxFit _resolveHeroFit(BoxConstraints constraints) {
+  final maxWidth = constraints.maxWidth;
+  final isWide =
+      !maxWidth.isFinite || maxWidth >= MovieDetailInfoBlock.wideBreakpoint;
+  return isWide ? BoxFit.contain : BoxFit.cover;
 }
 
 /// Hero 高度。

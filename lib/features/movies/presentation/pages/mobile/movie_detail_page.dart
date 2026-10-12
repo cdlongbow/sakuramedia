@@ -169,8 +169,6 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             mediaItemsOverride: derived.visibleMediaItems,
             selectedPreviewKey: detailState.selectedPreviewKey,
             selectedPreviewUrl: detailState.selectedPreviewUrl,
-            // 移动端 Hero 铺满裁切，桌面端保持 contain 不动。
-            heroImageFit: BoxFit.cover,
             isSubscribed: isSubscribed,
             isSubscriptionUpdating: isSubscriptionUpdating,
             isMoreActionsUpdating: activeMovieAction != null,

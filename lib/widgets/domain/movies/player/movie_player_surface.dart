@@ -608,9 +608,20 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     final playerContent = Stack(
       fit: StackFit.expand,
       children: [
-        // 锁尺寸时居中：槽位比视频大出黑边（展开）、比视频小则裁掉
-        // （收起，露出式展开），都不溢出报错。
-        if (lockedVideoSize == null) videoSurface else Center(child: videoSurface),
+        // 锁尺寸用 OverflowBox 撑住、不被槽位夹回（Center 会把宽度夹回槽位宽，
+        // 收起方向槽位逐帧变宽 → 视频逐帧重排）：槽位比视频大出黑边（展开）、
+        // 比视频小由 Stack 裁掉（收起，露出式展开）。
+        if (lockedVideoSize == null)
+          videoSurface
+        else
+          OverflowBox(
+            alignment: Alignment.center,
+            minWidth: lockedVideoSize.width,
+            maxWidth: lockedVideoSize.width,
+            minHeight: lockedVideoSize.height,
+            maxHeight: lockedVideoSize.height,
+            child: videoSurface,
+          ),
         if (_resumePrompt.isVisible && widget.resumePosition != null)
           PlaybackResumePromptOverlay(
             position: widget.resumePosition!,

@@ -17,7 +17,6 @@ import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
 import 'package:sakuramedia/widgets/base/media/video/player_screen_orientation.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
-import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_media_source.dart';
@@ -575,15 +574,10 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       onSubtitleReloadRequested: _handleSubtitleReloadRequested,
     );
     final backgroundColor = context.appColors.movieDetailHeroBackgroundStart;
-    // 面板收起/展开动画期间：视频按结束态槽位尺寸锁定，视频层不再随槽位逐帧
-    // 重采样（播完与实际槽位一致、无跳变）；跳变发生一次，被点击反馈盖住。
-    // 分栏壳之外没有 scope，走正常跟随槽位。
-    final lockedVideoSize =
-        PlayerSplitAnimationScope.maybeOf(context)?.value.lockedVideoSize;
     final videoSurface = Video(
       controller: _controller,
-      width: lockedVideoSize?.width ?? double.infinity,
-      height: lockedVideoSize?.height ?? double.infinity,
+      width: double.infinity,
+      height: double.infinity,
       fit: BoxFit.fitWidth,
       fill: backgroundColor,
       controls: resolveMoviePlayerVideoControlsBuilder(
@@ -608,20 +602,7 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     final playerContent = Stack(
       fit: StackFit.expand,
       children: [
-        // 锁尺寸用 OverflowBox 撑住、不被槽位夹回（Center 会把宽度夹回槽位宽，
-        // 收起方向槽位逐帧变宽 → 视频逐帧重排）：槽位比视频大出黑边（展开）、
-        // 比视频小由 Stack 裁掉（收起，露出式展开）。
-        if (lockedVideoSize == null)
-          videoSurface
-        else
-          OverflowBox(
-            alignment: Alignment.center,
-            minWidth: lockedVideoSize.width,
-            maxWidth: lockedVideoSize.width,
-            minHeight: lockedVideoSize.height,
-            maxHeight: lockedVideoSize.height,
-            child: videoSurface,
-          ),
+        videoSurface,
         if (_resumePrompt.isVisible && widget.resumePosition != null)
           PlaybackResumePromptOverlay(
             position: widget.resumePosition!,

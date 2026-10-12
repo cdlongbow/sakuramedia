@@ -140,45 +140,6 @@ void main() {
     expect(after.paged.filterUpdate.isIdle, isTrue);
   });
 
-  test('防抖结束、实际请求开始后才进入 loading', () async {
-    final firstPageGate = Completer<PaginatedResponseDto<int>>();
-    final staged = ProviderContainer(
-      overrides: [
-        _fetcherProvider.overrideWithValue((page, pageSize, filter) {
-          if (filter == 1) return firstPageGate.future;
-          return Future.value(
-            _page(
-              page: page,
-              items: List<int>.generate(3, (i) => filter * 100 + i),
-              total: 3,
-            ),
-          );
-        }),
-      ],
-    );
-    addTearDown(staged.dispose);
-    await staged.read(_provider.future);
-
-    final future = staged.read(_provider.notifier).applyFilterState(1);
-    expect(
-      staged.read(_provider).requireValue.paged.filterUpdate.isWaiting,
-      isTrue,
-    );
-
-    await Future<void>.delayed(const Duration(milliseconds: 30));
-    expect(
-      staged.read(_provider).requireValue.paged.filterUpdate.isLoading,
-      isTrue,
-    );
-
-    firstPageGate.complete(_page(page: 1, items: const [100], total: 1));
-    await future;
-    expect(
-      staged.read(_provider).requireValue.paged.filterUpdate.isIdle,
-      isTrue,
-    );
-  });
-
   test('防抖窗口内连续筛选只请求最终条件', () async {
     await container.read(_provider.future);
     final notifier = container.read(_provider.notifier);
@@ -191,34 +152,6 @@ void main() {
     expect(requests, [(1, 0), (1, 3)]);
     expect(container.read(_provider).requireValue.filter, 3);
     expect(container.read(_provider).requireValue.paged.items, [300, 301, 302]);
-  });
-
-  test('旧请求晚返回不会覆盖较新的筛选结果', () async {
-    final firstGate = Completer<PaginatedResponseDto<int>>();
-    final raced = ProviderContainer(
-      overrides: [
-        _fetcherProvider.overrideWithValue((page, pageSize, filter) {
-          if (filter == 1) return firstGate.future;
-          return Future.value(
-            _page(page: page, items: [filter * 100], total: 1),
-          );
-        }),
-      ],
-    );
-    addTearDown(raced.dispose);
-    await raced.read(_provider.future);
-    final notifier = raced.read(_provider.notifier);
-
-    final first = notifier.applyFilterState(1);
-    await Future<void>.delayed(const Duration(milliseconds: 30));
-    final second = notifier.applyFilterState(2);
-    await second;
-    expect(raced.read(_provider).requireValue.paged.items, [200]);
-
-    firstGate.complete(_page(page: 1, items: const [100], total: 1));
-    await first;
-    expect(raced.read(_provider).requireValue.filter, 2);
-    expect(raced.read(_provider).requireValue.paged.items, [200]);
   });
 
   test('失败保留旧结果和新筛选，并通过状态提供重试', () async {

@@ -18,13 +18,11 @@ class MoviePlayerHarness {
     required UpdateMediaProgress updateMediaProgress,
     int? initialMediaId,
     int? initialPositionSeconds,
-    Duration progressReportInterval = const Duration(seconds: 5),
   }) : _scope = MoviePlayerScope(
          movieNumber: movieNumber,
          baseUrl: baseUrl,
          initialMediaId: initialMediaId,
          initialPositionSeconds: initialPositionSeconds,
-         progressReportInterval: progressReportInterval,
        ) {
     _container = ProviderContainer(
       overrides: [

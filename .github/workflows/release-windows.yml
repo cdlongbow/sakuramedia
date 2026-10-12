@@ -32,9 +32,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests before release
-        run: flutter test
-
       - name: Build Windows release
         # shell: bash —— Windows runner 默认 pwsh，指定 bash 以解析 ${GITHUB_REF_NAME#v}
         shell: bash

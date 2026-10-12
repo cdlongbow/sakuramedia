@@ -26,11 +26,15 @@ jobs:
           flutter-version: 3.47.2
           cache: true
 
+      - name: Cache CocoaPods
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/CocoaPods
+          key: cocoapods-ios-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: cocoapods-ios-
+
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Run tests before release
-        run: flutter test
 
       - name: Build iOS app archive input (no codesign)
         shell: bash

@@ -18,7 +18,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
   flutter::DartProject project(L"data");
-  // Windows Impeller 后端（ANGLE/GLES）动画掉帧，退回 Skia；上游修复后（flutter/flutter#191468 一带）再开。
   project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
 
   std::vector<std::string> command_line_arguments =

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_loading_indicator.dart';
 import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 
@@ -51,9 +52,15 @@ class MoviePlayerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 面板动画期间去圆角：ClipRRect 路径不变，省一层裁切。
+    final animating =
+        PlayerSplitAnimationScope.maybeOf(context)?.value.isAnimating ??
+        false;
     return ClipRRect(
       key: const Key('movie-player-left-panel'),
-      borderRadius: context.appRadius.lgBorder,
+      borderRadius: animating
+          ? BorderRadius.zero
+          : context.appRadius.lgBorder,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: context.appColors.movieDetailHeroBackgroundStart,

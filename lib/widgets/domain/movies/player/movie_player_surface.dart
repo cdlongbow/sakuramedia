@@ -17,6 +17,7 @@ import 'package:sakuramedia/widgets/base/media/video/throttling_player.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
 import 'package:sakuramedia/widgets/base/media/video/player_screen_orientation.dart';
 import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
+import 'package:sakuramedia/widgets/domain/media/collapsible_player_split_view.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_controls.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_media_source.dart';
@@ -574,10 +575,15 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
       onSubtitleReloadRequested: _handleSubtitleReloadRequested,
     );
     final backgroundColor = context.appColors.movieDetailHeroBackgroundStart;
+    // 面板收起/展开动画期间：视频按结束态槽位尺寸锁定，视频层不再随槽位逐帧
+    // 重采样（播完与实际槽位一致、无跳变）；跳变发生一次，被点击反馈盖住。
+    // 分栏壳之外没有 scope，走正常跟随槽位。
+    final lockedVideoSize =
+        PlayerSplitAnimationScope.maybeOf(context)?.value.lockedVideoSize;
     final videoSurface = Video(
       controller: _controller,
-      width: double.infinity,
-      height: double.infinity,
+      width: lockedVideoSize?.width ?? double.infinity,
+      height: lockedVideoSize?.height ?? double.infinity,
       fit: BoxFit.fitWidth,
       fill: backgroundColor,
       controls: resolveMoviePlayerVideoControlsBuilder(
@@ -602,7 +608,9 @@ class _MoviePlayerSurfaceState extends ConsumerState<MoviePlayerSurface> {
     final playerContent = Stack(
       fit: StackFit.expand,
       children: [
-        videoSurface,
+        // 锁尺寸时居中：槽位比视频大出黑边（展开）、比视频小则裁掉
+        // （收起，露出式展开），都不溢出报错。
+        if (lockedVideoSize == null) videoSurface else Center(child: videoSurface),
         if (_resumePrompt.isVisible && widget.resumePosition != null)
           PlaybackResumePromptOverlay(
             position: widget.resumePosition!,

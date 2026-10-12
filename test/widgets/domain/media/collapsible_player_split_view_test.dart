@@ -307,6 +307,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('right'), findsOneWidget);
   });
+
+  testWidgets('动画播完视频锁尺寸清除、左圆角恢复', (tester) async {
+    PlayerSplitAnimation? captured;
+    final controller = MultiSplitViewController(
+      areas: <Area>[Area(flex: 0.72), Area(flex: 0.28)],
+    );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 400,
+            child: MoviePlayerSplitLayout(
+              controller: controller,
+              dividerHandleBuffer: 12,
+              collapsible: true,
+              leftChild: Builder(
+                builder: (context) {
+                  captured =
+                      PlayerSplitAnimationScope.maybeOf(context)?.value;
+                  return const ColoredBox(color: Colors.black);
+                },
+              ),
+              rightChild: const Text('right'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('movie-player-panel-handle')));
+    await tester.pumpAndSettle();
+    expect(find.text('right'), findsNothing);
+    expect(captured?.isAnimating, isFalse);
+    expect(captured?.lockedVideoSize, isNull);
+    expect(
+      tester
+          .widget<ClipRRect>(find.byKey(const Key('movie-player-left-panel')))
+          .borderRadius,
+      isNot(equals(BorderRadius.zero)),
+    );
+
+    await tester.tap(find.byKey(const Key('movie-player-panel-handle')));
+    await tester.pumpAndSettle();
+    expect(find.text('right'), findsOneWidget);
+    expect(captured?.isAnimating, isFalse);
+    expect(captured?.lockedVideoSize, isNull);
+  });
 }
 
 class _KeepAliveProbe extends StatefulWidget {

@@ -75,9 +75,13 @@ class _PlayerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 面板动画期间去圆角：ClipRRect 路径不变，省一层裁切。
+    final animating =
+        PlayerSplitAnimationScope.maybeOf(context)?.value.isAnimating ??
+        false;
     return ClipRRect(
       key: Key('$keyPrefix-play-left-panel'),
-      borderRadius: context.appRadius.lgBorder,
+      borderRadius: animating ? BorderRadius.zero : context.appRadius.lgBorder,
       child: ColoredBox(color: Colors.black, child: child),
     );
   }

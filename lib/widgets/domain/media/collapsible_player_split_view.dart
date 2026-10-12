@@ -7,15 +7,63 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
 typedef PlayerSplitPanelBuilder = Widget Function(BuildContext context);
 
+/// 收起/展开动画期间的共享快照：左侧视频锁尺寸、左圆角变直角都读它。
+///
+/// [isAnimating] 为真时动画进行中；[lockedVideoSize] 是动画结束时左侧槽位
+/// 的尺寸（动画期间视频按它固定布局，播完与实际槽位严丝合缝、无跳变），
+/// 平时为 null（视频跟随槽位）。
+@immutable
+class PlayerSplitAnimation {
+  const PlayerSplitAnimation({required this.isAnimating, this.lockedVideoSize});
+
+  const PlayerSplitAnimation.idle()
+    : isAnimating = false,
+      lockedVideoSize = null;
+
+  final bool isAnimating;
+  final Size? lockedVideoSize;
+
+  @override
+  bool operator ==(Object other) =>
+      other is PlayerSplitAnimation &&
+      other.isAnimating == isAnimating &&
+      other.lockedVideoSize == lockedVideoSize;
+
+  @override
+  int get hashCode => Object.hash(isAnimating, lockedVideoSize);
+}
+
+/// 把 [_CollapsiblePlayerSplitViewState] 的动画快照暴露给左侧子树
+///（播放器 surface 锁视频尺寸、左面板动画期间去圆角）。
+///
+/// 只包左侧分支，右侧面板不需要；分栏壳之外的页面读到 null，走正常布局。
+class PlayerSplitAnimationScope extends InheritedNotifier<
+  ValueNotifier<PlayerSplitAnimation>
+> {
+  const PlayerSplitAnimationScope({
+    super.key,
+    required ValueNotifier<PlayerSplitAnimation> state,
+    required super.child,
+  }) : super(notifier: state);
+
+  static ValueNotifier<PlayerSplitAnimation>? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<PlayerSplitAnimationScope>()
+        ?.notifier;
+  }
+}
+
 /// 播放器左右分栏的共享壳：桌面与移动端默认都展开右面板；[collapsible] 时右上角
 /// 常显一个纯图标开关（与顶栏返回/信息按钮同一行），点击收起/展开，展开后仍可用
 /// 分隔条拖拽调节宽度。
 ///
-/// 收起/展开由右侧 [Area.flex] 驱动（0 = 收起）：收起时右侧子树卸载，展开时挂载；
-/// 左侧子树始终挂在同一个 [MultiSplitView] 的同一位置，保证调用方的播放器 State
-/// 不因开关面板重建。动画期间右侧内容按展开态宽度固定布局，只有外层裁切窗口随
-/// 槽位收缩/展开（从右滑出/滑入），缩略图网格不会每帧重新布局；收起动画尾部槽位
-/// 接近 0 宽，固定宽度裁切也避免给网格负的布局约束。
+/// 收起/展开由右侧 [Area.flex] 驱动（0 = 收起）：展开时右侧子树在动画开头挂载；
+/// 收起时动画播完才卸载（动画尾部不再砸卸载开销）；左侧子树始终挂在同一个
+/// [MultiSplitView] 的同一位置，保证调用方的播放器 State 不因开关面板重建。
+/// 动画期间右侧内容按展开态宽度固定布局，只有外层裁切窗口随槽位收缩/展开
+/// （从右滑出/滑入），缩略图网格不会每帧重新布局；收起动画尾部槽位接近 0 宽，
+/// 固定宽度裁切也避免给网格负的布局约束。动画期间左侧视频按结束态尺寸锁定
+/// （见 [PlayerSplitAnimationScope]），视频层不随槽位逐帧重采样，播完无跳变。
 class CollapsiblePlayerSplitView extends StatefulWidget {
   const CollapsiblePlayerSplitView({
     super.key,
@@ -61,6 +109,7 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
   static const double _minPanelContentWidth = 48;
 
   late final AnimationController _animationController;
+  late final ValueNotifier<PlayerSplitAnimation> _animationState;
   double _animationBeginFlex = 0;
   double _animationEndFlex = 0;
   double _rememberedPanelFlex = 0.28;
@@ -68,6 +117,10 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
 
   MultiSplitViewController get _controller => widget.controller;
   double get _panelFlex => _controller.areas[1].flex ?? 0;
+
+  /// 外层约束快照：动画开始时据此算视频锁定尺寸（左侧槽位结束态宽高）。
+  double _lastAvailableWidth = 0;
+  double _lastSlotHeight = 0;
 
   @override
   void initState() {
@@ -77,6 +130,8 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       vsync: this,
       duration: _animationDuration,
     )..addListener(_applyFlexAnimationTick);
+    _animationState = ValueNotifier(const PlayerSplitAnimation.idle());
+    _animationController.addStatusListener(_handleAnimationStatus);
     if (!widget.panelAvailable) {
       _controller.areas[1].flex = 0;
     } else if (_panelFlex >= _rememberedFlexFloor) {
@@ -97,7 +152,9 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
   @override
   void dispose() {
     _controller.removeListener(_handleControllerChanged);
+    _animationController.removeStatusListener(_handleAnimationStatus);
     _animationController.dispose();
+    _animationState.dispose();
     super.dispose();
   }
 
@@ -107,13 +164,32 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       _rememberedPanelFlex = flex;
     }
     // layout 由 MultiSplitView 自己监听 controller 完成；这里只在展开/收起翻转时
-    // 重建，用来挂载/卸载右侧子树和切换图标，避免动画每帧重建整棵分栏。
+    // 重建。展开方向动画中就挂载（面板要跟着滑入）；收起方向等播完再卸载，
+    // 动画尾部不砸卸载开销（卸载见 _handleAnimationStatus）。
     final expanded = flex > _collapsedFlexThreshold;
-    if (expanded != _expanded) {
-      _expanded = expanded;
-      if (mounted) {
-        setState(() {});
-      }
+    if (expanded == _expanded) {
+      return;
+    }
+    if (_animationController.isAnimating && !expanded) {
+      return;
+    }
+    _expanded = expanded;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  /// 动画播完：清视频锁尺寸；收起方向此时才卸载右子树（展开方向开头已挂载）。
+  void _handleAnimationStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed &&
+        status != AnimationStatus.dismissed) {
+      return;
+    }
+    _animationState.value = const PlayerSplitAnimation.idle();
+    if (_animationEndFlex <= _collapsedFlexThreshold &&
+        _expanded &&
+        mounted) {
+      setState(() => _expanded = false);
     }
   }
 
@@ -134,7 +210,28 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
     }
     _animationBeginFlex = from;
     _animationEndFlex = target;
+    // 动画期间把视频锁在结束态槽位尺寸：视频层不再随槽位逐帧重采样，
+    // 播完时实际槽位与锁定尺寸一致、无跳变。点击时刻跳一次，被点击反馈盖住。
+    _animationState.value = PlayerSplitAnimation(
+      isAnimating: true,
+      lockedVideoSize: _endLeftSlotSize(target),
+    );
     _animationController.forward(from: 0);
+  }
+
+  /// 动画结束时左侧槽位的像素尺寸（高全程不变，动画只改宽度）。
+  Size? _endLeftSlotSize(double targetPanelFlex) {
+    final available = _lastAvailableWidth;
+    final height = _lastSlotHeight;
+    if (available <= 0 || height <= 0) {
+      return null;
+    }
+    final leftFlex = _controller.areas[0].flex ?? 1;
+    final total = leftFlex + targetPanelFlex;
+    if (total <= 0) {
+      return null;
+    }
+    return Size(available * leftFlex / total, height);
   }
 
   void _togglePanel() {
@@ -180,6 +277,10 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final available = math.max(constraints.maxWidth - spacing.xs, 0.0);
+          _lastAvailableWidth = available;
+          if (constraints.maxHeight.isFinite) {
+            _lastSlotHeight = constraints.maxHeight;
+          }
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -187,7 +288,17 @@ class _CollapsiblePlayerSplitViewState extends State<CollapsiblePlayerSplitView>
                 controller: widget.controller,
                 axis: Axis.horizontal,
                 builder: (context, area) => area.index == 0
-                    ? RepaintBoundary(child: widget.leftBuilder(context))
+                    ? RepaintBoundary(
+                        // scope 必须在 leftBuilder 执行前就挂在树上：外层先包
+                        // scope，内层 Builder 的 context 才能读到它。
+                        child: PlayerSplitAnimationScope(
+                          state: _animationState,
+                          child: Builder(
+                            builder: (innerContext) =>
+                                widget.leftBuilder(innerContext),
+                          ),
+                        ),
+                      )
                     : _expanded
                     ? _buildClippedPanel(context, available)
                     : const SizedBox.shrink(),

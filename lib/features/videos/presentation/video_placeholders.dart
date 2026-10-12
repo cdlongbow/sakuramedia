@@ -32,7 +32,6 @@ VideoCollectionDetailState videoCollectionDetailPlaceholder({
     items: List<VideoCollectionItemDto>.generate(
       itemCount,
       (index) => VideoCollectionItemDto(
-        itemId: -1 - index,
         position: index,
         video: _videoPlaceholder(index),
       ),

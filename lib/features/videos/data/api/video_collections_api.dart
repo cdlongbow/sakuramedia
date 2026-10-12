@@ -71,7 +71,7 @@ class VideoCollectionsApi {
       queryParameters['include_play_url'] = true;
     }
     final response = await _apiClient.get(
-      '/video-collections/$collectionId/items',
+      '/video-collections/$collectionId/videos',
       queryParameters: queryParameters,
     );
     return PaginatedResponseDto<VideoCollectionItemDto>.fromJson(
@@ -82,7 +82,7 @@ class VideoCollectionsApi {
 
   /// 拉取合集**全部**成员：并发翻页（见 [fetchAllPagesConcurrently]），墙钟从串行的
   /// O(N) 降到 ~O(N/并发)。详情页/连播页都用它替代旧的一次性全返。并发期间集合被并发
-  /// 增删导致页窗口错位时，按 `itemId` 去重避免重复成员进播放列表。
+  /// 增删导致页窗口错位时，按 `video.id` 去重避免重复成员进播放列表。
   Future<List<VideoCollectionItemDto>> getAllCollectionItems({
     required int collectionId,
     String? sort,
@@ -105,24 +105,24 @@ class VideoCollectionsApi {
       extractItems: (response) => response.items,
       pageSize: pageSize,
       concurrency: concurrency,
-      keyOf: (item) => item.itemId,
+      keyOf: (item) => item.video.id,
     );
   }
 
-  Future<void> addCollectionItem({
+  /// 追加视频到合集末尾（后端幂等，已存在则无副作用）。
+  Future<void> addVideoToCollection({
     required int collectionId,
     required int videoItemId,
   }) {
-    return _apiClient.postNoContent(
-      '/video-collections/$collectionId/items',
-      data: <String, dynamic>{'video_item_id': videoItemId},
+    return _apiClient.putNoContent(
+      '/video-collections/$collectionId/videos/$videoItemId',
     );
   }
 
   /// 按视频 id 从合集移出成员（唯一移出入口）。
   ///
   /// 不需要成员行 id，加入后立刻取消勾选也能移出；幂等，非成员调用同样成功。
-  Future<void> removeCollectionVideo({
+  Future<void> removeVideoFromCollection({
     required int collectionId,
     required int videoItemId,
   }) {

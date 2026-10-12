@@ -80,7 +80,6 @@ class _VideoCollectionPlayContentState
         PlayerAppFullscreenStateMixin<VideoCollectionPlayContent> {
   List<VideoItemListItemDto> _videos = const <VideoItemListItemDto>[];
   List<String> _playUrls = <String>[];
-  List<int> _collectionItemIds = <int>[];
   final _queueRevision = ValueNotifier<int>(0);
   final _videoKey = GlobalKey<VideoState>();
   OverlayEntry? _playerOverlayEntry;
@@ -132,7 +131,6 @@ class _VideoCollectionPlayContentState
             includePlayUrl: true,
           );
       final playUrls = <String>[];
-      final collectionItemIds = <int>[];
       final playableVideos = <VideoItemListItemDto>[];
       // 与 playableVideos 平行：每集「首个媒体」id（可空），供右侧关键帧面板逐集拉缩略图。
       final playableFirstMediaIds = <int?>[];
@@ -156,7 +154,6 @@ class _VideoCollectionPlayContentState
         }
         playUrls.add(playUrl);
         playableVideos.add(items[i].video);
-        collectionItemIds.add(items[i].itemId);
         playableFirstMediaIds.add(items[i].firstMediaId);
         playableDurations.add(items[i].video.durationSeconds);
       }
@@ -219,7 +216,6 @@ class _VideoCollectionPlayContentState
       setState(() {
         _videos = playableVideos;
         _playUrls = playUrls;
-        _collectionItemIds = collectionItemIds;
         _playbackInfoController?.dispose();
         _playbackInfoController = playbackInfoController;
         attachPlayback(
@@ -423,7 +419,7 @@ class _VideoCollectionPlayContentState
         deleteMedia: deleteMedia,
         persist: () => deleteMedia
             ? videosApi.deleteVideo(videoId)
-            : collectionsApi.removeCollectionVideo(
+            : collectionsApi.removeVideoFromCollection(
                 collectionId: widget.collectionId,
                 videoItemId: videoId,
               ),
@@ -441,7 +437,6 @@ class _VideoCollectionPlayContentState
           if (!mounted) return;
           _videos.removeAt(index);
           _playUrls.removeAt(index);
-          _collectionItemIds.removeAt(index);
         },
       );
       if (mounted) showToast(deleteMedia ? '已删除选集及关联媒体' : '已移出合集，视频仍保留');

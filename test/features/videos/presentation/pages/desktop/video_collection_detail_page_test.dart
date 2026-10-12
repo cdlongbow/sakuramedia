@@ -59,12 +59,11 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/1/items',
+      path: '/video-collections/1/videos',
       body: <String, dynamic>{
         'items': <Map<String, dynamic>>[
           for (var i = 0; i < total; i++)
             <String, dynamic>{
-              'item_id': i + 1,
               'position': i,
               'video': <String, dynamic>{
                 'id': i + 1,
@@ -133,7 +132,7 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/1/items',
+      path: '/video-collections/1/videos',
       body: const <String, dynamic>{
         'items': <dynamic>[],
         'page': 1,
@@ -249,7 +248,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('批量移出成员提交 video_collection_remove 且 ids 是成员 item_id', (
+  testWidgets('批量移出成员提交 video_collection_remove 且 ids 是 video id', (
     WidgetTester tester,
   ) async {
     enqueueInitialLoad();
@@ -293,7 +292,7 @@ void main() {
       'delete_files': false,
     });
     expect(
-      adapter.hitCount('DELETE', '/video-collections/1/items/1'),
+      adapter.hitCount('DELETE', '/video-collections/1/videos/1'),
       0,
     );
     // 提交后列表不即时变化，等任务完成后手动刷新。

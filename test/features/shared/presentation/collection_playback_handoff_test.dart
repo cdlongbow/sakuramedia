@@ -6,7 +6,6 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 void main() {
   VideoCollectionItemDto videoItem(int id) =>
       VideoCollectionItemDto.fromJson(<String, dynamic>{
-        'item_id': id,
         'position': id,
         'play_url': '/media/$id/play/?expires=1777777777&signature=abc',
         'video': <String, dynamic>{

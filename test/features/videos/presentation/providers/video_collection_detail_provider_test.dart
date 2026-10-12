@@ -29,7 +29,6 @@ Map<String, dynamic> _itemsBody() => <String, dynamic>{
   'total': 2,
   'items': <dynamic>[
     <String, dynamic>{
-      'item_id': 100,
       'position': 0,
       'video': <String, dynamic>{
         'id': 1,
@@ -41,7 +40,6 @@ Map<String, dynamic> _itemsBody() => <String, dynamic>{
       },
     },
     <String, dynamic>{
-      'item_id': 101,
       'position': 1,
       'video': <String, dynamic>{
         'id': 2,
@@ -109,12 +107,12 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/3/items',
+      path: '/video-collections/3/videos',
       body: _itemsBody(),
     );
   }
 
-  test('removeItem 成功：乐观移除并返回 null', () async {
+  test('removeVideo 成功：乐观移除并返回 null', () async {
     enqueueLoad();
     adapter.enqueueJson(
       method: 'DELETE',
@@ -128,14 +126,14 @@ void main() {
 
     final error = await container
         .read(videoCollectionDetailProvider(3).notifier)
-        .removeItem(100, 1);
+        .removeVideo(1);
 
     expect(error, isNull);
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;
-    expect(state.items.map((item) => item.itemId).toList(), <int>[101]);
+    expect(state.items.map((item) => item.video.id).toList(), <int>[2]);
   });
 
-  test('removeItem 失败：回滚并返回错误消息', () async {
+  test('removeVideo 失败：回滚并返回错误消息', () async {
     enqueueLoad();
     adapter.enqueueJson(
       method: 'DELETE',
@@ -151,17 +149,16 @@ void main() {
 
     final error = await container
         .read(videoCollectionDetailProvider(3).notifier)
-        .removeItem(100, 1);
+        .removeVideo(1);
 
     expect(error, isNotNull);
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;
     // 失败回滚，成员仍在。
-    expect(state.items.map((item) => item.itemId).toList(), <int>[100, 101]);
+    expect(state.items.map((item) => item.video.id).toList(), <int>[1, 2]);
   });
 
   test('deleteVideo 成功：乐观移除该成员', () async {
     enqueueLoad();
-    // 删除的是视频本体（itemId 100 对应 video.id 1）。
     adapter.enqueueJson(
       method: 'DELETE',
       path: '/videos/1',
@@ -174,9 +171,9 @@ void main() {
 
     await container
         .read(videoCollectionDetailProvider(3).notifier)
-        .deleteVideo(100, 1);
+        .deleteVideo(1);
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;
-    expect(state.items.map((item) => item.itemId).toList(), <int>[101]);
+    expect(state.items.map((item) => item.video.id).toList(), <int>[2]);
     expect(adapter.requests.last.path, '/videos/1');
   });
 
@@ -197,12 +194,12 @@ void main() {
     await expectLater(
       container
           .read(videoCollectionDetailProvider(3).notifier)
-          .deleteVideo(100, 1),
+          .deleteVideo(1),
       throwsA(isA<ApiException>()),
     );
     final state = container.read(videoCollectionDetailProvider(3)).requireValue;
     // 失败回滚，成员仍在。
-    expect(state.items.map((item) => item.itemId).toList(), <int>[100, 101]);
+    expect(state.items.map((item) => item.video.id).toList(), <int>[1, 2]);
   });
 
   test('默认手动顺序：build 不带 sort 参数', () async {
@@ -215,7 +212,7 @@ void main() {
     expect(state.sort.field, isNull);
     expect(state.sort.apiValue, isNull);
     final itemsRequest = adapter.requests.firstWhere(
-      (request) => request.path == '/video-collections/3/items',
+      (request) => request.path == '/video-collections/3/videos',
     );
     expect(itemsRequest.uri.queryParameters.containsKey('sort'), isFalse);
   });
@@ -225,7 +222,7 @@ void main() {
     // 切到「时长降序」后按新排序重拉成员。
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/3/items',
+      path: '/video-collections/3/videos',
       body: _itemsBody(),
     );
 
@@ -246,7 +243,7 @@ void main() {
     expect(pending.sort.direction, SortDirection.desc);
     expect(pending.filterUpdate.isWaiting, isTrue);
     expect(pending.items, isNotEmpty);
-    expect(adapter.hitCount('GET', '/video-collections/3/items'), 1);
+    expect(adapter.hitCount('GET', '/video-collections/3/videos'), 1);
 
     await update;
 
@@ -263,12 +260,12 @@ void main() {
     enqueueLoad();
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/3/items',
+      path: '/video-collections/3/videos',
       body: _itemsBody(),
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/3/items',
+      path: '/video-collections/3/videos',
       body: _itemsBody(),
     );
 

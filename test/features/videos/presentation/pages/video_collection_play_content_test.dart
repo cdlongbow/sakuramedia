@@ -75,7 +75,6 @@ void main() {
       final items = [
         for (var i = 0; i < 3; i++)
           VideoCollectionItemDto.fromJson({
-            'item_id': 100 + i,
             'position': i,
             'first_media_id': i + 1,
             'play_url': 'https://api.example.com/media/${i + 1}/play/',

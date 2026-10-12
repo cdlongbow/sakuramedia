@@ -48,8 +48,8 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
               actions.playSingle(context, video.id, video.preferredTitle),
           onThumbnails: () =>
               context.pushDesktopVideoThumbnails(videoId: video.id),
-          onRemoveFromCollection: () => actions.remove(item.itemId),
-          onDelete: () => actions.delete(item.itemId),
+          onRemoveFromCollection: () => actions.remove(item.video.id),
+          onDelete: () => actions.delete(item.video.id),
           collections: otherCollections,
           onCollectionTap: (ref) =>
               context.pushDesktopVideoCollectionDetail(collectionId: ref.id),

@@ -116,8 +116,8 @@ void main() {
   testWidgets('点未勾选行加入、点已勾选行按视频移出', (WidgetTester tester) async {
     enqueueCollections();
     adapter.enqueueJson(
-      method: 'POST',
-      path: '/video-collections/5/items',
+      method: 'PUT',
+      path: '/video-collections/5/videos/101',
       statusCode: 204,
     );
     adapter.enqueueJson(
@@ -140,10 +140,10 @@ void main() {
 
     expect(checkboxOf(tester, 5).value, isTrue);
     final addRequest = adapter.requests.singleWhere(
-      (request) => request.method == 'POST',
+      (request) => request.method == 'PUT',
     );
-    expect(addRequest.path, '/video-collections/5/items');
-    expect(addRequest.body, <String, dynamic>{'video_item_id': 101});
+    expect(addRequest.path, '/video-collections/5/videos/101');
+    expect(addRequest.body, isNull);
 
     await tester.tap(
       find.byKey(const Key('add-to-video-collection-option-3')),

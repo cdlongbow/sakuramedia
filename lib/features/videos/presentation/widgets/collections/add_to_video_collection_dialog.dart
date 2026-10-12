@@ -273,12 +273,12 @@ class _AddToVideoCollectionDialogState
     });
     try {
       if (isSelected) {
-        await api.removeCollectionVideo(
+        await api.removeVideoFromCollection(
           collectionId: collection.id,
           videoItemId: widget.videoItemId,
         );
       } else {
-        await api.addCollectionItem(
+        await api.addVideoToCollection(
           collectionId: collection.id,
           videoItemId: widget.videoItemId,
         );

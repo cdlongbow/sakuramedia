@@ -67,8 +67,8 @@ class VideoCollectionMemberActions {
   });
 
   final VideoCollectionPlaySingle playSingle;
-  final Future<void> Function(int itemId) remove;
-  final Future<void> Function(int itemId) delete;
+  final Future<void> Function(int videoId) remove;
+  final Future<void> Function(int videoId) delete;
 }
 
 /// 视频合集详情共享实现（桌面 / 移动双端壳收敛的 content 层）。
@@ -418,8 +418,8 @@ class _VideoCollectionDetailContentState
     BuildContext context,
     VideoCollectionDetailState state,
   ) {
-    final itemIds = state.items.map((it) => it.itemId);
-    final allSelected = isAllSelected(itemIds);
+    final videoIds = state.items.map((it) => it.video.id);
+    final allSelected = isAllSelected(videoIds);
     final hasSelection = selectedCount > 0;
     final submitting = watchBatchOperationSubmitting(ref, const [
       BatchOperationType.videoCollectionAdd,
@@ -440,7 +440,7 @@ class _VideoCollectionDetailContentState
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.xSmall,
             isSelected: allSelected,
-            onPressed: () => toggleSelectAll(itemIds),
+            onPressed: () => toggleSelectAll(videoIds),
           ),
         ],
       );
@@ -449,7 +449,7 @@ class _VideoCollectionDetailContentState
       countLabel: '已选 $selectedCount 个',
       selectAllLabel: allSelected ? '取消全选' : '全选',
       selectAllKey: Key('${widget.keyPrefix}-select-all-button'),
-      onToggleAll: () => toggleSelectAll(itemIds),
+      onToggleAll: () => toggleSelectAll(videoIds),
       actions: [
         AppButton(
           key: Key('${widget.keyPrefix}-batch-add-collection-button'),
@@ -569,11 +569,11 @@ class _VideoCollectionDetailContentState
             return AspectRatio(
               aspectRatio: aspect,
               child: CollectionMemberCard(
-                key: ValueKey<int>(item.itemId),
+                key: ValueKey<int>(item.video.id),
                 onLongPress: _isMobile && !selectionMode
                     ? () {
                         enterSelection();
-                        toggleSelect(item.itemId);
+                        toggleSelect(item.video.id);
                       }
                     : null,
                 coverUrl: item.video.coverImage?.origin,
@@ -584,9 +584,9 @@ class _VideoCollectionDetailContentState
                 // 副信息只在桌面悬停面板渲染；移动端无 hover，收起态不铺文字。
                 subtitle: _formatReleaseDate(item.video.releaseDate),
                 onTap: selectionMode
-                    ? () => toggleSelect(item.itemId)
+                    ? () => toggleSelect(item.video.id)
                     : () => _openMemberActions(context, item),
-                menuKey: Key('${widget.keyPrefix}-grid-menu-${item.itemId}'),
+                menuKey: Key('${widget.keyPrefix}-grid-menu-${item.video.id}'),
                 onPlay: _isMobile || playSingle == null
                     ? null
                     : () => playSingle(
@@ -595,29 +595,29 @@ class _VideoCollectionDetailContentState
                         item.video.preferredTitle,
                       ),
                 playButtonKey: Key(
-                  '${widget.keyPrefix}-grid-play-${item.itemId}',
+                  '${widget.keyPrefix}-grid-play-${item.video.id}',
                 ),
                 onThumbnails: _isMobile ? null : () => _openThumbnails(item),
                 thumbnailsButtonKey: Key(
-                  '${widget.keyPrefix}-grid-thumbnails-${item.itemId}',
+                  '${widget.keyPrefix}-grid-thumbnails-${item.video.id}',
                 ),
                 onAddToCollection: _isMobile
                     ? null
                     : () => _addToOtherCollection(item),
                 addToCollectionButtonKey: Key(
-                  '${widget.keyPrefix}-grid-add-collection-${item.itemId}',
+                  '${widget.keyPrefix}-grid-add-collection-${item.video.id}',
                 ),
-                onRemove: _isMobile ? null : () => _removeItem(item.itemId),
+                onRemove: _isMobile ? null : () => _removeVideo(item.video.id),
                 removeButtonKey: Key(
-                  '${widget.keyPrefix}-grid-remove-${item.itemId}',
+                  '${widget.keyPrefix}-grid-remove-${item.video.id}',
                 ),
-                onDelete: _isMobile ? null : () => _deleteVideo(item.itemId),
+                onDelete: _isMobile ? null : () => _deleteVideo(item.video.id),
                 deleteButtonKey: Key(
-                  '${widget.keyPrefix}-grid-delete-${item.itemId}',
+                  '${widget.keyPrefix}-grid-delete-${item.video.id}',
                 ),
                 expandToParent: true,
                 selectionMode: selectionMode,
-                isSelected: isSelected(item.itemId),
+                isSelected: isSelected(item.video.id),
               ),
             );
           },
@@ -638,28 +638,14 @@ class _VideoCollectionDetailContentState
       item,
       VideoCollectionMemberActions(
         playSingle: widget.playSingle ?? (_, __, ___) async {},
-        remove: _removeItem,
+        remove: _removeVideo,
         delete: _deleteVideo,
       ),
     );
   }
 
-  Future<void> _removeItem(int itemId) async {
-    final items =
-        ref.read(_providerRef).value?.items ?? const <VideoCollectionItemDto>[];
-    int? videoId;
-    for (final item in items) {
-      if (item.itemId == itemId) {
-        videoId = item.video.id;
-        break;
-      }
-    }
-    if (videoId == null) {
-      return;
-    }
-    final error = await ref
-        .read(_providerRef.notifier)
-        .removeItem(itemId, videoId);
+  Future<void> _removeVideo(int videoId) async {
+    final error = await ref.read(_providerRef.notifier).removeVideo(videoId);
     if (!mounted) {
       return;
     }
@@ -675,22 +661,16 @@ class _VideoCollectionDetailContentState
 
   /// 彻底删除视频本体（含文件，不可恢复）：先确认，再走 notifier 乐观删除并广播
   /// [VideoMutationEvents.reportDeleted]，让列表页网格精准移除、合集横滑区刷新。
-  Future<void> _deleteVideo(int itemId) async {
+  Future<void> _deleteVideo(int videoId) async {
     final items =
         ref.read(_providerRef).value?.items ?? const <VideoCollectionItemDto>[];
-    int? videoId;
     var title = '';
     for (final item in items) {
-      if (item.itemId == itemId) {
-        videoId = item.video.id;
+      if (item.video.id == videoId) {
         title = item.video.preferredTitle.trim();
         break;
       }
     }
-    if (videoId == null) {
-      return;
-    }
-    final targetVideoId = videoId;
     final label = title.isEmpty ? '该视频' : '“$title”';
     final notifier = ref.read(_providerRef.notifier);
     final confirmed = await _confirm(
@@ -699,12 +679,12 @@ class _VideoCollectionDetailContentState
       confirmLabel: '删除',
       confirmKey: Key('${widget.keyPrefix}-delete-confirm-button'),
       drawerKey: _isMobile ? Key('${widget.keyPrefix}-delete-drawer') : null,
-      onConfirm: () => notifier.deleteVideo(itemId, targetVideoId),
+      onConfirm: () => notifier.deleteVideo(videoId),
     );
     if (!mounted || !confirmed) {
       return;
     }
-    _mutationBroadcaster.reportDeleted(targetVideoId);
+    _mutationBroadcaster.reportDeleted(videoId);
     showToast('已删除视频');
   }
 
@@ -729,7 +709,7 @@ class _VideoCollectionDetailContentState
     try {
       await ref
           .read(videoCollectionsApiProvider)
-          .addCollectionItem(
+          .addVideoToCollection(
             collectionId: target.id,
             videoItemId: item.video.id,
           );
@@ -805,7 +785,7 @@ class _VideoCollectionDetailContentState
 
   List<VideoCollectionItemDto> _selectedItems(
     VideoCollectionDetailState state,
-  ) => state.items.where((it) => isSelected(it.itemId)).toList(growable: false);
+  ) => state.items.where((it) => isSelected(it.video.id)).toList(growable: false);
 
   Future<void> _batchAddToOtherCollection(
     VideoCollectionDetailState state,
@@ -859,7 +839,7 @@ class _VideoCollectionDetailContentState
       ref,
       operation: BatchOperationType.videoCollectionRemove,
       targetCollectionId: widget.collectionId,
-      ids: selected.map((item) => item.itemId).toList(growable: false),
+      ids: selected.map((item) => item.video.id).toList(growable: false),
     );
     if (!mounted) {
       return;

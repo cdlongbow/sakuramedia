@@ -55,12 +55,11 @@ void main() {
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/1/items',
+      path: '/video-collections/1/videos',
       body: <String, dynamic>{
         'items': <Map<String, dynamic>>[
           for (var i = 0; i < total; i++)
             <String, dynamic>{
-              'item_id': i + 1,
               'position': i,
               'video': <String, dynamic>{
                 'id': i + 1,
@@ -176,7 +175,7 @@ void main() {
 
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/1/items',
+      path: '/video-collections/1/videos',
       body: <String, dynamic>{
         'items': <Map<String, dynamic>>[],
         'page': 1,
@@ -190,7 +189,7 @@ void main() {
 
     // 即时生效：点选当场带 sort 重新拉取成员。
     final lastRequest = adapter.requests.last;
-    expect(lastRequest.path, '/video-collections/1/items');
+    expect(lastRequest.path, '/video-collections/1/videos');
     expect(lastRequest.uri.queryParameters['sort'], startsWith('title:'));
   });
 }

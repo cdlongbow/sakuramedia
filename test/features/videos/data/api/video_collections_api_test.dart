@@ -35,14 +35,13 @@ void main() {
   test('getCollectionItems 分页解析 position/内嵌视频/playUrl 并拼分页参数', () async {
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/3/items',
+      path: '/video-collections/3/videos',
       body: <String, dynamic>{
         'page': 1,
         'page_size': 100,
         'total': 2,
         'items': <dynamic>[
           <String, dynamic>{
-            'item_id': 100,
             'position': 0,
             'play_url': '/media/9/play/?expires=1777777777&signature=abc',
             'first_media_id': 9,
@@ -56,7 +55,6 @@ void main() {
             },
           },
           <String, dynamic>{
-            'item_id': 101,
             'position': 1,
             'video': <String, dynamic>{
               'id': 2,
@@ -78,7 +76,7 @@ void main() {
 
     expect(result.items, hasLength(2));
     expect(result.total, 2);
-    expect(result.items.first.itemId, 100);
+    expect(result.items.first.video.id, 1);
     expect(result.items.first.position, 0);
     expect(result.items.first.video.title, '第一段');
     expect(
@@ -108,7 +106,6 @@ void main() {
             ids
                 .map(
                   (id) => <String, dynamic>{
-                    'item_id': id + 100,
                     'position': id,
                     'video': <String, dynamic>{
                       'id': id,
@@ -126,12 +123,12 @@ void main() {
 
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/7/items',
+      path: '/video-collections/7/videos',
       body: pageBody(1, <int>[0, 1], 3),
     );
     adapter.enqueueJson(
       method: 'GET',
-      path: '/video-collections/7/items',
+      path: '/video-collections/7/videos',
       body: pageBody(2, <int>[2], 3),
     );
 
@@ -143,17 +140,36 @@ void main() {
     expect(items, hasLength(3));
     expect(items.map((it) => it.video.id), <int>[0, 1, 2]);
     // 翻了两页直至取满 total。
-    expect(adapter.hitCount('GET', '/video-collections/7/items'), 2);
+    expect(adapter.hitCount('GET', '/video-collections/7/videos'), 2);
   });
 
-  test('removeCollectionVideo 按视频 id 移出合集', () async {
+  test('addVideoToCollection 以视频 id 幂等加入合集', () async {
+    adapter.enqueueJson(
+      method: 'PUT',
+      path: '/video-collections/3/videos/101',
+      statusCode: 204,
+    );
+
+    await collectionsApi.addVideoToCollection(
+      collectionId: 3,
+      videoItemId: 101,
+    );
+
+    expect(adapter.requests.single.method, 'PUT');
+    expect(
+      adapter.requests.single.uri.path,
+      '/video-collections/3/videos/101',
+    );
+  });
+
+  test('removeVideoFromCollection 按视频 id 移出合集', () async {
     adapter.enqueueJson(
       method: 'DELETE',
       path: '/video-collections/3/videos/101',
       statusCode: 204,
     );
 
-    await collectionsApi.removeCollectionVideo(
+    await collectionsApi.removeVideoFromCollection(
       collectionId: 3,
       videoItemId: 101,
     );

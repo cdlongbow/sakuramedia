@@ -49,8 +49,8 @@ class MobileVideoCollectionDetailPage extends StatelessWidget {
           onThumbnails: () => MobileVideoThumbnailRouteData(
             videoId: video.id,
           ).push<void>(context),
-          onRemoveFromCollection: () => actions.remove(item.itemId),
-          onDelete: () => actions.delete(item.itemId),
+          onRemoveFromCollection: () => actions.remove(item.video.id),
+          onDelete: () => actions.delete(item.video.id),
           collections: otherCollections,
           onCollectionTap: (ref) => MobileVideoCollectionDetailRouteData(
             collectionId: ref.id,

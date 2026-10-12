@@ -346,7 +346,7 @@ void main() {
       'delete_files': false,
     });
     expect(
-      adapter.hitCount('POST', '/video-collections/7/items'),
+      adapter.hitCount('PUT', '/video-collections/7/videos/1'),
       0,
     );
     expect(find.byType(AppSelectionHeaderToolbar), findsNothing);

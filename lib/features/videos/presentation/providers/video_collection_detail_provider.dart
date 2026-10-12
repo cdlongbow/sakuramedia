@@ -180,19 +180,19 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
   }
 
   /// 从合集移除成员（乐观更新）；失败回滚并返回错误消息。
-  Future<String?> removeItem(int itemId, int videoItemId) async {
+  Future<String?> removeVideo(int videoItemId) async {
     try {
       return await withOptimisticPatch<String?>(
         key: _mutationKey,
         apply: (s) => s.copyWith(
           items: s.items
-              .where((item) => item.itemId != itemId)
+              .where((item) => item.video.id != videoItemId)
               .toList(growable: false),
         ),
         action: () async {
           await ref
               .read(videoCollectionsApiProvider)
-              .removeCollectionVideo(
+              .removeVideoFromCollection(
                 collectionId: collectionId,
                 videoItemId: videoItemId,
               );
@@ -205,14 +205,14 @@ class VideoCollectionDetail extends _$VideoCollectionDetail
   }
 
   /// 彻底删除视频本体（连同文件，不可恢复）；乐观更新，失败回滚并 rethrow。
-  /// 与 [removeItem] 区别：调用 `videosApi.deleteVideo` 删除视频本身而非仅解除
+  /// 与 [removeVideo] 区别：调用 `videosApi.deleteVideo` 删除视频本身而非仅解除
   /// 合集归属，调用方成功后应广播 `reportDeleted`（而非成员变化）。
-  Future<void> deleteVideo(int itemId, int videoId) async {
+  Future<void> deleteVideo(int videoId) async {
     await withOptimisticPatch<void>(
       key: _mutationKey,
       apply: (s) => s.copyWith(
         items: s.items
-            .where((item) => item.itemId != itemId)
+            .where((item) => item.video.id != videoId)
             .toList(growable: false),
       ),
       action: () => ref.read(videosApiProvider).deleteVideo(videoId),

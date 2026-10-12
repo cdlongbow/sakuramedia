@@ -59,14 +59,12 @@ MovieImageDto? _coverImageFromJson(dynamic value) {
 /// 面板据此调 `GET /media/{id}/thumbnails` 拉该集关键帧。
 class VideoCollectionItemDto {
   const VideoCollectionItemDto({
-    required this.itemId,
     required this.position,
     required this.video,
     this.playUrl,
     this.firstMediaId,
   });
 
-  final int itemId;
   final int position;
   final VideoItemListItemDto video;
   final String? playUrl;
@@ -81,7 +79,6 @@ class VideoCollectionItemDto {
             )
             : <String, dynamic>{};
     return VideoCollectionItemDto(
-      itemId: _intFromJson(json['item_id']) ?? 0,
       position: _intFromJson(json['position']) ?? 0,
       video: VideoItemListItemDto.fromJson(videoMap),
       playUrl: asStringOrNull(json['play_url']),

@@ -366,8 +366,12 @@ class _MomentCollectionDetailContentState
         );
         return GridView.builder(
           key: Key('$_keyPrefix-detail-grid'),
+          // 底部 = 区块留白 + 底部安全区：外壳不吞安全区，多选态底部操作条之上
+          // 也要留出 home indicator 的高度。
           padding: _isMobile
-              ? EdgeInsets.only(bottom: spacing.lg)
+              ? EdgeInsets.only(
+                  bottom: spacing.lg + MediaQuery.paddingOf(context).bottom,
+                )
               : EdgeInsets.zero,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,

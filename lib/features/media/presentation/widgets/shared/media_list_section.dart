@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
@@ -170,6 +171,7 @@ class MediaListSection extends StatelessWidget {
           onLoadMore: (ref) =>
               unawaited(ref.read(mediaBrowseProvider.notifier).loadMore()),
         ),
+        ...bottomSafeAreaSliver(context),
       ],
     );
     final resultView = Consumer(

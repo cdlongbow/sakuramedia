@@ -37,6 +37,7 @@ import 'package:sakuramedia/features/image_search/presentation/widgets/image_sea
 import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_grid.dart';
 import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_preview_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
@@ -289,6 +290,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
                   child: loadMoreFooter,
                 ),
               ),
+            ...bottomSafeAreaSliver(context),
           ],
         ),
       ),

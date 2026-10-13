@@ -1584,6 +1584,19 @@ void main() {
     final router = buildMobileRouter(sessionStore: sessionStore);
     _enqueueMovieDetailResponse(bundle);
 
+    // 底部安全区交给滚动层：外壳内容区一直铺到屏幕物理底边（home indicator
+    // 区不再露出未绘制黑底），滚动末尾由 AppAdaptiveRefreshScrollView 补留白。
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.padding = const FakeViewPadding(bottom: 34);
+    tester.view.viewPadding = const FakeViewPadding(bottom: 34);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPadding();
+      tester.view.resetViewPadding();
+    });
+
     await _pumpRouterApp(
       tester,
       router: router,
@@ -1597,7 +1610,13 @@ void main() {
 
     expect(find.byKey(const Key('mobile-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('mobile-subpage-topbar')), findsOneWidget);
-    expect(find.text('影片详情'), findsOneWidget);
+    // 沉浸详情不占标题位：顶栏只剩返回键和渐变。
+    expect(find.byKey(const Key('mobile-subpage-title')), findsNothing);
+    expect(find.byKey(const Key('mobile-subpage-back-button')), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const Key('mobile-subpage-body-padding'))).bottom,
+      moreOrLessEquals(844),
+    );
     expect(find.byKey(const Key('movie-detail-page')), findsOneWidget);
     final detailPage = _findPageByName(tester, 'mobile-movie-detail');
     expect(detailPage, isA<CupertinoPage<void>>());

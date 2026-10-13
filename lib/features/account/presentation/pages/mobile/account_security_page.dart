@@ -90,11 +90,12 @@ class _MobileAccountSecurityPageState
 
     return ListView(
       key: const Key('mobile-settings-account-security'),
+      // 底部 = 常规留白 + 底部安全区：子页外壳不吞安全区，页面自己补回。
       padding: EdgeInsets.fromLTRB(
         spacing.md,
         spacing.md,
         spacing.md,
-        spacing.lg,
+        spacing.lg + MediaQuery.paddingOf(context).bottom,
       ),
       children: [
         _buildAccountCard(context, profileState),

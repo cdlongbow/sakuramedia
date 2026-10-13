@@ -6,6 +6,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
@@ -31,12 +32,16 @@ void main() {
     bundle.dispose();
   });
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<void> pumpPage(WidgetTester tester, {double bottomInset = 0}) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
+    tester.view.padding = FakeViewPadding(bottom: bottomInset);
+    tester.view.viewPadding = FakeViewPadding(bottom: bottomInset);
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
+      tester.view.resetPadding();
+      tester.view.resetViewPadding();
     });
 
     await tester.pumpWidget(
@@ -78,6 +83,29 @@ void main() {
       sakuraMobileThemeData.appColors.surfaceCard,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('底部安全区在滚动末尾补出，末块内容不被 home indicator 压住', (
+    WidgetTester tester,
+  ) async {
+    _enqueueMovieDetailResponses(bundle);
+
+    await pumpPage(tester, bottomInset: 34);
+
+    final scrollable = find.descendant(
+      of: find.byKey(MovieDetailPageContent.scrollViewKey),
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+
+    // 滚到底：留白正好占屏幕最后 34pt，最后一块内容停在它上方。
+    final insetRect = tester.getRect(
+      find.byKey(bottomSafeAreaScrollInsetKey),
+    );
+    expect(insetRect.height, moreOrLessEquals(34));
+    expect(insetRect.bottom, moreOrLessEquals(844));
   });
 
   testWidgets('tapping a clip opens the actions drawer instead of playing', (

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -244,6 +245,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           if (!widget.enablePullToRefresh) {
             listContent = scrollView;
           } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+            // iOS 的刷新容器自带底部安全区留白（[AppAdaptiveRefreshScrollView]）。
             listContent = AppAdaptiveRefreshScrollView(
               onRefresh: _handleRefresh,
               controller: _scrollController,
@@ -251,9 +253,14 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
               slivers: slivers,
             );
           } else {
+            // Android 这条自己拼：下拉刷新壳不吃底部安全区，末尾要补留白。
             listContent = AppPullToRefresh(
               onRefresh: _handleRefresh,
-              child: scrollView,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                controller: _scrollController,
+                slivers: [...slivers, ...bottomSafeAreaSliver(context)],
+              ),
             );
           }
 
@@ -496,6 +503,7 @@ class _PlaylistDetailLoadingContent extends StatelessWidget {
             items: movieListItemPlaceholders(count: 12),
             onMovieTap: _ignoreMovieTap,
           ),
+          ...bottomSafeAreaSliver(context),
         ],
       ),
     );

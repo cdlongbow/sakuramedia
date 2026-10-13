@@ -281,4 +281,108 @@ void main() {
       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     );
   });
+
+  testWidgets('mobile subpage shell keeps title and bleeds to the bottom edge', (
+    tester,
+  ) async {
+    // 底部安全区不再由外壳留：内容铺到屏幕物理底边，由滚动层/贴底条自己补留白。
+    // 修前这里 body 底边停在「屏幕高 - 34」，底部会露出未绘制的黑带。
+    await _pumpShellWithBottomInset(
+      tester,
+      const AppMobileSubpageShell(
+        title: '播放列表详情',
+        defaultLocation: '/mobile/overview',
+        child: SizedBox.shrink(),
+      ),
+    );
+
+    expect(find.text('播放列表详情'), findsOneWidget);
+    expect(
+      tester.getRect(find.byType(Scaffold)).bottom,
+      moreOrLessEquals(_kTestScreenHeight),
+    );
+  });
+
+  testWidgets('immersive mobile subpage shell drops the title bar text', (
+    tester,
+  ) async {
+    await _pumpShellWithBottomInset(
+      tester,
+      const AppMobileSubpageShell(
+        title: '影片详情',
+        defaultLocation: '/mobile/overview',
+        immersive: true,
+        child: SizedBox.shrink(),
+      ),
+    );
+
+    // 沉浸详情不占标题位：只留返回键和顶栏渐变。
+    expect(find.byKey(const Key('mobile-subpage-title')), findsNothing);
+    expect(
+      find.byKey(const Key('mobile-subpage-back-button')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getRect(find.byType(Scaffold)).bottom,
+      moreOrLessEquals(_kTestScreenHeight),
+    );
+  });
+
+  testWidgets('裸 ListView 子页靠 Flutter 自动补齐底部安全区', (
+    tester,
+  ) async {
+    // `ListView` / `GridView`（BoxScrollView）在没显式传 padding 时会把
+    // MediaQuery 的垂直 padding 当 SliverPadding 用——外观设置、外部播放器
+    // 这类页面因此不用逐个改。这里锁住这条依赖，显式传了 padding 就会破。
+    await _pumpShellWithBottomInset(
+      tester,
+      AppMobileSubpageShell(
+        title: '子页面',
+        defaultLocation: '/mobile/overview',
+        child: ListView.builder(
+          key: const Key('subpage-plain-list'),
+          itemCount: 60,
+          itemBuilder: (_, index) => SizedBox(height: 40, child: Text('$index')),
+        ),
+      ),
+    );
+
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byKey(const Key('subpage-plain-list')),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position;
+
+    // 滚动范围比纯内容高多出一个安全区高度：多出来的就是自动补在末尾的留白。
+    expect(
+      position.maxScrollExtent - (60 * 40 - position.viewportDimension),
+      moreOrLessEquals(34),
+    );
+  });
+}
+
+const double _kTestScreenHeight = 844;
+
+Future<void> _pumpShellWithBottomInset(
+  WidgetTester tester,
+  Widget shell,
+) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = const Size(390, _kTestScreenHeight);
+  tester.view.padding = const FakeViewPadding(top: 47, bottom: 34);
+  tester.view.viewPadding = const FakeViewPadding(top: 47, bottom: 34);
+  addTearDown(() {
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+    tester.view.resetPadding();
+    tester.view.resetViewPadding();
+  });
+
+  await tester.pumpWidget(
+    MaterialApp(theme: sakuraThemeData, home: shell),
+  );
+  await tester.pumpAndSettle();
 }

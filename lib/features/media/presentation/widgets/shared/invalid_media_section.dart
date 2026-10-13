@@ -26,6 +26,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_filter_total_header.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -87,6 +88,7 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
                 unawaited(ref.read(invalidMediaProvider.notifier).loadMore()),
           ),
           SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.xxl)),
+          ...bottomSafeAreaSliver(context),
         ],
       ),
     );

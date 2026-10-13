@@ -27,6 +27,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bottom_bar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 
 class MultiVersionMoviesSection extends HookConsumerWidget {
@@ -331,6 +332,7 @@ class MultiVersionMoviesSection extends HookConsumerWidget {
                 unawaited(ref.read(provider.notifier).loadMore()),
           ),
           SliverToBoxAdapter(child: SizedBox(height: spacing.xxl)),
+          ...bottomSafeAreaSliver(context),
         ],
       ),
     );

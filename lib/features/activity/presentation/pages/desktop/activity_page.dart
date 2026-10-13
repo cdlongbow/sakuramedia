@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
@@ -563,6 +564,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
               // 连接横幅独立订阅：轮询状态变化只重建它，不重建整页。
               const _ConnectionBannerSliver(),
               ..._buildTabSlivers(context),
+              ...bottomSafeAreaSliver(context),
             ],
           ),
       ),

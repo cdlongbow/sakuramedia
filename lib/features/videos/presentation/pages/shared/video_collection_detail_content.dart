@@ -551,9 +551,13 @@ class _VideoCollectionDetailContentState
         return MasonryGridView.count(
           controller: _itemsScrollController,
           key: Key('${widget.keyPrefix}-detail-grid'),
-          // 横向缩进由 shell 提供，此处只补底部留白（仅移动）。
+          // 横向缩进由 shell 提供，此处只补底部留白（仅移动）：区块留白之外
+          // 还要补回外壳不再吞掉的底部安全区。
           padding: _isMobile
-              ? EdgeInsets.only(bottom: context.appSpacing.lg)
+              ? EdgeInsets.only(
+                  bottom: context.appSpacing.lg +
+                      MediaQuery.paddingOf(context).bottom,
+                )
               : null,
           crossAxisCount: columns,
           mainAxisSpacing: spacing,

@@ -1,6 +1,7 @@
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_pull_refresh_notification.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pull_to_refresh.dart';
 
 class AppAdaptiveRefreshScrollView extends StatelessWidget {
@@ -25,6 +26,10 @@ class AppAdaptiveRefreshScrollView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIosRefresh = defaultTargetPlatform == TargetPlatform.iOS;
+    // 底部安全区在这里补：外层移动子页外壳不吞底部安全区，滚动内容铺到屏幕
+    // 物理底边，尾部留出等高留白，最后一块内容不会被 home indicator 压住。
+    // 桌面、tab 壳内（Scaffold 已 removeBottomPadding）和抽屉里读到的都是 0。
+    final paddedSlivers = <Widget>[...slivers, ...bottomSafeAreaSliver(context)];
     final scrollView = CustomScrollView(
       key: key,
       controller: controller,
@@ -35,9 +40,9 @@ class AppAdaptiveRefreshScrollView extends StatelessWidget {
               CupertinoSliverRefreshControl(
                 onRefresh: () => runAppPullRefresh(context, onRefresh),
               ),
-              ...slivers,
+              ...paddedSlivers,
             ]
-          : slivers,
+          : paddedSlivers,
     );
 
     if (isIosRefresh) {

@@ -99,6 +99,12 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
             key: const Key('mobile-subpage-safe-area'),
             // 沉浸时顶边不留安全区：封面从状态栏下开始铺。
             top: !immersive,
+            // 底边一律不留：内容铺到屏幕物理底边（沉浸页的封面背景因此盖住
+            // home indicator 区，非沉浸页由外壳底色兜底）。底部安全区改由内容
+            // 层自己留——滚动页在滚动末尾补 `MediaQuery.paddingOf().bottom`
+            //（`AppAdaptiveRefreshScrollView` / `BoxScrollView` 已统一处理），
+            // 贴底操作条自带 `SafeArea(top: false)`。新加子页面时别忘了这一条。
+            bottom: false,
             child: Scaffold(
               backgroundColor: immersive
                   ? Colors.transparent
@@ -144,29 +150,30 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
                   ),
                   tooltip: '返回',
                 ),
-                title: ValueListenableBuilder<String?>(
-                  valueListenable: _titleOverride,
-                  builder: (context, override, _) {
-                    final resolved =
-                        (override != null && override.trim().isNotEmpty)
-                            ? override
-                            : widget.title;
-                    return Text(
-                      resolved,
-                      key: const Key('mobile-subpage-title'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        weight: AppTextWeight.medium,
-                        tone: immersive
-                            ? AppTextTone.onMedia
-                            : AppTextTone.primary,
+                title: immersive
+                    // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。
+                    ? null
+                    : ValueListenableBuilder<String?>(
+                        valueListenable: _titleOverride,
+                        builder: (context, override, _) {
+                          final resolved =
+                              (override != null && override.trim().isNotEmpty)
+                              ? override
+                              : widget.title;
+                          return Text(
+                            resolved,
+                            key: const Key('mobile-subpage-title'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: resolveAppTextStyle(
+                              context,
+                              size: AppTextSize.s14,
+                              weight: AppTextWeight.medium,
+                              tone: AppTextTone.primary,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
               body: Padding(
                 key: const Key('mobile-subpage-body-padding'),

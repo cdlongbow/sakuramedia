@@ -11,6 +11,7 @@ import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -152,6 +153,7 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
               onLoadMore: (ref) =>
                   unawaited(ref.read(managerProvider.notifier).loadMore()),
             ),
+            ...bottomSafeAreaSliver(context),
           ],
         ),
       ),

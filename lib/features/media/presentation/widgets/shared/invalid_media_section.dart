@@ -135,7 +135,9 @@ class _InvalidMediaSectionState extends ConsumerState<InvalidMediaSection>
       confirmKey: const Key('invalid-media-batch-delete-confirm-button'),
       cancelKey: const Key('invalid-media-batch-delete-cancel-button'),
       title: '批量删除失效媒体',
-      message: '将删除已选 ${mediaIds.length} 条失效媒体记录及对应文件，且不可恢复。确认要继续吗？',
+      message:
+          '将删除已选 ${mediaIds.length} 条失效媒体记录及对应文件，且不可恢复。'
+          '缩略图会保留，供同一文件重新入库时复用。确认要继续吗？',
       confirmLabel: '删除',
       danger: true,
     );
@@ -391,7 +393,9 @@ class _InvalidMediaRowConsumer extends ConsumerWidget {
     final confirmed = await showAppConfirmDialog(
       context,
       title: '删除失效媒体',
-      message: '确认删除“${item.displayTitle}”的这条失效媒体记录及对应文件？该操作不可恢复。',
+      message:
+          '确认删除“${item.displayTitle}”的这条失效媒体记录及对应文件？'
+          '该操作不可恢复，缩略图会保留用于同文件复用。',
       confirmLabel: '删除',
       danger: true,
       dialogKey: const Key('invalid-media-delete-confirm-dialog'),

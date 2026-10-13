@@ -262,6 +262,7 @@ class _AppSelectTriggerState<T> extends State<_AppSelectTrigger<T>> {
         if (widget.label != null && widget.label!.isNotEmpty) ...[
           Text(
             widget.label!,
+            softWrap: true,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,

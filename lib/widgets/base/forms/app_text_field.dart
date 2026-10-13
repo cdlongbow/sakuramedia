@@ -78,6 +78,7 @@ class AppTextField extends StatelessWidget {
         if (label != null && label!.isNotEmpty) ...[
           Text(
             label!,
+            softWrap: true,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -121,6 +122,10 @@ class AppTextField extends StatelessWidget {
     return InputDecoration(
       hintText: hintText,
       helperText: helperText,
+      // 后端下发的说明/校验文案可能很长：不设置时 Flutter 只显示单行省略。
+      // 给足行数让它换行显示全（实际只占文本真实高度），桌面/移动共用。
+      helperMaxLines: 10,
+      errorMaxLines: 10,
       hintStyle: resolveAppTextStyle(
         context,
         size: AppTextSize.s14,

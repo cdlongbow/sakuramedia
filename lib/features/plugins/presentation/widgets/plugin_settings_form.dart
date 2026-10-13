@@ -138,6 +138,7 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
           _description(
             Text(
               title,
+              softWrap: true,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s16,
@@ -193,13 +194,16 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
         validator: (_) => error() ?? (values[name] is bool ? null : '请选择开关状态'),
         builder: (state) => _description(
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   title,
+                  softWrap: true,
                   style: resolveAppTextStyle(context, size: AppTextSize.s14),
                 ),
               ),
+              SizedBox(width: context.appSpacing.sm),
               Semantics(
                 label: title,
                 child: AppSwitch(

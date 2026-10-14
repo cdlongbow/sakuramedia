@@ -114,8 +114,8 @@ class MovieDetail extends _$MovieDetail {
     await similarFuture;
   }
 
-  /// 并发去重：暖重进 [load] 与页面手势刷新可能同时触发；共享在途 Future，
-  /// 避免两个请求乱序返回时旧响应覆盖新响应。
+  /// 并发去重：暖重进 [load] 与其他显式刷新（如删媒体后同步）可能同时触发；
+  /// 共享在途 Future，避免两个请求乱序返回时旧响应覆盖新响应。
   Future<void> refresh() => _refreshInFlight ??= _refresh().whenComplete(
     () => _refreshInFlight = null,
   );
@@ -135,7 +135,7 @@ class MovieDetail extends _$MovieDetail {
     await similarFuture;
   }
 
-  /// 页面手势刷新（下拉 / 顶栏 / 详情内删媒体后同步）在 [refresh] 成功后显式调用。
+  /// 详情内删媒体等同步动作在 [refresh] 成功后显式调用。
   ///
   /// [refresh] 自身不上报：媒体管理页删版本等后台同步也走它，若在内部上报，
   /// 用户没打开的影片会被顶进「最近浏览」。

@@ -30,7 +30,6 @@ import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playli
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -99,205 +98,176 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     final subtitlesState = ref.watch(
       movieSubtitlesProvider(widget.movieNumber),
     );
-    return AppPageRefreshScope(
-      onRefresh: () async {
-        final detailNotifier = ref.read(
-          movieDetailProvider(widget.movieNumber).notifier,
+    if (detailState.isLoading && detailState.movie == null) {
+      // loading 用占位影片渲染真实详情布局，由 [AppSkeletonizer] 灰化。
+      // 暖重进（保活命中已有影片）不进骨架，旧内容常驻直到静默刷新完成。
+      return AppSkeletonizer(
+        enabled: true,
+        child: MovieDetailPageContent(
+          surfaceColor: context.appColors.surfaceElevated,
+          movie: movieDetailPlaceholder(),
+          selectedPreviewKey: '',
+          selectedPreviewUrl: null,
+          isSubscribed: false,
+          isSubscriptionUpdating: false,
+          selectedMediaId: null,
+          similarMovies: movieListItemPlaceholders(count: 4),
+          isSimilarMoviesLoading: false,
+          onInspectorPaneTap: (_) {},
+          onPlaylistTap: () {},
+          onMediaSelect: (_) {},
+          clips: clipPlaceholders(count: 4),
+          subtitleItems: movieSubtitlePlaceholders(),
+        ),
+      );
+    }
+
+    if (detailState.errorMessage != null || detailState.movie == null) {
+      return MovieDetailErrorState(
+        message: detailState.errorMessage ?? '影片详情暂时无法加载，请稍后重试',
+        onRetry: () =>
+            ref.read(movieDetailProvider(widget.movieNumber).notifier).load(),
+      );
+    }
+
+    final movie = detailState.movie!;
+    final derived = resolveDerived(movie, detailState);
+    final isSubscribed = derived.isSubscribed;
+    final isBlacklisted = derived.isBlacklisted;
+    final isCollection = derived.isCollection;
+    final isActionControlsLocked = derived.isActionControlsLocked;
+    final selectedMedia = derived.selectedMedia;
+    final externalPlayerSelection = ref
+        .watch(externalPlayerPreferenceProvider)
+        .value;
+    final canLaunchMergedPlayback =
+        const ExternalPlayerChannel().isSupported &&
+        externalPlayerSelection?.hasExternalPlayer == true;
+    final mergePlaybackCandidates = resolveMovieMergePlaybackCandidates(
+      movie,
+      useExternalPlayer: canLaunchMergedPlayback,
+    );
+    final mergePlaybackLabel = mergePlaybackCandidates.isEmpty
+        ? null
+        : mergePlaybackCandidates.length == 1
+        ? '合并播放 · ${mergePlaybackCandidates.single.segmentCount} 段'
+        : '合并播放';
+    return MovieDetailPageContent(
+      surfaceColor: context.appColors.surfaceElevated,
+      showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
+      movie: movie,
+      mediaItemsOverride: derived.visibleMediaItems,
+      selectedPreviewKey: detailState.selectedPreviewKey,
+      selectedPreviewUrl: detailState.selectedPreviewUrl,
+      isSubscribed: isSubscribed,
+      isSubscriptionUpdating: isSubscriptionUpdating,
+      isMoreActionsUpdating: activeMovieAction != null,
+      selectedMediaId: selectedMedia?.mediaId,
+      similarMovies: detailState.similarMovies,
+      isSimilarMoviesLoading: detailState.isSimilarMoviesLoading,
+      similarMoviesErrorMessage: detailState.similarMoviesErrorMessage,
+      onRetrySimilarMovies: () => ref
+          .read(movieDetailProvider(widget.movieNumber).notifier)
+          .retryLoadSimilarMovies(),
+      onSimilarMovieTap: (similarMovie) => context.pushDesktopMovieDetail(
+        movieNumber: similarMovie.movieNumber,
+        fallbackPath: buildDesktopMovieDetailRoutePath(widget.movieNumber),
+      ),
+      onSubscriptionTap: isActionControlsLocked || isBlacklisted
+          ? null
+          : () => toggleMovieSubscription(isSubscribed: isSubscribed),
+      onMoreActionsTap: isActionControlsLocked
+          ? null
+          : (globalPosition) => _showMovieActionMenu(
+              globalPosition,
+              movie,
+              isSubscribed,
+              isCollection,
+              isBlacklisted,
+              selectedMedia,
+            ),
+      onPlayTap: selectedMedia != null && selectedMedia.hasPlayableUrl
+          ? () => _openMoviePlayer(movie: movie, mediaId: selectedMedia.mediaId)
+          : null,
+      isPlayLoading: _isLaunchingPlayback,
+      onPlaylistTap: () async {
+        await showMoviePlaylistPickerDialog(
+          context,
+          movieNumber: widget.movieNumber,
+          initialPlaylists: movie.playlists,
+          presentation: MoviePlaylistPickerPresentation.dialog,
         );
-        await detailNotifier.refresh();
-        detailNotifier.reportView();
+        if (mounted) await reloadPlaylistMembership();
+      },
+      onMediaSelect: selectMedia,
+      mergePlaybackLabel: mergePlaybackLabel,
+      onMergePlaybackTap: mergePlaybackLabel == null || _isLaunchingPlayback
+          ? null
+          : () => _openMergedPlayback(movie, mergePlaybackCandidates),
+      isMergePlaybackLoading: _isLaunchingPlayback,
+      isDeletingSelectedMedia:
+          selectedMedia != null && deletingMediaId == selectedMedia.mediaId,
+      onDeleteSelectedMedia: selectedMedia == null ? null : deleteSelectedMedia,
+      onOpenMediaPointPreview: openMediaPointPreview,
+      onRequestMediaPointMenu: showMediaPointActions,
+      onActorTap: (actor) => context.pushDesktopActorDetail(
+        actorId: actor.id,
+        fallbackPath: buildDesktopMovieDetailRoutePath(widget.movieNumber),
+      ),
+      onSeriesTap: movie.seriesId == null
+          ? null
+          : () => context.pushDesktopMovieSeries(
+              seriesId: movie.seriesId!,
+              seriesName: movie.seriesName,
+              fallbackPath: buildDesktopMovieDetailRoutePath(
+                widget.movieNumber,
+              ),
+            ),
+      onTagTap: (tag) => context.pushDesktopTags(tagId: tag.tagId),
+      onRequestPlotImageMenu: (menuContext, index, globalPosition) =>
+          showMoviePlotImageActionMenu(
+            context: menuContext,
+            hostContext: context,
+            plotImages: movie.plotImages,
+            movieNumber: widget.movieNumber,
+            index: index,
+            globalPosition: globalPosition,
+          ),
+      onOpenPlotPreview: (index) => showMoviePlotPreviewOverlay(
+        context: context,
+        plotImages: movie.plotImages,
+        initialIndex: index,
+        onRequestImageMenu: (menuContext, previewIndex, globalPosition) =>
+            showMoviePlotImageActionMenu(
+              context: menuContext,
+              hostContext: context,
+              plotImages: movie.plotImages,
+              movieNumber: widget.movieNumber,
+              index: previewIndex,
+              globalPosition: globalPosition,
+              closeCurrentRouteOnSearch: true,
+            ),
+      ),
+      onInspectorPaneTap: (pane) =>
+          openInspector(movie, selectedMedia, pane: pane),
+      clips: clipsState.clips,
+      isClipsLoading: clipsState.isLoading,
+      clipsErrorMessage: clipsState.errorMessage,
+      onRetryClips: () =>
+          ref.read(movieClipsProvider(widget.movieNumber).notifier).retry(),
+      onOpenClipActions: openMovieClipActions,
+      onPlayClip: playMovieClip,
+      onRenameClip: renameMovieClip,
+      onDeleteClip: deleteMovieClip,
+      onAddClipToCollection: addMovieClipToCollection,
+      subtitleItems:
+          subtitlesState.asData?.value.items ?? const <MovieSubtitleItemDto>[],
+      isSubtitlesLoading: subtitlesState.isLoading,
+      subtitleErrorMessage: subtitlesState.hasError ? '请稍后重试' : null,
+      onRetrySubtitles: () async {
         ref.invalidate(movieSubtitlesProvider(widget.movieNumber));
       },
-      child: Builder(
-        builder: (context) {
-          if (detailState.isLoading && detailState.movie == null) {
-            // loading 用占位影片渲染真实详情布局，由 [AppSkeletonizer] 灰化。
-            // 暖重进（保活命中已有影片）不进骨架，旧内容常驻直到静默刷新完成。
-            return AppSkeletonizer(
-              enabled: true,
-              child: MovieDetailPageContent(
-                surfaceColor: context.appColors.surfaceElevated,
-                movie: movieDetailPlaceholder(),
-                selectedPreviewKey: '',
-                selectedPreviewUrl: null,
-                isSubscribed: false,
-                isSubscriptionUpdating: false,
-                selectedMediaId: null,
-                similarMovies: movieListItemPlaceholders(count: 4),
-                isSimilarMoviesLoading: false,
-                onInspectorPaneTap: (_) {},
-                onPlaylistTap: () {},
-                onMediaSelect: (_) {},
-                clips: clipPlaceholders(count: 4),
-                subtitleItems: movieSubtitlePlaceholders(),
-              ),
-            );
-          }
-
-          if (detailState.errorMessage != null || detailState.movie == null) {
-            return MovieDetailErrorState(
-              message: detailState.errorMessage ?? '影片详情暂时无法加载，请稍后重试',
-              onRetry: () => ref
-                  .read(movieDetailProvider(widget.movieNumber).notifier)
-                  .load(),
-            );
-          }
-
-          final movie = detailState.movie!;
-          final derived = resolveDerived(movie, detailState);
-          final isSubscribed = derived.isSubscribed;
-          final isBlacklisted = derived.isBlacklisted;
-          final isCollection = derived.isCollection;
-          final isActionControlsLocked = derived.isActionControlsLocked;
-          final selectedMedia = derived.selectedMedia;
-          final externalPlayerSelection = ref
-              .watch(externalPlayerPreferenceProvider)
-              .value;
-          final canLaunchMergedPlayback =
-              const ExternalPlayerChannel().isSupported &&
-              externalPlayerSelection?.hasExternalPlayer == true;
-          final mergePlaybackCandidates = resolveMovieMergePlaybackCandidates(
-            movie,
-            useExternalPlayer: canLaunchMergedPlayback,
-          );
-          final mergePlaybackLabel = mergePlaybackCandidates.isEmpty
-              ? null
-              : mergePlaybackCandidates.length == 1
-              ? '合并播放 · ${mergePlaybackCandidates.single.segmentCount} 段'
-              : '合并播放';
-          return MovieDetailPageContent(
-            surfaceColor: context.appColors.surfaceElevated,
-            showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
-            movie: movie,
-            mediaItemsOverride: derived.visibleMediaItems,
-            selectedPreviewKey: detailState.selectedPreviewKey,
-            selectedPreviewUrl: detailState.selectedPreviewUrl,
-            isSubscribed: isSubscribed,
-            isSubscriptionUpdating: isSubscriptionUpdating,
-            isMoreActionsUpdating: activeMovieAction != null,
-            selectedMediaId: selectedMedia?.mediaId,
-            similarMovies: detailState.similarMovies,
-            isSimilarMoviesLoading: detailState.isSimilarMoviesLoading,
-            similarMoviesErrorMessage: detailState.similarMoviesErrorMessage,
-            onRetrySimilarMovies: () => ref
-                .read(movieDetailProvider(widget.movieNumber).notifier)
-                .retryLoadSimilarMovies(),
-            onSimilarMovieTap: (similarMovie) => context.pushDesktopMovieDetail(
-              movieNumber: similarMovie.movieNumber,
-              fallbackPath: buildDesktopMovieDetailRoutePath(
-                widget.movieNumber,
-              ),
-            ),
-            onSubscriptionTap: isActionControlsLocked || isBlacklisted
-                ? null
-                : () => toggleMovieSubscription(isSubscribed: isSubscribed),
-            onMoreActionsTap: isActionControlsLocked
-                ? null
-                : (globalPosition) => _showMovieActionMenu(
-                    globalPosition,
-                    movie,
-                    isSubscribed,
-                    isCollection,
-                    isBlacklisted,
-                    selectedMedia,
-                  ),
-            onPlayTap: selectedMedia != null && selectedMedia.hasPlayableUrl
-                ? () => _openMoviePlayer(
-                    movie: movie,
-                    mediaId: selectedMedia.mediaId,
-                  )
-                : null,
-            isPlayLoading: _isLaunchingPlayback,
-            onPlaylistTap: () async {
-              await showMoviePlaylistPickerDialog(
-                context,
-                movieNumber: widget.movieNumber,
-                initialPlaylists: movie.playlists,
-                presentation: MoviePlaylistPickerPresentation.dialog,
-              );
-              if (mounted) await reloadPlaylistMembership();
-            },
-            onMediaSelect: selectMedia,
-            mergePlaybackLabel: mergePlaybackLabel,
-            onMergePlaybackTap:
-                mergePlaybackLabel == null || _isLaunchingPlayback
-                ? null
-                : () => _openMergedPlayback(movie, mergePlaybackCandidates),
-            isMergePlaybackLoading: _isLaunchingPlayback,
-            isDeletingSelectedMedia:
-                selectedMedia != null &&
-                deletingMediaId == selectedMedia.mediaId,
-            onDeleteSelectedMedia: selectedMedia == null
-                ? null
-                : deleteSelectedMedia,
-            onOpenMediaPointPreview: openMediaPointPreview,
-            onRequestMediaPointMenu: showMediaPointActions,
-            onActorTap: (actor) => context.pushDesktopActorDetail(
-              actorId: actor.id,
-              fallbackPath: buildDesktopMovieDetailRoutePath(
-                widget.movieNumber,
-              ),
-            ),
-            onSeriesTap: movie.seriesId == null
-                ? null
-                : () => context.pushDesktopMovieSeries(
-                    seriesId: movie.seriesId!,
-                    seriesName: movie.seriesName,
-                    fallbackPath: buildDesktopMovieDetailRoutePath(
-                      widget.movieNumber,
-                    ),
-                  ),
-            onTagTap: (tag) => context.pushDesktopTags(tagId: tag.tagId),
-            onRequestPlotImageMenu: (menuContext, index, globalPosition) =>
-                showMoviePlotImageActionMenu(
-                  context: menuContext,
-                  hostContext: context,
-                  plotImages: movie.plotImages,
-                  movieNumber: widget.movieNumber,
-                  index: index,
-                  globalPosition: globalPosition,
-                ),
-            onOpenPlotPreview: (index) => showMoviePlotPreviewOverlay(
-              context: context,
-              plotImages: movie.plotImages,
-              initialIndex: index,
-              onRequestImageMenu: (menuContext, previewIndex, globalPosition) =>
-                  showMoviePlotImageActionMenu(
-                    context: menuContext,
-                    hostContext: context,
-                    plotImages: movie.plotImages,
-                    movieNumber: widget.movieNumber,
-                    index: previewIndex,
-                    globalPosition: globalPosition,
-                    closeCurrentRouteOnSearch: true,
-                  ),
-            ),
-            onInspectorPaneTap: (pane) =>
-                openInspector(movie, selectedMedia, pane: pane),
-            clips: clipsState.clips,
-            isClipsLoading: clipsState.isLoading,
-            clipsErrorMessage: clipsState.errorMessage,
-            onRetryClips: () => ref
-                .read(movieClipsProvider(widget.movieNumber).notifier)
-                .retry(),
-            onOpenClipActions: openMovieClipActions,
-            onPlayClip: playMovieClip,
-            onRenameClip: renameMovieClip,
-            onDeleteClip: deleteMovieClip,
-            onAddClipToCollection: addMovieClipToCollection,
-            subtitleItems:
-                subtitlesState.asData?.value.items ??
-                const <MovieSubtitleItemDto>[],
-            isSubtitlesLoading: subtitlesState.isLoading,
-            subtitleErrorMessage: subtitlesState.hasError ? '请稍后重试' : null,
-            onRetrySubtitles: () async {
-              ref.invalidate(movieSubtitlesProvider(widget.movieNumber));
-            },
-            onOpenSubtitle: (item) =>
-                showMovieSubtitleViewer(context, item: item),
-          );
-        },
-      ),
+      onOpenSubtitle: (item) => showMovieSubtitleViewer(context, item: item),
     );
   }
 

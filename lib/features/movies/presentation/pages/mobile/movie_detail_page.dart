@@ -34,7 +34,6 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_mobile_confirm_actions.dart';
@@ -182,14 +181,6 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             onSimilarMovieTap: (similarMovie) => MobileMovieDetailRouteData(
               movieNumber: similarMovie.movieNumber,
             ).push(context),
-            scrollPhysics: const AlwaysScrollableScrollPhysics(),
-            scrollViewBuilder: (context, slivers, scrollPhysics) =>
-                AppAdaptiveRefreshScrollView(
-                  key: MovieDetailPageContent.scrollViewKey,
-                  onRefresh: _handleRefresh,
-                  physics: scrollPhysics,
-                  slivers: slivers,
-                ),
             onSubscriptionTap: isActionControlsLocked || isBlacklisted
                 ? null
                 : () => toggleMovieSubscription(isSubscribed: isSubscribed),
@@ -346,28 +337,6 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
         ],
       ),
     );
-  }
-
-  Future<void> _handleRefresh() async {
-    try {
-      final detailNotifier = ref.read(
-        movieDetailProvider(widget.movieNumber).notifier,
-      );
-      await detailNotifier.refresh();
-      detailNotifier.reportView();
-      if (mounted) {
-        resetDetailOverridesAfterRefresh();
-      }
-      await loadMovieCollectionStatus();
-      unawaited(
-        ref.read(movieClipsProvider(widget.movieNumber).notifier).load(),
-      );
-      ref.invalidate(movieSubtitlesProvider(widget.movieNumber));
-    } catch (_) {
-      if (mounted) {
-        showToast('刷新失败');
-      }
-    }
   }
 
   Future<void> _showMovieActionDrawer(

@@ -12,6 +12,8 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_collectio
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_no_pull_down_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
@@ -26,17 +28,8 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_si
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
-/// 详情正文滚动容器的装配入口：正文以 slivers 形式交出（移动端要套下拉刷新
-/// 容器），默认走 [CustomScrollView]。
-typedef MovieDetailScrollViewBuilder =
-    Widget Function(
-      BuildContext context,
-      List<Widget> slivers,
-      ScrollPhysics? scrollPhysics,
-    );
-
 class MovieDetailPageContent extends StatelessWidget {
-  /// 正文滚动容器（桌面 [CustomScrollView] / 移动端下拉刷新容器）的测试锚点。
+  /// 正文滚动容器（[AppNoPullDownScrollView]，顶部不可下拉）的测试锚点。
   static const Key scrollViewKey = Key('movie-detail-scroll-view');
 
   const MovieDetailPageContent({
@@ -88,8 +81,6 @@ class MovieDetailPageContent extends StatelessWidget {
     this.onRetrySubtitles,
     this.onOpenSubtitle,
     this.contentPadding = EdgeInsets.zero,
-    this.scrollPhysics,
-    this.scrollViewBuilder,
     this.isMoreActionsUpdating = false,
     this.isPlayLoading = false,
   });
@@ -159,8 +150,6 @@ class MovieDetailPageContent extends StatelessWidget {
   final Future<void> Function()? onRetrySubtitles;
   final Future<void> Function(MovieSubtitleItemDto item)? onOpenSubtitle;
   final EdgeInsetsGeometry contentPadding;
-  final ScrollPhysics? scrollPhysics;
-  final MovieDetailScrollViewBuilder? scrollViewBuilder;
 
   /// 播放动作进行中（合并播放探测/拉起外部播放器），透传给 hero 播放按钮显示 loading。
   final bool isPlayLoading;
@@ -198,22 +187,24 @@ class MovieDetailPageContent extends StatelessWidget {
                 heroFit,
                 hasCover: _hasCover,
               );
-              final slivers = <Widget>[
-                SliverPadding(
-                  padding: contentPadding,
-                  sliver: _buildDetailBody(
-                    context: context,
-                    heroHeight: heroHeight,
-                    heroFit: heroFit,
+              // 顶部继续下拉时页面完全不动（无回弹、无 Android 拉伸），
+              // 底部上滑的过卷手感保持平台默认。
+              return AppNoPullDownScrollView(
+                key: scrollViewKey,
+                // 移动子页外壳不吞底部安全区，滚动末尾补等高留白，
+                // 最后一块内容不会被 home indicator 压住。
+                slivers: <Widget>[
+                  SliverPadding(
+                    padding: contentPadding,
+                    sliver: _buildDetailBody(
+                      context: context,
+                      heroHeight: heroHeight,
+                      heroFit: heroFit,
+                    ),
                   ),
-                ),
-              ];
-              return scrollViewBuilder?.call(context, slivers, scrollPhysics) ??
-                  CustomScrollView(
-                    key: scrollViewKey,
-                    physics: scrollPhysics,
-                    slivers: slivers,
-                  );
+                  ...bottomSafeAreaSliver(context),
+                ],
+              );
             },
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 
@@ -30,7 +32,11 @@ void main() {
     bundle.dispose();
   });
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    AppPageRefreshRegistrar? refreshRegistrar,
+    TargetPlatform? platform,
+  }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1280, 900);
     addTearDown(() {
@@ -38,14 +44,22 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
+    const page = DesktopMovieDetailPage(movieNumber: 'ABC-001');
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
-            theme: sakuraThemeData,
-            home: const Scaffold(
-              body: DesktopMovieDetailPage(movieNumber: 'ABC-001'),
+            theme: platform == null
+                ? sakuraThemeData
+                : sakuraThemeData.copyWith(platform: platform),
+            home: Scaffold(
+              body: refreshRegistrar == null
+                  ? page
+                  : AppPageRefreshRegistrarScope(
+                      registrar: refreshRegistrar,
+                      child: page,
+                    ),
             ),
           ),
         ),
@@ -71,6 +85,69 @@ void main() {
     );
     expect(content.surfaceColor, sakuraThemeData.appColors.surfaceElevated);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面详情页不再注册顶栏刷新回调', (WidgetTester tester) async {
+    _enqueueMovieDetailResponses(bundle);
+    final registered = <AppPageRefreshCallback>[];
+
+    await pumpPage(
+      tester,
+      refreshRegistrar: AppPageRefreshRegistrar(
+        register: registered.add,
+        unregister: registered.remove,
+      ),
+    );
+
+    expect(registered, isEmpty);
+    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面详情页顶部不能下拉，底部上滑仍可过卷', (WidgetTester tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      _enqueueMovieDetailResponses(bundle);
+
+      await pumpPage(tester, platform: TargetPlatform.macOS);
+
+      final position = tester
+          .state<ScrollableState>(
+            find
+                .descendant(
+                  of: find.byKey(MovieDetailPageContent.scrollViewKey),
+                  matching: find.byType(Scrollable),
+                )
+                .first,
+          )
+          .position;
+      final scrollCenter = tester.getCenter(
+        find.byKey(MovieDetailPageContent.scrollViewKey),
+      );
+
+      final pullDown = await tester.startGesture(scrollCenter);
+      await pullDown.moveBy(const Offset(0, 300));
+      await tester.pump();
+      expect(position.pixels, 0);
+      expect(position.outOfRange, isFalse);
+      await pullDown.up();
+      await tester.pumpAndSettle();
+      expect(position.pixels, 0);
+
+      // 底部上滑的过卷手感保留。
+      position.jumpTo(position.maxScrollExtent);
+      await tester.pump();
+      final pushUp = await tester.startGesture(scrollCenter);
+      await pushUp.moveBy(const Offset(0, -240));
+      await tester.pump();
+      expect(position.pixels, greaterThan(position.maxScrollExtent));
+      await pushUp.up();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('playlist edits update the detail summary when closed', (

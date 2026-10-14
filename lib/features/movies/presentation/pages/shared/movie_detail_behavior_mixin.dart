@@ -45,7 +45,6 @@ import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.da
 /// - `_confirmDeleteMedia`——桌面弹 dialog、移动弹 bottom drawer
 /// - `_openInspector`——桌面对话框 / 移动底部抽屉，按入口键传功能
 /// - `_openMediaPointPreview`——预览浮层弹出方式两端不同
-/// - `_handleRefresh`（移动）
 /// - `_searchSimilarFromPoint`（桌面/移动 launcher 不同）
 /// - `openPlayerForPoint`（桌面 push 播放路由 / 移动经 external player launcher）
 ///
@@ -258,8 +257,8 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
 
   /// 详情 refresh 完成后：清 point overrides + subscription/collection override，
   /// 并把 selectedMediaId 保留到「仍在最新媒体列表里且不是刚删除的那个」，
-  /// 否则回落到首个媒体。`deletedMediaId=null` 时（如 mobile 下拉刷新）
-  /// 表示无特定删除动作，只要当前选中仍存在就保留。
+  /// 否则回落到首个媒体。`deletedMediaId=null` 表示无特定删除动作，
+  /// 只要当前选中仍存在就保留。
   void resetDetailOverridesAfterRefresh({int? deletedMediaId}) {
     final refreshedMediaItems =
         ref.read(movieDetailProvider(movieNumber)).movie?.mediaItems ??

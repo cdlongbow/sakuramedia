@@ -1,3 +1,5 @@
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -32,9 +34,14 @@ void main() {
     bundle.dispose();
   });
 
-  Future<void> pumpPage(WidgetTester tester, {double bottomInset = 0}) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    double bottomInset = 0,
+    Size size = const Size(390, 844),
+    TargetPlatform? platform,
+  }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = size;
     tester.view.padding = FakeViewPadding(bottom: bottomInset);
     tester.view.viewPadding = FakeViewPadding(bottom: bottomInset);
     addTearDown(() {
@@ -51,7 +58,9 @@ void main() {
           platform: AppPlatform.mobile,
           child: OKToast(
             child: MaterialApp(
-              theme: sakuraMobileThemeData,
+              theme: platform == null
+                  ? sakuraMobileThemeData
+                  : sakuraMobileThemeData.copyWith(platform: platform),
               home: const Scaffold(
                 body: MobileMovieDetailPage(movieNumber: 'ABC-001'),
               ),
@@ -108,6 +117,82 @@ void main() {
     expect(insetRect.bottom, moreOrLessEquals(844));
   });
 
+  testWidgets('顶部下拉不触发刷新：Android 无刷新指示器也不新增请求', (WidgetTester tester) async {
+    _enqueueMovieDetailResponses(bundle);
+
+    await pumpPage(tester, size: const Size(390, 600));
+
+    final position = _scrollPosition(tester);
+    expect(position.maxScrollExtent, greaterThan(0));
+    final requestsBeforeDrag = bundle.adapter.requests.length;
+    final pullDown = await tester.startGesture(
+      tester.getCenter(find.byKey(MovieDetailPageContent.scrollViewKey)),
+    );
+    await pullDown.moveBy(const Offset(0, 320));
+    await tester.pump();
+
+    // 顶部继续下拉：页面零位移、零过卷。
+    expect(position.pixels, 0);
+    expect(position.outOfRange, isFalse);
+    expect(find.byType(RefreshIndicator), findsNothing);
+    expect(find.byType(RefreshProgressIndicator), findsNothing);
+
+    await pullDown.up();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(position.pixels, 0);
+    expect(bundle.adapter.requests.length, requestsBeforeDrag);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('顶部下拉不触发刷新：iOS 无下拉刷新控件也不新增请求', (WidgetTester tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      _enqueueMovieDetailResponses(bundle);
+
+      await pumpPage(
+        tester,
+        size: const Size(390, 600),
+        platform: TargetPlatform.iOS,
+      );
+
+      final position = _scrollPosition(tester);
+      expect(position.maxScrollExtent, greaterThan(0));
+      final requestsBeforeDrag = bundle.adapter.requests.length;
+      final pullDown = await tester.startGesture(
+        tester.getCenter(find.byKey(MovieDetailPageContent.scrollViewKey)),
+      );
+      await pullDown.moveBy(const Offset(0, 320));
+      await tester.pump();
+
+      // 顶部钉住：不回弹、不显示下拉刷新控件。
+      expect(position.pixels, 0);
+      expect(find.byType(CupertinoSliverRefreshControl), findsNothing);
+      expect(find.byType(RefreshIndicator), findsNothing);
+
+      await pullDown.up();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(bundle.adapter.requests.length, requestsBeforeDrag);
+
+      // 底部上滑的过卷手感保留。
+      position.jumpTo(position.maxScrollExtent);
+      await tester.pump();
+      final pushUp = await tester.startGesture(
+        tester.getCenter(find.byKey(MovieDetailPageContent.scrollViewKey)),
+      );
+      await pushUp.moveBy(const Offset(0, -240));
+      await tester.pump();
+      expect(position.pixels, greaterThan(position.maxScrollExtent));
+      await pushUp.up();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
   testWidgets('tapping a clip opens the actions drawer instead of playing', (
     WidgetTester tester,
   ) async {
@@ -138,6 +223,19 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+}
+
+ScrollPosition _scrollPosition(WidgetTester tester) {
+  return tester
+      .state<ScrollableState>(
+        find
+            .descendant(
+              of: find.byKey(MovieDetailPageContent.scrollViewKey),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      )
+      .position;
 }
 
 void _enqueueMovieDetailResponses(TestApiBundle bundle) {

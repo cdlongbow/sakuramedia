@@ -34,6 +34,7 @@ class MovieSummaryCard extends StatelessWidget {
     this.showStatusBadges = true,
     this.rank,
     this.secondaryLabel,
+    this.trailingLabel,
     this.onTap,
     this.onRequestMenu,
     this.onSubscriptionTap,
@@ -49,6 +50,9 @@ class MovieSummaryCard extends StatelessWidget {
   final bool showStatusBadges;
   final int? rank;
   final String? secondaryLabel;
+
+  /// 收起态底部番号行右侧的补充文案（如「总分 4.0」）；null 时不显示。
+  final String? trailingLabel;
   final VoidCallback? onTap;
   final ValueChanged<Offset>? onRequestMenu;
   final VoidCallback? onSubscriptionTap;
@@ -251,6 +255,22 @@ class MovieSummaryCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: info),
+                if (trailingLabel case final label?) ...[
+                  SizedBox(width: spacing.sm),
+                  Text(
+                    label,
+                    key: Key(
+                      'movie-summary-card-trailing-${movie.movieNumber}',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: resolveCoverOverlayTextStyle(
+                      context,
+                      size: AppTextSize.s10,
+                      opacity: 0.72,
+                    ),
+                  ),
+                ],
                 if (rank case final rank?) ...[
                   SizedBox(width: spacing.sm),
                   _RankBadge(rank: rank, movieNumber: movie.movieNumber),

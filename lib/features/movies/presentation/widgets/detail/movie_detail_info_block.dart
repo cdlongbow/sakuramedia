@@ -19,6 +19,9 @@ class MovieDetailInfoBlock extends StatelessWidget {
     this.isPlayLoading = false,
     this.onSubscriptionTap,
     this.isSubscriptionUpdating = false,
+    this.isFavorite = false,
+    this.onFavoriteTap,
+    this.isFavoriteUpdating = false,
     this.onPlaylistTap,
     this.playlistTooltip = '播放列表',
     this.onMoreActionsTap,
@@ -27,6 +30,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
     this.onMergePlaybackTap,
     this.isMergePlaybackLoading = false,
     this.onInspectorPaneTap,
+    this.ratingPanel,
   });
 
   final bool isSubscribed;
@@ -51,6 +55,9 @@ class MovieDetailInfoBlock extends StatelessWidget {
 
   final VoidCallback? onSubscriptionTap;
   final bool isSubscriptionUpdating;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteTap;
+  final bool isFavoriteUpdating;
   final VoidCallback? onPlaylistTap;
 
   /// 播放列表键的无障碍提示（加入/管理），默认“播放列表”。
@@ -63,8 +70,11 @@ class MovieDetailInfoBlock extends StatelessWidget {
   final VoidCallback? onMergePlaybackTap;
   final bool isMergePlaybackLoading;
 
-  /// 评论 / 磁力搜索 / 缩略图入口：打开对应功能弹窗；null 时三个键不渲染。
+  /// 评论 / 缩略图入口：打开对应功能弹窗；null 时两个键不渲染。
   final ValueChanged<MovieDetailInspectorPane>? onInspectorPaneTap;
+
+  /// 展开在元信息行下方的内联评分面板；null 时不渲染。
+  final Widget? ratingPanel;
 
   /// 宽窄屏分界：以下走上下堆叠，以上走左右双列。
   static const double wideBreakpoint = 600;
@@ -72,7 +82,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
   /// 左操作列固定宽：六个键一行，每键 6×46 + 5×4 = 296（原三键时为 200/键 64）。
   static const double actionsColumnWidth = 296;
 
-  /// 操作列是否值得出现：播放/合并之外的六键（订阅/列表/评论/磁力/缩略图/更多）
+  /// 操作列是否值得出现：播放/合并之外的六键（订阅/列表/评论/收藏/缩略图/更多）
   /// 只要回调在就保留，不可播时也不整体消失。判定放在 [_InfoActionsColumn.isVisible]，
   /// 父级与自身共用。
 
@@ -94,6 +104,9 @@ class MovieDetailInfoBlock extends StatelessWidget {
           isSubscribed: isSubscribed,
           onSubscriptionTap: onSubscriptionTap,
           isSubscriptionUpdating: isSubscriptionUpdating,
+          isFavorite: isFavorite,
+          onFavoriteTap: onFavoriteTap,
+          isFavoriteUpdating: isFavoriteUpdating,
           onPlaylistTap: onPlaylistTap,
           playlistTooltip: playlistTooltip,
           onMoreActionsTap: onMoreActionsTap,
@@ -139,7 +152,12 @@ class MovieDetailInfoBlock extends StatelessWidget {
                         SizedBox(width: actionsColumnWidth, child: actions),
                         SizedBox(width: spacing.md),
                       ],
-                      Expanded(child: _InfoColumn(info: info)),
+                      Expanded(
+                        child: _InfoColumn(
+                          info: info,
+                          ratingPanel: ratingPanel,
+                        ),
+                      ),
                     ],
                   )
                 else
@@ -147,7 +165,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _InfoColumn(info: info),
+                      _InfoColumn(info: info, ratingPanel: ratingPanel),
                       if (hasInfo) SizedBox(height: spacing.sm),
                       if (hasActions) actions,
                     ],
@@ -243,9 +261,10 @@ class _MetaSegment extends StatelessWidget {
 
 /// 右信息列：深色字（坐浅底）。
 class _InfoColumn extends StatelessWidget {
-  const _InfoColumn({required this.info});
+  const _InfoColumn({required this.info, this.ratingPanel});
 
   final _HeroInfo info;
+  final Widget? ratingPanel;
 
   @override
   Widget build(BuildContext context) {
@@ -277,6 +296,10 @@ class _InfoColumn extends StatelessWidget {
               ],
             ],
           ),
+        if (ratingPanel != null) ...[
+          SizedBox(height: spacing.sm),
+          ratingPanel!,
+        ],
         if (info.fileSizeLabel != null) ...[
           SizedBox(height: spacing.xs),
           Text(
@@ -339,7 +362,7 @@ class _InfoColumn extends StatelessWidget {
   }
 }
 
-/// 左操作列：白色分体播放键（左播放 / 右合并，五五开）+ 订阅/播放列表/评论/磁力搜索/缩略图/更多六键。
+/// 左操作列：白色分体播放键（左播放 / 右合并，五五开）+ 订阅/播放列表/评论/收藏/缩略图/更多六键。
 class _InfoActionsColumn extends StatelessWidget {
   const _InfoActionsColumn({
     required this.onPlayTap,
@@ -347,6 +370,9 @@ class _InfoActionsColumn extends StatelessWidget {
     required this.isSubscribed,
     required this.onSubscriptionTap,
     required this.isSubscriptionUpdating,
+    required this.isFavorite,
+    required this.onFavoriteTap,
+    required this.isFavoriteUpdating,
     required this.onPlaylistTap,
     required this.playlistTooltip,
     required this.onMoreActionsTap,
@@ -363,6 +389,9 @@ class _InfoActionsColumn extends StatelessWidget {
   final bool isSubscribed;
   final VoidCallback? onSubscriptionTap;
   final bool isSubscriptionUpdating;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteTap;
+  final bool isFavoriteUpdating;
   final VoidCallback? onPlaylistTap;
   final String playlistTooltip;
   final Future<void> Function(Offset globalPosition)? onMoreActionsTap;
@@ -384,6 +413,8 @@ class _InfoActionsColumn extends StatelessWidget {
       _hasMerge ||
       onSubscriptionTap != null ||
       isSubscriptionUpdating ||
+      onFavoriteTap != null ||
+      isFavoriteUpdating ||
       onPlaylistTap != null ||
       onMoreActionsTap != null ||
       isMoreActionsUpdating ||
@@ -433,7 +464,33 @@ class _InfoActionsColumn extends StatelessWidget {
           color: context.appTextPalette.secondary,
         ),
       ),
-      // 内容入口：评论 / 磁力搜索 / 缩略图，与左侧动作键同排同形，
+      // 收藏快捷键替换原磁力搜索位；磁力搜索已收进「更多」。
+      _InfoActionKey(
+        key: const Key('movie-detail-hero-favorite-icon'),
+        tooltip: isFavorite ? '取消收藏' : '收藏影片',
+        showSurface: showKeySurface,
+        onTap: isFavoriteUpdating ? null : onFavoriteTap,
+        child: isFavoriteUpdating
+            ? SizedBox(
+                key: const Key('movie-detail-hero-favorite-loading'),
+                width: tokens.iconSizeSm,
+                height: tokens.iconSizeSm,
+                child: CircularProgressIndicator.adaptive(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color?>(
+                    context.appTextPalette.secondary,
+                  ),
+                ),
+              )
+            : Icon(
+                isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                size: tokens.iconSizeSm,
+                color: isFavorite
+                    ? context.appColors.subscriptionHeartIcon
+                    : context.appTextPalette.secondary,
+              ),
+      ),
+      // 内容入口：评论 / 缩略图，与左侧动作键同排同形，
       // 只靠 tooltip 区分；不藏进区块标题或媒体行图标。
       if (inspectorPaneTap != null) ...<Widget>[
         _InfoActionKey(
@@ -443,17 +500,6 @@ class _InfoActionsColumn extends StatelessWidget {
           onTap: () => inspectorPaneTap(MovieDetailInspectorPane.review),
           child: Icon(
             Icons.chat_bubble_outline_rounded,
-            size: tokens.iconSizeSm,
-            color: context.appTextPalette.secondary,
-          ),
-        ),
-        _InfoActionKey(
-          key: const Key('movie-detail-hero-magnet-search-icon'),
-          tooltip: '磁力搜索',
-          showSurface: showKeySurface,
-          onTap: () => inspectorPaneTap(MovieDetailInspectorPane.magnetSearch),
-          child: Icon(
-            Icons.search_rounded,
             size: tokens.iconSizeSm,
             color: context.appTextPalette.secondary,
           ),
@@ -641,7 +687,7 @@ class _InfoSplitPlayButton extends StatelessWidget {
   }
 }
 
-/// 中性小操作键（订阅 / 播放列表 / 评论 / 磁力搜索 / 缩略图）。
+/// 中性小操作键（订阅 / 播放列表 / 评论 / 收藏 / 缩略图）。
 ///
 /// 宽屏：浅底 + 圆角；窄屏（[showSurface] 为 false）：纯图标，无底色边框。
 class _InfoActionKey extends StatelessWidget {

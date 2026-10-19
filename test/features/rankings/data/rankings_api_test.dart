@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
@@ -116,12 +117,19 @@ void main() {
       period: 'weekly',
       page: 2,
       pageSize: 24,
+      sort: 'comment_count:desc',
+      interaction: MovieInteractionFilter.initial
+          .withRange(MovieInteractionMetric.score, min: 8.0)
+          .withRange(MovieInteractionMetric.watchedCount, min: 100),
     );
 
     final request = adapter.requests.single;
     expect(request.uri.queryParameters['period'], 'weekly');
     expect(request.uri.queryParameters['page'], '2');
     expect(request.uri.queryParameters['page_size'], '24');
+    expect(request.uri.queryParameters['sort'], 'comment_count:desc');
+    expect(request.uri.queryParameters['score_min'], '8.0');
+    expect(request.uri.queryParameters['watched_count_min'], '100');
     expect(page.items.single.rank, 1);
     expect(page.items.single.movieNumber, 'ABP-001');
     expect(page.items.single.coverImage?.origin, 'cover-large.jpg');

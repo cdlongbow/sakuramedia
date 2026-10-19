@@ -15,7 +15,11 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movies_pag
 import 'package:sakuramedia/features/overview/presentation/pages/desktop/overview_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/overview_skeleton_page.dart';
 import 'package:sakuramedia/features/clips/presentation/pages/desktop/clips_page.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlists_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/desktop/system_playlist_page.dart';
+import 'package:sakuramedia/features/recent_views/presentation/pages/desktop/recent_views_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/desktop/rated_movies_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/pages/desktop/rankings_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/movie_subscriptions_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/pages/mobile/rankings_page.dart';
@@ -212,6 +216,65 @@ const List<_NavSeed> _desktopNavSeeds = [
     ],
   ),
   _NavSeed(
+    id: 'favorites',
+    label: '我的收藏',
+    icon: Icons.favorite_border_rounded,
+    section: '浏览',
+    items: [
+      _NavItemSeed(
+        slug: 'library/favorites',
+        label: '我的收藏',
+        icon: Icons.favorite_border_rounded,
+        activeIcon: Icons.favorite_rounded,
+        description: '影片详情里手动收藏的影片列表。',
+      ),
+    ],
+  ),
+  _NavSeed(
+    id: 'recently-played',
+    label: '最近播放',
+    icon: Icons.play_circle_outline_rounded,
+    section: '浏览',
+    items: [
+      _NavItemSeed(
+        slug: 'library/recently-played',
+        label: '最近播放',
+        icon: Icons.play_circle_outline_rounded,
+        description: '按播放时间倒序查看最近看过的影片。',
+      ),
+    ],
+  ),
+  _NavSeed(
+    id: 'recent-views',
+    label: '最近浏览',
+    icon: Icons.visibility_outlined,
+    section: '浏览',
+    items: [
+      _NavItemSeed(
+        slug: 'library/recent-views',
+        label: '最近浏览',
+        icon: Icons.visibility_outlined,
+        activeIcon: Icons.visibility,
+        description: '最近浏览过的影片与女优。',
+      ),
+    ],
+  ),
+  _NavSeed(
+    id: 'ratings',
+    label: '我的评分',
+    icon: Icons.star_outline_rounded,
+    section: '浏览',
+    items: [
+      _NavItemSeed(
+        slug: 'library/ratings',
+        label: '我的评分',
+        icon: Icons.star_outline_rounded,
+        activeIcon: Icons.star_rounded,
+        description: '已评分影片、总分排序与评分维度维护的统一入口。',
+      ),
+    ],
+  ),
+  _NavSeed(
     id: 'videos',
     label: 'PornBox',
     icon: Icons.video_library_outlined,
@@ -334,6 +397,16 @@ final Map<String, WidgetBuilder> _desktopRouteBuilders =
       desktopTagsPath: (_) => const DesktopTagsPage(),
       desktopMomentsPath: (_) => const DesktopMomentsPage(),
       desktopPlaylistsPath: (_) => const DesktopPlaylistsPage(),
+      desktopFavoritesPath: (_) => const DesktopSystemPlaylistPage(
+        kind: PlaylistKind.favorites,
+        fallbackPath: desktopFavoritesPath,
+      ),
+      desktopRecentlyPlayedPath: (_) => const DesktopSystemPlaylistPage(
+        kind: PlaylistKind.recentlyPlayed,
+        fallbackPath: desktopRecentlyPlayedPath,
+      ),
+      desktopRecentViewsPath: (_) => const DesktopRecentViewsPage(),
+      desktopRatingsPath: (_) => const DesktopRatedMoviesPage(),
       desktopClipsPath: (_) => const DesktopClipsPage(),
       desktopVideosPath: (_) => const DesktopVideoListPage(),
       desktopRankingsPath: (_) => const DesktopRankingsPage(),

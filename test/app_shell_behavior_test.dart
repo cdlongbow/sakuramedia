@@ -503,6 +503,10 @@ void main() {
     router.go('/desktop/library/movies/ABC-001');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    // 详情页的评分维度区块会额外发起评分请求；推进两帧让 Dio 的零时长
+    // 计时器和请求失败回调跑完，避免测试结束时残留 pending timer。
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(milliseconds: 1));
 
     // immersive：内容全幅铺底，顶栏悬浮其上。
     final immersiveNavigator = navigatorRect();

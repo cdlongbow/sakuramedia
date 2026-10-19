@@ -1,11 +1,12 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
 enum MovieDetailActionType {
   castToDevice,
   toggleSubscription,
+  toggleFavorite,
+  openMagnetSearch,
   toggleCollectionType,
   toggleBlacklist,
   refreshMetadata,
@@ -29,7 +30,6 @@ class MovieDetailActionDescriptor {
 }
 
 List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
-  required MovieDetailDto movie,
   required bool isSubscribed,
   required bool isCollection,
   required bool isBlacklisted,
@@ -52,6 +52,11 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
             : Icons.favorite_rounded,
         tone: isSubscribed ? AppTextTone.error : AppTextTone.primary,
       ),
+    const MovieDetailActionDescriptor(
+      type: MovieDetailActionType.openMagnetSearch,
+      label: '搜索资源',
+      icon: Icons.search_rounded,
+    ),
     MovieDetailActionDescriptor(
       type: MovieDetailActionType.toggleCollectionType,
       label: isCollection ? '标记为单体' : '标记为合集',

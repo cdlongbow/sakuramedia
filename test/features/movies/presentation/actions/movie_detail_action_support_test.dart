@@ -21,10 +21,7 @@ void main() {
   test(
     'buildMovieDetailActionDescriptors keeps action order and prerequisites',
     () {
-      final movie = _movieDetail(javdbId: '');
-
       final actions = buildMovieDetailActionDescriptors(
-        movie: movie,
         isSubscribed: false,
         isCollection: false,
         isBlacklisted: false,
@@ -32,6 +29,7 @@ void main() {
 
       expect(actions.map((action) => action.type), <MovieDetailActionType>[
         MovieDetailActionType.toggleSubscription,
+        MovieDetailActionType.openMagnetSearch,
         MovieDetailActionType.toggleCollectionType,
         MovieDetailActionType.toggleBlacklist,
         MovieDetailActionType.refreshMetadata,
@@ -48,7 +46,6 @@ void main() {
       );
 
       final blacklistedActions = buildMovieDetailActionDescriptors(
-        movie: movie,
         isSubscribed: false,
         isCollection: true,
         isBlacklisted: true,
@@ -80,7 +77,6 @@ void main() {
 
   test('buildMovieDetailActionDescriptors prepends cast action when enabled', () {
     final actions = buildMovieDetailActionDescriptors(
-      movie: _movieDetail(javdbId: ''),
       isSubscribed: false,
       isCollection: false,
       isBlacklisted: false,
@@ -93,7 +89,6 @@ void main() {
 
   test('buildMovieDetailActionDescriptors shows casting label when active', () {
     final actions = buildMovieDetailActionDescriptors(
-      movie: _movieDetail(javdbId: ''),
       isSubscribed: false,
       isCollection: false,
       isBlacklisted: false,
@@ -107,7 +102,10 @@ void main() {
   test(
     'movieDetailRemoteActionSpecFor has no remote spec for local actions',
     () {
-      for (final action in [MovieDetailActionType.toggleCollectionType]) {
+      for (final action in [
+        MovieDetailActionType.toggleCollectionType,
+        MovieDetailActionType.openMagnetSearch,
+      ]) {
         expect(
           movieDetailRemoteActionSpecFor(
             action: action,
@@ -336,6 +334,8 @@ Future<MovieDetailApplyResult> _runApplyReturnedMovieDetail(
 MovieDetailDto _movieDetail({
   String javdbId = 'movie-1',
   List<int> mediaIds = const <int>[10, 20],
+  List<MoviePlaylistSummaryDto> playlists = const <MoviePlaylistSummaryDto>[],
+  int? favoritePlaylistId,
 }) {
   return MovieDetailDto(
     javdbId: javdbId,
@@ -382,6 +382,7 @@ MovieDetailDto _movieDetail({
           ),
         )
         .toList(growable: false),
-    playlists: const <MoviePlaylistSummaryDto>[],
+    playlists: playlists,
+    favoritePlaylistId: favoritePlaylistId,
   );
 }

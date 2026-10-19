@@ -643,7 +643,6 @@ void main() {
 
     for (final key in const <String>[
       'movie-detail-hero-review-icon',
-      'movie-detail-hero-magnet-search-icon',
       'movie-detail-hero-thumbnail-icon',
     ]) {
       await tester.ensureVisible(find.byKey(Key(key)));
@@ -653,7 +652,6 @@ void main() {
 
     expect(openedTabs, <MovieDetailInspectorPane>[
       MovieDetailInspectorPane.review,
-      MovieDetailInspectorPane.magnetSearch,
       MovieDetailInspectorPane.thumbnail,
     ]);
     expect(tester.takeException(), isNull);

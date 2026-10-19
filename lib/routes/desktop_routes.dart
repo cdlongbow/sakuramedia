@@ -117,9 +117,7 @@ class DesktopMoviePlayerRouteData extends _DesktopNoTransitionRouteData
   }
 }
 
-@TypedGoRoute<DesktopCastRemoteRouteData>(
-  path: '/desktop/cast/remote',
-)
+@TypedGoRoute<DesktopCastRemoteRouteData>(path: '/desktop/cast/remote')
 class DesktopCastRemoteRouteData extends _DesktopNoTransitionRouteData
     with $DesktopCastRemoteRouteData {
   const DesktopCastRemoteRouteData();
@@ -305,6 +303,11 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
           ],
         ),
         TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopRatedMoviesRouteData>(path: desktopRatingsPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
           routes: [TypedGoRoute<DesktopClipsRouteData>(path: desktopClipsPath)],
         ),
         TypedStatefulShellBranch<DesktopPrimaryBranchData>(
@@ -370,6 +373,10 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
       path: desktopRecentlySubscribedMoviesPath,
     ),
     TypedGoRoute<DesktopRecentViewsRouteData>(path: desktopRecentViewsPath),
+    TypedGoRoute<DesktopFavoritesRouteData>(path: desktopFavoritesPath),
+    TypedGoRoute<DesktopRecentlyPlayedRouteData>(
+      path: desktopRecentlyPlayedPath,
+    ),
     TypedGoRoute<DesktopVideoCollectionsRouteData>(
       path: desktopVideoCollectionsPath,
     ),
@@ -542,7 +549,8 @@ class DesktopLatestMoviesRouteData extends _DesktopShellPageRouteData
   }
 }
 
-class DesktopRecentlySubscribedMoviesRouteData extends _DesktopShellPageRouteData
+class DesktopRecentlySubscribedMoviesRouteData
+    extends _DesktopShellPageRouteData
     with $DesktopRecentlySubscribedMoviesRouteData {
   const DesktopRecentlySubscribedMoviesRouteData();
 
@@ -568,6 +576,16 @@ class DesktopRecentViewsRouteData extends _DesktopShellPageRouteData
   }
 }
 
+class DesktopFavoritesRouteData extends _DesktopShellSpecRouteData
+    with $DesktopFavoritesRouteData {
+  const DesktopFavoritesRouteData() : super(desktopFavoritesPath);
+}
+
+class DesktopRecentlyPlayedRouteData extends _DesktopShellSpecRouteData
+    with $DesktopRecentlyPlayedRouteData {
+  const DesktopRecentlyPlayedRouteData() : super(desktopRecentlyPlayedPath);
+}
+
 class DesktopMoviesRouteData extends _DesktopShellSpecRouteData
     with $DesktopMoviesRouteData {
   const DesktopMoviesRouteData() : super(desktopMoviesPath);
@@ -591,6 +609,11 @@ class DesktopMomentsRouteData extends _DesktopShellSpecRouteData
 class DesktopPlaylistsRouteData extends _DesktopShellSpecRouteData
     with $DesktopPlaylistsRouteData {
   const DesktopPlaylistsRouteData() : super(desktopPlaylistsPath);
+}
+
+class DesktopRatedMoviesRouteData extends _DesktopShellSpecRouteData
+    with $DesktopRatedMoviesRouteData {
+  const DesktopRatedMoviesRouteData() : super(desktopRatingsPath);
 }
 
 class DesktopClipsRouteData extends _DesktopShellSpecRouteData

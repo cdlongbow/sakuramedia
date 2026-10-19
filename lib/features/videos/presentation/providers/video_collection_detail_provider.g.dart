@@ -94,7 +94,7 @@ final class VideoCollectionDetailProvider
 }
 
 String _$videoCollectionDetailHash() =>
-    r'3df59023e74b1be936d1fc1f268ce7b27d8a97ac';
+    r'17d47dd62899cf25128110cb451deb4e4c895cad';
 
 /// 视频合集详情：加载合集元信息 + 全量有序成员，支持排序与移除。
 ///

@@ -56,7 +56,7 @@ final class MomentCollectionDetailProvider
 }
 
 String _$momentCollectionDetailHash() =>
-    r'e91592509d2b20f2bafa910e822588799ff34c9c';
+    r'a97f50f98d80e5492825ead4443bc54d890b515b';
 
 final class MomentCollectionDetailFamily extends $Family
     with

@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_subscri
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
 @immutable
@@ -18,6 +19,7 @@ class RankingFilterState {
     this.selectedPeriod,
     this.selectedSortField,
     this.selectedSortDirection = SortDirection.desc,
+    this.interaction = MovieInteractionFilter.initial,
   });
 
   static const RankingFilterState initial = RankingFilterState();
@@ -31,6 +33,7 @@ class RankingFilterState {
   final String? selectedPeriod;
   final RankingSortField? selectedSortField;
   final SortDirection selectedSortDirection;
+  final MovieInteractionFilter interaction;
 
   bool get hasNoSources =>
       sources.isEmpty && !isLoading && errorMessage == null;
@@ -52,6 +55,7 @@ class RankingFilterState {
     Object? selectedPeriod = _sentinel,
     Object? selectedSortField = _sentinel,
     SortDirection? selectedSortDirection,
+    MovieInteractionFilter? interaction,
   }) {
     return RankingFilterState(
       isLoading: isLoading ?? this.isLoading,
@@ -79,6 +83,7 @@ class RankingFilterState {
               : selectedSortField as RankingSortField?,
       selectedSortDirection:
           selectedSortDirection ?? this.selectedSortDirection,
+      interaction: interaction ?? this.interaction,
     );
   }
 }

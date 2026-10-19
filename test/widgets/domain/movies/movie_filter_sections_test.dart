@@ -1,10 +1,15 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
+
+import '../../../support/test_api_bundle.dart';
 
 /// 影片筛选面板的行为测试。宿主是列表顶栏 `AppListHeader` 的就地浮层——原先挂在
 /// 已删除的 `MovieFilterToolbar` 上，断言内容不变。
@@ -27,24 +32,31 @@ void main() {
     required VoidCallback onReset,
     List<MovieFilterYearOption>? yearOptions,
   }) {
-    return MaterialApp(
-      theme: sakuraThemeData,
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topRight,
-          child: AppListHeader(
-            filterButtonKey: const Key('movies-filter-trigger'),
-            filterLabel: filterState.triggerLabel,
-            filterPanelKey: const Key('movies-filter-panel'),
-            filterPanelExtraWidth: 260,
-            filterPanelBuilder: (_) => MovieFilterSectionGroup(
-              filterState: filterState,
-              onChanged: onChanged,
-              yearOptions: yearOptions,
-            ),
-            filterPanelFooter: AppFilterPanelFooter(
-              isDefault: filterState.isDefault,
-              onReset: onReset,
+    return ProviderScope(
+      overrides: [
+        movieInteractionFilterOptionsProvider.overrideWith(
+          (ref) async => testInteractionFilterOptions,
+        ),
+      ],
+      child: MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topRight,
+            child: AppListHeader(
+              filterButtonKey: const Key('movies-filter-trigger'),
+              filterLabel: filterState.triggerLabel,
+              filterPanelKey: const Key('movies-filter-panel'),
+              filterPanelExtraWidth: 260,
+              filterPanelBuilder: (_) => MovieFilterSectionGroup(
+                filterState: filterState,
+                onChanged: onChanged,
+                yearOptions: yearOptions,
+              ),
+              filterPanelFooter: AppFilterPanelFooter(
+                isDefault: filterState.isDefault,
+                onReset: onReset,
+              ),
             ),
           ),
         ),
@@ -153,7 +165,9 @@ void main() {
     expect(find.text('$currentYear'), findsOneWidget);
     expect(find.text('$currentYear(1)'), findsNothing);
 
-    await tester.ensureVisible(find.byKey(Key('movie-filter-year-$currentYear')));
+    await tester.ensureVisible(
+      find.byKey(Key('movie-filter-year-$currentYear')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('movie-filter-year-$currentYear')));
     await tester.pumpAndSettle();
@@ -191,6 +205,8 @@ void main() {
     await tester.tap(find.byKey(const Key('movies-filter-trigger')));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const Key('movie-filter-year-2026')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('movie-filter-year-2026')));
     await tester.pumpAndSettle();
     expect(changedState?.years, <int>{2026});
@@ -215,6 +231,38 @@ void main() {
     expect(changedState?.years, isEmpty);
     expect(filterState.isDefault, isTrue);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('互动数范围加载失败时显示重试，不回退写死上限', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          movieInteractionFilterOptionsProvider.overrideWith(
+            (ref) => Future<MovieInteractionFilterOptionsDto>.error(
+              StateError('boom'),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MovieFilterSectionGroup(
+                filterState: MovieFilterState.initial,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('互动数范围加载失败'), findsOneWidget);
+    expect(find.text('重试'), findsOneWidget);
+    expect(find.byKey(const Key('movie-filter-heat-slider')), findsNothing);
   });
 
   testWidgets('影片筛选面板可选 FC2 番号来源并重置回默认', (WidgetTester tester) async {

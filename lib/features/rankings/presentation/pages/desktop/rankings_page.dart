@@ -170,6 +170,12 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
               .read(rankingSummaryProvider(_scope).notifier)
               .selectPeriod(value),
         ),
+        interaction: summary.filters.interaction,
+        onInteractionChanged: (value) => _applyFilterChange(
+          () => ref
+              .read(rankingSummaryProvider(_scope).notifier)
+              .selectInteraction(value),
+        ),
         selectedSortField: summary.filters.selectedSortField,
         selectedSortDirection: summary.filters.selectedSortDirection,
         onSortChanged: (field, dir) => _applyFilterChange(
@@ -306,4 +312,3 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
     );
   }
 }
-

@@ -53,6 +53,7 @@ class MovieSummary extends _$MovieSummary
 
   @override
   MovieSummaryFilter get initialFilter => MovieSummaryFilter(
+    movie: scope.initialMovieFilter ?? MovieFilterState.initial,
     tagIds: scope.initialTagIds,
     tagMatch: scope.initialTagMatch,
   );
@@ -95,8 +96,7 @@ class MovieSummary extends _$MovieSummary
         numberSource: filter.movie.numberSource,
         sort: filter.movie.sortExpression,
         years: filter.movie.years.toList(),
-        heatMin: filter.movie.heatMin,
-        heatMax: filter.movie.heatMax,
+        interaction: filter.movie.interaction,
         actorAgeMin: filter.movie.actorAgeMin,
         actorAgeMax: filter.movie.actorAgeMax,
         resolution: filter.movie.resolution?.apiValue,
@@ -111,8 +111,7 @@ class MovieSummary extends _$MovieSummary
         numberSource: filter.movie.numberSource,
         sort: filter.movie.sortExpression,
         years: filter.movie.years.toList(),
-        heatMin: filter.movie.heatMin,
-        heatMax: filter.movie.heatMax,
+        interaction: filter.movie.interaction,
         actorAgeMin: filter.movie.actorAgeMin,
         actorAgeMax: filter.movie.actorAgeMax,
         resolution: filter.movie.resolution?.apiValue,
@@ -144,8 +143,7 @@ class MovieSummary extends _$MovieSummary
         numberSource: filter.movie.numberSource,
         sort: filter.movie.sortExpression,
         years: filter.movie.years.toList(),
-        heatMin: filter.movie.heatMin,
-        heatMax: filter.movie.heatMax,
+        interaction: filter.movie.interaction,
         resolution: filter.movie.resolution?.apiValue,
       ),
       MovieSummarySource.playlist =>
@@ -160,6 +158,12 @@ class MovieSummary extends _$MovieSummary
             ),
       MovieSummarySource.series => moviesApi.getMoviesBySeries(
         seriesId: scope.resourceId!,
+        page: page,
+        pageSize: pageSize,
+      ),
+      MovieSummarySource.rated => moviesApi.getMovies(
+        rated: true,
+        sort: filter.movie.sortExpression,
         page: page,
         pageSize: pageSize,
       ),

@@ -33,6 +33,7 @@ class MovieDetailDto {
     required this.mediaItems,
     this.mergePlaybackCandidates = const <MovieMergePlaybackCandidateDto>[],
     required this.playlists,
+    this.favoritePlaylistId,
     this.rankings = const <MovieRankingDto>[],
   });
 
@@ -68,6 +69,9 @@ class MovieDetailDto {
   final List<MovieMediaItemDto> mediaItems;
   final List<MovieMergePlaybackCandidateDto> mergePlaybackCandidates;
   final List<MoviePlaylistSummaryDto> playlists;
+
+  /// 系统「收藏」播放列表 ID；后端未初始化收藏列表时为 null。
+  final int? favoritePlaylistId;
 
   /// 影片当前在外部榜单上的上榜记录；没有上榜时为空。
   final List<MovieRankingDto> rankings;
@@ -128,6 +132,7 @@ class MovieDetailDto {
         json['playlists'],
         (item) => MoviePlaylistSummaryDto.fromJson(item),
       ),
+      favoritePlaylistId: _intFromJson(json['favorite_playlist_id']),
       rankings: _listFromJson(
         json['rankings'],
         (item) => MovieRankingDto.fromJson(item),

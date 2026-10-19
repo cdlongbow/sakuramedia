@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranked_movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 
 class RankingsApi {
   const RankingsApi({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -30,6 +31,7 @@ class RankingsApi {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    MovieInteractionFilter? interaction,
   }) async {
     final queryParameters = <String, dynamic>{
       'period': period,
@@ -39,6 +41,7 @@ class RankingsApi {
     if (sort != null) {
       queryParameters['sort'] = sort;
     }
+    interaction?.addQueryParameters(queryParameters);
     final response = await _apiClient.get(
       '/ranking-sources/$sourceKey/boards/$boardKey/items',
       queryParameters: queryParameters,

@@ -36,6 +36,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/rating/movie_rating_inline_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_merge_playback_candidate_list.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_viewer.dart';
@@ -155,13 +156,15 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     return MovieDetailPageContent(
       surfaceColor: context.appColors.surfaceElevated,
       showSimilarMovies: ref.watch(movieSimilarityEnabledProvider),
+      ratingPanel: MovieRatingInlinePanel(movieNumber: widget.movieNumber),
       movie: movie,
       mediaItemsOverride: derived.visibleMediaItems,
       selectedPreviewKey: detailState.selectedPreviewKey,
       selectedPreviewUrl: detailState.selectedPreviewUrl,
       isSubscribed: isSubscribed,
       isSubscriptionUpdating: isSubscriptionUpdating,
-      isMoreActionsUpdating: activeMovieAction != null,
+      isMoreActionsUpdating: activeMovieAction != null &&
+          activeMovieAction != MovieDetailActionType.toggleFavorite,
       selectedMediaId: selectedMedia?.mediaId,
       similarMovies: detailState.similarMovies,
       isSimilarMoviesLoading: detailState.isSimilarMoviesLoading,
@@ -176,6 +179,11 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       onSubscriptionTap: isActionControlsLocked || isBlacklisted
           ? null
           : () => toggleMovieSubscription(isSubscribed: isSubscribed),
+      onFavoriteTap: isActionControlsLocked
+          ? null
+          : () => executeMovieAction(MovieDetailActionType.toggleFavorite),
+      isFavoriteUpdating:
+          activeMovieAction == MovieDetailActionType.toggleFavorite,
       onMoreActionsTap: isActionControlsLocked
           ? null
           : (globalPosition) => _showMovieActionMenu(
@@ -308,7 +316,6 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       context: context,
       globalPosition: globalPosition,
       actions: buildMovieDetailActionDescriptors(
-        movie: movie,
         isSubscribed: isSubscribed,
         isCollection: isCollection,
         isBlacklisted: isBlacklisted,

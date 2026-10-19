@@ -117,10 +117,15 @@ void main() {
     await tester.tap(find.byKey(const Key('desktop-rankings-filter-trigger')));
     await tester.pumpAndSettle();
 
-    // 面板内容与移动抽屉逐节一致（来源 / 榜单 / 周期 / 排序）。
+    // 面板内容与移动抽屉逐节一致（来源 / 榜单 / 周期 / 互动数 / 排序）。
     expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
     expect(find.text('JavDB'), findsWidgets);
     expect(find.text('有码'), findsWidgets);
+    expect(
+      find.byKey(const Key('movie-filter-interaction-group-title')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('rankings-filter-sort-score')), findsOneWidget);
 
     bundle.adapter.enqueueJson(
       method: 'GET',
@@ -137,6 +142,28 @@ void main() {
     expect(lastRequest.uri.queryParameters['period'], 'weekly');
     expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
     expect(find.text('1 部'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/javdb/boards/censored/items',
+      body: _rankingItemsJson(total: 1),
+    );
+    final panelScrollable = find.descendant(
+      of: find.byKey(const Key('rankings-filter-panel')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('rankings-filter-sort-score')),
+      200,
+      scrollable: panelScrollable.first,
+    );
+    await tester.tap(find.byKey(const Key('rankings-filter-sort-score')));
+    await tester.pumpAndSettle();
+
+    expect(
+      bundle.adapter.requests.last.uri.queryParameters['sort'],
+      'score:desc',
+    );
   });
 
   testWidgets('筛选元数据加载完成前筛选入口不响应点击', (WidgetTester tester) async {

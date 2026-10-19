@@ -17,6 +17,7 @@ class MovieSummaryGrid extends ConsumerWidget {
     this.isMovieSubscriptionUpdating,
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
+    this.trailingLabelForMovie,
     this.emptyMessage = '当前没有可展示的影片数据。',
     this.selectionMode = false,
     this.isMovieSelected,
@@ -40,6 +41,9 @@ class MovieSummaryGrid extends ConsumerWidget {
   /// 未传自定义订阅回调时，接入跨列表复用的默认订阅动作。
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
+
+  /// 收起态番号行右侧文案（如「总分 4.0」）；null 时不显示。
+  final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
   final String emptyMessage;
 
   /// 选择模式开关：向 [MovieSummaryCard] 透传，卡片进入多选态。
@@ -57,6 +61,7 @@ class MovieSummaryGrid extends ConsumerWidget {
     isMovieSubscriptionUpdating: isMovieSubscriptionUpdating,
     useDefaultSubscriptionActions: useDefaultSubscriptionActions,
     secondaryLabelForMovie: secondaryLabelForMovie,
+    trailingLabelForMovie: trailingLabelForMovie,
   );
 
   @override
@@ -94,6 +99,7 @@ class MovieSummarySliver extends ConsumerWidget {
     this.isMovieSubscriptionUpdating,
     this.useDefaultSubscriptionActions = false,
     this.secondaryLabelForMovie,
+    this.trailingLabelForMovie,
     this.emptyMessage = '当前没有可展示的影片数据。',
     this.selectionMode = false,
     this.isMovieSelected,
@@ -117,6 +123,9 @@ class MovieSummarySliver extends ConsumerWidget {
   /// 未传自定义订阅回调时，接入跨列表复用的默认订阅动作。
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
+
+  /// 收起态番号行右侧文案（如「总分 4.0」）；null 时不显示。
+  final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
   final String emptyMessage;
 
   final bool selectionMode;
@@ -133,6 +142,7 @@ class MovieSummarySliver extends ConsumerWidget {
     isMovieSubscriptionUpdating: isMovieSubscriptionUpdating,
     useDefaultSubscriptionActions: useDefaultSubscriptionActions,
     secondaryLabelForMovie: secondaryLabelForMovie,
+    trailingLabelForMovie: trailingLabelForMovie,
   );
 
   @override

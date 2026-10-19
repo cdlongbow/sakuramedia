@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart' show ResponseBody;
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
@@ -6,6 +9,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_detail_page_content.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 
@@ -173,7 +178,9 @@ void main() {
     );
     await pumpPage(tester);
     expect(find.text('周末待看'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('movie-detail-playlist-trigger')));
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-detail-playlist-trigger')),
+    );
     await tester.tap(find.byKey(const Key('movie-detail-playlist-trigger')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('movie-playlist-option-1')));
@@ -186,6 +193,124 @@ void main() {
     expect(find.text('周末待看'), findsNothing);
     expect(find.byTooltip('加入播放列表'), findsOneWidget);
     expect(bundle.adapter.hitCount('DELETE', '/playlists/1/movies/ABC-001'), 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('桌面详情页收藏影片走 hero 快捷键', (WidgetTester tester) async {
+    final favoriteGate = Completer<void>();
+    _enqueueMovieDetailResponses(bundle, favoritePlaylistId: 9);
+    bundle.adapter.enqueueResponder(
+      method: 'PUT',
+      path: '/playlists/9/movies/ABC-001',
+      responder: (_, _) async {
+        await favoriteGate.future;
+        return ResponseBody.fromBytes(const <int>[], 204);
+      },
+    );
+    _enqueueMovieDetailResponses(bundle, favoritePlaylistId: 9);
+
+    await pumpPage(tester);
+
+    await tester.tap(find.byKey(const Key('movie-detail-hero-favorite-icon')));
+    await tester.pump();
+
+    // 收藏只让收藏键转圈，更多键不跟着加载。
+    expect(
+      find.byKey(const Key('movie-detail-hero-favorite-loading')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('movie-detail-hero-more-actions-loading')),
+      findsNothing,
+    );
+
+    favoriteGate.complete();
+    await tester.pumpAndSettle();
+
+    expect(bundle.adapter.hitCount('PUT', '/playlists/9/movies/ABC-001'), 1);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('收藏后失效收藏列表 provider，返回列表会重新拉取', (WidgetTester tester) async {
+    _enqueueMovieDetailResponses(bundle, favoritePlaylistId: 9);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists/9/movies',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'PUT',
+      path: '/playlists/9/movies/ABC-001',
+      statusCode: 204,
+    );
+    _enqueueMovieDetailResponses(bundle, favoritePlaylistId: 9);
+
+    await pumpPage(tester);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(DesktopMovieDetailPage)),
+    );
+    const playlistScope = MovieSummaryScope.playlist(playlistId: 9);
+    final subscription = container.listen(
+      movieSummaryProvider(playlistScope),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+    container.read(movieSummaryProvider(playlistScope));
+    await tester.pumpAndSettle();
+
+    int playlistRequests() => bundle.adapter.requests
+        .where((request) => request.uri.path == '/playlists/9/movies')
+        .length;
+    final before = playlistRequests();
+
+    // 失效后的重拉需要一条新的响应。
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists/9/movies',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+    await tester.tap(find.byKey(const Key('movie-detail-hero-favorite-icon')));
+    await tester.pumpAndSettle();
+
+    expect(playlistRequests(), before + 1);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('桌面详情页从更多菜单打开磁力搜索', (WidgetTester tester) async {
+    _enqueueMovieDetailResponses(bundle);
+
+    await pumpPage(tester);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('movie-detail-hero-more-actions-button')),
+    );
+    await tester.tap(
+      find.byKey(const Key('movie-detail-hero-more-actions-button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const Key('movie-detail-hero-action-openMagnetSearch')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('movie-detail-inspector-panel')),
+      findsOneWidget,
+    );
+    expect(find.text('磁力搜索'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -241,12 +366,14 @@ void main() {
 void _enqueueMovieDetailResponses(
   TestApiBundle bundle, {
   List<Map<String, dynamic>> playlists = const [],
+  int? favoritePlaylistId,
 }) {
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/movies/ABC-001',
     body: <String, dynamic>{
       'playlists': playlists,
+      'favorite_playlist_id': favoritePlaylistId,
       'javdb_id': 'MovieA1',
       'movie_number': 'ABC-001',
       'title': 'Movie 1',

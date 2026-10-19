@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
 import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
@@ -52,6 +53,8 @@ class RankingFilterSectionGroup extends StatelessWidget {
     required this.selectedSortField,
     required this.selectedSortDirection,
     required this.onSortChanged,
+    required this.interaction,
+    required this.onInteractionChanged,
     this.isBoardLoading = false,
     this.sectionKeys,
   });
@@ -68,6 +71,8 @@ class RankingFilterSectionGroup extends StatelessWidget {
   final SortDirection selectedSortDirection;
   final void Function(RankingSortField? field, SortDirection direction)
   onSortChanged;
+  final MovieInteractionFilter interaction;
+  final ValueChanged<MovieInteractionFilter> onInteractionChanged;
   final RankingFilterSectionKeys? sectionKeys;
 
   /// 切换来源后榜单（含周期）正在加载：榜单 / 周期分节显示骨架占位，
@@ -125,6 +130,11 @@ class RankingFilterSectionGroup extends StatelessWidget {
           ),
         ),
         SizedBox(height: context.appSpacing.lg),
+        MovieInteractionRangeFilterSectionGroup(
+          filter: interaction,
+          onChanged: onInteractionChanged,
+        ),
+        SizedBox(height: context.appSpacing.lg),
         KeyedSubtree(
           key: sectionKeys?.sort,
           child: RankingSortSection(
@@ -178,17 +188,15 @@ class RankingSortSection extends StatelessWidget {
               isSelected: selectedSortField == null,
               onPressed: () => onSortChanged(null, selectedSortDirection),
             ),
-            AppTextButton(
-              key: const Key('rankings-filter-sort-heat'),
-              label: RankingSortField.heat.label,
-              size: AppTextButtonSize.xSmall,
-              isSelected: selectedSortField == RankingSortField.heat,
-              onPressed:
-                  () => onSortChanged(
-                    RankingSortField.heat,
-                    selectedSortDirection,
-                  ),
-            ),
+            for (final field in RankingSortField.values)
+              if (field != RankingSortField.rank)
+                AppTextButton(
+                  key: Key('rankings-filter-sort-${field.apiValue}'),
+                  label: field.label,
+                  size: AppTextButtonSize.xSmall,
+                  isSelected: selectedSortField == field,
+                  onPressed: () => onSortChanged(field, selectedSortDirection),
+                ),
             if (selectedSortField != null)
               AppTextButton(
                 key: const Key('rankings-filter-sort-direction'),
@@ -199,13 +207,12 @@ class RankingSortSection extends StatelessWidget {
                       : Icons.north_rounded,
                 ),
                 size: AppTextButtonSize.xSmall,
-                onPressed:
-                    () => onSortChanged(
-                      selectedSortField,
-                      selectedSortDirection == SortDirection.desc
-                          ? SortDirection.asc
-                          : SortDirection.desc,
-                    ),
+                onPressed: () => onSortChanged(
+                  selectedSortField,
+                  selectedSortDirection == SortDirection.desc
+                      ? SortDirection.asc
+                      : SortDirection.desc,
+                ),
               ),
           ],
         ),

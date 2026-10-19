@@ -38,6 +38,8 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
@@ -57,6 +59,17 @@ import 'package:sakuramedia/features/videos/presentation/providers/videos_api_pr
 
 import 'fake_http_client_adapter.dart';
 import 'in_memory_credential_store.dart';
+
+/// 测试/预览用的互动数分布，取值与正式库 P99.9 一致，避免面板测试走网络。
+const testInteractionFilterOptions = MovieInteractionFilterOptionsDto(
+  movieCount: 166506,
+  heat: MovieInteractionDistributionDto(p999: 10839, max: 36278),
+  score: MovieInteractionDistributionDto(p999: 5.0, max: 5.0),
+  scoreNumber: MovieInteractionDistributionDto(p999: 19915, max: 52523),
+  watchedCount: MovieInteractionDistributionDto(p999: 4714, max: 14321),
+  wantWatchCount: MovieInteractionDistributionDto(p999: 15516, max: 39456),
+  commentCount: MovieInteractionDistributionDto(p999: 158, max: 611),
+);
 
 class TestApiBundle {
   TestApiBundle({
@@ -157,6 +170,9 @@ class TestApiBundle {
     DownloadClientsApi? downloadClientsApi,
     IndexerSettingsApi? indexerSettingsApi,
     ActivityApi? activityApi,
+    // 传 null 可让真实 provider 走 fake adapter，专门测加载/失败分支。
+    MovieInteractionFilterOptionsDto? interactionFilterOptions =
+        testInteractionFilterOptions,
   }) {
     return <Override>[
       apiClientProvider.overrideWithValue(apiClient),
@@ -184,6 +200,10 @@ class TestApiBundle {
         mediaLibrariesApi ?? this.mediaLibrariesApi,
       ),
       moviesApiProvider.overrideWithValue(moviesApi),
+      if (interactionFilterOptions != null)
+        movieInteractionFilterOptionsProvider.overrideWith(
+          (ref) async => interactionFilterOptions,
+        ),
       movieSubscriptionsApiProvider.overrideWithValue(movieSubscriptionsApi),
       playlistsApiProvider.overrideWithValue(playlistsApi),
       rankingsApiProvider.overrideWithValue(rankingsApi),

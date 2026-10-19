@@ -56,10 +56,7 @@ void main() {
       'series_name': 'Series 1',
       'maker_name': 'Maker',
       'director_name': 'Director',
-      'cover_image': <String, dynamic>{
-        'id': 10,
-        'origin': coverOrigin,
-      },
+      'cover_image': <String, dynamic>{'id': 10, 'origin': coverOrigin},
       'release_date': '2026-03-08',
       'duration_minutes': 120,
       'score': 4.5,
@@ -113,8 +110,9 @@ void main() {
       status: MovieStatusFilter.unsubscribed,
       collectionType: MovieCollectionTypeFilter.single,
       sort: 'release_date:desc',
-      heatMin: 1000,
-      heatMax: 5000,
+      interaction: MovieInteractionFilter.initial
+          .withRange(MovieInteractionMetric.heat, min: 1000, max: 5000)
+          .withRange(MovieInteractionMetric.score, min: 8.0),
       actorAgeMin: 20,
       actorAgeMax: 30,
       query: '温泉 三上',
@@ -128,6 +126,7 @@ void main() {
     expect(request.uri.queryParameters['sort'], 'release_date:desc');
     expect(request.uri.queryParameters['heat_min'], '1000');
     expect(request.uri.queryParameters['heat_max'], '5000');
+    expect(request.uri.queryParameters['score_min'], '8.0');
     expect(request.uri.queryParameters['actor_age_min'], '20');
     expect(request.uri.queryParameters['actor_age_max'], '30');
     expect(request.uri.queryParameters['query'], '温泉 三上');
@@ -208,33 +207,30 @@ void main() {
     expect(page.items.single.seriesName, 'S1 NO.1 STYLE');
   });
 
-  test(
-    'getMovies sends actor_id and years as stable desc CSV',
-    () async {
-      adapter.enqueueJson(
-        method: 'GET',
-        path: '/movies',
-        statusCode: 200,
-        body: <String, dynamic>{
-          'items': const <Map<String, dynamic>>[],
-          'page': 1,
-          'page_size': 24,
-          'total': 0,
-        },
-      );
+  test('getMovies sends actor_id and years as stable desc CSV', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      statusCode: 200,
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
 
-      await moviesApi.getMovies(
-        actorId: 7,
-        years: const <int>[2024, 2026],
-        page: 1,
-        pageSize: 24,
-      );
+    await moviesApi.getMovies(
+      actorId: 7,
+      years: const <int>[2024, 2026],
+      page: 1,
+      pageSize: 24,
+    );
 
-      final request = adapter.requests.single;
-      expect(request.uri.queryParameters['actor_id'], '7');
-      expect(request.uri.queryParameters['year'], '2026,2024');
-    },
-  );
+    final request = adapter.requests.single;
+    expect(request.uri.queryParameters['actor_id'], '7');
+    expect(request.uri.queryParameters['year'], '2026,2024');
+  });
 
   test('getMovies joins tagIds into comma-separated tag_ids', () async {
     adapter.enqueueJson(
@@ -690,10 +686,7 @@ void main() {
             'javdb_id': 'MovieA1',
             'movie_number': 'ABC-001',
             'title': 'Movie 1',
-            'cover_image': <String, dynamic>{
-              'id': 10,
-              'origin': 'large.jpg',
-            },
+            'cover_image': <String, dynamic>{'id': 10, 'origin': 'large.jpg'},
             'thin_cover_image': <String, dynamic>{
               'id': 11,
               'origin': 'thin-large.jpg',
@@ -718,10 +711,7 @@ void main() {
     expect(page.items.single.movieNumber, 'ABC-001');
     expect(page.items.single.preferredTitle, 'Movie 1');
     expect(page.items.single.coverImage?.origin, 'large.jpg');
-    expect(
-      page.items.single.thinCoverImage?.origin,
-      'thin-large.jpg',
-    );
+    expect(page.items.single.thinCoverImage?.origin, 'thin-large.jpg');
     expect(page.items.single.releaseDate, DateTime.parse('2024-01-02'));
     expect(page.items.single.canPlay, isTrue);
   });
@@ -822,10 +812,7 @@ void main() {
         'javdb_id': 'MovieA1',
         'movie_number': 'ABC-001',
         'title': 'Movie 1',
-        'cover_image': <String, dynamic>{
-          'id': 10,
-          'origin': 'cover-large.jpg',
-        },
+        'cover_image': <String, dynamic>{'id': 10, 'origin': 'cover-large.jpg'},
         'release_date': '2024-01-02',
         'duration_minutes': 120,
         'score': 4.5,
@@ -865,10 +852,7 @@ void main() {
           'origin': 'thin-large.jpg',
         },
         'plot_images': [
-          <String, dynamic>{
-            'id': 13,
-            'origin': 'plot-large.jpg',
-          },
+          <String, dynamic>{'id': 13, 'origin': 'plot-large.jpg'},
         ],
         'merge_playback_candidates': [
           <String, dynamic>{
@@ -892,6 +876,7 @@ void main() {
             'is_system': false,
           },
         ],
+        'favorite_playlist_id': 9,
         'rankings': [
           <String, dynamic>{
             'source_key': 'javdb',
@@ -1024,6 +1009,7 @@ void main() {
     expect(detail.playlists.first.name, '最近播放');
     expect(detail.playlists.first.isSystem, isTrue);
     expect(detail.playlists.last.kind, 'custom');
+    expect(detail.favoritePlaylistId, 9);
     expect(detail.rankings, hasLength(2));
     expect(detail.rankings.first.boardName, '热播');
     expect(detail.rankings.first.periodLabel, '日榜');
@@ -1517,10 +1503,7 @@ void main() {
           'thumbnail_id': 5,
           'media_id': 100,
           'offset_seconds': 10,
-          'image': <String, dynamic>{
-            'id': 88,
-            'origin': 'thumb-large.webp',
-          },
+          'image': <String, dynamic>{'id': 88, 'origin': 'thumb-large.webp'},
           'width': 1280,
           'height': 720,
         },
@@ -1552,10 +1535,7 @@ void main() {
             'thumbnail_id': 5,
             'media_id': 100,
             'offset_seconds': 10,
-            'image': <String, dynamic>{
-              'id': 88,
-              'origin': 'thumb-large.webp',
-            },
+            'image': <String, dynamic>{'id': 88, 'origin': 'thumb-large.webp'},
           },
         ],
       );
@@ -1813,6 +1793,29 @@ void main() {
       ),
       <String>['NOT-EXIST-999'],
     );
+  });
+
+  test('getInteractionFilterOptions parses dynamic distribution', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/interaction-filter-options',
+      body: <String, dynamic>{
+        'movie_count': 2,
+        'heat': <String, dynamic>{'p999': 10839, 'max': 36278},
+        'score': <String, dynamic>{'p999': 5.0, 'max': 5.0},
+        'score_number': <String, dynamic>{'p999': 19915, 'max': 52523},
+        'watched_count': <String, dynamic>{'p999': 4714, 'max': 14321},
+        'want_watch_count': <String, dynamic>{'p999': 15516, 'max': 39456},
+        'comment_count': <String, dynamic>{'p999': 158, 'max': 611},
+      },
+    );
+
+    final options = await moviesApi.getInteractionFilterOptions();
+
+    expect(options.movieCount, 2);
+    expect(options.sliderMaxFor(MovieInteractionMetric.heat), 10839);
+    expect(options.sliderMaxFor(MovieInteractionMetric.score), 5.0);
+    expect(options.sliderMaxFor(MovieInteractionMetric.commentCount), 158);
   });
 
   test('unsubscribeMovie preserves backend ApiException payload', () async {

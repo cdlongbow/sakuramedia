@@ -29,6 +29,34 @@ class MobileOverviewDrawer extends ConsumerWidget {
         label: '概览',
       );
 
+  static const _MobileOverviewDrawerMenuItem _favoritesItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'favorites',
+        icon: Icons.favorite_border_rounded,
+        label: '我的收藏',
+      );
+
+  static const _MobileOverviewDrawerMenuItem _recentlyPlayedItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'recently-played',
+        icon: Icons.play_circle_outline_rounded,
+        label: '最近播放',
+      );
+
+  static const _MobileOverviewDrawerMenuItem _recentViewsItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'recent-views',
+        icon: Icons.visibility_outlined,
+        label: '最近浏览',
+      );
+
+  static const _MobileOverviewDrawerMenuItem _ratingsItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'ratings',
+        icon: Icons.star_outline_rounded,
+        label: '我的评分',
+      );
+
   static const _MobileOverviewDrawerMenuItem _tagsItem =
       _MobileOverviewDrawerMenuItem(
         key: 'tags',
@@ -161,6 +189,27 @@ class MobileOverviewDrawer extends ConsumerWidget {
                             context: context,
                             item: _overviewItem,
                           ),
+                        ],
+                      ),
+                      SizedBox(height: spacing.md),
+                      _MobileOverviewDrawerSection(
+                        key: const Key(
+                          'mobile-overview-drawer-collection-section',
+                        ),
+                        items: <Widget>[
+                          _buildMenuEntry(
+                            context: context,
+                            item: _favoritesItem,
+                          ),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _recentlyPlayedItem,
+                          ),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _recentViewsItem,
+                          ),
+                          _buildMenuEntry(context: context, item: _ratingsItem),
                         ],
                       ),
                       SizedBox(height: spacing.md),

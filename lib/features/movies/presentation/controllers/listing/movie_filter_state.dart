@@ -1,8 +1,12 @@
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 export 'package:sakuramedia/features/playlists/data/playlist_resolution_filter.dart';
+
+// 互动数模型跨 movies / rankings 共用，从既有入口 re-export 保持下游 import 不变。
+export 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 
 // SortDirection 已抬到 lib/features/shared/data/sort_direction.dart，
 // 这里 re-export 保持 movies 域现有 import 路径不变。
@@ -75,10 +79,13 @@ enum MovieSortField {
   releaseDate,
   addedAt,
   subscribedAt,
-  commentCount,
-  scoreNumber,
-  wantWatchCount,
   heat,
+  score,
+  scoreNumber,
+  watchedCount,
+  wantWatchCount,
+  commentCount,
+  myScore,
 }
 
 extension MovieSortFieldX on MovieSortField {
@@ -86,20 +93,26 @@ extension MovieSortFieldX on MovieSortField {
     MovieSortField.releaseDate => 'release_date',
     MovieSortField.addedAt => 'added_at',
     MovieSortField.subscribedAt => 'subscribed_at',
-    MovieSortField.commentCount => 'comment_count',
-    MovieSortField.scoreNumber => 'score_number',
-    MovieSortField.wantWatchCount => 'want_watch_count',
     MovieSortField.heat => 'heat',
+    MovieSortField.score => 'score',
+    MovieSortField.scoreNumber => 'score_number',
+    MovieSortField.watchedCount => 'watched_count',
+    MovieSortField.wantWatchCount => 'want_watch_count',
+    MovieSortField.commentCount => 'comment_count',
+    MovieSortField.myScore => 'my_score',
   };
 
   String get label => switch (this) {
     MovieSortField.releaseDate => '发行时间',
     MovieSortField.addedAt => '最近入库',
     MovieSortField.subscribedAt => '订阅时间',
-    MovieSortField.commentCount => '评论人数',
-    MovieSortField.scoreNumber => '评分人数',
-    MovieSortField.wantWatchCount => '想看人数',
     MovieSortField.heat => '热度',
+    MovieSortField.score => '评分',
+    MovieSortField.scoreNumber => '评分人数',
+    MovieSortField.watchedCount => '看过人数',
+    MovieSortField.wantWatchCount => '想看人数',
+    MovieSortField.commentCount => '评论人数',
+    MovieSortField.myScore => '我的评分',
   };
 }
 
@@ -110,19 +123,6 @@ const Object _movieFilterUnset = Object();
 /// 女优详情会显式传入服务端返回的年份和数量，因此仍可保持「年份(影片数)」
 /// 的精确展示。
 const int movieFilterEarliestYear = 2008;
-
-/// 热度范围筛选的滑块上限：滑到顶即「无上界」（2w 及以上都包含）。
-///
-/// 与后端语义对齐：`heat_min` 传 0 等价于不传（全部包含），`heat_max`
-/// 传 20000 等价于不传（无上界），因此参数层用 `null` 表达「不限」。
-const int movieFilterHeatSliderMax = 20000;
-
-/// 滑块下限值 → 接口参数：0 即不限（不传 `heat_min`）。
-int? movieHeatMinFromSlider(int value) => value <= 0 ? null : value;
-
-/// 滑块上限值 → 接口参数：滑到顶即无上界（不传 `heat_max`）。
-int? movieHeatMaxFromSlider(int value) =>
-    value >= movieFilterHeatSliderMax ? null : value;
 
 /// 出演年龄筛选的滑块范围：18 ~ 50 岁。
 ///
@@ -163,20 +163,6 @@ String movieFilterYearsLabel(Set<int> years) {
   return '${ordered.first} 等 ${ordered.length} 个年份';
 }
 
-/// 热度范围的展示文案，桌面浮层与移动抽屉、筛选入口共用一份。
-String movieHeatRangeLabel(int? heatMin, int? heatMax) {
-  if (heatMin != null && heatMax != null) {
-    return '$heatMin ~ $heatMax';
-  }
-  if (heatMin != null) {
-    return '≥ $heatMin';
-  }
-  if (heatMax != null) {
-    return '≤ $heatMax';
-  }
-  return '不限';
-}
-
 List<MovieFilterYearOption> buildDefaultMovieFilterYearOptions({
   int? currentYear,
 }) {
@@ -206,9 +192,9 @@ class MovieFilterState {
     this.numberSource = MovieNumberSourceFilter.all,
     this.sortField = MovieSortField.releaseDate,
     this.sortDirection = SortDirection.desc,
+    this.dimensionSortId,
     this.years = const <int>{},
-    this.heatMin,
-    this.heatMax,
+    this.interaction = MovieInteractionFilter.initial,
     this.actorAgeMin,
     this.actorAgeMax,
     this.resolution,
@@ -220,14 +206,14 @@ class MovieFilterState {
   final MovieSortField sortField;
   final SortDirection sortDirection;
 
+  /// 非空时按该个人评分维度排序，覆盖 [sortField]。
+  final int? dimensionSortId;
+
   /// 多选年份，空集表示不限；多个年份之间为 OR。
   final Set<int> years;
 
-  /// 热度下限（接口 `heat_min` 语义）：null 表示不限。
-  final int? heatMin;
-
-  /// 热度上限（接口 `heat_max` 语义）：null 表示不限。
-  final int? heatMax;
+  /// 6 个互动数字段的 min/max 条件；空集表示不限。
+  final MovieInteractionFilter interaction;
 
   /// 出演年龄下限（接口 `actor_age_min` 语义）：null 表示不限。
   final int? actorAgeMin;
@@ -244,24 +230,29 @@ class MovieFilterState {
       numberSource == MovieNumberSourceFilter.all &&
       sortField == MovieSortField.releaseDate &&
       sortDirection == SortDirection.desc &&
+      dimensionSortId == null &&
       years.isEmpty &&
-      heatMin == null &&
-      heatMax == null &&
+      interaction.isDefault &&
       actorAgeMin == null &&
       actorAgeMax == null &&
       resolution == null;
 
-  bool get hasHeatRange => heatMin != null || heatMax != null;
+  bool get hasInteractionRange => !interaction.isDefault;
 
   bool get hasActorAgeRange => actorAgeMin != null || actorAgeMax != null;
 
-  String get sortExpression =>
-      '${sortField.apiValue}:${sortDirection.apiValue}';
+  String get sortExpression => dimensionSortId == null
+      ? '${sortField.apiValue}:${sortDirection.apiValue}'
+      : 'dimension_$dimensionSortId:${sortDirection.apiValue}';
 
   String get triggerLabel {
-    final label = switch ((years.isNotEmpty, hasHeatRange, hasActorAgeRange)) {
+    final label = switch ((
+      years.isNotEmpty,
+      hasInteractionRange,
+      hasActorAgeRange,
+    )) {
       (true, _, _) => movieFilterYearsLabel(years),
-      (_, true, _) => movieHeatRangeLabel(heatMin, heatMax),
+      (_, true, _) => interaction.summaryLabel,
       (_, _, true) => movieActorAgeRangeLabel(actorAgeMin, actorAgeMax),
       _ => status.label,
     };
@@ -274,9 +265,9 @@ class MovieFilterState {
       numberSource == other.numberSource &&
       sortField == other.sortField &&
       sortDirection == other.sortDirection &&
+      dimensionSortId == other.dimensionSortId &&
       setEquals(years, other.years) &&
-      heatMin == other.heatMin &&
-      heatMax == other.heatMax &&
+      interaction.matches(other.interaction) &&
       actorAgeMin == other.actorAgeMin &&
       actorAgeMax == other.actorAgeMax &&
       resolution == other.resolution;
@@ -287,9 +278,9 @@ class MovieFilterState {
     MovieNumberSourceFilter? numberSource,
     MovieSortField? sortField,
     SortDirection? sortDirection,
+    Object? dimensionSortId = _movieFilterUnset,
     Object? years = _movieFilterUnset,
-    Object? heatMin = _movieFilterUnset,
-    Object? heatMax = _movieFilterUnset,
+    MovieInteractionFilter? interaction,
     Object? actorAgeMin = _movieFilterUnset,
     Object? actorAgeMax = _movieFilterUnset,
     Object? resolution = _movieFilterUnset,
@@ -305,15 +296,13 @@ class MovieFilterState {
       numberSource: numberSource ?? this.numberSource,
       sortField: sortField ?? this.sortField,
       sortDirection: sortDirection ?? this.sortDirection,
+      dimensionSortId: identical(dimensionSortId, _movieFilterUnset)
+          ? this.dimensionSortId
+          : dimensionSortId as int?,
       years: identical(years, _movieFilterUnset)
           ? this.years
           : years as Set<int>? ?? const <int>{},
-      heatMin: identical(heatMin, _movieFilterUnset)
-          ? this.heatMin
-          : heatMin as int?,
-      heatMax: identical(heatMax, _movieFilterUnset)
-          ? this.heatMax
-          : heatMax as int?,
+      interaction: interaction ?? this.interaction,
       actorAgeMin: identical(actorAgeMin, _movieFilterUnset)
           ? this.actorAgeMin
           : actorAgeMin as int?,

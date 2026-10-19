@@ -4,6 +4,9 @@ abstract final class PlaylistKind {
 
   /// 系统「最近播放」，播放影片时由后端自动触达维护。
   static const String recentlyPlayed = 'recently_played';
+
+  /// 系统「收藏」，成员由用户在影片详情里手动增删。
+  static const String favorites = 'favorites';
 }
 
 class PlaylistDto {
@@ -25,6 +28,8 @@ class PlaylistDto {
   final String kind;
   final String description;
   final bool isSystem;
+
+  /// 是否可编辑列表信息（改名/描述）；收藏的成员增删按 [kind] 判定。
   final bool isMutable;
   final bool isDeletable;
   final int movieCount;

@@ -21,6 +21,7 @@ class MovieSummaryCardWiring {
     required this.isMovieSubscriptionUpdating,
     required this.useDefaultSubscriptionActions,
     required this.secondaryLabelForMovie,
+    this.trailingLabelForMovie,
   });
 
   final ValueChanged<MovieListItemDto>? onMovieTap;
@@ -34,6 +35,9 @@ class MovieSummaryCardWiring {
   /// 未传自定义订阅回调时，接入跨列表复用的默认订阅动作。
   final bool useDefaultSubscriptionActions;
   final String? Function(MovieListItemDto movie)? secondaryLabelForMovie;
+
+  /// 收起态番号行右侧文案（如「总分 4.0」）；null 时不显示。
+  final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
 
   /// watch 默认订阅动作的进行中集合；不启用默认动作时返回空集。
   Set<String> _watchUpdatingMovieNumbers(WidgetRef ref) =>
@@ -77,6 +81,7 @@ class MovieSummaryCardWiring {
           isMovieSubscriptionUpdating?.call(movie) ??
           updatingMovieNumbers.contains(movie.movieNumber),
       secondaryLabel: secondaryLabelForMovie?.call(movie),
+      trailingLabel: trailingLabelForMovie?.call(movie),
       selectionMode: selectionMode,
       isSelected: isSelected,
       onSelectedChanged: onSelectedChanged,

@@ -1,10 +1,7 @@
 import 'package:sakuramedia/features/movies/data/dto/listing/subscription_movie_list_item.dart';
 
 class MovieImageDto {
-  const MovieImageDto({
-    required this.id,
-    required this.origin,
-  });
+  const MovieImageDto({required this.id, required this.origin});
 
   final int id;
   final String origin;
@@ -74,6 +71,8 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
     required this.canPlay,
     this.similarityScore,
     this.maxMediaWidth = 0,
+    this.myScore,
+    this.myRatingValues = const <int, int>{},
   });
 
   /// 后端返回的影片整数主键，可用于与订阅等域数据关联。
@@ -96,6 +95,12 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
   final double? similarityScore;
   final int maxMediaWidth;
 
+  /// 个人评分总分（1-5）；未评分为 `null`。
+  final double? myScore;
+
+  /// 维度 id -> 分值；已评分列表中由后端附带，用于展示维度摘要。
+  final Map<int, int> myRatingValues;
+
   /// DMM 中文标题字段已随后端下线（存量收拢进 [title]），这里保留 getter 只做 trim。
   String get preferredTitle => title.trim();
 
@@ -113,6 +118,8 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
     bool? isSubscribed,
     bool? canPlay,
     double? similarityScore,
+    double? myScore,
+    Map<int, int>? myRatingValues,
   }) {
     return MovieListItemDto(
       // id 是不可变主键，copyWith 不开放改写、只透传（漏传会被默认 0 抹掉）。
@@ -131,6 +138,8 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
       isSubscribed: isSubscribed ?? this.isSubscribed,
       canPlay: canPlay ?? this.canPlay,
       similarityScore: similarityScore ?? this.similarityScore,
+      myScore: myScore ?? this.myScore,
+      myRatingValues: myRatingValues ?? this.myRatingValues,
     );
   }
 
@@ -155,6 +164,8 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
       isSubscribed: json['is_subscribed'] as bool? ?? false,
       canPlay: json['can_play'] as bool? ?? false,
       similarityScore: _doubleFromJson(json['similarity_score']),
+      myScore: _doubleFromJson(json['my_score']),
+      myRatingValues: _ratingValuesFromJson(json['my_rating_values']),
     );
   }
 
@@ -184,6 +195,21 @@ class MovieListItemDto implements SubscriptionMovieListItem<MovieListItemDto> {
       return value.toDouble();
     }
     return null;
+  }
+
+  static Map<int, int> _ratingValuesFromJson(dynamic value) {
+    if (value is! Map) {
+      return const <int, int>{};
+    }
+    final result = <int, int>{};
+    value.forEach((dynamic key, dynamic data) {
+      final dimensionId = int.tryParse(key.toString());
+      final score = data is num ? data.toInt() : int.tryParse('$data');
+      if (dimensionId != null && score != null) {
+        result[dimensionId] = score;
+      }
+    });
+    return Map<int, int>.unmodifiable(result);
   }
 
   static int? _intFromJson(dynamic value) {

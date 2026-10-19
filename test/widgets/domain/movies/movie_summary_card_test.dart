@@ -1016,6 +1016,50 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+  testWidgets('movie summary card shows trailing label beside movie number', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: SizedBox(
+            width: 220,
+            child: MovieSummaryCard(
+              movie: const MovieListItemDto(
+                javdbId: 'MovieA12',
+                movieNumber: 'ABC-034',
+                title: 'Movie 12',
+                coverImage: null,
+                releaseDate: null,
+                durationMinutes: 0,
+                heat: 0,
+                isSubscribed: false,
+                canPlay: false,
+              ),
+              trailingLabel: '总分 4.0',
+              onTap: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('movie-summary-card-trailing-ABC-034')),
+      findsOneWidget,
+    );
+    expect(find.text('总分 4.0'), findsOneWidget);
+
+    await _hoverCard(tester, 'ABC-034');
+
+    // 收起态主键层随悬停淡出，trailing 文案也不在悬停面板里重复。
+    expect(
+      find.byKey(const Key('movie-summary-card-trailing-ABC-034')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 /// 把鼠标指针移到卡片上：桌面端信息条靠悬停展开，必须用真实指针事件触发。

@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/rankings_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/async_notifier_dispose_guard.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/optimistic_patch_mixin.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
@@ -124,6 +125,7 @@ class RankingSummary extends _$RankingSummary
           page: page,
           pageSize: pageSize,
           sort: _activeFilters.sortExpression,
+          interaction: _activeFilters.interaction,
         );
   }
 
@@ -285,6 +287,19 @@ class RankingSummary extends _$RankingSummary
     return _applyFiltersAndReload(
       current,
       current.filters.copyWith(errorMessage: null, selectedPeriod: period),
+    );
+  }
+
+  Future<void> selectInteraction(MovieInteractionFilter interaction) {
+    final current = state.value;
+    if (current == null ||
+        current.filters.isLoading ||
+        interaction.matches(current.filters.interaction)) {
+      return Future<void>.value();
+    }
+    return _applyFiltersAndReload(
+      current,
+      current.filters.copyWith(errorMessage: null, interaction: interaction),
     );
   }
 

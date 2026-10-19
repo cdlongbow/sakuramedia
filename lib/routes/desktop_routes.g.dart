@@ -341,6 +341,15 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
         StatefulShellBranchData.$branch(
           routes: [
             GoRouteData.$route(
+              path: '/desktop/library/ratings',
+              hasOverriddenOnExit: false,
+              factory: $DesktopRatedMoviesRouteData._fromState,
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
               path: '/desktop/library/clips',
               hasOverriddenOnExit: false,
               factory: $DesktopClipsRouteData._fromState,
@@ -455,6 +464,16 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
       path: '/desktop/library/recent-views',
       hasOverriddenOnExit: false,
       factory: $DesktopRecentViewsRouteData._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/desktop/library/favorites',
+      hasOverriddenOnExit: false,
+      factory: $DesktopFavoritesRouteData._fromState,
+    ),
+    GoRouteData.$route(
+      path: '/desktop/library/recently-played',
+      hasOverriddenOnExit: false,
+      factory: $DesktopRecentlyPlayedRouteData._fromState,
     ),
     GoRouteData.$route(
       path: '/desktop/library/video-collections',
@@ -682,6 +701,27 @@ mixin $DesktopPlaylistsRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/library/playlists');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopRatedMoviesRouteData on GoRouteData {
+  static DesktopRatedMoviesRouteData _fromState(GoRouterState state) =>
+      const DesktopRatedMoviesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/library/ratings');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -1034,6 +1074,49 @@ mixin $DesktopRecentViewsRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/desktop/library/recent-views');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopFavoritesRouteData on GoRouteData {
+  static DesktopFavoritesRouteData _fromState(GoRouterState state) =>
+      const DesktopFavoritesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/library/favorites');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopRecentlyPlayedRouteData on GoRouteData {
+  static DesktopRecentlyPlayedRouteData _fromState(GoRouterState state) =>
+      const DesktopRecentlyPlayedRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/desktop/library/recently-played');
 
   @override
   void go(BuildContext context) => context.go(location);

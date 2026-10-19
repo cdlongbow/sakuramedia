@@ -21,9 +21,15 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_ac
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlist_detail_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_api_provider.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/system_playlist_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
@@ -109,15 +115,17 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
       isCollectionUpdating ||
       activeMovieAction != null;
 
-  Future<void> reloadPlaylistMembership() async {
+  Future<bool> reloadPlaylistMembership() async {
     try {
       final movie = await ref
           .read(moviesApiProvider)
           .getMovieDetail(movieNumber: movieNumber);
-      if (!mounted) return;
+      if (!mounted) return true;
       ref.read(movieDetailProvider(movieNumber).notifier).applyMovie(movie);
+      return true;
     } catch (error) {
       if (mounted) showToast(apiErrorMessage(error, fallback: '播放列表更新失败'));
+      return false;
     }
   }
 
@@ -376,9 +384,7 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
 
       await ref
           .read(mediaApiProvider)
-          .deleteMediaPoint(
-            pointId: existingPoint.pointId,
-          );
+          .deleteMediaPoint(pointId: existingPoint.pointId);
       if (!mounted) {
         return;
       }
@@ -510,12 +516,13 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     bool hasImage,
   ) {
     return <AppImageActionDescriptor>[
-      if (ref.read(imageSearchEnabledProvider)) AppImageActionDescriptor(
-        type: AppImageActionType.searchSimilar,
-        label: '相似图片',
-        icon: Icons.image_search_outlined,
-        enabled: hasImage,
-      ),
+      if (ref.read(imageSearchEnabledProvider))
+        AppImageActionDescriptor(
+          type: AppImageActionType.searchSimilar,
+          label: '相似图片',
+          icon: Icons.image_search_outlined,
+          enabled: hasImage,
+        ),
       AppImageActionDescriptor(
         type: AppImageActionType.saveToLocal,
         label: '保存到本地',
@@ -595,6 +602,69 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
     showMovieSubscriptionFeedback(result);
     return result.status == MovieSubscriptionToggleStatus.subscribed ||
         result.status == MovieSubscriptionToggleStatus.unsubscribed;
+  }
+
+  Future<bool> toggleMovieFavorite({
+    required MovieDetailDto movie,
+    required bool isFavorite,
+  }) async {
+    if (isMovieActionLocked) {
+      return false;
+    }
+    final playlistId = movie.favoritePlaylistId;
+    if (playlistId == null) {
+      showToast('收藏列表尚未初始化');
+      return false;
+    }
+
+    setState(() {
+      activeMovieAction = MovieDetailActionType.toggleFavorite;
+    });
+
+    try {
+      final api = ref.read(playlistsApiProvider);
+      if (isFavorite) {
+        await api.removeMovieFromPlaylist(
+          playlistId: playlistId,
+          movieNumber: movie.movieNumber,
+        );
+      } else {
+        await api.addMovieToPlaylist(
+          playlistId: playlistId,
+          movieNumber: movie.movieNumber,
+        );
+      }
+      // 详情页可能在请求期间被关闭；此时不要再用已释放的 ref。
+      if (!mounted) {
+        return true;
+      }
+      // 收藏列表可能正被「我的收藏」页监听；只刷新详情会让它在返回后仍显示旧成员。
+      ref.invalidate(
+        movieSummaryProvider(
+          MovieSummaryScope.playlist(playlistId: playlistId),
+        ),
+      );
+      ref.invalidate(playlistDetailProvider(playlistId));
+      ref.invalidate(systemPlaylistProvider(PlaylistKind.favorites));
+      final refreshed = await reloadPlaylistMembership();
+      if (mounted && refreshed) {
+        showToast(isFavorite ? '已取消收藏' : '已收藏');
+      }
+      return true;
+    } catch (error) {
+      if (mounted) {
+        showToast(
+          apiErrorMessage(error, fallback: isFavorite ? '取消收藏失败' : '收藏失败'),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          activeMovieAction = null;
+        });
+      }
+    }
   }
 
   Future<bool> toggleMovieBlacklist({required bool isBlacklisted}) async {
@@ -755,6 +825,18 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
             false,
       );
     }
+    if (action == MovieDetailActionType.toggleFavorite) {
+      final movie = ref.read(movieDetailProvider(movieNumber)).movie;
+      if (movie == null) {
+        return Future<bool>.value(false);
+      }
+      return toggleMovieFavorite(
+        movie: movie,
+        isFavorite: movie.playlists.any(
+          (playlist) => playlist.kind == PlaylistKind.favorites,
+        ),
+      );
+    }
 
     return executeMovieDetailRemoteAction(
       context: context,
@@ -806,7 +888,14 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
         }
       case MovieDetailActionType.refreshMetadata:
         await confirmRefreshMetadata();
+      case MovieDetailActionType.openMagnetSearch:
+        await openInspector(
+          movie,
+          selectedMedia,
+          pane: MovieDetailInspectorPane.magnetSearch,
+        );
       case MovieDetailActionType.toggleSubscription:
+      case MovieDetailActionType.toggleFavorite:
       case MovieDetailActionType.toggleBlacklist:
       case MovieDetailActionType.recomputeHeat:
         await executeMovieAction(action);

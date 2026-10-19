@@ -215,6 +215,34 @@ void main() {
     expect(tapped, isTrue);
   });
 
+  testWidgets('movie detail info block toggles favorite from the star key', (
+    WidgetTester tester,
+  ) async {
+    var tapped = false;
+
+    await tester.pumpWidget(
+      _buildBlock(
+        isFavorite: true,
+        onFavoriteTap: () {
+          tapped = true;
+        },
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('movie-detail-hero-favorite-icon')),
+      findsOneWidget,
+    );
+    expect(find.byTooltip('取消收藏'), findsOneWidget);
+    // 磁力搜索已收进「更多」。
+    expect(find.byTooltip('磁力搜索'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('movie-detail-hero-favorite-icon')));
+    await tester.pump();
+
+    expect(tapped, isTrue);
+  });
+
   testWidgets('movie detail info block invokes more actions callback', (
     WidgetTester tester,
   ) async {
@@ -258,11 +286,13 @@ void main() {
 
 Widget _buildBlock({
   bool isSubscribed = false,
+  bool isFavorite = false,
   String? overlayTitle,
   List<MovieDetailMetaItem> metaItems = const [],
   String? fileSizeLabel,
   VoidCallback? onPlayTap,
   VoidCallback? onSubscriptionTap,
+  VoidCallback? onFavoriteTap,
   VoidCallback? onPlaylistTap,
   Future<void> Function(Offset globalPosition)? onMoreActionsTap,
   String? mergePlaybackLabel,
@@ -273,13 +303,15 @@ Widget _buildBlock({
     home: Scaffold(
       body: SizedBox(
         width: 1200,
-          child: MovieDetailInfoBlock(
-            isSubscribed: isSubscribed,
-            overlayTitle: overlayTitle,
-            metaItems: metaItems,
-            fileSizeLabel: fileSizeLabel,
+        child: MovieDetailInfoBlock(
+          isSubscribed: isSubscribed,
+          isFavorite: isFavorite,
+          overlayTitle: overlayTitle,
+          metaItems: metaItems,
+          fileSizeLabel: fileSizeLabel,
           onPlayTap: onPlayTap,
           onSubscriptionTap: onSubscriptionTap,
+          onFavoriteTap: onFavoriteTap,
           onPlaylistTap: onPlaylistTap,
           onMoreActionsTap: onMoreActionsTap,
           mergePlaybackLabel: mergePlaybackLabel,

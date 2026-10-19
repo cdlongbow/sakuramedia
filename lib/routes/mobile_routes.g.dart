@@ -17,6 +17,9 @@ List<RouteBase> get $appRoutes => [
   $mobileLatestMoviesRouteData,
   $mobileRecentlySubscribedMoviesRouteData,
   $mobileRecentViewsRouteData,
+  $mobileFavoritesRouteData,
+  $mobileRecentlyPlayedRouteData,
+  $mobileRatedMoviesRouteData,
   $mobileSystemOverviewRouteData,
   $mobileMediaImportRouteData,
   $mobileActivityRouteData,
@@ -377,6 +380,88 @@ mixin $MobileRecentViewsRouteData on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/mobile/library/recent-views');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileFavoritesRouteData => GoRouteData.$route(
+  path: '/mobile/library/favorites',
+  hasOverriddenOnExit: false,
+  factory: $MobileFavoritesRouteData._fromState,
+);
+
+mixin $MobileFavoritesRouteData on GoRouteData {
+  static MobileFavoritesRouteData _fromState(GoRouterState state) =>
+      const MobileFavoritesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/library/favorites');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileRecentlyPlayedRouteData => GoRouteData.$route(
+  path: '/mobile/library/recently-played',
+  hasOverriddenOnExit: false,
+  factory: $MobileRecentlyPlayedRouteData._fromState,
+);
+
+mixin $MobileRecentlyPlayedRouteData on GoRouteData {
+  static MobileRecentlyPlayedRouteData _fromState(GoRouterState state) =>
+      const MobileRecentlyPlayedRouteData();
+
+  @override
+  String get location =>
+      GoRouteData.$location('/mobile/library/recently-played');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileRatedMoviesRouteData => GoRouteData.$route(
+  path: '/mobile/library/ratings',
+  hasOverriddenOnExit: false,
+  factory: $MobileRatedMoviesRouteData._fromState,
+);
+
+mixin $MobileRatedMoviesRouteData on GoRouteData {
+  static MobileRatedMoviesRouteData _fromState(GoRouterState state) =>
+      const MobileRatedMoviesRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/library/ratings');
 
   @override
   void go(BuildContext context) => context.go(location);

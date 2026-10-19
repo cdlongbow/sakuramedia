@@ -205,4 +205,71 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });
+
+  testWidgets('系统收藏列表可选，最近播放列表保持隐藏', (tester) async {
+    final session = SessionStore.inMemory();
+    await session.saveBaseUrl('https://api.example.com');
+    await session.saveTokens(
+      accessToken: 'test',
+      refreshToken: 'test',
+      expiresAt: DateTime(2030),
+    );
+    final bundle = await createTestApiBundle(session);
+    addTearDown(() {
+      bundle.dispose();
+      session.dispose();
+    });
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: [
+        {
+          'id': 1,
+          'name': '收藏',
+          'kind': 'favorites',
+          'is_system': true,
+          'movie_count': 3,
+        },
+        {
+          'id': 2,
+          'name': '最近播放',
+          'kind': 'recently_played',
+          'is_system': true,
+          'movie_count': 8,
+        },
+        {'id': 3, 'name': '周末', 'movie_count': 1},
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showMoviePlaylistPickerDialog(
+                    context,
+                    movieNumber: 'ABC-001',
+                    initialPlaylists: const [],
+                  ),
+                  child: const Text('打开'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('打开'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('movie-playlist-option-1')), findsOneWidget);
+    expect(find.byKey(const Key('movie-playlist-option-2')), findsNothing);
+    expect(find.byKey(const Key('movie-playlist-option-3')), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
 }

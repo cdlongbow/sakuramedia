@@ -16,6 +16,7 @@ enum MovieSummarySource {
   actor,
   playlist,
   series,
+  rated,
 }
 
 @immutable
@@ -29,6 +30,7 @@ class MovieSummaryScope {
     this.cacheKey,
     this.initialTagIds = const <int>[],
     this.initialTagMatch = TagMatchMode.or,
+    this.initialMovieFilter,
   });
 
   const MovieSummaryScope.latest({int pageSize = 24})
@@ -119,6 +121,25 @@ class MovieSummaryScope {
         initialLoadErrorText: '系列影片加载失败，请稍后重试',
       );
 
+  /// 已评分影片：只列个人评分记录，默认按总分倒序、包含合集。
+  const MovieSummaryScope.rated({String? cacheKey, int pageSize = 24})
+    : this._(
+        source: MovieSummarySource.rated,
+        cacheKey: cacheKey,
+        pageSize: pageSize,
+        initialLoadErrorText: '我的评分加载失败，请稍后重试',
+        initialMovieFilter: const MovieFilterState(
+          collectionType: MovieCollectionTypeFilter.all,
+          sortField: MovieSortField.myScore,
+        ),
+      );
+
+  /// 桌面 / 移动「我的评分」页共用的实例；评分写入后按同一 scope 精确失效。
+  ///
+  /// 不设 cacheKey：页面在 shell 分支里本身不会随切页销毁，无需自行保活；
+  /// 登出或页面销毁后仍能按 autoDispose 释放，避免残留上一账号的列表。
+  static const MovieSummaryScope ratedList = MovieSummaryScope.rated();
+
   final MovieSummarySource source;
   final int? resourceId;
   final String? instanceKey;
@@ -130,6 +151,9 @@ class MovieSummaryScope {
   final List<int> initialTagIds;
   final TagMatchMode initialTagMatch;
 
+  /// 首拉的影片筛选；为 `null` 时使用 [MovieFilterState.initial]。
+  final MovieFilterState? initialMovieFilter;
+
   @override
   bool operator ==(Object other) {
     return other is MovieSummaryScope &&
@@ -140,7 +164,10 @@ class MovieSummaryScope {
         other.initialLoadErrorText == initialLoadErrorText &&
         other.cacheKey == cacheKey &&
         listEquals(other.initialTagIds, initialTagIds) &&
-        other.initialTagMatch == initialTagMatch;
+        other.initialTagMatch == initialTagMatch &&
+        (other.initialMovieFilter == null) == (initialMovieFilter == null) &&
+        (other.initialMovieFilter == null ||
+            other.initialMovieFilter!.matches(initialMovieFilter!));
   }
 
   @override
@@ -153,5 +180,6 @@ class MovieSummaryScope {
     cacheKey,
     Object.hashAll(initialTagIds),
     initialTagMatch,
+    initialMovieFilter?.sortExpression,
   );
 }

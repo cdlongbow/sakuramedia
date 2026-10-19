@@ -41,7 +41,7 @@ void main() {
         find.byKey(const Key('movie-summary-card-SUB-001')),
         findsOneWidget,
       );
-      expect(find.text('最近浏览'), findsOneWidget);
+      expect(find.text('最近浏览'), findsWidgets);
       expect(
         find.byKey(const Key('recent-view-card-movie-HIS-001')),
         findsOneWidget,

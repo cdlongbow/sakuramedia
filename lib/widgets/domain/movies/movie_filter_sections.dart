@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
-/// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 热度范围 /
+/// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 互动数范围 /
 /// 出演年龄 / 年份 / 排序 / 可选标签）的纵向 Column。
 ///
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动 `MobileMovieFilterDrawer` 都用它，
@@ -92,12 +95,10 @@ class MovieFilterSectionGroup extends StatelessWidget {
               onChanged(filterState.copyWith(numberSource: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
-        MovieHeatRangeFilterSection(
-          heatMin: filterState.heatMin,
-          heatMax: filterState.heatMax,
-          onChanged: (range) => onChanged(
-            filterState.copyWith(heatMin: range.$1, heatMax: range.$2),
-          ),
+        MovieInteractionRangeFilterSectionGroup(
+          filter: filterState.interaction,
+          onChanged: (interaction) =>
+              onChanged(filterState.copyWith(interaction: interaction)),
         ),
         if (showActorAgeSection) ...[
           SizedBox(height: context.appSpacing.lg),
@@ -269,67 +270,194 @@ class MovieFilterChoiceSection<T> extends StatelessWidget {
   }
 }
 
-/// 热度范围双滑块筛选：0 ~ [movieFilterHeatSliderMax]（2w）。
+/// 6 个互动数字段的平铺式范围筛选：每个字段一个标题 + 双滑块。
 ///
-/// - 左滑块拖到 0 = 下限不限；右滑块拖到顶 = 无上界（2w 及以上都包含），
-///   两者都映射为接口参数的 `null`（不传），语义对齐后端 `heat_min` / `heat_max`。
-/// - 拖动中只更新面板内的值显示，松手（onChangeEnd）才应用请求，
-///   避免拖动过程打出一串列表请求。
-class MovieHeatRangeFilterSection extends StatefulWidget {
-  const MovieHeatRangeFilterSection({
+/// 左滑块拖到 0 = 下限不限；右滑块拖到顶 = 无上界；两者都映射为接口参数的
+/// `null`（不传）。拖动中只更新面板内的值显示，松手（onChangeEnd）才应用请求。
+class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
+  const MovieInteractionRangeFilterSectionGroup({
     super.key,
-    required this.heatMin,
-    required this.heatMax,
+    required this.filter,
     required this.onChanged,
   });
 
-  final int? heatMin;
-  final int? heatMax;
-  final ValueChanged<(int?, int?)> onChanged;
+  final MovieInteractionFilter filter;
+  final ValueChanged<MovieInteractionFilter> onChanged;
 
   @override
-  State<MovieHeatRangeFilterSection> createState() =>
-      _MovieHeatRangeFilterSectionState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final options = ref.watch(movieInteractionFilterOptionsProvider);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '互动数',
+              key: const Key('movie-filter-interaction-group-title'),
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.primary,
+              ),
+            ),
+            if (!filter.isDefault)
+              AppTextButton(
+                key: const Key('movie-filter-interaction-clear'),
+                label: '清空',
+                size: AppTextButtonSize.xSmall,
+                onPressed: () => onChanged(filter.clear()),
+              ),
+          ],
+        ),
+        SizedBox(height: context.appSpacing.sm),
+        options.when(
+          loading: () => _buildStatus(context, '互动数范围加载中', loading: true),
+          error: (_, _) => _buildStatus(
+            context,
+            '互动数范围加载失败',
+            onRetry: () => ref.invalidate(movieInteractionFilterOptionsProvider),
+          ),
+          data: (value) => _buildSections(context, value),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSections(
+    BuildContext context,
+    MovieInteractionFilterOptionsDto options,
+  ) {
+    final children = <Widget>[];
+    for (final metric in MovieInteractionMetric.values) {
+      final maxValue = options.sliderMaxFor(metric);
+      if (maxValue == null || maxValue <= 0) {
+        continue;
+      }
+      if (children.isNotEmpty) {
+        children.add(SizedBox(height: context.appSpacing.md));
+      }
+      children.add(
+        MovieInteractionRangeFilterSection(
+          metric: metric,
+          maxValue: maxValue.toDouble(),
+          range: filter.rangeFor(metric),
+          onChanged: (min, max) =>
+              onChanged(filter.withRange(metric, min: min, max: max)),
+        ),
+      );
+    }
+    if (children.isEmpty) {
+      return _buildStatus(context, '暂无可用的互动数范围');
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
+  Widget _buildStatus(
+    BuildContext context,
+    String message, {
+    bool loading = false,
+    VoidCallback? onRetry,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (loading) ...[
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
+          ),
+          SizedBox(width: context.appSpacing.sm),
+        ],
+        Text(
+          message,
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.regular,
+            tone: AppTextTone.muted,
+          ),
+        ),
+        if (onRetry != null) ...[
+          SizedBox(width: context.appSpacing.sm),
+          AppTextButton(
+            label: '重试',
+            size: AppTextButtonSize.xSmall,
+            onPressed: onRetry,
+          ),
+        ],
+      ],
+    );
+  }
 }
 
-class _MovieHeatRangeFilterSectionState
-    extends State<MovieHeatRangeFilterSection> {
+class MovieInteractionRangeFilterSection extends StatefulWidget {
+  const MovieInteractionRangeFilterSection({
+    super.key,
+    required this.metric,
+    required this.maxValue,
+    required this.range,
+    required this.onChanged,
+  });
+
+  final MovieInteractionMetric metric;
+  final double maxValue;
+  final MovieInteractionRange? range;
+  final void Function(num? min, num? max) onChanged;
+
+  @override
+  State<MovieInteractionRangeFilterSection> createState() =>
+      _MovieInteractionRangeFilterSectionState();
+}
+
+class _MovieInteractionRangeFilterSectionState
+    extends State<MovieInteractionRangeFilterSection> {
   late RangeValues _values;
 
   @override
   void initState() {
     super.initState();
-    _values = _valuesFrom(widget.heatMin, widget.heatMax);
+    _values = _valuesFrom(widget.range);
   }
 
   @override
-  void didUpdateWidget(covariant MovieHeatRangeFilterSection oldWidget) {
+  void didUpdateWidget(covariant MovieInteractionRangeFilterSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.heatMin != widget.heatMin ||
-        oldWidget.heatMax != widget.heatMax) {
+    if (oldWidget.range?.min != widget.range?.min ||
+        oldWidget.range?.max != widget.range?.max ||
+        oldWidget.metric != widget.metric ||
+        oldWidget.maxValue != widget.maxValue) {
       // 外部状态变化（重置筛选 / 其他入口改条件）时同步滑块位置；
       // onChangeEnd 应用后回传的值与此处推导一致，不会闪烁。
-      _values = _valuesFrom(widget.heatMin, widget.heatMax);
+      _values = _valuesFrom(widget.range);
     }
   }
 
-  static RangeValues _valuesFrom(int? heatMin, int? heatMax) => RangeValues(
-    (heatMin ?? 0).toDouble(),
-    (heatMax ?? movieFilterHeatSliderMax).toDouble(),
+  RangeValues _valuesFrom(MovieInteractionRange? range) => RangeValues(
+    (range?.min?.toDouble() ?? 0).clamp(0.0, widget.maxValue),
+    (range?.max?.toDouble() ?? widget.maxValue).clamp(0.0, widget.maxValue),
   );
 
   void _apply(RangeValues values) {
-    final heatMin = movieHeatMinFromSlider(values.start.round());
-    final heatMax = movieHeatMaxFromSlider(values.end.round());
-    if (heatMin != widget.heatMin || heatMax != widget.heatMax) {
-      widget.onChanged((heatMin, heatMax));
+    final min = widget.metric.minFromSlider(values.start);
+    final max = widget.metric.maxFromSlider(values.end, widget.maxValue);
+    if (min != widget.range?.min || max != widget.range?.max) {
+      widget.onChanged(min, max);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final heatMin = movieHeatMinFromSlider(_values.start.round());
-    final heatMax = movieHeatMaxFromSlider(_values.end.round());
+    final min = widget.metric.minFromSlider(_values.start);
+    final max = widget.metric.maxFromSlider(_values.end, widget.maxValue);
     final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,8 +466,8 @@ class _MovieHeatRangeFilterSectionState
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '热度',
-              key: const Key('movie-filter-heat-section-title'),
+              widget.metric.label,
+              key: Key('movie-filter-${widget.metric.apiValue}-section-title'),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s14,
@@ -348,8 +476,8 @@ class _MovieHeatRangeFilterSectionState
               ),
             ),
             Text(
-              movieHeatRangeLabel(heatMin, heatMax),
-              key: const Key('movie-filter-heat-range-label'),
+              movieInteractionRangeLabel(widget.metric, min, max),
+              key: Key('movie-filter-${widget.metric.apiValue}-range-label'),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -361,9 +489,7 @@ class _MovieHeatRangeFilterSectionState
         ),
         SizedBox(height: context.appSpacing.xs),
         // 桌面筛选面板内的滑块保持克制的体量：3px 细轨道 + 小扁平 thumb，
-        // 拖动反馈用 10% 品牌色的浅晕圈；默认 M3 的 20px thumb + 4px 轨道
-        // 在面板里显得过重。颜色全部走品牌/divider token，几何参数为
-        // 组件内部实现细节。
+        // 拖动反馈用 10% 品牌色的浅晕圈。
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 3,
@@ -378,9 +504,12 @@ class _MovieHeatRangeFilterSectionState
             overlayColor: colorScheme.primary.withValues(alpha: 0.10),
           ),
           child: RangeSlider(
-            key: const Key('movie-filter-heat-slider'),
+            key: Key('movie-filter-${widget.metric.apiValue}-slider'),
             min: 0,
-            max: movieFilterHeatSliderMax.toDouble(),
+            max: widget.maxValue,
+            divisions: widget.metric.isDecimal
+                ? (widget.maxValue * 10).round()
+                : null,
             values: _values,
             onChanged: (values) => setState(() => _values = values),
             onChangeEnd: _apply,
@@ -402,7 +531,7 @@ class _MovieHeatRangeFilterSectionState
                 ),
               ),
               Text(
-                '2w',
+                widget.metric.sliderMaxLabel(widget.maxValue),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s10,

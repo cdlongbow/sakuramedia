@@ -27,6 +27,7 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_ra
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_similar_movie_strip.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_subtitle_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 
 class MovieDetailPageContent extends StatelessWidget {
   /// 正文滚动容器（[AppNoPullDownScrollView]，顶部不可下拉）的测试锚点。
@@ -41,6 +42,8 @@ class MovieDetailPageContent extends StatelessWidget {
     required this.selectedPreviewUrl,
     required this.isSubscribed,
     required this.isSubscriptionUpdating,
+    this.onFavoriteTap,
+    this.isFavoriteUpdating = false,
     required this.selectedMediaId,
     required this.similarMovies,
     required this.isSimilarMoviesLoading,
@@ -83,6 +86,7 @@ class MovieDetailPageContent extends StatelessWidget {
     this.contentPadding = EdgeInsets.zero,
     this.isMoreActionsUpdating = false,
     this.isPlayLoading = false,
+    this.ratingPanel,
   });
 
   final MovieDetailDto movie;
@@ -92,12 +96,14 @@ class MovieDetailPageContent extends StatelessWidget {
   final String? selectedPreviewUrl;
   final bool isSubscribed;
   final bool isSubscriptionUpdating;
+  final VoidCallback? onFavoriteTap;
+  final bool isFavoriteUpdating;
   final bool isMoreActionsUpdating;
   final int? selectedMediaId;
   final List<MovieListItemDto> similarMovies;
   final bool isSimilarMoviesLoading;
 
-  /// 点击操作列的评论 / 磁力搜索 / 缩略图键：打开对应功能的弹窗。
+  /// 点击操作列的评论 / 缩略图键：打开对应功能的弹窗。
   final ValueChanged<MovieDetailInspectorPane> onInspectorPaneTap;
   final VoidCallback onPlaylistTap;
   final ValueChanged<MovieMediaItemDto> onMediaSelect;
@@ -153,6 +159,9 @@ class MovieDetailPageContent extends StatelessWidget {
 
   /// 播放动作进行中（合并播放探测/拉起外部播放器），透传给 hero 播放按钮显示 loading。
   final bool isPlayLoading;
+
+  /// 元信息行下方的内联评分面板；null 时不渲染。
+  final Widget? ratingPanel;
 
   final bool showSimilarMovies;
 
@@ -347,6 +356,11 @@ class MovieDetailPageContent extends StatelessWidget {
                   isSubscribed: isSubscribed,
                   onSubscriptionTap: onSubscriptionTap,
                   isSubscriptionUpdating: isSubscriptionUpdating,
+                  isFavorite: movie.playlists.any(
+                    (playlist) => playlist.kind == PlaylistKind.favorites,
+                  ),
+                  onFavoriteTap: onFavoriteTap,
+                  isFavoriteUpdating: isFavoriteUpdating,
                   onPlaylistTap: onPlaylistTap,
                   playlistTooltip: movie.playlists.isEmpty
                       ? '加入播放列表'
@@ -361,6 +375,7 @@ class MovieDetailPageContent extends StatelessWidget {
                   onMergePlaybackTap: onMergePlaybackTap,
                   isMergePlaybackLoading: isMergePlaybackLoading,
                   onInspectorPaneTap: onInspectorPaneTap,
+                  ratingPanel: ratingPanel,
                 ),
               ),
             ),

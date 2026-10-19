@@ -143,7 +143,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
       child: Builder(
         builder: (context) {
           if (detailAsync.isLoading && detailAsync.value == null) {
-            return const _PlaylistDetailLoadingContent();
+            return const PlaylistDetailLoadingContent();
           }
 
           if (detailAsync.hasError && detailAsync.value == null) {
@@ -465,8 +465,8 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 }
 
-class _PlaylistDetailLoadingContent extends StatelessWidget {
-  const _PlaylistDetailLoadingContent();
+class PlaylistDetailLoadingContent extends StatelessWidget {
+  const PlaylistDetailLoadingContent({super.key});
 
   @override
   Widget build(BuildContext context) {

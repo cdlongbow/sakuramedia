@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/rankings/data/rankings_api.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_provider.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_scope.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/rankings_api_provider.dart';
+import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 import '../../../../support/riverpod_test_helpers.dart';
@@ -213,6 +214,31 @@ void main() {
 
     await sortUpdate;
     expect(adapter.requests.last.uri.queryParameters['sort'], 'heat:asc');
+  });
+
+  test('互动数范围筛选防抖后写入请求参数', () async {
+    const scope = RankingSummaryScope.desktop();
+    await prime(scope);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/ranking-sources/javdb/boards/censored/items',
+      body: _page(items: <Map<String, dynamic>>[_rankedMovie(2)], total: 1),
+    );
+    final interaction = MovieInteractionFilter.initial
+        .withRange(MovieInteractionMetric.score, min: 8.0)
+        .withRange(MovieInteractionMetric.commentCount, min: 20);
+
+    final update = container
+        .read(rankingSummaryProvider(scope).notifier)
+        .selectInteraction(interaction);
+    final pending = container.read(rankingSummaryProvider(scope)).requireValue;
+    expect(pending.filters.interaction.matches(interaction), isTrue);
+    expect(pending.paged.filterUpdate.isWaiting, isTrue);
+
+    await update;
+    final parameters = adapter.requests.last.uri.queryParameters;
+    expect(parameters['score_min'], '8.0');
+    expect(parameters['comment_count_min'], '20');
   });
 
   test('刷新成功替换首页，失败保留旧条目并返回文案', () async {

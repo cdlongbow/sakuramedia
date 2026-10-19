@@ -8,10 +8,11 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_state.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
 import 'package:sakuramedia/features/overview/presentation/providers/overview_system_info_provider.dart';
-import 'package:sakuramedia/features/overview/presentation/providers/recently_played_playlist_provider.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/storage_usage_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/watch_trend_card.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/system_playlist_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_section.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -24,11 +25,16 @@ import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_rail.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 
+final _recentlyPlayedPlaylistProvider = systemPlaylistProvider(
+  PlaylistKind.recentlyPlayed,
+);
+
 class DesktopOverviewPage extends ConsumerWidget {
   const DesktopOverviewPage({super.key});
 
   static const _latestScope = MovieSummaryScope.latest();
-  static const _recentlySubscribedScope = MovieSummaryScope.recentlySubscribed();
+  static const _recentlySubscribedScope =
+      MovieSummaryScope.recentlySubscribed();
 
   /// 宽屏时「观看趋势 + 存储分布」并排；窄窗口堆叠。
   static const double _twoColumnMinWidth = 960;
@@ -38,7 +44,7 @@ class DesktopOverviewPage extends ConsumerWidget {
   static const int _previewItemCount = 12;
 
   Future<void> _refreshOverview(BuildContext context, WidgetRef ref) async {
-    final recentPlaylist = ref.read(recentlyPlayedPlaylistProvider).value;
+    final recentPlaylist = ref.read(_recentlyPlayedPlaylistProvider).value;
     final futures = <Future<void>>[
       // 沿用旧行为:桌面刷新走 load()(不置 loading 标志),卡片不闪骨架。
       ref.read(overviewSystemInfoProvider.notifier).load(),
@@ -58,14 +64,14 @@ class DesktopOverviewPage extends ConsumerWidget {
             .refresh(),
       );
     }
-    ref.invalidate(recentlyPlayedPlaylistProvider);
+    ref.invalidate(_recentlyPlayedPlaylistProvider);
     ref.invalidate(recentViewsProvider);
     try {
       await Future.wait<void>([
         ...futures,
         // invalidate 的两个 provider 也要等重建完成：否则刷新指示器先于
         // 「最近播放」「最近浏览」重载结束，rail 里还是旧快照。
-        ref.read(recentlyPlayedPlaylistProvider.future).then<void>((_) {}),
+        ref.read(_recentlyPlayedPlaylistProvider.future).then<void>((_) {}),
         ref.read(recentViewsProvider.future).then<void>((_) {}),
       ]);
     } catch (_) {
@@ -95,7 +101,7 @@ class DesktopOverviewPage extends ConsumerWidget {
     final recentlySubscribedAsync = ref.watch(
       movieSummaryProvider(_recentlySubscribedScope),
     );
-    final recentPlaylist = ref.watch(recentlyPlayedPlaylistProvider).value;
+    final recentPlaylist = ref.watch(_recentlyPlayedPlaylistProvider).value;
     final recentScope = recentPlaylist == null
         ? null
         : MovieSummaryScope.playlist(playlistId: recentPlaylist.id);
@@ -242,11 +248,11 @@ class DesktopOverviewPage extends ConsumerWidget {
                   SliverToBoxAdapter(
                     child: AppSectionHeader(
                       title: '最近播放',
-                      trailingText: '${recentPlaylist!.movieCount} 部',
+                      trailingText: '${recentPlaylist.movieCount} 部',
                       actionLabel: '更多',
                       actionKey: const Key('overview-recent-played-more'),
                       onActionTap: () => context.pushDesktopPlaylistDetail(
-                        playlistId: recentPlaylist!.id,
+                        playlistId: recentPlaylist.id,
                         fallbackPath: desktopOverviewPath,
                       ),
                     ),
@@ -258,7 +264,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                     child: _buildMovieRail(
                       context,
                       ref: ref,
-                      scope: recentScope!,
+                      scope: recentScope,
                       summary: recentAsync?.value,
                       isLoading:
                           (recentAsync?.isLoading ?? false) &&

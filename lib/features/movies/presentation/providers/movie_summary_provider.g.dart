@@ -65,7 +65,7 @@ final class MovieSummaryProvider
   }
 }
 
-String _$movieSummaryHash() => r'b69ac4d8a74696cc29e53f7d965534c1e2798c46';
+String _$movieSummaryHash() => r'b0557781b2f6665ed142221ec2499216f86aff38';
 
 /// 波 A 的影片摘要分页状态。
 ///

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
@@ -81,6 +82,7 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
     this.showHeader = true,
     this.useMobileSelectionLayout = false,
     this.tagSelectionScope,
+    this.trailingLabelForMovie,
   });
 
   final MovieSummaryScope scope;
@@ -105,6 +107,9 @@ class MovieSummaryListContent extends ConsumerStatefulWidget {
   /// 到列表筛选，顶栏摘要与重置也纳入标签条件。生命周期由调用页面管理
   /// （缓存页需把它的 cacheLink 一并注册进页面缓存）。
   final TagSelectionScope? tagSelectionScope;
+
+  /// 卡片收起态番号行右侧文案（如「总分 4.0」）；为 null 时不显示。
+  final String? Function(MovieListItemDto movie)? trailingLabelForMovie;
 
   @override
   ConsumerState<MovieSummaryListContent> createState() =>
@@ -180,6 +185,7 @@ class _MovieSummaryListContentState
   void _applyFilter(MovieFilterState nextState) {
     final current =
         ref.read(movieSummaryProvider(widget.scope)).value?.filter.movie ??
+        widget.scope.initialMovieFilter ??
         MovieFilterState.initial;
     if (nextState.matches(current)) {
       return;
@@ -258,7 +264,10 @@ class _MovieSummaryListContentState
     final view = ref.watch(
       movieSummaryProvider(widget.scope).select(
         (asyncState) => (
-          filter: asyncState.value?.filter.movie ?? MovieFilterState.initial,
+          filter:
+              asyncState.value?.filter.movie ??
+              widget.scope.initialMovieFilter ??
+              MovieFilterState.initial,
           total: asyncState.value?.paged.total ?? 0,
           items: asyncState.value?.paged.items ?? const [],
           currentPage: asyncState.value?.paged.currentPage ?? 0,
@@ -354,10 +363,7 @@ class _MovieSummaryListContentState
           onReset: _resetFilters,
         ),
         informationSlots: [
-          AppListHeaderInfo(
-            key: widget.totalKey,
-            label: '${view.total} 部',
-          ),
+          AppListHeaderInfo(key: widget.totalKey, label: '${view.total} 部'),
         ],
         actionSlots: [buildEnterSelectionButton()],
       );
@@ -403,6 +409,7 @@ class _MovieSummaryListContentState
                           ? movieListItemPlaceholders(count: 24)
                           : items,
                       errorMessage: initialErrorMessage,
+                      trailingLabelForMovie: widget.trailingLabelForMovie,
                       onMovieTap: (movie) =>
                           widget.onMovieTap(context, movie.movieNumber),
                       onMovieMenuRequest: (movie, globalPosition) {
@@ -445,9 +452,9 @@ class _MovieSummaryListContentState
                 // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
                 PagedLoadMoreFooterSliver(
                   watchFooter: (ref) => ref.watch(
-                    movieSummaryProvider(
-                      widget.scope,
-                    ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                    movieSummaryProvider(widget.scope).select(
+                      (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                    ),
                   ),
                   onLoadMore: (ref) => unawaited(
                     ref

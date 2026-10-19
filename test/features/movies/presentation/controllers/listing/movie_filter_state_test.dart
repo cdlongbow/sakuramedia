@@ -1,6 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 
+MovieInteractionFilter _range(
+  MovieInteractionMetric metric, {
+  num? min,
+  num? max,
+}) {
+  return MovieInteractionFilter.initial.withRange(metric, min: min, max: max);
+}
+
 void main() {
   group('MovieStatusFilter', () {
     test('unsubscribed 映射后端 status 枚举值', () {
@@ -9,27 +17,55 @@ void main() {
     });
   });
 
-  group('滑块值 → 接口参数映射', () {
+  group('互动数滑块值 → 接口参数映射', () {
     test('下限 0 映射为不限，正值原样透传', () {
-      expect(movieHeatMinFromSlider(0), isNull);
-      expect(movieHeatMinFromSlider(1000), 1000);
-      // 左 thumb 也能拖到顶：2w 及以上（无上界）。
-      expect(movieHeatMinFromSlider(movieFilterHeatSliderMax), 20000);
+      expect(MovieInteractionMetric.heat.minFromSlider(0), isNull);
+      expect(MovieInteractionMetric.heat.minFromSlider(1000), 1000);
+      expect(MovieInteractionMetric.heat.minFromSlider(10839), 10839);
     });
 
     test('上限滑到顶映射为不限，未到顶原样透传', () {
-      expect(movieHeatMaxFromSlider(movieFilterHeatSliderMax), isNull);
-      expect(movieHeatMaxFromSlider(movieFilterHeatSliderMax - 1), 19999);
-      expect(movieHeatMaxFromSlider(5000), 5000);
+      const maxValue = 10839.0;
+      expect(
+        MovieInteractionMetric.heat.maxFromSlider(maxValue, maxValue),
+        isNull,
+      );
+      expect(
+        MovieInteractionMetric.heat.maxFromSlider(maxValue - 1, maxValue),
+        10838,
+      );
+      expect(MovieInteractionMetric.heat.maxFromSlider(5000, maxValue), 5000);
+    });
+
+    test('评分按 0.1 精度归一化', () {
+      expect(MovieInteractionMetric.score.minFromSlider(8.04), 8.0);
+      expect(MovieInteractionMetric.score.minFromSlider(8.06), 8.1);
+      expect(MovieInteractionMetric.score.maxFromSlider(5, 5), isNull);
     });
   });
 
-  group('movieHeatRangeLabel', () {
+  group('movieInteractionRangeLabel', () {
     test('双边 / 单边 / 不限的文案', () {
-      expect(movieHeatRangeLabel(1000, 5000), '1000 ~ 5000');
-      expect(movieHeatRangeLabel(1000, null), '≥ 1000');
-      expect(movieHeatRangeLabel(null, 5000), '≤ 5000');
-      expect(movieHeatRangeLabel(null, null), '不限');
+      expect(
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, 5000),
+        '1000 ~ 5000',
+      );
+      expect(
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, 1000, null),
+        '≥ 1000',
+      );
+      expect(
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, 5000),
+        '≤ 5000',
+      );
+      expect(
+        movieInteractionRangeLabel(MovieInteractionMetric.heat, null, null),
+        '不限',
+      );
+      expect(
+        movieInteractionRangeLabel(MovieInteractionMetric.score, 8.0, null),
+        '≥ 8.0',
+      );
     });
   });
 
@@ -59,10 +95,7 @@ void main() {
     test('1 个直出，2 个顿号相连，3 个及以上折叠', () {
       expect(movieFilterYearsLabel(<int>{2024}), '2024');
       expect(movieFilterYearsLabel(<int>{2023, 2024}), '2024、2023');
-      expect(
-        movieFilterYearsLabel(<int>{2022, 2024, 2023}),
-        '2024 等 3 个年份',
-      );
+      expect(movieFilterYearsLabel(<int>{2022, 2024, 2023}), '2024 等 3 个年份');
     });
 
     test('空集返回空串', () {
@@ -71,37 +104,50 @@ void main() {
   });
 
   group('MovieFilterState', () {
-    test('初始状态不含热度条件', () {
+    test('初始状态不含互动数条件', () {
       const state = MovieFilterState.initial;
-      expect(state.heatMin, isNull);
-      expect(state.heatMax, isNull);
-      expect(state.hasHeatRange, isFalse);
+      expect(state.interaction.isDefault, isTrue);
+      expect(state.hasInteractionRange, isFalse);
       expect(state.isDefault, isTrue);
       expect(state.triggerLabel, '全部');
     });
 
-    test('热度条件影响 isDefault / hasHeatRange / triggerLabel', () {
-      final state = const MovieFilterState().copyWith(heatMin: 1000);
-      expect(state.hasHeatRange, isTrue);
+    test('互动数条件影响 isDefault / hasInteractionRange / triggerLabel', () {
+      final state = const MovieFilterState().copyWith(
+        interaction: _range(MovieInteractionMetric.heat, min: 1000),
+      );
+      expect(state.hasInteractionRange, isTrue);
       expect(state.isDefault, isFalse);
-      expect(state.triggerLabel, '≥ 1000');
+      expect(state.triggerLabel, '热度 ≥ 1000');
 
       final both = const MovieFilterState().copyWith(
-        heatMin: 1000,
-        heatMax: 5000,
+        interaction: _range(MovieInteractionMetric.heat, min: 1000, max: 5000),
       );
-      expect(both.triggerLabel, '1000 ~ 5000');
+      expect(both.triggerLabel, '热度 1000 ~ 5000');
     });
 
-    test('triggerLabel 优先级：年份 > 热度 > 状态', () {
+    test('多个互动数指标折叠为数量摘要', () {
+      final filter = _range(MovieInteractionMetric.heat, min: 1000)
+          .withRange(MovieInteractionMetric.score, min: 8.0)
+          .withRange(MovieInteractionMetric.commentCount, min: 10);
+      final state = const MovieFilterState().copyWith(interaction: filter);
+
+      expect(state.triggerLabel, '互动数 · 3 项');
+    });
+
+    test('triggerLabel 优先级：年份 > 互动数 > 状态', () {
       final withYear = const MovieFilterState().copyWith(years: <int>{2024});
       expect(withYear.triggerLabel, '2024');
 
-      final withYearAndHeat = withYear.copyWith(heatMin: 1000);
+      final withYearAndHeat = withYear.copyWith(
+        interaction: _range(MovieInteractionMetric.heat, min: 1000),
+      );
       expect(withYearAndHeat.triggerLabel, '2024');
 
-      final withHeatOnly = const MovieFilterState().copyWith(heatMax: 2000);
-      expect(withHeatOnly.triggerLabel, '≤ 2000');
+      final withHeatOnly = const MovieFilterState().copyWith(
+        interaction: _range(MovieInteractionMetric.heat, max: 2000),
+      );
+      expect(withHeatOnly.triggerLabel, '热度 ≤ 2000');
     });
 
     test('多选年份影响 isDefault / triggerLabel / matches', () {
@@ -129,23 +175,37 @@ void main() {
       expect(cleared.isDefault, isTrue);
     });
 
-    test('copyWith 可显式清空热度条件', () {
-      const withHeat = MovieFilterState(heatMin: 1000, heatMax: 5000);
-      final cleared = withHeat.copyWith(
-        heatMin: null,
-        heatMax: null,
+    test('copyWith 可清空互动数条件', () {
+      final withHeat = MovieFilterState(
+        interaction: _range(MovieInteractionMetric.heat, min: 1000, max: 5000),
       );
-      expect(cleared.heatMin, isNull);
-      expect(cleared.heatMax, isNull);
+      final cleared = withHeat.copyWith(
+        interaction: MovieInteractionFilter.initial,
+      );
+      expect(cleared.interaction.isDefault, isTrue);
       expect(cleared.isDefault, isTrue);
     });
 
-    test('matches 比较热度条件', () {
+    test('matches 比较互动数条件', () {
       const base = MovieFilterState();
       expect(base.matches(const MovieFilterState()), isTrue);
       expect(
-        base.matches(const MovieFilterState(heatMin: 1000)),
+        base.matches(
+          MovieFilterState(
+            interaction: _range(MovieInteractionMetric.heat, min: 1000),
+          ),
+        ),
         isFalse,
+      );
+      expect(
+        MovieFilterState(
+          interaction: _range(MovieInteractionMetric.score, min: 8.0),
+        ).matches(
+          MovieFilterState(
+            interaction: _range(MovieInteractionMetric.score, min: 8.0),
+          ),
+        ),
+        isTrue,
       );
     });
 
@@ -169,11 +229,13 @@ void main() {
       expect(both.triggerLabel, '18 ~ 25 岁');
     });
 
-    test('triggerLabel 优先级：年份 > 热度 > 出演年龄 > 状态', () {
+    test('triggerLabel 优先级：年份 > 互动数 > 出演年龄 > 状态', () {
       final withAgeAndHeat = const MovieFilterState()
           .copyWith(actorAgeMax: 25)
-          .copyWith(heatMin: 1000);
-      expect(withAgeAndHeat.triggerLabel, '≥ 1000');
+          .copyWith(
+            interaction: _range(MovieInteractionMetric.heat, min: 1000),
+          );
+      expect(withAgeAndHeat.triggerLabel, '热度 ≥ 1000');
 
       final withAgeAndYear = const MovieFilterState()
           .copyWith(actorAgeMax: 25)
@@ -198,6 +260,25 @@ void main() {
           actorAgeMax: 25,
         ).matches(const MovieFilterState(actorAgeMin: 20, actorAgeMax: 25)),
         isTrue,
+      );
+    });
+  });
+
+  group('我的评分排序', () {
+    test('总分排序使用 my_score', () {
+      const filter = MovieFilterState(sortField: MovieSortField.myScore);
+      expect(filter.sortExpression, 'my_score:desc');
+    });
+
+    test('维度排序覆盖普通排序字段，可清除', () {
+      final filter = const MovieFilterState(
+        sortField: MovieSortField.myScore,
+      ).copyWith(dimensionSortId: 7, sortDirection: SortDirection.asc);
+      expect(filter.sortExpression, 'dimension_7:asc');
+      expect(filter.isDefault, isFalse);
+      expect(
+        filter.copyWith(dimensionSortId: null).sortExpression,
+        'my_score:asc',
       );
     });
   });

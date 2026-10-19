@@ -21,6 +21,9 @@ const String desktopMomentsPath = '/desktop/library/moments';
 const String desktopMomentCollectionsPath =
     '/desktop/library/moment-collections';
 const String desktopPlaylistsPath = '/desktop/library/playlists';
+const String desktopFavoritesPath = '/desktop/library/favorites';
+const String desktopRecentlyPlayedPath = '/desktop/library/recently-played';
+const String desktopRatingsPath = '/desktop/library/ratings';
 const String desktopClipsPath = '/desktop/library/clips';
 const String desktopClipCollectionsPath = '/desktop/library/clip-collections';
 const String desktopVideosPath = '/desktop/library/videos';
@@ -55,6 +58,9 @@ const String mobileLatestMoviesPath = '/mobile/library/latest';
 const String mobileRecentlySubscribedMoviesPath =
     '/mobile/library/recently-subscribed';
 const String mobileRecentViewsPath = '/mobile/library/recent-views';
+const String mobileFavoritesPath = '/mobile/library/favorites';
+const String mobileRecentlyPlayedPath = '/mobile/library/recently-played';
+const String mobileRatingsPath = '/mobile/library/ratings';
 const String mobileMovieSeriesPathPrefix = '$mobileMoviesPath/series';
 const String mobileActorsPath = '/mobile/library/actors';
 const String mobileTagsPath = '/mobile/library/tags';
@@ -66,8 +72,7 @@ const String mobilePornboxPath = '/mobile/pornbox';
 const String mobileSettingsMediaLibrariesPath =
     '/mobile/settings/media-libraries';
 const String mobileSettingsPluginsPath = '/mobile/settings/plugins';
-const String mobileSettingsPluginMarketPath =
-    '/mobile/settings/plugins/market';
+const String mobileSettingsPluginMarketPath = '/mobile/settings/plugins/market';
 const String mobileSettingsDownloadersPath = '/mobile/settings/downloaders';
 const String mobileSettingsIndexersPath = '/mobile/settings/indexers';
 const String mobileSettingsSystemMaintenancePath =

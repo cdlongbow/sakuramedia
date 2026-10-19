@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/overview/presentation/providers/recently_played_playlist_provider.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/system_playlist_provider.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -29,7 +30,7 @@ void main() {
     apiClient.rawRefreshDio.httpClientAdapter = adapter;
     container = ProviderContainer(
       overrides: [apiClientProvider.overrideWithValue(apiClient)],
-      retry: (_, __) => null,
+      retry: (_, _) => null,
     );
   });
 
@@ -39,17 +40,20 @@ void main() {
     sessionStore.dispose();
   });
 
-  test('返回系统「最近播放」列表', () async {
+  test('返回指定 kind 的系统列表', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/playlists',
       body: <dynamic>[
         _playlistJson(id: 1, name: '我的列表', kind: 'custom'),
-        _playlistJson(id: 9, name: '最近播放', kind: 'recently_played'),
+        _playlistJson(id: 8, name: '收藏', kind: PlaylistKind.favorites),
+        _playlistJson(id: 9, name: '最近播放', kind: PlaylistKind.recentlyPlayed),
       ],
     );
 
-    final playlist = await container.read(recentlyPlayedPlaylistProvider.future);
+    final playlist = await container.read(
+      systemPlaylistProvider(PlaylistKind.recentlyPlayed).future,
+    );
 
     expect(playlist?.id, 9);
     expect(playlist?.movieCount, 12);
@@ -59,14 +63,33 @@ void main() {
     );
   });
 
-  test('没有系统列表时返回 null', () async {
+  test('按 favorites kind 返回收藏列表', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: <dynamic>[
+        _playlistJson(id: 8, name: '收藏', kind: PlaylistKind.favorites),
+        _playlistJson(id: 9, name: '最近播放', kind: PlaylistKind.recentlyPlayed),
+      ],
+    );
+
+    final playlist = await container.read(
+      systemPlaylistProvider(PlaylistKind.favorites).future,
+    );
+
+    expect(playlist?.id, 8);
+  });
+
+  test('没有该系统列表时返回 null', () async {
     adapter.enqueueJson(
       method: 'GET',
       path: '/playlists',
       body: <dynamic>[_playlistJson(id: 1, name: '我的列表', kind: 'custom')],
     );
 
-    final playlist = await container.read(recentlyPlayedPlaylistProvider.future);
+    final playlist = await container.read(
+      systemPlaylistProvider(PlaylistKind.recentlyPlayed).future,
+    );
 
     expect(playlist, isNull);
   });

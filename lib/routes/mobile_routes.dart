@@ -40,9 +40,12 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_play
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/latest_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/recently_subscribed_movies_page.dart';
+import 'package:sakuramedia/features/movies/presentation/pages/mobile/rated_movies_page.dart';
 import 'package:sakuramedia/features/recent_views/presentation/pages/mobile/recent_views_page.dart';
 import 'package:sakuramedia/features/overview/presentation/pages/mobile/system_overview_page.dart';
 import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/mobile/system_playlist_page.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/search/presentation/pages/mobile/catalog_search_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/follow_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/mobile/movie_subscriptions_page.dart';
@@ -370,6 +373,66 @@ class MobileRecentViewsRouteData extends _MobileSubpageRouteData
   }
 }
 
+@TypedGoRoute<MobileFavoritesRouteData>(path: mobileFavoritesPath)
+class MobileFavoritesRouteData extends _MobileSubpageRouteData
+    with $MobileFavoritesRouteData {
+  const MobileFavoritesRouteData();
+
+  @override
+  String get pageName => 'mobile-favorites';
+
+  @override
+  String get title => '我的收藏';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileSystemPlaylistPage(kind: PlaylistKind.favorites);
+  }
+}
+
+@TypedGoRoute<MobileRecentlyPlayedRouteData>(path: mobileRecentlyPlayedPath)
+class MobileRecentlyPlayedRouteData extends _MobileSubpageRouteData
+    with $MobileRecentlyPlayedRouteData {
+  const MobileRecentlyPlayedRouteData();
+
+  @override
+  String get pageName => 'mobile-recently-played';
+
+  @override
+  String get title => '最近播放';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileSystemPlaylistPage(kind: PlaylistKind.recentlyPlayed);
+  }
+}
+
+@TypedGoRoute<MobileRatedMoviesRouteData>(path: mobileRatingsPath)
+class MobileRatedMoviesRouteData extends _MobileSubpageRouteData
+    with $MobileRatedMoviesRouteData {
+  const MobileRatedMoviesRouteData();
+
+  @override
+  String get pageName => 'mobile-rated-movies';
+
+  @override
+  String get title => '我的评分';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileRatedMoviesPage();
+  }
+}
+
 @TypedGoRoute<MobileSystemOverviewRouteData>(path: mobileSystemOverviewPath)
 class MobileSystemOverviewRouteData extends _MobileSubpageRouteData
     with $MobileSystemOverviewRouteData {
@@ -684,9 +747,7 @@ class MobileMoviePlayerRouteData extends _MobileCupertinoRouteData
   }
 }
 
-@TypedGoRoute<MobileCastRemoteRouteData>(
-  path: '/mobile/cast/remote',
-)
+@TypedGoRoute<MobileCastRemoteRouteData>(path: '/mobile/cast/remote')
 class MobileCastRemoteRouteData extends _MobileCupertinoRouteData
     with $MobileCastRemoteRouteData {
   const MobileCastRemoteRouteData();
@@ -1168,10 +1229,8 @@ class _MobileRootShellScopeState extends ConsumerState<_MobileRootShellScope> {
       drawer: enableOverviewDrawer
           ? MobileOverviewDrawer(
               hostContext: context,
-              onMenuSelected: (key) => _handleOverviewDrawerSelection(
-                context,
-                key,
-              ),
+              onMenuSelected: (key) =>
+                  _handleOverviewDrawerSelection(context, key),
             )
           : null,
       drawerEnableOpenDragGesture: enableOverviewDrawerDrag,
@@ -1194,6 +1253,18 @@ void _handleOverviewDrawerSelection(BuildContext hostContext, String key) {
   switch (key) {
     case 'overview':
       const MobileSystemOverviewRouteData().push(hostContext);
+      return;
+    case 'favorites':
+      const MobileFavoritesRouteData().push(hostContext);
+      return;
+    case 'recently-played':
+      const MobileRecentlyPlayedRouteData().push(hostContext);
+      return;
+    case 'recent-views':
+      const MobileRecentViewsRouteData().push(hostContext);
+      return;
+    case 'ratings':
+      const MobileRatedMoviesRouteData().push(hostContext);
       return;
     case 'notifications':
       const MobileNotificationsRouteData().push(hostContext);
@@ -1244,7 +1315,6 @@ void _handleOverviewDrawerSelection(BuildContext hostContext, String key) {
       return;
   }
 }
-
 
 class MobileOverviewBranchData extends StatefulShellBranchData {
   const MobileOverviewBranchData();

@@ -53,6 +53,7 @@ class MovieSummaryFilter {
     movie.numberSource,
     movie.sortField,
     movie.sortDirection,
+    movie.dimensionSortId,
     Object.hashAllUnordered(movie.years),
     movie.resolution,
     playlist.sortField,

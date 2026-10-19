@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
@@ -10,6 +11,8 @@ import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.d
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/parsed_movie_number_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/rating/movie_rating_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/rating/rating_dimension_dto.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 
@@ -27,12 +30,12 @@ class MoviesApi {
     List<int>? years,
     List<int>? tagIds,
     TagMatchMode? tagMatch,
-    int? heatMin,
-    int? heatMax,
+    MovieInteractionFilter? interaction,
     int? actorAgeMin,
     int? actorAgeMax,
     String? resolution,
     bool? blacklisted,
+    bool? rated,
     String? query,
     int page = 1,
     int pageSize = 20,
@@ -64,14 +67,9 @@ class MoviesApi {
       final ordered = years.toList()..sort((a, b) => b.compareTo(a));
       queryParameters['year'] = ordered.join(',');
     }
-    if (heatMin != null) {
-      queryParameters['heat_min'] = heatMin;
-    }
+    interaction?.addQueryParameters(queryParameters);
     if (resolution != null) {
       queryParameters['resolution'] = resolution;
-    }
-    if (heatMax != null) {
-      queryParameters['heat_max'] = heatMax;
     }
     if (actorAgeMin != null) {
       queryParameters['actor_age_min'] = actorAgeMin;
@@ -81,6 +79,9 @@ class MoviesApi {
     }
     if (blacklisted != null) {
       queryParameters['blacklisted'] = blacklisted;
+    }
+    if (rated == true) {
+      queryParameters['rated'] = true;
     }
     if (tagIds != null && tagIds.isNotEmpty) {
       queryParameters['tag_ids'] = tagIds.join(',');
@@ -98,6 +99,11 @@ class MoviesApi {
       response,
       MovieListItemDto.fromJson,
     );
+  }
+
+  Future<MovieInteractionFilterOptionsDto> getInteractionFilterOptions() async {
+    final response = await _apiClient.get('/movies/interaction-filter-options');
+    return MovieInteractionFilterOptionsDto.fromJson(response);
   }
 
   Future<PaginatedResponseDto<MovieListItemDto>> getLatestMovies({
@@ -177,6 +183,62 @@ class MoviesApi {
       '/movies/$movieNumber/heat-recompute',
     );
     return ManualJobTriggerResponseDto.fromJson(response);
+  }
+
+  Future<List<RatingDimensionDto>> getRatingDimensions() async {
+    final response = await _apiClient.getList('/movie-rating-dimensions');
+    return response.map(RatingDimensionDto.fromJson).toList(growable: false);
+  }
+
+  Future<RatingDimensionDto> createRatingDimension({
+    required String name,
+  }) async {
+    final response = await _apiClient.post(
+      '/movie-rating-dimensions',
+      data: <String, dynamic>{'name': name.trim()},
+    );
+    return RatingDimensionDto.fromJson(response);
+  }
+
+  Future<RatingDimensionDto> updateRatingDimension({
+    required int dimensionId,
+    required String name,
+    double? weight,
+  }) async {
+    final response = await _apiClient.put(
+      '/movie-rating-dimensions/$dimensionId',
+      data: <String, dynamic>{
+        'name': name.trim(),
+        if (weight != null) 'weight': weight,
+      },
+    );
+    return RatingDimensionDto.fromJson(response);
+  }
+
+  Future<void> deleteRatingDimension(int dimensionId) {
+    return _apiClient.deleteNoContent('/movie-rating-dimensions/$dimensionId');
+  }
+
+  Future<MovieRatingDto> getMovieRating({required String movieNumber}) async {
+    final response = await _apiClient.get('/movies/$movieNumber/rating');
+    return MovieRatingDto.fromJson(response);
+  }
+
+  Future<MovieRatingDto> saveMovieRating({
+    required String movieNumber,
+    required Map<int, int> values,
+  }) async {
+    final response = await _apiClient.put(
+      '/movies/$movieNumber/rating',
+      data: <String, dynamic>{
+        'values': values.map((key, value) => MapEntry(key.toString(), value)),
+      },
+    );
+    return MovieRatingDto.fromJson(response);
+  }
+
+  Future<void> deleteMovieRating(String movieNumber) {
+    return _apiClient.deleteNoContent('/movies/$movieNumber/rating');
   }
 
   Future<List<MovieListItemDto>> getSimilarMovies({

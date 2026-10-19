@@ -119,6 +119,18 @@ class _MobileRankingFilterDrawerContentState
                 .selectPeriod(value),
           );
         },
+        interaction: filters.interaction,
+        onInteractionChanged: (interaction) {
+          if (interaction.matches(filters.interaction)) {
+            return;
+          }
+          widget.onFilterChanged?.call();
+          unawaited(
+            ref
+                .read(rankingSummaryProvider(widget.scope).notifier)
+                .selectInteraction(interaction),
+          );
+        },
         selectedSortField: filters.selectedSortField,
         selectedSortDirection: filters.selectedSortDirection,
         onSortChanged: (field, direction) {

@@ -97,7 +97,7 @@ void main() {
   });
 
   test('desktop navigation tree contains moments entry', () {
-    expect(desktopNavGroups.length, 16);
+    expect(desktopNavGroups.length, 20);
     // 管理区顺序：媒体管理 / 资源导入 / 任务中心 / 订阅管理 / 通知 / 系统设置。
     expect(desktopNavGroups.map((group) => group.label), [
       '概览',
@@ -108,6 +108,10 @@ void main() {
       '时刻',
       '切片',
       '播放列表',
+      '我的收藏',
+      '最近播放',
+      '最近浏览',
+      '我的评分',
       'PornBox',
       '排行榜',
       '媒体管理',
@@ -128,6 +132,10 @@ void main() {
       desktopMomentsPath,
       desktopClipsPath,
       desktopPlaylistsPath,
+      desktopFavoritesPath,
+      desktopRecentlyPlayedPath,
+      desktopRecentViewsPath,
+      desktopRatingsPath,
       desktopVideosPath,
       desktopRankingsPath,
       desktopMediaPath,
@@ -181,10 +189,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('desktop-follow-page')), findsOneWidget);
-    expect(
-      find.byKey(const Key('movie-summary-card-FOL-001')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('movie-summary-card-FOL-001')), findsOneWidget);
   });
 
   testWidgets('desktop latest movies route renders the paged latest list', (
@@ -209,14 +214,8 @@ void main() {
     router.go(desktopLatestMoviesPath);
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('desktop-latest-movies-page')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('desktop-latest-movies-total')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('desktop-latest-movies-page')), findsOneWidget);
+    expect(find.byKey(const Key('desktop-latest-movies-total')), findsNothing);
     expect(find.text('1 部'), findsNothing);
     expect(find.text('ABC-001'), findsOneWidget);
   });
@@ -280,6 +279,149 @@ void main() {
     );
     expect(find.byKey(const Key('recent-view-card-actor-7')), findsOneWidget);
     expect(find.text('还没有浏览记录'), findsNothing);
+  });
+
+  testWidgets('desktop favorites sidebar entry returns to origin', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    _enqueueSystemPlaylistResponses(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _emptyPagedMovies(),
+    );
+    final router = buildDesktopRouter(sessionStore: sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopMoviesPath);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, desktopMoviesPath);
+
+    final favoritesNav = find.byKey(const Key('nav-group-favorites'));
+    await tester.ensureVisible(favoritesNav);
+    await tester.pumpAndSettle();
+    await tester.tap(favoritesNav);
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      desktopFavoritesPath,
+    );
+    expect(find.byKey(const Key('playlist-banner-card-8')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('topbar-back-button')));
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, desktopMoviesPath);
+  });
+
+  testWidgets('desktop recent views sidebar entry returns to origin', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/view-history',
+      body: <String, dynamic>{'items': const <Map<String, dynamic>>[]},
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _emptyPagedMovies(),
+    );
+    final router = buildDesktopRouter(sessionStore: sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopMoviesPath);
+    await tester.pumpAndSettle();
+
+    final recentViewsNav = find.byKey(const Key('nav-group-recent-views'));
+    await tester.ensureVisible(recentViewsNav);
+    await tester.pumpAndSettle();
+    await tester.tap(recentViewsNav);
+    await tester.pumpAndSettle();
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      desktopRecentViewsPath,
+    );
+
+    await tester.tap(find.byKey(const Key('topbar-back-button')));
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, desktopMoviesPath);
+  });
+
+  testWidgets('desktop recently played route reuses playlist detail', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    _enqueueSystemPlaylistResponses(bundle);
+    final router = buildDesktopRouter(sessionStore: sessionStore);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopRecentlyPlayedPath);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('playlist-banner-card-9')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('topbar-back-button')));
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, desktopOverviewPath);
+  });
+
+  test('desktop top bar config enables back on system playlist pages', () {
+    final favorites = resolveDesktopTopBarConfig(
+      currentPath: desktopFavoritesPath,
+      routeSpecs: desktopRouteSpecs,
+    );
+    final recentlyPlayed = resolveDesktopTopBarConfig(
+      currentPath: desktopRecentlyPlayedPath,
+      routeSpecs: desktopRouteSpecs,
+    );
+
+    expect(favorites.title, '我的收藏');
+    expect(favorites.isBackEnabled, isTrue);
+    expect(recentlyPlayed.title, '最近播放');
+    expect(recentlyPlayed.isBackEnabled, isTrue);
   });
 
   test('desktop top bar config disables back on overview', () {
@@ -1252,10 +1394,7 @@ void main() {
       router.routeInformationProvider.value.uri.path,
       mobileLatestMoviesPath,
     );
-    expect(
-      find.byKey(const Key('mobile-latest-movies-page')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('mobile-latest-movies-page')), findsOneWidget);
     expect(find.text('最近添加'), findsOneWidget);
   });
 
@@ -1614,7 +1753,9 @@ void main() {
     expect(find.byKey(const Key('mobile-subpage-title')), findsNothing);
     expect(find.byKey(const Key('mobile-subpage-back-button')), findsOneWidget);
     expect(
-      tester.getRect(find.byKey(const Key('mobile-subpage-body-padding'))).bottom,
+      tester
+          .getRect(find.byKey(const Key('mobile-subpage-body-padding')))
+          .bottom,
       moreOrLessEquals(844),
     );
     expect(find.byKey(const Key('movie-detail-page')), findsOneWidget);
@@ -1877,6 +2018,95 @@ void main() {
     expect(find.text('系统版本'), findsOneWidget);
   });
 
+  // 抽屉「我的」分区：收藏/播放/浏览都是可返回概览的移动子页，不进底栏。
+  testWidgets('mobile drawer collection section opens favorites page', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore(
+      platform: AppPlatform.mobile,
+    );
+    addTearDown(sessionStore.dispose);
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    final router = buildMobileRouter(sessionStore: sessionStore);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/latest',
+      body: _emptyPagedMovies(),
+    );
+    _enqueueSystemPlaylistResponses(bundle);
+
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('mobile-overview-menu-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-overview-drawer-collection-section')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-overview-drawer-recently-played')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-overview-drawer-recent-views')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-overview-drawer-ratings')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('mobile-overview-drawer-favorites')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-playlist-detail-page')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('mobile-bottom-navigation')), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, mobileOverviewPath);
+
+    // 「我的评分」入口：移动端与桌面共用同一评分列表。
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movie-rating-dimensions',
+      body: const <Map<String, dynamic>>[],
+    );
+    await tester.tap(find.byKey(const Key('mobile-overview-menu-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('mobile-overview-drawer-ratings')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('mobile-rated-movies-page')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, mobileOverviewPath);
+  });
+
   // 抽屉「管理」分区：点媒体管理 → 打开移动子页（非底栏页面，可返回概览）。
   testWidgets('mobile drawer management section opens media management page', (
     WidgetTester tester,
@@ -1998,10 +2228,7 @@ void main() {
     await tester.tap(mediaImportItem);
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('media-import-page')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('media-import-page')), findsOneWidget);
     expect(find.byKey(const Key('mobile-bottom-navigation')), findsNothing);
 
     _enqueueActivityCenterResponses(bundle);
@@ -2010,7 +2237,10 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, mobileActivityPath);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(router.routeInformationProvider.value.uri.path, mobileMediaImportPath);
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      mobileMediaImportPath,
+    );
 
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
@@ -2106,9 +2336,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('mobile-overview-menu-button')));
     await tester.pumpAndSettle();
-    final pluginsItem = find.byKey(
-      const Key('mobile-overview-drawer-plugins'),
-    );
+    final pluginsItem = find.byKey(const Key('mobile-overview-drawer-plugins'));
     await tester.ensureVisible(pluginsItem);
     await tester.tap(pluginsItem);
     await tester.pumpAndSettle();
@@ -2419,10 +2647,7 @@ void main() {
         movieNumber: 'ABC-001',
         offsetSeconds: 120,
         score: 0.91,
-        image: const MovieImageDto(
-          id: 10,
-          origin: '/thumb-1.webp',
-        ),
+        image: const MovieImageDto(id: 10, origin: '/thumb-1.webp'),
       );
 
       content.onOpenMovieDetail!(hostContext, resultItem);
@@ -4082,6 +4307,57 @@ String _buildImageSearchLocation(String path, {required String draftId}) {
   ).toString();
 }
 
+Map<String, dynamic> _emptyPagedMovies() => <String, dynamic>{
+  'items': const <Map<String, dynamic>>[],
+  'page': 1,
+  'page_size': 24,
+  'total': 0,
+};
+
+Map<String, dynamic> _playlistJson({
+  required int id,
+  required String name,
+  required String kind,
+}) => <String, dynamic>{
+  'id': id,
+  'name': name,
+  'kind': kind,
+  'description': '',
+  'is_system': true,
+  'is_mutable': false,
+  'is_deletable': false,
+  'movie_count': 0,
+  'created_at': '2026-01-01T00:00:00Z',
+  'updated_at': '2026-01-02T00:00:00Z',
+};
+
+void _enqueueSystemPlaylistResponses(TestApiBundle bundle) {
+  final favorites = _playlistJson(id: 8, name: '收藏', kind: 'favorites');
+  final recentlyPlayed = _playlistJson(
+    id: 9,
+    name: '最近播放',
+    kind: 'recently_played',
+  );
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/playlists',
+    body: <Map<String, dynamic>>[favorites, recentlyPlayed],
+  );
+  for (final playlist in <Map<String, dynamic>>[favorites, recentlyPlayed]) {
+    final id = playlist['id'] as int;
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists/$id',
+      body: playlist,
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists/$id/movies',
+      body: _emptyPagedMovies(),
+    );
+  }
+}
+
 Future<SessionStore> _buildLoggedInSessionStore({
   AppPlatform platform = AppPlatform.desktop,
 }) async {
@@ -4203,10 +4479,7 @@ void _enqueueImageSearchSingleResultResponse(TestApiBundle bundle) {
           'movie_number': 'ABC-001',
           'offset_seconds': 120,
           'score': 0.91,
-          'image': <String, dynamic>{
-            'id': 10,
-            'origin': '/thumb-1.webp',
-          },
+          'image': <String, dynamic>{'id': 10, 'origin': '/thumb-1.webp'},
         },
       ],
     },

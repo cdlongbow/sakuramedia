@@ -75,6 +75,7 @@ void main() {
       MovieSummarySource.actor => '/movies',
       MovieSummarySource.playlist => '/playlists/${scope.resourceId}/movies',
       MovieSummarySource.series => '/movies/by-series',
+      MovieSummarySource.rated => '/movies',
     };
     final method = scope.source == MovieSummarySource.series ? 'POST' : 'GET';
     adapter.enqueueJson(
@@ -97,9 +98,9 @@ void main() {
     for (final next in [
       filter,
       filter.copyWith(status: MovieStatusFilter.all),
-      filter.copyWith(status: MovieStatusFilter.all).copyWith(
-        status: MovieStatusFilter.playable,
-      ),
+      filter
+          .copyWith(status: MovieStatusFilter.all)
+          .copyWith(status: MovieStatusFilter.playable),
     ]) {
       adapter.enqueueJson(
         method: 'GET',
@@ -269,11 +270,12 @@ void main() {
     await container
         .read(movieSummaryProvider(actorScope).notifier)
         .applyMovieFilter(
-          const MovieFilterState(
+          MovieFilterState(
             status: MovieStatusFilter.subscribed,
-            years: <int>{2023, 2024},
-            heatMin: 1000,
-            heatMax: 20000,
+            years: const <int>{2023, 2024},
+            interaction: MovieInteractionFilter.initial
+                .withRange(MovieInteractionMetric.heat, min: 1000, max: 20000)
+                .withRange(MovieInteractionMetric.score, min: 8.0),
           ),
         );
 
@@ -283,9 +285,10 @@ void main() {
     final secondRequest = adapter.requests.last;
     expect(secondRequest.uri.queryParameters['status'], 'subscribed');
     expect(secondRequest.uri.queryParameters['year'], '2024,2023');
-    // 女优详情也走 /catalog/movies 接口，热度范围与 actor_id 可组合过滤。
+    // 女优详情也走 /catalog/movies 接口，互动数范围与 actor_id 可组合过滤。
     expect(secondRequest.uri.queryParameters['heat_min'], '1000');
     expect(secondRequest.uri.queryParameters['heat_max'], '20000');
+    expect(secondRequest.uri.queryParameters['score_min'], '8.0');
   });
 
   test('出演年龄筛选写入请求参数，清空后不再发送', () async {
@@ -419,10 +422,9 @@ void main() {
     expect(adapter.requests.length, 1);
 
     // 页面首帧后的 post-frame 同步条件相同，应短路、不产生第二次请求。
-    await container.read(movieSummaryProvider(scope).notifier).applyTagFilter(
-      tagIds: <int>[7],
-      tagMatch: TagMatchMode.and,
-    );
+    await container
+        .read(movieSummaryProvider(scope).notifier)
+        .applyTagFilter(tagIds: <int>[7], tagMatch: TagMatchMode.and);
     expect(adapter.requests.length, 1);
   });
 
@@ -440,10 +442,9 @@ void main() {
       path: '/movies',
       body: _page(items: <Map<String, dynamic>>[_movie('ABC-001')], total: 1),
     );
-    await container.read(movieSummaryProvider(scope).notifier).applyTagFilter(
-      tagIds: <int>[7],
-      tagMatch: TagMatchMode.or,
-    );
+    await container
+        .read(movieSummaryProvider(scope).notifier)
+        .applyTagFilter(tagIds: <int>[7], tagMatch: TagMatchMode.or);
     final tagged = adapter.requests.last.uri.queryParameters;
     expect(tagged['tag_ids'], '7');
     expect(tagged['tag_match'], 'or');
@@ -912,14 +913,14 @@ void main() {
     );
 
     final broadcastChanges = <MovieSubscriptionChange>[];
-    final subscription = container.listen(
-      movieSubscriptionEventsProvider,
-      (_, next) {
-        if (next.hasValue) {
-          broadcastChanges.addAll(next.requireValue);
-        }
-      },
-    );
+    final subscription = container.listen(movieSubscriptionEventsProvider, (
+      _,
+      next,
+    ) {
+      if (next.hasValue) {
+        broadcastChanges.addAll(next.requireValue);
+      }
+    });
     addTearDown(subscription.close);
     final result = await container
         .read(movieSummaryProvider(scope).notifier)
@@ -939,6 +940,41 @@ void main() {
       true,
     ]);
   });
+
+  test('我的评分 scope 请求 rated=true 与总分排序', () async {
+    const scope = MovieSummaryScope.ratedList;
+    await prime(scope, <Map<String, dynamic>>[
+      <String, dynamic>{..._movie('ABC-001'), 'my_score': 4.5},
+    ]);
+
+    final request = adapter.requests.last;
+    expect(request.method, 'GET');
+    expect(request.uri.path, '/movies');
+    expect(request.uri.queryParameters['rated'], 'true');
+    expect(request.uri.queryParameters['sort'], 'my_score:desc');
+
+    final state = container.read(movieSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.single.myScore, 4.5);
+  });
+
+  test('我的评分 scope 不自行保活，无监听者后释放', () async {
+    const scope = MovieSummaryScope.ratedList;
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _page(items: [_movie('ABC-001')], total: 1),
+    );
+    final subscription = container.listen(
+      movieSummaryProvider(scope),
+      (_, _) {},
+    );
+    await container.read(movieSummaryProvider(scope).future);
+    expect(container.exists(movieSummaryProvider(scope)), isTrue);
+
+    subscription.close();
+    await container.pump();
+    expect(container.exists(movieSummaryProvider(scope)), isFalse);
+  });
 }
 
 Future<void> _settleEvents() async {
@@ -947,11 +983,7 @@ Future<void> _settleEvents() async {
 }
 
 Future<void> _waitFor(bool Function() condition) async {
-  for (
-    var attempt = 0;
-    attempt < 200 && !condition();
-    attempt++
-  ) {
+  for (var attempt = 0; attempt < 200 && !condition(); attempt++) {
     await Future<void>.delayed(const Duration(milliseconds: 1));
   }
 }

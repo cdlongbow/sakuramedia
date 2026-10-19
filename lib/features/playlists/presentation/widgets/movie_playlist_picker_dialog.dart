@@ -102,7 +102,10 @@ class _MoviePlaylistPickerDialogState
       }
       setState(() {
         _playlists = playlists
-            .where((playlist) => !playlist.isSystem)
+            .where(
+              (playlist) =>
+                  !playlist.isSystem || playlist.kind == PlaylistKind.favorites,
+            )
             .toList(growable: false);
         _isLoading = false;
       });

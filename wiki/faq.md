@@ -28,7 +28,7 @@ docker exec -it --user app -w /app sakuramedia python -m src.start.commands rese
 
 先在「概览」页运行「组件诊断」，确认 JavDB 连通；再检查容器网络、代理规则和 DNS。如果图片域名无法访问，也需要检查相同的网络设置。
 
-如果软路由开启了透明代理，且 JavDB 数据源异常，检查 `c0.jdbstatic.com` 的分流规则。该图片域名经日本节点出口时可能被拒绝；将它设为直连或使用非日本IP出口后再重试。
+封面、剧照和头像由后端从 JavDB 图片 CDN（`tp.spfcas.com`）下载。如果软路由开启了透明代理，检查该域名是否被分流到不可用的出口；访问失败时影片图片会缺失。
 
 ### 为什么刚启动后看不到影片或女优？
 

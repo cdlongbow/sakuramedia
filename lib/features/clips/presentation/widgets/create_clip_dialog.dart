@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -63,18 +64,32 @@ class CreateClipDialog extends ConsumerStatefulWidget {
 
 class _CreateClipDialogState extends ConsumerState<CreateClipDialog> {
   late final TextEditingController _titleController;
+  bool _defaultTitleInitialized = false;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_defaultTitleInitialized) {
+      return;
+    }
+    _defaultTitleInitialized = true;
     // 默认标题采用「番号-切片时长」格式，例如 SSNI-888-3分48秒，用户可继续编辑。
     final duration = (widget.endSeconds - widget.startSeconds).abs();
     final number = widget.movieNumber.trim();
-    final durationLabel = formatMediaDurationLabel(duration);
+    final durationLabel = formatMediaDurationLabel(
+      duration,
+      l10n: AppLocalizations.of(context),
+    );
     final defaultTitle =
         number.isEmpty ? durationLabel : '$number-$durationLabel';
-    _titleController = TextEditingController(text: defaultTitle);
+    _titleController.text = defaultTitle;
   }
 
   @override

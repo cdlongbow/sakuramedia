@@ -3,6 +3,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
 import 'package:sakuramedia/widgets/base/forms/app_password_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
 /// 渲染宿主支持的插件配置协议，不依赖具体插件。
@@ -114,6 +115,7 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
     String path,
     bool required,
   ) {
+    final l10n = AppLocalizations.of(context);
     final title = '${field['title'] ?? name}${required ? ' *' : ''}';
     final description = field['description'] as String?;
     final value = values[name];
@@ -171,15 +173,20 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
                 value: i,
                 child: Text(
                   options[i] == null
-                      ? '未设置'
+                      ? l10n.pluginSettingsUnset
                       : type == 'boolean'
-                      ? (options[i] == true ? '开启' : '关闭')
+                      ? (options[i] == true
+                            ? l10n.pluginSettingsOn
+                            : l10n.pluginSettingsOff)
                       : options[i].toString(),
                 ),
               ),
           ],
           validator: (_) =>
-              error() ?? (options.contains(values[name]) ? null : '请选择一项'),
+              error() ??
+              (options.contains(values[name])
+                  ? null
+                  : l10n.pluginSettingsSelectOne),
           onChanged: widget.enabled
               ? (i) {
                   if (i != null) change(options[i]);
@@ -191,7 +198,9 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
     }
     if (type == 'boolean') {
       return FormField<bool>(
-        validator: (_) => error() ?? (values[name] is bool ? null : '请选择开关状态'),
+        validator: (_) =>
+            error() ??
+            (values[name] is bool ? null : l10n.pluginSettingsSelectToggle),
         builder: (state) => _description(
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,19 +246,25 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
       } else if (number) {
         parsed = type == 'integer' ? int.tryParse(input) : num.tryParse(input);
         if (parsed == null || !(parsed as num).isFinite) {
-          return type == 'integer' ? '请输入整数' : '请输入数字';
+          return type == 'integer'
+              ? l10n.pluginSettingsInteger
+              : l10n.pluginSettingsNumber;
         }
         final minimum = field['minimum'] as num?;
         final maximum = field['maximum'] as num?;
         final exclusiveMin = field['exclusiveMinimum'] as num?;
         final exclusiveMax = field['exclusiveMaximum'] as num?;
-        if (minimum != null && parsed < minimum) return '不能小于 $minimum';
-        if (maximum != null && parsed > maximum) return '不能大于 $maximum';
+        if (minimum != null && parsed < minimum) {
+          return l10n.pluginSettingsMin('$minimum');
+        }
+        if (maximum != null && parsed > maximum) {
+          return l10n.pluginSettingsMax('$maximum');
+        }
         if (exclusiveMin != null && parsed <= exclusiveMin) {
-          return '必须大于 $exclusiveMin';
+          return l10n.pluginSettingsExclusiveMin('$exclusiveMin');
         }
         if (exclusiveMax != null && parsed >= exclusiveMax) {
-          return '必须小于 $exclusiveMax';
+          return l10n.pluginSettingsExclusiveMax('$exclusiveMax');
         }
       } else if (list) {
         parsed = input
@@ -259,28 +274,38 @@ class _PluginSettingsFormState extends State<PluginSettingsForm> {
             .toList();
       } else {
         parsed = input;
-        if (required && input.isEmpty) return '请填写$title';
+        if (required && input.isEmpty) {
+          return l10n.pluginSettingsRequired(title);
+        }
         final min = field['minLength'] as int?;
         final max = field['maxLength'] as int?;
-        if (min != null && input.runes.length < min) return '至少输入 $min 个字符';
-        if (max != null && input.runes.length > max) return '最多输入 $max 个字符';
+        if (min != null && input.runes.length < min) {
+          return l10n.pluginSettingsMinLength(min);
+        }
+        if (max != null && input.runes.length > max) {
+          return l10n.pluginSettingsMaxLength(max);
+        }
       }
       values[name] = parsed;
       return null;
     }
 
     final bounds = [
-      if (field['minimum'] != null) '最小 ${field['minimum']}',
-      if (field['exclusiveMinimum'] != null) '大于 ${field['exclusiveMinimum']}',
-      if (field['maximum'] != null) '最大 ${field['maximum']}',
-      if (field['exclusiveMaximum'] != null) '小于 ${field['exclusiveMaximum']}',
-    ].join('，');
+      if (field['minimum'] != null)
+        l10n.pluginSettingsBoundMin('${field['minimum']}'),
+      if (field['exclusiveMinimum'] != null)
+        l10n.pluginSettingsBoundGreater('${field['exclusiveMinimum']}'),
+      if (field['maximum'] != null)
+        l10n.pluginSettingsBoundMax('${field['maximum']}'),
+      if (field['exclusiveMaximum'] != null)
+        l10n.pluginSettingsBoundLess('${field['exclusiveMaximum']}'),
+    ].join(l10n.listSeparator);
     final helper = [
       if (description != null) description,
-      if (list) '每行一项',
+      if (list) l10n.pluginSettingsListHint,
       if (number && bounds.isNotEmpty) bounds,
-      if (nullable && description == null) '留空表示未设置',
-    ].join('；');
+      if (nullable && description == null) l10n.pluginSettingsNullableHint,
+    ].join(l10n.hintSeparator);
     if (field['format'] == 'password' || field['writeOnly'] == true) {
       return AppPasswordField(
         fieldKey: key,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/controllers/system_diagnostics_controller.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_category_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_page_frame.dart';
@@ -83,7 +84,7 @@ class _DesktopSystemDiagnosticsPageState
               ),
               SizedBox(height: spacing.xs),
               Text(
-                _buildSubtitle(diagnostics),
+                _buildSubtitle(context, diagnostics),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -115,17 +116,24 @@ class _DesktopSystemDiagnosticsPageState
     );
   }
 
-  String _buildSubtitle(SystemDiagnosticsState c) {
+  String _buildSubtitle(BuildContext context, SystemDiagnosticsState c) {
+    final l10n = AppLocalizations.of(context);
     if (c.isRunning) {
-      return '正在检测 ${c.completedItemCount}/${c.totalItemCount}…';
+      return l10n.systemDiagnosticsRunning(
+        c.completedItemCount,
+        c.totalItemCount,
+      );
     }
     if (c.lastRunAt == null) {
-      return '尚未检测。点右上角开始一次完整检测。';
+      return l10n.systemDiagnosticsNeverRun;
     }
+    final relative = formatRelativeTimeLabel(c.lastRunAt!, l10n: l10n);
     if (c.unhealthyCount > 0) {
-      return '上次检测：${formatRelativeTimeLabel(c.lastRunAt!)} · '
-          '${c.unhealthyCount} 项异常';
+      return l10n.systemDiagnosticsLastRunWithIssues(
+        relative,
+        c.unhealthyCount,
+      );
     }
-    return '上次检测：${formatRelativeTimeLabel(c.lastRunAt!)} · 全部通过';
+    return l10n.systemDiagnosticsLastRunAllPassed(relative);
   }
 }

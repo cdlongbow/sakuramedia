@@ -4,6 +4,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_cover_thumbnail.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_meta_label.dart';
 import 'package:sakuramedia/features/media/presentation/widgets/shared/media_list_item_path_line.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
@@ -276,7 +277,11 @@ class _MediaListItemBody extends StatelessWidget {
         ],
         SizedBox(height: spacing.sm),
         Text(
-          buildMediaListItemMetaLabel(item, library: library),
+          buildMediaListItemMetaLabel(
+            item,
+            l10n: AppLocalizations.of(context),
+            library: library,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: resolveAppTextStyle(

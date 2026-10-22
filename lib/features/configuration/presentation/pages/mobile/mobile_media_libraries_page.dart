@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/configuration/presentation/providers/media_
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_entity_list_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -39,7 +40,14 @@ class _MobileMediaLibrariesPageState
       return await ref.read(mediaProviderCatalogProvider.future);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: 'Provider 目录加载失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).mediaLibraryProviderCatalogLoadFailed,
+          ),
+        );
       }
       return null;
     }
@@ -54,7 +62,9 @@ class _MobileMediaLibrariesPageState
     final providers = await _loadCatalog();
     if (!mounted || providers == null) return;
     if (providers.isEmpty) {
-      showToast('暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。');
+      showToast(
+        AppLocalizations.of(context).mediaLibraryNoProviderInstalled,
+      );
       return;
     }
     await showMobileMediaLibraryEditorDrawer(context, providers: providers);
@@ -85,16 +95,17 @@ class _MobileMediaLibrariesPageState
   }
 
   Future<void> _handleDeleteLibrary(MediaLibraryDto library) async {
+    final l10n = AppLocalizations.of(context);
     await showAppConfigDeleteConfirm(
       context: context,
-      title: '删除媒体库',
-      message: '确认删除媒体库“${library.name}”？该操作不可恢复。',
+      title: l10n.mediaLibraryDeleteTitle,
+      message: l10n.mediaLibraryDeleteMessage(library.name),
       dialogKey: const Key('mobile-media-library-delete-drawer'),
       confirmKey: const Key('mobile-media-library-delete-confirm-button'),
       onDelete: () =>
           ref.read(mediaLibrariesProvider.notifier).delete(library.id),
-      successToast: '媒体库已删除',
-      failureFallback: '删除媒体库失败',
+      successToast: l10n.mediaLibraryDeleted,
+      failureFallback: l10n.mediaLibraryDeleteFailed,
     );
   }
 
@@ -102,6 +113,7 @@ class _MobileMediaLibrariesPageState
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     final async = ref.watch(mediaLibrariesProvider);
     return ColoredBox(
       key: const Key('mobile-settings-media-libraries'),
@@ -124,11 +136,12 @@ class _MobileMediaLibrariesPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppNoticeCard(
-                          key: Key('mobile-media-libraries-notice-card'),
+                        AppNoticeCard(
+                          key: const Key('mobile-media-libraries-notice-card'),
                           leadingIcon: Icons.folder_open_outlined,
-                          title: '媒体库存储',
-                          description: '媒体库通过已安装的 Provider 连接存储；配置字段由插件目录动态提供。',
+                          title: l10n.mediaLibraryStorageTitle,
+                          description:
+                              l10n.mediaLibraryStorageDescriptionMobile,
                         ),
                         SizedBox(height: spacing.md),
                         _buildCatalogNotice(context),
@@ -152,7 +165,7 @@ class _MobileMediaLibrariesPageState
               width: double.infinity,
               child: AppButton(
                 key: const Key('mobile-media-libraries-create-button'),
-                label: '新增媒体库',
+                label: l10n.mediaLibraryAdd,
                 variant: AppButtonVariant.primary,
                 icon: const Icon(Icons.add_rounded),
                 onPressed: _handleCreateLibrary,
@@ -165,22 +178,23 @@ class _MobileMediaLibrariesPageState
   }
 
   Widget _buildCatalogNotice(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final catalog = ref.watch(mediaProviderCatalogProvider);
     if (catalog.hasError) {
       return Padding(
         padding: EdgeInsets.only(bottom: context.appSpacing.md),
-        child: const AppNoticeCard(
+        child: AppNoticeCard(
           leadingIcon: Icons.warning_amber_rounded,
-          description: 'Provider 目录暂不可用，已存在的媒体库仍可管理；新增或编辑配置前请重试。',
+          description: l10n.mediaLibraryProviderCatalogUnavailable,
         ),
       );
     }
     if (catalog.hasValue && catalog.value!.isEmpty) {
       return Padding(
         padding: EdgeInsets.only(bottom: context.appSpacing.md),
-        child: const AppNoticeCard(
+        child: AppNoticeCard(
           leadingIcon: Icons.extension_off_outlined,
-          description: '暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。',
+          description: l10n.mediaLibraryNoProviderInstalled,
         ),
       );
     }
@@ -191,23 +205,27 @@ class _MobileMediaLibrariesPageState
     BuildContext context,
     AsyncValue<List<MediaLibraryDto>> async,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (async.isLoading && async.value == null) {
       return _buildLoadingSection(context);
     }
     if (async.hasError) {
       return AppMobileSectionError(
         key: const Key('mobile-media-libraries-error-state'),
-        title: '媒体库加载失败',
-        message: apiErrorMessage(async.error!, fallback: '媒体库加载失败，请稍后重试。'),
+        title: l10n.mediaLibraryLoadFailedTitle,
+        message: apiErrorMessage(
+          async.error!,
+          fallback: l10n.mediaLibraryLoadFailedFallback,
+        ),
         onRetry: () => ref.read(mediaLibrariesProvider.notifier).reload(),
         retryButtonKey: const Key('mobile-media-libraries-retry-button'),
       );
     }
     final libraries = async.value ?? const <MediaLibraryDto>[];
     if (libraries.isEmpty) {
-      return const MobileConfigEmptyCard(
-        key: Key('mobile-media-libraries-empty-state'),
-        message: '还没有媒体库',
+      return MobileConfigEmptyCard(
+        key: const Key('mobile-media-libraries-empty-state'),
+        message: l10n.mediaLibraryEmpty,
       );
     }
     final catalog = ref.watch(mediaProviderCatalogProvider);
@@ -265,6 +283,7 @@ class _MobileMediaLibrariesPageState
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     final provider = _findProvider(providers, library.providerKey);
     final unavailable = catalogReady && provider == null;
     final avatarSide = componentTokens.iconSizeXl + spacing.md;
@@ -298,7 +317,7 @@ class _MobileMediaLibrariesPageState
         Text(
           provider?.displayName ??
               (catalogReady
-                  ? 'Provider 不可用 · ${library.providerKey}'
+                  ? l10n.mediaLibraryProviderUnavailable(library.providerKey)
                   : library.providerKey),
           style: resolveAppTextStyle(
             context,
@@ -319,7 +338,9 @@ class _MobileMediaLibrariesPageState
         ),
         SizedBox(height: spacing.xs),
         Text(
-          '更新时间: ${formatUpdatedAtLabel(library.updatedAt) ?? '未知'}',
+          l10n.mediaLibraryUpdatedAt(
+            formatUpdatedAtLabel(library.updatedAt) ?? l10n.commonUnknown,
+          ),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -331,7 +352,7 @@ class _MobileMediaLibrariesPageState
       onTap: () => _handleEditLibrary(library),
       trailingAction: AppIconButton(
         key: Key('mobile-media-library-more-${library.id}'),
-        tooltip: '更多操作',
+        tooltip: l10n.mediaLibraryMoreActions,
         backgroundColor: colors.surfaceMuted,
         borderColor: colors.borderSubtle,
         onPressed: () => _handleLibraryActions(library),
@@ -458,14 +479,15 @@ class _MobileMediaLibraryEditorDrawerState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = _selectedProvider;
     final unavailable = _isEditing && provider == null;
     return AppBottomFormSheet(
       formKey: _formKey,
-      title: _isEditing ? '编辑媒体库' : '新增媒体库',
+      title: _isEditing ? l10n.mediaLibraryEditTitle : l10n.mediaLibraryAdd,
       subtitle: unavailable
-          ? '当前 Provider 不可用，仅可修改媒体库名称。'
-          : '选择 Provider 后填写其存储配置。',
+          ? l10n.mediaLibraryEditSubtitleUnavailable
+          : l10n.mediaLibraryEditSubtitle,
       submitKey: const Key('mobile-media-library-submit-button'),
       isSubmitting: _isSubmitting,
       onSubmit: _submit,
@@ -507,6 +529,7 @@ class _MobileMediaLibraryEditorDrawerState
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     if (!_hasAttemptedSubmit) {
       setState(() => _hasAttemptedSubmit = true);
@@ -536,12 +559,19 @@ class _MobileMediaLibraryEditorDrawerState
                 .read(mediaLibrariesProvider.notifier)
                 .create(value.toCreatePayload());
       if (!mounted) return;
-      showToast(_isEditing ? '媒体库已更新' : '媒体库已创建');
+      showToast(
+        _isEditing ? l10n.mediaLibraryUpdated : l10n.mediaLibraryCreated,
+      );
       Navigator.of(context).pop(library);
     } catch (error) {
       if (!mounted) return;
       showToast(
-        apiErrorMessage(error, fallback: _isEditing ? '更新媒体库失败' : '创建媒体库失败'),
+        apiErrorMessage(
+          error,
+          fallback: _isEditing
+              ? l10n.mediaLibraryUpdateFailed
+              : l10n.mediaLibraryCreateFailed,
+        ),
       );
       setState(() => _isSubmitting = false);
     }
@@ -556,6 +586,7 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -582,14 +613,14 @@ class _MobileMediaLibraryActionsDrawer extends StatelessWidget {
         _MobileDrawerActionRow(
           key: const Key('mobile-media-library-action-edit'),
           icon: Icons.edit_outlined,
-          label: '编辑媒体库',
+          label: l10n.mediaLibraryEditAction,
           onTap: () => Navigator.of(context).pop(MobileMediaLibraryAction.edit),
         ),
         SizedBox(height: spacing.sm),
         _MobileDrawerActionRow(
           key: const Key('mobile-media-library-action-delete'),
           icon: Icons.delete_outline_rounded,
-          label: '删除媒体库',
+          label: l10n.mediaLibraryDeleteAction,
           tone: AppTextTone.error,
           onTap: () =>
               Navigator.of(context).pop(MobileMediaLibraryAction.delete),

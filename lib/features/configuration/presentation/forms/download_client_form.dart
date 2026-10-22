@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/forms/provider_config_form.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -59,9 +60,12 @@ class DownloadClientFormValue {
   }
 }
 
-String? validateDownloadClientName(String? value) {
+String? validateDownloadClientName(
+  String? value, {
+  required AppLocalizations l10n,
+}) {
   if (value == null || value.trim().isEmpty) {
-    return '请输入下载器名称';
+    return l10n.downloaderNameRequired;
   }
   return null;
 }
@@ -105,6 +109,7 @@ class DownloadClientFormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = fieldSpacing ?? context.appSpacing.lg;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -113,9 +118,9 @@ class DownloadClientFormFields extends StatelessWidget {
           controller: nameController,
           focusNode: nameFocusNode,
           enabled: enabled,
-          label: '名称',
-          hintText: '给下载器起个名字',
-          validator: validateDownloadClientName,
+          label: l10n.downloaderNameLabel,
+          hintText: l10n.downloaderNameHint,
+          validator: (value) => validateDownloadClientName(value, l10n: l10n),
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.next,
           onFieldSubmitted: (_) => libraryFocusNode?.requestFocus(),
@@ -132,10 +137,13 @@ class DownloadClientFormFields extends StatelessWidget {
                 ),
               )
               .toList(growable: false),
-          label: '目标媒体库',
-          placeholder: libraries.isEmpty ? '暂无支持下载的媒体库' : '请选择目标媒体库',
+          label: l10n.downloaderTargetLibrary,
+          placeholder: libraries.isEmpty
+              ? l10n.downloaderNoDownloadableLibraries
+              : l10n.downloaderSelectTargetLibrary,
           onChanged: enabled && libraries.isNotEmpty ? onLibraryChanged : null,
-          validator: (value) => value == null ? '请选择目标媒体库' : null,
+          validator: (value) =>
+              value == null ? l10n.downloaderSelectTargetLibrary : null,
         ),
         if (providerConfigController.fields.isNotEmpty) ...[
           SizedBox(height: spacing),
@@ -163,6 +171,7 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final tone = _tone(report.status);
     final colors = context.appColors;
     final surface = switch (report.status) {
@@ -184,7 +193,7 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '配置测试结果',
+                  l10n.downloaderTestResultTitle,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s14,
@@ -194,7 +203,7 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
                 ),
               ),
               AppBadge(
-                label: _statusLabel(report.status),
+                label: _statusLabel(l10n, report.status),
                 tone: tone,
                 size: AppBadgeSize.compact,
               ),
@@ -202,7 +211,7 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
           ),
           SizedBox(height: spacing.xs),
           Text(
-            _summary(report.status),
+            _summary(l10n, report.status),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -219,11 +228,12 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
     );
   }
 
-  static String _statusLabel(String status) => switch (status) {
-    'ok' => '通过',
-    'warning' => '有警告',
-    _ => '未通过',
-  };
+  static String _statusLabel(AppLocalizations l10n, String status) =>
+      switch (status) {
+        'ok' => l10n.downloaderTestStatusOk,
+        'warning' => l10n.downloaderTestStatusWarning,
+        _ => l10n.downloaderTestStatusFailed,
+      };
 
   static AppBadgeTone _tone(String status) => switch (status) {
     'ok' => AppBadgeTone.success,
@@ -231,11 +241,12 @@ class DownloadClientDiagnosticResultView extends StatelessWidget {
     _ => AppBadgeTone.error,
   };
 
-  static String _summary(String status) => switch (status) {
-    'ok' => '所有检查已通过，可以保存并开始使用。',
-    'warning' => '检测完成，但存在警告。配置仍可保存，导入时可能回退为复制。',
-    _ => '检测未通过。配置仍可保存，但下载任务或导入可能失败。',
-  };
+  static String _summary(AppLocalizations l10n, String status) =>
+      switch (status) {
+        'ok' => l10n.downloaderTestSummaryOk,
+        'warning' => l10n.downloaderTestSummaryWarning,
+        _ => l10n.downloaderTestSummaryFailed,
+      };
 }
 
 class _DiagnosticCheckRow extends StatelessWidget {
@@ -246,11 +257,12 @@ class _DiagnosticCheckRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppBadge(
-          label: _statusLabel(check.status),
+          label: _statusLabel(l10n, check.status),
           tone: _tone(check.status),
           size: AppBadgeSize.compact,
         ),
@@ -260,7 +272,7 @@ class _DiagnosticCheckRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _checkLabel(check.key),
+                _checkLabel(l10n, check.key),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -284,12 +296,13 @@ class _DiagnosticCheckRow extends StatelessWidget {
     );
   }
 
-  static String _statusLabel(String status) => switch (status) {
-    'ok' => '通过',
-    'warning' => '警告',
-    'skipped' => '未执行',
-    _ => '失败',
-  };
+  static String _statusLabel(AppLocalizations l10n, String status) =>
+      switch (status) {
+        'ok' => l10n.downloaderCheckStatusOk,
+        'warning' => l10n.downloaderCheckStatusWarning,
+        'skipped' => l10n.downloaderCheckStatusSkipped,
+        _ => l10n.downloaderCheckStatusFailed,
+      };
 
   static AppBadgeTone _tone(String status) => switch (status) {
     'ok' => AppBadgeTone.success,
@@ -298,12 +311,13 @@ class _DiagnosticCheckRow extends StatelessWidget {
     _ => AppBadgeTone.error,
   };
 
-  static String _checkLabel(String key) => switch (key) {
-    'qbittorrent_connection' => 'qBittorrent 连通性',
-    'directory_mapping' => '下载目录映射',
-    'hardlink' => '硬链接',
-    'cleanup' => '临时文件清理',
-    'provider' => '下载器测试',
-    _ => key,
-  };
+  static String _checkLabel(AppLocalizations l10n, String key) =>
+      switch (key) {
+        'qbittorrent_connection' => l10n.downloaderCheckQbittorrent,
+        'directory_mapping' => l10n.downloaderCheckDirectoryMapping,
+        'hardlink' => l10n.downloaderCheckHardlink,
+        'cleanup' => l10n.downloaderCheckCleanup,
+        'provider' => l10n.downloaderCheckProvider,
+        _ => key,
+      };
 }

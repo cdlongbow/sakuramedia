@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/plugins/presentation/plugin_management_acti
 import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -74,6 +75,7 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
     }
     final asyncPlugins = ref.watch(pluginsProvider);
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppPageRefreshScope(
       onRefresh: _onRefresh,
       child: Column(
@@ -83,7 +85,10 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
             key: const Key('plugins-tab-bar'),
             controller: _tabController,
             onTap: (_) => setState(() {}),
-            tabs: const [Tab(text: '已安装'), Tab(text: '插件市场')],
+            tabs: [
+              Tab(text: l10n.pluginsTabInstalled),
+              Tab(text: l10n.pluginsTabMarket),
+            ],
           ),
           SizedBox(height: spacing.lg),
           if (_tabController.index == 0)
@@ -99,12 +104,13 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
     BuildContext context,
     AsyncValue<PluginsState> asyncPlugins,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (asyncPlugins.hasError) {
       return AppSectionError(
-        title: '插件加载失败',
+        title: l10n.pluginsLoadFailed,
         message: apiErrorMessage(
           asyncPlugins.error!,
-          fallback: '插件加载失败，请稍后重试。',
+          fallback: l10n.pluginsLoadFailedFallback,
         ),
         onRetry: _actions.refresh,
       );
@@ -120,6 +126,7 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
 
   Widget _buildLoaded(BuildContext context, PluginsState state) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final rows = <Widget>[];
     for (var i = 0; i < state.plugins.length; i++) {
       final plugin = state.plugins[i];
@@ -149,17 +156,17 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppNoticeCard(
-          key: Key('plugins-restart-notice'),
+        AppNoticeCard(
+          key: const Key('plugins-restart-notice'),
           leadingIcon: Icons.info_outline_rounded,
-          description: '插件安装、更新、启停、删除或配置修改后，需重启容器才生效。',
+          description: l10n.pluginsRestartNotice,
         ),
         SizedBox(height: spacing.lg),
         Row(
           children: [
             AppButton(
               key: const Key('plugins-check-updates-button'),
-              label: '检查更新',
+              label: l10n.pluginsCheckUpdates,
               size: AppButtonSize.small,
               icon: const Icon(Icons.system_update_outlined),
               isLoading: state.isCheckingUpdates,
@@ -175,7 +182,7 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
             Skeleton.shade(
               child: AppButton(
                 key: const Key('plugins-install-button'),
-                label: '安装插件',
+                label: l10n.pluginInstallTitle,
                 variant: AppButtonVariant.primary,
                 size: AppButtonSize.small,
                 icon: const Icon(Icons.upload_file_outlined),
@@ -187,7 +194,7 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
             ),
             SizedBox(width: spacing.md),
             Text(
-              '支持上传 .zip 插件包',
+              l10n.pluginsZipSupport,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -198,18 +205,18 @@ class _DesktopPluginsSectionState extends ConsumerState<DesktopPluginsSection>
         ),
         SizedBox(height: spacing.lg),
         if (state.plugins.isEmpty)
-          const AppEmptyState(
-            key: Key('plugins-empty-state'),
+          AppEmptyState(
+            key: const Key('plugins-empty-state'),
             icon: Icons.extension_outlined,
-            title: '还没有安装插件',
-            message: '点击上方「安装插件」上传 zip 插件包，安装后需重启容器才生效。',
+            title: l10n.pluginsEmptyTitle,
+            message: l10n.pluginsEmptyMessage,
           )
         else
           AppContentCard(
             key: const Key('plugins-list-card'),
-            title: '已安装插件',
+            title: l10n.pluginsInstalledTitle,
             headerTrailing: AppBadge(
-              label: '${state.plugins.length} 个',
+              label: l10n.pluginsCount(state.plugins.length),
               tone: AppBadgeTone.neutral,
             ),
             padding: EdgeInsets.all(spacing.lg),
@@ -247,6 +254,7 @@ class _PluginRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final disabled = busy || installing || checkingUpdates;
     return AppInteractiveSurface(
       enabled: !disabled,
@@ -284,9 +292,10 @@ class _PluginRow extends StatelessWidget {
                       if (plugin.loadStatus == 'error') ...[
                         SizedBox(width: spacing.sm),
                         Tooltip(
-                          message: plugin.loadError ?? '插件加载失败',
-                          child: const AppBadge(
-                            label: '加载失败',
+                          message:
+                              plugin.loadError ?? l10n.pluginsLoadErrorTooltip,
+                          child: AppBadge(
+                            label: l10n.pluginsLoadErrorBadge,
                             tone: AppBadgeTone.error,
                             size: AppBadgeSize.compact,
                           ),
@@ -312,7 +321,7 @@ class _PluginRow extends StatelessWidget {
             if (update != null) ...[
               AppButton(
                 key: Key('plugin-upgrade-button-${plugin.pluginId}'),
-                label: '更新',
+                label: l10n.pluginsUpdateAction,
                 variant: AppButtonVariant.primary,
                 size: AppButtonSize.xSmall,
                 onPressed: disabled ? null : () => onUpgrade(update!),
@@ -330,8 +339,8 @@ class _PluginRow extends StatelessWidget {
             SizedBox(width: spacing.xs),
             AppIconButton(
               key: Key('plugin-remove-button-${plugin.pluginId}'),
-              tooltip: '删除插件',
-              semanticLabel: '删除 ${plugin.displayName}',
+              tooltip: l10n.pluginDeleteTitle,
+              semanticLabel: l10n.pluginsDeleteSemantic(plugin.displayName),
               icon: const Icon(Icons.delete_outline_rounded),
               iconColor: context.appTextPalette.error,
               onPressed: disabled ? null : onRemove,

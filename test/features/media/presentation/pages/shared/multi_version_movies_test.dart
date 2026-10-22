@@ -1,6 +1,7 @@
 import 'package:sakuramedia/app/app_platform.dart';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
@@ -59,6 +60,12 @@ void main() {
             overrides: bundle.riverpodOverrides(),
             child: MaterialApp(
               theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               builder: (_, child) => AppPlatformScope(
                 platform: mobile ? AppPlatform.mobile : AppPlatform.desktop,
                 child: child!,
@@ -214,6 +221,12 @@ void main() {
           overrides: bundle.riverpodOverrides(),
           child: MaterialApp(
             theme: sakuraMobileThemeData,
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             builder: (_, child) =>
                 AppPlatformScope(platform: AppPlatform.mobile, child: child!),
             home: OKToast(

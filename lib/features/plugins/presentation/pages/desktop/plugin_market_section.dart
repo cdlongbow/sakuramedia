@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/plugins/presentation/plugin_placeholders.da
 import 'package:sakuramedia/features/plugins/presentation/providers/plugin_market_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugin_market_state.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -52,6 +53,7 @@ class _DesktopPluginMarketSectionState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final asyncMarket = ref.watch(pluginMarketProvider);
     final installedById = <String, PluginSummaryDto>{
       for (final plugin
@@ -63,10 +65,10 @@ class _DesktopPluginMarketSectionState
     if (asyncMarket.hasError && asyncMarket.value == null) {
       return AppSectionError(
         key: const Key('plugin-market-error'),
-        title: '插件市场加载失败',
+        title: l10n.pluginMarketLoadFailed,
         message: apiErrorMessage(
           asyncMarket.error!,
-          fallback: '插件市场加载失败，请稍后重试。',
+          fallback: l10n.pluginMarketLoadFailedFallback,
         ),
         onRetry: _actions.refreshMarket,
       );
@@ -89,6 +91,7 @@ class _DesktopPluginMarketSectionState
     bool isRefreshing,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final visiblePlugins = state.visiblePlugins;
     final busy = state.busyPluginIds.isNotEmpty;
     final rows = <Widget>[];
@@ -125,7 +128,7 @@ class _DesktopPluginMarketSectionState
         AppNoticeCard(
           key: const Key('plugin-market-notice'),
           leadingIcon: Icons.storefront_outlined,
-          description: '插件来自官方索引仓库；社区插件未经官方审计，安装前请确认来源可信。',
+          description: l10n.pluginMarketDescription,
         ),
         SizedBox(height: spacing.lg),
         Row(
@@ -134,7 +137,7 @@ class _DesktopPluginMarketSectionState
               child: AppTextField(
                 fieldKey: const Key('plugin-market-search-field'),
                 controller: _searchController,
-                hintText: '搜索插件名称、ID 或描述',
+                hintText: l10n.pluginMarketSearchHint,
                 prefix: Icon(
                   Icons.search_rounded,
                   size: context.appComponentTokens.iconSizeSm,
@@ -146,7 +149,7 @@ class _DesktopPluginMarketSectionState
             SizedBox(width: spacing.sm),
             AppButton(
               key: const Key('plugin-market-refresh-button'),
-              label: '刷新',
+              label: l10n.commonRefresh,
               size: AppButtonSize.small,
               icon: const Icon(Icons.refresh_rounded),
               isLoading: isRefreshing,
@@ -159,17 +162,19 @@ class _DesktopPluginMarketSectionState
           AppEmptyState(
             key: const Key('plugin-market-empty-state'),
             icon: Icons.storefront_outlined,
-            title: state.keyword.trim().isEmpty ? '市场暂无插件' : '没有匹配的插件',
+            title: state.keyword.trim().isEmpty
+                ? l10n.pluginMarketEmpty
+                : l10n.pluginMarketNoMatch,
             message: state.keyword.trim().isEmpty
-                ? '索引仓库还没有收录插件，稍后再来看看。'
-                : '换个关键词试试。',
+                ? l10n.pluginMarketEmptyDescription
+                : l10n.pluginMarketNoMatchDescription,
           )
         else
           AppContentCard(
             key: const Key('plugin-market-list-card'),
-            title: '可安装插件',
+            title: l10n.pluginMarketInstallablePlugins,
             headerTrailing: AppBadge(
-              label: '${visiblePlugins.length} 个',
+              label: l10n.pluginsCount(visiblePlugins.length),
               tone: AppBadgeTone.neutral,
             ),
             padding: EdgeInsets.all(spacing.lg),
@@ -203,6 +208,7 @@ class _MarketPluginRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final release = plugin.latest;
     return Padding(
       key: Key('plugin-market-row-${plugin.pluginId}'),
@@ -236,7 +242,9 @@ class _MarketPluginRow extends StatelessWidget {
                     ),
                     SizedBox(width: spacing.sm),
                     AppBadge(
-                      label: plugin.official ? '官方' : '社区',
+                      label: plugin.official
+                          ? l10n.pluginMarketOfficial
+                          : l10n.pluginMarketCommunity,
                       tone: plugin.official
                           ? AppBadgeTone.primary
                           : AppBadgeTone.neutral,
@@ -257,7 +265,7 @@ class _MarketPluginRow extends StatelessWidget {
                 ),
                 SizedBox(height: spacing.xs / 2),
                 Text(
-                  _subtitle,
+                  _subtitle(l10n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: resolveAppTextStyle(
@@ -275,8 +283,10 @@ class _MarketPluginRow extends StatelessWidget {
               key: Key(
                 'plugin-market-copy-homepage-button-${plugin.pluginId}',
               ),
-              tooltip: '复制项目主页',
-              semanticLabel: '复制 ${plugin.displayName} 的项目主页',
+              tooltip: l10n.pluginMarketCopyHomepage,
+              semanticLabel: l10n.pluginMarketCopyHomepageSemantic(
+                plugin.displayName,
+              ),
               icon: const Icon(Icons.content_copy_rounded),
               onPressed: onCopyHomepage,
             ),
@@ -288,20 +298,20 @@ class _MarketPluginRow extends StatelessWidget {
             switch (status) {
               PluginMarketStatus.notInstalled => AppButton(
                 key: Key('plugin-market-install-button-${plugin.pluginId}'),
-                label: '安装',
+                label: l10n.pluginInstallConfirm,
                 variant: AppButtonVariant.primary,
                 size: AppButtonSize.xSmall,
                 onPressed: release == null ? null : onInstall,
               ),
               PluginMarketStatus.updateAvailable => AppButton(
                 key: Key('plugin-market-upgrade-button-${plugin.pluginId}'),
-                label: '更新',
+                label: l10n.pluginUpgradeConfirm,
                 variant: AppButtonVariant.primary,
                 size: AppButtonSize.xSmall,
                 onPressed: onUpgrade,
               ),
-              PluginMarketStatus.installed => const AppBadge(
-                label: '已安装',
+              PluginMarketStatus.installed => AppBadge(
+                label: l10n.pluginMarketInstalled,
                 tone: AppBadgeTone.success,
                 size: AppBadgeSize.compact,
               ),
@@ -311,14 +321,20 @@ class _MarketPluginRow extends StatelessWidget {
     );
   }
 
-  String get _subtitle {
+  String _subtitle(AppLocalizations l10n) {
     final version = plugin.latest?.version;
     if (status == PluginMarketStatus.updateAvailable &&
         installedVersion != null) {
-      return '已安装 v$installedVersion · 可更新到 v${version ?? '-'}';
+      return l10n.pluginMarketInstalledVersion(
+        installedVersion!,
+        version ?? '-',
+      );
     }
     if (status == PluginMarketStatus.installed && installedVersion != null) {
-      return '已安装 v$installedVersion · ${plugin.author}';
+      return l10n.pluginMarketInstalledAuthor(
+        installedVersion!,
+        plugin.author,
+      );
     }
     return 'v${version ?? '-'} · ${plugin.author}';
   }

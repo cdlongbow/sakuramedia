@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/shared/presentation/file_picker_with_bytes.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class PluginZipFile {
   const PluginZipFile({required this.bytes, required this.fileName});
@@ -19,7 +20,7 @@ class PluginZipPickerException implements Exception {
   final String message;
 }
 
-Future<PluginZipFile?> pickPluginZip() async {
+Future<PluginZipFile?> pickPluginZip({AppLocalizations? l10n}) async {
   final override = debugPluginZipPicker;
   if (override != null) {
     return override();
@@ -28,9 +29,12 @@ Future<PluginZipFile?> pickPluginZip() async {
   try {
     final picked = await pickFileWithBytes(
       allowedExtensions: const <String>['zip'],
-      unreadableMessage: '无法读取所选插件包，请换一个文件再试',
-      pickerUnavailableMessage: '文件选择器尚未加载，请完整重启应用后再试',
-      openFailureMessage: '打开文件选择器失败，请稍后再试',
+      unreadableMessage:
+          l10n?.pluginZipUnreadable ?? '无法读取所选插件包，请换一个文件再试',
+      pickerUnavailableMessage:
+          l10n?.pluginZipPickerUnavailable ?? '文件选择器尚未加载，请完整重启应用后再试',
+      openFailureMessage:
+          l10n?.pluginZipOpenFailed ?? '打开文件选择器失败，请稍后再试',
     );
     if (picked == null) {
       return null;

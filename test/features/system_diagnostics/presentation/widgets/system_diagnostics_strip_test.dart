@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
@@ -35,7 +36,16 @@ Widget _wrap(Widget child) {
   );
   return ProviderScope(
     overrides: _bundle.riverpodOverrides(),
-    child: MaterialApp.router(routerConfig: router, theme: sakuraThemeData),
+    child: MaterialApp.router(
+      routerConfig: router,
+      theme: sakuraThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+    ),
   );
 }
 

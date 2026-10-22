@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/activity_ap
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/features/status/presentation/providers/status_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -91,7 +92,12 @@ class _SystemMaintenanceContentState
         return;
       }
       setState(() {
-        _errorMessage = apiErrorMessage(error, fallback: '图搜索状态加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).systemMaintenanceImageSearchLoadFailedFallback,
+        );
       });
     } finally {
       if (mounted) {
@@ -130,6 +136,7 @@ class _SystemMaintenanceContentState
   }
 
   Widget _buildContent(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -138,66 +145,62 @@ class _SystemMaintenanceContentState
         _buildMaintenanceTaskCard(
           context,
           taskKey: _mediaInfoBackfillTaskKey,
-          title: '媒体信息回填',
-          description:
-              '为缺少或不完整技术信息的媒体文件重新探测，补齐时长、分辨率和视频信息。只处理缺失或不完整项，不会无条件覆盖已有信息。',
-          successMessage: '媒体信息回填任务已提交，进度请在任务中心查看',
+          title: l10n.systemMaintenanceMediaInfoBackfillTitle,
+          description: l10n.systemMaintenanceMediaInfoBackfillDescription,
+          successMessage: l10n.systemMaintenanceMediaInfoBackfillSuccess,
         ),
         SizedBox(height: context.appSpacing.xl),
         _buildMaintenanceTaskCard(
           context,
           taskKey: _fileHashBackfillTaskKey,
-          title: '媒体文件哈希补算',
-          description:
-              '为尚未记录文件哈希的媒体文件计算并保存文件指纹，用于识别重复媒体。只处理哈希为空的文件，媒体库较大时可能运行较久。',
-          successMessage: '媒体文件哈希补算任务已提交，进度请在任务中心查看',
+          title: l10n.systemMaintenanceFileHashBackfillTitle,
+          description: l10n.systemMaintenanceFileHashBackfillDescription,
+          successMessage: l10n.systemMaintenanceFileHashBackfillSuccess,
         ),
         SizedBox(height: context.appSpacing.xl),
         _buildMaintenanceTaskCard(
           context,
           taskKey: _thumbnailPackBackfillTaskKey,
-          title: '媒体缩略图打包回填',
-          description:
-              '把媒体时间轴缩略图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的媒体，媒体库较大时可能运行较久。',
-          successMessage: '缩略图打包回填任务已提交，进度请在任务中心查看',
+          title: l10n.systemMaintenanceThumbnailPackTitle,
+          description: l10n.systemMaintenanceThumbnailPackDescription,
+          successMessage: l10n.systemMaintenanceThumbnailPackSuccess,
         ),
         SizedBox(height: context.appSpacing.xl),
         _buildMaintenanceTaskCard(
           context,
           taskKey: _movieAssetPackBackfillTaskKey,
-          title: '影片图片打包回填',
-          description:
-              '把影片的封面、薄封面与剧情图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的影片，媒体库较大时可能运行较久。',
-          successMessage: '影片图片打包回填任务已提交，进度请在任务中心查看',
+          title: l10n.systemMaintenanceMovieAssetPackTitle,
+          description: l10n.systemMaintenanceMovieAssetPackDescription,
+          successMessage: l10n.systemMaintenanceMovieAssetPackSuccess,
         ),
         SizedBox(height: context.appSpacing.xl),
         _buildMaintenanceTaskCard(
           context,
           taskKey: _actorGenderBackfillTaskKey,
-          title: '演员性别回填',
-          description:
-              '按影片元数据修正演员的存量性别，人工锁定的资料不会被覆盖。任务会一次处理完所有候选，逐条访问 JavDB 并限速，演员数量较多时可能运行较久。',
-          successMessage: '演员性别回填任务已提交，进度请在任务中心查看',
+          title: l10n.systemMaintenanceActorGenderTitle,
+          description: l10n.systemMaintenanceActorGenderDescription,
+          successMessage: l10n.systemMaintenanceActorGenderSuccess,
         ),
       ],
     );
   }
 
   Widget _buildImageSearchSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final status = _imageSearchStatus;
     if (status == null) {
       if (_errorMessage != null) {
         if (_isMobile) {
           return AppMobileSectionError(
             key: const Key('mobile-system-maintenance-error-state'),
-            title: '图搜索状态加载失败',
+            title: l10n.systemMaintenanceImageSearchLoadFailed,
             message: _errorMessage!,
             onRetry: _load,
             retryButtonKey: const Key('mobile-system-maintenance-retry-button'),
           );
         }
         return AppSectionError(
-          title: '图搜索状态加载失败',
+          title: l10n.systemMaintenanceImageSearchLoadFailed,
           message: _errorMessage!,
           onRetry: _load,
         );
@@ -211,7 +214,7 @@ class _SystemMaintenanceContentState
             : null,
         enabled: true,
         child: AppContentCard(
-          title: '图搜索索引',
+          title: l10n.systemMaintenanceImageSearchTitle,
           child: _isMobile
               ? _buildMobileCardBody(
                   context,
@@ -238,7 +241,7 @@ class _SystemMaintenanceContentState
             ? 'mobile-system-maintenance-image-search-card'
             : 'configuration-system-maintenance-image-search-card',
       ),
-      title: '图搜索索引',
+      title: l10n.systemMaintenanceImageSearchTitle,
       child: _isMobile
           ? _buildMobileCardBody(
               context,
@@ -262,12 +265,15 @@ class _SystemMaintenanceContentState
     required String description,
     required String successMessage,
   }) {
+    final l10n = AppLocalizations.of(context);
     final platformPrefix = _isMobile ? 'mobile' : 'configuration';
     final isSubmitting = _submittingTaskKey == taskKey;
     final hasSubmittingTask = _submittingTaskKey != null;
     final button = AppButton(
       key: Key('$platformPrefix-system-maintenance-$taskKey-run'),
-      label: isSubmitting ? '提交中' : '立即执行',
+      label: isSubmitting
+          ? l10n.systemMaintenanceSubmit
+          : l10n.systemMaintenanceRunNow,
       variant: AppButtonVariant.primary,
       size: _isMobile ? AppButtonSize.medium : AppButtonSize.small,
       isLoading: isSubmitting,
@@ -331,9 +337,16 @@ class _SystemMaintenanceContentState
       if (error is ApiException &&
           error.statusCode == 409 &&
           error.error?.code == 'task_conflict') {
-        showToast('任务已在运行中');
+        showToast(AppLocalizations.of(context).systemMaintenanceTaskRunning);
       } else {
-        showToast(apiErrorMessage(error, fallback: '任务提交失败，请重试'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).systemMaintenanceSubmitFailed,
+          ),
+        );
       }
     } finally {
       if (mounted && _submittingTaskKey == taskKey) {
@@ -348,11 +361,12 @@ class _SystemMaintenanceContentState
     required bool requiresRebuild,
     required bool isRebuilding,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
           child: Text(
-            _buildImageSearchMessage(status),
+            _buildImageSearchMessage(l10n, status),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s14,
@@ -365,11 +379,12 @@ class _SystemMaintenanceContentState
         SizedBox(width: context.appSpacing.lg),
         _buildResetButton(
           key: const Key('configuration-system-maintenance-image-search-reset'),
+          l10n: l10n,
           label: isRebuilding
-              ? '重建中'
+              ? l10n.systemMaintenanceRebuilding
               : requiresRebuild
-              ? '立即重建'
-              : '重建索引',
+              ? l10n.systemMaintenanceRebuildNow
+              : l10n.systemMaintenanceRebuildIndex,
           isRebuilding: isRebuilding,
           variant: AppButtonVariant.primary,
         ),
@@ -384,11 +399,12 @@ class _SystemMaintenanceContentState
     required bool isRebuilding,
   }) {
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          _buildImageSearchMessage(status),
+          _buildImageSearchMessage(l10n, status),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -406,7 +422,7 @@ class _SystemMaintenanceContentState
               borderRadius: context.appRadius.mdBorder,
             ),
             child: Text(
-              '重建会清空现有图片索引，期间图搜索结果可能暂时不完整。',
+              l10n.systemMaintenanceRebuildNotice,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -420,11 +436,12 @@ class _SystemMaintenanceContentState
           width: double.infinity,
           child: _buildResetButton(
             key: const Key('mobile-system-maintenance-image-search-reset'),
+            l10n: l10n,
             label: isRebuilding
-                ? '重建中'
+                ? l10n.systemMaintenanceRebuilding
                 : requiresRebuild
-                ? '立即重建'
-                : '重建索引',
+                ? l10n.systemMaintenanceRebuildNow
+                : l10n.systemMaintenanceRebuildIndex,
             isRebuilding: isRebuilding,
             variant: AppButtonVariant.danger,
           ),
@@ -435,13 +452,16 @@ class _SystemMaintenanceContentState
 
   Widget _buildResetButton({
     required Key key,
+    required AppLocalizations l10n,
     required String label,
     required bool isRebuilding,
     required AppButtonVariant variant,
   }) {
     return AppButton(
       key: key,
-      label: _imageSearchStatus?.enabled == false ? '未启用' : label,
+      label: _imageSearchStatus?.enabled == false
+          ? l10n.systemMaintenanceDisabled
+          : label,
       variant: variant,
       onPressed: isRebuilding || _imageSearchStatus?.enabled != true
           ? null
@@ -449,19 +469,27 @@ class _SystemMaintenanceContentState
     );
   }
 
-  String _buildImageSearchMessage(StatusImageSearchDto status) {
-    if (!status.enabled) return '图片与文字搜图未启用。可在服务器端高级设置中开启，保存后重启后端容器。';
+  String _buildImageSearchMessage(
+    AppLocalizations l10n,
+    StatusImageSearchDto status,
+  ) {
+    if (!status.enabled) {
+      return l10n.systemMaintenanceImageSearchDisabledMessage;
+    }
     final indexSpace = status.indexSpace;
     if (indexSpace.isRebuilding) {
-      return '图搜索索引正在后台重建，请稍候。';
+      return l10n.systemMaintenanceImageSearchRebuildingMessage;
     }
     if (indexSpace.requiresRebuild) {
       if (indexSpace.indexedSpaceId == null) {
-        return '无法确认历史图搜索索引使用的嵌入空间，图搜索已暂停。请重建索引后再搜索。';
+        return l10n.systemMaintenanceImageSearchSpaceUnknownMessage;
       }
-      return '嵌入空间已从「${indexSpace.indexedSpaceId}」变更为「${indexSpace.currentSpaceId ?? '未知'}」，图搜索已暂停。请重建索引后再搜索。';
+      return l10n.systemMaintenanceImageSearchSpaceChangedMessage(
+        indexSpace.indexedSpaceId!,
+        indexSpace.currentSpaceId ?? l10n.commonUnknown,
+      );
     }
-    return '更换嵌入模型后，重建索引以重新生成全部图片向量。重建期间图搜索结果可能暂时不完整。';
+    return l10n.systemMaintenanceImageSearchRebuildHint;
   }
 
   Future<void> _confirmImageSearchReset() async {
@@ -469,12 +497,14 @@ class _SystemMaintenanceContentState
     if (status == null || !status.enabled || status.indexSpace.isRebuilding) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '重建图搜索索引',
-      message:
-          '${_buildImageSearchMessage(status)}\n\n这会清空现有图片索引并重新开始构建，确认继续吗？',
-      confirmLabel: '重建索引',
+      title: l10n.systemMaintenanceRebuildDialogTitle,
+      message: l10n.systemMaintenanceRebuildDialogMessage(
+        _buildImageSearchMessage(l10n, status),
+      ),
+      confirmLabel: l10n.systemMaintenanceRebuildIndex,
       danger: true,
       dialogKey: Key(
         _isMobile
@@ -492,14 +522,14 @@ class _SystemMaintenanceContentState
             : 'configuration-image-search-reset-cancel',
       ),
       onConfirm: () => ref.read(statusApiProvider).resetImageSearch(),
-      failureFallback: '重建图搜索索引失败',
+      failureFallback: l10n.systemMaintenanceRebuildFailed,
     );
     if (!confirmed || !mounted) {
       return;
     }
     await _load();
     if (mounted) {
-      showToast('图搜索索引已开始重建');
+      showToast(l10n.systemMaintenanceRebuildStarted);
     }
   }
 }

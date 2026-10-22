@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/relative_time_label.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_list_item_dto.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
@@ -238,6 +239,7 @@ class _SearchProgressLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final style = resolveAppTextStyle(
       context,
       size: AppTextSize.s12,
@@ -258,22 +260,35 @@ class _SearchProgressLine extends StatelessWidget {
       children: [
         if (showProgress) ...[
           if (item.isFresh)
-            Text('新片 · 持续查询中', style: style)
+            Text(l10n.subscriptionNewMovieSearching, style: style)
           else if (item.status == MovieSubscriptionStatus.exhausted)
-            Text('已查询过 ${item.attemptCount} 次', style: style)
+            Text(
+              l10n.subscriptionSearchedTimes(item.attemptCount),
+              style: style,
+            )
           else if (item.attemptCount > 0 && item.attemptCount < item.attemptLimit)
-            Text('再尝试 ${item.attemptLimit - item.attemptCount} 次就放弃', style: style),
+            Text(
+              l10n.subscriptionRetryBeforeGivingUp(
+                item.attemptLimit - item.attemptCount,
+              ),
+              style: style,
+            ),
           Text(
             item.lastSearchedAt == null
-                ? '尚未查询'
-                : formatRelativeTimeLabel(item.lastSearchedAt!, suffix: '查过'),
+                ? l10n.subscriptionNotSearched
+                : l10n.subscriptionLastSearchedAt(
+                    formatRelativeTimeLabel(
+                      item.lastSearchedAt!,
+                      l10n: l10n,
+                    ),
+                  ),
             style: style,
           ),
         ],
         if (item.deadDownloadTaskCount > 0)
           AppBadge(
             key: Key('movie-subscription-row-dead-${item.movieNumber}'),
-            label: '${item.deadDownloadTaskCount} 个种子已判死',
+            label: l10n.subscriptionDeadTorrents(item.deadDownloadTaskCount),
             tone: AppBadgeTone.warning,
             size: AppBadgeSize.compact,
           ),
@@ -356,11 +371,16 @@ class _FooterLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final facts = <String>[
-      if (item.releaseDate != null) '发行 ${item.releaseDate}',
+      if (item.releaseDate != null)
+        l10n.subscriptionReleasedAt(item.releaseDate!),
       if (item.subscribedAt != null)
-        formatRelativeTimeLabel(item.subscribedAt!, suffix: '订阅'),
-      if (item.mediaCount > 0) '本地 ${item.mediaCount} 个媒体',
+        l10n.subscriptionSubscribedAt(
+          formatRelativeTimeLabel(item.subscribedAt!, l10n: l10n),
+        ),
+      if (item.mediaCount > 0)
+        l10n.subscriptionLocalMediaCount(item.mediaCount),
     ];
     final mutedStyle = resolveAppTextStyle(
       context,

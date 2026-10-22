@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/plugins/presentation/providers/plugins_api_
 import 'package:sakuramedia/features/shared/presentation/restart_messages.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/plugins/presentation/widgets/plugin_settings_form.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
@@ -96,7 +97,12 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       }
       setState(() {
         _loading = false;
-        _errorMessage = apiErrorMessage(error, fallback: '插件配置加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).pluginSettingsLoadFailedFallback,
+        );
       });
     }
   }
@@ -112,21 +118,22 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
   }
 
   String? _validateJson(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
       _lastValidatedSettings = null;
-      return '配置不能为空';
+      return l10n.pluginSettingsEmpty;
     }
     try {
       final decoded = jsonDecode(text);
       if (decoded is! Map<String, dynamic>) {
         _lastValidatedSettings = null;
-        return '插件配置必须是一个 JSON 对象';
+        return l10n.pluginSettingsMustBeObject;
       }
       _lastValidatedSettings = decoded;
     } on FormatException {
       _lastValidatedSettings = null;
-      return '不是合法的 JSON';
+      return l10n.pluginSettingsInvalidJson;
     }
     return null;
   }
@@ -151,7 +158,10 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       if (!mounted) {
         return;
       }
-      showToast(buildRestartRequiredMessage('插件配置已保存'));
+      final l10n = AppLocalizations.of(context);
+      showToast(
+        buildRestartRequiredMessage(l10n.pluginSettingsSaved, l10n: l10n),
+      );
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) {
@@ -169,7 +179,12 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
           };
         }
       });
-      showToast(apiErrorMessage(error, fallback: '插件配置保存失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).pluginSettingsSaveFailed,
+        ),
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _formKey.currentState?.validate();
       });
@@ -200,7 +215,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
     }
     return AppBottomFormSheet(
       formKey: _formKey,
-      title: '插件配置',
+      title: AppLocalizations.of(context).pluginSettingsTitle,
       subtitle: '${widget.plugin.displayName} · ${widget.plugin.pluginId}',
       submitKey: const Key('plugin-settings-save-button'),
       isSubmitting: _saving,
@@ -216,7 +231,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '插件配置',
+            AppLocalizations.of(context).pluginSettingsTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s16,
@@ -240,7 +255,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: '取消',
+                  label: AppLocalizations.of(context).commonCancel,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
@@ -248,7 +263,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
               Expanded(
                 child: AppButton(
                   key: const Key('plugin-settings-save-button'),
-                  label: '保存',
+                  label: AppLocalizations.of(context).commonSave,
                   variant: AppButtonVariant.primary,
                   onPressed: null,
                 ),
@@ -268,7 +283,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '插件配置',
+            AppLocalizations.of(context).pluginSettingsTitle,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s16,
@@ -291,25 +306,35 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
   }
 
   /// 加载态占位 Schema：让骨架按「有 Schema 的插件表单」形态渲染。
-  static const Map<String, dynamic> _placeholderSchema = <String, dynamic>{
+  static Map<String, dynamic> _placeholderSchema(AppLocalizations l10n) =>
+      <String, dynamic>{
     'type': 'object',
     'properties': <String, dynamic>{
-      'endpoint': <String, dynamic>{'type': 'string', 'title': '服务地址'},
+      'endpoint': <String, dynamic>{
+        'type': 'string',
+        'title': l10n.pluginSettingsPlaceholderEndpoint,
+      },
       'api_key': <String, dynamic>{'type': 'string', 'title': 'API Key'},
-      'enabled': <String, dynamic>{'type': 'boolean', 'title': '启用'},
+      'enabled': <String, dynamic>{
+        'type': 'boolean',
+        'title': l10n.pluginSettingsPlaceholderEnabled,
+      },
     },
   };
 
   Widget _buildDesktopBody(BuildContext context) {
     if (_errorMessage != null) {
       return AppSectionError(
-        title: '插件配置加载失败',
+        title: AppLocalizations.of(context).pluginSettingsLoadFailed,
         message: _errorMessage!,
         onRetry: _load,
       );
     }
     // loading 用占位 Schema / 空表单渲染真实表单结构，由 [AppSkeletonizer] 灰化。
-    final schema = _schema ?? (_loading ? _placeholderSchema : null);
+    final l10n = AppLocalizations.of(context);
+    final schema = _schema ?? (
+      _loading ? _placeholderSchema(l10n) : null
+    );
     final values = _loading
         ? <String, dynamic>{}
         : _formSettings;
@@ -336,7 +361,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
                 alignment: Alignment.centerRight,
                 child: AppButton(
                   key: const Key('plugin-settings-save-button'),
-                  label: '保存',
+                  label: l10n.commonSave,
                   variant: AppButtonVariant.primary,
                   size: AppButtonSize.small,
                   isLoading: _saving,
@@ -352,7 +377,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
   Widget _buildMobileBody(BuildContext context) {
     if (_errorMessage != null) {
       return AppMobileSectionError(
-        title: '插件配置加载失败',
+        title: AppLocalizations.of(context).pluginSettingsLoadFailed,
         message: _errorMessage!,
         onRetry: _load,
         retryButtonKey: const Key('mobile-plugin-settings-retry-button'),
@@ -363,7 +388,11 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
       child: _buildFields(
         context,
         includeSaveButton: false,
-        schema: _schema ?? (_loading ? _placeholderSchema : null),
+        schema:
+            _schema ??
+            (_loading
+                ? _placeholderSchema(AppLocalizations.of(context))
+                : null),
         values: _loading ? <String, dynamic>{} : _formSettings,
       ),
     );
@@ -401,7 +430,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
           AppTextField(
             fieldKey: const Key('plugin-settings-json-field'),
             controller: _controller,
-            label: '配置内容（JSON）',
+            label: AppLocalizations.of(context).pluginSettingsJsonLabel,
             hintText: '{ "key": "value" }',
             minLines: 14,
             maxLines: 14,
@@ -419,7 +448,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
             if (effectiveSchema == null)
               AppButton(
                 key: const Key('plugin-settings-format-button'),
-                label: '格式化',
+                label: AppLocalizations.of(context).pluginSettingsFormat,
                 size: AppButtonSize.small,
                 icon: const Icon(Icons.format_align_left_rounded),
                 onPressed: _saving ? null : _format,
@@ -428,7 +457,7 @@ class _PluginSettingsContentState extends ConsumerState<PluginSettingsContent> {
               SizedBox(width: spacing.sm),
               AppButton(
                 key: const Key('plugin-settings-save-button'),
-                label: '保存',
+                label: AppLocalizations.of(context).commonSave,
                 variant: AppButtonVariant.primary,
                 size: AppButtonSize.small,
                 isLoading: _saving,

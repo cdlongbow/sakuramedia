@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -70,7 +71,16 @@ Future<void> _pumpDesktopApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
-      child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      child: MaterialApp.router(
+        theme: sakuraThemeData,
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        routerConfig: router,
+      ),
     ),
   );
 }

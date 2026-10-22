@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/configuration/presentation/providers/media_
 import 'package:sakuramedia/features/configuration/presentation/providers/media_provider_catalog_provider.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_inline_action_button.dart';
@@ -45,7 +46,7 @@ class _DownloadClientsSectionState
       builder: (_) => DownloadClientDialog(
         libraries: libraries,
         providers: providers,
-        title: '添加下载器',
+        title: AppLocalizations.of(context).downloaderAddTitle,
       ),
     );
   }
@@ -60,21 +61,22 @@ class _DownloadClientsSectionState
       builder: (_) => DownloadClientDialog(
         libraries: libraries,
         providers: providers,
-        title: '编辑下载器',
+        title: AppLocalizations.of(context).downloaderEditTitle,
         initialClient: client,
       ),
     );
   }
 
   Future<void> _deleteClient(DownloadClientDto client) async {
+    final l10n = AppLocalizations.of(context);
     await showAppConfigDeleteConfirm(
       context: context,
-      title: '删除下载器',
-      message: '确认删除下载器“${client.name}”？该操作不会删除下载任务。',
+      title: l10n.downloaderDeleteTitle,
+      message: l10n.downloaderDeleteMessage(client.name),
       onDelete: () =>
           ref.read(downloadClientsProvider.notifier).delete(client.id),
-      successToast: '下载器已删除',
-      failureFallback: '删除下载器失败',
+      successToast: l10n.downloaderDeleted,
+      failureFallback: l10n.downloaderDeleteFailed,
     );
   }
 
@@ -112,6 +114,7 @@ class _DownloadClientsSectionState
   }
 
   Widget _buildContent(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final clientsAsync = ref.watch(downloadClientsProvider);
     final librariesAsync = ref.watch(mediaLibrariesProvider);
     final providersAsync = ref.watch(mediaProviderCatalogProvider);
@@ -124,8 +127,11 @@ class _DownloadClientsSectionState
       final error = clientsAsync.error ?? librariesAsync.error;
       if (error != null) {
         return AppSectionError(
-          title: '下载器配置加载失败',
-          message: apiErrorMessage(error, fallback: '下载器配置加载失败，请稍后重试。'),
+          title: l10n.downloaderConfigLoadFailed,
+          message: apiErrorMessage(
+            error,
+            fallback: l10n.downloaderConfigLoadFailedFallback,
+          ),
           onRetry: () async {
             await Future.wait<void>([
               ref.read(downloadClientsProvider.notifier).reload(),
@@ -168,7 +174,7 @@ class _DownloadClientsSectionState
           Padding(
             padding: EdgeInsets.only(bottom: spacing.lg),
             child: Text(
-              'Provider 目录暂不可用，已有下载器仍可管理；恢复插件目录后才能新建或编辑 Provider 配置。',
+              l10n.downloaderProviderUnavailable,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -180,7 +186,7 @@ class _DownloadClientsSectionState
           Padding(
             padding: EdgeInsets.only(bottom: spacing.lg),
             child: Text(
-              '当前没有支持下载的媒体库，请先配置可下载的媒体库 Provider。',
+              l10n.downloaderNoDownloadableLibraryProvider,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -189,7 +195,7 @@ class _DownloadClientsSectionState
             ),
           ),
         if (clients.isEmpty)
-          const AppEmptyState(message: '还没有下载器配置')
+          AppEmptyState(message: l10n.downloaderEmpty)
         else
           AppSettingsGroup(
             children: [
@@ -220,7 +226,7 @@ class _DownloadClientsSectionState
               key: const Key('configuration-download-client-create-button'),
               icon: Icons.add_rounded,
               iconColor: Theme.of(context).colorScheme.primary,
-              title: '新建下载器',
+              title: l10n.downloaderCreate,
               titleTone: AppTextTone.accent,
               titleWeight: AppTextWeight.medium,
               trailing: const AppSettingCellChevron(),
@@ -255,9 +261,13 @@ class DownloadClientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final providerName =
-        provider?.displayName ?? mediaLibrary?.providerKey ?? '未知 Provider';
-    final libraryName = mediaLibrary?.name ?? '未匹配 (${client.libraryId})';
+        provider?.displayName ??
+        mediaLibrary?.providerKey ??
+        l10n.downloaderUnknownProvider;
+    final libraryName =
+        mediaLibrary?.name ?? l10n.downloaderUnmatchedLibrary(client.libraryId);
     return Padding(
       key: Key('download-client-card-${client.id}'),
       padding: EdgeInsets.symmetric(
@@ -322,7 +332,10 @@ class DownloadClientCard extends StatelessWidget {
               runSpacing: spacing.sm,
               children: [
                 AppInfoPill(label: 'Provider', value: providerName),
-                AppInfoPill(label: '媒体库', value: libraryName),
+                AppInfoPill(
+                  label: l10n.downloaderMediaLibraryLabel,
+                  value: libraryName,
+                ),
               ],
             ),
           ),
@@ -422,6 +435,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
 
   Future<void> _submit() async {
     if (_isSubmitting || _isTesting) return;
+    final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final value = DownloadClientFormValue.fromControllers(
       nameController: _nameController,
@@ -446,7 +460,9 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
             .create(value.toCreatePayload());
       }
       if (!mounted) return;
-      showToast(_isEditing ? '下载器已更新' : '下载器已创建');
+      showToast(
+        _isEditing ? l10n.downloaderUpdated : l10n.downloaderCreated,
+      );
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
@@ -454,7 +470,9 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
       showToast(
         apiErrorMessage(
           error,
-          fallback: _isEditing ? '更新下载器失败' : '创建下载器失败',
+          fallback: _isEditing
+              ? l10n.downloaderUpdateFailed
+              : l10n.downloaderCreateFailed,
         ),
       );
     }
@@ -462,6 +480,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
 
   Future<void> _testClient() async {
     if (_isTesting || _isSubmitting) return;
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final value = DownloadClientFormValue.fromControllers(
@@ -490,7 +509,9 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
       setState(() => _diagnosticReport = report);
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '下载器测试失败'));
+        showToast(
+          apiErrorMessage(error, fallback: l10n.downloaderTestFailed),
+        );
       }
     } finally {
       if (mounted) setState(() => _isTesting = false);
@@ -500,6 +521,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return AppDesktopDialog(
       insetPadding: EdgeInsets.symmetric(
         horizontal: context.appLayoutTokens.dialogInsetPadding,
@@ -547,7 +569,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                         onPressed: _isTesting || _isSubmitting
                             ? null
                             : () => Navigator.of(context).pop(),
-                        label: '取消',
+                        label: l10n.commonCancel,
                       ),
                     ),
                     SizedBox(width: spacing.md),
@@ -556,7 +578,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                         onPressed: _isTesting || _isSubmitting
                             ? null
                             : _submit,
-                        label: '保存',
+                        label: l10n.commonSave,
                         variant: AppButtonVariant.primary,
                         isLoading: _isSubmitting,
                       ),
@@ -568,7 +590,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                         onPressed: _isTesting || _isSubmitting
                             ? null
                             : _testClient,
-                        label: '测试配置',
+                        label: l10n.downloaderTestConfig,
                         icon: const Icon(Icons.rule_rounded),
                         size: AppButtonSize.small,
                         isLoading: _isTesting,

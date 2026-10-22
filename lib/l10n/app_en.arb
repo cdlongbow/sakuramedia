@@ -158,5 +158,1112 @@
   },
   "sseActorOnlineImportFinished": "Online performer import complete",
   "sseActorOnlineSearchFinished": "Online search complete",
-  "sseActorSyncingOnlineResults": "Syncing online performer search results..."
+  "sseActorSyncingOnlineResults": "Syncing online performer search results...",
+  "commonCancel": "Cancel",
+  "commonRetry": "Retry",
+  "commonDelete": "Delete",
+  "commonCopy": "Copy",
+  "commonDone": "Done",
+  "commonUnknown": "Unknown",
+  "accountTitle": "Account",
+  "accountProfileTitle": "Account profile",
+  "accountUsername": "Username",
+  "accountUsernameHint": "Enter a new username",
+  "accountUsernameHelpMobile": "Your current session stays signed in after saving.",
+  "accountUsernameHelpDesktop": "The username is used for sign-in and account identification. Your current session stays signed in after saving.",
+  "accountSaveUsername": "Save username",
+  "accountUsernameUpdated": "Username updated",
+  "accountCurrentUsername": "Current username",
+  "accountCreatedAt": "Created",
+  "accountLastLogin": "Last sign-in",
+  "accountChangePasswordTitle": "Change password",
+  "accountChangePasswordNotice": "Changing your password signs you out immediately; sign in again with the new password.",
+  "accountCurrentPassword": "Current password",
+  "accountNewPassword": "New password",
+  "accountConfirmNewPassword": "Confirm new password",
+  "accountConfirmChange": "Confirm change",
+  "accountReset": "Reset",
+  "accountPasswordChangedReloginFailed": "Password changed, but signing in with the new password failed. Please sign in again to confirm.",
+  "accountPasswordChangedRelogin": "Password updated. Please sign in again.",
+  "accountCurrentPasswordRequired": "Enter your current password",
+  "accountNewPasswordRequired": "Enter a new password",
+  "accountNewPasswordSameAsCurrent": "The new password must differ from the current password",
+  "accountConfirmPasswordRequired": "Enter the new password again",
+  "accountPasswordMismatch": "The new passwords do not match",
+  "apiKeysTitle": "API keys",
+  "apiKeysDescription": "API keys let external tools (such as MCP servers) call the API with the same permissions as your account. A key is shown only once at creation; store it safely.",
+  "apiKeysEmpty": "No API keys yet.",
+  "apiKeysGenerate": "Generate new key",
+  "apiKeyUnnamed": "Unnamed key",
+  "apiKeyNeverUsed": "Never used",
+  "apiKeyLastUsed": "Last used {time}",
+  "@apiKeyLastUsed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyCreatedAt": "Created {time}",
+  "@apiKeyCreatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyDeleteTitle": "Delete API key",
+  "apiKeyDeleteMessage": "Integrations using \"{name}\" will stop working immediately. Delete this key?",
+  "@apiKeyDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyGenerateTitle": "Generate API key",
+  "apiKeyNameLabel": "Label (optional)",
+  "apiKeyNameHint": "e.g. MCP server",
+  "apiKeyGenerateAction": "Generate",
+  "apiKeyGeneratedTitle": "API key generated",
+  "apiKeyOnlyOnceNotice": "This key is shown only once. Copy it now; you cannot view it again after closing.",
+  "apiKeyCopied": "Copied to clipboard",
+  "apiKeyCopyFailed": "Copy failed. Select and copy manually.",
+  "errorChangePasswordFailed": "Failed to change password",
+  "errorApiKeysLoadFailed": "Failed to load API keys",
+  "errorApiKeyDeleteFailed": "Failed to delete API key",
+  "errorApiKeyGenerateFailed": "Failed to generate API key",
+  "commonSave": "Save",
+  "commonRefresh": "Refresh",
+  "commonSaved": "Saved",
+  "configRestartRequiredBadge": "Restart required",
+  "configUnsavedBadge": "Unsaved",
+  "configOptionalServicesTitle": "Image search / similarity",
+  "configQdrantEnabledTitle": "Enable similar movies and vector service",
+  "configQdrantEnabledSubtitle": "Use Qdrant for similar movies and better recommendations",
+  "configComposeDefaultHelper": "With the Compose example from the quick start, this is the default address; leave the API key empty.",
+  "configQdrantUrlLabel": "Qdrant URL",
+  "configQdrantApiKeyLabel": "Qdrant API key (optional)",
+  "configImageSearchEnabledTitle": "Enable image and text search",
+  "configImageSearchEnabledSubtitle": "Use the embedding service for image and text vectors and better moment recommendations",
+  "configImageSearchRequiresQdrant": "Enable similar movies and vector service above first",
+  "configEmbeddingUrlLabel": "Embedding service URL",
+  "configEmbeddingApiKeyLabel": "Embedding service API key (optional)",
+  "configOptionalServicesTip": "Changes take effect after restarting the backend container. Disabling keeps indexes; to free memory, also stop the optional containers. After re-enabling, rebuild the image search index under System maintenance and recompute similar movies in the task center.",
+  "configDisableVectorTitle": "Disable vector service",
+  "configDisableVectorMessage": "Image and text search depends on Qdrant and will be disabled too. Existing settings and indexes are kept and take effect after saving and restarting.",
+  "configDisableVectorConfirm": "Disable both",
+  "configInvalidHttpUrl": "Enter a valid HTTP or HTTPS URL",
+  "configMediaImportTitle": "Media import",
+  "configMediaImportTip": "These settings only control the minimum file size for JAV movie imports. Keep the defaults for a first deployment.",
+  "configMinVideoSizeLabel": "Minimum video size for import",
+  "configMinVideoSizeHint": "256 or higher recommended",
+  "configMinVideoSizeHelper": "Edited in MB and converted to bytes on save; 256 MB or higher is recommended.",
+  "configMinVideoSizeShort": "minimum size",
+  "configPositiveIntRequired": "Enter a value greater than 0 for {label}",
+  "@configPositiveIntRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "configSchedulerTitle": "Scheduler frequency",
+  "configSchedulerTip": "Cron syntax: minute hour day month weekday (*/N for every N, comma lists, hyphen ranges). The worker concurrency controls how many ordinary tasks run at once. Changes take effect after restarting the container.",
+  "configWorkerSectionTitle": "Ordinary task execution",
+  "configWorkerConcurrencyLabel": "Ordinary task concurrency",
+  "configWorkerConcurrencyHelper": "Import and storage transfer tasks use separate concurrency and are not affected.",
+  "configWorkerConcurrencyUnit": "workers",
+  "configWorkerConcurrencyRange": "Enter an integer between {min} and {max}",
+  "@configWorkerConcurrencyRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "configCronRequired": "Enter a standard 5-field cron expression",
+  "configLoggingTitle": "Logging",
+  "configLoggingTip": "Keep the log level at INFO normally; switch to DEBUG temporarily when troubleshooting.",
+  "configLoggingLevelLabel": "Log level",
+  "configUnsavedChangesTitle": "Unsaved changes",
+  "configUnsavedChangesMessage": "Refreshing will discard your unsaved advanced settings. Continue?",
+  "configLoggingConfirmTitle": "Confirm log level change",
+  "configLoggingConfirmMessage": "Changing the log level restarts the container. The page may stop responding temporarily and will need a refresh. Continue?",
+  "configContinueSave": "Continue saving",
+  "restartRequiredMessage": "{action}. Restart the container to apply.",
+  "@restartRequiredMessage": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAdvancedSettingsLoadFailed": "Failed to load advanced settings",
+  "errorAdvancedSettingsSaveFailed": "Failed to save advanced settings",
+  "configCronGroupDownloadImport": "Downloads / import",
+  "configCronGroupScrapeBackfill": "Scraping / backfill",
+  "configCronGroupRecommendation": "Recommendations",
+  "configCronGroupMaintenance": "Checks / cleanup",
+  "taskNameActorSubscriptionSync": "Subscribed actor movie sync",
+  "taskNameSubscribedMovieAutoDownload": "Auto-download subscribed missing movies",
+  "taskNameDownloadTaskSync": "Download task status sync",
+  "taskNameDownloadTaskAutoImport": "Auto-import completed downloads",
+  "taskNameMovieHeatUpdate": "Movie heat update",
+  "taskNameMovieInteractionSync": "Movie interaction sync",
+  "taskNameMovieJavdbBackfill": "JavDB movie backfill",
+  "taskNameMediaFileHashBackfill": "Media file hash backfill",
+  "taskNameMediaFileScan": "Media file scan",
+  "taskNameMediaThumbnailGeneration": "Media thumbnail generation",
+  "taskNameImageSearchIndex": "Image search index build",
+  "taskNameMovieSimilarityRecompute": "Movie similarity recompute",
+  "taskNameMomentRecommendationGenerate": "Recommended moment generation",
+  "taskNameDailyRecommendationGenerate": "Daily recommendation snapshot generation",
+  "taskNameActivityRecordCleanup": "Task record cleanup",
+  "taskNameGfriendsFiletreeRefresh": "GFriends cache refresh",
+  "taskHelpActorSubscriptionSync": "Sync movie data for subscribed JavDB actors; local actors have no remote source and are not synced.",
+  "taskHelpSubscribedMovieAutoDownload": "Automatically download subscribed movies that are missing.",
+  "taskHelpDownloadTaskSync": "Sync download task status.",
+  "taskHelpDownloadTaskAutoImport": "Import completed download tasks.",
+  "taskHelpMovieHeatUpdate": "Recompute movie heat.",
+  "taskHelpMovieInteractionSync": "Sync movie interaction counts; candidates still follow the tiered refresh rules.",
+  "taskHelpMovieJavdbBackfill": "Try to backfill due plugin movies from JavDB, checking each movie every 7 days.",
+  "taskHelpMediaFileHashBackfill": "Backfill missing media file hashes.",
+  "taskHelpMediaFileScan": "Validate media files against the storage provider's listing.",
+  "taskHelpMediaThumbnailGeneration": "Generate media thumbnails.",
+  "taskHelpImageSearchIndex": "Build the image search index.",
+  "taskHelpMovieSimilarityRecompute": "Recompute movie similarity offline.",
+  "taskHelpMomentRecommendationGenerate": "Generate recommended moments.",
+  "taskHelpDailyRecommendationGenerate": "Generate the daily recommendation snapshot.",
+  "taskHelpActivityRecordCleanup": "Clean up notifications and task run data in the task center.",
+  "taskHelpGfriendsFiletreeRefresh": "Refresh the GFriends Filetree cache.",
+  "relativeTimeJustNow": "Just now",
+  "relativeTimeMinutesAgo": "{count} min ago",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastCheckedRelative": "Checked {time}",
+  "@lastCheckedRelative": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "systemDiagnosticsRunning": "Checking {current}/{total}…",
+  "@systemDiagnosticsRunning": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsNeverRun": "Not checked yet. Start a full check from the top-right corner.",
+  "systemDiagnosticsLastRunWithIssues": "Last checked: {time} · {count} issues",
+  "@systemDiagnosticsLastRunWithIssues": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsLastRunAllPassed": "Last checked: {time} · All checks passed",
+  "@systemDiagnosticsLastRunAllPassed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionLastSearchedAt": "Last searched: {time}",
+  "@subscriptionLastSearchedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionSubscribedAt": "Subscribed {time}",
+  "@subscriptionSubscribedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncedAtLabel": "Updated {time}",
+  "@syncedAtLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaDurationHoursMinutesSeconds": "{hours} hr {minutes} min {seconds} sec",
+  "@mediaDurationHoursMinutesSeconds": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaDurationMinutesSeconds": "{minutes} min {seconds} sec",
+  "@mediaDurationMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaDurationSeconds": "{seconds} sec",
+  "@mediaDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaLibraryDeleted": "Media library deleted",
+  "mediaLibraryFallback": "Media library {id}",
+  "@mediaLibraryFallback": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{count} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationSeconds": "{count} sec",
+  "@durationSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsComponentTitle": "Component diagnostics",
+  "systemDiagnosticsRerun": "Check again",
+  "systemDiagnosticsOpenPage": "Open component diagnostics",
+  "systemDiagnosticsStartCheck": "Start check",
+  "systemDiagnosticsStatusNotChecked": "Not checked",
+  "systemDiagnosticsStatusIssues": "{count} issues",
+  "@systemDiagnosticsStatusIssues": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsStatusWarning": "Warnings",
+  "systemDiagnosticsStatusPartiallyChecked": "Partially unchecked",
+  "systemDiagnosticsStatusAllPassed": "All passed",
+  "systemDiagnosticsCheckingComponents": "Checking components {current}/{total}…",
+  "@systemDiagnosticsCheckingComponents": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionNewMovieSearching": "New · searching continuously",
+  "subscriptionSearchedTimes": "Searched {count} times",
+  "@subscriptionSearchedTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionRetryBeforeGivingUp": "{count} more attempts before giving up",
+  "@subscriptionRetryBeforeGivingUp": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionNotSearched": "Not searched yet",
+  "subscriptionDeadTorrents": "{count} dead torrents",
+  "@subscriptionDeadTorrents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionReleasedAt": "Released {date}",
+  "@subscriptionReleasedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionLocalMediaCount": "{count} local media",
+  "@subscriptionLocalMediaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonEdit": "Edit",
+  "indexerAdd": "Add indexer",
+  "indexerLoadFailedTitle": "Failed to load indexers",
+  "indexerOverviewTitle": "Torznab indexers find candidate releases and send download requests to the selected download client.",
+  "indexerOverviewDescription": "Each indexer can have its own API key; requests to sites with no key omit apikey.",
+  "indexerApiKeyConfigured": "API key configured",
+  "indexerCountLabel": "Indexers",
+  "indexerBoundDownloadClientsLabel": "Bound download clients",
+  "indexerCountValue": "{count}",
+  "@indexerCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerGuideCreateDownloaderTitle": "Create a download client first",
+  "indexerGuideCreateDownloaderDescription": "Indexers must be bound to a download client before movie detail download requests can work.",
+  "indexerGuideGoToDownloaders": "Go to download clients",
+  "indexerEmpty": "No indexers configured yet",
+  "indexerApiKeyLine": "API key: {value}",
+  "@indexerApiKeyLine": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerBoundDownloadClientsLine": "Bound download clients: {value}",
+  "@indexerBoundDownloadClientsLine": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerConfigured": "Configured",
+  "indexerNotConfigured": "Not configured",
+  "indexerNotMatched": "Not matched",
+  "indexerBoundDownloaderInvalid": "The bound download client is no longer available. Select another one.",
+  "indexerLoadFailedFallback": "Failed to load indexers. Try again later.",
+  "indexerConnectionHealthy": "Torznab connection is healthy",
+  "indexerConnectionTestFailed": "Torznab connection test failed",
+  "indexerDeleteTitle": "Delete indexer",
+  "indexerDeleteMessage": "Delete indexer \"{name}\"? It will no longer be able to send download requests to its bound client.",
+  "@indexerDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerDeleteFailed": "Failed to delete indexer",
+  "indexerDeleted": "Indexer deleted",
+  "indexerUnsavedTestHint": "Save the current configuration before testing.",
+  "indexerEditTitle": "Edit indexer",
+  "indexerFormSubtitle": "Maintain the indexer URL, kind, and download client bindings.",
+  "indexerUnsupportedKind": "Indexer kind must be pt or bt",
+  "indexerSelectDownloader": "Select at least one available download client",
+  "indexerUpdated": "Indexer updated",
+  "indexerCreated": "Indexer created",
+  "indexerUpdateFailed": "Failed to update indexer",
+  "indexerCreateFailed": "Failed to create indexer",
+  "indexerKindLabel": "Kind",
+  "indexerBoundDownloadClientLabel": "Bound download client",
+  "indexerTestPanelTitle": "Torznab connectivity",
+  "indexerTestPanelDescription": "Run a real Torznab search with the saved configuration; indexer data is not modified.",
+  "indexerTestAgain": "Test again",
+  "indexerTestStart": "Test Torznab connectivity",
+  "indexerTestStatusTesting": "Testing",
+  "indexerTestStatusPending": "Not tested",
+  "indexerTestStatusHealthy": "Connected",
+  "indexerTestStatusFailed": "Connection failed",
+  "indexerTestMetricQuery": "Query",
+  "indexerTestMetricIndexers": "Indexers",
+  "indexerTestMetricResults": "Results",
+  "indexerTestMetricElapsed": "Elapsed",
+  "indexerTestCountIndexers": "{count}",
+  "@indexerTestCountIndexers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerTestCountResults": "{count}",
+  "@indexerTestCountResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerTestRequestFailed": "Failed to call the Torznab test endpoint",
+  "indexerTestHealthyNoResults": "Torznab is connected; the test query returned no results.",
+  "indexerTestHealthy": "Torznab is connected; the real search completed.",
+  "indexerTestIncomplete": "Torznab could not complete this connectivity test.",
+  "indexerTestFixNoIndexers": "Add at least one indexer and save the configuration before testing.",
+  "indexerTestFixGeneric": "Check the Torznab service, API key, and indexer URL, then try again.",
+  "indexerNameRequired": "Enter an indexer name",
+  "indexerNameDuplicate": "Indexer name is duplicated",
+  "indexerUrlRequired": "Enter the indexer URL",
+  "indexerUrlInvalid": "Enter a valid http/https URL",
+  "indexerDownloadClientRequired": "Select at least one download client",
+  "indexerNameFieldLabel": "Name (NAME)",
+  "indexerNameHint": "e.g. M-Team",
+  "indexerUrlFieldLabel": "Resource URL (URL)",
+  "indexerUrlHint": "Enter the full Torznab URL",
+  "indexerApiKeyFieldLabel": "API key (optional)",
+  "indexerApiKeyHint": "Leave empty to omit apikey from requests",
+  "indexerShowApiKey": "Show API key",
+  "indexerHideApiKey": "Hide API key",
+  "indexerKindFieldLabel": "Kind (KIND)",
+  "indexerKindPt": "PT (private)",
+  "indexerKindBt": "BT (public)",
+  "indexerDownloadClientPriority": "Download client priority",
+  "indexerDownloadClientPriorityHint": "The first download client is the default target for automatic downloads and download requests.",
+  "metricText": "{label}: {value}",
+  "@metricText": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerNoBoundDownloaderTitle": "No download clients bound",
+  "indexerNoBoundDownloaderSubtitle": "Add at least one from below",
+  "indexerDefaultDownloader": "Default download client",
+  "indexerPriority": "Priority {index}",
+  "@indexerPriority": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerMoveUp": "Move up",
+  "indexerMoveUpName": "Move {name} up",
+  "@indexerMoveUpName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerMoveDown": "Move down",
+  "indexerMoveDownName": "Move {name} down",
+  "@indexerMoveDownName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerRemove": "Remove",
+  "indexerAddDownloaderGroup": "Add download client",
+  "indexerUnbound": "Not bound",
+  "indexerAddAction": "Add",
+  "downloaderLoadFailedFallback": "Failed to load download clients. Try again later.",
+  "downloaderDeleteTitle": "Delete download client",
+  "downloaderDeleteMessage": "Delete download client \"{name}\"? Download tasks are not deleted.",
+  "@downloaderDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "downloaderDeleted": "Download client deleted",
+  "downloaderDeleteFailed": "Failed to delete download client",
+  "downloaderTabDownloaders": "Download clients",
+  "downloaderTabGuide": "Setup guide",
+  "downloaderAdd": "Add download client",
+  "downloaderOverviewTitle": "Download clients hand resource requests from indexers to the matching provider.",
+  "downloaderOverviewDescription": "Choose a media library that supports downloads, then fill in the fields provided by its provider.",
+  "downloaderConfiguredCount": "Download clients",
+  "downloaderAvailableLibraries": "Available media libraries",
+  "downloaderProviderUnavailable": "The provider catalog is unavailable. Existing download clients can still be managed; restore the plugin directory to create or edit provider settings.",
+  "downloaderLoadFailedTitle": "Failed to load download clients",
+  "downloaderEmpty": "No download clients configured yet",
+  "downloaderGuideLibrariesTitle": "Prepare a media library first",
+  "downloaderGuideLibrariesDescription": "A download client must be bound to a media library that supports downloads; its settings come from the matching provider.",
+  "downloaderGuideLibrariesTip": "If the list is empty, install and configure a provider that supports downloads first.",
+  "downloaderGuideConfigured": "Configured",
+  "downloaderGuidePending": "Not configured",
+  "downloaderGuideGoToLibraries": "Go to media libraries",
+  "downloaderGuideConfigureTitle": "Configure download clients",
+  "downloaderGuideConfigureDescription": "Choose a target media library, then fill in the fields defined by the provider catalog.",
+  "downloaderGuideSensitiveHint": "Sensitive fields left empty keep their existing values.",
+  "downloaderGuideSwitchToDownloaders": "Switch to download clients",
+  "downloaderUnknownProvider": "Unknown provider",
+  "downloaderUnmatchedLibrary": "Not matched ({id})",
+  "@downloaderUnmatchedLibrary": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "downloaderMediaLibraryLabel": "Media library",
+  "downloaderUpdated": "Download client updated",
+  "downloaderCreated": "Download client created",
+  "downloaderUpdateFailed": "Failed to update download client",
+  "downloaderCreateFailed": "Failed to create download client",
+  "downloaderTestFailed": "Download client test failed",
+  "downloaderEditTitle": "Edit download client",
+  "downloaderFormSubtitle": "Settings are determined by the target media library's provider.",
+  "downloaderTestConfig": "Test configuration",
+  "downloaderNameRequired": "Enter a download client name",
+  "downloaderNameLabel": "Name",
+  "downloaderNameHint": "Give the download client a name",
+  "downloaderTargetLibrary": "Target media library",
+  "downloaderNoDownloadableLibraries": "No media libraries support downloads",
+  "downloaderSelectTargetLibrary": "Select a target media library",
+  "downloaderTestResultTitle": "Configuration test result",
+  "downloaderTestStatusOk": "Passed",
+  "downloaderTestStatusWarning": "Warning",
+  "downloaderTestStatusFailed": "Failed",
+  "downloaderTestSummaryOk": "All checks passed. Save to start using it.",
+  "downloaderTestSummaryWarning": "Checks completed with warnings. You can still save; imports may fall back to copying.",
+  "downloaderTestSummaryFailed": "Checks failed. You can still save, but downloads or imports may fail.",
+  "downloaderCheckStatusOk": "Passed",
+  "downloaderCheckStatusWarning": "Warning",
+  "downloaderCheckStatusSkipped": "Skipped",
+  "downloaderCheckStatusFailed": "Failed",
+  "downloaderCheckQbittorrent": "qBittorrent connectivity",
+  "downloaderCheckDirectoryMapping": "Download directory mapping",
+  "downloaderCheckHardlink": "Hard links",
+  "downloaderCheckCleanup": "Temporary file cleanup",
+  "downloaderCheckProvider": "Download client test",
+  "downloaderConfigLoadFailed": "Failed to load download client configuration",
+  "downloaderConfigLoadFailedFallback": "Failed to load download client configuration. Try again later.",
+  "downloaderNoDownloadableLibraryProvider": "No media libraries support downloads. Configure a media library provider that supports downloads first.",
+  "downloaderAddTitle": "Add download client",
+  "downloaderCreate": "New download client",
+  "mediaLibraryProviderCatalogLoadFailed": "Failed to load the provider catalog. Try again later.",
+  "mediaLibraryNoProviderInstalled": "No providers available. Install and enable a media provider under Plugins first.",
+  "mediaLibraryDeleteTitle": "Delete media library",
+  "mediaLibraryDeleteMessage": "Delete media library \"{name}\"? This cannot be undone.",
+  "@mediaLibraryDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryDeleteFailed": "Failed to delete media library",
+  "mediaLibraryStorageTitle": "Media library storage",
+  "mediaLibraryStorageDescriptionMobile": "Media libraries connect to storage through installed providers; configuration fields come from the plugin catalog.",
+  "mediaLibraryStorageDescriptionDesktop": "Media libraries connect to storage through installed providers; provider settings come from the plugin catalog.",
+  "mediaLibraryAdd": "Add media library",
+  "mediaLibraryProviderCatalogUnavailable": "The provider catalog is unavailable. Existing media libraries can still be managed; retry before adding or editing.",
+  "mediaLibraryEmpty": "No media libraries yet",
+  "mediaLibraryLoadFailedTitle": "Failed to load media libraries",
+  "mediaLibraryLoadFailedFallback": "Failed to load media libraries. Try again later.",
+  "mediaLibraryProviderUnavailable": "Provider unavailable · {providerKey}",
+  "@mediaLibraryProviderUnavailable": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryUpdatedAt": "Updated: {time}",
+  "@mediaLibraryUpdatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryMoreActions": "More actions",
+  "mediaLibraryEditTitle": "Edit media library",
+  "mediaLibraryEditSubtitleUnavailable": "The current provider is unavailable; only the name can be changed.",
+  "mediaLibraryEditSubtitle": "Choose a provider, then fill in its storage settings.",
+  "mediaLibraryUpdated": "Media library updated",
+  "mediaLibraryCreated": "Media library created",
+  "mediaLibraryUpdateFailed": "Failed to update media library",
+  "mediaLibraryCreateFailed": "Failed to create media library",
+  "mediaLibraryEditAction": "Edit media library",
+  "mediaLibraryDeleteAction": "Delete media library",
+  "mediaLibraryUnavailable": "Unavailable",
+  "mediaLibraryNameRequired": "Enter a media library name",
+  "mediaLibraryNameLabel": "Name",
+  "mediaLibraryNameHint": "e.g. Main Library",
+  "mediaLibraryProviderLabel": "Storage provider",
+  "mediaLibrarySelectProvider": "Select a storage provider",
+  "mediaLibraryProviderUnavailableHint": "Provider \"{providerKey}\" is unavailable, so its settings cannot be edited. You can rename the library; edit the settings after restoring the plugin.",
+  "@mediaLibraryProviderUnavailableHint": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceImageSearchLoadFailed": "Failed to load image search status",
+  "systemMaintenanceImageSearchLoadFailedFallback": "Failed to load image search status. Try again later.",
+  "systemMaintenanceMediaInfoBackfillTitle": "Media info backfill",
+  "systemMaintenanceMediaInfoBackfillDescription": "Re-probe media files with missing or incomplete technical info to fill in duration, resolution, and video details. Only missing or incomplete items are processed; existing info is not overwritten unconditionally.",
+  "systemMaintenanceMediaInfoBackfillSuccess": "Media info backfill task submitted. Check the task center for progress.",
+  "systemMaintenanceFileHashBackfillTitle": "Media file hash backfill",
+  "systemMaintenanceFileHashBackfillDescription": "Compute and store file fingerprints for media files without a hash, so duplicates can be identified. Only files with an empty hash are processed; large libraries may take a while.",
+  "systemMaintenanceFileHashBackfillSuccess": "Media file hash backfill task submitted. Check the task center for progress.",
+  "systemMaintenanceThumbnailPackTitle": "Media thumbnail pack backfill",
+  "systemMaintenanceThumbnailPackDescription": "Pack media timeline thumbnails from individual files into archives to reduce the number of small files on the server. Only unpacked media is processed; large libraries may take a while.",
+  "systemMaintenanceThumbnailPackSuccess": "Thumbnail pack backfill task submitted. Check the task center for progress.",
+  "systemMaintenanceMovieAssetPackTitle": "Movie image pack backfill",
+  "systemMaintenanceMovieAssetPackDescription": "Pack movie covers, thin covers, and plot images from individual files into archives to reduce the number of small files on the server. Only unpacked movies are processed; large libraries may take a while.",
+  "systemMaintenanceMovieAssetPackSuccess": "Movie image pack backfill task submitted. Check the task center for progress.",
+  "systemMaintenanceActorGenderTitle": "Actor gender backfill",
+  "systemMaintenanceActorGenderDescription": "Correct stored actor genders from movie metadata; manually locked profiles are not overwritten. The task processes every candidate in one run, visiting JavDB with rate limiting, so many actors may take a while.",
+  "systemMaintenanceActorGenderSuccess": "Actor gender backfill task submitted. Check the task center for progress.",
+  "systemMaintenanceImageSearchTitle": "Image search index",
+  "systemMaintenanceSubmit": "Submitting",
+  "systemMaintenanceRunNow": "Run now",
+  "systemMaintenanceTaskRunning": "The task is already running",
+  "systemMaintenanceSubmitFailed": "Failed to submit task. Try again.",
+  "systemMaintenanceRebuilding": "Rebuilding",
+  "systemMaintenanceRebuildNow": "Rebuild now",
+  "systemMaintenanceRebuildIndex": "Rebuild index",
+  "systemMaintenanceRebuildNotice": "Rebuilding clears the current image index; image search results may be incomplete until it finishes.",
+  "systemMaintenanceDisabled": "Disabled",
+  "systemMaintenanceImageSearchDisabledMessage": "Image and text search is disabled. Enable it in the server's advanced settings; restart the backend container after saving.",
+  "systemMaintenanceImageSearchRebuildingMessage": "The image search index is rebuilding in the background. Please wait.",
+  "systemMaintenanceImageSearchSpaceUnknownMessage": "The embedding space used by the existing image index cannot be determined, so image search is paused. Rebuild the index before searching.",
+  "systemMaintenanceImageSearchSpaceChangedMessage": "The embedding space changed from \"{indexed}\" to \"{current}\", so image search is paused. Rebuild the index before searching.",
+  "@systemMaintenanceImageSearchSpaceChangedMessage": {
+    "placeholders": {
+      "indexed": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceImageSearchRebuildHint": "After changing the embedding model, rebuild the index to regenerate all image vectors. Results may be incomplete during the rebuild.",
+  "systemMaintenanceRebuildDialogTitle": "Rebuild image search index",
+  "systemMaintenanceRebuildDialogMessage": "{message}\n\nThis clears the current image index and starts over. Continue?",
+  "@systemMaintenanceRebuildDialogMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceRebuildFailed": "Failed to rebuild image search index",
+  "systemMaintenanceRebuildStarted": "Image search index rebuild started",
+  "configTabAccountSecurity": "Account security",
+  "configTabAppearance": "Appearance",
+  "configTabMediaLibraries": "Media libraries",
+  "configTabDownloadClients": "Download clients",
+  "configTabIndexers": "Indexers",
+  "configTabExternalPlayer": "External player",
+  "configTabBlacklistedMovies": "Blocked movies",
+  "configTabAdvanced": "Advanced settings",
+  "configTabPlugins": "Plugins",
+  "configTabSystemMaintenance": "System maintenance",
+  "appearanceDescription": "Adjust the interface brightness and accent color; settings are saved on this device.",
+  "appearanceThemeMode": "Theme mode",
+  "appearanceSystem": "Follow system",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
+  "appearanceThemeColor": "Accent color",
+  "appearanceThemeColorFooter": "The accent color applies to buttons, selected states, and emphasized elements.",
+  "providerConfigFieldRequired": "Enter {label}",
+  "@providerConfigFieldRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerConfigLoadFailed": "Failed to load indexer configuration",
+  "indexerConfigLoadFailedFallback": "Failed to load indexer configuration. Try again later.",
+  "indexerNameDuplicateWithName": "Duplicate indexer name: {name}",
+  "@indexerNameDuplicateWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerUrlMustBeHttp": "Indexer URL must be a valid http/https URL",
+  "indexerDownloadersInvalid": "The download client bound to this indexer is no longer available. Select another one.",
+  "indexerSaveFailed": "Failed to save indexer configuration",
+  "indexerListTitle": "Indexers",
+  "indexerCreateDownloaderHint": "Create a download client on the Download clients tab first",
+  "indexerEmptyNoMatch": "No matching indexers",
+  "indexerDownloaderLine": "Download clients: {downloaders}",
+  "@indexerDownloaderLine": {
+    "placeholders": {
+      "downloaders": {
+        "type": "String"
+      }
+    }
+  },
+  "configLeaveUnsavedMessage": "Advanced settings have unsaved changes. Leave anyway?",
+  "configLeaveConfirm": "Leave",
+  "indexerSearchHint": "Search added indexers...",
+  "indexerEmptyDesktop": "No indexers configured yet",
+  "pluginInstallTitle": "Install plugin",
+  "pluginInstallMessage": "Install \"{fileName}\". If a plugin with the same name exists, its code will be replaced and its data/ will be kept.",
+  "@pluginInstallMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginInstallConfirm": "Install",
+  "pluginInstalled": "Plugin installed",
+  "pluginInstalledRefreshFailed": "Plugin installed, but refreshing the list failed. Try again later.",
+  "pluginInstallFailed": "Failed to install plugin",
+  "pluginEnabled": "Plugin enabled",
+  "pluginDisabled": "Plugin disabled",
+  "pluginToggleFailed": "Failed to enable or disable plugin",
+  "pluginUpdateCheckPartialFailed": "Some plugin update checks failed. Try again later.",
+  "pluginNoUpdates": "No updates available",
+  "pluginUpdatesFound": "{count} plugin updates available",
+  "@pluginUpdatesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginUpgradeTitle": "Update plugin",
+  "pluginUpgradeMessage": "Update \"{name}\" from v{fromVersion} to v{toVersion}. Restart the container manually after updating.",
+  "@pluginUpgradeMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "fromVersion": {
+        "type": "String"
+      },
+      "toVersion": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginUpgradeConfirm": "Update",
+  "pluginUpgradeNotes": "What's new\n{notes}",
+  "@pluginUpgradeNotes": {
+    "placeholders": {
+      "notes": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginUpgradeFailed": "Failed to update plugin",
+  "pluginUpgraded": "Plugin updated",
+  "pluginDeleteTitle": "Delete plugin",
+  "pluginDeleteMessage": "Delete the code for \"{name}\"? Its data/ will be kept and can be reused after reinstalling the same plugin. Storage plugins still used by a media library cannot be deleted.",
+  "@pluginDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginDeleted": "Plugin deleted",
+  "pluginDeleteFailed": "Failed to delete plugin",
+  "pluginMarketInstallMessage": "Download v{version} from {repo} and install \"{name}\".",
+  "@pluginMarketInstallMessage": {
+    "placeholders": {
+      "repo": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginCommunityWarning": "This community plugin has not been officially audited. Make sure you trust its source.",
+  "pluginHomepageCopied": "Project homepage copied",
+  "pluginCopyFailed": "Copy failed",
+  "pluginZipUnreadable": "Could not read the selected plugin package. Try another file.",
+  "pluginZipPickerUnavailable": "The file picker is not loaded yet. Fully restart the app and try again.",
+  "pluginZipOpenFailed": "Failed to open the file picker. Try again later.",
+  "pluginSettingsUnset": "Not set",
+  "pluginSettingsOn": "On",
+  "pluginSettingsOff": "Off",
+  "pluginSettingsSelectOne": "Select an option",
+  "pluginSettingsSelectToggle": "Select a toggle state",
+  "pluginSettingsInteger": "Enter an integer",
+  "pluginSettingsNumber": "Enter a number",
+  "pluginSettingsMin": "Must be at least {value}",
+  "@pluginSettingsMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsMax": "Must be at most {value}",
+  "@pluginSettingsMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsExclusiveMin": "Must be greater than {value}",
+  "@pluginSettingsExclusiveMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsExclusiveMax": "Must be less than {value}",
+  "@pluginSettingsExclusiveMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsRequired": "Enter {title}",
+  "@pluginSettingsRequired": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsMinLength": "Enter at least {count} characters",
+  "@pluginSettingsMinLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginSettingsMaxLength": "Enter at most {count} characters",
+  "@pluginSettingsMaxLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginSettingsBoundMin": "Min {value}",
+  "@pluginSettingsBoundMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundGreater": "Greater than {value}",
+  "@pluginSettingsBoundGreater": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundMax": "Max {value}",
+  "@pluginSettingsBoundMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundLess": "Less than {value}",
+  "@pluginSettingsBoundLess": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsListHint": "One per line",
+  "pluginSettingsNullableHint": "Leave empty for unset",
+  "listSeparator": ", ",
+  "hintSeparator": "; ",
+  "pluginSettingsLoadFailed": "Failed to load plugin settings",
+  "pluginSettingsLoadFailedFallback": "Failed to load plugin settings. Try again later.",
+  "pluginSettingsEmpty": "Configuration cannot be empty",
+  "pluginSettingsMustBeObject": "Plugin settings must be a JSON object",
+  "pluginSettingsInvalidJson": "Invalid JSON",
+  "pluginSettingsSaved": "Plugin settings saved",
+  "pluginSettingsSaveFailed": "Failed to save plugin settings",
+  "pluginSettingsTitle": "Plugin settings",
+  "pluginSettingsJsonLabel": "Configuration (JSON)",
+  "pluginSettingsPlaceholderEndpoint": "Service URL",
+  "pluginSettingsPlaceholderEnabled": "Enabled",
+  "pluginSettingsFormat": "Format",
+  "pluginsTabInstalled": "Installed",
+  "pluginsTabMarket": "Plugin market",
+  "pluginsLoadFailed": "Failed to load plugins",
+  "pluginsLoadFailedFallback": "Failed to load plugins. Try again later.",
+  "pluginsRestartNotice": "Restart the container after installing, updating, enabling, disabling, deleting, or configuring plugins.",
+  "pluginsCheckUpdates": "Check for updates",
+  "pluginsZipSupport": "Upload a .zip plugin package",
+  "pluginsEmptyTitle": "No plugins installed yet",
+  "pluginsEmptyMessage": "Click \"Install plugin\" above to upload a zip package; restart the container after installing.",
+  "pluginsEmptyMessageMobile": "Click \"Install plugin\" below to upload a zip package; restart the container after installing.",
+  "pluginsInstalledTitle": "Installed plugins",
+  "pluginsCount": "{count}",
+  "@pluginsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginsLoadErrorTooltip": "Failed to load plugin",
+  "pluginsLoadErrorBadge": "Load failed",
+  "pluginsUpdateAction": "Update",
+  "pluginsDeleteSemantic": "Delete {name}",
+  "@pluginsDeleteSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginsManagementTitle": "Plugin management",
+  "pluginsManageNotice": "Restart the container after installing, updating, enabling, disabling, deleting, or configuring plugins.",
+  "pluginsUpdatableStat": "Updatable",
+  "pluginsLoadingList": "Loading plugin list",
+  "pluginsCheckReleaseUpdates": "Check plugin release updates",
+  "pluginsUpdatesFound": "{count} updates found",
+  "@pluginsUpdatesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginsMarket": "Plugin market",
+  "pluginsEnabled": "Enabled",
+  "pluginsDisabled": "Disabled",
+  "pluginsUpdateAvailable": "Update available",
+  "pluginsMoreActions": "More actions",
+  "pluginsManageSemantic": "Manage {name}",
+  "@pluginsManageSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginsActionsTitle": "Choose a plugin action",
+  "pluginsDisable": "Disable plugin",
+  "pluginsEnable": "Enable plugin",
+  "pluginsUpdateTo": "Update to v{version}",
+  "@pluginsUpdateTo": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketTitle": "Plugin market",
+  "pluginMarketDescription": "Plugins come from the official index repository; community plugins are not officially audited. Verify the source before installing.",
+  "pluginMarketInstallable": "Installable",
+  "pluginMarketUpdatable": "Updatable",
+  "pluginMarketSearchHint": "Search plugin name, ID, or description",
+  "pluginMarketLoadFailed": "Failed to load plugin market",
+  "pluginMarketLoadFailedFallback": "Failed to load plugin market. Try again later.",
+  "pluginMarketEmpty": "No plugins in the market yet",
+  "pluginMarketNoMatch": "No matching plugins",
+  "pluginMarketEmptyDescription": "The index repository has no plugins yet. Check back later.",
+  "pluginMarketNoMatchDescription": "Try another keyword.",
+  "pluginMarketOfficial": "Official",
+  "pluginMarketCommunity": "Community",
+  "pluginMarketCopyHomepage": "Copy project homepage",
+  "pluginMarketCopyHomepageSemantic": "Copy {name}'s project homepage",
+  "@pluginMarketCopyHomepageSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstalled": "Installed",
+  "pluginMarketInstalledVersion": "Installed v{version} · update to v{latest}",
+  "@pluginMarketInstalledVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstalledAuthor": "Installed v{version} · {author}",
+  "@pluginMarketInstalledAuthor": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstallablePlugins": "Installable plugins"
 }

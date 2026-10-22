@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_status_chip.dart';
@@ -31,15 +32,18 @@ class IndexerConnectionTestPanel extends StatelessWidget {
 
   bool get _isHealthy => result?.healthy == true;
 
-  String get _statusLabel {
-    if (isTesting) return '测试中';
-    if (!_hasResult) return '待测试';
-    return _isHealthy ? '连通正常' : '连通失败';
+  String _statusLabel(AppLocalizations l10n) {
+    if (isTesting) return l10n.indexerTestStatusTesting;
+    if (!_hasResult) return l10n.indexerTestStatusPending;
+    return _isHealthy
+        ? l10n.indexerTestStatusHealthy
+        : l10n.indexerTestStatusFailed;
   }
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -47,7 +51,7 @@ class IndexerConnectionTestPanel extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Torznab 连通性',
+                l10n.indexerTestPanelTitle,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s14,
@@ -57,7 +61,7 @@ class IndexerConnectionTestPanel extends StatelessWidget {
               ),
             ),
             AppStatusChip(
-              label: _statusLabel,
+              label: _statusLabel(l10n),
               palette: _statusPalette(),
               isBusy: isTesting,
               dense: true,
@@ -66,7 +70,7 @@ class IndexerConnectionTestPanel extends StatelessWidget {
         ),
         SizedBox(height: spacing.xs),
         Text(
-          '使用已保存的配置执行一次真实 Torznab 搜索，不会修改索引器数据。',
+          l10n.indexerTestPanelDescription,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -77,7 +81,7 @@ class IndexerConnectionTestPanel extends StatelessWidget {
         SizedBox(height: spacing.md),
         AppButton(
           key: testButtonKey,
-          label: _hasResult ? '重新测试' : '测试 Torznab 连通性',
+          label: _hasResult ? l10n.indexerTestAgain : l10n.indexerTestStart,
           icon: isTesting ? null : const Icon(Icons.radar_rounded),
           size: AppButtonSize.small,
           isLoading: isTesting,
@@ -137,6 +141,7 @@ class _ResultSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final colors = context.appColors;
+    final l10n = AppLocalizations.of(context);
     final backgroundColor =
         _isHealthy ? colors.successSurface : colors.errorSurface;
     final tone = _isHealthy ? AppTextTone.success : AppTextTone.error;
@@ -153,7 +158,7 @@ class _ResultSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _headline,
+            _headline(l10n),
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -167,10 +172,22 @@ class _ResultSummary extends StatelessWidget {
               spacing: spacing.md,
               runSpacing: spacing.xs,
               children: [
-                _MetricText(label: '查询', value: result.query),
-                _MetricText(label: '索引器', value: '${result.indexersChecked} 个'),
-                _MetricText(label: '候选', value: '${result.resultCount} 条'),
-                _MetricText(label: '耗时', value: '${result.elapsedMs} ms'),
+                _MetricText(
+                  label: l10n.indexerTestMetricQuery,
+                  value: result.query,
+                ),
+                _MetricText(
+                  label: l10n.indexerTestMetricIndexers,
+                  value: l10n.indexerTestCountIndexers(result.indexersChecked),
+                ),
+                _MetricText(
+                  label: l10n.indexerTestMetricResults,
+                  value: l10n.indexerTestCountResults(result.resultCount),
+                ),
+                _MetricText(
+                  label: l10n.indexerTestMetricElapsed,
+                  value: '${result.elapsedMs} ms',
+                ),
               ],
             ),
             if (!_isHealthy && result.error?.type.isNotEmpty == true) ...[
@@ -189,7 +206,7 @@ class _ResultSummary extends StatelessWidget {
           if (!_isHealthy) ...[
             SizedBox(height: spacing.xs),
             Text(
-              _fixHint,
+              _fixHint(l10n),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s10,
@@ -203,24 +220,26 @@ class _ResultSummary extends StatelessWidget {
     );
   }
 
-  String get _headline {
+  String _headline(AppLocalizations l10n) {
     final result = this.result;
-    if (result == null) return requestError ?? '请求 Torznab 测试接口失败';
+    if (result == null) {
+      return requestError ?? l10n.indexerTestRequestFailed;
+    }
     if (result.healthy) {
       return result.resultCount == 0
-          ? 'Torznab 已连通，测试查询未返回候选。'
-          : 'Torznab 已连通，真实搜索已完成。';
+          ? l10n.indexerTestHealthyNoResults
+          : l10n.indexerTestHealthy;
     }
     return result.error?.message.isNotEmpty == true
         ? result.error!.message
-        : 'Torznab 未能完成本次连通性测试。';
+        : l10n.indexerTestIncomplete;
   }
 
-  String get _fixHint {
+  String _fixHint(AppLocalizations l10n) {
     if (result?.error?.type == 'no_indexers_configured') {
-      return '请添加至少一个索引器并保存配置后再测试。';
+      return l10n.indexerTestFixNoIndexers;
     }
-    return '请检查 Torznab 服务、API Key 和索引器地址后重试。';
+    return l10n.indexerTestFixGeneric;
   }
 }
 
@@ -233,7 +252,7 @@ class _MetricText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      '$label：$value',
+      AppLocalizations.of(context).metricText(label, value),
       style: resolveAppTextStyle(
         context,
         size: AppTextSize.s10,

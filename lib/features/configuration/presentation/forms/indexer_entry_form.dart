@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -12,12 +13,13 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
 String? validateIndexerNameField(
   String? value, {
+  required AppLocalizations l10n,
   List<IndexerEntryDto> existingEntries = const <IndexerEntryDto>[],
   int? editingEntryId,
 }) {
   final trimmed = value?.trim() ?? '';
   if (trimmed.isEmpty) {
-    return '请输入索引器名称';
+    return l10n.indexerNameRequired;
   }
   final duplicates = existingEntries.where((item) {
     if (editingEntryId != null && item.id == editingEntryId) {
@@ -26,24 +28,32 @@ String? validateIndexerNameField(
     return item.name.trim().toLowerCase() == trimmed.toLowerCase();
   });
   if (duplicates.isNotEmpty) {
-    return '索引器名称重复';
+    return l10n.indexerNameDuplicate;
   }
   return null;
 }
 
-String? validateIndexerUrlField(String? value) {
+String? validateIndexerUrlField(
+  String? value, {
+  required AppLocalizations l10n,
+}) {
   final trimmed = value?.trim() ?? '';
   if (trimmed.isEmpty) {
-    return '请输入索引器 URL';
+    return l10n.indexerUrlRequired;
   }
   if (!isValidIndexerHttpUrl(trimmed)) {
-    return '请输入合法的 http/https 地址';
+    return l10n.indexerUrlInvalid;
   }
   return null;
 }
 
-String? validateIndexerDownloadClientsField(List<int>? value) {
-  return value == null || value.isEmpty ? '请至少选择一个下载器' : null;
+String? validateIndexerDownloadClientsField(
+  List<int>? value, {
+  required AppLocalizations l10n,
+}) {
+  return value == null || value.isEmpty
+      ? l10n.indexerDownloadClientRequired
+      : null;
 }
 
 bool isValidIndexerHttpUrl(String value) {
@@ -111,63 +121,65 @@ class IndexerEntryFormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const IndexerFormFieldLabel(label: '名称 (NAME)'),
+        IndexerFormFieldLabel(label: l10n.indexerNameFieldLabel),
         SizedBox(height: spacing.sm),
         AppTextField(
           fieldKey: const Key('indexer-entry-name-field'),
           controller: nameController,
           focusNode: nameFocusNode,
-          hintText: '例如: 馒头',
+          hintText: l10n.indexerNameHint,
           enabled: enabled,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.next,
           validator: (value) => validateIndexerNameField(
             value,
+            l10n: l10n,
             existingEntries: existingEntries,
             editingEntryId: editingEntryId,
           ),
         ),
         SizedBox(height: spacing.lg),
-        const IndexerFormFieldLabel(label: '资源地址 (URL)'),
+        IndexerFormFieldLabel(label: l10n.indexerUrlFieldLabel),
         SizedBox(height: spacing.sm),
         AppTextField(
           fieldKey: const Key('indexer-entry-url-field'),
           controller: urlController,
           focusNode: urlFocusNode,
-          hintText: '填写完整的 torznab 地址',
+          hintText: l10n.indexerUrlHint,
           enabled: enabled,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => onSubmitted?.call(),
-          validator: validateIndexerUrlField,
+          validator: (value) => validateIndexerUrlField(value, l10n: l10n),
         ),
         SizedBox(height: spacing.lg),
-        const IndexerFormFieldLabel(label: 'API Key (可选)'),
+        IndexerFormFieldLabel(label: l10n.indexerApiKeyFieldLabel),
         SizedBox(height: spacing.sm),
         AppPasswordField(
           fieldKey: const Key('indexer-entry-api-key-field'),
           controller: apiKeyController,
-          hintText: '留空则请求不携带 apikey',
+          hintText: l10n.indexerApiKeyHint,
           enabled: enabled,
           autovalidateMode: autovalidateMode,
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => onSubmitted?.call(),
-          showLabel: '显示 API Key',
-          hideLabel: '隐藏 API Key',
+          showLabel: l10n.indexerShowApiKey,
+          hideLabel: l10n.indexerHideApiKey,
         ),
         SizedBox(height: spacing.lg),
-        const IndexerFormFieldLabel(label: '类别 (KIND)'),
+        IndexerFormFieldLabel(label: l10n.indexerKindFieldLabel),
         SizedBox(height: spacing.sm),
         Row(
           key: const Key('indexer-entry-kind-field'),
           children: [
             Expanded(
               child: IndexerKindOptionButton(
-                label: 'PT (私有)',
+                label: l10n.indexerKindPt,
                 selected: kind == 'pt',
                 enabled: enabled,
                 onTap: () => onKindChanged('pt'),
@@ -176,7 +188,7 @@ class IndexerEntryFormFields extends StatelessWidget {
             SizedBox(width: spacing.md),
             Expanded(
               child: IndexerKindOptionButton(
-                label: 'BT (公网)',
+                label: l10n.indexerKindBt,
                 selected: kind == 'bt',
                 enabled: enabled,
                 onTap: () => onKindChanged('bt'),
@@ -192,7 +204,8 @@ class IndexerEntryFormFields extends StatelessWidget {
               '$kind:${selectedDownloadClientIds.join(',')}',
             ),
             initialValue: selectedDownloadClientIds,
-            validator: validateIndexerDownloadClientsField,
+            validator: (value) =>
+                validateIndexerDownloadClientsField(value, l10n: l10n),
             builder: (field) {
               final clientsById = <int, DownloadClientDto>{
                 for (final client in downloadClients) client.id: client,
@@ -241,10 +254,12 @@ class IndexerEntryFormFields extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const IndexerFormFieldLabel(label: '下载器优先级'),
+                  IndexerFormFieldLabel(
+                    label: l10n.indexerDownloadClientPriority,
+                  ),
                   SizedBox(height: spacing.sm),
                   Text(
-                    '首位下载器将作为自动下载和资源投递的默认目标。',
+                    l10n.indexerDownloadClientPriorityHint,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -255,23 +270,27 @@ class IndexerEntryFormFields extends StatelessWidget {
                   SizedBox(height: spacing.sm),
                   if (downloadClients.isEmpty)
                     AppSettingsGroup(
-                      children: [AppSettingCell(title: '请先在下载器页创建下载器')],
+                      children: [
+                        AppSettingCell(
+                          title: l10n.indexerGuideCreateDownloaderTitle,
+                        ),
+                      ],
                     )
                   else ...[
                     if (selectedClients.isEmpty)
                       AppSettingsGroup(
-                        header: '已绑定下载器',
-                        children: const [
+                        header: l10n.indexerBoundDownloadClientsLabel,
+                        children: [
                           AppSettingCell(
                             icon: Icons.download_outlined,
-                            title: '尚未绑定下载器',
-                            subtitle: '请从下方添加至少一个下载器',
+                            title: l10n.indexerNoBoundDownloaderTitle,
+                            subtitle: l10n.indexerNoBoundDownloaderSubtitle,
                           ),
                         ],
                       )
                     else
                       AppSettingsGroup(
-                        header: '已绑定下载器',
+                        header: l10n.indexerBoundDownloadClientsLabel,
                         children: [
                           for (
                             var index = 0;
@@ -290,8 +309,8 @@ class IndexerEntryFormFields extends StatelessWidget {
                                   : null,
                               title: selectedClients[index].name,
                               subtitle: index == 0
-                                  ? '默认下载器'
-                                  : '优先级 ${index + 1}',
+                                  ? l10n.indexerDefaultDownloader
+                                  : l10n.indexerPriority(index + 1),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -305,9 +324,10 @@ class IndexerEntryFormFields extends StatelessWidget {
                                     onPressed: !enabled || index == 0
                                         ? null
                                         : () => move(index, -1),
-                                    tooltip: '上移',
-                                    semanticLabel:
-                                        '上移 ${selectedClients[index].name}',
+                                    tooltip: l10n.indexerMoveUp,
+                                    semanticLabel: l10n.indexerMoveUpName(
+                                      selectedClients[index].name,
+                                    ),
                                   ),
                                   AppIconButton(
                                     key: Key(
@@ -321,9 +341,10 @@ class IndexerEntryFormFields extends StatelessWidget {
                                             index == selectedClients.length - 1
                                         ? null
                                         : () => move(index, 1),
-                                    tooltip: '下移',
-                                    semanticLabel:
-                                        '下移 ${selectedClients[index].name}',
+                                    tooltip: l10n.indexerMoveDown,
+                                    semanticLabel: l10n.indexerMoveDownName(
+                                      selectedClients[index].name,
+                                    ),
                                   ),
                                   AppTextButton(
                                     key: Key(
@@ -332,7 +353,7 @@ class IndexerEntryFormFields extends StatelessWidget {
                                     onPressed: enabled
                                         ? () => remove(selectedClients[index])
                                         : null,
-                                    label: '移除',
+                                    label: l10n.indexerRemove,
                                     size: AppTextButtonSize.xSmall,
                                     backgroundStyle:
                                         AppTextButtonBackgroundStyle.muted,
@@ -345,20 +366,20 @@ class IndexerEntryFormFields extends StatelessWidget {
                     if (unboundClients.isNotEmpty) ...[
                       SizedBox(height: spacing.md),
                       AppSettingsGroup(
-                        header: '添加下载器',
+                        header: l10n.indexerAddDownloaderGroup,
                         children: [
                           for (final client in unboundClients)
                             AppSettingCell(
                               key: Key('indexer-download-client-${client.id}'),
                               icon: Icons.download_outlined,
                               title: client.name,
-                              subtitle: '未绑定',
+                              subtitle: l10n.indexerUnbound,
                               trailing: AppTextButton(
                                 key: Key(
                                   'indexer-download-client-add-${client.id}',
                                 ),
                                 onPressed: enabled ? () => add(client) : null,
-                                label: '添加',
+                                label: l10n.indexerAddAction,
                                 size: AppTextButtonSize.xSmall,
                                 emphasis: AppTextButtonEmphasis.accent,
                               ),

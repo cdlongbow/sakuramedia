@@ -158,5 +158,1112 @@
   },
   "sseActorOnlineImportFinished": "在线女优入库完成",
   "sseActorOnlineSearchFinished": "在线搜索已完成",
-  "sseActorSyncingOnlineResults": "正在同步在线女优搜索结果"
+  "sseActorSyncingOnlineResults": "正在同步在线女优搜索结果",
+  "commonCancel": "取消",
+  "commonRetry": "重试",
+  "commonDelete": "删除",
+  "commonCopy": "复制",
+  "commonDone": "完成",
+  "commonUnknown": "未知",
+  "accountTitle": "账号",
+  "accountProfileTitle": "账号资料",
+  "accountUsername": "用户名",
+  "accountUsernameHint": "请输入新的用户名",
+  "accountUsernameHelpMobile": "保存后当前登录态保持不变。",
+  "accountUsernameHelpDesktop": "用户名用于登录和账号识别，保存后当前登录态保持不变。",
+  "accountSaveUsername": "保存用户名",
+  "accountUsernameUpdated": "用户名已更新",
+  "accountCurrentUsername": "当前用户名",
+  "accountCreatedAt": "创建时间",
+  "accountLastLogin": "上次登录",
+  "accountChangePasswordTitle": "修改密码",
+  "accountChangePasswordNotice": "修改密码后将立即退出当前登录，需要使用新密码重新登录。",
+  "accountCurrentPassword": "当前密码",
+  "accountNewPassword": "新密码",
+  "accountConfirmNewPassword": "确认新密码",
+  "accountConfirmChange": "确认修改",
+  "accountReset": "重置",
+  "accountPasswordChangedReloginFailed": "密码已修改，但新密码登录校验失败，请重新登录确认",
+  "accountPasswordChangedRelogin": "密码已更新，请重新登录",
+  "accountCurrentPasswordRequired": "请输入当前密码",
+  "accountNewPasswordRequired": "请输入新密码",
+  "accountNewPasswordSameAsCurrent": "新密码不能与当前密码相同",
+  "accountConfirmPasswordRequired": "请再次输入新密码",
+  "accountPasswordMismatch": "两次输入的新密码不一致",
+  "apiKeysTitle": "API 密钥",
+  "apiKeysDescription": "供外部工具（如 MCP 服务）调用 API，权限等同于账号。密钥只在生成时显示一次，请妥善保存。",
+  "apiKeysEmpty": "还没有 API 密钥。",
+  "apiKeysGenerate": "生成新密钥",
+  "apiKeyUnnamed": "未命名密钥",
+  "apiKeyNeverUsed": "从未使用",
+  "apiKeyLastUsed": "最后使用 {time}",
+  "@apiKeyLastUsed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyCreatedAt": "创建于 {time}",
+  "@apiKeyCreatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyDeleteTitle": "删除 API 密钥",
+  "apiKeyDeleteMessage": "删除后使用「{name}」的集成将立即失效，确认删除？",
+  "@apiKeyDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "apiKeyGenerateTitle": "生成 API 密钥",
+  "apiKeyNameLabel": "备注名（可选）",
+  "apiKeyNameHint": "例如：MCP server",
+  "apiKeyGenerateAction": "生成",
+  "apiKeyGeneratedTitle": "密钥已生成",
+  "apiKeyOnlyOnceNotice": "此密钥仅显示一次，关闭后将无法再次查看，请立即复制保存。",
+  "apiKeyCopied": "已复制到剪贴板",
+  "apiKeyCopyFailed": "复制失败，请手动选择复制",
+  "errorChangePasswordFailed": "修改密码失败",
+  "errorApiKeysLoadFailed": "API 密钥加载失败",
+  "errorApiKeyDeleteFailed": "删除密钥失败",
+  "errorApiKeyGenerateFailed": "生成密钥失败",
+  "commonSave": "保存",
+  "commonRefresh": "刷新",
+  "commonSaved": "已保存",
+  "configRestartRequiredBadge": "重启容器生效",
+  "configUnsavedBadge": "未保存",
+  "configOptionalServicesTitle": "图搜 / 相似度",
+  "configQdrantEnabledTitle": "启用相似影片与向量服务",
+  "configQdrantEnabledSubtitle": "使用 Qdrant 提供相似影片，并增强推荐结果",
+  "configComposeDefaultHelper": "按快速开始的 Compose 示例部署时，默认即此地址，API Key 留空即可。",
+  "configQdrantUrlLabel": "Qdrant 地址",
+  "configQdrantApiKeyLabel": "Qdrant API Key（可选）",
+  "configImageSearchEnabledTitle": "启用图片与文字搜图",
+  "configImageSearchEnabledSubtitle": "使用嵌入服务生成图片与文字向量，并增强时刻推荐",
+  "configImageSearchRequiresQdrant": "需先启用上方的相似影片与向量服务",
+  "configEmbeddingUrlLabel": "嵌入服务地址",
+  "configEmbeddingApiKeyLabel": "嵌入服务 API Key（可选）",
+  "configOptionalServicesTip": "保存后重启后端容器生效。关闭功能会保留索引；如需释放内存，请同时停止对应的可选容器。重新启用后可在系统维护中重建图搜索引，在任务中心重算相似影片。",
+  "configDisableVectorTitle": "关闭向量服务",
+  "configDisableVectorMessage": "图片与文字搜图依赖 Qdrant，将同时关闭。已有配置与索引会保留，保存并重启后生效。",
+  "configDisableVectorConfirm": "同时关闭",
+  "configInvalidHttpUrl": "请输入有效的 HTTP 或 HTTPS 地址",
+  "configMediaImportTitle": "媒体导入",
+  "configMediaImportTip": "这组配置仅控制 JAV 类影片导入的最小文件大小。第一次部署通常保持默认。",
+  "configMinVideoSizeLabel": "允许导入的视频最小体积",
+  "configMinVideoSizeHint": "建议不低于 256",
+  "configMinVideoSizeHelper": "UI 按 MB 编辑，保存时会转换为字节；不建议低于 256 MB。",
+  "configMinVideoSizeShort": "最小体积",
+  "configPositiveIntRequired": "请输入大于 0 的{label}",
+  "@configPositiveIntRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "configSchedulerTitle": "定时任务频率",
+  "configSchedulerTip": "Cron 语法：分 时 日 月 周（*/N 每隔 N，逗号列表，连字符区间）；普通任务并发数控制同时执行的任务数量。修改后需要重启容器才生效。",
+  "configWorkerSectionTitle": "普通任务执行",
+  "configWorkerConcurrencyLabel": "普通任务并发数",
+  "configWorkerConcurrencyHelper": "导入和存储迁移任务使用独立并发，不受此设置影响。",
+  "configWorkerConcurrencyUnit": "个",
+  "configWorkerConcurrencyRange": "请输入 {min}–{max} 的整数",
+  "@configWorkerConcurrencyRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "configCronRequired": "请输入 5 位标准 cron",
+  "configLoggingTitle": "日志",
+  "configLoggingTip": "日志等级平时保持 INFO，排查问题时再临时改成 DEBUG。",
+  "configLoggingLevelLabel": "日志等级",
+  "configUnsavedChangesTitle": "有未保存的改动",
+  "configUnsavedChangesMessage": "刷新将丢弃当前未保存的高级设置，确认刷新？",
+  "configLoggingConfirmTitle": "确认修改日志等级",
+  "configLoggingConfirmMessage": "修改日志等级将重启容器，页面会临时无响应并需刷新，是否继续？",
+  "configContinueSave": "继续保存",
+  "restartRequiredMessage": "{action}，需重启容器才生效",
+  "@restartRequiredMessage": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAdvancedSettingsLoadFailed": "高级设置加载失败",
+  "errorAdvancedSettingsSaveFailed": "保存高级设置失败",
+  "configCronGroupDownloadImport": "下载 / 导入",
+  "configCronGroupScrapeBackfill": "抓取 / 回填",
+  "configCronGroupRecommendation": "推荐",
+  "configCronGroupMaintenance": "巡检 / 清理",
+  "taskNameActorSubscriptionSync": "订阅演员影片同步",
+  "taskNameSubscribedMovieAutoDownload": "已订阅缺失影片自动下载",
+  "taskNameDownloadTaskSync": "下载任务状态同步",
+  "taskNameDownloadTaskAutoImport": "已完成下载自动导入",
+  "taskNameMovieHeatUpdate": "影片热度更新",
+  "taskNameMovieInteractionSync": "影片互动数同步",
+  "taskNameMovieJavdbBackfill": "JavDB 影片补录",
+  "taskNameMediaFileHashBackfill": "媒体文件哈希补算",
+  "taskNameMediaFileScan": "媒体文件巡检",
+  "taskNameMediaThumbnailGeneration": "媒体缩略图生成",
+  "taskNameImageSearchIndex": "图像搜索索引构建",
+  "taskNameMovieSimilarityRecompute": "影片相似度重算",
+  "taskNameMomentRecommendationGenerate": "推荐时刻生成",
+  "taskNameDailyRecommendationGenerate": "每日推荐快照生成",
+  "taskNameActivityRecordCleanup": "任务记录清理",
+  "taskNameGfriendsFiletreeRefresh": "GFriends 缓存刷新",
+  "taskHelpActorSubscriptionSync": "同步已订阅 JavDB 女优的影片数据；本地女优没有远端来源，不会参与同步。",
+  "taskHelpSubscribedMovieAutoDownload": "自动下载已订阅但缺失的影片。",
+  "taskHelpDownloadTaskSync": "同步下载任务状态。",
+  "taskHelpDownloadTaskAutoImport": "导入已完成的下载任务。",
+  "taskHelpMovieHeatUpdate": "重算影片热度。",
+  "taskHelpMovieInteractionSync": "同步影片互动数，候选仍受分层刷新规则影响。",
+  "taskHelpMovieJavdbBackfill": "尝试从 JavDB 补录到期的插件影片，每部影片间隔 7 天检查。",
+  "taskHelpMediaFileHashBackfill": "补算缺失的媒体文件哈希。",
+  "taskHelpMediaFileScan": "用存储提供方清单校验媒体文件有效性。",
+  "taskHelpMediaThumbnailGeneration": "生成媒体缩略图。",
+  "taskHelpImageSearchIndex": "生成图片搜索索引。",
+  "taskHelpMovieSimilarityRecompute": "离线重算影片相似度。",
+  "taskHelpMomentRecommendationGenerate": "生成推荐时刻。",
+  "taskHelpDailyRecommendationGenerate": "生成每日推荐快照。",
+  "taskHelpActivityRecordCleanup": "清理任务中心的通知与任务运行数据。",
+  "taskHelpGfriendsFiletreeRefresh": "刷新 GFriends Filetree 缓存。",
+  "relativeTimeJustNow": "刚刚",
+  "relativeTimeMinutesAgo": "{count} 分钟前",
+  "@relativeTimeMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeHoursAgo": "{count} 小时前",
+  "@relativeTimeHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "relativeTimeDaysAgo": "{count} 天前",
+  "@relativeTimeDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastCheckedRelative": "{time}检测",
+  "@lastCheckedRelative": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "systemDiagnosticsRunning": "正在检测 {current}/{total}…",
+  "@systemDiagnosticsRunning": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsNeverRun": "尚未检测。点右上角开始一次完整检测。",
+  "systemDiagnosticsLastRunWithIssues": "上次检测：{time} · {count} 项异常",
+  "@systemDiagnosticsLastRunWithIssues": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsLastRunAllPassed": "上次检测：{time} · 全部通过",
+  "@systemDiagnosticsLastRunAllPassed": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionLastSearchedAt": "上次查询：{time}",
+  "@subscriptionLastSearchedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionSubscribedAt": "订阅于 {time}",
+  "@subscriptionSubscribedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncedAtLabel": "更新于 {time}",
+  "@syncedAtLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaDurationHoursMinutesSeconds": "{hours}时{minutes}分{seconds}秒",
+  "@mediaDurationHoursMinutesSeconds": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaDurationMinutesSeconds": "{minutes}分{seconds}秒",
+  "@mediaDurationMinutesSeconds": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaDurationSeconds": "{seconds}秒",
+  "@mediaDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaLibraryDeleted": "媒体库已删除",
+  "mediaLibraryFallback": "媒体库 {id}",
+  "@mediaLibraryFallback": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{count} 分钟",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationSeconds": "{count} 秒",
+  "@durationSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsComponentTitle": "组件诊断",
+  "systemDiagnosticsRerun": "重新检测",
+  "systemDiagnosticsOpenPage": "打开组件诊断页",
+  "systemDiagnosticsStartCheck": "开始检测",
+  "systemDiagnosticsStatusNotChecked": "未检测",
+  "systemDiagnosticsStatusIssues": "{count} 项异常",
+  "@systemDiagnosticsStatusIssues": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDiagnosticsStatusWarning": "有警告",
+  "systemDiagnosticsStatusPartiallyChecked": "部分未检测",
+  "systemDiagnosticsStatusAllPassed": "全部通过",
+  "systemDiagnosticsCheckingComponents": "正在检测组件 {current}/{total}…",
+  "@systemDiagnosticsCheckingComponents": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionNewMovieSearching": "新片 · 持续查询中",
+  "subscriptionSearchedTimes": "已查询过 {count} 次",
+  "@subscriptionSearchedTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionRetryBeforeGivingUp": "再尝试 {count} 次就放弃",
+  "@subscriptionRetryBeforeGivingUp": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionNotSearched": "尚未查询",
+  "subscriptionDeadTorrents": "{count} 个种子已判死",
+  "@subscriptionDeadTorrents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionReleasedAt": "发行 {date}",
+  "@subscriptionReleasedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionLocalMediaCount": "本地 {count} 个媒体",
+  "@subscriptionLocalMediaCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonEdit": "编辑",
+  "indexerAdd": "新增索引器",
+  "indexerLoadFailedTitle": "索引器加载失败",
+  "indexerOverviewTitle": "Torznab 索引器负责搜索候选资源，并把资源请求投递到对应下载器。",
+  "indexerOverviewDescription": "每个索引器可独立配置 API Key；留空的站点请求不会携带 apikey。",
+  "indexerApiKeyConfigured": "API Key 已配置",
+  "indexerCountLabel": "索引器数",
+  "indexerBoundDownloadClientsLabel": "已绑定下载器",
+  "indexerCountValue": "{count} 个",
+  "@indexerCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerGuideCreateDownloaderTitle": "请先在下载器页创建下载器",
+  "indexerGuideCreateDownloaderDescription": "索引器需要先绑定下载器，影片详情里的资源投递才能生效。",
+  "indexerGuideGoToDownloaders": "前往下载器",
+  "indexerEmpty": "还没有索引器配置",
+  "indexerApiKeyLine": "API Key: {value}",
+  "@indexerApiKeyLine": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerBoundDownloadClientsLine": "绑定下载器: {value}",
+  "@indexerBoundDownloadClientsLine": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerConfigured": "已配置",
+  "indexerNotConfigured": "未配置",
+  "indexerNotMatched": "未匹配",
+  "indexerBoundDownloaderInvalid": "绑定下载器已失效，请重新选择",
+  "indexerLoadFailedFallback": "索引器加载失败，请稍后重试。",
+  "indexerConnectionHealthy": "Torznab 连通正常",
+  "indexerConnectionTestFailed": "Torznab 连通性测试失败",
+  "indexerDeleteTitle": "删除索引器",
+  "indexerDeleteMessage": "确认删除索引器\"{name}\"？删除后，该索引器将无法继续把资源请求投递到当前下载器。",
+  "@indexerDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerDeleteFailed": "删除索引器失败",
+  "indexerDeleted": "索引器已删除",
+  "indexerUnsavedTestHint": "当前配置尚未保存，保存后再测试。",
+  "indexerEditTitle": "编辑索引器",
+  "indexerFormSubtitle": "维护索引器地址、类别与下载器绑定关系。",
+  "indexerUnsupportedKind": "索引器类型仅支持 pt 或 bt",
+  "indexerSelectDownloader": "请至少选择一个仍可用的下载器",
+  "indexerUpdated": "索引器已更新",
+  "indexerCreated": "索引器已创建",
+  "indexerUpdateFailed": "更新索引器失败",
+  "indexerCreateFailed": "创建索引器失败",
+  "indexerKindLabel": "类别",
+  "indexerBoundDownloadClientLabel": "绑定下载器",
+  "indexerTestPanelTitle": "Torznab 连通性",
+  "indexerTestPanelDescription": "使用已保存的配置执行一次真实 Torznab 搜索，不会修改索引器数据。",
+  "indexerTestAgain": "重新测试",
+  "indexerTestStart": "测试 Torznab 连通性",
+  "indexerTestStatusTesting": "测试中",
+  "indexerTestStatusPending": "待测试",
+  "indexerTestStatusHealthy": "连通正常",
+  "indexerTestStatusFailed": "连通失败",
+  "indexerTestMetricQuery": "查询",
+  "indexerTestMetricIndexers": "索引器",
+  "indexerTestMetricResults": "候选",
+  "indexerTestMetricElapsed": "耗时",
+  "indexerTestCountIndexers": "{count} 个",
+  "@indexerTestCountIndexers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerTestCountResults": "{count} 条",
+  "@indexerTestCountResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerTestRequestFailed": "请求 Torznab 测试接口失败",
+  "indexerTestHealthyNoResults": "Torznab 已连通，测试查询未返回候选。",
+  "indexerTestHealthy": "Torznab 已连通，真实搜索已完成。",
+  "indexerTestIncomplete": "Torznab 未能完成本次连通性测试。",
+  "indexerTestFixNoIndexers": "请添加至少一个索引器并保存配置后再测试。",
+  "indexerTestFixGeneric": "请检查 Torznab 服务、API Key 和索引器地址后重试。",
+  "indexerNameRequired": "请输入索引器名称",
+  "indexerNameDuplicate": "索引器名称重复",
+  "indexerUrlRequired": "请输入索引器 URL",
+  "indexerUrlInvalid": "请输入合法的 http/https 地址",
+  "indexerDownloadClientRequired": "请至少选择一个下载器",
+  "indexerNameFieldLabel": "名称 (NAME)",
+  "indexerNameHint": "例如: 馒头",
+  "indexerUrlFieldLabel": "资源地址 (URL)",
+  "indexerUrlHint": "填写完整的 torznab 地址",
+  "indexerApiKeyFieldLabel": "API Key (可选)",
+  "indexerApiKeyHint": "留空则请求不携带 apikey",
+  "indexerShowApiKey": "显示 API Key",
+  "indexerHideApiKey": "隐藏 API Key",
+  "indexerKindFieldLabel": "类别 (KIND)",
+  "indexerKindPt": "PT (私有)",
+  "indexerKindBt": "BT (公网)",
+  "indexerDownloadClientPriority": "下载器优先级",
+  "indexerDownloadClientPriorityHint": "首位下载器将作为自动下载和资源投递的默认目标。",
+  "metricText": "{label}：{value}",
+  "@metricText": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerNoBoundDownloaderTitle": "尚未绑定下载器",
+  "indexerNoBoundDownloaderSubtitle": "请从下方添加至少一个下载器",
+  "indexerDefaultDownloader": "默认下载器",
+  "indexerPriority": "优先级 {index}",
+  "@indexerPriority": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "indexerMoveUp": "上移",
+  "indexerMoveUpName": "上移 {name}",
+  "@indexerMoveUpName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerMoveDown": "下移",
+  "indexerMoveDownName": "下移 {name}",
+  "@indexerMoveDownName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerRemove": "移除",
+  "indexerAddDownloaderGroup": "添加下载器",
+  "indexerUnbound": "未绑定",
+  "indexerAddAction": "添加",
+  "downloaderLoadFailedFallback": "下载器加载失败，请稍后重试。",
+  "downloaderDeleteTitle": "删除下载器",
+  "downloaderDeleteMessage": "确认删除下载器“{name}”？该操作不会删除下载任务。",
+  "@downloaderDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "downloaderDeleted": "下载器已删除",
+  "downloaderDeleteFailed": "删除下载器失败",
+  "downloaderTabDownloaders": "下载器",
+  "downloaderTabGuide": "接入说明",
+  "downloaderAdd": "新增下载器",
+  "downloaderOverviewTitle": "下载器把索引器推送的资源请求交给对应 Provider 执行。",
+  "downloaderOverviewDescription": "先选择支持下载的媒体库，再填写该 Provider 提供的配置字段。",
+  "downloaderConfiguredCount": "已配置下载器数",
+  "downloaderAvailableLibraries": "可用媒体库数",
+  "downloaderProviderUnavailable": "Provider 目录暂不可用，已有下载器仍可管理；恢复插件目录后才能新建或编辑 Provider 配置。",
+  "downloaderLoadFailedTitle": "下载器加载失败",
+  "downloaderEmpty": "还没有下载器配置",
+  "downloaderGuideLibrariesTitle": "先准备媒体库",
+  "downloaderGuideLibrariesDescription": "下载器必须绑定一个支持下载的媒体库，配置由对应 Provider 提供。",
+  "downloaderGuideLibrariesTip": "如果列表为空，请先安装并配置支持下载的 Provider。",
+  "downloaderGuideConfigured": "已配置",
+  "downloaderGuidePending": "待配置",
+  "downloaderGuideGoToLibraries": "前往媒体库",
+  "downloaderGuideConfigureTitle": "配置下载器",
+  "downloaderGuideConfigureDescription": "选择目标媒体库后，填写 Provider 目录定义的配置字段。",
+  "downloaderGuideSensitiveHint": "敏感字段留空保存时会沿用已有值。",
+  "downloaderGuideSwitchToDownloaders": "切换到下载器",
+  "downloaderUnknownProvider": "未知 Provider",
+  "downloaderUnmatchedLibrary": "未匹配 ({id})",
+  "@downloaderUnmatchedLibrary": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "downloaderMediaLibraryLabel": "媒体库",
+  "downloaderUpdated": "下载器已更新",
+  "downloaderCreated": "下载器已创建",
+  "downloaderUpdateFailed": "更新下载器失败",
+  "downloaderCreateFailed": "创建下载器失败",
+  "downloaderTestFailed": "下载器测试失败",
+  "downloaderEditTitle": "编辑下载器",
+  "downloaderFormSubtitle": "配置由目标媒体库的 Provider 决定。",
+  "downloaderTestConfig": "测试配置",
+  "downloaderNameRequired": "请输入下载器名称",
+  "downloaderNameLabel": "名称",
+  "downloaderNameHint": "给下载器起个名字",
+  "downloaderTargetLibrary": "目标媒体库",
+  "downloaderNoDownloadableLibraries": "暂无支持下载的媒体库",
+  "downloaderSelectTargetLibrary": "请选择目标媒体库",
+  "downloaderTestResultTitle": "配置测试结果",
+  "downloaderTestStatusOk": "通过",
+  "downloaderTestStatusWarning": "有警告",
+  "downloaderTestStatusFailed": "未通过",
+  "downloaderTestSummaryOk": "所有检查已通过，可以保存并开始使用。",
+  "downloaderTestSummaryWarning": "检测完成，但存在警告。配置仍可保存，导入时可能回退为复制。",
+  "downloaderTestSummaryFailed": "检测未通过。配置仍可保存，但下载任务或导入可能失败。",
+  "downloaderCheckStatusOk": "通过",
+  "downloaderCheckStatusWarning": "警告",
+  "downloaderCheckStatusSkipped": "未执行",
+  "downloaderCheckStatusFailed": "失败",
+  "downloaderCheckQbittorrent": "qBittorrent 连通性",
+  "downloaderCheckDirectoryMapping": "下载目录映射",
+  "downloaderCheckHardlink": "硬链接",
+  "downloaderCheckCleanup": "临时文件清理",
+  "downloaderCheckProvider": "下载器测试",
+  "downloaderConfigLoadFailed": "下载器配置加载失败",
+  "downloaderConfigLoadFailedFallback": "下载器配置加载失败，请稍后重试。",
+  "downloaderNoDownloadableLibraryProvider": "当前没有支持下载的媒体库，请先配置可下载的媒体库 Provider。",
+  "downloaderAddTitle": "添加下载器",
+  "downloaderCreate": "新建下载器",
+  "mediaLibraryProviderCatalogLoadFailed": "Provider 目录加载失败，请稍后重试。",
+  "mediaLibraryNoProviderInstalled": "暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。",
+  "mediaLibraryDeleteTitle": "删除媒体库",
+  "mediaLibraryDeleteMessage": "确认删除媒体库“{name}”？该操作不可恢复。",
+  "@mediaLibraryDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryDeleteFailed": "删除媒体库失败",
+  "mediaLibraryStorageTitle": "媒体库存储",
+  "mediaLibraryStorageDescriptionMobile": "媒体库通过已安装的 Provider 连接存储；配置字段由插件目录动态提供。",
+  "mediaLibraryStorageDescriptionDesktop": "媒体库通过已安装的 Provider 连接存储；Provider 配置由插件目录动态提供。",
+  "mediaLibraryAdd": "新增媒体库",
+  "mediaLibraryProviderCatalogUnavailable": "Provider 目录暂不可用，已存在的媒体库仍可管理；新增或编辑配置前请重试。",
+  "mediaLibraryEmpty": "还没有媒体库",
+  "mediaLibraryLoadFailedTitle": "媒体库加载失败",
+  "mediaLibraryLoadFailedFallback": "媒体库加载失败，请稍后重试。",
+  "mediaLibraryProviderUnavailable": "Provider 不可用 · {providerKey}",
+  "@mediaLibraryProviderUnavailable": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryUpdatedAt": "更新时间: {time}",
+  "@mediaLibraryUpdatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaLibraryMoreActions": "更多操作",
+  "mediaLibraryEditTitle": "编辑媒体库",
+  "mediaLibraryEditSubtitleUnavailable": "当前 Provider 不可用，仅可修改媒体库名称。",
+  "mediaLibraryEditSubtitle": "选择 Provider 后填写其存储配置。",
+  "mediaLibraryUpdated": "媒体库已更新",
+  "mediaLibraryCreated": "媒体库已创建",
+  "mediaLibraryUpdateFailed": "更新媒体库失败",
+  "mediaLibraryCreateFailed": "创建媒体库失败",
+  "mediaLibraryEditAction": "编辑媒体库",
+  "mediaLibraryDeleteAction": "删除媒体库",
+  "mediaLibraryUnavailable": "不可用",
+  "mediaLibraryNameRequired": "请输入媒体库名称",
+  "mediaLibraryNameLabel": "名称",
+  "mediaLibraryNameHint": "例如：Main Library",
+  "mediaLibraryProviderLabel": "存储 Provider",
+  "mediaLibrarySelectProvider": "请选择存储 Provider",
+  "mediaLibraryProviderUnavailableHint": "Provider「{providerKey}」当前不可用，无法编辑其配置。可先修改名称；恢复插件后再编辑配置。",
+  "@mediaLibraryProviderUnavailableHint": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceImageSearchLoadFailed": "图搜索状态加载失败",
+  "systemMaintenanceImageSearchLoadFailedFallback": "图搜索状态加载失败，请稍后重试。",
+  "systemMaintenanceMediaInfoBackfillTitle": "媒体信息回填",
+  "systemMaintenanceMediaInfoBackfillDescription": "为缺少或不完整技术信息的媒体文件重新探测，补齐时长、分辨率和视频信息。只处理缺失或不完整项，不会无条件覆盖已有信息。",
+  "systemMaintenanceMediaInfoBackfillSuccess": "媒体信息回填任务已提交，进度请在任务中心查看",
+  "systemMaintenanceFileHashBackfillTitle": "媒体文件哈希补算",
+  "systemMaintenanceFileHashBackfillDescription": "为尚未记录文件哈希的媒体文件计算并保存文件指纹，用于识别重复媒体。只处理哈希为空的文件，媒体库较大时可能运行较久。",
+  "systemMaintenanceFileHashBackfillSuccess": "媒体文件哈希补算任务已提交，进度请在任务中心查看",
+  "systemMaintenanceThumbnailPackTitle": "媒体缩略图打包回填",
+  "systemMaintenanceThumbnailPackDescription": "把媒体时间轴缩略图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的媒体，媒体库较大时可能运行较久。",
+  "systemMaintenanceThumbnailPackSuccess": "缩略图打包回填任务已提交，进度请在任务中心查看",
+  "systemMaintenanceMovieAssetPackTitle": "影片图片打包回填",
+  "systemMaintenanceMovieAssetPackDescription": "把影片的封面、薄封面与剧情图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的影片，媒体库较大时可能运行较久。",
+  "systemMaintenanceMovieAssetPackSuccess": "影片图片打包回填任务已提交，进度请在任务中心查看",
+  "systemMaintenanceActorGenderTitle": "演员性别回填",
+  "systemMaintenanceActorGenderDescription": "按影片元数据修正演员的存量性别，人工锁定的资料不会被覆盖。任务会一次处理完所有候选，逐条访问 JavDB 并限速，演员数量较多时可能运行较久。",
+  "systemMaintenanceActorGenderSuccess": "演员性别回填任务已提交，进度请在任务中心查看",
+  "systemMaintenanceImageSearchTitle": "图搜索索引",
+  "systemMaintenanceSubmit": "提交中",
+  "systemMaintenanceRunNow": "立即执行",
+  "systemMaintenanceTaskRunning": "任务已在运行中",
+  "systemMaintenanceSubmitFailed": "任务提交失败，请重试",
+  "systemMaintenanceRebuilding": "重建中",
+  "systemMaintenanceRebuildNow": "立即重建",
+  "systemMaintenanceRebuildIndex": "重建索引",
+  "systemMaintenanceRebuildNotice": "重建会清空现有图片索引，期间图搜索结果可能暂时不完整。",
+  "systemMaintenanceDisabled": "未启用",
+  "systemMaintenanceImageSearchDisabledMessage": "图片与文字搜图未启用。可在服务器端高级设置中开启，保存后重启后端容器。",
+  "systemMaintenanceImageSearchRebuildingMessage": "图搜索索引正在后台重建，请稍候。",
+  "systemMaintenanceImageSearchSpaceUnknownMessage": "无法确认历史图搜索索引使用的嵌入空间，图搜索已暂停。请重建索引后再搜索。",
+  "systemMaintenanceImageSearchSpaceChangedMessage": "嵌入空间已从「{indexed}」变更为「{current}」，图搜索已暂停。请重建索引后再搜索。",
+  "@systemMaintenanceImageSearchSpaceChangedMessage": {
+    "placeholders": {
+      "indexed": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceImageSearchRebuildHint": "更换嵌入模型后，重建索引以重新生成全部图片向量。重建期间图搜索结果可能暂时不完整。",
+  "systemMaintenanceRebuildDialogTitle": "重建图搜索索引",
+  "systemMaintenanceRebuildDialogMessage": "{message}\n\n这会清空现有图片索引并重新开始构建，确认继续吗？",
+  "@systemMaintenanceRebuildDialogMessage": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "systemMaintenanceRebuildFailed": "重建图搜索索引失败",
+  "systemMaintenanceRebuildStarted": "图搜索索引已开始重建",
+  "configTabAccountSecurity": "账号安全",
+  "configTabAppearance": "外观",
+  "configTabMediaLibraries": "媒体库",
+  "configTabDownloadClients": "下载器",
+  "configTabIndexers": "索引器",
+  "configTabExternalPlayer": "外部播放器",
+  "configTabBlacklistedMovies": "屏蔽影片",
+  "configTabAdvanced": "高级设置",
+  "configTabPlugins": "插件",
+  "configTabSystemMaintenance": "系统维护",
+  "appearanceDescription": "调整界面明暗与主题色，设置保存在本机。",
+  "appearanceThemeMode": "主题模式",
+  "appearanceSystem": "跟随系统",
+  "appearanceLight": "浅色",
+  "appearanceDark": "深色",
+  "appearanceThemeColor": "主题色",
+  "appearanceThemeColorFooter": "主题色会应用到按钮、选中态和强调元素。",
+  "providerConfigFieldRequired": "请输入{label}",
+  "@providerConfigFieldRequired": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerConfigLoadFailed": "索引器配置加载失败",
+  "indexerConfigLoadFailedFallback": "索引器配置加载失败，请稍后重试。",
+  "indexerNameDuplicateWithName": "索引器名称重复: {name}",
+  "@indexerNameDuplicateWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "indexerUrlMustBeHttp": "索引器 URL 必须是合法的 http/https 地址",
+  "indexerDownloadersInvalid": "索引器绑定的下载器已失效，请重新选择",
+  "indexerSaveFailed": "保存索引器配置失败",
+  "indexerListTitle": "索引器列表",
+  "indexerCreateDownloaderHint": "请先在下载器 Tab 创建下载器",
+  "indexerEmptyNoMatch": "没有匹配的索引站",
+  "indexerDownloaderLine": "下载器: {downloaders}",
+  "@indexerDownloaderLine": {
+    "placeholders": {
+      "downloaders": {
+        "type": "String"
+      }
+    }
+  },
+  "configLeaveUnsavedMessage": "高级设置里还有未保存的改动，确认离开？",
+  "configLeaveConfirm": "确认离开",
+  "indexerSearchHint": "搜索已添加的索引器...",
+  "indexerEmptyDesktop": "还没有配置索引站",
+  "pluginInstallTitle": "安装插件",
+  "pluginInstallMessage": "将安装「{fileName}」。若已存在同名插件，会替换其代码并保留 data/ 运行数据。",
+  "@pluginInstallMessage": {
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginInstallConfirm": "安装",
+  "pluginInstalled": "插件已安装",
+  "pluginInstalledRefreshFailed": "插件已安装，但列表刷新失败，请稍后重试",
+  "pluginInstallFailed": "安装插件失败",
+  "pluginEnabled": "插件已启用",
+  "pluginDisabled": "插件已停用",
+  "pluginToggleFailed": "插件启停失败",
+  "pluginUpdateCheckPartialFailed": "部分插件的更新检查失败，请稍后重试",
+  "pluginNoUpdates": "未发现可用更新",
+  "pluginUpdatesFound": "发现 {count} 个插件更新",
+  "@pluginUpdatesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginUpgradeTitle": "更新插件",
+  "pluginUpgradeMessage": "将「{name}」从 v{fromVersion} 更新到 v{toVersion}。更新完成后，需手动重启容器才会生效。",
+  "@pluginUpgradeMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "fromVersion": {
+        "type": "String"
+      },
+      "toVersion": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginUpgradeConfirm": "更新",
+  "pluginUpgradeNotes": "更新内容\n{notes}",
+  "@pluginUpgradeNotes": {
+    "placeholders": {
+      "notes": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginUpgradeFailed": "更新插件失败",
+  "pluginUpgraded": "插件已更新",
+  "pluginDeleteTitle": "删除插件",
+  "pluginDeleteMessage": "确认删除「{name}」的插件代码？运行数据（data/）会保留，可在重新安装同一插件后继续使用；仍被媒体库使用的存储插件无法删除。",
+  "@pluginDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginDeleted": "插件已删除",
+  "pluginDeleteFailed": "删除插件失败",
+  "pluginMarketInstallMessage": "将从 {repo} 下载 v{version} 安装包并安装「{name}」。",
+  "@pluginMarketInstallMessage": {
+    "placeholders": {
+      "repo": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginCommunityWarning": "这是社区插件，未经官方审计，请确认来源可信。",
+  "pluginHomepageCopied": "项目主页已复制",
+  "pluginCopyFailed": "复制失败",
+  "pluginZipUnreadable": "无法读取所选插件包，请换一个文件再试",
+  "pluginZipPickerUnavailable": "文件选择器尚未加载，请完整重启应用后再试",
+  "pluginZipOpenFailed": "打开文件选择器失败，请稍后再试",
+  "pluginSettingsUnset": "未设置",
+  "pluginSettingsOn": "开启",
+  "pluginSettingsOff": "关闭",
+  "pluginSettingsSelectOne": "请选择一项",
+  "pluginSettingsSelectToggle": "请选择开关状态",
+  "pluginSettingsInteger": "请输入整数",
+  "pluginSettingsNumber": "请输入数字",
+  "pluginSettingsMin": "不能小于 {value}",
+  "@pluginSettingsMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsMax": "不能大于 {value}",
+  "@pluginSettingsMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsExclusiveMin": "必须大于 {value}",
+  "@pluginSettingsExclusiveMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsExclusiveMax": "必须小于 {value}",
+  "@pluginSettingsExclusiveMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsRequired": "请填写{title}",
+  "@pluginSettingsRequired": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsMinLength": "至少输入 {count} 个字符",
+  "@pluginSettingsMinLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginSettingsMaxLength": "最多输入 {count} 个字符",
+  "@pluginSettingsMaxLength": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginSettingsBoundMin": "最小 {value}",
+  "@pluginSettingsBoundMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundGreater": "大于 {value}",
+  "@pluginSettingsBoundGreater": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundMax": "最大 {value}",
+  "@pluginSettingsBoundMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsBoundLess": "小于 {value}",
+  "@pluginSettingsBoundLess": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginSettingsListHint": "每行一项",
+  "pluginSettingsNullableHint": "留空表示未设置",
+  "listSeparator": "，",
+  "hintSeparator": "；",
+  "pluginSettingsLoadFailed": "插件配置加载失败",
+  "pluginSettingsLoadFailedFallback": "插件配置加载失败，请稍后重试。",
+  "pluginSettingsEmpty": "配置不能为空",
+  "pluginSettingsMustBeObject": "插件配置必须是一个 JSON 对象",
+  "pluginSettingsInvalidJson": "不是合法的 JSON",
+  "pluginSettingsSaved": "插件配置已保存",
+  "pluginSettingsSaveFailed": "插件配置保存失败",
+  "pluginSettingsTitle": "插件配置",
+  "pluginSettingsJsonLabel": "配置内容（JSON）",
+  "pluginSettingsPlaceholderEndpoint": "服务地址",
+  "pluginSettingsPlaceholderEnabled": "启用",
+  "pluginSettingsFormat": "格式化",
+  "pluginsTabInstalled": "已安装",
+  "pluginsTabMarket": "插件市场",
+  "pluginsLoadFailed": "插件加载失败",
+  "pluginsLoadFailedFallback": "插件加载失败，请稍后重试。",
+  "pluginsRestartNotice": "插件安装、更新、启停、删除或配置修改后，需重启容器才生效。",
+  "pluginsCheckUpdates": "检查更新",
+  "pluginsZipSupport": "支持上传 .zip 插件包",
+  "pluginsEmptyTitle": "还没有安装插件",
+  "pluginsEmptyMessage": "点击上方「安装插件」上传 zip 插件包，安装后需重启容器才生效。",
+  "pluginsEmptyMessageMobile": "点击下方「安装插件」上传 zip 插件包，安装后需重启容器才生效。",
+  "pluginsInstalledTitle": "已安装插件",
+  "pluginsCount": "{count} 个",
+  "@pluginsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginsLoadErrorTooltip": "插件加载失败",
+  "pluginsLoadErrorBadge": "加载失败",
+  "pluginsUpdateAction": "更新",
+  "pluginsDeleteSemantic": "删除 {name}",
+  "@pluginsDeleteSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginsManagementTitle": "插件管理",
+  "pluginsManageNotice": "安装、更新、启停、删除或配置修改后，需重启容器才会生效。",
+  "pluginsUpdatableStat": "可更新",
+  "pluginsLoadingList": "正在加载插件列表",
+  "pluginsCheckReleaseUpdates": "检查插件 Release 更新",
+  "pluginsUpdatesFound": "发现 {count} 个更新",
+  "@pluginsUpdatesFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginsMarket": "插件市场",
+  "pluginsEnabled": "已启用",
+  "pluginsDisabled": "已停用",
+  "pluginsUpdateAvailable": "有更新",
+  "pluginsMoreActions": "更多操作",
+  "pluginsManageSemantic": "管理 {name}",
+  "@pluginsManageSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginsActionsTitle": "选择要执行的插件操作",
+  "pluginsDisable": "停用插件",
+  "pluginsEnable": "启用插件",
+  "pluginsUpdateTo": "更新到 v{version}",
+  "@pluginsUpdateTo": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketTitle": "插件市场",
+  "pluginMarketDescription": "插件来自官方索引仓库；社区插件未经官方审计，安装前请确认来源可信。",
+  "pluginMarketInstallable": "可安装",
+  "pluginMarketUpdatable": "可更新",
+  "pluginMarketSearchHint": "搜索插件名称、ID 或描述",
+  "pluginMarketLoadFailed": "插件市场加载失败",
+  "pluginMarketLoadFailedFallback": "插件市场加载失败，请稍后重试。",
+  "pluginMarketEmpty": "市场暂无插件",
+  "pluginMarketNoMatch": "没有匹配的插件",
+  "pluginMarketEmptyDescription": "索引仓库还没有收录插件，稍后再来看看。",
+  "pluginMarketNoMatchDescription": "换个关键词试试。",
+  "pluginMarketOfficial": "官方",
+  "pluginMarketCommunity": "社区",
+  "pluginMarketCopyHomepage": "复制项目主页",
+  "pluginMarketCopyHomepageSemantic": "复制 {name} 的项目主页",
+  "@pluginMarketCopyHomepageSemantic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstalled": "已安装",
+  "pluginMarketInstalledVersion": "已安装 v{version} · 可更新到 v{latest}",
+  "@pluginMarketInstalledVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstalledAuthor": "已安装 v{version} · {author}",
+  "@pluginMarketInstalledAuthor": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginMarketInstallablePlugins": "可安装插件"
 }

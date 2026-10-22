@@ -17,7 +17,7 @@
   ·
   <a href="https://tinypinglite.github.io/sakuramedia/"><strong>查看 Wiki</strong></a>
   ·
-  <a href="./wiki/public/videos/sakuramedia-demo.mp4"><strong>看演示</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/videos/sakuramedia-demo.mp4"><strong>看演示</strong></a>
 </p>
 
 <p align="center">
@@ -57,6 +57,15 @@
 
 > 时刻依赖来源媒体；切片是独立视频文件。
 
+### 普通视频（PornBox）
+
+- 📼 **普通视频导入**：在「媒体导入 → 视频」选择存储中的目录或视频文件，导入时可直接加入合集；不需要番号，也不走 JAV 的订阅与下载流程。
+- 🗂️ **合集组织**：在合集详情查看成员、手动排序，加入或移出成员；点「播放全部」按当前顺序开始。
+- 🔗 **合集连播**：右侧缩略图面板把各集关键帧拼成一条；滚动或点选即可跳到对应视频和画面，播完自动进入下一部。
+- 📌 **连播中标记时刻**：缩略图右键 →「添加标记」；时刻仍绑定具体视频和媒体，不会因为连播丢失。同一菜单也可以保存到本地；启用以图搜图后还能搜相似图片。
+
+> PornBox 与 JAV 的番号、订阅和下载流程相互独立；合集只负责组织已经入库的普通视频。
+
 ### 管理与扩展
 
 - 🗂️ **媒体库管理**：查看重复文件、多版本和失效媒体；采样文件指纹只读少量片段，跨库/跨存储识别重复。把本地影片通过 115 秒传迁移到网盘，保留媒体记录与播放进度；未命中会跳过并保留源文件。
@@ -72,11 +81,11 @@
   <img src="./wiki/public/images/readme/carousel.gif" alt="界面轮播" width="900" />
 </p>
 <p align="center">
-  <sub>概览 / 发现 / 详情 / 播放器 / 切片</sub>
+  <sub>概览 / 发现 / 详情 / 播放器 / 切片 / PornBox</sub>
 </p>
 
 <p align="center">
-  <a href="./wiki/public/videos/sakuramedia-demo.mp4"><strong>▶ 看 37 秒完整演示</strong></a>
+  <a href="https://tinypinglite.github.io/sakuramedia/videos/sakuramedia-demo.mp4"><strong>▶ 看 45 秒完整演示</strong></a>
 </p>
 
 <details>
@@ -118,6 +127,20 @@
 </p>
 <p align="center">
   <sub>切片页：浏览、播放、加入合集</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/pornbox-collection.png" alt="PornBox 合集详情" width="1100" />
+</p>
+<p align="center">
+  <sub>PornBox 合集：成员、手动顺序、播放全部</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/pornbox-timeline.png" alt="合集连播缩略图与添加标记" width="420" />
+</p>
+<p align="center">
+  <sub>合集连播：缩略图面板按合集拼接；右键 → 添加标记</sub>
 </p>
 
 <p align="center">

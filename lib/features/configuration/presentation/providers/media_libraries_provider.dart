@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
@@ -32,7 +33,12 @@ class MediaLibraries extends _$MediaLibraries
     if (current == null) {
       await reload();
       return state.hasError
-          ? apiErrorMessage(state.error!, fallback: '媒体库加载失败，请稍后重试。')
+          ? ref.apiErrorMessage(
+              state.error!,
+              fallback: ref
+                  .read(appLocalizationsProvider)
+                  .errorMediaLibraryLoadFailed,
+            )
           : null;
     }
     try {
@@ -40,7 +46,12 @@ class MediaLibraries extends _$MediaLibraries
       if (!isDisposed) state = AsyncData(next);
       return null;
     } catch (error) {
-      return apiErrorMessage(error, fallback: '媒体库加载失败，请稍后重试。');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorMediaLibraryLoadFailed,
+      );
     }
   }
 

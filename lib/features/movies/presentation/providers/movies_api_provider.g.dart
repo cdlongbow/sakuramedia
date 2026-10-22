@@ -61,4 +61,4 @@ final class MoviesApiProvider
   }
 }
 
-String _$moviesApiHash() => r'a73af53896a3865e60c34da6d76230dc9c696eab';
+String _$moviesApiHash() => r'54ada3bfca743ba71f6ac4991096132a529985e9';

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/duplicate_media_group_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
@@ -23,10 +24,12 @@ class DuplicateMedia extends _$DuplicateMedia
   int get pageSize => 20;
 
   @override
-  String get initialLoadErrorText => '重复媒体加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorDuplicateMediaLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多重复媒体失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreDuplicateMediaFailed;
 
   @override
   PagedListState<DuplicateMediaGroupDto> pagedOf(

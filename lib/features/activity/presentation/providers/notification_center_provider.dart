@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/activity/presentation/activity_filter_state
 import 'package:sakuramedia/features/activity/presentation/providers/activity_api_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'notification_center_provider.g.dart';
 
@@ -31,6 +32,7 @@ class NotificationCenter extends _$NotificationCenter {
   int _notificationFilterGeneration = 0;
   final Set<int> _pendingReadIds = <int>{};
   final Set<int> _inFlightReadIds = <int>{};
+
   /// 已读回执失败过的通知：失败回滚为未读后，行重建会再次触发
   /// [onNotificationDisplayed]，无抑制会形成无退避的重试风暴。
   /// 只在用户主动刷新（下拉 / 切筛选 / 全部已读）时清空给一次新机会。
@@ -99,7 +101,12 @@ class NotificationCenter extends _$NotificationCenter {
       if (!ref.mounted || generation != _lifecycleGeneration) return;
       state = state.copyWith(
         isInitialLoading: false,
-        initialErrorMessage: apiErrorMessage(error, fallback: '通知加载失败，请稍后重试'),
+        initialErrorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorNotificationLoadFailed,
+        ),
         connectionState: NotificationConnectionState.polling,
         connectionMessage: '通知同步失败，可手动刷新',
       );
@@ -168,7 +175,12 @@ class NotificationCenter extends _$NotificationCenter {
       );
     } catch (error) {
       if (!ref.mounted || !_filterRequests.isCurrent(requestId)) return;
-      final message = apiErrorMessage(error, fallback: '通知筛选刷新失败，请重试');
+      final message = ref.apiErrorMessage(
+        error,
+        fallback: ref
+            .read(appLocalizationsProvider)
+            .errorNotificationFilterRefreshFailed,
+      );
       state = state.copyWith(
         refreshErrorMessage: message,
         filterUpdate: FilterUpdateState.failed(message),
@@ -199,10 +211,11 @@ class NotificationCenter extends _$NotificationCenter {
           );
       if (!ref.mounted || generation != _notificationFilterGeneration) return;
       final ids = state.notifications.map((item) => item.id).toSet();
-      final notifications = _withInFlightReadOverrides(<ActivityNotificationDto>[
-        ...state.notifications,
-        ...response.items.where((item) => ids.add(item.id)),
-      ]);
+      final notifications =
+          _withInFlightReadOverrides(<ActivityNotificationDto>[
+            ...state.notifications,
+            ...response.items.where((item) => ids.add(item.id)),
+          ]);
       _nextPage = response.page + 1;
       state = state.copyWith(
         notifications: notifications,
@@ -212,9 +225,11 @@ class NotificationCenter extends _$NotificationCenter {
     } catch (error) {
       if (ref.mounted && generation == _notificationFilterGeneration) {
         state = state.copyWith(
-          loadMoreErrorMessage: apiErrorMessage(
+          loadMoreErrorMessage: ref.apiErrorMessage(
             error,
-            fallback: '加载更多通知失败，请点击重试',
+            fallback: ref
+                .read(appLocalizationsProvider)
+                .errorLoadMoreNotificationsFailed,
           ),
         );
       }

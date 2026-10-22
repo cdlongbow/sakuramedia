@@ -11,6 +11,7 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_mutatio
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_scope.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_summary_state.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'video_summary_provider.g.dart';
 
@@ -36,10 +37,12 @@ class VideoSummary extends _$VideoSummary
   int get pageSize => 24;
 
   @override
-  String get initialLoadErrorText => '视频列表加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorVideoListLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreFailed;
 
   @override
   VideoFilterState get initialFilter => VideoFilterState.initial;

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
@@ -142,7 +143,10 @@ class MovieDetailReview extends _$MovieDetailReview {
         items: const <MovieReviewDto>[],
         loadedPage: 0,
         hasNextPage: true,
-        initialErrorMessage: apiErrorMessage(error, fallback: '评论加载失败，请稍后重试。'),
+        initialErrorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorReviewLoadFailed,
+        ),
       );
     } finally {
       if (!_isDisposed && generation == _contentGeneration) {
@@ -206,7 +210,12 @@ class MovieDetailReview extends _$MovieDetailReview {
       state = state.copyWith(
         isInitialLoading: false,
         filterUpdate: FilterUpdateState.failed(
-          apiErrorMessage(error, fallback: '评论筛选更新失败，请稍后重试。'),
+          ref.apiErrorMessage(
+            error,
+            fallback: ref
+                .read(appLocalizationsProvider)
+                .errorReviewFilterUpdateFailed,
+          ),
         ),
       );
     }
@@ -254,9 +263,11 @@ class MovieDetailReview extends _$MovieDetailReview {
     } catch (error) {
       if (_isDisposed || generation != _contentGeneration) return;
       state = state.copyWith(
-        loadMoreErrorMessage: apiErrorMessage(
+        loadMoreErrorMessage: ref.apiErrorMessage(
           error,
-          fallback: '评论加载更多失败，请稍后重试。',
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorReviewLoadMoreFailed,
         ),
       );
     } finally {

@@ -1,5 +1,5 @@
-import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 import 'dart:async';
+import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/movie_subscripti
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_manager_state.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscription_status_counts_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/providers/movie_subscriptions_api_provider.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'movie_subscription_manager_provider.g.dart';
 
@@ -52,10 +53,12 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   int get pageSize => 20;
 
   @override
-  String get initialLoadErrorText => '订阅列表加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorSubscriptionListLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多订阅失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreSubscriptionsFailed;
 
   @override
   PagedListState<MovieSubscriptionListItemDto> pagedOf(
@@ -257,7 +260,12 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
   }
 
   String _resetErrorMessage(Object error) {
-    return apiErrorMessage(error, fallback: '重置订阅搜索状态失败');
+    return ref.apiErrorMessage(
+      error,
+      fallback: ref
+          .read(appLocalizationsProvider)
+          .errorResetSubscriptionSearchFailed,
+    );
   }
 
   // --- 取消订阅 --------------------------------------------------------------
@@ -281,7 +289,12 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
-        message: apiErrorMessage(error, fallback: '取消订阅影片失败'),
+        message: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorUnsubscribeMovieFailed,
+        ),
       );
     } finally {
       _unmarkPending(<String>{movieNumber});
@@ -345,7 +358,12 @@ class MovieSubscriptionManager extends _$MovieSubscriptionManager
     } catch (error) {
       return MovieSubscriptionBatchToggleResult.failed(
         requestedCount: targets.length,
-        message: apiErrorMessage(error, fallback: '批量取消订阅影片失败'),
+        message: ref.apiErrorMessage(
+          error,
+          fallback: ref
+              .read(appLocalizationsProvider)
+              .errorBatchUnsubscribeMoviesFailed,
+        ),
       );
     } finally {
       _setBatchAction(null);

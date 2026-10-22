@@ -14,6 +14,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/mutation_even
 import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_scope.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'catalog_search_provider.g.dart';
 
@@ -125,7 +126,10 @@ class CatalogSearch extends _$CatalogSearch {
       state = state.copyWith(
         movieResults: const [],
         actorResults: const [],
-        errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorSearchFailed,
+        ),
         isLoading: false,
       );
     }
@@ -220,10 +224,9 @@ class CatalogSearch extends _$CatalogSearch {
   Future<MovieSubscriptionToggleResult> toggleMovieSubscription(
     String movieNumber,
   ) async {
-    final movie =
-        state.movieResults
-            .where((item) => item.movieNumber == movieNumber)
-            .firstOrNull;
+    final movie = state.movieResults
+        .where((item) => item.movieNumber == movieNumber)
+        .firstOrNull;
     if (movie == null || state.isMovieSubscriptionUpdating(movieNumber)) {
       return const MovieSubscriptionToggleResult.ignored();
     }
@@ -254,7 +257,7 @@ class CatalogSearch extends _$CatalogSearch {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
           fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
         ),
@@ -269,8 +272,9 @@ class CatalogSearch extends _$CatalogSearch {
   Future<ActorSubscriptionToggleResult> toggleActorSubscription(
     int actorId,
   ) async {
-    final actor =
-        state.actorResults.where((item) => item.id == actorId).firstOrNull;
+    final actor = state.actorResults
+        .where((item) => item.id == actorId)
+        .firstOrNull;
     if (actor == null || state.isActorSubscriptionUpdating(actorId)) {
       return const ActorSubscriptionToggleResult.ignored();
     }
@@ -288,10 +292,9 @@ class CatalogSearch extends _$CatalogSearch {
       }
       final items = state.actorResults
           .map(
-            (item) =>
-                item.id == actorId
-                    ? item.copyWith(isSubscribed: subscribe)
-                    : item,
+            (item) => item.id == actorId
+                ? item.copyWith(isSubscribed: subscribe)
+                : item,
           )
           .toList(growable: false);
       state = state.copyWith(actorResults: items);
@@ -303,7 +306,7 @@ class CatalogSearch extends _$CatalogSearch {
           : const ActorSubscriptionToggleResult.unsubscribed();
     } catch (error) {
       return ActorSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
           fallback: subscribe ? '订阅女优失败' : '取消订阅女优失败',
         ),
@@ -389,7 +392,12 @@ class CatalogSearch extends _$CatalogSearch {
               state = state.copyWith(
                 movieResults: const [],
                 actorResults: const [],
-                errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+                errorMessage: ref.apiErrorMessage(
+                  error,
+                  fallback: ref
+                      .read(appLocalizationsProvider)
+                      .errorSearchFailed,
+                ),
                 isLoading: false,
               );
             }
@@ -433,7 +441,12 @@ class CatalogSearch extends _$CatalogSearch {
               state = state.copyWith(
                 movieResults: const [],
                 actorResults: const [],
-                errorMessage: apiErrorMessage(error, fallback: '搜索失败，请稍后重试'),
+                errorMessage: ref.apiErrorMessage(
+                  error,
+                  fallback: ref
+                      .read(appLocalizationsProvider)
+                      .errorSearchFailed,
+                ),
                 isLoading: false,
               );
             }

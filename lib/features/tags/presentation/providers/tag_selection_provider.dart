@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tags_api_provider.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'tag_selection_provider.g.dart';
 
@@ -59,7 +60,10 @@ class TagSelection extends _$TagSelection {
       }
       state = state.copyWith(
         isLoading: false,
-        errorMessage: apiErrorMessage(error, fallback: '标签加载失败，请稍后重试'),
+        errorMessage: ref.apiErrorMessage(
+          error,
+          fallback: ref.read(appLocalizationsProvider).errorTagLoadFailed,
+        ),
       );
     }
   }

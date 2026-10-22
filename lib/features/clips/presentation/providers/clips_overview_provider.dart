@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
@@ -30,10 +31,12 @@ class ClipsOverview extends _$ClipsOverview
   int get pageSize => 24;
 
   @override
-  String get initialLoadErrorText => '切片暂时无法加载，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorClipLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失败，请重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreRetry;
 
   @override
   ClipsFilter get initialFilter => const ClipsFilter();

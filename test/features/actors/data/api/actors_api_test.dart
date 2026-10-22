@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations_en.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -398,6 +399,39 @@ void main() {
       expect(updates.last.results.single.id, 1);
     },
   );
+
+  test('searchOnlineActorsStream localizes progress messages', () async {
+    adapter.enqueueSse(
+      method: 'POST',
+      path: '/actors/metadata-imports',
+      chunks: <String>[
+        'event: search_started\n'
+            'data: {"actor_name":"三上悠亚"}\n\n',
+        'event: image_download_started\n'
+            'data: {"javdb_id":"ActorA1","index":1,"total":2}\n\n',
+        'event: completed\n'
+            'data: {"success":true,"actors":[],"failed_items":[],"stats":{"total":0,"created_count":0,"already_exists_count":0,"failed_count":0}}\n\n',
+      ],
+    );
+
+    final englishApi = ActorsApi(
+      apiClient: apiClient,
+      l10n: () => AppLocalizationsEn(),
+    );
+    final updates = await englishApi
+        .searchOnlineActorsStream(actorName: '三上悠亚')
+        .toList();
+
+    expect(
+      updates.first.message,
+      'Searching external sources for performers...',
+    );
+    expect(
+      updates.any((update) => update.message == 'Downloading avatars 1/2'),
+      isTrue,
+    );
+    expect(updates.last.message, 'Online search complete');
+  });
 
   test(
     'searchOnlineActorsStream keeps actor_not_found as non-error completion',

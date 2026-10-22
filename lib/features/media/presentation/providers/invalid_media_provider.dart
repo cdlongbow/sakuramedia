@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/presentation/actions/media_video_mutation_report.dart';
@@ -19,10 +20,12 @@ class InvalidMedia extends _$InvalidMedia
   int get pageSize => 20;
 
   @override
-  String get initialLoadErrorText => '失效媒体加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorInvalidMediaLoadFailed;
 
   @override
-  String get loadMoreErrorText => '加载更多失效媒体失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreInvalidMediaFailed;
 
   @override
   PagedListState<InvalidMediaDto> pagedOf(InvalidMediaState s) => s.paged;

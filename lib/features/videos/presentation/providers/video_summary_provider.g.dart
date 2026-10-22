@@ -65,7 +65,7 @@ final class VideoSummaryProvider
   }
 }
 
-String _$videoSummaryHash() => r'd484b8da2d7ecdba6e95e6a9c3ba4a0aa487baf6';
+String _$videoSummaryHash() => r'662ad5d48d95907f2192d7d9287d1adcf454ed76';
 
 /// 桌面 / 移动 PornBox 共用的缓存分页列表。
 ///

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/providers/indexer_settings_api_provider.dart';
@@ -38,7 +39,12 @@ class IndexerSettings extends _$IndexerSettings
     if (current == null) {
       await reload();
       return state.hasError
-          ? apiErrorMessage(state.error!, fallback: '索引器加载失败，请稍后重试。')
+          ? ref.apiErrorMessage(
+              state.error!,
+              fallback: ref
+                  .read(appLocalizationsProvider)
+                  .errorIndexerLoadFailed,
+            )
           : null;
     }
     try {
@@ -48,7 +54,10 @@ class IndexerSettings extends _$IndexerSettings
       }
       return null;
     } catch (error) {
-      return apiErrorMessage(error, fallback: '索引器加载失败，请稍后重试。');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref.read(appLocalizationsProvider).errorIndexerLoadFailed,
+      );
     }
   }
 
@@ -65,18 +74,14 @@ class IndexerSettings extends _$IndexerSettings
     final current = state.value;
     if (current == null || current.isSaving) {
       return current?.saved ??
-          const IndexerSettingsDto(
-            indexers: <IndexerEntryDto>[],
-          );
+          const IndexerSettingsDto(indexers: <IndexerEntryDto>[]);
     }
     state = AsyncData(current.copyWith(isSaving: true));
     try {
       final saved = await ref
           .read(indexerSettingsApiProvider)
           .updateSettings(
-            UpdateIndexerSettingsPayload(
-              indexers: current.draft.indexers,
-            ),
+            UpdateIndexerSettingsPayload(indexers: current.draft.indexers),
           );
       if (!isDisposed) {
         state = AsyncData(IndexerSettingsState.fromDto(saved));

@@ -162,4 +162,4 @@ final class AppLanguageTagProvider
   }
 }
 
-String _$appLanguageTagHash() => r'86f33243ef865b33eba76d42aa656bfaf37a9737';
+String _$appLanguageTagHash() => r'3060b34394f4d3391d0dff261e7aface9fd57abc';

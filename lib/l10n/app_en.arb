@@ -29,7 +29,7 @@
     }
   },
   "settingsLanguageTitle": "Interface language",
-  "settingsLanguageHint": "Language is saved on the server and this device. New tasks and notifications use the new language; historical text keeps its original language.",
+  "settingsLanguageHint": "Language is saved on the server and this device. New tasks and notifications use the new language; historical text keeps its original language. Some server-provided text updates after restarting the app.",
   "settingsLanguageSimplifiedChinese": "简体中文",
   "settingsLanguageEnglish": "English",
   "settingsLanguageUpdateFailed": "Could not update the language. Check the backend version or try again later.",
@@ -50,5 +50,113 @@
         "type": "String"
       }
     }
-  }
+  },
+  "errorLoadMoreFailed": "Failed to load more. Tap to retry.",
+  "errorSearchFailed": "Search failed. Please try again later.",
+  "errorIndexerLoadFailed": "Failed to load indexers. Please try again later.",
+  "errorDownloadClientLoadFailed": "Failed to load download clients. Please try again later.",
+  "errorMediaLibraryLoadFailed": "Failed to load media libraries. Please try again later.",
+  "errorRemoveFailed": "Failed to remove. Please try again.",
+  "errorActivityLoadFailed": "Failed to load the activity center. Please try again later.",
+  "errorTasteProfileLoadFailed": "Failed to load the taste profile. Please try again later.",
+  "errorMediaListLoadFailed": "Failed to load the media list. Please try again later.",
+  "errorLoadMoreMediaFailed": "Failed to load more media. Tap to retry.",
+  "errorRankingFilterLoadFailed": "Failed to load ranking filters. Please try again later.",
+  "errorFilterUpdateFailed": "Failed to update filtered results. Please try again.",
+  "errorTorznabConnectionTestFailed": "Torznab connection test failed.",
+  "errorMomentListLoadFailed": "Failed to load moments. Please try again later.",
+  "errorClipLoadFailed": "Clips are temporarily unavailable. Please try again later.",
+  "errorLoadMoreRetry": "Failed to load more. Please try again.",
+  "errorNotificationLoadFailed": "Failed to load notifications. Please try again later.",
+  "errorNotificationFilterRefreshFailed": "Failed to refresh notification filters. Please try again.",
+  "errorLoadMoreNotificationsFailed": "Failed to load more notifications. Tap to retry.",
+  "errorTaskFilterRefreshFailed": "Failed to refresh task filters. Please try again.",
+  "errorLoadMoreTasksFailed": "Failed to load more tasks. Tap to retry.",
+  "errorExecutableTaskLoadFailed": "Failed to load available tasks. Please try again.",
+  "errorRecommendedMovieLoadFailed": "Failed to load recommended movies. Please try again later.",
+  "errorLoadMoreRecommendedMoviesFailed": "Failed to load more recommended movies. Tap to retry.",
+  "errorHotNewMovieLoadFailed": "Failed to load hot new releases. Please try again later.",
+  "errorLoadMoreHotNewMoviesFailed": "Failed to load more hot new releases. Tap to retry.",
+  "errorRecommendedMomentLoadFailed": "Failed to load recommended moments. Please try again later.",
+  "errorLoadMoreRecommendedMomentsFailed": "Failed to load more recommended moments. Tap to retry.",
+  "errorResetSubscriptionSearchFailed": "Failed to reset subscription search status.",
+  "errorUnsubscribeMovieFailed": "Failed to unsubscribe from the movie.",
+  "errorBatchUnsubscribeMoviesFailed": "Failed to unsubscribe from the selected movies.",
+  "errorSubscriptionListLoadFailed": "Failed to load subscriptions. Please try again later.",
+  "errorLoadMoreSubscriptionsFailed": "Failed to load more subscriptions. Tap to retry.",
+  "errorTagLoadFailed": "Failed to load tags. Please try again later.",
+  "errorRankingLoadFailed": "Failed to load rankings. Please try again later.",
+  "errorVideoListLoadFailed": "Failed to load videos. Please try again later.",
+  "errorActorListLoadFailed": "Failed to load performers. Please try again later.",
+  "errorImportFailed": "Import failed. Please try again later.",
+  "errorReviewLoadFailed": "Failed to load reviews. Please try again later.",
+  "errorReviewFilterUpdateFailed": "Failed to update review filters. Please try again later.",
+  "errorReviewLoadMoreFailed": "Failed to load more reviews. Please try again later.",
+  "errorRetryLater": "Please try again later.",
+  "errorAccountProfileLoadFailed": "Failed to load the account profile. Please try again later.",
+  "errorChangeUsernameFailed": "Failed to change the username.",
+  "errorDownloadTaskLoadFailed": "Failed to load download tasks. Please try again later.",
+  "errorInvalidMediaLoadFailed": "Failed to load invalid media. Please try again later.",
+  "errorLoadMoreInvalidMediaFailed": "Failed to load more invalid media. Tap to retry.",
+  "errorDuplicateMediaLoadFailed": "Failed to load duplicate media. Please try again later.",
+  "errorLoadMoreDuplicateMediaFailed": "Failed to load more duplicate media. Tap to retry.",
+  "errorMultiVersionMovieLoadFailed": "Failed to load multi-version movies. Please try again later.",
+  "errorLoadMoreMoviesFailed": "Failed to load more movies. Tap to retry.",
+  "errorUsernameExists": "That username is already taken. Choose another one.",
+  "errorUsernameRequired": "Enter a username.",
+  "errorUsernameUnchanged": "The username is unchanged.",
+  "sseMovieSeriesSearching": "Searching series...",
+  "sseMovieSeriesFound": "Found series in library: {name}",
+  "@sseMovieSeriesFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sseMovieJavdbSeriesFound": "Matched JAVDB series",
+  "sseMovieJavdbSeriesCount": " · {count} videos",
+  "@sseMovieJavdbSeriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sseMovieCandidatesReady": "Found {total} movies. Preparing to import...",
+  "@sseMovieCandidatesReady": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sseMovieImporting": "Importing movies...",
+  "sseMovieImportFinished": "Import complete",
+  "sseMovieImportSuccess": "Import succeeded",
+  "sseMovieImportFailed": "Import failed",
+  "sseMovieProcessing": "Processing...",
+  "sseMovieSearchingExternal": "Searching external sources for movies...",
+  "sseMovieCandidatesFetched": "Fetched movie candidates from online sources",
+  "sseMovieImportingOnline": "Importing online movies...",
+  "sseMovieOnlineImportFinished": "Online movie import complete",
+  "sseMovieOnlineSearchFinished": "Online search complete",
+  "sseMovieSyncingOnlineResults": "Syncing online movie search results...",
+  "sseActorSearchingExternal": "Searching external sources for performers...",
+  "sseActorCandidatesFetched": "Fetched performer candidates from online sources",
+  "sseActorImportingOnline": "Importing online performers...",
+  "sseActorDownloadingAvatar": "Downloading avatars {index}/{total}",
+  "@sseActorDownloadingAvatar": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sseActorOnlineImportFinished": "Online performer import complete",
+  "sseActorOnlineSearchFinished": "Online search complete",
+  "sseActorSyncingOnlineResults": "Syncing online performer search results..."
 }

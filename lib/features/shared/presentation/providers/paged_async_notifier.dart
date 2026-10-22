@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 enum FilterUpdatePhase { idle, waiting, loading, failed }
 
@@ -461,7 +462,7 @@ mixin PagedAsyncNotifierMixin<S, T> on $AsyncNotifier<S> {
       );
       return null;
     } catch (error) {
-      return apiErrorMessage(error, fallback: initialLoadErrorText);
+      return ref.apiErrorMessage(error, fallback: initialLoadErrorText);
     }
   }
 
@@ -586,7 +587,8 @@ mixin FilterablePagedAsyncNotifierMixin<S, T, F>
   Duration get filterDebounceDuration => const Duration(milliseconds: 250);
 
   @protected
-  String get filterUpdateErrorText => '筛选结果更新失败，请重试';
+  String get filterUpdateErrorText =>
+      ref.read(appLocalizationsProvider).errorFilterUpdateFailed;
 
   /// 把新筛选值写进 State（连带清多选等副作用）。注意把 filter 字段本身也写入。
   @protected
@@ -675,7 +677,7 @@ mixin FilterablePagedAsyncNotifierMixin<S, T, F>
             isLoadingMore: false,
             loadMoreErrorMessage: null,
             filterUpdate: FilterUpdateState.failed(
-              apiErrorMessage(error, fallback: filterUpdateErrorText),
+              ref.apiErrorMessage(error, fallback: filterUpdateErrorText),
             ),
           ),
         ),

@@ -74,7 +74,7 @@ final class AccountProfileProvider
   }
 }
 
-String _$accountProfileHash() => r'a0101fe0437e257b3501bd54b8271fd57f7394c1';
+String _$accountProfileHash() => r'50d194be2432225236015ccced710ce1fcc18f12';
 
 /// 账号资料（用户名/创建时间/上次登录）+ 修改用户名。
 ///

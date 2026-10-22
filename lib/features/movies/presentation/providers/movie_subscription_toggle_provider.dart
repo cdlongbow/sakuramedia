@@ -1,8 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
-import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
@@ -114,7 +115,10 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
         ),
       );
     } catch (error) {
-      final reason = apiErrorMessage(error, fallback: '请稍后重试');
+      final reason = ref.apiErrorMessage(
+        error,
+        fallback: ref.read(appLocalizationsProvider).errorRetryLater,
+      );
       return MovieSubscriptionBatchToggleResult.failed(
         requestedCount: numbers.length,
         message: '$step：$reason。已停止操作，已删除 $deletedCount 个媒体，删除操作无法回滚。',
@@ -176,7 +180,7 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
           fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
         ),

@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/providers/clip_collection_detail_state.dart';
@@ -76,7 +77,10 @@ class ClipCollectionDetail extends _$ClipCollectionDetail
         },
       );
     } catch (error) {
-      return apiErrorMessage(error, fallback: '移除失败，请重试');
+      return ref.apiErrorMessage(
+        error,
+        fallback: ref.read(appLocalizationsProvider).errorRemoveFailed,
+      );
     }
   }
 

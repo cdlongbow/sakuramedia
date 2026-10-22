@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/multi_version_movie_dto.dart';
@@ -23,9 +24,11 @@ class MultiVersionMovies extends _$MultiVersionMovies
   @override
   int get pageSize => 20;
   @override
-  String get initialLoadErrorText => '多版本影片加载失败，请稍后重试';
+  String get initialLoadErrorText =>
+      ref.read(appLocalizationsProvider).errorMultiVersionMovieLoadFailed;
   @override
-  String get loadMoreErrorText => '加载更多影片失败，请点击重试';
+  String get loadMoreErrorText =>
+      ref.read(appLocalizationsProvider).errorLoadMoreMoviesFailed;
   @override
   PagedListState<MultiVersionMovieDto> pagedOf(
     PagedListState<MultiVersionMovieDto> state,

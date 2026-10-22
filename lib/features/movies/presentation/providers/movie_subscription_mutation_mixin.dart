@@ -1,7 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/movies/data/dto/listing/subscription_movie_list_item.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/subscription_movie_list_item.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
@@ -68,7 +69,7 @@ mixin MovieSubscriptionMutationMixin<
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
       return MovieSubscriptionToggleResult.failed(
-        message: apiErrorMessage(
+        message: ref.apiErrorMessage(
           error,
           fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
         ),
@@ -138,7 +139,7 @@ mixin MovieSubscriptionMutationMixin<
             ),
           },
           rollback: _restoreSubscriptionStatuses,
-          errorMessageOf: (error) => apiErrorMessage(
+          errorMessageOf: (error) => ref.apiErrorMessage(
             error,
             fallback: subscribe ? '批量订阅影片失败' : '批量取消订阅影片失败',
           ),

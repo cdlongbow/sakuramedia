@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/series_import/movie_search_stream_update.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/series_import_state.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 
 part 'series_import_provider.g.dart';
 
@@ -55,7 +56,10 @@ class SeriesImport extends _$SeriesImport {
             state = state.copyWith(
               isRunning: false,
               hasFailed: true,
-              errorMessage: apiErrorMessage(error, fallback: '导入失败，请稍后重试'),
+              errorMessage: ref.apiErrorMessage(
+                error,
+                fallback: ref.read(appLocalizationsProvider).errorImportFailed,
+              ),
             );
           },
           onDone: () {
@@ -91,10 +95,9 @@ class SeriesImport extends _$SeriesImport {
         isCompleted: true,
         hasNewMovies: stats != null && stats.createdCount > 0,
         hasFailed: update.success == false,
-        errorMessage:
-            update.success == false
-                ? _resolveFailureMessage(update.reason)
-                : null,
+        errorMessage: update.success == false
+            ? _resolveFailureMessage(update.reason)
+            : null,
       );
     }
     state = next;

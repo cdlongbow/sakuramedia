@@ -71,7 +71,7 @@ final class DailyRecommendationFeedProvider
 }
 
 String _$dailyRecommendationFeedHash() =>
-    r'9ac74832d0620d9c1205133007da1340d0b7d4df';
+    r'815e890541d64139cbbd795f6cab7d7458d8e175';
 
 /// 「发现 → 全部推荐影片」分页列表(桌面/移动共用页面,family 参数为每页条数:
 /// 桌面 24 / 移动 18)。
@@ -192,7 +192,7 @@ final class HotActressReleaseFeedProvider
 }
 
 String _$hotActressReleaseFeedHash() =>
-    r'b7a33476e41ec95e9f3c3ce090076a478fb19504';
+    r'7b9851afccd339d1412d98b744e8a0ea03b0e23b';
 
 final class HotActressReleaseFeedFamily extends $Family
     with
@@ -309,7 +309,7 @@ final class MomentRecommendationFeedProvider
 }
 
 String _$momentRecommendationFeedHash() =>
-    r'07cbf260c2fd33d954c98c829e029943926d60bd';
+    r'b342e506bcfcba4e1fea0b0783ae2c41dd5f2620';
 
 /// 「发现 → 全部推荐时刻」分页列表,同上(family 参数为每页条数)。
 ///

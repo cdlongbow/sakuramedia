@@ -16,6 +16,8 @@
   <a href="https://tinypinglite.github.io/sakuramedia/guide/quick-start"><strong>部署后端</strong></a>
   ·
   <a href="https://tinypinglite.github.io/sakuramedia/"><strong>查看 Wiki</strong></a>
+  ·
+  <a href="./wiki/public/videos/sakuramedia-demo.mp4"><strong>看演示</strong></a>
 </p>
 
 <p align="center">
@@ -61,6 +63,72 @@
 - 🔔 **任务与通知**：任务中心查看下载、导入和后台任务；通知提醒，通知渠道可扩展。
 - 🧩 **插件扩展**：存储、下载、排行榜、字幕、女优资料补全等能力通过插件接入。
 - 💻 **多客户端**：Windows / macOS / Android / iOS；桌面端负责配置和集中管理，移动端用于浏览和观看，具体入口因平台而异。
+
+## 界面
+
+> 截图使用演示数据，封面与缩略图已虚化。完整演示见下方视频。
+
+<p align="center">
+  <img src="./wiki/public/images/readme/carousel.gif" alt="界面轮播" width="900" />
+</p>
+<p align="center">
+  <sub>概览 / 发现 / 详情 / 播放器 / 切片</sub>
+</p>
+
+<p align="center">
+  <a href="./wiki/public/videos/sakuramedia-demo.mp4"><strong>▶ 看 37 秒完整演示</strong></a>
+</p>
+
+<details>
+<summary><strong>更多截图</strong></summary>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/desktop-overview.png" alt="概览" width="1100" />
+</p>
+<p align="center">
+  <sub>概览：媒体资产、观看趋势、存储分布</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/desktop-discover.png" alt="发现页" width="49%" />
+  <img src="./wiki/public/images/readme/desktop-detail.png" alt="影片详情" width="49%" />
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/desktop-player.png" alt="播放器与缩略图时间轴" width="1100" />
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/thumbnail-menu.png" alt="从缩略图搜相似画面" width="1100" />
+</p>
+<p align="center">
+  <sub>从缩略图右键 → 相似图片</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/thumbnail-timeline.gif" alt="缩略图时间轴演示" width="400" />
+  <img src="./wiki/public/images/readme/clip-selection.png" alt="圈选切片" width="400" />
+</p>
+<p align="center">
+  <sub>缩略图时间轴 / 圈选切片</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/clips-page.png" alt="切片页" width="1100" />
+</p>
+<p align="center">
+  <sub>切片页：浏览、播放、加入合集</sub>
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/desktop-image-search.png" alt="以图搜图" width="1100" />
+</p>
+
+<p align="center">
+  <img src="./wiki/public/images/readme/mobile-home.png" alt="移动端" width="260" />
+</p>
+
+</details>
 
 ## 怎么存、怎么下
 

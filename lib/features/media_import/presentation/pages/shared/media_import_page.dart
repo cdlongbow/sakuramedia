@@ -10,6 +10,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media_import/presentation/directory_picker_dialog.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/imports/video_import_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
@@ -51,6 +52,7 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
 
   Future<void> _createImport() async {
     if (_isCreating) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _isCreating = true);
     try {
       switch (_activeTab) {
@@ -67,7 +69,7 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
                 sourceDisposition: request.sourceDisposition,
               );
           if (mounted) {
-            showToast('导入任务 #${accepted.taskRunId} 已提交，请在任务中心查看进度');
+            showToast(l10n.mediaImportTaskSubmitted(accepted.taskRunId));
           }
         case _ImportTab.video:
           final request = await showVideoImportDialog(context);
@@ -83,12 +85,18 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
                 collectionId: request.collectionId,
               );
           if (mounted) {
-            showToast('视频导入任务 #${accepted.taskRunId} 已提交，请在任务中心查看进度');
+            showToast(l10n.mediaImportVideoTaskSubmitted(accepted.taskRunId));
           }
       }
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '提交导入任务失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.mediaImportSubmitFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -100,19 +108,19 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
     }
   }
 
-  String get _title => switch (_activeTab) {
-    _ImportTab.javMovie => 'JAV 影片导入',
-    _ImportTab.video => '视频导入',
+  String _title(AppLocalizations l10n) => switch (_activeTab) {
+    _ImportTab.javMovie => l10n.mediaImportTitleJav,
+    _ImportTab.video => l10n.mediaImportTitleVideo,
   };
 
-  String get _description => switch (_activeTab) {
-    _ImportTab.javMovie => '浏览存储中的目录，批量导入 JAV 影片。',
-    _ImportTab.video => '选择存储中的目录或视频文件，可同时加入合集。',
+  String _description(AppLocalizations l10n) => switch (_activeTab) {
+    _ImportTab.javMovie => l10n.mediaImportDescriptionJav,
+    _ImportTab.video => l10n.mediaImportDescriptionVideo,
   };
 
-  Widget _buildCreateButton() => AppButton(
+  Widget _buildCreateButton(AppLocalizations l10n) => AppButton(
     key: const Key('media-import-create-button'),
-    label: '新建导入',
+    label: l10n.mediaImportCreateAction,
     variant: AppButtonVariant.primary,
     isLoading: _isSubmitting,
     icon: const Icon(Icons.drive_folder_upload_outlined),
@@ -121,9 +129,10 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     final description = Text(
-      '$_description 导入进度和结果请前往任务中心查看。',
+      '${_description(l10n)} ${l10n.mediaImportDescriptionSuffix}',
       style: resolveAppTextStyle(
         context,
         size: isMobile ? AppTextSize.s14 : AppTextSize.s12,
@@ -136,16 +145,19 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
         SliverToBoxAdapter(
           child: AppTabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(key: Key('media-import-tab-jav'), text: 'JAV 影片'),
-              Tab(key: Key('media-import-tab-video'), text: '视频'),
+            tabs: [
+              Tab(key: const Key('media-import-tab-jav'), text: l10n.mediaImportTabJav),
+              Tab(
+                key: const Key('media-import-tab-video'),
+                text: l10n.mediaImportTabVideo,
+              ),
             ],
           ),
         ),
         SliverToBoxAdapter(child: SizedBox(height: context.appSpacing.lg)),
         SliverToBoxAdapter(
           child: AppContentCard(
-            title: _title,
+            title: _title(l10n),
             titleStyle: resolveAppTextStyle(
               context,
               size: isMobile ? AppTextSize.s16 : AppTextSize.s14,
@@ -159,7 +171,7 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
                     children: [
                       Expanded(child: description),
                       SizedBox(width: context.appSpacing.lg),
-                      _buildCreateButton(),
+                      _buildCreateButton(l10n),
                     ],
                   ),
           ),
@@ -170,7 +182,7 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
               padding: EdgeInsets.only(top: context.appSpacing.md),
               child: AppButton(
                 key: const Key('media-import-task-center-button'),
-                label: '查看导入任务',
+                label: l10n.mediaImportViewTasksAction,
                 icon: const Icon(Icons.task_alt_outlined),
                 trailingIcon: const Icon(Icons.chevron_right_rounded),
                 onPressed: () => context.push(mobileActivityPath),
@@ -188,7 +200,7 @@ class _MediaImportPageState extends ConsumerState<MediaImportPage>
           top: false,
           child: Padding(
             padding: EdgeInsets.only(top: context.appSpacing.lg),
-            child: _buildCreateButton(),
+            child: _buildCreateButton(l10n),
           ),
         ),
       ],

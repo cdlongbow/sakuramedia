@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/media/presentation/widgets/shared/media_lis
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_async_section.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -307,6 +308,7 @@ class _MediaListHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final asyncState = ref.watch(mediaBrowseProvider);
     final librariesAsync = ref.watch(mediaLibrariesProvider);
     final librariesState = librariesAsync.value ?? MediaLibrariesState.empty;
@@ -327,7 +329,7 @@ class _MediaListHeader extends ConsumerWidget {
     if (mobile && selectionMode) {
       return AppListHeader.selection(
         key: Key('$keyPrefix-selection-header'),
-        selectionLabel: '已选 $selectionCount 项',
+        selectionLabel: l10n.mediaListSelectedItems(selectionCount),
         selectionExitButtonKey: Key('$keyPrefix-exit-selection-button'),
         onExitSelection: () {
           ref.read(mediaBrowseProvider.notifier).clearSelection();
@@ -336,7 +338,9 @@ class _MediaListHeader extends ConsumerWidget {
         actionSlots: [
           AppTextButton(
             key: Key('$keyPrefix-select-all-button'),
-            label: allLoadedSelected ? '取消全选本页' : '全选本页',
+            label: allLoadedSelected
+                ? l10n.mediaListClearSelectAllLoaded
+                : l10n.mediaListSelectAllLoaded,
             size: AppTextButtonSize.small,
             onPressed: !hasItems || busy
                 ? null
@@ -359,9 +363,9 @@ class _MediaListHeader extends ConsumerWidget {
           libraries: librariesState.libraries,
           ref: ref,
         ),
-        filterLabel: filter.triggerLabel,
+        filterLabel: filter.triggerLabel(l10n: l10n),
         filterButtonKey: Key('$keyPrefix-filter-trigger'),
-        filterTooltip: '筛选',
+        filterTooltip: l10n.mediaListFilterTooltip,
         filterUpdate:
             currentState?.paged.filterUpdate ?? const FilterUpdateState.idle(),
         hasPreviousFilterItems: hasItems,
@@ -370,7 +374,7 @@ class _MediaListHeader extends ConsumerWidget {
         informationSlots: [
           AppListHeaderInfo(
             key: Key('$keyPrefix-total-text'),
-            label: '共 $total 条',
+            label: l10n.mediaListTotalItems(total),
           ),
         ],
         actionSlots: [
@@ -384,14 +388,16 @@ class _MediaListHeader extends ConsumerWidget {
           ),
           AppTextButton(
             key: Key('$keyPrefix-enter-selection-button'),
-            label: '选择',
+            label: l10n.mediaListEnterSelection,
             size: AppTextButtonSize.xSmall,
             icon: const Icon(Icons.check_circle_outline, size: 14),
             onPressed: hasItems && !busy ? onEnterSelection : null,
           ),
           AppIconButton(
             key: Key('$keyPrefix-refresh-button'),
-            tooltip: isInitialLoading ? '刷新中' : '刷新',
+            tooltip: isInitialLoading
+                ? l10n.mediaListRefreshing
+                : l10n.commonRefresh,
             icon: const Icon(Icons.refresh_rounded),
             onPressed: isInitialLoading
                 ? null
@@ -411,8 +417,8 @@ class _MediaListHeader extends ConsumerWidget {
         onReset: () => _resetFilter(ref),
       ),
       totalText: hasSelection
-          ? '共 $total 条 · 已选 $selectionCount 项'
-          : '共 $total 条',
+          ? l10n.mediaListTotalItemsWithSelection(total, selectionCount)
+          : l10n.mediaListTotalItems(total),
       totalKey: const Key('media-management-total-text'),
       filterUpdate:
           currentState?.paged.filterUpdate ?? const FilterUpdateState.idle(),
@@ -442,8 +448,8 @@ class _MediaListHeader extends ConsumerWidget {
         resetThumbnailsLabel:
             filter.thumbnailGenerationState ==
                 MediaBrowseThumbnailGenerationFilter.succeeded
-            ? '重新生成缩略图'
-            : '重试缩略图',
+            ? l10n.mediaListActionRegenerateThumbnails
+            : l10n.mediaListActionRetryThumbnails,
         onBatchResetThumbnails: onBatchResetThumbnails,
         onRefresh: () => unawaited((onRefresh ?? () => _defaultRefresh(ref))()),
       ),
@@ -542,6 +548,7 @@ class _MediaListBodySliver extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // 多选集合变化时 paged 段保持相等，因此列表 sliver 不会整体重建；
     // 每一行通过 [_MediaRowConsumer] 只订阅自己的选中态。
     // loadMore 的 loading / 失败只影响页脚：这里清成中立值，翻页状态翻转
@@ -594,8 +601,8 @@ class _MediaListBodySliver extends ConsumerWidget {
       asyncState: asyncPaged,
       pagedOf: (state) => state,
       itemSpacing: context.appSpacing.sm,
-      initialErrorMessage: '媒体列表加载失败，请稍后重试',
-      emptyMessage: '当前筛选下没有媒体记录。调整筛选条件或稍后再试。',
+      initialErrorMessage: l10n.errorMediaListLoadFailed,
+      emptyMessage: l10n.mediaListEmpty,
       // loading 用占位媒体渲染真实行，由 [AppSkeletonizer] 灰化。
       skeletonBuilder: (context) {
         final placeholders = mediaListItemPlaceholders();
@@ -662,6 +669,7 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final isSelected = ref.watch(
       mediaBrowseProvider.select(
         (asyncState) => asyncState.value?.isSelected(item.id) ?? false,
@@ -734,7 +742,9 @@ class _MediaMobileRowConsumer extends ConsumerWidget {
             : null,
         isRetryingThumbnails: isRetrying,
         canRetryThumbnails: isRetryable && !busy,
-        retryThumbnailsLabel: isRegenerateThumbnails ? '重新生成缩略图' : '重试缩略图',
+        retryThumbnailsLabel: isRegenerateThumbnails
+            ? l10n.mediaListActionRegenerateThumbnails
+            : l10n.mediaListActionRetryThumbnails,
         onOpenActions: selectionMode || onOpenRowActions == null
             ? null
             : () => unawaited(onOpenRowActions!(item)),
@@ -780,6 +790,7 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final selectionCount = ref.watch(
       mediaBrowseProvider.select(
         (asyncState) => asyncState.value?.selectionCount ?? 0,
@@ -791,14 +802,16 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
       ),
     );
     final resetThumbnailsLabel = switch (resetThumbnailsMode) {
-      MediaBrowseThumbnailGenerationFilter.terminal => '重试',
-      MediaBrowseThumbnailGenerationFilter.succeeded => '重新生成',
+      MediaBrowseThumbnailGenerationFilter.terminal =>
+        l10n.mediaListBatchRetryThumbnails,
+      MediaBrowseThumbnailGenerationFilter.succeeded =>
+        l10n.mediaListBatchRegenerateThumbnails,
       _ => null,
     };
     final busy = isDeleting || isTransferring || isResettingThumbnails;
     return AppSelectionBottomBar(
       leading: Text(
-        '已选 $selectionCount 项',
+        l10n.mediaListSelectedItems(selectionCount),
         key: Key('$keyPrefix-bottom-selection-count'),
         style: resolveAppTextStyle(
           context,
@@ -810,7 +823,7 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
       actions: [
         AppButton(
           key: Key('$keyPrefix-batch-transfer-button'),
-          label: '迁移',
+          label: l10n.mediaListActionTransfer,
           size: AppButtonSize.small,
           icon: const Icon(Icons.drive_file_move_outline),
           isLoading: isTransferring,
@@ -818,7 +831,7 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
         ),
         AppButton(
           key: Key('$keyPrefix-batch-delete-button'),
-          label: '删除',
+          label: l10n.commonDelete,
           size: AppButtonSize.small,
           variant: AppButtonVariant.danger,
           icon: const Icon(Icons.delete_outline_rounded),
@@ -880,6 +893,7 @@ class _MediaRowConsumer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final isSelected = ref.watch(
       mediaBrowseProvider.select(
         (asyncState) => asyncState.value?.isSelected(item.id) ?? false,
@@ -946,7 +960,9 @@ class _MediaRowConsumer extends ConsumerWidget {
             : null,
         isRetryingThumbnails: isRetrying,
         canRetryThumbnails: isRetryable && !busy,
-        retryThumbnailsLabel: isRegenerateThumbnails ? '重新生成缩略图' : '重试缩略图',
+        retryThumbnailsLabel: isRegenerateThumbnails
+            ? l10n.mediaListActionRegenerateThumbnails
+            : l10n.mediaListActionRetryThumbnails,
         showUpdatedAt: true,
       );
     }
@@ -1021,6 +1037,7 @@ class _MediaListActionBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     if (!selectionMode) {
       return Wrap(
@@ -1034,7 +1051,9 @@ class _MediaListActionBar extends ConsumerWidget {
           ),
           AppIconButton(
             key: const Key('media-management-refresh-button'),
-            tooltip: isInitialLoading ? '刷新中' : '刷新',
+            tooltip: isInitialLoading
+                ? l10n.mediaListRefreshing
+                : l10n.commonRefresh,
             icon: const Icon(Icons.refresh_rounded),
             onPressed: isInitialLoading ? null : onRefresh,
           ),
@@ -1048,7 +1067,9 @@ class _MediaListActionBar extends ConsumerWidget {
       children: [
         AppButton(
           key: const Key('media-management-select-all-button'),
-          label: allLoadedSelected ? '取消全选本页' : '全选本页',
+          label: allLoadedSelected
+              ? l10n.mediaListClearSelectAllLoaded
+              : l10n.mediaListSelectAllLoaded,
           size: AppButtonSize.small,
           variant: AppButtonVariant.secondary,
           onPressed: !hasItems || busy
@@ -1060,7 +1081,7 @@ class _MediaListActionBar extends ConsumerWidget {
         if (hasSelection)
           AppButton(
             key: const Key('media-management-batch-transfer-button'),
-            label: '迁移（$selectionCount）',
+            label: l10n.mediaListBatchTransfer(selectionCount),
             size: AppButtonSize.small,
             icon: const Icon(Icons.drive_file_move_outline),
             isLoading: isTransferring,
@@ -1071,7 +1092,10 @@ class _MediaListActionBar extends ConsumerWidget {
             onBatchResetThumbnails != null)
           AppButton(
             key: const Key('media-management-batch-reset-thumbnails-button'),
-            label: '$resetThumbnailsLabel（$selectionCount）',
+            label: l10n.mediaListBatchResetThumbnailsCount(
+              resetThumbnailsLabel,
+              selectionCount,
+            ),
             size: AppButtonSize.small,
             icon: const Icon(Icons.refresh_rounded),
             isLoading: isResettingThumbnails,
@@ -1080,7 +1104,7 @@ class _MediaListActionBar extends ConsumerWidget {
         if (hasSelection)
           AppButton(
             key: const Key('media-management-batch-delete-button'),
-            label: '批量删除（$selectionCount）',
+            label: l10n.mediaListBatchDelete(selectionCount),
             size: AppButtonSize.small,
             variant: AppButtonVariant.danger,
             icon: const Icon(Icons.delete_outline_rounded),
@@ -1089,7 +1113,7 @@ class _MediaListActionBar extends ConsumerWidget {
           ),
         AppTextButton(
           key: const Key('media-management-exit-selection-button'),
-          label: '退出选择',
+          label: l10n.mediaListExitSelection,
           size: AppTextButtonSize.small,
           onPressed: busy ? null : () => _exitSelection(ref),
         ),

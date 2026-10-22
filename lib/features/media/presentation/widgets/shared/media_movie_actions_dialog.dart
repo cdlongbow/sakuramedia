@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -116,7 +117,7 @@ class _MediaMovieActionsContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          item.displayHeading,
+          item.displayHeading(l10n: AppLocalizations.of(context)),
           key: const Key('media-row-movie-actions-title'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -146,6 +147,7 @@ class _MediaMovieActionsContent extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return MediaPreviewActionGrid(
       gridKey: const Key('media-row-movie-actions-grid'),
       layout: MediaPreviewActionGridLayout.horizontalScroll,
@@ -154,14 +156,14 @@ class _MediaMovieActionsContent extends StatelessWidget {
       actions: [
         MediaPreviewActionItem(
           key: const Key('media-row-movie-actions-play'),
-          label: '播放',
+          label: l10n.mediaListActionPlay,
           icon: Icons.play_circle_outline_rounded,
           onTap: _canPlay ? () => _run(context, MediaMovieAction.play) : null,
         ),
         if (canOpenMovieDetail)
           MediaPreviewActionItem(
             key: const Key('media-row-movie-actions-open-detail'),
-            label: '影片详情',
+            label: l10n.mediaListActionMovieDetail,
             icon: Icons.info_outline_rounded,
             onTap: () => _run(context, MediaMovieAction.openMovieDetail),
           ),

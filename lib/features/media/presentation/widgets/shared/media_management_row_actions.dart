@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 
@@ -16,6 +17,7 @@ Future<MediaManagementRowAction?> showMediaManagementRowActions({
   required String? retryThumbnailsLabel,
   String? retryThumbnailsSubtitle,
 }) {
+  final l10n = AppLocalizations.of(context);
   return showAppActionMenu<MediaManagementRowAction>(
     context: context,
     presentation: AppMenuPresentation.bottomDrawer,
@@ -31,18 +33,18 @@ Future<MediaManagementRowAction?> showMediaManagementRowActions({
         icon: Icons.refresh_rounded,
         visible: retryThumbnailsLabel != null,
       ),
-      const AppMenuItem(
-        key: Key('media-management-row-action-transfer'),
+      AppMenuItem(
+        key: const Key('media-management-row-action-transfer'),
         value: MediaManagementRowAction.transfer,
-        label: '迁移',
-        subtitle: '迁移到其它媒体库',
+        label: l10n.mediaListActionTransfer,
+        subtitle: l10n.mediaListActionTransferToLibrary,
         icon: Icons.drive_file_move_outline,
       ),
-      const AppMenuItem(
-        key: Key('media-management-row-action-delete'),
+      AppMenuItem(
+        key: const Key('media-management-row-action-delete'),
         value: MediaManagementRowAction.delete,
-        label: '删除媒体',
-        subtitle: '删除该媒体及其文件，不可恢复',
+        label: l10n.mediaListRowActionDelete,
+        subtitle: l10n.mediaListRowActionDeleteSubtitle,
         icon: Icons.delete_outline_rounded,
         tone: AppTextTone.error,
       ),

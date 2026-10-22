@@ -154,7 +154,7 @@ class _GroupHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  movie.displayHeading,
+                  movie.displayHeading(l10n: AppLocalizations.of(context)),
                   key: Key('$keyPrefix-row-heading-${movie.id}'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -223,6 +223,7 @@ class _FileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final filenameStyle = resolveAppTextStyle(
       context,
@@ -254,8 +255,8 @@ class _FileRow extends StatelessWidget {
                           message:
                               selectionLimitReached &&
                                   !selectedIds!.contains(item.id)
-                              ? '至少保留一个'
-                              : '选择此项',
+                              ? l10n.mediaListKeepAtLeastOne
+                              : l10n.mediaListSelectItem,
                           child: Checkbox(
                             key: Key('$keyPrefix-select-${item.id}'),
                             value: selectedIds!.contains(item.id),
@@ -285,7 +286,7 @@ class _FileRow extends StatelessWidget {
                             Text(
                               buildMediaListItemMetaLabel(
                                 item,
-                                l10n: AppLocalizations.of(context),
+                                l10n: l10n,
                                 library: library,
                               ),
                               maxLines: 1,
@@ -373,8 +374,8 @@ class _FileTitleLine extends StatelessWidget {
             ],
             if (!item.valid) ...[
               SizedBox(width: spacing.sm),
-              const AppBadge(
-                label: '失效',
+              AppBadge(
+                label: AppLocalizations.of(context).mediaListInvalidBadge,
                 tone: AppBadgeTone.error,
                 size: AppBadgeSize.compact,
               ),

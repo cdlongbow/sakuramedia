@@ -23,6 +23,7 @@ import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_ver
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -68,6 +69,7 @@ class MediaManagementContent extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final tabTickerProvider = useSingleTickerProvider();
     final tabController = useMemoized(
       () => TabController(length: 4, vsync: tabTickerProvider),
@@ -132,10 +134,22 @@ class MediaManagementContent extends HookConsumerWidget {
           AppTabBar(
             controller: tabController,
             tabs: [
-              Tab(key: Key('$keyPrefix-tab-list'), text: '媒体列表'),
-              Tab(key: Key('$keyPrefix-tab-duplicates'), text: '重复媒体'),
-              Tab(key: Key('$keyPrefix-tab-versions'), text: '多版本影片'),
-              Tab(key: Key('$keyPrefix-tab-maintenance'), text: '失效媒体'),
+              Tab(
+                key: Key('$keyPrefix-tab-list'),
+                text: l10n.mediaListTabList,
+              ),
+              Tab(
+                key: Key('$keyPrefix-tab-duplicates'),
+                text: l10n.mediaListTabDuplicates,
+              ),
+              Tab(
+                key: Key('$keyPrefix-tab-versions'),
+                text: l10n.mediaListTabVersions,
+              ),
+              Tab(
+                key: Key('$keyPrefix-tab-maintenance'),
+                text: l10n.mediaListTabInvalid,
+              ),
             ],
           ),
           SizedBox(height: context.appSpacing.lg),
@@ -346,6 +360,7 @@ class MediaManagementContent extends HookConsumerWidget {
     ValueNotifier<bool> selectionMode,
   ) async {
     if (isDeleting.value) return;
+    final l10n = AppLocalizations.of(context);
     final browseState = ref.read(mediaBrowseProvider).value;
     if (browseState == null) return;
     final selectedIds = browseState.selectedIds.toList(growable: false);
@@ -356,9 +371,9 @@ class MediaManagementContent extends HookConsumerWidget {
       dialogKey: const Key('media-management-batch-delete-dialog'),
       confirmKey: const Key('media-management-batch-delete-confirm-button'),
       cancelKey: const Key('media-management-batch-delete-cancel-button'),
-      title: '批量删除媒体',
-      message: '将删除已选 ${selectedIds.length} 项媒体及其对应文件，且不可恢复。请确认要继续吗？',
-      confirmLabel: '删除',
+      title: l10n.mediaListBatchDeleteTitle,
+      message: l10n.mediaListBatchDeleteMessage(selectedIds.length),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !context.mounted) return;
@@ -387,14 +402,15 @@ class MediaManagementContent extends HookConsumerWidget {
     ValueNotifier<int?> deletingMediaId,
   ) async {
     if (deletingMediaId.value != null) return;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
       dialogKey: Key('media-management-delete-dialog-${item.id}'),
       confirmKey: Key('media-management-delete-confirm-${item.id}'),
       cancelKey: Key('media-management-delete-cancel-${item.id}'),
-      title: '删除媒体',
-      message: '确认删除“${item.fileName}”及对应文件？该操作不可恢复。',
-      confirmLabel: '删除',
+      title: l10n.mediaListDeleteTitle,
+      message: l10n.mediaListDeleteMessage(item.fileName),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !context.mounted) return;
@@ -404,10 +420,16 @@ class MediaManagementContent extends HookConsumerWidget {
       await ref.read(mediaApiProvider).deleteMedia(mediaId: item.id);
       ref.read(mediaBrowseProvider.notifier).removeItemsByIds([item.id]);
       _reportDeletedPornboxVideos(ref, [item]);
-      if (context.mounted) showToast('媒体已删除');
+      if (context.mounted) showToast(l10n.mediaListDeleteSuccess);
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '删除媒体失败'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.mediaListDeleteFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (context.mounted && deletingMediaId.value == item.id) {
@@ -446,6 +468,7 @@ class MediaManagementContent extends HookConsumerWidget {
     ValueNotifier<int?>? transferringMediaId,
   }) async {
     if (isTransferring.value || mediaIds.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
     isTransferring.value = true;
     transferringMediaId?.value = mediaIds.first;
     try {
@@ -458,7 +481,7 @@ class MediaManagementContent extends HookConsumerWidget {
       // 选目标库期间不显示卡片 loading，避免转圈一直转。
       transferringMediaId?.value = null;
       if (candidates.targets.isEmpty) {
-        showToast('当前媒体库没有可用的迁移目标');
+        showToast(l10n.mediaListTransferNoTarget);
         return;
       }
       final targetLibraryId = await showMediaTransferTargetDialog(
@@ -475,10 +498,16 @@ class MediaManagementContent extends HookConsumerWidget {
       );
       ref.read(mediaBrowseProvider.notifier).clearSelection();
       selectionMode?.value = false;
-      showToast('迁移任务 #${accepted.taskRunId} 已提交，请在活动中心查看进度');
+      showToast(l10n.mediaListTransferSubmitted(accepted.taskRunId));
     } catch (error) {
       if (context.mounted) {
-        showToast(apiErrorMessage(error, fallback: '提交迁移任务失败，请稍后重试。'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.mediaListTransferSubmitFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (context.mounted) {
@@ -495,6 +524,7 @@ class MediaManagementContent extends HookConsumerWidget {
     ValueNotifier<bool> selectionMode,
   ) async {
     if (isResettingThumbnails.value) return;
+    final l10n = AppLocalizations.of(context);
     final browseState = ref.read(mediaBrowseProvider).value;
     if (browseState == null || browseState.selectedIds.isEmpty) return;
     final selectedIds = browseState.selectedIds.toList(growable: false);
@@ -512,11 +542,15 @@ class MediaManagementContent extends HookConsumerWidget {
       cancelKey: const Key(
         'media-management-batch-reset-thumbnails-cancel-button',
       ),
-      title: force ? '重新生成缩略图' : '重试缩略图',
+      title: force
+          ? l10n.mediaListThumbnailRegenerateTitle
+          : l10n.mediaListThumbnailRetryTitle,
       message: force
-          ? '将删除已选 ${selectedIds.length} 项现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？'
-          : '将把已选 ${selectedIds.length} 项重新加入缩略图生成队列。确认继续吗？',
-      confirmLabel: force ? '重新生成' : '重试',
+          ? l10n.mediaListThumbnailBatchRegenerateMessage(selectedIds.length)
+          : l10n.mediaListThumbnailBatchRetryMessage(selectedIds.length),
+      confirmLabel: force
+          ? l10n.mediaListThumbnailRegenerateConfirm
+          : l10n.commonRetry,
     );
     if (!confirmed || !context.mounted) return;
 
@@ -542,6 +576,7 @@ class MediaManagementContent extends HookConsumerWidget {
         item.thumbnailGenerationState ==
         MediaThumbnailGenerationState.succeeded;
     if (force) {
+      final l10n = AppLocalizations.of(context);
       final confirmed = await showAppConfirmDialog(
         context,
         dialogKey: const Key(
@@ -553,9 +588,9 @@ class MediaManagementContent extends HookConsumerWidget {
         cancelKey: const Key(
           'media-management-single-regenerate-thumbnails-cancel-button',
         ),
-        title: '重新生成缩略图',
-        message: '将删除该媒体现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？',
-        confirmLabel: '重新生成',
+        title: l10n.mediaListThumbnailRegenerateTitle,
+        message: l10n.mediaListThumbnailSingleRegenerateMessage,
+        confirmLabel: l10n.mediaListThumbnailRegenerateConfirm,
       );
       if (!confirmed || !context.mounted) return;
     }
@@ -583,19 +618,24 @@ class MediaManagementContent extends HookConsumerWidget {
     required ValueNotifier<int?> deletingMediaId,
   }) async {
     final state = item.thumbnailGenerationState;
+    final l10n = AppLocalizations.of(context);
     final retryLabel = switch (state) {
-      MediaThumbnailGenerationState.terminal => '重试缩略图',
-      MediaThumbnailGenerationState.succeeded => '重新生成缩略图',
+      MediaThumbnailGenerationState.terminal =>
+        l10n.mediaListActionRetryThumbnails,
+      MediaThumbnailGenerationState.succeeded =>
+        l10n.mediaListActionRegenerateThumbnails,
       _ => null,
     };
     final action = await showMediaManagementRowActions(
       context: context,
-      title: item.displayHeading,
+      title: item.displayHeading(l10n: l10n),
       titleSubtitle: item.displaySubtitle,
       retryThumbnailsLabel: retryLabel,
       retryThumbnailsSubtitle: switch (state) {
-        MediaThumbnailGenerationState.terminal => '重新加入缩略图生成队列',
-        MediaThumbnailGenerationState.succeeded => '删除已有缩略图并重新生成',
+        MediaThumbnailGenerationState.terminal =>
+          l10n.mediaListRowActionRetrySubtitle,
+        MediaThumbnailGenerationState.succeeded =>
+          l10n.mediaListRowActionRegenerateSubtitle,
         _ => null,
       },
     );
@@ -636,6 +676,7 @@ class MediaManagementContent extends HookConsumerWidget {
     bool force = false,
   }) async {
     if (isResettingThumbnails.value) return;
+    final l10n = AppLocalizations.of(context);
     isResettingThumbnails.value = true;
     retryingThumbnailMediaId?.value = mediaIds.first;
     try {
@@ -650,20 +691,32 @@ class MediaManagementContent extends HookConsumerWidget {
           .refresh();
       if (!context.mounted) return;
       if (refreshMessage != null) {
-        showToast('已重置 $resetCount 项，但列表刷新失败：$refreshMessage');
+        showToast(
+          l10n.mediaListThumbnailResetRefreshFailed(
+            resetCount,
+            refreshMessage,
+          ),
+        );
       } else if (resetCount == 0) {
-        showToast(force ? '没有可重新生成的媒体' : '媒体已无可重试的失败状态');
+        showToast(
+          force
+              ? l10n.mediaListThumbnailNothingToRegenerate
+              : l10n.mediaListThumbnailNothingToRetry,
+        );
       } else if (force) {
-        showToast('已提交 $resetCount 项缩略图重新生成，生成完成后自动恢复');
+        showToast(l10n.mediaListThumbnailRegenerateSubmitted(resetCount));
       } else {
-        showToast('已重置 $resetCount 项缩略图，已重新加入生成队列');
+        showToast(l10n.mediaListThumbnailRetrySubmitted(resetCount));
       }
     } catch (error) {
       if (context.mounted) {
         showToast(
           apiErrorMessage(
             error,
-            fallback: force ? '重新生成缩略图失败，请稍后重试。' : '重试缩略图失败，请稍后重试。',
+            fallback: force
+                ? l10n.mediaListThumbnailRegenerateFailed
+                : l10n.mediaListThumbnailRetryFailed,
+            l10n: l10n,
           ),
         );
       }

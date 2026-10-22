@@ -1,3 +1,6 @@
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
+
 /// Provider-owned opaque source reference selected from the browse response.
 class MediaImportSource {
   const MediaImportSource({required this.sourceRef});
@@ -17,15 +20,30 @@ extension SourceDispositionX on SourceDisposition {
     SourceDisposition.inPlace => 'in_place',
   };
 
-  String get label => switch (this) {
-    SourceDisposition.keep => '保留源文件',
-    SourceDisposition.deleteAfterCommit => '导入成功后删除源文件',
-    SourceDisposition.inPlace => '原地导入（不复制文件）',
+  /// 处置方式名（简体中文兜底）。
+  ///
+  /// 源文件选择器（`lib/widgets/domain/media_import`）仍按零参 getter 取值，
+  /// 域内调用请改用 [labelWith] 取当前语言文案。
+  String get label => labelWith(l10n: AppLocalizationsZh());
+
+  /// 当前语言的处置方式名。
+  String labelWith({required AppLocalizations l10n}) => switch (this) {
+    SourceDisposition.keep => l10n.mediaImportDispositionKeep,
+    SourceDisposition.deleteAfterCommit =>
+      l10n.mediaImportDispositionDeleteAfterCommit,
+    SourceDisposition.inPlace => l10n.mediaImportDispositionInPlace,
   };
 
-  String get description => switch (this) {
-    SourceDisposition.keep => '将源文件复制到媒体库中，导入后不会删除源文件',
-    SourceDisposition.deleteAfterCommit => '将源文件复制到媒体库中，导入成功后删除源文件',
-    SourceDisposition.inPlace => '不复制文件，媒体直接引用源文件当前位置',
+  /// 处置方式说明（简体中文兜底）。
+  ///
+  /// 同 [label]：共享组件仍按零参 getter 取值，域内调用请改用 [descriptionWith]。
+  String get description => descriptionWith(l10n: AppLocalizationsZh());
+
+  /// 当前语言的处置方式说明。
+  String descriptionWith({required AppLocalizations l10n}) => switch (this) {
+    SourceDisposition.keep => l10n.mediaImportDispositionKeepDescription,
+    SourceDisposition.deleteAfterCommit =>
+      l10n.mediaImportDispositionDeleteAfterCommitDescription,
+    SourceDisposition.inPlace => l10n.mediaImportDispositionInPlaceDescription,
   };
 }

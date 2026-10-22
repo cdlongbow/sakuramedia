@@ -1265,5 +1265,395 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "mediaListTabList": "Media list",
+  "mediaListTabDuplicates": "Duplicate media",
+  "mediaListTabVersions": "Multi-version movies",
+  "mediaListTabInvalid": "Invalid media",
+  "mediaListKindJav": "JAV movie",
+  "mediaListKindUnknown": "Unknown source",
+  "mediaListUnnamedMedia": "Unnamed media",
+  "mediaListSortFileSize": "File size",
+  "mediaListSortHeat": "Heat",
+  "mediaListThumbnailPending": "Pending",
+  "mediaListThumbnailRetryWait": "Waiting to retry",
+  "mediaListThumbnailFailed": "Generation failed",
+  "mediaListThumbnailCompleted": "Completed",
+  "mediaListFilterTooltip": "Filter",
+  "mediaListFilterAll": "All",
+  "mediaListFilterSectionSource": "Source",
+  "mediaListFilterSectionLibrary": "Media library",
+  "mediaListFilterSectionThumbnail": "Thumbnail status",
+  "mediaListFilterAllLibraries": "All media libraries",
+  "mediaListFilterAllMedia": "All media",
+  "mediaListInvalidBadge": "Invalid",
+  "mediaListUpdatedAt": "Updated {value}",
+  "@mediaListUpdatedAt": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListActionTransfer": "Transfer",
+  "mediaListActionTransferToLibrary": "Transfer to another media library",
+  "mediaListActionMore": "More actions",
+  "mediaListActionRetryThumbnails": "Retry thumbnails",
+  "mediaListActionRegenerateThumbnails": "Regenerate thumbnails",
+  "mediaListActionPlay": "Play",
+  "mediaListActionMovieDetail": "Movie details",
+  "mediaListRowActionDelete": "Delete media",
+  "mediaListRowActionDeleteSubtitle": "Delete this media and its files. This cannot be undone",
+  "mediaListRowActionRetrySubtitle": "Re-queue thumbnail generation",
+  "mediaListRowActionRegenerateSubtitle": "Delete the existing thumbnails and regenerate",
+  "mediaListSelectedItems": "{count} selected",
+  "@mediaListSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectedRecords": "{count} selected",
+  "@mediaListSelectedRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectedCopies": "{count} selected",
+  "@mediaListSelectedCopies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectAllLoaded": "Select all on this page",
+  "mediaListClearSelectAllLoaded": "Clear selection on this page",
+  "mediaListTotalItems": "{count} items",
+  "@mediaListTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalItemsWithSelection": "{count} items · {selected} selected",
+  "@mediaListTotalItemsWithSelection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "selected": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalGroups": "{count} groups",
+  "@mediaListTotalGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalMovies": "{count} movies",
+  "@mediaListTotalMovies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalInvalidItems": "{count} invalid media items",
+  "@mediaListTotalInvalidItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListEnterSelection": "Select",
+  "mediaListExitSelection": "Exit selection",
+  "mediaListRefreshing": "Refreshing",
+  "mediaListClearSelection": "Clear",
+  "mediaListBatchTransfer": "Transfer ({count})",
+  "@mediaListBatchTransfer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListBatchDelete": "Delete ({count})",
+  "@mediaListBatchDelete": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListBatchDeleteSelected": "Delete selected",
+  "mediaListBatchRetryThumbnails": "Retry",
+  "mediaListBatchRegenerateThumbnails": "Regenerate",
+  "mediaListBatchDeleteTitle": "Delete media in batch",
+  "mediaListBatchDeleteMessage": "{count} selected media items and their files will be deleted, and this cannot be undone. Do you want to continue?",
+  "@mediaListBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDeleteTitle": "Delete media",
+  "mediaListDeleteMessage": "Delete “{name}” and its file? This action cannot be undone.",
+  "@mediaListDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListDeleteSuccess": "Media deleted",
+  "mediaListDeleteFailed": "Failed to delete media",
+  "mediaListTransferTitle": "Transfer media",
+  "mediaListTransferDescription": "{count} media items will be transferred from “{library}” to another media library.",
+  "@mediaListTransferDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "library": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListTransferTargetLabel": "Target media library",
+  "mediaListTransferNotice": "The transfer task first confirms that the target media is available, then updates the media ownership and cleans up the source files. Some files may be skipped; see the activity center for details.",
+  "mediaListTransferConfirm": "Confirm transfer",
+  "mediaListTransferNoTarget": "No transfer target is available in the current media library",
+  "mediaListTransferSubmitted": "Transfer task #{id} submitted. Check the progress in the activity center.",
+  "@mediaListTransferSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTransferSubmitFailed": "Failed to submit the transfer task. Try again later.",
+  "mediaListThumbnailRetryTitle": "Retry thumbnails",
+  "mediaListThumbnailRegenerateTitle": "Regenerate thumbnails",
+  "mediaListThumbnailBatchRegenerateMessage": "The existing thumbnails of {count} selected items will be deleted and regenerated; thumbnails stay unavailable until generation finishes. Continue?",
+  "@mediaListThumbnailBatchRegenerateMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailBatchRetryMessage": "{count} selected items will be queued for thumbnail generation again. Continue?",
+  "@mediaListThumbnailBatchRetryMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRegenerateConfirm": "Regenerate",
+  "mediaListThumbnailSingleRegenerateMessage": "The existing thumbnails of this media will be deleted and regenerated; thumbnails stay unavailable until generation finishes. Continue?",
+  "mediaListThumbnailResetRefreshFailed": "{count} items were reset, but the list failed to refresh: {message}",
+  "@mediaListThumbnailResetRefreshFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListThumbnailNothingToRegenerate": "No media left to regenerate",
+  "mediaListThumbnailNothingToRetry": "No failed media left to retry",
+  "mediaListThumbnailRegenerateSubmitted": "{count} thumbnail regenerations submitted; they are restored automatically once done",
+  "@mediaListThumbnailRegenerateSubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRetrySubmitted": "{count} thumbnails were reset and queued for generation again",
+  "@mediaListThumbnailRetrySubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRegenerateFailed": "Failed to regenerate thumbnails. Try again later.",
+  "mediaListThumbnailRetryFailed": "Failed to retry thumbnails. Try again later.",
+  "mediaListEmpty": "No media records match the current filters. Adjust the filters or try again later.",
+  "mediaListDuplicateBatchDeleteTitle": "Delete duplicate media in batch",
+  "mediaListDuplicateBatchDeleteMessage": "{count} selected media items and their files will be deleted; at least one copy is kept per group. Continue?",
+  "@mediaListDuplicateBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateChanged": "The duplicate media changed. Select again; at least one copy must be kept",
+  "mediaListDuplicateRemainingHint": "{count} media items will remain in this group after the deletion.",
+  "@mediaListDuplicateRemainingHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateNoLongerHint": "This group will no longer be treated as duplicate media after the deletion.",
+  "mediaListDuplicateDeleteTitle": "Delete duplicate media",
+  "mediaListDuplicateDeleteMessage": "Delete “{name}” and its file? {hint}",
+  "@mediaListDuplicateDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "hint": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListDuplicateDeleteFailed": "Failed to delete the duplicate media",
+  "mediaListDuplicateDeleted": "Duplicate media deleted",
+  "mediaListDuplicateCopiesCount": "{count} copies",
+  "@mediaListDuplicateCopiesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateDeleteItem": "Delete this item",
+  "mediaListDuplicateSelectionHint": "Select the media to delete; at least one copy is kept per group",
+  "mediaListDuplicateDescription": "Media records of the same file are grouped by content fingerprint. Make sure at least one usable copy is kept before deleting.",
+  "mediaListDuplicateEmpty": "No duplicate files found for this type.",
+  "mediaListKeepAtLeastOne": "Keep at least one",
+  "mediaListSelectItem": "Select this item",
+  "mediaListVersionsBatchDeleteTitle": "Delete movie versions in batch",
+  "mediaListVersionsBatchDeleteMessage": "{count} selected versions and their files will be deleted; at least one version is kept per movie. Continue?",
+  "@mediaListVersionsBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsChanged": "The movie versions changed. Select again; at least one version must be kept",
+  "mediaListVersionsDeleteTitle": "Delete movie version",
+  "mediaListVersionsDeleteMessage": "Delete “{name}” and its file? {count} versions will be kept.",
+  "@mediaListVersionsDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsDeleteFailed": "Failed to delete the movie version",
+  "mediaListVersionsDeleted": "Movie version deleted",
+  "mediaListVersionsIncludeVr": "Include VR",
+  "mediaListVersionsIncludeFc2": "Include FC2",
+  "mediaListVersionsCount": "{count} versions",
+  "@mediaListVersionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsDeleteItem": "Delete this version",
+  "mediaListVersionsSelectionHint": "Select the versions to delete; at least one version is kept per movie",
+  "mediaListVersionsEmpty": "No multi-version movies yet",
+  "mediaListInvalidBatchDeleteTitle": "Delete invalid media in batch",
+  "mediaListInvalidBatchDeleteMessage": "{count} selected invalid media records and their files will be deleted, and this cannot be undone. Thumbnails are kept so the same file can reuse them when imported again. Continue?",
+  "@mediaListInvalidBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListInvalidDescription": "Media marked invalid by the file scan shows up here. If the file is really missing, delete the record; JAV movies will download a new copy automatically.",
+  "mediaListInvalidEmpty": "No invalid media right now",
+  "mediaListInvalidDeleteTitle": "Delete invalid media",
+  "mediaListInvalidDeleteMessage": "Delete the invalid media record for “{name}” and its file? This action cannot be undone; thumbnails are kept so the same file can reuse them.",
+  "@mediaListInvalidDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListInvalidDeleted": "Invalid media deleted",
+  "mediaListInvalidDeleteFailed": "Failed to delete the invalid media",
+  "mediaImportTitleJav": "JAV movie import",
+  "mediaImportTitleVideo": "Video import",
+  "mediaImportDescriptionJav": "Browse the storage directories and import JAV movies in bulk.",
+  "mediaImportDescriptionVideo": "Select storage directories or video files, and add them to collections at the same time.",
+  "mediaImportDescriptionSuffix": "Check the task center for the import progress and results.",
+  "mediaImportCreateAction": "New import",
+  "mediaImportTabJav": "JAV movies",
+  "mediaImportTabVideo": "Videos",
+  "mediaImportViewTasksAction": "View import tasks",
+  "mediaImportTaskSubmitted": "Import task #{id} submitted. Check the progress in the task center.",
+  "@mediaImportTaskSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaImportVideoTaskSubmitted": "Video import task #{id} submitted. Check the progress in the task center.",
+  "@mediaImportVideoTaskSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaImportSubmitFailed": "Failed to submit the import task. Try again later.",
+  "mediaImportPickerTitle": "New media import",
+  "mediaImportPickerSubmitAction": "Start import",
+  "mediaImportDispositionKeep": "Keep source files",
+  "mediaImportDispositionDeleteAfterCommit": "Delete source files after a successful import",
+  "mediaImportDispositionInPlace": "Import in place (no file copy)",
+  "mediaImportDispositionKeepDescription": "Source files are copied into the media library and kept after the import",
+  "mediaImportDispositionDeleteAfterCommitDescription": "Source files are copied into the media library and deleted after a successful import",
+  "mediaImportDispositionInPlaceDescription": "No file is copied; the media references the current location of the source file",
+  "mediaImportFailureMovieNumberNotFound": "Movie number not recognized",
+  "mediaImportFailureMetadataFetchFailed": "Failed to fetch the metadata",
+  "mediaImportFailureImageDownloadFailed": "Failed to download the cover",
+  "mediaImportFailureMetadataUpsertFailed": "Failed to save the metadata",
+  "mediaImportFailureMediaImportFailed": "Failed to import the file",
+  "mediaImportFailureFileTooSmall": "The file is too small",
+  "mediaImportFailureUnsupportedFormat": "Unsupported format",
+  "mediaImportFailureAlreadyIndexedPath": "Already in the library",
+  "mediaImportFailureUnknownReason": "Unknown reason",
+  "mediaImportMetadataSearchFailed": "Failed to search the metadata. Try again later.",
+  "mediaListBatchResetThumbnailsCount": "{label} ({count})",
+  "@mediaListBatchResetThumbnailsCount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

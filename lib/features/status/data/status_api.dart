@@ -1,3 +1,4 @@
+import 'package:sakuramedia/config/app_release_channels.dart';
 import 'package:sakuramedia/features/status/data/server_capabilities.dart';
 import 'package:sakuramedia/core/format/release_version.dart';
 import 'package:sakuramedia/core/json/json_parse.dart';
@@ -7,10 +8,6 @@ import 'package:sakuramedia/features/status/data/status_dto.dart';
 class StatusApi {
   const StatusApi({required ApiClient apiClient}) : _apiClient = apiClient;
 
-  static const _frontendReleaseApiUrl =
-      'https://api.github.com/repos/tinypinglite/sakuramedia/releases/latest';
-  static const _backendReleaseApiUrl =
-      'https://api.github.com/repos/tinypinglite/sakuramediabe/releases/latest';
   static const _releaseCheckTimeout = Duration(seconds: 10);
 
   final ApiClient _apiClient;
@@ -44,10 +41,10 @@ class StatusApi {
   Future<void> resetImageSearch() => _apiClient.post('/image-search/reset');
 
   Future<String?> checkFrontendUpdate(String currentVersion) =>
-      _checkReleaseUpdate(currentVersion, _frontendReleaseApiUrl);
+      _checkReleaseUpdate(currentVersion, AppReleaseChannels.frontendApiUrl);
 
   Future<String?> checkBackendUpdate(String currentVersion) =>
-      _checkReleaseUpdate(currentVersion, _backendReleaseApiUrl);
+      _checkReleaseUpdate(currentVersion, AppReleaseChannels.backendApiUrl);
 
   Future<String?> _checkReleaseUpdate(
     String currentVersion,

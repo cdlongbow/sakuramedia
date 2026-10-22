@@ -7,6 +7,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
+import 'package:sakuramedia/widgets/shell/desktop/sidebar_appearance_menu.dart';
 import 'package:sakuramedia/widgets/shell/desktop/sidebar_version_footer.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
 
@@ -103,8 +104,14 @@ class AppSidebar extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(height: context.appSpacing.sm),
-                    const SidebarVersionFooter(),
-                    SizedBox(height: context.appSpacing.sm),
+                    Row(
+                      children: [
+                        const Expanded(child: SidebarVersionFooter()),
+                        SizedBox(width: context.appSpacing.sm),
+                        const SidebarAppearanceMenu(),
+                      ],
+                    ),
+                    SizedBox(height: context.appSpacing.xs),
                     AppSidebarItem(
                       key: const Key('sidebar-logout-button'),
                       icon: Icons.logout_rounded,

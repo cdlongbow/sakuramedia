@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sakuramedia/app/providers/app_shell_providers.dart';
+import 'package:sakuramedia/app/providers/appearance_providers.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -62,7 +64,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('系统版本'), findsNothing);
-    expect(find.byKey(const Key('sidebar-version-dialog')), findsNothing);
+    expect(find.byKey(const Key('sidebar-version-popover')), findsNothing);
 
     await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
     await tester.pumpAndSettle();
@@ -145,23 +147,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 常态：页脚单行 + 有更新 badge，详情收进弹窗、点行才展开。
+    // 常态：页脚单行 + info 图标更新圆点，详情收进上方浮层。
     expect(find.byKey(const Key('sidebar-version-info')), findsOneWidget);
-    expect(
-      find.byKey(const Key('sidebar-version-update-badge')),
-      findsOneWidget,
-    );
-    expect(find.text('有更新'), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-version-update-dot')), findsOneWidget);
+    expect(find.text('有更新'), findsNothing);
     expect(find.byKey(const Key('sidebar-update-notice')), findsNothing);
 
     await tester.tap(find.byKey(const Key('sidebar-version-info')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('sidebar-version-dialog')), findsOneWidget);
+    expect(find.byKey(const Key('sidebar-version-popover')), findsOneWidget);
     expect(find.text('系统版本'), findsOneWidget);
+    expect(find.text('有更新'), findsOneWidget);
     expect(find.byKey(const Key('sidebar-update-notice')), findsOneWidget);
     expect(find.text('发现可用更新'), findsOneWidget);
     expect(find.text('客户端 v0.3.0 · 服务端 v0.3.0 · 1 个插件'), findsOneWidget);
+    expect(find.text('客户端发布页'), findsOneWidget);
+    expect(find.text('服务端发布页'), findsOneWidget);
     final colors = sakuraThemeData.extension<AppColors>()!;
     final updateNotice = tester.widget<Container>(
       find.byKey(const Key('sidebar-update-notice')),
@@ -169,17 +171,42 @@ void main() {
     final updateNoticeDecoration = updateNotice.decoration! as BoxDecoration;
     expect(updateNoticeDecoration.color, colors.selectionSurface);
     final updateBadge = find.descendant(
-      of: find.byKey(const Key('sidebar-version-dialog')),
+      of: find.byKey(const Key('sidebar-version-popover')),
       matching: find.byType(AppBadge),
     );
-    expect(tester.widget<AppBadge>(updateBadge.first).tone, AppBadgeTone.primary);
+    expect(
+      tester.widget<AppBadge>(updateBadge.first).tone,
+      AppBadgeTone.primary,
+    );
 
-    // 弹窗里的插件更新入口存在（跳转逻辑与系统诊断「去修复」同构；
+    // 浮层里的插件更新入口存在（跳转逻辑与系统诊断「去修复」同构；
     // 实际跳转的目标页渲染不在本测试覆盖范围，这里不点击跳转）。
     expect(
-      find.byKey(const Key('sidebar-version-dialog-go-plugins')),
+      find.byKey(const Key('sidebar-version-popover-go-plugins')),
       findsOneWidget,
     );
+
+    // 点外部 / Esc / 收起侧栏都关闭浮层。
+    await tester.tapAt(const Offset(600, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-version-popover')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sidebar-version-info')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-version-popover')), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-version-popover')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sidebar-version-info')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-version-popover')), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byKey(const Key('sidebar-version-info'))),
+    );
+    container.read(appShellSidebarCollapsedProvider.notifier).toggle();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-version-popover')), findsNothing);
   });
 
   testWidgets('desktop sidebar groups nav items into 浏览/管理 sections', (
@@ -925,6 +952,58 @@ void main() {
     expect(find.text('Desktop Workbench'), findsNothing);
     expect(find.text('媒体资产'), findsOneWidget);
     expect(find.text('最近添加'), findsOneWidget);
+  });
+
+  testWidgets('desktop sidebar appearance actions switch and collapse', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueOverviewResponses(bundle);
+    await _pumpDesktopApp(
+      tester,
+      bundle: bundle,
+      sessionStore: sessionStore,
+      statusApi: bundle.statusApi,
+      moviesApi: bundle.moviesApi,
+    );
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byKey(const Key('sidebar-appearance-mode-toggle'))),
+    );
+    expect(container.read(appearanceProvider).themeMode, ThemeMode.system);
+
+    await tester.tap(find.byKey(const Key('sidebar-appearance-mode-toggle')));
+    await tester.pumpAndSettle();
+    expect(container.read(appearanceProvider).themeMode, ThemeMode.light);
+
+    await tester.tap(find.byKey(const Key('sidebar-theme-color-button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sidebar-theme-color-popover')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('sidebar-theme-color-klein-blue')));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(appearanceProvider).themeColor.id,
+      AppThemeColor.kleinBlueId,
+    );
+    expect(find.byKey(const Key('sidebar-theme-color-popover')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sidebar-theme-color-button')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('sidebar-theme-color-popover')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sidebar-theme-color-popover')), findsNothing);
   });
 
   testWidgets(

@@ -5,10 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/appearance_store.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/appearance_settings_content.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 void main() {
   testWidgets('外观设置默认跟随系统 + 绛红，点击模式与主题色切换偏好', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final store = InMemoryAppearanceStore();
     final container = ProviderContainer(
       retry: (_, _) => null,
@@ -21,15 +26,23 @@ void main() {
         container: container,
         child: MaterialApp(
           theme: sakuraThemeData,
-          home: const Scaffold(body: AppearanceSettingsContent()),
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: const Scaffold(
+            body: SingleChildScrollView(child: AppearanceSettingsContent()),
+          ),
         ),
       ),
     );
 
-    expect(
-      container.read(appearanceProvider).themeMode,
-      ThemeMode.system,
-    );
+    expect(find.byKey(const Key('settings-language-zh-CN')), findsOneWidget);
+    expect(find.byKey(const Key('settings-language-en')), findsOneWidget);
+
+    expect(container.read(appearanceProvider).themeMode, ThemeMode.system);
     expect(
       container.read(appearanceProvider).themeColor.id,
       AppThemeColor.crimsonId,
@@ -66,7 +79,9 @@ void main() {
     expect(container.read(appearanceProvider).themeMode, ThemeMode.system);
     expect(store.read().themeMode, ThemeMode.system);
 
-    await tester.tap(find.byKey(const Key('appearance-theme-color-klein-blue')));
+    await tester.tap(
+      find.byKey(const Key('appearance-theme-color-klein-blue')),
+    );
     await tester.pumpAndSettle();
 
     expect(

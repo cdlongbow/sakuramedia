@@ -1,0 +1,54 @@
+{
+  "@@locale": "en",
+  "appTitle": "SakuraMedia",
+  "loginFirstRunTitle": "First time here?",
+  "loginFirstRunDescription": "SakuraMedia consists of a client and a backend; the client cannot be used alone. Deploy the backend first, then enter the server address to sign in. The default account is account / account; change the password after signing in.",
+  "loginViewDeployGuide": "View deployment guide",
+  "loginHaveServer": "I already have a server",
+  "loginSubtitle": "Enter the server address and account details (the backend must be deployed first).",
+  "loginServerHelpTooltip": "How to find the server address",
+  "loginServerHelper": "Use the address of the machine running the backend, e.g. 192.168.1.10:38000",
+  "loginUsername": "Username",
+  "loginPassword": "Password",
+  "loginShowPassword": "Show password",
+  "loginHidePassword": "Hide password",
+  "loginSubmitting": "Signing in...",
+  "loginSubmit": "Sign in",
+  "loginErrorFallback": "Sign-in failed. Please try again later.",
+  "loginErrorNetwork": "Sign-in failed. Check your network or server address.",
+  "loginDeployGuideInError": "Backend not deployed yet? View the deployment guide",
+  "loginOpenBrowserFailed": "Could not open the browser. Open the Wiki quick-start page manually.",
+  "loginServerRequired": "Enter the server address.",
+  "loginServerInvalid": "Enter a valid http(s) address.",
+  "loginFieldRequired": "Please enter {field}.",
+  "@loginFieldRequired": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLanguageTitle": "Interface language",
+  "settingsLanguageHint": "Language is saved on the server and this device. New tasks and notifications use the new language; historical text keeps its original language.",
+  "settingsLanguageSimplifiedChinese": "简体中文",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageUpdateFailed": "Could not update the language. Check the backend version or try again later.",
+  "errorNetworkFailure": "Unable to connect to the server. Check the backend address, make sure the service is running, and verify the network.",
+  "errorNetworkFailureWithHost": "Unable to connect to the server: {baseUrl}. Check the backend address, make sure the service is running, and verify the network.",
+  "@errorNetworkFailureWithHost": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTimeout": "The server timed out. Check whether the service is busy or the network is stable, then try again.",
+  "errorTimeoutWithHost": "The server timed out: {baseUrl}. Check whether the service is busy or the network is stable, then try again.",
+  "@errorTimeoutWithHost": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  }
+}

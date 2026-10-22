@@ -1,0 +1,54 @@
+{
+  "@@locale": "zh",
+  "appTitle": "SakuraMedia",
+  "loginFirstRunTitle": "第一次使用？",
+  "loginFirstRunDescription": "SakuraMedia 由客户端和后端组成，客户端不能单独使用。先部署后端，再填服务器地址登录。默认账号 account / account，登录后请修改密码。",
+  "loginViewDeployGuide": "查看部署教程",
+  "loginHaveServer": "已有服务器，直接登录",
+  "loginSubtitle": "请输入服务器地址与账号信息（需要先部署后端）",
+  "loginServerHelpTooltip": "如何获取服务器地址",
+  "loginServerHelper": "填运行后端的机器地址，例如 192.168.1.10:38000",
+  "loginUsername": "用户名",
+  "loginPassword": "密码",
+  "loginShowPassword": "显示密码",
+  "loginHidePassword": "隐藏密码",
+  "loginSubmitting": "登录中...",
+  "loginSubmit": "登录",
+  "loginErrorFallback": "登录失败，请稍后重试",
+  "loginErrorNetwork": "登录失败，请检查网络或服务器地址",
+  "loginDeployGuideInError": "还没有部署后端？查看部署教程",
+  "loginOpenBrowserFailed": "无法打开浏览器，请手动访问 Wiki 的「快速开始」",
+  "loginServerRequired": "请输入服务器地址",
+  "loginServerInvalid": "请输入有效的 http(s) 地址",
+  "loginFieldRequired": "请输入{field}",
+  "@loginFieldRequired": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsLanguageTitle": "界面语言",
+  "settingsLanguageHint": "语言保存在服务器与本机；切换后新产生的任务和通知使用新语言，历史文本保持原语言。",
+  "settingsLanguageSimplifiedChinese": "简体中文",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageUpdateFailed": "语言更新失败，请检查后端版本或稍后重试",
+  "errorNetworkFailure": "无法连接到服务器。请检查后端地址是否正确、服务是否已启动，或网络是否可达。",
+  "errorNetworkFailureWithHost": "无法连接到服务器：{baseUrl}。请检查后端地址是否正确、服务是否已启动，或网络是否可达。",
+  "@errorNetworkFailureWithHost": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  },
+  "errorTimeout": "连接服务器超时。请检查服务是否繁忙、网络是否稳定，或稍后重试。",
+  "errorTimeoutWithHost": "连接服务器超时：{baseUrl}。请检查服务是否繁忙、网络是否稳定，或稍后重试。",
+  "@errorTimeoutWithHost": {
+    "placeholders": {
+      "baseUrl": {
+        "type": "String"
+      }
+    }
+  }
+}

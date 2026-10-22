@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sakuramedia/app/language/app_language.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
+import 'package:sakuramedia/core/network/api_error_localizations.dart';
+import 'package:sakuramedia/features/account/presentation/providers/account_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
 import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
@@ -40,6 +46,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isSubmitting = false;
   bool _isPasswordObscured = true;
   bool _hasAttemptedSubmit = false;
+  bool _languageTouched = false;
   String? _submitError;
   bool _showFirstRunNotice = false;
   bool _showDeployHelp = false;
@@ -105,6 +112,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     FocusScope.of(context).unfocus();
     setState(() {
       _isSubmitting = true;
@@ -114,13 +122,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     final sessionStore = ref.read(sessionStoreProvider);
     final authApi = ref.read(authApiProvider);
+    final accountApi = ref.read(accountApiProvider);
+    final selectedLanguage = ref.read(appLanguageControllerProvider);
 
     try {
       await sessionStore.saveBaseUrl(_composeBaseUrl());
-      await authApi.login(
+      final tokens = await authApi.login(
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
+
+      if (_languageTouched) {
+        // 登录页的显式选择优先；保存失败不阻塞进入应用，设置页可重试。
+        try {
+          await accountApi.updateLanguage(selectedLanguage.apiTag);
+        } catch (_) {
+          // 语言已保存在本机，下一次切换/登录还会再次同步。
+        }
+      } else {
+        await ref
+            .read(appLanguageControllerProvider.notifier)
+            .applyServerLanguage(tokens.user.language);
+      }
 
       if (!mounted) {
         return;
@@ -131,7 +154,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
       setState(() {
-        _submitError = apiErrorMessage(error, fallback: '登录失败，请稍后重试');
+        _submitError = localizedApiErrorMessage(
+          l10n,
+          error,
+          fallback: l10n.loginErrorFallback,
+        );
         _showDeployHelp = error.isTransportFailure;
       });
     } catch (_) {
@@ -139,7 +166,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
       setState(() {
-        _submitError = '登录失败，请检查网络或服务器地址';
+        _submitError = l10n.loginErrorNetwork;
         _showDeployHelp = true;
       });
     } finally {
@@ -155,13 +182,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       'https://tinypinglite.github.io/sakuramedia/guide/quick-start';
 
   Future<void> _openDeployGuide() async {
+    final l10n = AppLocalizations.of(context);
     final opened = await ref.read(externalUrlOpenerProvider)(
       Uri.parse(_deployGuideUrl),
     );
     if (!opened && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法打开浏览器，请手动访问 Wiki 的「快速开始」')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.loginOpenBrowserFailed)));
     }
   }
 
@@ -169,18 +197,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _showFirstRunNotice = false);
   }
 
-  String? _validateBaseUrl(String? value) {
+  String? _validateBaseUrl(AppLocalizations l10n, String? value) {
     final host = value?.trim() ?? '';
     if (host.isEmpty) {
-      return '请输入服务器地址';
+      return l10n.loginServerRequired;
     }
     if (host.contains(RegExp(r'\s'))) {
-      return '请输入有效的 http(s) 地址';
+      return l10n.loginServerInvalid;
     }
 
     final uri = Uri.tryParse('$_protocol://$host');
     if (uri == null || uri.host.isEmpty) {
-      return '请输入有效的 http(s) 地址';
+      return l10n.loginServerInvalid;
     }
     return null;
   }
@@ -211,15 +239,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
   }
 
-  String? _validateRequired(String label, String? value) {
+  String? _validateRequired(
+    AppLocalizations l10n,
+    String label,
+    String? value,
+  ) {
     if ((value ?? '').trim().isEmpty) {
-      return '请输入$label';
+      return l10n.loginFieldRequired(label);
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final currentLanguage = ref.watch(appLanguageControllerProvider);
     final colors = context.appColors;
     final spacing = context.appSpacing;
     final radius = context.appRadius;
@@ -306,13 +340,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     ).colorScheme.primary,
                                   ),
                                   SizedBox(width: spacing.sm),
-                                  Text(
-                                    'SakuraMedia',
-                                    style: resolveAppTextStyle(
-                                      context,
-                                      size: AppTextSize.s18,
-                                      weight: AppTextWeight.semibold,
+                                  Expanded(
+                                    child: Text(
+                                      'SakuraMedia',
+                                      style: resolveAppTextStyle(
+                                        context,
+                                        size: AppTextSize.s18,
+                                        weight: AppTextWeight.semibold,
+                                      ),
                                     ),
+                                  ),
+                                  _LoginLanguageSwitcher(
+                                    current: currentLanguage,
+                                    enabled: !_isSubmitting,
+                                    onSelected: (language) {
+                                      setState(() {
+                                        _languageTouched = true;
+                                      });
+                                      unawaited(
+                                        ref
+                                            .read(
+                                              appLanguageControllerProvider
+                                                  .notifier,
+                                            )
+                                            .setLanguage(language),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
@@ -321,10 +374,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 AppNoticeCard(
                                   key: const Key('login-first-run-notice'),
                                   leadingIcon: Icons.dns_outlined,
-                                  title: '第一次使用？',
-                                  description:
-                                      'SakuraMedia 由客户端和后端组成，客户端不能单独使用。先部署后端，再填服务器地址登录。'
-                                      '默认账号 account / account，登录后请修改密码。',
+                                  title: l10n.loginFirstRunTitle,
+                                  description: l10n.loginFirstRunDescription,
                                 ),
                                 SizedBox(height: spacing.sm),
                                 Wrap(
@@ -333,7 +384,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   children: <Widget>[
                                     AppTextButton(
                                       key: const Key('login-open-deploy-guide'),
-                                      label: '查看部署教程',
+                                      label: l10n.loginViewDeployGuide,
                                       icon: Icon(
                                         Icons.open_in_new_rounded,
                                         size: context
@@ -347,7 +398,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     ),
                                     AppTextButton(
                                       key: const Key('login-dismiss-first-run'),
-                                      label: '已有服务器，直接登录',
+                                      label: l10n.loginHaveServer,
                                       size: AppTextButtonSize.small,
                                       onPressed: _isSubmitting
                                           ? null
@@ -358,7 +409,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 SizedBox(height: spacing.lg),
                               ],
                               Text(
-                                '请输入服务器地址与账号信息（需要先部署后端）',
+                                l10n.loginSubtitle,
                                 style: resolveAppTextStyle(
                                   context,
                                   size: AppTextSize.s14,
@@ -373,7 +424,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 keyboardType: TextInputType.url,
                                 textInputAction: TextInputAction.next,
                                 enabled: !_isSubmitting,
-                                validator: _validateBaseUrl,
+                                validator: (value) =>
+                                    _validateBaseUrl(l10n, value),
                                 onChanged: _handleBaseUrlChanged,
                                 onFieldSubmitted: (_) =>
                                     _usernameFocusNode.requestFocus(),
@@ -385,7 +437,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ),
                                 suffix: AppIconButton(
                                   key: const Key('login-base-url-help'),
-                                  tooltip: '如何获取服务器地址',
+                                  tooltip: l10n.loginServerHelpTooltip,
                                   padding: EdgeInsets.all(
                                     context.appSpacing.xs,
                                   ),
@@ -400,7 +452,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ),
                               SizedBox(height: spacing.xs),
                               Text(
-                                '填运行后端的机器地址，例如 192.168.1.10:38000',
+                                l10n.loginServerHelper,
                                 style: resolveAppTextStyle(
                                   context,
                                   size: AppTextSize.s12,
@@ -414,11 +466,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 focusNode: _usernameFocusNode,
                                 textInputAction: TextInputAction.next,
                                 enabled: !_isSubmitting,
-                                validator: (value) =>
-                                    _validateRequired('用户名', value),
+                                validator: (value) => _validateRequired(
+                                  l10n,
+                                  l10n.loginUsername,
+                                  value,
+                                ),
                                 onFieldSubmitted: (_) =>
                                     _passwordFocusNode.requestFocus(),
-                                hintText: '用户名',
+                                hintText: l10n.loginUsername,
                                 prefix: Icon(
                                   Icons.person_outline_rounded,
                                   size: context.appComponentTokens.iconSizeMd,
@@ -433,10 +488,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 obscureText: _isPasswordObscured,
                                 textInputAction: TextInputAction.done,
                                 enabled: !_isSubmitting,
-                                validator: (value) =>
-                                    _validateRequired('密码', value),
+                                validator: (value) => _validateRequired(
+                                  l10n,
+                                  l10n.loginPassword,
+                                  value,
+                                ),
                                 onFieldSubmitted: (_) => _submitLogin(),
-                                hintText: '密码',
+                                hintText: l10n.loginPassword,
                                 prefix: Icon(
                                   Icons.lock_outline_rounded,
                                   size: context.appComponentTokens.iconSizeMd,
@@ -445,8 +503,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 suffix: AppIconButton(
                                   key: const Key('login-password-toggle'),
                                   tooltip: _isPasswordObscured
-                                      ? '显示密码'
-                                      : '隐藏密码',
+                                      ? l10n.loginShowPassword
+                                      : l10n.loginHidePassword,
                                   padding: EdgeInsets.all(
                                     context.appSpacing.xs,
                                   ),
@@ -497,7 +555,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   SizedBox(height: spacing.sm),
                                   AppTextButton(
                                     key: const Key('login-error-deploy-guide'),
-                                    label: '还没有部署后端？查看部署教程',
+                                    label: l10n.loginDeployGuideInError,
                                     icon: Icon(
                                       Icons.open_in_new_rounded,
                                       size:
@@ -535,7 +593,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   width: double.infinity,
                                   child: AppButton(
                                     key: const Key('login-submit-button'),
-                                    label: _isSubmitting ? '登录中...' : '登录',
+                                    label: _isSubmitting
+                                        ? l10n.loginSubmitting
+                                        : l10n.loginSubmit,
                                     variant: AppButtonVariant.primary,
                                     size: AppButtonSize.large,
                                     borderRadius: radius.pillBorder,
@@ -824,6 +884,72 @@ class _ProtocolMenuItemState extends State<_ProtocolMenuItem> {
               tone: widget.selected ? AppTextTone.accent : AppTextTone.primary,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 登录页语言切换：首次登录即可选英文，登录失败提示也使用同一语言。
+class _LoginLanguageSwitcher extends StatelessWidget {
+  const _LoginLanguageSwitcher({
+    required this.current,
+    required this.enabled,
+    required this.onSelected,
+  });
+
+  final AppLanguage current;
+  final bool enabled;
+  final ValueChanged<AppLanguage> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final spacing = context.appSpacing;
+    return PopupMenuButton<AppLanguage>(
+      key: const Key('login-language-switcher'),
+      enabled: enabled,
+      onSelected: onSelected,
+      itemBuilder: (context) => <PopupMenuEntry<AppLanguage>>[
+        PopupMenuItem<AppLanguage>(
+          value: AppLanguage.zhCN,
+          child: Text(l10n.settingsLanguageSimplifiedChinese),
+        ),
+        PopupMenuItem<AppLanguage>(
+          value: AppLanguage.en,
+          child: Text(l10n.settingsLanguageEnglish),
+        ),
+      ],
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: spacing.sm,
+          vertical: spacing.xs,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              Icons.language_rounded,
+              size: context.appComponentTokens.iconSizeSm,
+              color: context.appTextPalette.muted,
+            ),
+            SizedBox(width: spacing.xs),
+            Text(
+              current == AppLanguage.en
+                  ? l10n.settingsLanguageEnglish
+                  : l10n.settingsLanguageSimplifiedChinese,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                tone: AppTextTone.secondary,
+              ),
+            ),
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: context.appComponentTokens.iconSizeSm,
+              color: context.appTextPalette.muted,
+            ),
+          ],
         ),
       ),
     );

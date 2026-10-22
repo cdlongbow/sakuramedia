@@ -17,7 +17,9 @@ class ApiClient {
   ApiClient({
     required SessionStore sessionStore,
     void Function()? onUnauthorized,
+    String Function()? languageProvider,
   }) : _sessionStore = sessionStore,
+       _languageProvider = languageProvider,
        _dio = Dio(
          BaseOptions(
            connectTimeout: const Duration(seconds: 30),
@@ -36,6 +38,8 @@ class ApiClient {
            contentType: Headers.jsonContentType,
          ),
        ) {
+    _dio.interceptors.add(_languageInterceptor());
+    _refreshDio.interceptors.add(_languageInterceptor());
     _dio.interceptors.add(
       AuthInterceptor(
         dio: _dio,
@@ -52,8 +56,23 @@ class ApiClient {
   }
 
   final SessionStore _sessionStore;
+  final String Function()? _languageProvider;
   final Dio _dio;
   final Dio _refreshDio;
+
+  InterceptorsWrapper _languageInterceptor() {
+    return InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.headers['Accept-Language'] = _currentLanguageTag();
+        handler.next(options);
+      },
+    );
+  }
+
+  String _currentLanguageTag() {
+    final tag = _languageProvider?.call().trim() ?? '';
+    return tag.isEmpty ? 'zh-CN' : tag;
+  }
 
   Dio get rawDio => _dio;
   Dio get rawRefreshDio => _refreshDio;

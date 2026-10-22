@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/features/plugins/data/plugin_market_source.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_router.dart';
@@ -2226,6 +2227,12 @@ void main() {
           child: OKToast(
             child: MaterialApp.router(
               theme: sakuraMobileThemeData,
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               routerConfig: router,
             ),
           ),
@@ -2920,7 +2927,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2943,7 +2959,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2964,7 +2989,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -2988,7 +3022,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3282,7 +3325,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3319,7 +3371,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3381,7 +3442,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3444,7 +3514,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3585,7 +3664,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3623,7 +3711,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -3703,7 +3800,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -4357,7 +4463,16 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: bundle.riverpodOverrides(),
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -4442,7 +4557,7 @@ void main() {
       find.byKey(const Key('movie-detail-review-content')).hitTestable().first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Select all'));
+    await tester.tap(find.text('全选'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('搜索番号'));
     await tester.pumpAndSettle();
@@ -4594,7 +4709,16 @@ Future<void> _pumpRouterApp(
         imageSearchDraftStore: draftStore,
       ),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          theme: sakuraThemeData,
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          routerConfig: router,
+        ),
       ),
     ),
   );

@@ -19,6 +19,14 @@ class AccountApi {
     return AccountDto.fromJson(response);
   }
 
+  Future<AccountDto> updateLanguage(String language) async {
+    final response = await _apiClient.patch(
+      '/account',
+      data: <String, dynamic>{'language': language},
+    );
+    return AccountDto.fromJson(response);
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,

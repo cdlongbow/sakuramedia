@@ -4,17 +4,20 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
-import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
-import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
-import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show Consumer, ProviderScope;
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/language/providers/language_providers.dart';
 import 'package:sakuramedia/app/providers/external_url_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
+import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
+import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
+import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 
@@ -36,9 +39,20 @@ Future<void> _pumpLoginPage(
         if (urlOpener != null)
           externalUrlOpenerProvider.overrideWithValue(urlOpener),
       ],
-      child: MaterialApp(
-        theme: sakuraThemeData,
-        home: const LoginPage(platform: AppPlatform.desktop),
+      child: Consumer(
+        builder: (context, ref, _) {
+          final language = ref.watch(appLanguageControllerProvider);
+          return MaterialApp(
+            theme: sakuraThemeData,
+            locale: language.locale,
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+            home: const LoginPage(platform: AppPlatform.desktop),
+          );
+        },
       ),
     ),
   );
@@ -102,6 +116,26 @@ void main() {
     expect(find.text('saved.example.com'), findsOneWidget);
     expect(find.byKey(const Key('login-first-run-notice')), findsNothing);
     expect(find.text('请输入服务器地址与账号信息（需要先部署后端）'), findsOneWidget);
+  });
+
+  testWidgets('switches login page language to English', (
+    WidgetTester tester,
+  ) async {
+    await _pumpLoginPage(
+      tester,
+      sessionStore: sessionStore,
+      authApi: authApi,
+      credentialStore: credentialStore,
+    );
+
+    expect(find.text('登录'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('login-language-switcher')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Username'), findsOneWidget);
   });
 
   testWidgets('first-run notice explains backend and opens deploy guide', (

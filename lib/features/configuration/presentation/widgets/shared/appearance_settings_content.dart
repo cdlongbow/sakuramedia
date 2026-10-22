@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
+import 'package:sakuramedia/features/configuration/presentation/widgets/shared/language_settings_content.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 
@@ -47,8 +48,7 @@ class AppearanceSettingsContent extends ConsumerWidget {
               trailing: themeMode == ThemeMode.system
                   ? const _SelectionCheckMark()
                   : null,
-              onTap: () =>
-                  unawaited(controller.setThemeMode(ThemeMode.system)),
+              onTap: () => unawaited(controller.setThemeMode(ThemeMode.system)),
             ),
             AppSettingCell(
               key: const Key('appearance-mode-light'),
@@ -105,6 +105,8 @@ class AppearanceSettingsContent extends ConsumerWidget {
               ),
           ],
         ),
+        SizedBox(height: spacing.xl),
+        const LanguageSettingsContent(),
       ],
     );
   }

@@ -1,21 +1,24 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 播放器统一加载反馈：用于页面取流、首帧等待与播放中缓冲。
 ///
 /// 深色半透明胶囊保证它在黑底和视频画面上都清晰可见，同时不使用第二套强调色。
 class VideoLoadingIndicator extends StatelessWidget {
-  const VideoLoadingIndicator({super.key, this.label = '正在加载…'});
+  const VideoLoadingIndicator({super.key, this.label});
 
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final text = label ?? l10n.baseVideoLoading;
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
     return Semantics(
       container: true,
-      label: label,
+      label: text,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: context.appColors.mediaOverlayStrong,
@@ -43,7 +46,7 @@ class VideoLoadingIndicator extends StatelessWidget {
               ),
               SizedBox(width: spacing.sm),
               Text(
-                label,
+                text,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,

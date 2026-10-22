@@ -5,6 +5,7 @@ import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/app_update_check_provider.dart';
 import 'package:sakuramedia/features/plugins/presentation/providers/plugins_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/shell/app_version_info_parts.dart';
 
@@ -19,6 +20,7 @@ class AppVersionInfoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = appL10n(context);
     final versionInfo =
         ref.watch(appVersionInfoProvider).value ?? AppVersionInfoState.initial;
     final pluginUpdateCount =
@@ -46,7 +48,7 @@ class AppVersionInfoCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  '系统版本',
+                  l10n.shellSystemVersion,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -56,17 +58,17 @@ class AppVersionInfoCard extends ConsumerWidget {
                 ),
               ),
               if (hasUpdates)
-                const AppBadge(
-                  label: '有更新',
+                AppBadge(
+                  label: l10n.shellUpdateBadge,
                   tone: AppBadgeTone.primary,
                   size: AppBadgeSize.compact,
                 ),
             ],
           ),
           SizedBox(height: context.appSpacing.sm),
-          AppVersionRow(label: '客户端', value: frontendVersion),
+          AppVersionRow(label: l10n.shellClientLabel, value: frontendVersion),
           SizedBox(height: context.appSpacing.xs),
-          AppVersionRow(label: '服务端', value: backendVersion),
+          AppVersionRow(label: l10n.shellServerLabel, value: backendVersion),
           if (hasUpdates) ...[
             SizedBox(height: context.appSpacing.sm),
             Divider(height: 1, color: context.appColors.divider),

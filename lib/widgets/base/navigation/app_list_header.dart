@@ -3,6 +3,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 
@@ -34,7 +35,7 @@ class AppListHeader extends StatelessWidget {
     this.onFilterPanelOpened,
     this.filterIcon = Icons.tune_rounded,
     this.filterLabel,
-    this.filterTooltip = '筛选',
+    this.filterTooltip,
     this.filterButtonKey,
     this.filterEnabled = true,
     this.filterUpdate = const FilterUpdateState.idle(),
@@ -58,7 +59,7 @@ class AppListHeader extends StatelessWidget {
     required this.selectionLabel,
     required this.onExitSelection,
     this.selectionExitButtonKey,
-    this.selectionExitTooltip = '退出选择',
+    this.selectionExitTooltip,
     this.actionSlots = const <Widget>[],
   }) : onFilterTap = null,
        filterPanelBuilder = null,
@@ -140,6 +141,7 @@ class AppListHeader extends StatelessWidget {
   /// 两端共用同一个 [AppFilterEntryButton] 外观，只有展开方式不同：
   /// 桌面就地浮层（[AppFilterPopover]），移动底部抽屉（[onFilterTap]）。
   Widget _buildFilterEntry(BuildContext context) {
+    final l10n = appL10n(context);
     final panelBuilder = filterPanelBuilder;
     if (panelBuilder == null) {
       return KeyedSubtree(
@@ -147,7 +149,7 @@ class AppListHeader extends StatelessWidget {
         child: AppFilterEntryButton(
           icon: filterIcon,
           label: filterLabel,
-          tooltip: filterTooltip,
+          tooltip: filterTooltip ?? l10n.baseFilterTooltip,
           onTap: filterEnabled ? onFilterTap : null,
         ),
       );
@@ -167,7 +169,7 @@ class AppListHeader extends StatelessWidget {
         child: AppFilterEntryButton(
           icon: filterIcon,
           label: filterLabel,
-          tooltip: filterTooltip,
+          tooltip: filterTooltip ?? l10n.baseFilterTooltip,
           trailingIcon: isOpen
               ? Icons.expand_less_rounded
               : Icons.expand_more_rounded,
@@ -179,6 +181,7 @@ class AppListHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
     // 无筛选维度的列表（两个筛选参数都不传）左侧不占位，信息槽从最左开始。
@@ -186,8 +189,8 @@ class AppListHeader extends StatelessWidget {
         ? AppIconButton(
             key: selectionExitButtonKey,
             icon: const Icon(Icons.close_rounded),
-            tooltip: selectionExitTooltip,
-            semanticLabel: selectionExitTooltip,
+            tooltip: selectionExitTooltip ?? l10n.baseExitSelection,
+            semanticLabel: selectionExitTooltip ?? l10n.baseExitSelection,
             // regular = iconSizeMd + md*2 = 44，达到 iOS HIG 的最小点按尺寸。
             size: AppIconButtonSize.regular,
             onPressed: onExitSelection,

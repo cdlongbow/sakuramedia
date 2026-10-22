@@ -2,12 +2,23 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/shell/window/app_mac_traffic_lights.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   Future<void> pumpTrafficLights(WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        locale: Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(body: Center(child: AppMacTrafficLights())),
       ),
     );

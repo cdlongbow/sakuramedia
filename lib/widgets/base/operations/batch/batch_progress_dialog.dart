@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
 /// 批量任务执行结果：成功与失败的原始条目清单，供调用方按结果就地更新列表。
@@ -95,6 +96,7 @@ class _BatchProgressDialogState<T> extends State<_BatchProgressDialog<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final colors = context.appColors;
     final value = _total == 0 ? 1.0 : _current / _total;
@@ -109,7 +111,7 @@ class _BatchProgressDialogState<T> extends State<_BatchProgressDialog<T>> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _done ? '已完成' : widget.title,
+              _done ? l10n.baseBatchCompleted : widget.title,
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s16,
@@ -129,8 +131,8 @@ class _BatchProgressDialogState<T> extends State<_BatchProgressDialog<T>> {
             SizedBox(height: spacing.sm),
             Text(
               _done
-                  ? '成功 ${_succeeded.length} 个，失败 ${_failed.length} 个'
-                  : '处理中 $_current/$_total',
+                  ? l10n.baseBatchSummary(_succeeded.length, _failed.length)
+                  : l10n.baseBatchProgress(_current, _total),
               style: resolveAppTextStyle(
                 context,
                 size: AppTextSize.s12,
@@ -147,7 +149,7 @@ class _BatchProgressDialogState<T> extends State<_BatchProgressDialog<T>> {
                 alignment: Alignment.centerRight,
                 child: AppButton(
                   key: const Key('batch-progress-close-button'),
-                  label: '关闭',
+                  label: l10n.baseClose,
                   size: AppButtonSize.small,
                   onPressed:
                       () => Navigator.of(context).pop(

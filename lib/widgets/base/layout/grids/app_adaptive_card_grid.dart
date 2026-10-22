@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
 
 /// 布局模式：等宽 tile(固定 aspect ratio) vs 瀑布流(逐 tile aspect)。
@@ -32,7 +33,7 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
     required this.items,
     required this.itemBuilder,
     this.errorMessage,
-    this.emptyMessage = '当前没有可展示的数据。',
+    this.emptyMessage,
     this.targetColumnWidth,
     this.orientation,
     this.minColumns = 2,
@@ -53,7 +54,7 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
 
   final String? errorMessage;
-  final String emptyMessage;
+  final String? emptyMessage;
 
   /// 目标列宽,列公式的 target。null → 按 [orientation] 取统一 token。
   final double? targetColumnWidth;
@@ -89,7 +90,9 @@ class AppAdaptiveCardGrid<T> extends StatelessWidget {
     }
 
     if (items.isEmpty) {
-      return AppEmptyState(message: emptyMessage);
+      return AppEmptyState(
+        message: emptyMessage ?? appL10n(context).baseEmptyData,
+      );
     }
 
     return _buildGrid(
@@ -205,7 +208,7 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
     required this.items,
     required this.itemBuilder,
     this.errorMessage,
-    this.emptyMessage = '当前没有可展示的数据。',
+    this.emptyMessage,
     this.targetColumnWidth,
     this.orientation,
     this.minColumns = 2,
@@ -223,7 +226,7 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
   final List<T> items;
   final Widget Function(BuildContext context, T item, int index) itemBuilder;
   final String? errorMessage;
-  final String emptyMessage;
+  final String? emptyMessage;
 
   /// 目标列宽,列公式的 target。null → 按 [orientation] 取统一 token。
   final double? targetColumnWidth;
@@ -244,7 +247,11 @@ class AppAdaptiveCardSliver<T> extends StatelessWidget {
       return SliverToBoxAdapter(child: AppEmptyState(message: errorMessage!));
     }
     if (items.isEmpty) {
-      return SliverToBoxAdapter(child: AppEmptyState(message: emptyMessage));
+      return SliverToBoxAdapter(
+        child: AppEmptyState(
+          message: emptyMessage ?? appL10n(context).baseEmptyData,
+        ),
+      );
     }
 
     final itemCount = items.length;

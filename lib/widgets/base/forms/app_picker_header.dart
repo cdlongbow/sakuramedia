@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_search_field.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 选择器弹层的统一头部：标题 + 计数 + 搜索 + 筛选 chips。
 ///
@@ -15,7 +16,7 @@ class AppPickerHeader extends StatelessWidget {
     this.countKey,
     required this.searchController,
     this.searchFieldKey,
-    this.searchHintText = '搜索',
+    this.searchHintText,
     this.onSearchChanged,
     this.clearSearchKey,
     this.chips = const <Widget>[],
@@ -31,7 +32,7 @@ class AppPickerHeader extends StatelessWidget {
 
   final TextEditingController searchController;
   final Key? searchFieldKey;
-  final String searchHintText;
+  final String? searchHintText;
   final ValueChanged<String>? onSearchChanged;
   final Key? clearSearchKey;
 
@@ -44,6 +45,7 @@ class AppPickerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final count = countLabel;
     return Column(
@@ -81,7 +83,7 @@ class AppPickerHeader extends StatelessWidget {
               SizedBox(width: spacing.xs),
               AppTextButton(
                 key: doneKey,
-                label: '完成',
+                label: l10n.commonDone,
                 size: AppTextButtonSize.small,
                 onPressed: onDone,
               ),
@@ -92,7 +94,7 @@ class AppPickerHeader extends StatelessWidget {
         AppSearchField(
           fieldKey: searchFieldKey,
           controller: searchController,
-          hintText: searchHintText,
+          hintText: searchHintText ?? l10n.baseSearchHint,
           onChanged: onSearchChanged,
           clearKey: clearSearchKey,
         ),

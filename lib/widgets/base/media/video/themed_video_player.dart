@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/media/video/initial_seek_guard.dart';
 import 'package:sakuramedia/widgets/base/media/video/playback_resume_prompt.dart';
 import 'package:sakuramedia/widgets/base/media/video/player_screen_orientation.dart';
@@ -260,6 +261,7 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final theme = Theme.of(context);
     final fullscreenBottom =
         widget.fullscreenBottomControls ?? widget.bottomControls;
@@ -329,8 +331,12 @@ class _ThemedVideoPlayerState extends State<ThemedVideoPlayer> {
               ),
             ),
             if (!_initialFrameReady)
-              const IgnorePointer(
-                child: Center(child: VideoLoadingIndicator(label: '正在加载视频…')),
+              IgnorePointer(
+                child: Center(
+                  child: VideoLoadingIndicator(
+                    label: l10n.baseVideoLoadingVideo,
+                  ),
+                ),
               ),
             if (_resumePromptVisible && widget.resumePosition != null)
               PlaybackResumePromptOverlay(

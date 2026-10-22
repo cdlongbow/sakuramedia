@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
@@ -26,7 +27,7 @@ class AppSortMenuButton<F> extends StatefulWidget {
     required this.onDirectionChanged,
     this.directionVisibleWhen,
     this.allowDefaultOption = false,
-    this.defaultOptionLabel = '默认',
+    this.defaultOptionLabel,
     this.triggerLabel,
     this.useDrawer = false,
     this.enabled = true,
@@ -36,7 +37,7 @@ class AppSortMenuButton<F> extends StatefulWidget {
     this.fieldKeyBuilder,
     this.directionKeyBuilder,
     this.defaultOptionKey,
-    this.tooltip = '排序',
+    this.tooltip,
   });
 
   final List<F> fields;
@@ -52,7 +53,7 @@ class AppSortMenuButton<F> extends StatefulWidget {
 
   /// 是否在字段前渲染「默认」选项；选中时回调 `null`。
   final bool allowDefaultOption;
-  final String defaultOptionLabel;
+  final String? defaultOptionLabel;
 
   /// 完全覆盖自动生成的摘要（一般不需要）。
   final String? triggerLabel;
@@ -70,7 +71,7 @@ class AppSortMenuButton<F> extends StatefulWidget {
   final Key? Function(F field)? fieldKeyBuilder;
   final Key? Function(SortDirection direction)? directionKeyBuilder;
   final Key? defaultOptionKey;
-  final String tooltip;
+  final String? tooltip;
 
   @override
   State<AppSortMenuButton<F>> createState() => _AppSortMenuButtonState<F>();
@@ -79,14 +80,14 @@ class AppSortMenuButton<F> extends StatefulWidget {
 class _AppSortMenuButtonState<F> extends State<AppSortMenuButton<F>> {
   final AppPopoverController _popoverController = AppPopoverController();
 
-  String get _label {
+  String _label(AppLocalizations l10n) {
     final override = widget.triggerLabel;
     if (override != null) {
       return override;
     }
     final field = widget.selectedField;
     if (field == null) {
-      return widget.defaultOptionLabel;
+      return widget.defaultOptionLabel ?? l10n.baseSortDefault;
     }
     final fieldLabel = widget.fieldLabelBuilder(field);
     final showArrow = widget.directionVisibleWhen?.call(field) ?? true;
@@ -147,16 +148,17 @@ class _AppSortMenuButtonState<F> extends State<AppSortMenuButton<F>> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     if (widget.useDrawer) {
       return AppFilterEntryButton(
         key: widget.triggerKey,
         icon: Icons.swap_vert_rounded,
-        tooltip: widget.tooltip,
+        tooltip: widget.tooltip ?? l10n.baseSortTooltip,
         onTap: widget.enabled ? () => _showDrawer(context) : null,
       );
     }
     return AppFilterPopover(
-      triggerLabel: _label,
+      triggerLabel: _label(l10n),
       panelKey: widget.panelKey ?? const Key('app-sort-panel'),
       controller: _popoverController,
       panelExtraWidth: 300,
@@ -164,8 +166,8 @@ class _AppSortMenuButtonState<F> extends State<AppSortMenuButton<F>> {
       triggerBuilder: (context, isOpen, toggle) => AppFilterEntryButton(
         key: widget.triggerKey,
         icon: Icons.swap_vert_rounded,
-        label: _label,
-        tooltip: widget.tooltip,
+        label: _label(l10n),
+        tooltip: widget.tooltip ?? l10n.baseSortTooltip,
         trailingIcon: isOpen
             ? Icons.expand_less_rounded
             : Icons.expand_more_rounded,
@@ -192,7 +194,7 @@ class _AppSortSection<F> extends StatelessWidget {
     required this.onDirectionChanged,
     this.directionVisibleWhen,
     this.allowDefaultOption = false,
-    this.defaultOptionLabel = '默认',
+    this.defaultOptionLabel,
     this.fieldKeyBuilder,
     this.directionKeyBuilder,
     this.defaultOptionKey,
@@ -211,7 +213,7 @@ class _AppSortSection<F> extends StatelessWidget {
 
   /// 是否在字段前渲染「默认」选项；选中时回调 `null`。
   final bool allowDefaultOption;
-  final String defaultOptionLabel;
+  final String? defaultOptionLabel;
 
   final Key? Function(F field)? fieldKeyBuilder;
   final Key? Function(SortDirection direction)? directionKeyBuilder;
@@ -221,12 +223,13 @@ class _AppSortSection<F> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '排序方式',
+          l10n.baseSortTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -242,7 +245,7 @@ class _AppSortSection<F> extends StatelessWidget {
             if (allowDefaultOption)
               AppTextButton(
                 key: defaultOptionKey,
-                label: defaultOptionLabel,
+                label: defaultOptionLabel ?? l10n.baseSortDefault,
                 size: AppTextButtonSize.xSmall,
                 isSelected: selectedField == null,
                 onPressed: () => onFieldChanged(null),

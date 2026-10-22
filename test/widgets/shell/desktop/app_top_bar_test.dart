@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,13 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_top_bar.dart';
 import 'package:window_manager/window_manager.dart';
 
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
+
 void main() {
   testWidgets('app top bar back button uses xs icon token', (
     WidgetTester tester,
@@ -14,6 +22,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: const Scaffold(
             body: AppTopBar(
@@ -51,6 +62,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: AppTopBar(
@@ -90,6 +104,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: const Scaffold(
             body: AppTopBar(
@@ -119,6 +136,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: AppTopBar(
@@ -153,6 +173,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: _testLocalizationsDelegates,
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: AppTopBar(
@@ -185,6 +208,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: _testLocalizationsDelegates,
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraThemeData,
             home: Scaffold(
               body: AppTopBar(
@@ -228,6 +254,9 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             child: MaterialApp(
+              locale: const Locale('zh'),
+              localizationsDelegates: _testLocalizationsDelegates,
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: sakuraThemeData,
               home: Scaffold(
                 body: AppTopBar(

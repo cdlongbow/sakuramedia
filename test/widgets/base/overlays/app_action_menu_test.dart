@@ -1,9 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +22,9 @@ void main() {
     String? selected;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _SecondaryTapTrigger(
@@ -45,6 +56,9 @@ void main() {
       'navigator', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: _OffsetNavigatorHost(
           child: const _SecondaryTapTrigger(
@@ -68,6 +82,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _SecondaryTapTrigger(
@@ -99,6 +116,9 @@ void main() {
     String? selected;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _SecondaryTapTrigger(
@@ -128,6 +148,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _AutoTrigger(
@@ -168,6 +191,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _SecondaryTapTrigger(
@@ -201,6 +227,9 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: Scaffold(
             body: _AutoTrigger(
@@ -234,6 +263,9 @@ void main() {
     Future<double> captureWidth(List<AppMenuItem<String>> items) async {
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(body: _AutoTrigger(items: items)),
         ),
@@ -275,6 +307,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: _AutoTrigger(
@@ -310,6 +345,9 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: Scaffold(
             body: _AutoTrigger(
@@ -339,6 +377,9 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: Scaffold(
             body: _AutoTrigger(
@@ -381,6 +422,9 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraMobileThemeData,
           home: Scaffold(
             body: _AutoTrigger(

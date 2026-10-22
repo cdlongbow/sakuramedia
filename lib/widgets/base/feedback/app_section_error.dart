@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 class AppSectionError extends StatelessWidget {
   const AppSectionError({
@@ -16,6 +17,7 @@ class AppSectionError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,7 +44,7 @@ class AppSectionError extends StatelessWidget {
         AppButton(
           onPressed: () => onRetry(),
           icon: const Icon(Icons.refresh_rounded),
-          label: '重试',
+          label: l10n.commonRetry,
         ),
       ],
     );

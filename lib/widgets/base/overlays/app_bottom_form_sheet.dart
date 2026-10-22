@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 装进 [showAppBottomDrawer] 的表单外壳。
 ///
@@ -20,8 +21,8 @@ class AppBottomFormSheet extends StatelessWidget {
     required this.submitKey,
     required this.isSubmitting,
     required this.onSubmit,
-    this.cancelLabel = '取消',
-    this.submitLabel = '保存',
+    this.cancelLabel,
+    this.submitLabel,
     this.submitDisabled = false,
   });
 
@@ -35,8 +36,8 @@ class AppBottomFormSheet extends StatelessWidget {
   /// 提交按钮 Key —— 必填，测试用。
   final Key submitKey;
 
-  final String cancelLabel;
-  final String submitLabel;
+  final String? cancelLabel;
+  final String? submitLabel;
 
   /// 驱动提交按钮的 spinner。同时会禁用取消按钮防误关。
   final bool isSubmitting;
@@ -48,6 +49,7 @@ class AppBottomFormSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final busy = isSubmitting || submitDisabled;
     final resolvedSubtitle = subtitle;
@@ -98,7 +100,7 @@ class AppBottomFormSheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: AppButton(
-                    label: cancelLabel,
+                    label: cancelLabel ?? l10n.commonCancel,
                     onPressed: busy ? null : () => Navigator.of(context).pop(),
                   ),
                 ),
@@ -106,7 +108,7 @@ class AppBottomFormSheet extends StatelessWidget {
                 Expanded(
                   child: AppButton(
                     key: submitKey,
-                    label: submitLabel,
+                    label: submitLabel ?? l10n.commonSave,
                     variant: AppButtonVariant.primary,
                     isLoading: isSubmitting,
                     onPressed: submitDisabled ? null : onSubmit,

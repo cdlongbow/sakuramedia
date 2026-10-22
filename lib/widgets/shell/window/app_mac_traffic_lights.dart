@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// 单个圆点的点击区边长（视觉圆 12pt、中心间距 20pt，与系统一致）。
@@ -105,6 +106,7 @@ class _AppMacTrafficLightsState extends State<AppMacTrafficLights>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
@@ -115,7 +117,7 @@ class _AppMacTrafficLightsState extends State<AppMacTrafficLights>
           _buildButton(
             index: 0,
             key: const Key('mac-traffic-light-close'),
-            label: '关闭',
+            label: l10n.shellWindowClose,
             fill: AppMacTrafficLightColors.closeFill,
             border: AppMacTrafficLightColors.closeBorder,
             glyph: _TrafficLightGlyph.close,
@@ -129,7 +131,7 @@ class _AppMacTrafficLightsState extends State<AppMacTrafficLights>
           _buildButton(
             index: 1,
             key: const Key('mac-traffic-light-minimize'),
-            label: '最小化',
+            label: l10n.shellWindowMinimize,
             fill: AppMacTrafficLightColors.minimizeFill,
             border: AppMacTrafficLightColors.minimizeBorder,
             glyph: _TrafficLightGlyph.minimize,
@@ -143,7 +145,7 @@ class _AppMacTrafficLightsState extends State<AppMacTrafficLights>
           _buildButton(
             index: 2,
             key: const Key('mac-traffic-light-zoom'),
-            label: '全屏',
+            label: l10n.shellWindowFullscreen,
             fill: AppMacTrafficLightColors.zoomFill,
             border: AppMacTrafficLightColors.zoomBorder,
             glyph: _optionHeld

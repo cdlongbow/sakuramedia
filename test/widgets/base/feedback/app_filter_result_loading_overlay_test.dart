@@ -1,11 +1,22 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
+
 void main() {
   Widget wrap({required bool isLoading, required bool hasPreviousItems}) {
     return MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: _testLocalizationsDelegates,
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       theme: sakuraThemeData,
       home: Scaffold(
         body: SizedBox.expand(

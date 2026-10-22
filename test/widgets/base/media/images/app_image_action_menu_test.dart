@@ -1,10 +1,18 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +21,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: _MenuTestTrigger())),
+      MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        home: const Scaffold(body: _MenuTestTrigger()),
+      ),
     );
 
     final trigger = find.byKey(const Key('menu-test-trigger'));
@@ -30,7 +43,12 @@ void main() {
     'image action menu appears near pointer inside an offset navigator',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _OffsetNavigatorHost(child: _MenuTestPage())),
+        MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: const _OffsetNavigatorHost(child: _MenuTestPage()),
+        ),
       );
 
       final trigger = find.byKey(const Key('menu-test-trigger'));
@@ -48,7 +66,12 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: _OffsetNavigatorHost(child: _MenuTestPage())),
+      MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        home: const _OffsetNavigatorHost(child: _MenuTestPage()),
+      ),
     );
 
     final trigger = find.byKey(const Key('menu-test-trigger'));
@@ -69,6 +92,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: Builder(
             builder:
@@ -123,6 +149,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: Scaffold(
           body: Builder(
             builder:
@@ -170,7 +199,12 @@ void main() {
     await tester.pumpWidget(
       AppPlatformScope(
         platform: AppPlatform.mobile,
-        child: MaterialApp(home: Scaffold(body: _AutoMenuTestButton())),
+        child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: const Scaffold(body: _AutoMenuTestButton()),
+        ),
       ),
     );
 

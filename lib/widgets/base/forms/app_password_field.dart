@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 密码输入框：包一层 [AppTextField] + 内置 obscure 状态 + 右侧可见性切换按钮。
 ///
@@ -23,8 +24,8 @@ class AppPasswordField extends StatefulWidget {
     this.onFieldSubmitted,
     this.onChanged,
     this.autovalidateMode,
-    this.showLabel = '显示密码',
-    this.hideLabel = '隐藏密码',
+    this.showLabel,
+    this.hideLabel,
     this.iconButtonSize = AppIconButtonSize.compact,
     this.isDense = true,
   });
@@ -43,8 +44,8 @@ class AppPasswordField extends StatefulWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final ValueChanged<String>? onChanged;
   final AutovalidateMode? autovalidateMode;
-  final String showLabel;
-  final String hideLabel;
+  final String? showLabel;
+  final String? hideLabel;
   final AppIconButtonSize iconButtonSize;
   final bool isDense;
 
@@ -57,7 +58,11 @@ class _AppPasswordFieldState extends State<AppPasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    final actionLabel = _obscure ? widget.showLabel : widget.hideLabel;
+    final l10n = appL10n(context);
+    final actionLabel =
+        _obscure
+            ? (widget.showLabel ?? l10n.baseShowPassword)
+            : (widget.hideLabel ?? l10n.baseHidePassword);
     return AppTextField(
       fieldKey: widget.fieldKey,
       controller: widget.controller,

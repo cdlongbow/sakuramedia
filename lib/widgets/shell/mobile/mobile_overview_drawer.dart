@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/notification_center_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/shell/app_version_info_card.dart';
 
@@ -22,140 +23,150 @@ class MobileOverviewDrawer extends ConsumerWidget {
   final BuildContext hostContext;
   final void Function(String key) onMenuSelected;
 
-  static const _MobileOverviewDrawerMenuItem _overviewItem =
+  static _MobileOverviewDrawerMenuItem _overviewItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'overview',
         icon: Icons.space_dashboard_outlined,
-        label: '概览',
+        label: l10n.shellNavOverview,
       );
 
-  static const _MobileOverviewDrawerMenuItem _favoritesItem =
+  static _MobileOverviewDrawerMenuItem _favoritesItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'favorites',
         icon: Icons.favorite_border_rounded,
-        label: '我的收藏',
+        label: l10n.shellNavFavorites,
       );
 
-  static const _MobileOverviewDrawerMenuItem _recentlyPlayedItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'recently-played',
-        icon: Icons.play_circle_outline_rounded,
-        label: '最近播放',
-      );
+  static _MobileOverviewDrawerMenuItem _recentlyPlayedItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'recently-played',
+    icon: Icons.play_circle_outline_rounded,
+    label: l10n.shellNavRecentlyPlayed,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _recentViewsItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'recent-views',
-        icon: Icons.visibility_outlined,
-        label: '最近浏览',
-      );
+  static _MobileOverviewDrawerMenuItem _recentViewsItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'recent-views',
+    icon: Icons.visibility_outlined,
+    label: l10n.shellNavRecentViews,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _ratingsItem =
+  static _MobileOverviewDrawerMenuItem _ratingsItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'ratings',
         icon: Icons.star_outline_rounded,
-        label: '我的评分',
+        label: l10n.shellNavMyRatings,
       );
 
-  static const _MobileOverviewDrawerMenuItem _tagsItem =
+  static _MobileOverviewDrawerMenuItem _tagsItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'tags',
         icon: Icons.sell_outlined,
-        label: '标签',
+        label: l10n.shellNavTags,
       );
 
-  static const List<_MobileOverviewDrawerMenuItem> _libraryItems =
-      <_MobileOverviewDrawerMenuItem>[
-        _MobileOverviewDrawerMenuItem(
-          key: 'media-libraries',
-          icon: Icons.video_library_outlined,
-          label: '媒体库',
-        ),
-        _MobileOverviewDrawerMenuItem(
-          key: 'downloaders',
-          icon: Icons.download_outlined,
-          label: '下载器',
-        ),
-        _MobileOverviewDrawerMenuItem(
-          key: 'indexers',
-          icon: Icons.travel_explore_outlined,
-          label: '索引器',
-        ),
-      ];
+  static List<_MobileOverviewDrawerMenuItem> _libraryItems(
+    AppLocalizations l10n,
+  ) => <_MobileOverviewDrawerMenuItem>[
+    _MobileOverviewDrawerMenuItem(
+      key: 'media-libraries',
+      icon: Icons.video_library_outlined,
+      label: l10n.shellNavMediaLibraries,
+    ),
+    _MobileOverviewDrawerMenuItem(
+      key: 'downloaders',
+      icon: Icons.download_outlined,
+      label: l10n.shellNavDownloaders,
+    ),
+    _MobileOverviewDrawerMenuItem(
+      key: 'indexers',
+      icon: Icons.travel_explore_outlined,
+      label: l10n.shellNavIndexers,
+    ),
+  ];
 
-  static const _MobileOverviewDrawerMenuItem _mediaManagementItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'media-management',
-        icon: Icons.video_settings_outlined,
-        label: '媒体管理',
-      );
+  static _MobileOverviewDrawerMenuItem _mediaManagementItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'media-management',
+    icon: Icons.video_settings_outlined,
+    label: l10n.shellNavMediaManagement,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _mediaImportItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'media-import',
-        icon: Icons.drive_folder_upload_outlined,
-        label: '资源导入',
-      );
+  static _MobileOverviewDrawerMenuItem _mediaImportItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'media-import',
+    icon: Icons.drive_folder_upload_outlined,
+    label: l10n.shellNavMediaImport,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _downloadTasksItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'download-tasks',
-        icon: Icons.download_for_offline_outlined,
-        label: '下载任务',
-      );
+  static _MobileOverviewDrawerMenuItem _downloadTasksItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'download-tasks',
+    icon: Icons.download_for_offline_outlined,
+    label: l10n.shellNavDownloadTasks,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _activityItem =
+  static _MobileOverviewDrawerMenuItem _activityItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'activity',
         icon: Icons.bolt_outlined,
-        label: '任务中心',
+        label: l10n.shellNavTaskCenter,
       );
 
-  static const _MobileOverviewDrawerMenuItem _movieSubscriptionsItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'movie-subscriptions',
-        icon: Icons.bookmark_added_outlined,
-        label: '订阅管理',
-      );
+  static _MobileOverviewDrawerMenuItem _movieSubscriptionsItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'movie-subscriptions',
+    icon: Icons.bookmark_added_outlined,
+    label: l10n.shellNavSubscriptions,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _systemMaintenanceItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'system-maintenance',
-        icon: Icons.build_outlined,
-        label: '系统维护',
-      );
+  static _MobileOverviewDrawerMenuItem _systemMaintenanceItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'system-maintenance',
+    icon: Icons.build_outlined,
+    label: l10n.shellNavSystemMaintenance,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _pluginsItem =
+  static _MobileOverviewDrawerMenuItem _pluginsItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'plugins',
         icon: Icons.extension_outlined,
-        label: '插件',
+        label: l10n.shellNavPlugins,
       );
 
-  static const _MobileOverviewDrawerMenuItem _externalPlayerItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'external-player',
-        icon: Icons.open_in_new_rounded,
-        label: '外部播放器',
-      );
+  static _MobileOverviewDrawerMenuItem _externalPlayerItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'external-player',
+    icon: Icons.open_in_new_rounded,
+    label: l10n.shellNavExternalPlayer,
+  );
 
-  static const _MobileOverviewDrawerMenuItem _appearanceItem =
+  static _MobileOverviewDrawerMenuItem _appearanceItem(AppLocalizations l10n) =>
       _MobileOverviewDrawerMenuItem(
         key: 'appearance',
         icon: Icons.palette_outlined,
-        label: '外观',
+        label: l10n.shellNavAppearance,
       );
 
   // 调用外部播放器仅在 Android 原生实现，其它平台不展示该入口。
   static bool get _supportsExternalPlayer =>
       defaultTargetPlatform == TargetPlatform.android;
 
-  static const _MobileOverviewDrawerMenuItem _accountSecurityItem =
-      _MobileOverviewDrawerMenuItem(
-        key: 'account-security',
-        icon: Icons.security_rounded,
-        label: '账号安全',
-      );
+  static _MobileOverviewDrawerMenuItem _accountSecurityItem(
+    AppLocalizations l10n,
+  ) => _MobileOverviewDrawerMenuItem(
+    key: 'account-security',
+    icon: Icons.security_rounded,
+    label: l10n.shellNavAccountSecurity,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -166,6 +177,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
   }
 
   Widget _buildDrawer(BuildContext context, {required int unreadCount}) {
+    final l10n = appL10n(context);
     final spacing = hostContext.appSpacing;
 
     return Drawer(
@@ -194,7 +206,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _overviewItem,
+                            item: _overviewItem(l10n),
                           ),
                         ],
                       ),
@@ -206,17 +218,20 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _favoritesItem,
+                            item: _favoritesItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _recentlyPlayedItem,
+                            item: _recentlyPlayedItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _recentViewsItem,
+                            item: _recentViewsItem(l10n),
                           ),
-                          _buildMenuEntry(context: context, item: _ratingsItem),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _ratingsItem(l10n),
+                          ),
                         ],
                       ),
                       SizedBox(height: spacing.md),
@@ -230,7 +245,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                               'mobile-overview-drawer-notifications',
                             ),
                             icon: Icons.notifications_none_rounded,
-                            label: '消息',
+                            label: l10n.shellNavNotifications,
                             trailing: unreadCount > 0
                                 ? AppBadge(
                                     key: const Key(
@@ -251,7 +266,10 @@ class MobileOverviewDrawer extends ConsumerWidget {
                       _MobileOverviewDrawerSection(
                         key: const Key('mobile-overview-drawer-tags-section'),
                         items: <Widget>[
-                          _buildMenuEntry(context: context, item: _tagsItem),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _tagsItem(l10n),
+                          ),
                         ],
                       ),
                       SizedBox(height: spacing.md),
@@ -263,7 +281,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                           items: <Widget>[
                             _buildMenuEntry(
                               context: context,
-                              item: _externalPlayerItem,
+                              item: _externalPlayerItem(l10n),
                             ),
                           ],
                         ),
@@ -273,7 +291,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         key: const Key(
                           'mobile-overview-drawer-library-section',
                         ),
-                        items: _libraryItems
+                        items: _libraryItems(l10n)
                             .map(
                               (item) =>
                                   _buildMenuEntry(context: context, item: item),
@@ -288,29 +306,32 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _mediaManagementItem,
+                            item: _mediaManagementItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _mediaImportItem,
+                            item: _mediaImportItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _downloadTasksItem,
+                            item: _downloadTasksItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _activityItem,
+                            item: _activityItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _movieSubscriptionsItem,
+                            item: _movieSubscriptionsItem(l10n),
                           ),
                           _buildMenuEntry(
                             context: context,
-                            item: _systemMaintenanceItem,
+                            item: _systemMaintenanceItem(l10n),
                           ),
-                          _buildMenuEntry(context: context, item: _pluginsItem),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _pluginsItem(l10n),
+                          ),
                         ],
                       ),
                       SizedBox(height: spacing.md),
@@ -321,7 +342,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _appearanceItem,
+                            item: _appearanceItem(l10n),
                           ),
                         ],
                       ),
@@ -333,7 +354,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                         items: <Widget>[
                           _buildMenuEntry(
                             context: context,
-                            item: _accountSecurityItem,
+                            item: _accountSecurityItem(l10n),
                           ),
                         ],
                       ),
@@ -352,7 +373,7 @@ class MobileOverviewDrawer extends ConsumerWidget {
                   _MobileOverviewDrawerItem(
                     key: const Key('mobile-overview-drawer-logout'),
                     icon: Icons.logout_rounded,
-                    label: '退出登录',
+                    label: l10n.shellLogout,
                     onTap: () => _selectMenu(context, 'logout'),
                   ),
                 ],

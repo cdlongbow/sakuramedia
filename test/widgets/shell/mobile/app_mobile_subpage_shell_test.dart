@@ -1,9 +1,17 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   testWidgets('mobile subpage shell renders app bar title and no bottom nav', (
@@ -11,6 +19,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: const AppMobileSubpageShell(
           title: '播放列表详情',
@@ -95,7 +106,13 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
+        routerConfig: router,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -149,7 +166,13 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
+        routerConfig: router,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -198,7 +221,13 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
+        routerConfig: router,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -245,7 +274,13 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      MaterialApp.router(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
+        routerConfig: router,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -262,6 +297,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: AppMobileSubpageShell(
           title: '子页面',
@@ -454,6 +492,9 @@ void main() {
   testWidgets('切换 Tab 后恢复 AppBar，避免新 Tab 丢失返回键和标题', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: AppMobileSubpageShell(
           title: '媒体管理',
@@ -560,7 +601,13 @@ Future<void> _pumpShellWithBottomInset(
   });
 
   await tester.pumpWidget(
-    MaterialApp(theme: sakuraThemeData, home: shell),
+    MaterialApp(
+      locale: const Locale('zh'),
+      localizationsDelegates: _testLocalizationsDelegates,
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      theme: sakuraThemeData,
+      home: shell,
+    ),
   );
   await tester.pumpAndSettle();
 }

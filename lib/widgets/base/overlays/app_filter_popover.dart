@@ -2,34 +2,27 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 
-class AppFilterPopoverController {
-  VoidCallback? _close;
+export 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart'
+    show AppPopoverController;
 
-  void close() => _close?.call();
+const double _panelVerticalGap = 8;
 
-  void _attach(VoidCallback close) => _close = close;
-
-  void _detach(VoidCallback close) {
-    if (_close == close) {
-      _close = null;
-    }
-  }
-}
-
-/// 通用「触发按钮 + 展开浮层面板」外壳。
+/// 通用「触发按钮 + 展开浮层面板」外壳（筛选场景）。
 ///
 /// actor / movie / ranking 三个 FilterToolbar 的浮层骨架
 /// (LayerLink / OverlayEntry / CompositedTransformFollower /
 /// GestureDetector 遮罩 / 面板 Container + panel) 逐行雷同,
-/// 由本组件封死。调用方只提供:
+/// 由 [AppAnchoredPopover] 封死。本组件只保留筛选面板的宽度、滚动和 footer
+/// 约定。调用方只提供:
 ///   - trigger 文案 / 高亮语义 / 面板宽度增量;
 ///   - 面板 body(`panelBuilder`);
 ///   - 可选 footer(通常用 [AppFilterPanelFooter])。
 ///
 /// 面板内容一律包在 `Flexible(SingleChildScrollView)` 里,
 /// 保证矮窗口不溢出。footer(若有)在滚动区之外。
-class AppFilterPopover extends StatefulWidget {
+class AppFilterPopover extends StatelessWidget {
   const AppFilterPopover({
     super.key,
     required this.triggerLabel,
@@ -98,248 +91,78 @@ class AppFilterPopover extends StatefulWidget {
   triggerBuilder;
 
   /// 需要在面板内完成“应用并关闭”时使用。
-  final AppFilterPopoverController? controller;
-
-  @override
-  State<AppFilterPopover> createState() => _AppFilterPopoverState();
-}
-
-enum AppFilterPopoverAlignment { rightAlignedToTrigger, leftAlignedToTrigger }
-
-class _AppFilterPopoverState extends State<AppFilterPopover> {
-  final LayerLink _layerLink = LayerLink();
-  final GlobalKey _triggerKey = GlobalKey();
-  OverlayEntry? _overlayEntry;
-  bool _isOpen = false;
-  bool _overlayRebuildScheduled = false;
-  late Size _triggerSize = widget.initialTriggerSize;
-  Offset _triggerOffsetInOverlay = Offset.zero;
-
-  static const double _panelVerticalGap = 8;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller?._attach(_closeFromController);
-  }
-
-  @override
-  void didUpdateWidget(covariant AppFilterPopover oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller?._detach(_closeFromController);
-      widget.controller?._attach(_closeFromController);
-    }
-    _scheduleOverlayRebuild();
-  }
-
-  @override
-  void dispose() {
-    widget.controller?._detach(_closeFromController);
-    _removeOverlay(updateState: false);
-    super.dispose();
-  }
-
-  void _closeFromController() => _removeOverlay();
-
-  void _togglePanel() {
-    if (!widget.enabled) {
-      return;
-    }
-    if (_isOpen) {
-      _removeOverlay();
-    } else {
-      _showOverlay();
-    }
-  }
-
-  void _showOverlay() {
-    widget.onOpened?.call();
-    _updateTriggerMetrics();
-    _isOpen = true;
-    _overlayEntry = OverlayEntry(
-      builder: (overlayContext) => _buildOverlay(overlayContext),
-    );
-    Overlay.of(context).insert(_overlayEntry!);
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  void _scheduleOverlayRebuild() {
-    if (!_isOpen || _overlayEntry == null || _overlayRebuildScheduled) {
-      return;
-    }
-    _overlayRebuildScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _overlayRebuildScheduled = false;
-      if (!mounted || !_isOpen) {
-        return;
-      }
-      _overlayEntry?.markNeedsBuild();
-    });
-  }
-
-  void _updateTriggerMetrics() {
-    final triggerBox =
-        _triggerKey.currentContext?.findRenderObject() as RenderBox?;
-    if (triggerBox != null) {
-      _triggerSize = triggerBox.size;
-    }
-  }
-
-  RenderBox? _updateTriggerMetricsForOverlay(BuildContext overlayContext) {
-    final triggerBox =
-        _triggerKey.currentContext?.findRenderObject() as RenderBox?;
-    final overlayState = Overlay.maybeOf(overlayContext);
-    final overlayBox = overlayState?.context.findRenderObject() as RenderBox?;
-
-    if (triggerBox != null) {
-      _triggerSize = triggerBox.size;
-    }
-    if (triggerBox != null && overlayBox != null) {
-      _triggerOffsetInOverlay = triggerBox.localToGlobal(
-        Offset.zero,
-        ancestor: overlayBox,
-      );
-    }
-    return overlayBox;
-  }
-
-  void _removeOverlay({bool updateState = true}) {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    _overlayRebuildScheduled = false;
-    if (updateState && _isOpen && mounted) {
-      setState(() {
-        _isOpen = false;
-      });
-      return;
-    }
-    _isOpen = false;
-  }
-
-  Widget _buildOverlay(BuildContext overlayContext) {
-    final overlayBox = _updateTriggerMetricsForOverlay(overlayContext);
-    final mediaQuery = MediaQuery.of(overlayContext);
-    final overlayWidth = overlayBox?.size.width ?? mediaQuery.size.width;
-    final desiredWidth = _triggerSize.width + widget.panelExtraWidth;
-    final panelWidth = desiredWidth
-        .clamp(_triggerSize.width, overlayWidth)
-        .toDouble();
-    final overflow = (panelWidth - _triggerSize.width).clamp(0, overlayWidth);
-    final horizontalOffset = switch (widget.alignment) {
-      // 右对齐：面板右边缘贴 trigger 右边缘，多出的宽度向左延伸，最多延伸
-      // 到 overlay 左边界（trigger 越靠右可用空间越大）。
-      AppFilterPopoverAlignment.rightAlignedToTrigger =>
-        -overflow.clamp(0, _triggerOffsetInOverlay.dx).toDouble(),
-      // 左对齐：面板左边缘贴 trigger 左边缘，多出的宽度向右延伸；trigger 太
-      // 靠右导致面板会超出 overlay 时，再把面板整体左移到刚好贴 overlay 右边。
-      AppFilterPopoverAlignment.leftAlignedToTrigger => () {
-        final rightSpace =
-            overlayWidth - _triggerOffsetInOverlay.dx - _triggerSize.width;
-        if (overflow <= rightSpace) {
-          return 0.0;
-        }
-        return -(overflow - rightSpace).toDouble();
-      }(),
-    };
-
-    final overlayHeight = overlayBox?.size.height ?? mediaQuery.size.height;
-    final panelTop =
-        _triggerOffsetInOverlay.dy + _triggerSize.height + _panelVerticalGap;
-    final bottomMargin = mediaQuery.padding.bottom + context.appSpacing.lg;
-    final safeOverlayHeight = (overlayHeight - bottomMargin)
-        .clamp(1.0, overlayHeight)
-        .toDouble();
-    final availablePanelHeight = safeOverlayHeight - panelTop;
-    final maxPanelHeight = availablePanelHeight > 0
-        ? availablePanelHeight
-        : safeOverlayHeight;
-
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: _removeOverlay,
-            child: const SizedBox.expand(),
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: Offset(
-            horizontalOffset,
-            _triggerSize.height + _panelVerticalGap,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              key: widget.panelKey,
-              width: panelWidth,
-              constraints: BoxConstraints(maxHeight: maxPanelHeight),
-              padding: EdgeInsets.all(context.appSpacing.lg),
-              decoration: BoxDecoration(
-                color: context.appColors.surfaceCard,
-                borderRadius: context.appRadius.mdBorder,
-                border: Border.all(color: context.appColors.borderSubtle),
-                boxShadow: context.appShadows.panel,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                      key: widget.scrollViewKey,
-                      child: widget.panelBuilder(overlayContext),
-                    ),
-                  ),
-                  if (widget.footer != null) ...[
-                    SizedBox(height: context.appSpacing.lg),
-                    widget.footer!,
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  final AppPopoverController? controller;
 
   @override
   Widget build(BuildContext context) {
-    final highlight =
-        widget.isSelected || (widget.highlightWhenOpen && _isOpen);
-    final customTrigger = widget.triggerBuilder;
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: KeyedSubtree(
-        key: _triggerKey,
-        child: customTrigger != null
-            ? customTrigger(
-                context,
-                _isOpen,
-                widget.enabled ? _togglePanel : () {},
-              )
-            : AppTextButton(
-                key: widget.triggerKey,
-                label: widget.triggerLabel,
-                labelKey: widget.labelKey,
-                icon: const Icon(Icons.filter_alt_outlined),
-                trailingIcon: Icon(
-                  _isOpen ? Icons.expand_less : Icons.expand_more,
+    return AppAnchoredPopover(
+      placement: alignment == AppFilterPopoverAlignment.rightAlignedToTrigger
+          ? AppPopoverPlacement.belowEnd
+          : AppPopoverPlacement.belowStart,
+      gap: _panelVerticalGap,
+      enabled: enabled,
+      onOpened: onOpened,
+      controller: controller,
+      initialTriggerSize: initialTriggerSize,
+      panelWidthBuilder: (overlayContext, triggerWidth, overlayWidth) =>
+          (triggerWidth + panelExtraWidth)
+              .clamp(triggerWidth, overlayWidth)
+              .toDouble(),
+      triggerBuilder: (context, isOpen, toggle) {
+        final highlight = isSelected || (highlightWhenOpen && isOpen);
+        final customTrigger = triggerBuilder;
+        if (customTrigger != null) {
+          return customTrigger(context, isOpen, toggle);
+        }
+        return AppTextButton(
+          key: triggerKey,
+          label: triggerLabel,
+          labelKey: labelKey,
+          icon: const Icon(Icons.filter_alt_outlined),
+          trailingIcon: Icon(isOpen ? Icons.expand_less : Icons.expand_more),
+          size: AppTextButtonSize.small,
+          isSelected: highlight,
+          onPressed: enabled ? toggle : null,
+        );
+      },
+      panelBuilder: (overlayContext, layout, _) => Material(
+        color: Colors.transparent,
+        child: Container(
+          key: panelKey,
+          width: layout.width,
+          constraints: BoxConstraints(
+            maxHeight: layout.maxHeight ?? double.infinity,
+          ),
+          padding: EdgeInsets.all(overlayContext.appSpacing.lg),
+          decoration: BoxDecoration(
+            color: overlayContext.appColors.surfaceCard,
+            borderRadius: overlayContext.appRadius.mdBorder,
+            border: Border.all(color: overlayContext.appColors.borderSubtle),
+            boxShadow: overlayContext.appShadows.panel,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                child: SingleChildScrollView(
+                  key: scrollViewKey,
+                  child: panelBuilder(overlayContext),
                 ),
-                size: AppTextButtonSize.small,
-                isSelected: highlight,
-                onPressed: widget.enabled ? _togglePanel : null,
               ),
+              if (footer != null) ...[
+                SizedBox(height: overlayContext.appSpacing.lg),
+                footer!,
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 }
+
+enum AppFilterPopoverAlignment { rightAlignedToTrigger, leftAlignedToTrigger }
 
 /// 筛选面板底栏：左侧文案 + 右侧「重置」按钮。
 ///

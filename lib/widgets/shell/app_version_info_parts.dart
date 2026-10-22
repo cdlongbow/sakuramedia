@@ -8,7 +8,7 @@ import 'package:sakuramedia/config/app_release_channels.dart';
 import 'package:sakuramedia/core/platform/clipboard_copy.dart';
 import 'package:sakuramedia/theme.dart';
 
-/// 版本信息的一行（label + 右对齐值），版本卡片与侧栏版本弹窗共用。
+/// 版本信息的一行（label + 右对齐值），版本卡片与侧栏版本浮层共用。
 class AppVersionRow extends StatelessWidget {
   const AppVersionRow({super.key, required this.label, required this.value});
 
@@ -47,7 +47,7 @@ class AppVersionRow extends StatelessWidget {
 }
 
 /// 「发现可用更新」提示块（客户端 / 服务端 / 插件数量），版本卡片与侧栏
-/// 版本弹窗共用，避免两处维护同一段文案与样式。
+/// 版本浮层共用，避免两处维护同一段文案与样式。
 class AppVersionUpdateNotice extends ConsumerWidget {
   const AppVersionUpdateNotice({
     super.key,
@@ -174,34 +174,39 @@ class _ReleaseLink extends StatelessWidget {
     return Semantics(
       link: true,
       label: '打开$label',
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: context.appRadius.smBorder,
-        mouseCursor: SystemMouseCursors.click,
-        hoverColor: context.appColors.surfaceCard,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: spacing.xs),
-          child: Row(
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    tone: AppTextTone.accent,
+      // 提示块自身有不透明底色；透明 Material 让 ink 画在底色之上，
+      // 否则 hover / 点击波纹会被盖住。
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: context.appRadius.smBorder,
+          mouseCursor: SystemMouseCursors.click,
+          hoverColor: context.appColors.surfaceCard,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: spacing.xs),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      tone: AppTextTone.accent,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: spacing.xs),
-              Icon(
-                Icons.open_in_new_rounded,
-                size: context.appComponentTokens.iconSize3xs,
-                color: context.appTextPalette.accent,
-              ),
-            ],
+                SizedBox(width: spacing.xs),
+                Icon(
+                  Icons.open_in_new_rounded,
+                  size: context.appComponentTokens.iconSize3xs,
+                  color: context.appTextPalette.accent,
+                ),
+              ],
+            ),
           ),
         ),
       ),

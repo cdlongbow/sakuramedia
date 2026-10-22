@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 
 /// 桌面侧栏底部的明暗模式切换 + 主题色小浮窗。
 ///
@@ -21,100 +21,15 @@ class SidebarAppearanceMenu extends ConsumerStatefulWidget {
 }
 
 class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
-  static const double _panelGap = 8;
   static const double _themeColorDotSize = 6;
-  static const Duration _panelAnimationDuration = Duration(milliseconds: 140);
 
-  final LayerLink _layerLink = LayerLink();
-  final FocusNode _panelFocusNode = FocusNode(
-    debugLabel: 'sidebar-theme-color-panel',
-  );
-  OverlayEntry? _overlayEntry;
-
-  @override
-  void dispose() {
-    _removePanel();
-    _panelFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _togglePanel() {
-    if (_overlayEntry != null) {
-      _removePanel();
-      return;
-    }
-    _overlayEntry = OverlayEntry(builder: _buildOverlay);
-    Overlay.of(context).insert(_overlayEntry!);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _overlayEntry != null) {
-        _panelFocusNode.requestFocus();
-      }
-    });
-  }
-
-  void _removePanel() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  Widget _buildOverlay(BuildContext overlayContext) {
-    // 浮层内不要放 Tooltip：Flutter 3.47 的 Tooltip 走 OverlayPortal，
-    // 在 CompositedTransformFollower 内布局时拿不到父级 paint transform。
-    final panelWidth =
-        overlayContext.appSidebarTokens.expandedWidth -
-        overlayContext.appSpacing.sm * 2;
-
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: _removePanel,
-            child: const SizedBox.expand(),
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          targetAnchor: Alignment.topRight,
-          followerAnchor: Alignment.bottomRight,
-          offset: const Offset(0, -_panelGap),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: 1),
-            duration: _panelAnimationDuration,
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - value) * context.appSpacing.xs),
-                  child: child,
-                ),
-              );
-            },
-            child: CallbackShortcuts(
-              bindings: <ShortcutActivator, VoidCallback>{
-                const SingleActivator(LogicalKeyboardKey.escape): _removePanel,
-              },
-              child: Focus(
-                focusNode: _panelFocusNode,
-                child: _ThemeColorPanel(
-                  width: panelWidth,
-                  onSelected: _removePanel,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  final AppPopoverController _popoverController = AppPopoverController();
 
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(appShellSidebarCollapsedProvider, (previous, next) {
       if (next) {
-        _removePanel();
+        _popoverController.close();
       }
     });
 
@@ -125,9 +40,15 @@ class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
         .forBrightness(Theme.of(context).brightness)
         .primary;
 
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: Row(
+    return AppAnchoredPopover(
+      controller: _popoverController,
+      placement: AppPopoverPlacement.aboveEnd,
+      animate: true,
+      focusOnOpen: true,
+      panelWidthBuilder: (overlayContext, _, _) =>
+          overlayContext.appSidebarTokens.expandedWidth -
+          overlayContext.appSpacing.sm * 2,
+      triggerBuilder: (context, _, toggle) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppIconButton(
@@ -164,10 +85,12 @@ class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
             tooltip: '主题色',
             semanticLabel: '主题色',
             iconColor: context.appTextPalette.primary,
-            onPressed: _togglePanel,
+            onPressed: toggle,
           ),
         ],
       ),
+      panelBuilder: (overlayContext, layout, close) =>
+          _ThemeColorPanel(width: layout.width, onSelected: close),
     );
   }
 }

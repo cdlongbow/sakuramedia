@@ -104,8 +104,8 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
   late final TextEditingController _textController;
-  final AppFilterPopoverController _filterPopoverController =
-      AppFilterPopoverController();
+  final AppPopoverController _filterPopoverController =
+      AppPopoverController();
   ImageSearchFilterState? _desktopFilterDraft;
   bool _isViewportFillCheckScheduled = false;
   int _autoLoadAttempts = 0;

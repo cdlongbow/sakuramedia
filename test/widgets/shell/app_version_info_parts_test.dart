@@ -1,6 +1,8 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/providers/external_url_provider.dart';
 import 'package:sakuramedia/config/app_release_channels.dart';
 import 'package:sakuramedia/theme.dart';
@@ -17,9 +19,7 @@ void main() {
     expect(find.text('客户端发布页'), findsOneWidget);
     expect(find.text('服务端发布页'), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const Key('version-release-link-frontend')),
-    );
+    await tester.tap(find.byKey(const Key('version-release-link-frontend')));
     await tester.pump();
     expect(opened.single, Uri.parse(AppReleaseChannels.frontendPageUrl));
 
@@ -50,11 +50,42 @@ void main() {
       find.byKey(const Key('version-release-link-frontend')),
       findsNothing,
     );
-    expect(
-      find.byKey(const Key('version-release-link-backend')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('version-release-link-backend')), findsNothing);
     expect(find.text('2 个插件'), findsOneWidget);
+  });
+
+  testWidgets('打开浏览器失败时复制链接并提示', (WidgetTester tester) async {
+    Object? clipboardArguments;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (MethodCall call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardArguments = call.arguments;
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+    });
+
+    await _pumpNotice(
+      tester,
+      frontendUpdateVersion: 'v0.3.0',
+      openSucceeds: false,
+    );
+
+    await tester.tap(find.byKey(const Key('version-release-link-frontend')));
+    await tester.pumpAndSettle();
+
+    expect(clipboardArguments, <String, dynamic>{
+      'text': AppReleaseChannels.frontendPageUrl,
+    });
+    expect(find.text('无法打开浏览器，链接已复制'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
   });
 }
 
@@ -63,6 +94,7 @@ Future<List<Uri>> _pumpNotice(
   String? frontendUpdateVersion,
   String? backendUpdateVersion,
   int pluginUpdateCount = 0,
+  bool openSucceeds = true,
 }) async {
   final opened = <Uri>[];
   await tester.pumpWidget(
@@ -70,19 +102,21 @@ Future<List<Uri>> _pumpNotice(
       overrides: [
         externalUrlOpenerProvider.overrideWithValue((uri) async {
           opened.add(uri);
-          return true;
+          return openSucceeds;
         }),
       ],
-      child: MaterialApp(
-        theme: sakuraDesktopThemeData,
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 340,
-              child: AppVersionUpdateNotice(
-                frontendUpdateVersion: frontendUpdateVersion,
-                backendUpdateVersion: backendUpdateVersion,
-                pluginUpdateCount: pluginUpdateCount,
+      child: OKToast(
+        child: MaterialApp(
+          theme: sakuraDesktopThemeData,
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 340,
+                child: AppVersionUpdateNotice(
+                  frontendUpdateVersion: frontendUpdateVersion,
+                  backendUpdateVersion: backendUpdateVersion,
+                  pluginUpdateCount: pluginUpdateCount,
+                ),
               ),
             ),
           ),

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_version_info_state.dart';
 import 'package:sakuramedia/app/providers/app_shell_providers.dart';
@@ -13,6 +12,7 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 import 'package:sakuramedia/widgets/shell/app_version_info_parts.dart';
 
 const double _sidebarVersionUpdateDotSize = 6;
@@ -31,113 +31,22 @@ class SidebarVersionFooter extends ConsumerStatefulWidget {
 
 class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
   static const double _popoverWidth = 300;
-  static const double _popoverGap = 8;
-  static const Duration _popoverAnimationDuration = Duration(milliseconds: 140);
 
-  final LayerLink _layerLink = LayerLink();
-  final FocusNode _popoverFocusNode = FocusNode(
-    debugLabel: 'sidebar-version-popover',
-  );
-  OverlayEntry? _overlayEntry;
-
-  @override
-  void dispose() {
-    _removePopover();
-    _popoverFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _togglePopover() {
-    if (_overlayEntry != null) {
-      _removePopover();
-      return;
-    }
-    _showPopover();
-  }
-
-  void _showPopover() {
-    _overlayEntry = OverlayEntry(builder: _buildOverlay);
-    Overlay.of(context).insert(_overlayEntry!);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _overlayEntry != null) {
-        _popoverFocusNode.requestFocus();
-      }
-    });
-  }
-
-  void _removePopover() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
+  final AppPopoverController _popoverController = AppPopoverController();
 
   void _openPlugins() {
-    _removePopover();
+    _popoverController.close();
     ref
         .read(configurationTabRequestProvider.notifier)
         .request('configuration-tab-plugins');
     context.goPrimaryRoute(desktopConfigurationPath);
   }
 
-  Widget _buildOverlay(BuildContext overlayContext) {
-    // 浮层内不要放 Tooltip：Flutter 3.47 的 Tooltip 走 OverlayPortal，
-    // 在 CompositedTransformFollower 内布局时拿不到父级 paint transform。
-    final width = math.min(
-      _popoverWidth,
-      MediaQuery.sizeOf(overlayContext).width - overlayContext.appSpacing.xxl,
-    );
-
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: _removePopover,
-            child: const SizedBox.expand(),
-          ),
-        ),
-        CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          targetAnchor: Alignment.topLeft,
-          followerAnchor: Alignment.bottomLeft,
-          offset: const Offset(0, -_popoverGap),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: 1),
-            duration: _popoverAnimationDuration,
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - value) * context.appSpacing.xs),
-                  child: child,
-                ),
-              );
-            },
-            child: CallbackShortcuts(
-              bindings: <ShortcutActivator, VoidCallback>{
-                const SingleActivator(LogicalKeyboardKey.escape):
-                    _removePopover,
-              },
-              child: Focus(
-                focusNode: _popoverFocusNode,
-                child: _VersionPopoverContent(
-                  width: width,
-                  onGoPlugins: _openPlugins,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(appShellSidebarCollapsedProvider, (previous, next) {
       if (next) {
-        _removePopover();
+        _popoverController.close();
       }
     });
 
@@ -156,9 +65,14 @@ class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
         ? '${versionInfo.tooltipLabel} · 有更新'
         : versionInfo.tooltipLabel;
 
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: Tooltip(
+    return AppAnchoredPopover(
+      controller: _popoverController,
+      placement: AppPopoverPlacement.aboveStart,
+      animate: true,
+      focusOnOpen: true,
+      panelWidthBuilder: (overlayContext, _, overlayWidth) =>
+          math.min(_popoverWidth, overlayWidth - overlayContext.appSpacing.xxl),
+      triggerBuilder: (context, _, toggle) => Tooltip(
         message: tooltip,
         waitDuration: const Duration(milliseconds: 300),
         child: Material(
@@ -167,7 +81,7 @@ class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
             borderRadius: context.appRadius.smBorder,
             mouseCursor: SystemMouseCursors.click,
             hoverColor: context.appColors.sidebarHoverBackground,
-            onTap: _togglePopover,
+            onTap: toggle,
             child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: context.appSpacing.md,
@@ -195,6 +109,10 @@ class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
             ),
           ),
         ),
+      ),
+      panelBuilder: (overlayContext, layout, _) => _VersionPopoverContent(
+        width: layout.width,
+        onGoPlugins: _openPlugins,
       ),
     );
   }

@@ -8,13 +8,16 @@ import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/providers/credential_store_provider.dart';
 import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/providers/external_url_provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key, required this.platform});
@@ -38,12 +41,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isPasswordObscured = true;
   bool _hasAttemptedSubmit = false;
   String? _submitError;
+  bool _showFirstRunNotice = false;
+  bool _showDeployHelp = false;
   String _protocol = 'http';
 
   @override
   void initState() {
     super.initState();
-    _initBaseUrl(ref.read(sessionStoreProvider).baseUrl);
+    final savedBaseUrl = ref.read(sessionStoreProvider).baseUrl;
+    _initBaseUrl(savedBaseUrl);
+    _showFirstRunNotice = savedBaseUrl.trim().isEmpty;
     _loadSavedCredentials();
   }
 
@@ -102,6 +109,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() {
       _isSubmitting = true;
       _submitError = null;
+      _showDeployHelp = false;
     });
 
     final sessionStore = ref.read(sessionStoreProvider);
@@ -124,6 +132,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
       setState(() {
         _submitError = apiErrorMessage(error, fallback: '登录失败，请稍后重试');
+        _showDeployHelp = error.isTransportFailure;
       });
     } catch (_) {
       if (!mounted) {
@@ -131,6 +140,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
       setState(() {
         _submitError = '登录失败，请检查网络或服务器地址';
+        _showDeployHelp = true;
       });
     } finally {
       if (mounted) {
@@ -139,6 +149,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         });
       }
     }
+  }
+
+  static const _deployGuideUrl =
+      'https://tinypinglite.github.io/sakuramedia/guide/quick-start';
+
+  Future<void> _openDeployGuide() async {
+    final opened = await ref.read(externalUrlOpenerProvider)(
+      Uri.parse(_deployGuideUrl),
+    );
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法打开浏览器，请手动访问 Wiki 的「快速开始」')),
+      );
+    }
+  }
+
+  void _dismissFirstRunNotice() {
+    setState(() => _showFirstRunNotice = false);
   }
 
   String? _validateBaseUrl(String? value) {
@@ -290,8 +318,48 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ],
                               ),
                               SizedBox(height: spacing.lg),
+                              if (_showFirstRunNotice) ...[
+                                AppNoticeCard(
+                                  key: const Key('login-first-run-notice'),
+                                  leadingIcon: Icons.dns_outlined,
+                                  title: '第一次使用？',
+                                  description:
+                                      'SakuraMedia 由客户端和后端组成，客户端不能单独使用。先部署后端，再填服务器地址登录。'
+                                      '默认账号 account / account，登录后请修改密码。',
+                                ),
+                                SizedBox(height: spacing.sm),
+                                Wrap(
+                                  spacing: spacing.sm,
+                                  runSpacing: spacing.xs,
+                                  children: <Widget>[
+                                    AppTextButton(
+                                      key: const Key('login-open-deploy-guide'),
+                                      label: '查看部署教程',
+                                      icon: Icon(
+                                        Icons.open_in_new_rounded,
+                                        size: context
+                                            .appComponentTokens
+                                            .iconSizeSm,
+                                      ),
+                                      size: AppTextButtonSize.small,
+                                      onPressed: _isSubmitting
+                                          ? null
+                                          : _openDeployGuide,
+                                    ),
+                                    AppTextButton(
+                                      key: const Key('login-dismiss-first-run'),
+                                      label: '已有服务器，直接登录',
+                                      size: AppTextButtonSize.small,
+                                      onPressed: _isSubmitting
+                                          ? null
+                                          : _dismissFirstRunNotice,
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: spacing.lg),
+                              ],
                               Text(
-                                '请输入服务器地址与账号信息',
+                                '请输入服务器地址与账号信息（需要先部署后端）',
                                 style: resolveAppTextStyle(
                                   context,
                                   size: AppTextSize.s14,
@@ -315,6 +383,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   protocol: _protocol,
                                   enabled: !_isSubmitting,
                                   onChanged: _handleProtocolChanged,
+                                ),
+                                suffix: AppIconButton(
+                                  key: const Key('login-base-url-help'),
+                                  tooltip: '如何获取服务器地址',
+                                  padding: EdgeInsets.all(
+                                    context.appSpacing.xs,
+                                  ),
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : _openDeployGuide,
+                                  icon: Icon(
+                                    Icons.help_outline_rounded,
+                                    size: context.appComponentTokens.iconSizeSm,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: spacing.xs),
+                              Text(
+                                '填运行后端的机器地址，例如 192.168.1.10:38000',
+                                style: resolveAppTextStyle(
+                                  context,
+                                  size: AppTextSize.s12,
+                                  tone: AppTextTone.muted,
                                 ),
                               ),
                               SizedBox(height: fieldGap),
@@ -403,6 +494,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                         ),
                                   ),
                                 ),
+                                if (_showDeployHelp) ...[
+                                  SizedBox(height: spacing.sm),
+                                  AppTextButton(
+                                    key: const Key('login-error-deploy-guide'),
+                                    label: '还没有部署后端？查看部署教程',
+                                    icon: Icon(
+                                      Icons.open_in_new_rounded,
+                                      size:
+                                          context.appComponentTokens.iconSizeSm,
+                                    ),
+                                    size: AppTextButtonSize.small,
+                                    onPressed: _isSubmitting
+                                        ? null
+                                        : _openDeployGuide,
+                                  ),
+                                ],
                               ],
                               SizedBox(height: sectionGap),
                               DecoratedBox(

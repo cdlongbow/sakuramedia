@@ -9,6 +9,7 @@ import 'package:sakuramedia/core/session/providers/credential_store_provider.dar
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/features/auth/presentation/providers/auth_api_provider.dart';
 import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/app/providers/external_url_provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
@@ -24,6 +25,7 @@ Future<void> _pumpLoginPage(
   required SessionStore sessionStore,
   required AuthApi authApi,
   required CredentialStore credentialStore,
+  ExternalUrlOpener? urlOpener,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -31,6 +33,8 @@ Future<void> _pumpLoginPage(
         sessionStoreProvider.overrideWithValue(sessionStore),
         credentialStoreProvider.overrideWithValue(credentialStore),
         authApiProvider.overrideWithValue(authApi),
+        if (urlOpener != null)
+          externalUrlOpenerProvider.overrideWithValue(urlOpener),
       ],
       child: MaterialApp(
         theme: sakuraThemeData,
@@ -96,6 +100,62 @@ void main() {
     expect(find.byKey(const Key('login-protocol-selector')), findsOneWidget);
     expect(find.text('https://'), findsOneWidget);
     expect(find.text('saved.example.com'), findsOneWidget);
+    expect(find.byKey(const Key('login-first-run-notice')), findsNothing);
+    expect(find.text('请输入服务器地址与账号信息（需要先部署后端）'), findsOneWidget);
+  });
+
+  testWidgets('first-run notice explains backend and opens deploy guide', (
+    WidgetTester tester,
+  ) async {
+    final freshSession = SessionStore.inMemory();
+    final freshClient = ApiClient(sessionStore: freshSession);
+    final freshAdapter = FakeHttpClientAdapter();
+    freshClient.rawDio.httpClientAdapter = freshAdapter;
+    freshClient.rawRefreshDio.httpClientAdapter = freshAdapter;
+    final freshAuthApi = AuthApi(
+      apiClient: freshClient,
+      sessionStore: freshSession,
+      credentialStore: credentialStore,
+    );
+    addTearDown(freshClient.dispose);
+    final opened = <Uri>[];
+
+    await _pumpLoginPage(
+      tester,
+      sessionStore: freshSession,
+      authApi: freshAuthApi,
+      credentialStore: credentialStore,
+      urlOpener: (uri) async {
+        opened.add(uri);
+        return true;
+      },
+    );
+
+    expect(find.byKey(const Key('login-first-run-notice')), findsOneWidget);
+    expect(find.text('第一次使用？'), findsOneWidget);
+    expect(find.textContaining('客户端不能单独使用'), findsOneWidget);
+    expect(find.textContaining('account / account'), findsOneWidget);
+    expect(find.byKey(const Key('login-base-url-help')), findsOneWidget);
+    expect(find.text('填运行后端的机器地址，例如 192.168.1.10:38000'), findsOneWidget);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('login-open-deploy-guide')),
+    );
+    await tester.tap(find.byKey(const Key('login-open-deploy-guide')));
+    await tester.pump();
+
+    expect(
+      opened.single.toString(),
+      'https://tinypinglite.github.io/sakuramedia/guide/quick-start',
+    );
+
+    await tester.ensureVisible(
+      find.byKey(const Key('login-dismiss-first-run')),
+    );
+    await tester.tap(find.byKey(const Key('login-dismiss-first-run')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('login-first-run-notice')), findsNothing);
   });
 
   testWidgets('validates base url format before submit', (
@@ -200,6 +260,7 @@ void main() {
 
     expect(find.byKey(const Key('login-error-message')), findsOneWidget);
     expect(find.text('用户名或密码错误'), findsOneWidget);
+    expect(find.byKey(const Key('login-error-deploy-guide')), findsNothing);
   });
 
   testWidgets('shows clear server connection message after transport failure', (
@@ -236,6 +297,7 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.byKey(const Key('login-error-deploy-guide')), findsOneWidget);
     expect(find.textContaining('XMLHttpRequest onError'), findsNothing);
   });
 

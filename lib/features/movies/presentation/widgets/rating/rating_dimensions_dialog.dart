@@ -4,6 +4,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/movies/data/dto/rating/rating_dimension_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/rating_dimensions_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -74,7 +75,9 @@ class _RatingDimensionsDialogState
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      showToast('维度名称不能为空');
+      showToast(
+        AppLocalizations.of(context).movieWidgetDimensionNameRequired,
+      );
       return;
     }
     setState(() => _saving = true);
@@ -97,18 +100,26 @@ class _RatingDimensionsDialogState
       });
     } catch (error) {
       if (!mounted) return;
-      showToast(apiErrorMessage(error, fallback: '保存评分维度失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).movieWidgetRatingDimensionSaveFailed,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _delete(RatingDimensionDto dimension) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '删除评分维度',
-      message: '删除「${dimension.name}」后，已有影片在该维度的分值会被移除并重算总分。',
-      confirmLabel: '删除',
+      title: l10n.movieWidgetDeleteRatingDimensionTitle,
+      message: l10n.movieWidgetDeleteRatingDimensionMessage(dimension.name),
+      confirmLabel: l10n.commonDelete,
       danger: true,
     );
     if (!confirmed || !mounted) return;
@@ -116,19 +127,27 @@ class _RatingDimensionsDialogState
       await ref.read(ratingDimensionsProvider.notifier).delete(dimension.id);
     } catch (error) {
       if (!mounted) return;
-      showToast(apiErrorMessage(error, fallback: '删除评分维度失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).movieWidgetRatingDimensionDeleteFailed,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final dimensions = ref.watch(ratingDimensionsProvider);
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '评分维度',
+          l10n.movieWidgetRatingDimensionsTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -137,7 +156,7 @@ class _RatingDimensionsDialogState
         ),
         SizedBox(height: context.appSpacing.xs),
         Text(
-          '统一 1–5 分；总分按已填维度加权平均。',
+          l10n.movieWidgetRatingScaleHint,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -155,7 +174,7 @@ class _RatingDimensionsDialogState
             children: [
               Expanded(
                 child: Text(
-                  '评分维度加载失败',
+                  l10n.movieWidgetRatingDimensionsLoadFailed,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s14,
@@ -164,7 +183,7 @@ class _RatingDimensionsDialogState
                 ),
               ),
               AppTextButton(
-                label: '重试',
+                label: l10n.commonRetry,
                 onPressed: () => ref.invalidate(ratingDimensionsProvider),
               ),
             ],
@@ -186,6 +205,7 @@ class _RatingDimensionsDialogState
     BuildContext context,
     List<RatingDimensionDto> dimensions,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: context.appColors.surfaceMuted,
@@ -221,7 +241,7 @@ class _RatingDimensionsDialogState
                   ),
                   SizedBox(width: context.appSpacing.xs),
                   Text(
-                    '新增维度',
+                    l10n.movieWidgetAddDimension,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s14,
@@ -242,6 +262,7 @@ class _RatingDimensionsDialogState
     BuildContext context,
     RatingDimensionDto dimension,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       key: Key('rating-dimension-${dimension.id}'),
       padding: EdgeInsets.symmetric(
@@ -260,13 +281,13 @@ class _RatingDimensionsDialogState
           ),
           AppIconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: '编辑',
+            tooltip: l10n.commonEdit,
             size: AppIconButtonSize.mini,
             onPressed: () => _startEdit(dimension),
           ),
           AppIconButton(
             icon: const Icon(Icons.delete_outline_rounded),
-            tooltip: '删除',
+            tooltip: l10n.commonDelete,
             size: AppIconButtonSize.mini,
             onPressed: () => _delete(dimension),
           ),
@@ -276,11 +297,14 @@ class _RatingDimensionsDialogState
   }
 
   Widget _buildForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _editingId == null ? '新增维度' : '编辑维度',
+          _editingId == null
+              ? l10n.movieWidgetAddDimension
+              : l10n.movieWidgetEditDimension,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -291,20 +315,23 @@ class _RatingDimensionsDialogState
         AppTextField(
           fieldKey: const Key('rating-dimension-name-field'),
           controller: _nameController,
-          hintText: '维度名称，如 颜值 / 剧情',
+          hintText: l10n.movieWidgetDimensionNameHint,
         ),
         SizedBox(height: context.appSpacing.md),
         Row(
           children: [
             AppButton(
-              label: '保存',
+              label: l10n.commonSave,
               variant: AppButtonVariant.primary,
               size: AppButtonSize.small,
               isLoading: _saving,
               onPressed: _saving ? null : _save,
             ),
             SizedBox(width: context.appSpacing.sm),
-            AppTextButton(label: '取消', onPressed: _saving ? null : _cancelForm),
+            AppTextButton(
+              label: l10n.commonCancel,
+              onPressed: _saving ? null : _cancelForm,
+            ),
           ],
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 import 'test_api_bundle.dart';
 
@@ -16,6 +17,9 @@ import 'test_api_bundle.dart';
 ///   `sakuraDesktopThemeData` / `sakuraMobileThemeData`。
 /// - [wrapInOkToast]：默认 true（toast 文案断言依赖 OKToast 树）。
 /// - [wrap]：自定义外壳（如 `Scaffold(body: ...)`、navigatorObservers）。
+/// - [locale]：传值时给 `MaterialApp` 装上 ARB 本地化（`AppLocalizations`），
+///   供已经迁到 `AppLocalizations.of(context)` 的组件使用；不传则保持
+///   Flutter 默认（英文）本地化，行为与迁移前一致。
 ///
 /// 不强推替换存量测试——新测试用这个，旧测试随页面迁移顺手 refactor。
 Future<void> pumpWithProviders(
@@ -27,6 +31,7 @@ Future<void> pumpWithProviders(
   ThemeData? theme,
   bool wrapInOkToast = true,
   Widget Function(Widget)? wrap,
+  Locale? locale,
 }) async {
   var child = home;
   if (wrap != null) {
@@ -37,7 +42,20 @@ Future<void> pumpWithProviders(
       if (bundle != null) ...bundle.riverpodOverrides(),
       ...overrides,
     ],
-    child: MaterialApp(home: child, theme: theme),
+    child: MaterialApp(
+      home: child,
+      theme: theme,
+      locale: locale,
+      localizationsDelegates: locale == null
+          ? null
+          : <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+      supportedLocales: locale == null
+          ? const <Locale>[Locale('en', 'US')]
+          : const <Locale>[Locale('zh'), Locale('en')],
+    ),
   );
   if (wrapInOkToast) {
     app = OKToast(child: app);

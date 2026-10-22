@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
@@ -66,15 +67,15 @@ class MovieClipStrip extends StatelessWidget {
       return _MovieClipFeedback(
         feedbackKey: const Key('movie-clip-strip-error'),
         message: errorMessage!,
-        actionLabel: '重试',
+        actionLabel: AppLocalizations.of(context).commonRetry,
         onAction: onRetry,
       );
     }
 
     if (clips.isEmpty) {
-      return const _MovieClipFeedback(
-        feedbackKey: Key('movie-clip-strip-empty'),
-        message: '暂无切片',
+      return _MovieClipFeedback(
+        feedbackKey: const Key('movie-clip-strip-empty'),
+        message: AppLocalizations.of(context).movieWidgetNoClips,
       );
     }
 

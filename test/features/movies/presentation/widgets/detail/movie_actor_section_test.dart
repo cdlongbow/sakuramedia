@@ -284,6 +284,7 @@ Future<void> _pumpSection(
     bundle: bundle,
     theme: sakuraThemeData,
     physicalSize: const Size(900, 760),
+    locale: const Locale('zh'),
     home: Scaffold(
       body: SingleChildScrollView(
         child: MovieActorSection(

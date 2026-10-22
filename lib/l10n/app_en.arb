@@ -1265,5 +1265,221 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "movieWidgetActorSearchFailed": "Failed to search actors. Please try again later.",
+  "movieWidgetLocalActorCreateFailed": "Failed to create the actor. Please try again later.",
+  "movieWidgetCreateLocalActorTitle": "Create local actor",
+  "movieWidgetAddActorTitle": "Add actors",
+  "movieWidgetCreateLocalActorSubtitle": "The new actor is added to this movie's cast automatically.",
+  "movieWidgetActorPickerSubtitle": "Pick from the actor library, or create a new local actor.",
+  "movieWidgetCreateAndAdd": "Create and add",
+  "movieWidgetAddActorsCount": "Add {count} actors",
+  "@movieWidgetAddActorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetSearchActorLabel": "Search actors",
+  "movieWidgetActorSearchHint": "Type a name to search the actor library",
+  "movieWidgetSelectedActorsSummary": "Selected {count}: {names}",
+  "@movieWidgetSelectedActorsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorNameSeparator": ", ",
+  "movieWidgetActorSearchPrompt": "Type a name to start searching",
+  "movieWidgetActorNotFound": "No matching actors found",
+  "movieWidgetCreateLocalActorWithName": "Create local actor \"{name}\"",
+  "@movieWidgetCreateLocalActorWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetCreateLocalActorEntry": "Not found? Create a local actor",
+  "movieWidgetLocalActorBadge": "Local actor",
+  "movieWidgetActorAlreadyInCast": "In cast",
+  "movieWidgetBackToSelection": "Back to selection",
+  "movieWidgetActorNameLabel": "Name",
+  "movieWidgetActorNameRequired": "Enter the actor name",
+  "movieWidgetActorNameTooLong": "Name cannot exceed 255 characters",
+  "movieWidgetActorAliasLabel": "Alias (optional)",
+  "movieWidgetActorAliasHint": "e.g. Alias A / Alias B",
+  "movieWidgetActorAliasHelper": "Separate multiple aliases with /, may be empty",
+  "movieWidgetActorAliasTooLong": "Alias cannot exceed 1024 characters",
+  "movieWidgetAddActorFailed": "Failed to add actors. Please try again later.",
+  "movieWidgetActorsAddedWithFailures": "Added {added} actors, {failed} failed",
+  "@movieWidgetActorsAddedWithFailures": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorsAddedRefreshFailed": "Added {added} actors, but refreshing the list failed",
+  "@movieWidgetActorsAddedRefreshFailed": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorAdded": "Added {name}",
+  "@movieWidgetActorAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorsAdded": "Added {count} actors",
+  "@movieWidgetActorsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorRemoved": "Removed {name} from the cast",
+  "@movieWidgetActorRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorRemovedRefreshFailed": "Removed {name}, but refreshing the list failed",
+  "@movieWidgetActorRemovedRefreshFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetRemoveActorFailed": "Failed to remove the actor. Please try again later.",
+  "movieWidgetActorsSectionTitle": "Actors",
+  "movieWidgetActorRemovalScopeNotice": "Removing only affects this movie; the actor profile is kept.",
+  "movieWidgetActorCastManualNotice": "The cast is managed manually; refreshing metadata will not overwrite it.",
+  "movieWidgetActorRemovalEditingHint": "Removing only affects this movie; the cast switches to manual management and metadata refresh no longer overwrites it.",
+  "movieWidgetActorAddManualHint": "Adding switches the cast to manual management; metadata refresh no longer overwrites it.",
+  "movieWidgetManageAction": "Manage",
+  "movieWidgetAddLabel": "Add",
+  "movieWidgetRemoveActorFromCast": "Remove {name} from the cast",
+  "@movieWidgetRemoveActorFromCast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetNoActors": "No actors yet",
+  "movieWidgetNoClips": "No clips yet",
+  "movieWidgetPlaylistTooltip": "Playlist",
+  "movieWidgetSubscribed": "Subscribed",
+  "movieWidgetSubscribe": "Subscribe",
+  "movieWidgetRemoveFavorite": "Remove from favorites",
+  "movieWidgetFavoriteMovie": "Add to favorites",
+  "movieWidgetReview": "Reviews",
+  "movieWidgetThumbnail": "Thumbnails",
+  "movieWidgetPlay": "Play",
+  "movieWidgetMerge": "Merge",
+  "movieWidgetMoreActions": "More actions",
+  "movieWidgetClipCreated": "Clip created",
+  "movieWidgetMagnetSearch": "Magnet search",
+  "movieWidgetDownloadSubmitted": "Submitted to {clientName}",
+  "@movieWidgetDownloadSubmitted": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetDownloadTaskExists": "The download task already exists",
+  "movieWidgetNoReviews": "No reviews yet",
+  "movieWidgetAnonymousUser": "Anonymous",
+  "movieWidgetNoReviewContent": "No review content",
+  "movieWidgetSearchMovieNumber": "Search by movie number",
+  "movieWidgetAddMagnetDownload": "Add magnet download",
+  "movieWidgetAddMagnetIndexed": "Add magnet {index}",
+  "@movieWidgetAddMagnetIndexed": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetRetryLoadMore": "Retry loading more",
+  "movieWidgetNoMediaSources": "No media sources yet",
+  "movieWidgetDeleteMedia": "Delete media",
+  "movieWidgetMomentsTitle": "Moments",
+  "movieWidgetNoMediaPoints": "No marked moments yet",
+  "movieWidgetSelectMergeLibraryTitle": "Choose a media library to merge",
+  "movieWidgetMediaLibraryFallback": "Library {id}",
+  "@movieWidgetMediaLibraryFallback": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetMediaLibrarySegments": "{providerKey} · {count} segments",
+  "@movieWidgetMediaLibrarySegments": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetNoPlotImages": "No plot images yet",
+  "movieWidgetNoSimilarMovies": "No similar movies yet",
+  "movieWidgetSubtitleListLoadFailed": "Failed to load subtitles",
+  "movieWidgetNoSubtitles": "No subtitles available",
+  "movieWidgetSubtitleContentLoadFailed": "Failed to read the subtitle content",
+  "movieWidgetSubtitleContentEmpty": "(Subtitle content is empty)",
+  "movieWidgetNoTags": "No tags yet",
+  "movieWidgetRatingSaveFailed": "Failed to save the rating",
+  "movieWidgetLoading": "Loading…",
+  "movieWidgetRatingDimensionsLoadFailed": "Failed to load rating dimensions",
+  "movieWidgetNoRatingDimensions": "No rating dimensions yet",
+  "movieWidgetSetupAction": "Set up",
+  "movieWidgetRatingLoading": "Loading rating…",
+  "movieWidgetRatingLoadFailed": "Failed to load the rating",
+  "movieWidgetDimensionNameRequired": "Dimension name cannot be empty",
+  "movieWidgetRatingDimensionSaveFailed": "Failed to save the rating dimension",
+  "movieWidgetDeleteRatingDimensionTitle": "Delete rating dimension",
+  "movieWidgetDeleteRatingDimensionMessage": "After deleting \"{name}\", existing scores in this dimension are removed and the totals are recalculated.",
+  "@movieWidgetDeleteRatingDimensionMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetRatingDimensionDeleteFailed": "Failed to delete the rating dimension",
+  "movieWidgetRatingDimensionsTitle": "Rating dimensions",
+  "movieWidgetRatingScaleHint": "All dimensions use a 1–5 scale; the total is the weighted average of the filled dimensions.",
+  "movieWidgetAddDimension": "Add dimension",
+  "movieWidgetEditDimension": "Edit dimension",
+  "movieWidgetDimensionNameHint": "Dimension name, e.g. Looks / Story",
+  "movieWidgetSeriesImportTitle": "Import series movies",
+  "movieWidgetSeriesCreated": "Added",
+  "movieWidgetSeriesAlreadyExists": "Existing",
+  "movieWidgetSeriesFailed": "Failed",
+  "movieWidgetSeriesImportDoneWithRefresh": "Done (refresh list)",
+  "movieWidgetClose": "Close"
 }

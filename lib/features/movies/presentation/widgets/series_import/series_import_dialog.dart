@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/series_import_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/series_import_state.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -134,7 +135,7 @@ class _SeriesImportDesktopDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '导入系列影片',
+                  AppLocalizations.of(context).movieWidgetSeriesImportTitle,
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s16,
@@ -176,7 +177,9 @@ class _SeriesImportContent extends StatelessWidget {
 
     if (state.hasFailed) {
       return _FailureView(
-        errorMessage: state.errorMessage ?? '导入失败，请稍后重试',
+        errorMessage:
+            state.errorMessage ??
+            AppLocalizations.of(context).errorImportFailed,
         onRetry: onRetry,
         onClose: onDone,
       );
@@ -303,6 +306,7 @@ class _StatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final radius = context.appRadius;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       width: double.infinity,
@@ -317,12 +321,22 @@ class _StatsCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _StatItem(label: '新增', value: stats.createdCount),
+          _StatItem(
+            label: l10n.movieWidgetSeriesCreated,
+            value: stats.createdCount,
+          ),
           _StatDivider(),
-          _StatItem(label: '已存在', value: stats.alreadyExistsCount),
+          _StatItem(
+            label: l10n.movieWidgetSeriesAlreadyExists,
+            value: stats.alreadyExistsCount,
+          ),
           if (stats.failedCount > 0) ...[
             _StatDivider(),
-            _StatItem(label: '失败', value: stats.failedCount, isError: true),
+            _StatItem(
+              label: l10n.movieWidgetSeriesFailed,
+              value: stats.failedCount,
+              isError: true,
+            ),
           ],
         ],
       ),
@@ -391,11 +405,16 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       child: FilledButton(
         onPressed: state.canDismiss ? onDone : null,
-        child: Text(state.hasNewMovies ? '完成（刷新列表）' : '完成'),
+        child: Text(
+          state.hasNewMovies
+              ? l10n.movieWidgetSeriesImportDoneWithRefresh
+              : l10n.commonDone,
+        ),
       ),
     );
   }
@@ -459,12 +478,15 @@ class _FailureView extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: onClose,
-                child: const Text('关闭'),
+                child: Text(AppLocalizations.of(context).movieWidgetClose),
               ),
             ),
             SizedBox(width: spacing.md),
             Expanded(
-              child: FilledButton(onPressed: onRetry, child: const Text('重试')),
+              child: FilledButton(
+                onPressed: onRetry,
+                child: Text(AppLocalizations.of(context).commonRetry),
+              ),
             ),
           ],
         ),

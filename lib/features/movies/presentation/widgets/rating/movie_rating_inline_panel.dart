@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/movies/data/dto/rating/rating_dimension_dto
 import 'package:sakuramedia/features/movies/presentation/providers/movie_rating_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/rating_dimensions_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/rating/rating_dimensions_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -75,7 +76,14 @@ class _MovieRatingInlinePanelState
         }
       } catch (error) {
         if (mounted) {
-          showToast(apiErrorMessage(error, fallback: '保存评分失败'));
+          showToast(
+            apiErrorMessage(
+              error,
+              fallback: AppLocalizations.of(
+                context,
+              ).movieWidgetRatingSaveFailed,
+            ),
+          );
         }
         break;
       }
@@ -115,30 +123,36 @@ class _MovieRatingInlinePanelState
     }
 
     if (dimensionsState.isLoading && dimensions == null) {
-      return _mutedText(context, '加载中…');
+      return _mutedText(
+        context,
+        AppLocalizations.of(context).movieWidgetLoading,
+      );
     }
     if (dimensionsState.hasError && dimensions == null) {
       return _errorLine(
         context,
-        '评分维度加载失败',
+        AppLocalizations.of(context).movieWidgetRatingDimensionsLoadFailed,
         () => ref.invalidate(ratingDimensionsProvider),
       );
     }
     if (dimensions == null || dimensions.isEmpty) {
       return _messageLine(
         context,
-        '还没有评分维度',
-        action: '设置',
+        AppLocalizations.of(context).movieWidgetNoRatingDimensions,
+        action: AppLocalizations.of(context).movieWidgetSetupAction,
         onAction: () => showRatingDimensionsDialog(context),
       );
     }
     if (ratingState.isLoading && rating == null) {
-      return _mutedText(context, '评分加载中…');
+      return _mutedText(
+        context,
+        AppLocalizations.of(context).movieWidgetRatingLoading,
+      );
     }
     if (ratingState.hasError && rating == null) {
       return _errorLine(
         context,
-        '评分加载失败',
+        AppLocalizations.of(context).movieWidgetRatingLoadFailed,
         () => ref.invalidate(movieRatingProvider(widget.movieNumber)),
       );
     }
@@ -223,7 +237,7 @@ class _MovieRatingInlinePanelState
           ),
         ),
         AppTextButton(
-          label: '重试',
+          label: AppLocalizations.of(context).commonRetry,
           size: AppTextButtonSize.xSmall,
           onPressed: onRetry,
         ),

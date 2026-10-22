@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
@@ -140,6 +141,15 @@ Widget awaitableGalleryApp({required Widget child}) {
   final sessionStore = SessionStore.inMemory();
   return ProviderScope(
     overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
-    child: MaterialApp(theme: sakuraThemeData, home: Scaffold(body: child)),
+    child: MaterialApp(
+      theme: sakuraThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+      home: Scaffold(body: child),
+    ),
   );
 }

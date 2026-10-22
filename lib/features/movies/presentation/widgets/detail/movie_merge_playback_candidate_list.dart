@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 
 class MovieMergePlaybackCandidateList extends StatelessWidget {
@@ -14,12 +15,13 @@ class MovieMergePlaybackCandidateList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '选择合并播放媒体库',
+          l10n.movieWidgetSelectMergeLibraryTitle,
           style: resolveAppTextStyle(context, size: AppTextSize.s18),
         ),
         SizedBox(height: context.appSpacing.md),
@@ -29,11 +31,14 @@ class MovieMergePlaybackCandidateList extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             title: Text(
               candidate.libraryName.trim().isEmpty
-                  ? '媒体库 ${candidate.libraryId}'
+                  ? l10n.movieWidgetMediaLibraryFallback(candidate.libraryId)
                   : candidate.libraryName.trim(),
             ),
             subtitle: Text(
-              '${candidate.providerKey} · ${candidate.segmentCount} 段',
+              l10n.movieWidgetMediaLibrarySegments(
+                candidate.providerKey,
+                candidate.segmentCount,
+              ),
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => onSelected(candidate),

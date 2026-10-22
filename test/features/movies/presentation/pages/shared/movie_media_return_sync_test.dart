@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/actors/presentation/pages/desktop/actor_det
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart';
 
@@ -111,6 +112,12 @@ void main() {
             child: OKToast(
               child: MaterialApp.router(
                 theme: sakuraThemeData,
+                locale: const Locale('zh'),
+                localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  ...GlobalMaterialLocalizations.delegates,
+                ],
+                supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
                 routerConfig: router,
               ),
             ),

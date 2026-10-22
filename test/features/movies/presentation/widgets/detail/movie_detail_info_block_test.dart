@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_info_block.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 照片下方信息块：标题 + 右信息列 + 左操作列（分体播放 + 六键）。
 void main() {
@@ -298,6 +299,12 @@ Widget _buildBlock({
 }) {
   return MaterialApp(
     theme: sakuraThemeData,
+    locale: const Locale('zh'),
+    localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ],
+    supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
     home: Scaffold(
       body: SizedBox(
         width: 1200,

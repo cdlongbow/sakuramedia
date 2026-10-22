@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dar
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_picker_sheet.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_section.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -78,16 +79,17 @@ class _MovieActorSectionState extends State<MovieActorSection> {
     final refreshed = await _notifyActorsChanged();
     if (!mounted) return;
     setState(() => _isAdding = false);
+    final l10n = AppLocalizations.of(context);
     if (added == 0) {
-      showToast('添加演员失败，请稍后重试');
+      showToast(l10n.movieWidgetAddActorFailed);
     } else if (failed > 0) {
-      showToast('已添加 $added 位演员，$failed 位添加失败');
+      showToast(l10n.movieWidgetActorsAddedWithFailures(added, failed));
     } else if (!refreshed) {
-      showToast('已添加 $added 位演员，列表刷新失败');
+      showToast(l10n.movieWidgetActorsAddedRefreshFailed(added));
     } else if (added == 1) {
-      showToast('已添加 ${selected.single.displayName}');
+      showToast(l10n.movieWidgetActorAdded(selected.single.displayName));
     } else {
-      showToast('已添加 $added 位演员');
+      showToast(l10n.movieWidgetActorsAdded(added));
     }
   }
 
@@ -104,14 +106,22 @@ class _MovieActorSectionState extends State<MovieActorSection> {
       );
       final refreshed = await _notifyActorsChanged();
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       showToast(
         refreshed
-            ? '已从演员表移除 ${actor.displayName}'
-            : '已移除 ${actor.displayName}，列表刷新失败',
+            ? l10n.movieWidgetActorRemoved(actor.displayName)
+            : l10n.movieWidgetActorRemovedRefreshFailed(actor.displayName),
       );
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '移除演员失败，请稍后重试'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: AppLocalizations.of(
+              context,
+            ).movieWidgetRemoveActorFailed,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -138,8 +148,9 @@ class _MovieActorSectionState extends State<MovieActorSection> {
     }
     final spacing = context.appSpacing;
     final editing = _isEditing && _canManage;
+    final l10n = AppLocalizations.of(context);
     return MovieDetailSection(
-      title: '演员',
+      title: l10n.movieWidgetActorsSectionTitle,
       titleKey: const Key('movie-actors-title'),
       trailing: _canManage ? _buildHeaderAction(context, editing) : null,
       child: Column(
@@ -162,19 +173,21 @@ class _MovieActorSectionState extends State<MovieActorSection> {
             SizedBox(height: spacing.sm),
             _SectionHint(
               key: const Key('movie-actors-manual-notice'),
-              text: editing ? '移除只影响本片，不会删除女优资料。' : '演员表已手动管理，刷新元数据不会覆盖。',
+              text: editing
+                  ? l10n.movieWidgetActorRemovalScopeNotice
+                  : l10n.movieWidgetActorCastManualNotice,
             ),
           ] else if (editing) ...[
             SizedBox(height: spacing.sm),
-            const _SectionHint(
-              key: Key('movie-actors-edit-hint'),
-              text: '移除只影响本片；增删后将改为手动管理，刷新元数据不再覆盖。',
+            _SectionHint(
+              key: const Key('movie-actors-edit-hint'),
+              text: l10n.movieWidgetActorRemovalEditingHint,
             ),
           ] else if (widget.actors.isEmpty) ...[
             SizedBox(height: spacing.sm),
-            const _SectionHint(
-              key: Key('movie-actors-empty-hint'),
-              text: '添加后将改为手动管理，刷新元数据不再覆盖。',
+            _SectionHint(
+              key: const Key('movie-actors-empty-hint'),
+              text: l10n.movieWidgetActorAddManualHint,
             ),
           ],
         ],
@@ -183,10 +196,11 @@ class _MovieActorSectionState extends State<MovieActorSection> {
   }
 
   Widget _buildHeaderAction(BuildContext context, bool editing) {
+    final l10n = AppLocalizations.of(context);
     if (editing) {
       return AppTextButton(
         key: const Key('movie-actors-finish-button'),
-        label: '完成',
+        label: l10n.commonDone,
         size: AppTextButtonSize.xSmall,
         onPressed: () => setState(() => _isEditing = false),
       );
@@ -194,7 +208,7 @@ class _MovieActorSectionState extends State<MovieActorSection> {
     if (widget.actors.isEmpty) {
       return AppTextButton(
         key: const Key('movie-actors-add-button'),
-        label: '添加演员',
+        label: l10n.movieWidgetAddActorTitle,
         size: AppTextButtonSize.xSmall,
         emphasis: AppTextButtonEmphasis.accent,
         isLoading: _isAdding,
@@ -203,7 +217,7 @@ class _MovieActorSectionState extends State<MovieActorSection> {
     }
     return AppTextButton(
       key: const Key('movie-actors-manage-button'),
-      label: '管理',
+      label: l10n.movieWidgetManageAction,
       size: AppTextButtonSize.xSmall,
       onPressed: () => setState(() => _isEditing = true),
     );
@@ -250,6 +264,7 @@ class _AddActorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     final tile = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -286,7 +301,7 @@ class _AddActorTile extends StatelessWidget {
             maxWidth: tokens.movieDetailActorCardWidth,
           ),
           child: Text(
-            '添加',
+            l10n.movieWidgetAddLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -305,10 +320,10 @@ class _AddActorTile extends StatelessWidget {
       child: tile,
     );
     if (onTap == null) {
-      return Tooltip(message: '添加演员', child: content);
+      return Tooltip(message: l10n.movieWidgetAddActorTitle, child: content);
     }
     return Tooltip(
-      message: '添加演员',
+      message: l10n.movieWidgetAddActorTitle,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(

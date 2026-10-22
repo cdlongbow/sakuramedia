@@ -6,6 +6,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_media_point_gallery.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieMediaItemList extends StatelessWidget {
   const MovieMediaItemList({
@@ -53,7 +54,7 @@ class MovieMediaItemList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MovieDetailPillWrap(
-          emptyMessage: '暂无媒体源',
+          emptyMessage: AppLocalizations.of(context).movieWidgetNoMediaSources,
           items: mediaItems
               .map((item) {
                 final isSelected = item.mediaId == selectedMediaId;
@@ -108,8 +109,10 @@ class MovieMediaItemList extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.delete_outline_rounded),
-                  tooltip: '删除媒体',
-                  semanticLabel: '删除媒体',
+                  tooltip: AppLocalizations.of(context).movieWidgetDeleteMedia,
+                  semanticLabel: AppLocalizations.of(
+                    context,
+                  ).movieWidgetDeleteMedia,
                   size: AppIconButtonSize.mini,
                   iconColor: context.appTextPalette.error,
                   onPressed: isDeletingSelectedMedia
@@ -123,7 +126,7 @@ class MovieMediaItemList extends StatelessWidget {
         if (selectedItem != null && selectedItem.points.isNotEmpty) ...[
           SizedBox(height: contentGap),
           Text(
-            '时刻',
+            AppLocalizations.of(context).movieWidgetMomentsTitle,
             key: const Key('movie-media-points-title'),
             style: resolveAppTextStyle(
               context,

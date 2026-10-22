@@ -6,6 +6,7 @@ import 'package:sakuramedia/widgets/base/interaction/app_clickable.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_empty_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_thumbnail.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieMediaPointGallery extends StatelessWidget {
   const MovieMediaPointGallery({
@@ -13,7 +14,7 @@ class MovieMediaPointGallery extends StatelessWidget {
     required this.points,
     this.onOpenPreview,
     this.onRequestPointMenu,
-    this.emptyMessage = '暂无标记点',
+    this.emptyMessage,
   });
 
   final List<MovieMediaPointDto> points;
@@ -24,14 +25,17 @@ class MovieMediaPointGallery extends StatelessWidget {
     Offset globalPosition,
   )?
   onRequestPointMenu;
-  final String emptyMessage;
+  /// 空态文案；为 null 时用当前语言的默认文案。
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
       return MovieDetailEmptyPanel(
         key: const Key('movie-media-point-empty'),
-        message: emptyMessage,
+        message:
+            emptyMessage ??
+            AppLocalizations.of(context).movieWidgetNoMediaPoints,
       );
     }
 

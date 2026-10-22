@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -123,7 +124,12 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
       setState(() {
         _hasSearched = true;
         _isSearching = false;
-        _searchErrorMessage = apiErrorMessage(error, fallback: '搜索演员失败，请稍后重试');
+        _searchErrorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).movieWidgetActorSearchFailed,
+        );
       });
     }
   }
@@ -180,7 +186,12 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
       if (!mounted) return;
       setState(() {
         _isCreating = false;
-        _createErrorMessage = apiErrorMessage(error, fallback: '新建女优失败，请稍后重试');
+        _createErrorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).movieWidgetLocalActorCreateFailed,
+        );
       });
     }
   }
@@ -188,17 +199,24 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final isCreate = _mode == _PickerMode.create;
+    final l10n = AppLocalizations.of(context);
     return AppBottomFormSheet(
       key: const Key('movie-actor-picker-form'),
       formKey: _formKey,
-      title: isCreate ? '新建本地女优' : '添加演员',
-      subtitle: isCreate ? '创建后会自动加入本片演员表。' : '从女优库中选择，或新建一位本地女优。',
+      title: isCreate
+          ? l10n.movieWidgetCreateLocalActorTitle
+          : l10n.movieWidgetAddActorTitle,
+      subtitle: isCreate
+          ? l10n.movieWidgetCreateLocalActorSubtitle
+          : l10n.movieWidgetActorPickerSubtitle,
       submitKey: Key(
         isCreate ? 'movie-actor-create-confirm' : 'movie-actor-picker-confirm',
       ),
       submitLabel: isCreate
-          ? '创建并添加'
-          : (_selected.isEmpty ? '添加演员' : '添加 ${_selected.length} 位演员'),
+          ? l10n.movieWidgetCreateAndAdd
+          : (_selected.isEmpty
+                ? l10n.movieWidgetAddActorTitle
+                : l10n.movieWidgetAddActorsCount(_selected.length)),
       isSubmitting: _isCreating,
       submitDisabled: !isCreate && _selected.isEmpty,
       onSubmit: () {
@@ -215,6 +233,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
   Widget _buildPickBody(BuildContext context) {
     final spacing = context.appSpacing;
     final query = _query;
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: _pickerBodyHeight,
       child: Column(
@@ -223,8 +242,8 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           AppTextField(
             fieldKey: const Key('movie-actor-picker-search-field'),
             controller: _searchController,
-            label: '搜索演员',
-            hintText: '输入名字搜索女优库',
+            label: l10n.movieWidgetSearchActorLabel,
+            hintText: l10n.movieWidgetActorSearchHint,
             textInputAction: TextInputAction.search,
             onChanged: _onQueryChanged,
             onFieldSubmitted: (value) {
@@ -240,7 +259,12 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           if (_selected.isNotEmpty) ...[
             SizedBox(height: spacing.sm),
             Text(
-              '已选 ${_selected.length} 位：${_selected.values.map((item) => item.displayName).join('、')}',
+              l10n.movieWidgetSelectedActorsSummary(
+                _selected.length,
+                _selected.values
+                    .map((item) => item.displayName)
+                    .join(l10n.movieWidgetActorNameSeparator),
+              ),
               key: const Key('movie-actor-picker-selection-summary'),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -270,6 +294,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
 
   Widget _buildResults(BuildContext context, String query) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     if (_isSearching) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -280,7 +305,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
       return Align(
         alignment: Alignment.topLeft,
         child: Text(
-          '输入名字开始搜索',
+          l10n.movieWidgetActorSearchPrompt,
           key: const Key('movie-actor-picker-hint'),
           style: resolveAppTextStyle(
             context,
@@ -296,7 +321,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '未找到匹配的演员',
+            l10n.movieWidgetActorNotFound,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -307,7 +332,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
             SizedBox(height: spacing.sm),
             AppButton(
               key: const Key('movie-actor-picker-create-entry'),
-              label: '新建本地女优「$query」',
+              label: l10n.movieWidgetCreateLocalActorWithName(query),
               icon: const Icon(Icons.person_add_alt_1_rounded),
               size: AppButtonSize.small,
               onPressed: () => _enterCreate(query),
@@ -330,7 +355,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           SizedBox(height: spacing.xs),
           AppTextButton(
             key: const Key('movie-actor-picker-create-entry'),
-            label: '没找到？新建本地女优',
+            label: l10n.movieWidgetCreateLocalActorEntry,
             size: AppTextButtonSize.xSmall,
             emphasis: AppTextButtonEmphasis.accent,
             onPressed: () => _enterCreate(query),
@@ -343,6 +368,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
   Widget _buildCandidateTile(BuildContext context, ActorListItemDto candidate) {
     final spacing = context.appSpacing;
     final tokens = context.appComponentTokens;
+    final l10n = AppLocalizations.of(context);
     final isExisting = widget.existingActorIds.contains(candidate.id);
     final isSelected = _selected.containsKey(candidate.id);
     return CheckboxListTile(
@@ -374,7 +400,9 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
         children: [
           Flexible(
             child: Text(
-              candidate.isLocal ? '本地女优' : candidate.javdbId,
+              candidate.isLocal
+                  ? l10n.movieWidgetLocalActorBadge
+                  : candidate.javdbId,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: resolveAppTextStyle(
@@ -386,7 +414,10 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           ),
           if (isExisting) ...[
             SizedBox(width: spacing.xs),
-            const AppBadge(label: '已在演员表', size: AppBadgeSize.compact),
+            AppBadge(
+              label: l10n.movieWidgetActorAlreadyInCast,
+              size: AppBadgeSize.compact,
+            ),
           ],
         ],
       ),
@@ -395,6 +426,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
 
   Widget _buildCreateBody(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: _pickerBodyHeight,
       child: Column(
@@ -404,7 +436,7 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
             alignment: Alignment.centerLeft,
             child: AppTextButton(
               key: const Key('movie-actor-create-back'),
-              label: '返回选择',
+              label: l10n.movieWidgetBackToSelection,
               icon: Icon(
                 Icons.arrow_back_rounded,
                 size: context.appComponentTokens.iconSizeXs,
@@ -417,13 +449,13 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           AppTextField(
             fieldKey: const Key('movie-actor-create-name-field'),
             controller: _createNameController,
-            label: '姓名',
-            hintText: '请输入女优姓名',
+            label: l10n.movieWidgetActorNameLabel,
+            hintText: l10n.movieWidgetActorNameRequired,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
               final name = value?.trim() ?? '';
-              if (name.isEmpty) return '请输入女优姓名';
-              if (name.length > 255) return '姓名不能超过 255 个字符';
+              if (name.isEmpty) return l10n.movieWidgetActorNameRequired;
+              if (name.length > 255) return l10n.movieWidgetActorNameTooLong;
               return null;
             },
           ),
@@ -431,13 +463,13 @@ class _MovieActorPickerSheetState extends State<MovieActorPickerSheet> {
           AppTextField(
             fieldKey: const Key('movie-actor-create-alias-field'),
             controller: _createAliasController,
-            label: '别名（可选）',
-            hintText: '例如：别名A / 别名B',
-            helperText: '多个别名用 / 分隔，可留空',
+            label: l10n.movieWidgetActorAliasLabel,
+            hintText: l10n.movieWidgetActorAliasHint,
+            helperText: l10n.movieWidgetActorAliasHelper,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
               final alias = value?.trim() ?? '';
-              if (alias.length > 1024) return '别名不能超过 1024 个字符';
+              if (alias.length > 1024) return l10n.movieWidgetActorAliasTooLong;
               return null;
             },
           ),

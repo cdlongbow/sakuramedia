@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_pill_wrap.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
@@ -39,7 +40,7 @@ class MovieSubtitleSection extends StatelessWidget {
       return AppEmptyState(
         key: const Key('movie-subtitles-error'),
         icon: Icons.subtitles_outlined,
-        title: '字幕列表加载失败',
+        title: AppLocalizations.of(context).movieWidgetSubtitleListLoadFailed,
         message: error,
         onRetry: onRetry == null ? null : () => unawaited(onRetry!()),
         retryKey: const Key('movie-subtitles-retry'),
@@ -47,10 +48,10 @@ class MovieSubtitleSection extends StatelessWidget {
     }
 
     if (items.isEmpty) {
-      return const AppEmptyState(
-        key: Key('movie-subtitles-empty'),
+      return AppEmptyState(
+        key: const Key('movie-subtitles-empty'),
         icon: Icons.subtitles_outlined,
-        message: '暂无可用字幕',
+        message: AppLocalizations.of(context).movieWidgetNoSubtitles,
       );
     }
 
@@ -63,7 +64,7 @@ class MovieSubtitleSection extends StatelessWidget {
   ) {
     return MovieDetailPillWrap(
       key: const Key('movie-subtitles-list'),
-      emptyMessage: '暂无可用字幕',
+      emptyMessage: AppLocalizations.of(context).movieWidgetNoSubtitles,
       items: [
         for (final item in pills)
           MovieDetailPillItem(

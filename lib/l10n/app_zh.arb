@@ -1265,5 +1265,221 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "movieWidgetActorSearchFailed": "搜索演员失败，请稍后重试",
+  "movieWidgetLocalActorCreateFailed": "新建女优失败，请稍后重试",
+  "movieWidgetCreateLocalActorTitle": "新建本地女优",
+  "movieWidgetAddActorTitle": "添加演员",
+  "movieWidgetCreateLocalActorSubtitle": "创建后会自动加入本片演员表。",
+  "movieWidgetActorPickerSubtitle": "从女优库中选择，或新建一位本地女优。",
+  "movieWidgetCreateAndAdd": "创建并添加",
+  "movieWidgetAddActorsCount": "添加 {count} 位演员",
+  "@movieWidgetAddActorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetSearchActorLabel": "搜索演员",
+  "movieWidgetActorSearchHint": "输入名字搜索女优库",
+  "movieWidgetSelectedActorsSummary": "已选 {count} 位：{names}",
+  "@movieWidgetSelectedActorsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorNameSeparator": "、",
+  "movieWidgetActorSearchPrompt": "输入名字开始搜索",
+  "movieWidgetActorNotFound": "未找到匹配的演员",
+  "movieWidgetCreateLocalActorWithName": "新建本地女优「{name}」",
+  "@movieWidgetCreateLocalActorWithName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetCreateLocalActorEntry": "没找到？新建本地女优",
+  "movieWidgetLocalActorBadge": "本地女优",
+  "movieWidgetActorAlreadyInCast": "已在演员表",
+  "movieWidgetBackToSelection": "返回选择",
+  "movieWidgetActorNameLabel": "姓名",
+  "movieWidgetActorNameRequired": "请输入女优姓名",
+  "movieWidgetActorNameTooLong": "姓名不能超过 255 个字符",
+  "movieWidgetActorAliasLabel": "别名（可选）",
+  "movieWidgetActorAliasHint": "例如：别名A / 别名B",
+  "movieWidgetActorAliasHelper": "多个别名用 / 分隔，可留空",
+  "movieWidgetActorAliasTooLong": "别名不能超过 1024 个字符",
+  "movieWidgetAddActorFailed": "添加演员失败，请稍后重试",
+  "movieWidgetActorsAddedWithFailures": "已添加 {added} 位演员，{failed} 位添加失败",
+  "@movieWidgetActorsAddedWithFailures": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorsAddedRefreshFailed": "已添加 {added} 位演员，列表刷新失败",
+  "@movieWidgetActorsAddedRefreshFailed": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorAdded": "已添加 {name}",
+  "@movieWidgetActorAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorsAdded": "已添加 {count} 位演员",
+  "@movieWidgetActorsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetActorRemoved": "已从演员表移除 {name}",
+  "@movieWidgetActorRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetActorRemovedRefreshFailed": "已移除 {name}，列表刷新失败",
+  "@movieWidgetActorRemovedRefreshFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetRemoveActorFailed": "移除演员失败，请稍后重试",
+  "movieWidgetActorsSectionTitle": "演员",
+  "movieWidgetActorRemovalScopeNotice": "移除只影响本片，不会删除女优资料。",
+  "movieWidgetActorCastManualNotice": "演员表已手动管理，刷新元数据不会覆盖。",
+  "movieWidgetActorRemovalEditingHint": "移除只影响本片；增删后将改为手动管理，刷新元数据不再覆盖。",
+  "movieWidgetActorAddManualHint": "添加后将改为手动管理，刷新元数据不再覆盖。",
+  "movieWidgetManageAction": "管理",
+  "movieWidgetAddLabel": "添加",
+  "movieWidgetRemoveActorFromCast": "从演员表移除 {name}",
+  "@movieWidgetRemoveActorFromCast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetNoActors": "暂无演员",
+  "movieWidgetNoClips": "暂无切片",
+  "movieWidgetPlaylistTooltip": "播放列表",
+  "movieWidgetSubscribed": "已订阅",
+  "movieWidgetSubscribe": "订阅",
+  "movieWidgetRemoveFavorite": "取消收藏",
+  "movieWidgetFavoriteMovie": "收藏影片",
+  "movieWidgetReview": "评论",
+  "movieWidgetThumbnail": "缩略图",
+  "movieWidgetPlay": "播放",
+  "movieWidgetMerge": "合并",
+  "movieWidgetMoreActions": "更多操作",
+  "movieWidgetClipCreated": "切片已生成",
+  "movieWidgetMagnetSearch": "磁力搜索",
+  "movieWidgetDownloadSubmitted": "已提交到 {clientName}",
+  "@movieWidgetDownloadSubmitted": {
+    "placeholders": {
+      "clientName": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetDownloadTaskExists": "下载任务已存在",
+  "movieWidgetNoReviews": "暂无评论",
+  "movieWidgetAnonymousUser": "匿名用户",
+  "movieWidgetNoReviewContent": "暂无评论内容",
+  "movieWidgetSearchMovieNumber": "搜索番号",
+  "movieWidgetAddMagnetDownload": "添加磁力下载",
+  "movieWidgetAddMagnetIndexed": "添加磁力 {index}",
+  "@movieWidgetAddMagnetIndexed": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetRetryLoadMore": "重试加载更多",
+  "movieWidgetNoMediaSources": "暂无媒体源",
+  "movieWidgetDeleteMedia": "删除媒体",
+  "movieWidgetMomentsTitle": "时刻",
+  "movieWidgetNoMediaPoints": "暂无标记点",
+  "movieWidgetSelectMergeLibraryTitle": "选择合并播放媒体库",
+  "movieWidgetMediaLibraryFallback": "媒体库 {id}",
+  "@movieWidgetMediaLibraryFallback": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetMediaLibrarySegments": "{providerKey} · {count} 段",
+  "@movieWidgetMediaLibrarySegments": {
+    "placeholders": {
+      "providerKey": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "movieWidgetNoPlotImages": "暂无剧情图",
+  "movieWidgetNoSimilarMovies": "暂无相似影片",
+  "movieWidgetSubtitleListLoadFailed": "字幕列表加载失败",
+  "movieWidgetNoSubtitles": "暂无可用字幕",
+  "movieWidgetSubtitleContentLoadFailed": "字幕内容读取失败",
+  "movieWidgetSubtitleContentEmpty": "（字幕内容为空）",
+  "movieWidgetNoTags": "暂无标签",
+  "movieWidgetRatingSaveFailed": "保存评分失败",
+  "movieWidgetLoading": "加载中…",
+  "movieWidgetRatingDimensionsLoadFailed": "评分维度加载失败",
+  "movieWidgetNoRatingDimensions": "还没有评分维度",
+  "movieWidgetSetupAction": "设置",
+  "movieWidgetRatingLoading": "评分加载中…",
+  "movieWidgetRatingLoadFailed": "评分加载失败",
+  "movieWidgetDimensionNameRequired": "维度名称不能为空",
+  "movieWidgetRatingDimensionSaveFailed": "保存评分维度失败",
+  "movieWidgetDeleteRatingDimensionTitle": "删除评分维度",
+  "movieWidgetDeleteRatingDimensionMessage": "删除「{name}」后，已有影片在该维度的分值会被移除并重算总分。",
+  "@movieWidgetDeleteRatingDimensionMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movieWidgetRatingDimensionDeleteFailed": "删除评分维度失败",
+  "movieWidgetRatingDimensionsTitle": "评分维度",
+  "movieWidgetRatingScaleHint": "统一 1–5 分；总分按已填维度加权平均。",
+  "movieWidgetAddDimension": "新增维度",
+  "movieWidgetEditDimension": "编辑维度",
+  "movieWidgetDimensionNameHint": "维度名称，如 颜值 / 剧情",
+  "movieWidgetSeriesImportTitle": "导入系列影片",
+  "movieWidgetSeriesCreated": "新增",
+  "movieWidgetSeriesAlreadyExists": "已存在",
+  "movieWidgetSeriesFailed": "失败",
+  "movieWidgetSeriesImportDoneWithRefresh": "完成（刷新列表）",
+  "movieWidgetClose": "关闭"
 }

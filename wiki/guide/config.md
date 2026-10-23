@@ -1,6 +1,6 @@
 # 配置说明
 
-配置文件位于 `sakuramedia-data/config/config.toml`。配置中的路径均指容器内路径；provider 自己声明的路径字段按对应 provider 的部署说明填写。
+配置文件位于 `sakuramedia-data/config/config.toml`。配置中的路径均指容器内路径。`/data` 是后端运行数据；媒体库、下载目录等 provider 路径通常挂在 `/media`，填写方法见[容器路径与硬链接](/guide/container-paths)。
 
 ## 配置总览
 
@@ -218,7 +218,7 @@ index_upsert_batch_size = 100
 
 新部署两个开关默认关闭；旧部署升级时只将缺失开关补为开启，用户已经保存的值不会被覆盖。移动端不提供配置表单，但会根据服务器能力调整入口。
 
-这些字段控制 SigLIP2 嵌入服务连接、搜索会话和 Qdrant 索引批处理。默认地址对应快速开始中的 `siglip2-embed` 服务名；只有把嵌入服务部署到其他主机、修改服务名或开启鉴权时，才需要改连接字段。
+这些字段控制 SigLIP2 嵌入服务连接、搜索会话和 Qdrant 索引批处理。默认地址对应[进阶部署](/guide/docker#完整-compose-示例)中的 `siglip2-embed` 服务名；只有把嵌入服务部署到其他主机、修改服务名或开启鉴权时，才需要改连接字段。
 
 文字搜画面还需要 SigLIP2 容器加载文本塔（默认加载）；容器设了 `TEXT_TOWER_ENABLED=false` 时只提供图片向量，文字搜画面不可用，图片搜图不受影响。详见 [SigLIP2 硬件方案](/guide/docker)。
 

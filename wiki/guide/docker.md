@@ -4,19 +4,49 @@ outline: [2, 4]
 
 # 可选向量服务与 SigLIP2 硬件方案
 
-快速开始中的 CPU 镜像适用于 AMD、Intel 和 ARM64 主机。SigLIP2 镜像已包含模型和运行时，**不需要**下载模型、挂载模型目录或预先缩放图片。服务启动时会按镜像内安装的运行时自动选择推理后端，不需要配置。
+本文示例中的 CPU 镜像适用于 AMD、Intel 和 ARM64 主机。SigLIP2 镜像已包含模型和运行时，**不需要**下载模型、挂载模型目录或预先缩放图片。服务启动时会按镜像内安装的运行时自动选择推理后端，不需要配置。
 
 后端和嵌入服务在同一个 Compose 项目中时，不需要映射端口；后端默认通过 `http://siglip2-embed:8080` 访问服务。
 
 ## 按需启用
 
-基础部署不需要这两个服务。仅需相似影片时启动 Qdrant 并在桌面高级设置中开启「相似影片与向量服务」；需要图搜时再部署 SigLIP2，开启「图片与文字搜图」。完整 Compose 和操作步骤见[快速开始](./quick-start#以图搜图嵌入服务-可选)。保存后需重启后端容器。
+基础部署不需要这两个服务。仅需相似影片时启动 Qdrant 并在桌面高级设置中开启「相似影片与向量服务」；需要图搜时再部署 SigLIP2，开启「图片与文字搜图」。完整 Compose 见下方[完整 Compose 示例](#完整-compose-示例)。保存后需重启后端容器。
 
 缩略图与时刻收藏独立保留。每日推荐和时刻推荐在关闭向量能力后仍使用其他候选信号。重新启用时保留原索引；关闭期间发生删除或更新的，应在「系统设置 → 系统维护」重建图搜索引，并在任务中心运行「影片相似度重算」。
 
+## 完整 Compose 示例
+
+在快速开始的基础 compose 中追加以下两个服务。基础部署不需要它们；只有启用相似影片或图搜时才需要。ARM 平台不建议启用以图搜图。
+
+```yaml
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: qdrant
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: "6333"
+      QDRANT__LOG_LEVEL: "INFO"
+    volumes:
+      - ./sakuramedia-data/image-search-index:/qdrant/storage
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  siglip2-embed:
+    image: tinyping/siglip2-embed-service:cpu
+    container_name: siglip2-embed
+    restart: unless-stopped
+    environment:
+      CPU_CONCURRENCY: "1"
+      MALLOC_TRIM_THRESHOLD_: "131072"
+      # 内存不够可尝试设为 false，降低文字搜图的内存占用。
+      TEXT_TOWER_ENABLED: "true"
+```
+
 ## Intel 核显
 
-适用于 Linux amd64 的 Intel 核显主机。将快速开始中的 `siglip2-embed` 服务替换为：
+适用于 Linux amd64 的 Intel 核显主机。将上面的 `siglip2-embed` 服务替换为：
 
 ```yaml
   siglip2-embed:
@@ -35,7 +65,7 @@ outline: [2, 4]
 
 ## NVIDIA CUDA
 
-宿主机需要已安装 NVIDIA 驱动、`nvidia-container-toolkit`，且 `nvidia-smi` 能正常显示显卡。将快速开始中的服务替换为：
+宿主机需要已安装 NVIDIA 驱动、`nvidia-container-toolkit`，且 `nvidia-smi` 能正常显示显卡。将上面的服务替换为：
 
 ```yaml
   siglip2-embed:

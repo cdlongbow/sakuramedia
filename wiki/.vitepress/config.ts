@@ -21,6 +21,8 @@ export default defineConfig({
         items: [
           { text: '介绍', link: '/guide/introduction' },
           { text: '快速开始', link: '/guide/quick-start' },
+          { text: '容器路径与硬链接', link: '/guide/container-paths' },
+          { text: '自动下载与索引器', link: '/guide/auto-download' },
           { text: '推荐插件', link: '/guide/plugins' },
           { text: '配置说明', link: '/guide/config' },
           { text: '进阶部署', link: '/guide/docker' },

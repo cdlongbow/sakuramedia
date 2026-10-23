@@ -1,64 +1,51 @@
 ---
-outline: [2, 4]
+outline: [2, 3]
 ---
 
 # 快速开始
 
-这是一份“先把服务跑起来”的快速指引，覆盖 SakuraMedia 的「搜索 → 订阅 → 下载 → 导入」主流程，以及可选的以图搜图功能。
+这份指引只做一件事：部署 SakuraMedia 后端，把宿主机上已有的影片导入本地媒体库。
 
+自动下载（qBittorrent + 索引器）、以图搜图、115 网盘等是可选扩展，见[自动下载与索引器](/guide/auto-download)、[进阶部署](/guide/docker)和[推荐插件](/guide/plugins)。
 
+## 开始前
 
-## 准备工作
+- 一台持续运行的主机或 NAS，已安装 Docker 和 Docker Compose。
+- 一个 SSD 目录存放后端运行数据（数据库、配置、日志、插件）。
+- 一个存放已有影片的宿主机目录，例如 `/mnt/volume1/media/av`。
+- 客户端从 [GitHub Releases](https://github.com/tinypinglite/sakuramedia/releases/latest) 下载（iOS 端要求 iOS 15.0 及以上）。
 
-#### 必备
+## 阶段 1：部署后端
 
-- 一台持续运行的主机或 NAS。
-- 已安装 `Docker` 和 `Docker Compose`。
-- 按需准备索引器和下载 provider。可用 provider 由已安装插件提供，前置条件和配置字段以插件说明为准。
-- 如果 provider 需要访问宿主机目录或远端存储，按 provider 的部署说明准备凭据和挂载；SakuraMedia 不要求统一的本地目录结构。
-
-### 硬件要求
-
-- CPU 建议 4 核，可用内存不少于 2 GB；如果启用以图搜图功能建议可用内存不少于4GB， ARM平台不建议使用以图搜图功能。
-- SSD 用于运行数据（数据库、配置、日志、缓存和图片索引）。
-- 媒体存储空间由所选 provider 管理，容量按实际库规模准备。
-
-### 两个基础服务，两个可选服务
-
-- `sakuramedia`：后端服务，负责媒体管理和任务调度等核心能力。
-- `postgres`：PostgreSQL 数据库，存储业务数据。
-- `qdrant`（可选）：向量数据库，支撑相似影片、推荐中的影片相似度信号，以及图搜索引。
-- `siglip2-embed`（可选）：以图搜图嵌入服务，负责图片与文本向量化。
-
-## 部署后端服务
-
-### 1. 创建数据目录
-
-先找一个容量充足且是SSD的目录， 再创建存放运行时数据和 `compose.yaml` 的目录：
+### 1. 准备目录
 
 ```bash
-mkdir -p sakuramedia/sakuramedia-data/{cache,logs,config,media-clips,image-search-index,postgres,plugins}
-mkdir -p sakuramedia/sakuramedia-data/cache/{assets,gfriends}
+# 后端运行数据；config、logs、plugins 等子目录由容器首次启动自动创建
+mkdir -p sakuramedia/sakuramedia-data/postgres
+
+# 在已有影片目录的同一父目录下，新建媒体库目录
+mkdir -p /mnt/volume1/media/library
 ```
 
-### 2. 准备 `compose.yaml`
-
-在刚才创建的 `sakuramedia` 目录中新建 `compose.yaml`（即 `sakuramedia/compose.yaml`）。下面示例以本地存储与 qBittorrent 为例。已有影片目录、qBittorrent 下载目录和 SakuraMedia 媒体库应位于同一文件系统，并将它们的共同父目录整体挂载到后端容器；这样导入时可以使用硬链接，无法硬链接时会复制文件。
-
-::: danger 保存前必须修改
-示例中的 `/mnt/volume1/media` 必须替换为宿主机实际的媒体根目录，并与后续填写的媒体库路径和后端下载根目录保持一致。若不使用中国时区，也要修改 `TZ`。
-:::
-
-以下目录结构仅作示例；实际部署时请按宿主机的实际目录结构替换。示例中，媒体根目录为 `/mnt/volume1/media`：
+目录结构示例：
 
 ```text
-/mnt/volume1/media
-├── av             # 已有影片
-├── downloads      # qBittorrent 下载目录
-└── sakuramedia    # SakuraMedia 媒体库
+/mnt/volume1/media/
+├── av/          # 已有影片（示例名，换成你的实际目录）
+└── library/     # SakuraMedia 媒体库
 ```
 
-确保三个子目录已创建。使用其他 provider 时，按其部署说明添加所需挂载。
+`av` 和 `library` 在同一个宿主机目录下，后面只挂载它们的父目录 `/mnt/volume1/media`。这样导入时两个目录在同一个挂载点，选择「保留源文件」才能使用硬链接。
+
+### 2. 写 `.env` 和 `compose.yaml`
+
+在 `sakuramedia/` 目录中新建 `.env`：
+
+```bash
+STORAGE_ROOT=/mnt/volume1/media
+```
+
+再新建 `compose.yaml`：
 
 ```yaml
 services:
@@ -70,7 +57,6 @@ services:
       POSTGRES_DB: sakuramedia
       POSTGRES_USER: sakuramedia
       POSTGRES_PASSWORD: sakuramedia
-      
     volumes:
       - ./sakuramedia-data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -90,110 +76,113 @@ services:
       # 需要使用其他宿主机端口时修改左侧的 38000。
       - "38000:8000"
     environment:
-      # 如果你知道这两个参数的含义，可以修改。
+      # 如果你知道 PUID/PGID 的含义，可以改成和宿主机用户一致。
       PUID: 0
       PGID: 0
       # 不使用中国时区时修改为宿主机所在时区。
       TZ: "Asia/Shanghai"
-      # 若部署机器无法直连 JavDB API 或 GFriends，取消下方三行注释并填入 HTTP_PROXY和HTTPS_PROXY
+      # 若部署机器无法直连 JavDB API 或 GFriends，取消下方三行注释并填入代理地址。
       # HTTP_PROXY: "http://192.168.1.1:7890"
       # HTTPS_PROXY: "http://192.168.1.1:7890"
       # NO_PROXY: "localhost,127.0.0.1"
-
       MALLOC_TRIM_THRESHOLD_: "131072"
     volumes:
       - ./sakuramedia-data:/data
-      # 必须替换为宿主机实际的媒体根目录。
-      - /mnt/volume1/media:/mnt/volume1/media
-
-  ## 以下两个容器可选，用于实现以图搜图和文字搜图功能
-  # qdrant:
-  #   image: qdrant/qdrant:v1.12.4
-  #   container_name: qdrant
-  #   restart: unless-stopped
-  #   environment:
-  #     QDRANT__SERVICE__HTTP_PORT: "6333"
-  #     QDRANT__LOG_LEVEL: "INFO"
-  #   volumes:
-  #     - ./sakuramedia-data/image-search-index:/qdrant/storage
-  #   ulimits:
-  #     nofile:
-  #       soft: 65536
-  #       hard: 65536
-  ## 这里默认用的是CPU来进行图像推理， 如果你有Intel核显或nvidia显卡，阅读这篇内容 https://tinypinglite.github.io/sakuramedia/guide/docker.html
-  # siglip2-embed:
-  #   image: tinyping/siglip2-embed-service:cpu
-  #   container_name: siglip2-embed
-  #   restart: unless-stopped
-  #   environment:
-  #     CPU_CONCURRENCY: "1"
-  #     MALLOC_TRIM_THRESHOLD_: "131072"
-  #     TEXT_TOWER_ENABLED: "true" # 内存不够可尝试将此项设为false，关于文字搜图降低内存占用
+      - ${STORAGE_ROOT}:/media
 ```
 
-::: warning JavDB 图片下载
-封面、剧照和头像由后端从 JavDB 图片 CDN（`tp.spfcas.com`）下载。若容器无法访问该域名，影片图片会下载失败；使用代理或主路由透明代理时，请确认该域名能正常访问。
+::: danger 保存前必须修改
+- `STORAGE_ROOT` 改成宿主机上包含「已有影片目录」和「媒体库目录」的父目录，必须是绝对路径。
+- 不使用中国时区时修改 `TZ`。
+- 如果 SakuraMedia 以非 root 运行，确保 PUID/PGID 对 `${STORAGE_ROOT}` 有读写权限。
 :::
+
+SakuraMedia 的 `/data` 是后端运行数据，`/media` 才是媒体数据。不要把媒体库放到 `/data` 下面。
 
 ::: tip 数据库
-后端默认按 `postgres` 服务名连接内置 PostgreSQL，照抄示例即可运行。若使用外部 PostgreSQL，再按[配置说明](/guide/config#database)修改 `[database].url`。
+后端默认按 `postgres` 服务名连接内置 PostgreSQL，照抄示例即可运行。使用外部 PostgreSQL 时，按[配置说明](/guide/config#database)修改 `[database].url`。
 :::
-
-### 以图搜图嵌入服务（可选）
-以图搜图和相似影片功能默认关闭，可在部署后在系统设置 -> 高级设置中开启，此功能需要部署qdrant和siglip2-embed两个服务，建议可用内存大于4G， 且CPU性能够强或有Intel核显/Nvidia显卡。
 
 ### 3. 启动
 
 ```bash
 cd sakuramedia
 docker compose up -d
+docker compose ps
 ```
 
-### 4. 访问
-
-客户端可从 [GitHub Releases](https://github.com/tinypinglite/sakuramedia/releases/latest) 下载（iOS 端要求 iOS 15.0 及以上）。默认用户名和密码是 `account` 和 `account`，登录后建议立即修改密码。桌面端和移动端首次登录时填写后端地址，例如：
+首次启动会自动建表、安装官方预装插件。`docker compose ps` 中 `postgres` 为 `healthy`、`sakuramedia` 为 `running` 后，打开客户端，首次登录时填写后端地址：
 
 ```text
 http://你的IP:38000
 ```
 
-### 5. 首次登录后的初始化
+默认用户名和密码是 `account` 和 `account`。登录后建议立即修改密码。
 
-#### 1. 安装存储 Provider 和按需插件
+## 阶段 2：创建媒体库并导入已有影片
 
-后端不内置任何插件。请先从[插件目录](/guide/plugins)选择并安装所需的存储 Provider，再按需安装排行榜、合集判定、字幕、女优资料补全等插件。进入「系统设置 → 插件」上传并启用插件；全部插件安装完成后，重启 `sakuramedia` 容器。
+官方镜像已经预装并启用「本地存储与 qBittorrent」，不需要再上传插件。
 
-#### 2. 创建媒体库
+### 1. 创建媒体库
 
-进入「系统设置 → 媒体库 → 新增」，选择 media provider，填写 provider 动态提供的配置字段并保存。媒体库的存储、浏览和播放能力由该 provider 提供。
+「系统设置 → 媒体库 → 新增」，选择「本地存储与 qBittorrent」，填写：
 
-使用「本地存储与 qBittorrent」时，媒体库路径填写 `/mnt/volume1/media/sakuramedia`，手动导入根目录填写 `/mnt/volume1/media/av`。
+| 字段 | 填写 | 对应宿主机目录 |
+|---|---|---|
+| 媒体库路径 | `/media/library` | `${STORAGE_ROOT}/library` |
+| 手动导入根目录 | `/media/av` | `${STORAGE_ROOT}/av` |
+
+媒体库路径是影片导入后的最终目录；手动导入根目录是浏览已有文件时使用的范围。
+
+`/media/av` 是容器内路径，对应宿主机上的 `${STORAGE_ROOT}/av`。已有影片目录必须挂进容器，来源浏览器里才能看到它。如果你已有目录叫别的名字，把 `/media/av` 换成 `/media/<实际目录名>`。
+
+::: tip 路径映射
+- 宿主机 `${STORAGE_ROOT}` → 容器 `/media`
+- 已有影片 `${STORAGE_ROOT}/av` → 容器 `/media/av`
+- 新媒体库 `${STORAGE_ROOT}/library` → 容器 `/media/library`
+
+完整规则见[容器路径与硬链接](/guide/container-paths)。
+:::
 
 <Screenshot src="/images/guide/media-library-form.png" alt="新增媒体库表单" caption="界面示意：新增媒体库；字段由所选存储插件提供。" />
 
-#### 3. 添加下载器
+### 2. 导入已有影片
 
-进入「系统设置 → 下载器 → 新增」，选择目标媒体库。系统会根据该媒体库所属的 provider 显示下载配置字段，填写后保存。下载完成后，provider 返回的 `completed_source_ref` 会被自动导入流程使用。
+「管理 → 资源导入」→「JAV 影片」→「新建导入」→ 选择刚才的媒体库 → 在来源浏览器中选中影片文件或目录 → 选择导入方式 → 开始导入。
 
-使用「本地存储与 qBittorrent」时，qBittorrent 保存根目录填写 qBittorrent 容器内的路径，例如 `/downloads`；后端下载根目录填写后端容器内同一目录的挂载路径，例如 `/mnt/volume1/media/downloads`。
+三种导入方式：
 
-<Screenshot src="/images/guide/download-client-form.png" alt="添加下载器表单" caption="界面示意：添加下载器时选择目标媒体库，并填写插件提供的配置字段。" />
+| 方式 | 实际行为 | 源文件 | 适合 |
+|---|---|---|---|
+| 保留源文件 | 优先硬链接；不能硬链接时复制 | 保留 | 同一挂载点，想省空间、保持做种 |
+| 导入成功后删除源文件 | 复制到媒体库，成功后删除源文件（效果等同移动） | 删除 | 不想保留原件 |
+| 原地导入 | 不复制也不硬链接，媒体直接引用源文件 | 不动 | 文件已整理好，不想动 |
 
-#### 4. 配置索引器并绑定下载器
+- **保留源文件**：同一挂载点且文件系统支持硬链接时，导入几乎瞬间完成，不占额外空间；不能硬链接时会复制，导入慢一些，并占用双倍空间。
+- **导入成功后删除源文件**：先复制到媒体库，导入成功后再删除源文件；导入期间会临时占用双倍空间，但跨文件系统也能用。选择前确认文件没有在做种或被其他程序使用。
+- **原地导入**：只支持从手动导入目录导入；之后移动、重命名或修改源文件，媒体会失效；删除 SakuraMedia 中的媒体记录不会删除源文件。
 
-进入「系统设置 → 索引器 → 新增」。「资源地址」要填完整的 Torznab 地址，不要填网站或聚合器的首页：
+第一次导入建议先选一个小目录，用「保留源文件」验证流程。
 
-- 使用 Jackett：点击站点对应的「Copy Torznab Feed」复制地址，粘贴到「资源地址」；API Key 从 Jackett 面板右上角复制，填入「API Key」字段。
-- 使用 Prowlarr：在索引器列表点该索引器的 RSS 图标，复制打开地址（形如 `http://<主机>:9696/<索引器ID>/api?apikey=...`）粘贴到「资源地址」；地址里已包含 `apikey`，「API Key」字段可以留空。
+提交后在「任务中心」查看进度。导入成功后打开影片详情，确认媒体出现并能播放。
 
-然后绑定一个或多个下载器（第一个作为默认下载目标），再到索引器页点「测试 Torznab 连通性」验证。
+更完整的导入步骤见[导入已有资源](/manual/import)。
 
-#### 5. 用组件诊断验证
+::: warning JavDB 图片与元数据
+导入时会从 JavDB 获取元数据和图片。容器无法访问 JavDB API 或图片 CDN（`tp.spfcas.com`）时，影片可能缺少封面、剧照或部分信息；使用代理时请确认这些域名能正常访问。
+:::
 
-在「概览」页运行「组件诊断」，检查媒体库、索引器、JavDB 和 SigLIP2 嵌入服务的连通性。未启用图搜时嵌入服务显示「未启用」；已启用但连接失败才属于异常。
+## 可选：自动下载
 
-#### 6. 在线搜索影片或女优
+想让系统为订阅的影片自动寻找资源、下载并导入时，再配置 qBittorrent 和索引器：
 
-数据库为空时，在搜索页开启「联网」后再搜索。在线结果写入本地后，下次搜索通常可以直接使用本地数据。
+- [自动下载与索引器](/guide/auto-download)
+- [获得第一部想看的影片](/manual/first-movie)
 
-配置完成后，从[使用手册](/manual/)选择阅读路线，或直接尝试[获得第一部影片](/manual/first-movie)。更多字段说明见[配置说明](/guide/config)，任务频率见[后台任务](/guide/tasks)。
+## 下一步
+
+- 导入更多影片：[导入已有资源](/manual/import)
+- 路径与硬链接：[容器路径与硬链接](/guide/container-paths)
+- 以图搜图 / 相似影片：[进阶部署](/guide/docker)
+- 115 网盘和其他插件：[推荐插件](/guide/plugins)
+- 字段和任务频率：[配置说明](/guide/config)、[后台任务](/guide/tasks)

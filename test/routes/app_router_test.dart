@@ -50,6 +50,11 @@ const List<_MobileSettingsRouteCase> _mobileSettingsRouteCases =
         pageKey: Key('desktop-activity-page'),
       ),
       _MobileSettingsRouteCase(
+        path: mobileDownloadTasksPath,
+        title: '下载任务',
+        pageKey: Key('download-tasks-page'),
+      ),
+      _MobileSettingsRouteCase(
         path: mobileSettingsMediaLibrariesPath,
         title: '媒体库',
         pageKey: Key('mobile-settings-media-libraries'),
@@ -97,8 +102,8 @@ void main() {
   });
 
   test('desktop navigation tree contains moments entry', () {
-    expect(desktopNavGroups.length, 20);
-    // 管理区顺序：媒体管理 / 资源导入 / 任务中心 / 订阅管理 / 通知 / 系统设置。
+    expect(desktopNavGroups.length, 21);
+    // 管理区顺序：媒体管理 / 资源导入 / 下载任务 / 任务中心 / 订阅管理 / 通知 / 系统设置。
     expect(desktopNavGroups.map((group) => group.label), [
       '概览',
       '发现',
@@ -116,6 +121,7 @@ void main() {
       '排行榜',
       '媒体管理',
       '资源导入',
+      '下载任务',
       '任务中心',
       '订阅管理',
       '通知',
@@ -140,6 +146,7 @@ void main() {
       desktopRankingsPath,
       desktopMediaPath,
       desktopMediaImportPath,
+      desktopDownloadTasksPath,
       desktopActivityPath,
       desktopMovieSubscriptionsPath,
       desktopNotificationsPath,
@@ -1536,6 +1543,22 @@ void main() {
         _enqueueMobileMediaManagementResponses(bundle);
       } else if (routeCase.path == mobileActivityPath) {
         _enqueueActivityCenterResponses(bundle);
+      } else if (routeCase.path == mobileDownloadTasksPath) {
+        bundle.adapter.setFallbackJson(
+          method: 'GET',
+          path: '/download-tasks',
+          body: {
+            'items': const <Map<String, dynamic>>[],
+            'page': 1,
+            'page_size': 20,
+            'total': 0,
+          },
+        );
+        bundle.adapter.setFallbackJson(
+          method: 'GET',
+          path: '/download-clients',
+          body: const <Map<String, dynamic>>[],
+        );
       }
 
       router.go(routeCase.path);
@@ -2792,6 +2815,22 @@ void main() {
         _enqueueMobileMediaManagementResponses(bundle);
       } else if (routeCase.path == mobileActivityPath) {
         _enqueueActivityCenterResponses(bundle);
+      } else if (routeCase.path == mobileDownloadTasksPath) {
+        bundle.adapter.setFallbackJson(
+          method: 'GET',
+          path: '/download-tasks',
+          body: {
+            'items': const <Map<String, dynamic>>[],
+            'page': 1,
+            'page_size': 20,
+            'total': 0,
+          },
+        );
+        bundle.adapter.setFallbackJson(
+          method: 'GET',
+          path: '/download-clients',
+          body: const <Map<String, dynamic>>[],
+        );
       }
 
       router.go(routeCase.path);

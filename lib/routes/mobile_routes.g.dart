@@ -23,6 +23,7 @@ List<RouteBase> get $appRoutes => [
   $mobileSystemOverviewRouteData,
   $mobileMediaImportRouteData,
   $mobileActivityRouteData,
+  $mobileDownloadTasksRouteData,
   $mobileNotificationsRouteData,
   $mobileMediaManagementRouteData,
   $mobileMovieSubscriptionsRouteData,
@@ -539,15 +540,43 @@ RouteBase get $mobileActivityRouteData => GoRouteData.$route(
 
 mixin $MobileActivityRouteData on GoRouteData {
   static MobileActivityRouteData _fromState(GoRouterState state) =>
-      MobileActivityRouteData(
+      const MobileActivityRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/mobile/system/activity');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $mobileDownloadTasksRouteData => GoRouteData.$route(
+  path: '/mobile/system/download-tasks',
+  hasOverriddenOnExit: false,
+  factory: $MobileDownloadTasksRouteData._fromState,
+);
+
+mixin $MobileDownloadTasksRouteData on GoRouteData {
+  static MobileDownloadTasksRouteData _fromState(GoRouterState state) =>
+      MobileDownloadTasksRouteData(
         downloadMovieNumber: state.uri.queryParameters['download-movie-number'],
       );
 
-  MobileActivityRouteData get _self => this as MobileActivityRouteData;
+  MobileDownloadTasksRouteData get _self =>
+      this as MobileDownloadTasksRouteData;
 
   @override
   String get location => GoRouteData.$location(
-    '/mobile/system/activity',
+    '/mobile/system/download-tasks',
     queryParams: {
       if (_self.downloadMovieNumber != null)
         'download-movie-number': _self.downloadMovieNumber,

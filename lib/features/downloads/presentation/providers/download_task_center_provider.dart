@@ -215,6 +215,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   }
 
   void stopPolling() {
+    if (isDisposed) return;
     _pollRequested = false;
     _pollTimer?.cancel();
     _pollTimer = null;
@@ -223,6 +224,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
 
   /// 暂停页面不可见期间的下载快照轮询，但保留当前筛选和轮询请求意图。
   void pausePolling() {
+    if (isDisposed) return;
     _pollingEnabled = false;
     _pollTimer?.cancel();
     _pollTimer = null;
@@ -287,10 +289,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         current.copyWith(
           pollingState: DownloadTaskPollingState.polling,
           paged: nextPaged,
-          selectedTaskIds: _pruneSelection(
-            current.selectedTaskIds,
-            nextPaged,
-          ),
+          selectedTaskIds: _pruneSelection(current.selectedTaskIds, nextPaged),
         ),
       );
     } catch (_) {

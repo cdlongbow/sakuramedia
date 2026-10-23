@@ -1,0 +1,694 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/app/app_platform.dart';
+import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
+import 'package:sakuramedia/features/downloads/presentation/manual_download_dialog.dart';
+import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+
+import '../../../support/test_api_bundle.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late _RecordingFilePicker picker;
+  late FilePickerPlatform originalPicker;
+
+  setUp(() {
+    picker = _RecordingFilePicker();
+    originalPicker = FilePickerPlatform.instance;
+    FilePickerPlatform.instance = picker;
+  });
+
+  tearDown(() {
+    FilePickerPlatform.instance = originalPicker;
+  });
+
+  testWidgets('validates, shows PornBox, and exposes collection creation', (
+    tester,
+  ) async {
+    await _openDialog(tester);
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('请粘贴磁力链接'), findsOneWidget);
+    expect(find.text('请填写番号'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'https://example.com/a.torrent',
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('仅支持 magnet: 开头的磁力链接'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('manual-download-kind-video')));
+    await tester.pumpAndSettle();
+    expect(find.text('PornBox'), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('manual-download-collection-field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('manual-download-create-collection-button')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('submits jav magnet after resolving a local movie', (
+    tester,
+  ) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-001',
+    );
+    _enqueueParsed(bundle, query: 'ABC-001', movieNumber: 'ABC-001');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'ABC-001', title: 'Movie'),
+    ]);
+    await _tapQuery(tester);
+
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+    expect(find.text('Movie'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 201,
+      body: _manualTaskJson(),
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('manual-download-modal')), findsNothing);
+    final request = bundle.adapter.requests.singleWhere(
+      (request) => request.path == '/download-requests/manual',
+    );
+    expect(request.body, {
+      'client_id': 1,
+      'media_kind': 'jav',
+      'source_uri': 'magnet:?xt=urn:btih:abc',
+      'movie_number': 'ABC-001',
+      'delete_source_after_import': false,
+    });
+    final host = tester.state<_DialogHostState>(find.byType(_DialogHost));
+    expect(host.result, isNotNull);
+    expect(host.result!.response.created, isTrue);
+    expect(host.result!.clientName, 'qb-main');
+  });
+
+  testWidgets('submits stored canonical number for a local hit', (
+    tester,
+  ) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ssni888',
+    );
+    _enqueueParsed(bundle, query: 'ssni888', movieNumber: 'SSNI-888');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'SNI-888', title: 'Decoy'),
+      _movieJson(movieNumber: 'ssni_888', title: 'Local Movie'),
+    ]);
+    await _tapQuery(tester);
+
+    expect(find.text('Local Movie'), findsOneWidget);
+    expect(find.text('本地'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 201,
+      body: _manualTaskJson(movieNumber: 'ssni_888'),
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    final request = bundle.adapter.requests.singleWhere(
+      (request) => request.path == '/download-requests/manual',
+    );
+    expect(request.body['movie_number'], 'ssni_888');
+  });
+
+  testWidgets('falls back online when local has no exact match', (
+    tester,
+  ) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'abp123',
+    );
+    _enqueueParsed(bundle, query: 'abp123', movieNumber: 'ABP-123');
+    _enqueueLocalMovies(bundle, const <Map<String, dynamic>>[]);
+    _enqueueOnlineCompleted(
+      bundle,
+      movieNumber: 'ABP-123',
+      title: 'Online Movie',
+    );
+    await _tapQuery(tester);
+
+    expect(find.text('Online Movie'), findsOneWidget);
+    expect(find.text('在线'), findsOneWidget);
+    expect(bundle.adapter.hitCount('POST', '/movies/metadata-imports'), 1);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 201,
+      body: _manualTaskJson(movieNumber: 'ABP-123'),
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    final request = bundle.adapter.requests.singleWhere(
+      (request) => request.path == '/download-requests/manual',
+    );
+    expect(request.body['movie_number'], 'ABP-123');
+  });
+
+  testWidgets('blocks submit when local and online both miss', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'abc999',
+    );
+    _enqueueParsed(bundle, query: 'abc999', movieNumber: 'ABC-999');
+    _enqueueLocalMovies(bundle, const <Map<String, dynamic>>[]);
+    _enqueueOnlineNotFound(bundle);
+    await _tapQuery(tester);
+
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-error')),
+      findsOneWidget,
+    );
+    expect(find.text('本地和在线均未找到 ABC-999'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+    expect(bundle.adapter.hitCount('POST', '/download-requests/manual'), 0);
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+  });
+
+  testWidgets('parse failure skips local and online search', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'hello',
+    );
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/movies/search/parse-number',
+      body: <String, dynamic>{
+        'query': 'hello',
+        'parsed': false,
+        'movie_number': null,
+        'reason': 'movie_number_not_found',
+      },
+    );
+    await _tapQuery(tester);
+
+    expect(find.text('无法识别番号，请输入完整番号（如 SSNI-888）'), findsOneWidget);
+    expect(bundle.adapter.hitCount('GET', '/movies'), 0);
+    expect(bundle.adapter.hitCount('POST', '/movies/metadata-imports'), 0);
+  });
+
+  testWidgets('editing the number clears the resolved movie', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-001',
+    );
+    _enqueueParsed(bundle, query: 'ABC-001', movieNumber: 'ABC-001');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'ABC-001', title: 'Movie'),
+    ]);
+    await _tapQuery(tester);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-002',
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('请先点击「查询」并匹配影片'), findsOneWidget);
+    expect(bundle.adapter.hitCount('POST', '/download-requests/manual'), 0);
+  });
+
+  testWidgets('enter key triggers the number query', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-001',
+    );
+    _enqueueParsed(bundle, query: 'ABC-001', movieNumber: 'ABC-001');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'ABC-001', title: 'Movie'),
+    ]);
+
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(bundle.adapter.hitCount('POST', '/movies/search/parse-number'), 1);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('creates a PornBox collection and submits its id', (
+    tester,
+  ) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.tap(find.byKey(const Key('manual-download-kind-video')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('manual-download-create-collection-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('video-collection-name-field')),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.byKey(const Key('video-collection-name-field')),
+      'New Collection',
+    );
+    const created = <String, dynamic>{
+      'id': 9,
+      'name': 'New Collection',
+      'item_count': 0,
+    };
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/video-collections',
+      statusCode: 201,
+      body: created,
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/video-collections',
+      body: const <Map<String, dynamic>>[created],
+    );
+    await tester.tap(find.byKey(const Key('video-collection-submit-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('New Collection'), findsOneWidget);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 201,
+      body: _manualTaskJson(
+        movieNumber: null,
+        mediaKind: 'video',
+        collectionId: 9,
+      ),
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    final request = bundle.adapter.requests.singleWhere(
+      (request) => request.path == '/download-requests/manual',
+    );
+    expect(request.body['media_kind'], 'video');
+    expect(request.body['collection_id'], 9);
+    expect(request.body.containsKey('movie_number'), isFalse);
+  });
+
+  testWidgets('keeps dialog open and shows backend error', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-001',
+    );
+    _enqueueParsed(bundle, query: 'ABC-001', movieNumber: 'ABC-001');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'ABC-001', title: 'Movie'),
+    ]);
+    await _tapQuery(tester);
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 409,
+      body: {
+        'error': {
+          'code': 'download_task_already_imported',
+          'message': '该资源已有下载任务且已进入导入流程',
+        },
+      },
+    );
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-submit-error')),
+      findsOneWidget,
+    );
+    expect(find.text('该资源已有下载任务且已进入导入流程'), findsOneWidget);
+  });
+
+  testWidgets('opens as bottom drawer on mobile without overflow', (
+    tester,
+  ) async {
+    final bundle = await _openDialog(
+      tester,
+      platform: AppPlatform.mobile,
+      size: const Size(390, 844),
+    );
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.enterText(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      'ABC-001',
+    );
+    _enqueueParsed(bundle, query: 'ABC-001', movieNumber: 'ABC-001');
+    _enqueueLocalMovies(bundle, <Map<String, dynamic>>[
+      _movieJson(movieNumber: 'ABC-001', title: 'Movie'),
+    ]);
+    await _tapQuery(tester);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('manual-download-kind-video')));
+    await tester.pumpAndSettle();
+    expect(find.text('PornBox'), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-collection-field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('manual-download-create-collection-button')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rejects oversized torrent file before posting', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.tap(find.byKey(const Key('manual-download-source-torrent')));
+    await tester.pumpAndSettle();
+    // PornBox 不需要番号解析，直接验证文件大小门禁。
+    await tester.tap(find.byKey(const Key('manual-download-kind-video')));
+    await tester.pumpAndSettle();
+    picker.selectedFile = _SelectedFile(
+      name: 'big.torrent',
+      bytes: Uint8List(DownloadsApi.maxManualTorrentBytes + 1),
+    );
+
+    await tester.tap(
+      find.byKey(const Key('manual-download-pick-torrent-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('种子文件不能超过 10 MB'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+    expect(
+      bundle.adapter.hitCount('POST', '/download-requests/manual/torrent'),
+      0,
+    );
+  });
+}
+
+Future<TestApiBundle> _openDialog(
+  WidgetTester tester, {
+  AppPlatform platform = AppPlatform.desktop,
+  Size size = const Size(1200, 900),
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+  final sessionStore = SessionStore.inMemory();
+  await sessionStore.saveBaseUrl('https://api.example.com');
+  await sessionStore.saveTokens(
+    accessToken: 'access-token',
+    refreshToken: 'refresh-token',
+    expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+  );
+  final bundle = await createTestApiBundle(sessionStore);
+  addTearDown(bundle.dispose);
+  addTearDown(sessionStore.dispose);
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/download-clients',
+    body: const <Map<String, dynamic>>[
+      <String, dynamic>{'id': 1, 'name': 'qb-main', 'library_id': 1},
+    ],
+  );
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/video-collections',
+    body: const <Map<String, dynamic>>[],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: bundle.riverpodOverrides(),
+      child: MaterialApp(
+        theme: platform == AppPlatform.mobile
+            ? sakuraMobileThemeData
+            : sakuraDesktopThemeData,
+        home: AppPlatformScope(
+          platform: platform,
+          child: const OKToast(child: _DialogHost()),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('open-manual-download')));
+  await tester.pumpAndSettle();
+  return bundle;
+}
+
+Future<void> _tapQuery(WidgetTester tester) async {
+  // enterText 后的 setState 需要先出一帧，查询按钮才会拿到非空 onPressed。
+  await tester.pump();
+  await tester.tap(
+    find.byKey(const Key('manual-download-movie-number-query-button')),
+  );
+  await tester.pumpAndSettle();
+}
+
+void _enqueueParsed(
+  TestApiBundle bundle, {
+  required String query,
+  required String movieNumber,
+}) {
+  bundle.adapter.enqueueJson(
+    method: 'POST',
+    path: '/movies/search/parse-number',
+    body: <String, dynamic>{
+      'query': query,
+      'parsed': true,
+      'movie_number': movieNumber,
+      'reason': null,
+    },
+  );
+}
+
+void _enqueueLocalMovies(
+  TestApiBundle bundle,
+  List<Map<String, dynamic>> movies,
+) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/movies',
+    body: <String, dynamic>{
+      'items': movies,
+      'page': 1,
+      'page_size': 50,
+      'total': movies.length,
+    },
+  );
+}
+
+void _enqueueOnlineCompleted(
+  TestApiBundle bundle, {
+  required String movieNumber,
+  required String title,
+}) {
+  final movie = jsonEncode(_movieJson(movieNumber: movieNumber, title: title));
+  bundle.adapter.enqueueSse(
+    method: 'POST',
+    path: '/movies/metadata-imports',
+    chunks: <String>[
+      'event: search_started\n'
+          'data: {"movie_number":"$movieNumber"}\n\n',
+      'event: completed\n'
+          'data: {"success":true,"movies":[$movie],"failed_items":[],"stats":{"total":1,"created_count":1,"already_exists_count":0,"failed_count":0}}\n\n',
+    ],
+  );
+}
+
+void _enqueueOnlineNotFound(TestApiBundle bundle) {
+  bundle.adapter.enqueueSse(
+    method: 'POST',
+    path: '/movies/metadata-imports',
+    chunks: <String>[
+      'event: completed\n'
+          'data: {"success":false,"reason":"movie_not_found","movies":[]}\n\n',
+    ],
+  );
+}
+
+Map<String, dynamic> _movieJson({
+  required String movieNumber,
+  required String title,
+}) => <String, dynamic>{
+  'id': 1,
+  'movie_number': movieNumber,
+  'title': title,
+  'is_subscribed': false,
+  'can_play': false,
+};
+
+Map<String, dynamic> _manualTaskJson({
+  int id = 500,
+  String? movieNumber = 'ABC-001',
+  int? collectionId,
+  String mediaKind = 'jav',
+}) => <String, dynamic>{
+  'task': <String, dynamic>{
+    'id': id,
+    'client_id': 1,
+    'movie_number': movieNumber,
+    'media_kind': mediaKind,
+    'collection_id': collectionId,
+    'name': movieNumber ?? 'manual',
+    'remote_id': 'remote-$id',
+    'state': 'queued',
+    'progress': 0.0,
+    'import_status': 'pending',
+    'created_at': '2026-08-10T12:00:00Z',
+    'updated_at': '2026-08-10T12:00:00Z',
+  },
+  'created': true,
+};
+
+class _DialogHost extends StatefulWidget {
+  const _DialogHost();
+
+  @override
+  State<_DialogHost> createState() => _DialogHostState();
+}
+
+class _DialogHostState extends State<_DialogHost> {
+  ManualDownloadResult? result;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: AppButton(
+          key: const Key('open-manual-download'),
+          label: '打开',
+          onPressed: () async {
+            final next = await showManualDownloadDialog(context);
+            if (mounted) {
+              setState(() => result = next);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RecordingFilePicker extends FilePickerPlatform {
+  PlatformFile? selectedFile;
+
+  @override
+  Future<PlatformFile?> pickFile({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    return selectedFile;
+  }
+}
+
+final class _SelectedFile extends PlatformFile {
+  _SelectedFile({required this.name, this.bytes});
+
+  @override
+  final String name;
+
+  final Uint8List? bytes;
+
+  @override
+  Future<Uint8List> readAsBytes() async {
+    if (bytes == null) throw StateError('Cannot read selected file');
+    return bytes!;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}

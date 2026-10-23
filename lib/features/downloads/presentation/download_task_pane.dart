@@ -42,19 +42,19 @@ import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
 
-/// 构建「下载任务」Tab 的 sliver 列表。
+/// 构建「下载任务」页的头部。
 ///
-/// 调用方负责把返回的 slivers 放进外层 `CustomScrollView`。
+/// 调用方负责把列表 slivers 放进外层滚动视图。
 Widget buildDownloadTaskHeader({
   required BuildContext context,
   required WidgetRef ref,
+  required VoidCallback onManualAdd,
 }) {
   // 只订阅头部渲染所需的字段：进度轮询 tick 不重建头部。
   final header = ref.watch(
     downloadTaskCenterProvider.select((asyncState) {
       final state = asyncState.value;
       return (
-        hasValue: state != null,
         selectionMode: state?.selectionMode ?? false,
         selectionCount: state?.selectionCount ?? 0,
         loadedCount: state?.paged.items.length ?? 0,
@@ -63,13 +63,13 @@ Widget buildDownloadTaskHeader({
             state?.paged.filterUpdate ?? const FilterUpdateState.idle(),
         hasItems: state?.paged.items.isNotEmpty ?? false,
         filter: state?.filter ?? DownloadTaskFilterState.initial,
-        clientOptions:
-            state?.clientOptions ?? const <DownloadClientOption>[],
+        clientOptions: state?.clientOptions ?? const <DownloadClientOption>[],
       );
     }),
   );
-  if (!header.hasValue) return const SizedBox.shrink();
   final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
+  // 首次加载也渲染初始筛选栏：骨架列表与数据回来后的最终布局保持一致，
+  // 避免头部突然多出一行导致内容下跳。
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
@@ -88,6 +88,7 @@ Widget buildDownloadTaskHeader({
           filter: header.filter,
           clientOptions: header.clientOptions,
           hasItems: header.hasItems,
+          onManualAdd: onManualAdd,
         )
       else
         Row(
@@ -98,9 +99,12 @@ Widget buildDownloadTaskHeader({
                 filter: header.filter,
                 clientOptions: header.clientOptions,
                 hasItems: header.hasItems,
+                onManualAdd: onManualAdd,
               ),
             ),
             SizedBox(width: context.appSpacing.md),
+            _buildManualAddAction(context, onManualAdd, isMobile: false),
+            SizedBox(width: context.appSpacing.sm),
             AppSelectionEntryButton(
               key: const Key('download-tasks-selection-entry'),
               onPressed: header.loadedCount == 0
@@ -121,6 +125,29 @@ Widget buildDownloadTaskHeader({
       ),
       SizedBox(height: context.appSpacing.lg),
     ],
+  );
+}
+
+Widget _buildManualAddAction(
+  BuildContext context,
+  VoidCallback onManualAdd, {
+  required bool isMobile,
+}) {
+  if (isMobile) {
+    return AppIconButton(
+      key: const Key('download-tasks-manual-add'),
+      tooltip: '手动添加下载',
+      icon: const Icon(Icons.add_rounded),
+      onPressed: onManualAdd,
+    );
+  }
+  return AppButton(
+    key: const Key('download-tasks-manual-add'),
+    label: '手动添加',
+    icon: const Icon(Icons.add_rounded),
+    size: AppButtonSize.small,
+    variant: AppButtonVariant.primary,
+    onPressed: onManualAdd,
   );
 }
 
@@ -228,13 +255,7 @@ class _MobileSelectionBar extends ConsumerWidget {
       ),
     );
     return AppSelectionBottomBar(
-      actions: <Widget>[
-        _buildBatchDeleteButton(
-          context,
-          ref,
-          selectionCount,
-        ),
-      ],
+      actions: <Widget>[_buildBatchDeleteButton(context, ref, selectionCount)],
     );
   }
 }
@@ -300,11 +321,11 @@ Future<void> _deleteTask(
   }
 }
 
-List<Widget> buildDownloadTaskSlivers() {
+List<Widget> buildDownloadTaskSlivers({required VoidCallback onManualAdd}) {
   // 列表本体与页脚各自独立订阅：进度 tick 只重建变化的行，
   // 翻页状态翻转只重建页脚，不重建整个列表。
   return <Widget>[
-    const _DownloadTasksBodySliver(),
+    _DownloadTasksBodySliver(onManualAdd: onManualAdd),
     // 无更多且无失败时不占位；「还有更多」时页脚常驻（空闲也留好间距）。
     // 空列表与页脚互斥：hasMore 但 items 为空时渲染的是空态文案
     // （见 _DownloadTasksBodySliver），不再出现「加载更多」。
@@ -347,7 +368,9 @@ DownloadTaskRowState? _rowById(DownloadTaskCenterState? state, int taskId) {
 /// 进度 tick 只改变行内数据（条目序列不变），不重建列表；
 /// 各行通过 [_DownloadTaskCard] 独立订阅自己的行状态。
 class _DownloadTasksBodySliver extends ConsumerWidget {
-  const _DownloadTasksBodySliver();
+  const _DownloadTasksBodySliver({required this.onManualAdd});
+
+  final VoidCallback onManualAdd;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -363,14 +386,26 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
           filterUpdate:
               state?.paged.filterUpdate ?? const FilterUpdateState.idle(),
           isEmpty: state?.paged.items.isEmpty ?? true,
-          filterIsDefault: state?.filter.isDefault ?? true,
+          stateFilter:
+              state?.filter.stateFilter ?? DownloadTaskStateFilter.downloading,
+          hasSearchOrClientFilter:
+              (state?.filter.normalizedSearch.isNotEmpty ?? false) ||
+              (state?.filter.clientId != null),
         );
       }),
     );
 
     if (body.isLoading && !body.hasValue) {
       // loading 用占位任务渲染真实任务卡，由 [AppSkeletonizer] 灰化。
-      final placeholders = downloadTaskPlaceholders();
+      // 按视口高度补足卡片数量，避免高窗口下骨架只占上方一小块。
+      final cardExtent =
+          context.appComponentTokens.downloadTaskCardMinHeight +
+          context.appSpacing.md;
+      final placeholderCount = (MediaQuery.sizeOf(context).height / cardExtent)
+          .ceil()
+          .clamp(3, 8)
+          .toInt();
+      final placeholders = downloadTaskPlaceholders(count: placeholderCount);
       return AppSkeletonizer.sliver(
         enabled: true,
         child: SliverList(
@@ -391,10 +426,7 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
     if (body.hasError && !body.hasValue) {
       return SliverToBoxAdapter(
         child: AppEmptyState(
-          message: apiErrorMessage(
-            body.error!,
-            fallback: '下载任务加载失败，请稍后重试',
-          ),
+          message: apiErrorMessage(body.error!, fallback: '下载任务加载失败，请稍后重试'),
           onRetry: () => ref.invalidate(downloadTaskCenterProvider),
         ),
       );
@@ -409,8 +441,11 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
       if (body.filterUpdate.hasFailed) {
         return const SliverToBoxAdapter(child: SizedBox.shrink());
       }
-      // 有筛选时给一个可以「清除筛选」的重试入口，避免用户困惑「明明有任务却看不到」。
-      final hasFilter = !body.filterIsDefault;
+      // 独立下载页默认只看「下载中」：空态必须给一个出口，否则只有已完成任务的
+      // 用户会以为列表是空的。
+      final hasFilter =
+          body.stateFilter != DownloadTaskStateFilter.all ||
+          body.hasSearchOrClientFilter;
       return SliverToBoxAdapter(
         child: AppEmptyState(
           message: hasFilter ? '没有符合筛选条件的下载任务' : '暂无下载任务',
@@ -419,11 +454,17 @@ class _DownloadTasksBodySliver extends ConsumerWidget {
               ? () => unawaited(
                   ref
                       .read(downloadTaskCenterProvider.notifier)
-                      .applyFilter(DownloadTaskFilterState.initial),
+                      .applyFilter(
+                        const DownloadTaskFilterState(
+                          stateFilter: DownloadTaskStateFilter.all,
+                        ),
+                      ),
                 )
-              : null,
-          retryLabel: '清除筛选',
-          retryKey: const Key('download-empty-clear-filter'),
+              : onManualAdd,
+          retryLabel: hasFilter ? '查看全部任务' : '手动添加',
+          retryKey: hasFilter
+              ? const Key('download-empty-view-all')
+              : const Key('download-empty-manual-add'),
         ),
       );
     }
@@ -518,7 +559,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                   }
                   context.pushDesktopMovieDetail(
                     movieNumber: movieNumber!,
-                    fallbackPath: desktopActivityPath,
+                    fallbackPath: desktopDownloadTasksPath,
                   );
                 },
         ),
@@ -600,10 +641,7 @@ class _DownloadTaskCard extends ConsumerWidget {
                     runSpacing: context.appSpacing.xs,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(
-                        clientName,
-                        style: _footnoteTextStyle(context),
-                      ),
+                      Text(clientName, style: _footnoteTextStyle(context)),
                       if (formatUpdatedAtLabel(task.createdAt) != null)
                         Text(
                           '创建 ${formatUpdatedAtLabel(task.createdAt)}',
@@ -656,6 +694,10 @@ class _DownloadTaskCard extends ConsumerWidget {
   }
 
   static String _resolveDisplayTitle(DownloadTaskDto task) {
+    final displayName = (task.displayName ?? '').trim();
+    if (displayName.isNotEmpty) {
+      return displayName;
+    }
     final movieTitle = (task.movieTitle ?? '').trim();
     if (movieTitle.isNotEmpty) {
       return movieTitle;
@@ -817,11 +859,13 @@ class _DownloadFilterBar extends StatelessWidget {
     required this.filter,
     required this.clientOptions,
     required this.hasItems,
+    required this.onManualAdd,
   });
 
   final DownloadTaskFilterState filter;
   final List<DownloadClientOption> clientOptions;
   final bool hasItems;
+  final VoidCallback onManualAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -830,6 +874,7 @@ class _DownloadFilterBar extends StatelessWidget {
         filter: filter,
         clientOptions: clientOptions,
         hasItems: hasItems,
+        onManualAdd: onManualAdd,
       );
     }
     return _DesktopDownloadFilterBar(
@@ -850,9 +895,7 @@ class _DesktopDownloadFilterBar extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final searchController = useTextEditingController(
-      text: filter.search,
-    );
+    final searchController = useTextEditingController(text: filter.search);
     // 若外部通过其它入口（如「清除筛选」）改了 filter.search，同步进输入框；
     // 用户正在输入时（controller.text 与最近同步值不一致）避免打断。
     final attachedSearch = useRef<String>(filter.search);
@@ -951,11 +994,13 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
     required this.filter,
     required this.clientOptions,
     required this.hasItems,
+    required this.onManualAdd,
   });
 
   final DownloadTaskFilterState filter;
   final List<DownloadClientOption> clientOptions;
   final bool hasItems;
+  final VoidCallback onManualAdd;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -976,6 +1021,8 @@ class _MobileDownloadFilterEntry extends ConsumerWidget {
           ),
         ),
         SizedBox(width: context.appSpacing.md),
+        _buildManualAddAction(context, onManualAdd, isMobile: true),
+        SizedBox(width: context.appSpacing.xs),
         AppSelectionEntryButton(
           key: const Key('download-tasks-selection-entry'),
           onPressed: hasItems

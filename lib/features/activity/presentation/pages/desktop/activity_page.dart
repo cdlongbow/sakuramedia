@@ -17,9 +17,6 @@ import 'package:sakuramedia/features/activity/presentation/activity_placeholders
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/job_params_dialog.dart';
-import 'package:sakuramedia/features/downloads/presentation/download_task_pane.dart';
-import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,7 +31,6 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_over
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
@@ -43,22 +39,16 @@ import 'package:sakuramedia/widgets/domain/media_import/import_failed_items_dial
 import 'package:skeletonizer/skeletonizer.dart';
 
 class DesktopActivityPage extends ConsumerStatefulWidget {
-  const DesktopActivityPage({super.key, this.initialDownloadMovieNumber});
-
-  /// 打开后直接定位到「下载任务」tab 并按该番号过滤；null（普通入口）行为不变。
-  final String? initialDownloadMovieNumber;
+  const DesktopActivityPage({super.key});
 
   @override
   ConsumerState<DesktopActivityPage> createState() =>
       _DesktopActivityPageState();
 }
 
-class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+/// 任务中心：只承载后台任务与任务历史；下载任务已拆到独立页面。
+class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
   late final ScrollController _pageScrollController;
-  ActivityTab? _lastActiveTab = ActivityTab.tasks;
-  bool _hasOpenedDownloadTasks = false;
   bool? _isPageVisible;
 
   ActivityCenter get _controller => ref.read(activityCenterProvider.notifier);
@@ -66,12 +56,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(_handleTabChanged);
     _pageScrollController = ScrollController();
-    // 订阅卡片跳转进来的下载意图：等首帧后统一走同一路径（切 tab + 应用筛选），
-    // 避免与 activity provider 的 bootstrap 初始化互相踩。
-    _scheduleInitialDownloadIntent();
   }
 
   @override
@@ -85,114 +70,18 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     // TickerMode 切换时同步更新轮询状态而触发 build 期间修改 provider。
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _isPageVisible != isVisible) return;
-      _updatePollingForVisibility(isVisible);
-    });
-  }
-
-  void _updatePollingForVisibility(bool isVisible) {
-    if (isVisible) {
-      unawaited(_controller.resumePolling());
-    } else {
-      _controller.pausePolling();
-    }
-
-    // 下载中心保持按需初始化：从未进入下载 tab 的隐藏分支不应创建它。
-    if (!_hasOpenedDownloadTasks) return;
-    final downloadController = ref.read(downloadTaskCenterProvider.notifier);
-    if (isVisible) {
-      unawaited(downloadController.resumePolling());
-    } else {
-      downloadController.pausePolling();
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant DesktopActivityPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialDownloadMovieNumber ==
-        widget.initialDownloadMovieNumber) {
-      return;
-    }
-    _scheduleInitialDownloadIntent();
-  }
-
-  void _scheduleInitialDownloadIntent() {
-    final movieNumber = widget.initialDownloadMovieNumber?.trim();
-    if (movieNumber == null || movieNumber.isEmpty) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && widget.initialDownloadMovieNumber?.trim() == movieNumber) {
-        unawaited(_applyInitialDownloadIntent(movieNumber));
+      if (isVisible) {
+        unawaited(_controller.resumePolling());
+      } else {
+        _controller.pausePolling();
       }
     });
-  }
-
-  /// 消费「打开即看某番号下载任务」的意图：先应用筛选再切 tab。
-  Future<void> _applyInitialDownloadIntent(String movieNumber) async {
-    await ref
-        .read(downloadTaskCenterProvider.notifier)
-        .applyFilter(
-          DownloadTaskFilterState(
-            // 用 all 而不是默认 downloading：订阅的导入失败任务可能已经下载完成，
-            // 按 downloading 过滤会把它们滤掉。
-            stateFilter: DownloadTaskStateFilter.all,
-            search: movieNumber,
-          ),
-        );
-    if (!mounted || widget.initialDownloadMovieNumber?.trim() != movieNumber) {
-      return;
-    }
-    _controller.setActiveTab(ActivityTab.downloadTasks);
   }
 
   @override
   void dispose() {
-    _tabController
-      ..removeListener(_handleTabChanged)
-      ..dispose();
     _pageScrollController.dispose();
     super.dispose();
-  }
-
-  void _handleTabChanged() {
-    if (_tabController.indexIsChanging) {
-      final nextTab = ActivityTab.values[_tabController.index];
-      _controller.setActiveTab(nextTab);
-    }
-  }
-
-  void _syncTabSelection(ActivityTab activeTab) {
-    if (_tabController.index != activeTab.index) {
-      _tabController.animateTo(activeTab.index);
-    }
-    _handleActiveTabDiff(activeTab);
-  }
-
-  /// 收敛 tab 切换的副作用：手势切 tab、程序化 setActiveTab（如 triggerJob）
-  /// 都过这条路径。切进下载任务时开始轮询，切走后停止轮询。
-  void _handleActiveTabDiff(ActivityTab nextTab) {
-    if (nextTab == _lastActiveTab) {
-      return;
-    }
-    final previousTab = _lastActiveTab;
-    _lastActiveTab = nextTab;
-
-    if (nextTab == ActivityTab.downloadTasks) {
-      if (!_hasOpenedDownloadTasks) {
-        setState(() {
-          _hasOpenedDownloadTasks = true;
-        });
-      }
-      final downloadController = ref.read(downloadTaskCenterProvider.notifier);
-      if (_isPageVisible == false) {
-        downloadController.pausePolling();
-      }
-      unawaited(downloadController.startPolling());
-    } else if (previousTab == ActivityTab.downloadTasks) {
-      final downloadController = ref.read(downloadTaskCenterProvider.notifier);
-      downloadController.stopPolling();
-      // 离开下载 tab 顺手退出多选，回来时不再残留选中态。
-      downloadController.exitSelectionMode();
-    }
   }
 
   Future<void> _triggerJob(JobMetadataDto job) async {
@@ -232,7 +121,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     );
   }
 
-  List<Widget> _buildTabSlivers(BuildContext context) {
+  List<Widget> _buildTaskSlivers(BuildContext context) {
     if (_controller.isInitialLoading) {
       // loading 用占位任务渲染真实任务卡与历史列表，由 [AppSkeletonizer] 灰化；
       // 复用与真实列表同一套 section/list 组件，避免两套渲染器各自漂移。
@@ -267,41 +156,37 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         ),
       ];
     }
-    return switch (_controller.activeTab) {
-      // 各段独立订阅：活动进度 tick 只重建活动区，翻页只重建页脚，
-      // 历史列表不受两者牵连（见 _ActiveRunsSliver / _HistoryRunsSliver /
-      // PagedLoadMoreFooterSliver）。静态头（可执行任务 + 标题）跟随父级重建。
-      ActivityTab.tasks => <Widget>[
-        _ActiveRunsSliver(),
-        _buildTasksStaticHeader(context),
-        _HistoryRunsSliver(),
-        // 任务历史页脚常驻：loading / 失败时显示行，空闲只留上下间距
-        // （空列表 + 筛选失败时不占位，与原逻辑一致）。
-        PagedLoadMoreFooterSliver(
-          topSpacing: PagedFooterSpacing.lg,
-          bottomSpacing: PagedFooterSpacing.xl,
-          padWhenIdle: true,
-          watchFooter: (ref) => ref.watch(
-            activityCenterProvider.select((v) {
-              final state = v.value;
-              final runs = state?.taskRuns ?? const <TaskRunDto>[];
-              if (runs.isEmpty &&
-                  (state?.taskFilterUpdate.hasFailed ?? false)) {
-                return null;
-              }
-              return (
-                isLoading: state?.isLoadingMoreTasks ?? false,
-                errorMessage: state?.taskLoadMoreErrorMessage,
-              );
-            }),
-          ),
-          onLoadMore: (ref) => unawaited(
-            ref.read(activityCenterProvider.notifier).loadMoreTasks(),
-          ),
+    // 各段独立订阅：活动进度 tick 只重建活动区，翻页只重建页脚，
+    // 历史列表不受两者牵连（见 _ActiveRunsSliver / _HistoryRunsSliver /
+    // PagedLoadMoreFooterSliver）。静态头（可执行任务 + 标题）跟随父级重建。
+    return <Widget>[
+      _ActiveRunsSliver(),
+      _buildTasksStaticHeader(context),
+      _HistoryRunsSliver(),
+      // 任务历史页脚常驻：loading / 失败时显示行，空闲只留上下间距
+      // （空列表 + 筛选失败时不占位，与原逻辑一致）。
+      PagedLoadMoreFooterSliver(
+        topSpacing: PagedFooterSpacing.lg,
+        bottomSpacing: PagedFooterSpacing.xl,
+        padWhenIdle: true,
+        watchFooter: (ref) => ref.watch(
+          activityCenterProvider.select((v) {
+            final state = v.value;
+            final runs = state?.taskRuns ?? const <TaskRunDto>[];
+            if (runs.isEmpty && (state?.taskFilterUpdate.hasFailed ?? false)) {
+              return null;
+            }
+            return (
+              isLoading: state?.isLoadingMoreTasks ?? false,
+              errorMessage: state?.taskLoadMoreErrorMessage,
+            );
+          }),
         ),
-      ],
-      ActivityTab.downloadTasks => buildDownloadTaskSlivers(),
-    };
+        onLoadMore: (ref) => unawaited(
+          ref.read(activityCenterProvider.notifier).loadMoreTasks(),
+        ),
+      ),
+    ];
   }
 
   /// 任务 tab 的静态头（可执行任务区 + 「任务历史」标题）：只读 jobs 等低频字段，
@@ -330,25 +215,17 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     );
   }
 
-  Future<void> _refreshActiveTab() async {
-    switch (_controller.activeTab) {
-      case ActivityTab.tasks:
-        await _controller.refreshTaskHistory();
-      case ActivityTab.downloadTasks:
-        await ref.read(downloadTaskCenterProvider.notifier).refresh();
-    }
-  }
+  Future<void> _refreshTasks() => _controller.refreshTaskHistory();
 
   @override
   Widget build(BuildContext context) {
     // 只订阅页面骨架所需的字段：进行中任务进度、历史条目与翻页状态
     // 走独立订阅，不重建整页（见 _ActiveRunsSliver / _HistoryRunsSliver /
-    // _TasksFooterSliver）。轮询无实质变化时 provider 本就不写回。
+    // PagedLoadMoreFooterSliver）。轮询无实质变化时 provider 本就不写回。
     final tasksView = ref.watch(
       activityCenterProvider.select((asyncValue) {
         final state = asyncValue.value;
         return (
-          activeTab: state?.activeTab ?? ActivityTab.tasks,
           taskFilter: state?.taskFilter ?? ActivityTaskFilterState.initial,
           taskFilterUpdate:
               state?.taskFilterUpdate ?? const FilterUpdateState.idle(),
@@ -366,90 +243,33 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         );
       }),
     );
-    final activeTab = tasksView.activeTab;
-    // 下载 tab 只订阅覆盖层所需的两个布尔：进度 tick 不重建本页，
-    // 列表本体与头部由下载 pane 内部各自独立订阅。
-    final downloadView =
-        _hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks
-        ? ref.watch(
-            downloadTaskCenterProvider.select(
-              (asyncValue) => (
-                filterUpdate:
-                    asyncValue.value?.paged.filterUpdate ??
-                    const FilterUpdateState.idle(),
-                hasItems: asyncValue.value?.paged.items.isNotEmpty ?? false,
-              ),
-            ),
-          )
-        : null;
-    ref.listen<ActivityTab>(
-      activityCenterProvider.select(
-        (value) => value.value?.activeTab ?? ActivityTab.tasks,
-      ),
-      (_, next) => _syncTabSelection(next),
-    );
     ref.listen(
       activityCenterProvider.select((value) => value.value?.taskFilter),
       (previous, next) {
         if (previous != null &&
             next != null &&
             previous != next &&
-            activeTab == ActivityTab.tasks &&
             _pageScrollController.hasClients) {
           _pageScrollController.jumpTo(0);
         }
       },
     );
-    if (_hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks) {
-      ref.listen(
-        downloadTaskCenterProvider.select((value) => value.value?.filter),
-        (previous, next) {
-          if (previous != null &&
-              next != null &&
-              previous != next &&
-              activeTab == ActivityTab.downloadTasks &&
-              _pageScrollController.hasClients) {
-            _pageScrollController.jumpTo(0);
-          }
-        },
-      );
-    }
-    final filterUpdate = switch (activeTab) {
-      ActivityTab.tasks => tasksView.taskFilterUpdate,
-      ActivityTab.downloadTasks =>
-        downloadView?.filterUpdate ?? const FilterUpdateState.idle(),
-    };
-    final hasPreviousItems = switch (activeTab) {
-      ActivityTab.tasks => tasksView.hasTaskItems,
-      ActivityTab.downloadTasks => downloadView?.hasItems ?? false,
-    };
     final layout = AppFixedHeaderLayout(
       header: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppTabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(key: Key('activity-tab-tasks'), text: '后台任务'),
-              Tab(key: Key('activity-tab-download-tasks'), text: '下载任务'),
-            ],
+          _TaskFilterBar(controller: _controller),
+          AppFilterUpdateBar(
+            state: tasksView.taskFilterUpdate,
+            hasPreviousItems: tasksView.hasTaskItems,
+            onRetry: _controller.refreshTaskHistory,
           ),
           SizedBox(height: context.appSpacing.lg),
-          if (activeTab == ActivityTab.tasks) ...[
-            _TaskFilterBar(controller: _controller),
-            AppFilterUpdateBar(
-              state: tasksView.taskFilterUpdate,
-              hasPreviousItems: tasksView.hasTaskItems,
-              onRetry: _controller.refreshTaskHistory,
-            ),
-            SizedBox(height: context.appSpacing.lg),
-          ] else
-            buildDownloadTaskHeader(context: context, ref: ref),
         ],
       ),
       child: AppFilterResultLoadingOverlay(
-        isLoading: filterUpdate.isLoading,
-        hasPreviousItems: hasPreviousItems,
+        isLoading: tasksView.taskFilterUpdate.isLoading,
+        hasPreviousItems: tasksView.hasTaskItems,
         child: AppPagedLoadMoreScope(
           canLoadMore: () {
             final activity = ref.read(activityCenterProvider).value;
@@ -459,56 +279,26 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
                 activity.initialErrorMessage != null) {
               return false;
             }
-            return switch (activity.activeTab) {
-              ActivityTab.tasks =>
-                activity.taskFilterUpdate.isIdle &&
-                    !activity.isRefreshingTaskHistory &&
-                    activity.hasMoreTasks &&
-                    !activity.isLoadingMoreTasks &&
-                    activity.taskLoadMoreErrorMessage == null,
-              ActivityTab.downloadTasks =>
-                _hasOpenedDownloadTasks &&
-                    (ref
-                            .read(downloadTaskCenterProvider)
-                            .value
-                            ?.paged
-                            .canAutoLoadMore ??
-                        false),
-            };
+            return activity.taskFilterUpdate.isIdle &&
+                !activity.isRefreshingTaskHistory &&
+                activity.hasMoreTasks &&
+                !activity.isLoadingMoreTasks &&
+                activity.taskLoadMoreErrorMessage == null;
           },
-          onLoadMore: () {
-            final activeTab =
-                ref.read(activityCenterProvider).value?.activeTab ??
-                ActivityTab.tasks;
-            return switch (activeTab) {
-              ActivityTab.tasks => _controller.loadMoreTasks(),
-              ActivityTab.downloadTasks =>
-                ref.read(downloadTaskCenterProvider.notifier).loadMore(),
-            };
-          },
+          onLoadMore: _controller.loadMoreTasks,
           child: CustomScrollView(
             controller: _pageScrollController,
             slivers: [
               // 连接横幅独立订阅：轮询状态变化只重建它，不重建整页。
               const _ConnectionBannerSliver(),
-              ..._buildTabSlivers(context),
+              ..._buildTaskSlivers(context),
               ...bottomSafeAreaSliver(context),
             ],
           ),
         ),
       ),
     );
-    return AppPageRefreshScope(
-      onRefresh: _refreshActiveTab,
-      // 下载 tab 的多选态在移动端需要贴底批量操作条；桌面动作在顶栏里。
-      child: activeTab == ActivityTab.downloadTasks
-          ? wrapDownloadTaskSelectionBar(
-              context: context,
-              ref: ref,
-              child: layout,
-            )
-          : layout,
-    );
+    return AppPageRefreshScope(onRefresh: _refreshTasks, child: layout);
   }
 }
 

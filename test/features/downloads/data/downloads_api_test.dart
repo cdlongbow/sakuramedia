@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
+import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -156,11 +160,9 @@ void main() {
                 'progress': 0.3,
                 'import_status': 'pending',
                 'import_status_label': '等待导入',
+                'display_name': '我的资源',
                 'movie_title': '中文标题',
-                'movie_cover': {
-                  'id': 5,
-                  'origin': '/files/images/large.jpg',
-                },
+                'movie_cover': {'id': 5, 'origin': '/files/images/large.jpg'},
                 'movie_thin_cover': {
                   'id': 6,
                   'origin': '/files/images/thin-large.jpg',
@@ -192,6 +194,7 @@ void main() {
         expect(result.items.single.remoteId, 'aa');
         expect(result.items.single.state, 'downloading');
         expect(result.items.single.importStatusLabel, '等待导入');
+        expect(result.items.single.displayName, '我的资源');
         // 后端 JOIN 出的标题/封面已进入 DTO，前端下载卡片可以直接展示，不再二次查。
         expect(result.items.single.movieTitle, '中文标题');
         expect(
@@ -264,6 +267,148 @@ void main() {
       },
     );
 
+    test('createManualDownloadRequest sends jav magnet payload', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-requests/manual',
+        statusCode: 201,
+        body: _downloadTaskResponse(),
+      );
+
+      final response = await bundle.downloadsApi.createManualDownloadRequest(
+        clientId: 2,
+        mediaKind: ManualDownloadMediaKind.jav,
+        sourceUri: 'magnet:?xt=urn:btih:abc',
+        movieNumber: ' ABC-001 ',
+        collectionId: 9,
+        displayName: ' ',
+        deleteSourceAfterImport: true,
+      );
+
+      expect(bundle.adapter.requests.single.body, {
+        'client_id': 2,
+        'media_kind': 'jav',
+        'source_uri': 'magnet:?xt=urn:btih:abc',
+        'movie_number': 'ABC-001',
+        'delete_source_after_import': true,
+      });
+      expect(response.created, isTrue);
+    });
+
+    test(
+      'createManualDownloadRequest sends video collection payload',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/download-requests/manual',
+          statusCode: 201,
+          body: _downloadTaskResponse(movieNumber: null),
+        );
+
+        await bundle.downloadsApi.createManualDownloadRequest(
+          clientId: 3,
+          mediaKind: ManualDownloadMediaKind.video,
+          sourceUri: 'magnet:?xt=urn:btih:def',
+          movieNumber: 'IGNORED',
+          collectionId: 9,
+          displayName: ' 我的视频 ',
+        );
+
+        expect(bundle.adapter.requests.single.body, {
+          'client_id': 3,
+          'media_kind': 'video',
+          'source_uri': 'magnet:?xt=urn:btih:def',
+          'collection_id': 9,
+          'display_name': '我的视频',
+          'delete_source_after_import': false,
+        });
+      },
+    );
+
+    test(
+      'createManualTorrentDownloadRequest sends multipart fields and file',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/download-requests/manual/torrent',
+          statusCode: 201,
+          body: _downloadTaskResponse(movieNumber: null),
+        );
+
+        final bytes = Uint8List.fromList(<int>[1, 2, 3, 4]);
+        await bundle.downloadsApi.createManualTorrentDownloadRequest(
+          clientId: 2,
+          mediaKind: ManualDownloadMediaKind.video,
+          torrentBytes: bytes,
+          fileName: 'abc.torrent',
+          collectionId: 9,
+          displayName: '视频资源',
+        );
+
+        final body = bundle.adapter.requests.single.body as FormData;
+        final fields = <String, String>{
+          for (final entry in body.fields) entry.key: entry.value,
+        };
+        expect(fields, {
+          'client_id': '2',
+          'media_kind': 'video',
+          'collection_id': '9',
+          'display_name': '视频资源',
+          'delete_source_after_import': 'false',
+        });
+        expect(body.files, hasLength(1));
+        expect(body.files.single.key, 'file');
+        expect(body.files.single.value.filename, 'abc.torrent');
+        expect(body.files.single.value.length, bytes.length);
+      },
+    );
+
+    test('createManualDownloadRequest surfaces backend error code', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/download-requests/manual',
+        statusCode: 409,
+        body: {
+          'error': {
+            'code': 'download_task_already_imported',
+            'message': '该资源已有下载任务且已进入导入流程',
+          },
+        },
+      );
+
+      expect(
+        () => bundle.downloadsApi.createManualDownloadRequest(
+          clientId: 2,
+          mediaKind: ManualDownloadMediaKind.jav,
+          sourceUri: 'magnet:?xt=urn:btih:abc',
+          movieNumber: 'ABC-001',
+        ),
+        throwsA(
+          isA<ApiException>().having(
+            (ApiException error) => error.error?.code,
+            'error.code',
+            'download_task_already_imported',
+          ),
+        ),
+      );
+    });
+
     test(
       'deleteDownloadTask without delete_files sends only delete_files=false',
       () async {
@@ -309,62 +454,68 @@ void main() {
       },
     );
 
-    test('triggerDownloadTaskImport posts to the task import endpoint', () async {
-      final sessionStore = await _buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
+    test(
+      'triggerDownloadTaskImport posts to the task import endpoint',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
 
-      bundle.adapter.enqueueJson(
-        method: 'POST',
-        path: '/download-tasks/7/import',
-        statusCode: 202,
-        body: {'task_id': 7, 'task_run_id': 42, 'status': 'accepted'},
-      );
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/download-tasks/7/import',
+          statusCode: 202,
+          body: {'task_id': 7, 'task_run_id': 42, 'status': 'accepted'},
+        );
 
-      await bundle.downloadsApi.triggerDownloadTaskImport(7);
+        await bundle.downloadsApi.triggerDownloadTaskImport(7);
 
-      final request = bundle.adapter.requests.single;
-      expect(request.method, 'POST');
-      expect(request.path, '/download-tasks/7/import');
-    });
+        final request = bundle.adapter.requests.single;
+        expect(request.method, 'POST');
+        expect(request.path, '/download-tasks/7/import');
+      },
+    );
 
-    test('getDownloadTaskFiles gets the task files endpoint and parses files', () async {
-      final sessionStore = await _buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
+    test(
+      'getDownloadTaskFiles gets the task files endpoint and parses files',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
 
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/download-tasks/7/files',
-        body: [
-          {
-            'name': 'ABC-001.mkv',
-            'relative_path': 'ABC-001/ABC-001.mkv',
-            'size_bytes': 123,
-            'is_video': true,
-          },
-          {
-            'name': 'zh.srt',
-            'relative_path': 'ABC-001/subs/zh.srt',
-            'size_bytes': 45,
-            'is_video': false,
-          },
-        ],
-      );
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/download-tasks/7/files',
+          body: [
+            {
+              'name': 'ABC-001.mkv',
+              'relative_path': 'ABC-001/ABC-001.mkv',
+              'size_bytes': 123,
+              'is_video': true,
+            },
+            {
+              'name': 'zh.srt',
+              'relative_path': 'ABC-001/subs/zh.srt',
+              'size_bytes': 45,
+              'is_video': false,
+            },
+          ],
+        );
 
-      final files = await bundle.downloadsApi.getDownloadTaskFiles(7);
+        final files = await bundle.downloadsApi.getDownloadTaskFiles(7);
 
-      final request = bundle.adapter.requests.single;
-      expect(request.method, 'GET');
-      expect(request.path, '/download-tasks/7/files');
-      expect(files, hasLength(2));
-      expect(files.first.name, 'ABC-001.mkv');
-      expect(files.first.relativePath, 'ABC-001/ABC-001.mkv');
-      expect(files.first.sizeBytes, 123);
-      expect(files.first.isVideo, isTrue);
-      expect(files.last.name, 'zh.srt');
-      expect(files.last.isVideo, isFalse);
-    });
+        final request = bundle.adapter.requests.single;
+        expect(request.method, 'GET');
+        expect(request.path, '/download-tasks/7/files');
+        expect(files, hasLength(2));
+        expect(files.first.name, 'ABC-001.mkv');
+        expect(files.first.relativePath, 'ABC-001/ABC-001.mkv');
+        expect(files.first.sizeBytes, 123);
+        expect(files.first.isVideo, isTrue);
+        expect(files.last.name, 'zh.srt');
+        expect(files.last.isVideo, isFalse);
+      },
+    );
 
     test(
       'triggerDownloadTaskBatchImport posts task ids and parses result',
@@ -377,7 +528,10 @@ void main() {
           method: 'POST',
           path: '/download-tasks/imports',
           statusCode: 202,
-          body: {'accepted_count': 2, 'skipped_task_ids': [7]},
+          body: {
+            'accepted_count': 2,
+            'skipped_task_ids': [7],
+          },
         );
 
         final result = await bundle.downloadsApi.triggerDownloadTaskBatchImport(
@@ -387,7 +541,9 @@ void main() {
         final request = bundle.adapter.requests.single;
         expect(request.method, 'POST');
         expect(request.path, '/download-tasks/imports');
-        expect(request.body, {'task_ids': [1, 2, 7]});
+        expect(request.body, {
+          'task_ids': [1, 2, 7],
+        });
         expect(result.acceptedCount, 2);
         expect(result.skippedTaskIds, [7]);
       },
@@ -404,7 +560,10 @@ void main() {
         for (final body in const <Map<String, dynamic>>[
           {'accepted_count': 100, 'skipped_task_ids': <int>[]},
           {'accepted_count': 100, 'skipped_task_ids': <int>[]},
-          {'accepted_count': 49, 'skipped_task_ids': [250]},
+          {
+            'accepted_count': 49,
+            'skipped_task_ids': [250],
+          },
         ]) {
           bundle.adapter.enqueueJson(
             method: 'POST',
@@ -474,6 +633,27 @@ void main() {
       },
     );
   });
+}
+
+Map<String, dynamic> _downloadTaskResponse({
+  int id = 123,
+  String? movieNumber = 'ABC-001',
+}) {
+  return <String, dynamic>{
+    'task': <String, dynamic>{
+      'id': id,
+      'client_id': 2,
+      'movie_number': movieNumber,
+      'name': movieNumber ?? 'manual',
+      'remote_id': 'remote-$id',
+      'state': 'queued',
+      'progress': 0.0,
+      'import_status': 'pending',
+      'created_at': '2026-03-10T08:10:00Z',
+      'updated_at': '2026-03-10T08:10:00Z',
+    },
+    'created': true,
+  };
 }
 
 Future<SessionStore> _buildLoggedInSessionStore() async {

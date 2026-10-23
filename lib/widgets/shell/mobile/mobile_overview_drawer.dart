@@ -97,6 +97,13 @@ class MobileOverviewDrawer extends ConsumerWidget {
         label: '资源导入',
       );
 
+  static const _MobileOverviewDrawerMenuItem _downloadTasksItem =
+      _MobileOverviewDrawerMenuItem(
+        key: 'download-tasks',
+        icon: Icons.download_for_offline_outlined,
+        label: '下载任务',
+      );
+
   static const _MobileOverviewDrawerMenuItem _activityItem =
       _MobileOverviewDrawerMenuItem(
         key: 'activity',
@@ -286,6 +293,10 @@ class MobileOverviewDrawer extends ConsumerWidget {
                           _buildMenuEntry(
                             context: context,
                             item: _mediaImportItem,
+                          ),
+                          _buildMenuEntry(
+                            context: context,
+                            item: _downloadTasksItem,
                           ),
                           _buildMenuEntry(
                             context: context,

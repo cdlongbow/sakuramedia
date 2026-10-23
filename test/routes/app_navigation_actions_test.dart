@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
+import 'package:sakuramedia/features/downloads/presentation/pages/mobile/download_tasks_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_player_page.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_navigation_route_state.dart';
@@ -294,7 +294,7 @@ void main() {
           ),
         ),
         GoRoute(
-          path: '/mobile/system/activity',
+          path: '/mobile/system/download-tasks',
           builder: (context, state) => const SizedBox.shrink(),
         ),
       ],
@@ -315,17 +315,17 @@ void main() {
     );
   });
 
-  testWidgets('mobile activity route passes movie number to page', (
+  testWidgets('mobile download tasks route passes movie number to page', (
     WidgetTester tester,
   ) async {
     late BuildContext routeContext;
     late GoRouterState routeState;
-    const activityPath = '/mobile/system/activity';
+    const downloadsPath = '/mobile/system/download-tasks';
     final router = GoRouter(
-      initialLocation: activityPath,
+      initialLocation: downloadsPath,
       routes: <RouteBase>[
         GoRoute(
-          path: activityPath,
+          path: downloadsPath,
           builder: (context, state) {
             routeContext = context;
             routeState = state;
@@ -337,11 +337,14 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-    final page = const MobileActivityRouteData(
+    final page = const MobileDownloadTasksRouteData(
       downloadMovieNumber: 'SSIS-801',
     ).buildSubpage(routeContext, routeState);
-    expect(page, isA<MobileActivityPage>());
-    expect((page as MobileActivityPage).initialDownloadMovieNumber, 'SSIS-801');
+    expect(page, isA<MobileDownloadTasksPage>());
+    expect(
+      (page as MobileDownloadTasksPage).initialDownloadMovieNumber,
+      'SSIS-801',
+    );
   });
 }
 

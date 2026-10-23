@@ -28,7 +28,7 @@ import 'package:sakuramedia/features/overview/presentation/pages/desktop/latest_
 import 'package:sakuramedia/features/overview/presentation/pages/desktop/recently_subscribed_movies_page.dart';
 import 'package:sakuramedia/features/recent_views/presentation/pages/desktop/recent_views_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/pages/desktop/follow_page.dart';
-import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
+import 'package:sakuramedia/features/downloads/presentation/pages/desktop/download_tasks_page.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/system_diagnostics_page.dart';
 import 'package:sakuramedia/features/tags/presentation/pages/desktop/tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
@@ -323,6 +323,13 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
         TypedStatefulShellBranch<DesktopPrimaryBranchData>(
           routes: [
             TypedGoRoute<DesktopActivityRouteData>(path: desktopActivityPath),
+          ],
+        ),
+        TypedStatefulShellBranch<DesktopPrimaryBranchData>(
+          routes: [
+            TypedGoRoute<DesktopDownloadTasksRouteData>(
+              path: desktopDownloadTasksPath,
+            ),
           ],
         ),
         TypedStatefulShellBranch<DesktopPrimaryBranchData>(
@@ -633,16 +640,21 @@ class DesktopConfigurationRouteData extends _DesktopShellSpecRouteData
 
 class DesktopActivityRouteData extends _DesktopShellSpecRouteData
     with $DesktopActivityRouteData {
-  const DesktopActivityRouteData({this.downloadMovieNumber})
-    : super(desktopActivityPath);
+  const DesktopActivityRouteData() : super(desktopActivityPath);
+}
 
-  /// 打开任务中心后直接定位到「下载任务」tab 并按番号过滤的意图。
-  /// 走 query 参数而非 path：侧边栏等普通入口不携带，行为与原来一致。
+class DesktopDownloadTasksRouteData extends _DesktopShellSpecRouteData
+    with $DesktopDownloadTasksRouteData {
+  const DesktopDownloadTasksRouteData({this.downloadMovieNumber})
+    : super(desktopDownloadTasksPath);
+
+  /// 打开下载任务页后按番号过滤的意图。走 query 参数而非 path：
+  /// 侧边栏等普通入口不携带，行为与普通入口一致。
   final String? downloadMovieNumber;
 
   @override
   String get location => buildRouteLocation(
-    path: desktopActivityPath,
+    path: desktopDownloadTasksPath,
     queryParameters: <String, String?>{
       'downloadMovieNumber': downloadMovieNumber,
     },
@@ -650,14 +662,14 @@ class DesktopActivityRouteData extends _DesktopShellSpecRouteData
 
   @override
   Widget buildContent(BuildContext context, GoRouterState state) {
-    // 兼容 typed route 新参数名与未来可能的 URL 旧参数名；程序化导航时
+    // 兼容 typed route 参数名与 URL 深链的 kebab-case 参数名；程序化导航时
     // 实例字段有值，URL 深链时从 state 读 query。
     final movieNumber = resolveStringQueryParameter(
       state,
-      names: const <String>['downloadMovieNumber'],
+      names: const <String>['downloadMovieNumber', 'download-movie-number'],
       fallback: downloadMovieNumber,
     );
-    return DesktopActivityPage(initialDownloadMovieNumber: movieNumber);
+    return DesktopDownloadTasksPage(initialDownloadMovieNumber: movieNumber);
   }
 }
 

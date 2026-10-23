@@ -50,7 +50,8 @@ class DownloadTaskRowState {
         other.task.updatedAt == task.updatedAt &&
         other.task.movieTitle == task.movieTitle &&
         other.task.movieCover?.origin == task.movieCover?.origin &&
-        other.task.movieThinCover?.origin == task.movieThinCover?.origin;
+        other.task.movieThinCover?.origin == task.movieThinCover?.origin &&
+        other.task.displayName == task.displayName;
   }
 
   @override

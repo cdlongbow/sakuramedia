@@ -4,8 +4,6 @@ import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_filter_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 
-enum ActivityTab { tasks, downloadTasks }
-
 enum ActivityConnectionState { connecting, polling }
 
 @immutable
@@ -14,7 +12,6 @@ class ActivityCenterState {
     this.initialized = false,
     this.isInitialLoading = false,
     this.initialErrorMessage,
-    this.activeTab = ActivityTab.tasks,
     this.connectionState = ActivityConnectionState.connecting,
     this.connectionMessage,
     this.taskFilter = ActivityTaskFilterState.initial,
@@ -42,7 +39,6 @@ class ActivityCenterState {
   final bool initialized;
   final bool isInitialLoading;
   final String? initialErrorMessage;
-  final ActivityTab activeTab;
   final ActivityConnectionState connectionState;
   final String? connectionMessage;
   final ActivityTaskFilterState taskFilter;
@@ -102,7 +98,6 @@ class ActivityCenterState {
     bool? initialized,
     bool? isInitialLoading,
     Object? initialErrorMessage = _unset,
-    ActivityTab? activeTab,
     ActivityConnectionState? connectionState,
     Object? connectionMessage = _unset,
     ActivityTaskFilterState? taskFilter,
@@ -127,7 +122,6 @@ class ActivityCenterState {
       initialErrorMessage: identical(initialErrorMessage, _unset)
           ? this.initialErrorMessage
           : initialErrorMessage as String?,
-      activeTab: activeTab ?? this.activeTab,
       connectionState: connectionState ?? this.connectionState,
       connectionMessage: identical(connectionMessage, _unset)
           ? this.connectionMessage
@@ -169,7 +163,6 @@ class ActivityCenterState {
         other.initialized == initialized &&
         other.isInitialLoading == isInitialLoading &&
         other.initialErrorMessage == initialErrorMessage &&
-        other.activeTab == activeTab &&
         other.connectionState == connectionState &&
         other.connectionMessage == connectionMessage &&
         other.taskFilter == taskFilter &&
@@ -194,7 +187,6 @@ class ActivityCenterState {
     initialized,
     isInitialLoading,
     initialErrorMessage,
-    activeTab,
     connectionState,
     connectionMessage,
     taskFilter,

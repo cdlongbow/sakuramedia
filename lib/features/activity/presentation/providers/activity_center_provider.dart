@@ -25,9 +25,6 @@ class ActivityCenter extends _$ActivityCenter
   late final DebouncedLatestRequest _taskFilterRequests =
       DebouncedLatestRequest();
   int _taskFilterGeneration = 0;
-  ActivityTab? _pendingActiveTab;
-  int? _pendingHighlightedTaskRunId;
-  bool _hasPendingHighlight = false;
 
   ActivityCenterState get current => state.value ?? ActivityCenterState.initial;
 
@@ -54,24 +51,11 @@ class ActivityCenter extends _$ActivityCenter
       final bootstrap = await _fetchBootstrap(ActivityTaskFilterState.initial);
       final jobsResult = await jobsFuture;
       if (isDisposed) return ActivityCenterState.initial;
-      var next = _applyBootstrap(ActivityCenterState.initial, bootstrap)
-          .copyWith(
-            initialized: true,
-            jobs: jobsResult.jobs,
-            jobErrorMessage: jobsResult.errorMessage,
-          );
-      if (_pendingActiveTab != null || _hasPendingHighlight) {
-        next = next.copyWith(
-          activeTab: _pendingActiveTab ?? next.activeTab,
-          highlightedTaskRunId: _hasPendingHighlight
-              ? _pendingHighlightedTaskRunId
-              : next.highlightedTaskRunId,
-        );
-        _pendingActiveTab = null;
-        _pendingHighlightedTaskRunId = null;
-        _hasPendingHighlight = false;
-      }
-      return next;
+      return _applyBootstrap(ActivityCenterState.initial, bootstrap).copyWith(
+        initialized: true,
+        jobs: jobsResult.jobs,
+        jobErrorMessage: jobsResult.errorMessage,
+      );
     } catch (error) {
       return ActivityCenterState.initial.copyWith(
         initialErrorMessage: apiErrorMessage(error, fallback: '任务中心加载失败，请稍后重试'),
@@ -156,25 +140,6 @@ class ActivityCenter extends _$ActivityCenter
       );
       _startPolling();
     }
-  }
-
-  void setActiveTab(ActivityTab tab, {int? highlightTaskRunId}) {
-    if (state.value == null) {
-      _pendingActiveTab = tab;
-      _pendingHighlightedTaskRunId = highlightTaskRunId;
-      _hasPendingHighlight = true;
-      return;
-    }
-    if (current.activeTab == tab &&
-        highlightTaskRunId == current.highlightedTaskRunId) {
-      return;
-    }
-    state = AsyncData(
-      current.copyWith(
-        activeTab: tab,
-        highlightedTaskRunId: highlightTaskRunId,
-      ),
-    );
   }
 
   Future<void> applyTaskFilter(ActivityTaskFilterState next) {
@@ -285,10 +250,7 @@ class ActivityCenter extends _$ActivityCenter
           .triggerJob(taskKey: taskKey, params: params);
       if (!isDisposed) {
         state = AsyncData(
-          current.copyWith(
-            activeTab: ActivityTab.tasks,
-            highlightedTaskRunId: response.taskRunId,
-          ),
+          current.copyWith(highlightedTaskRunId: response.taskRunId),
         );
         await _refreshFromPolling();
       }
@@ -519,7 +481,6 @@ class ActivityCenter extends _$ActivityCenter
   bool get initialized => current.initialized;
   bool get isInitialLoading => state.isLoading || current.isInitialLoading;
   String? get initialErrorMessage => current.initialErrorMessage;
-  ActivityTab get activeTab => current.activeTab;
   ActivityConnectionState get connectionState => current.connectionState;
   String? get connectionMessage => current.connectionMessage;
   ActivityTaskFilterState get taskFilter => current.taskFilter;

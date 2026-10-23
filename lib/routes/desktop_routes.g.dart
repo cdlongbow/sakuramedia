@@ -386,6 +386,15 @@ RouteBase get $desktopShellRouteData => ShellRouteData.$route(
         StatefulShellBranchData.$branch(
           routes: [
             GoRouteData.$route(
+              path: '/desktop/system/download-tasks',
+              hasOverriddenOnExit: false,
+              factory: $DesktopDownloadTasksRouteData._fromState,
+            ),
+          ],
+        ),
+        StatefulShellBranchData.$branch(
+          routes: [
+            GoRouteData.$route(
               path: '/desktop/system/media',
               hasOverriddenOnExit: false,
               factory: $DesktopMediaRouteData._fromState,
@@ -802,15 +811,37 @@ mixin $DesktopRankingsRouteData on GoRouteData {
 
 mixin $DesktopActivityRouteData on GoRouteData {
   static DesktopActivityRouteData _fromState(GoRouterState state) =>
-      DesktopActivityRouteData(
+      const DesktopActivityRouteData();
+
+  @override
+  String get location => GoRouteData.$location('/desktop/system/activity');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $DesktopDownloadTasksRouteData on GoRouteData {
+  static DesktopDownloadTasksRouteData _fromState(GoRouterState state) =>
+      DesktopDownloadTasksRouteData(
         downloadMovieNumber: state.uri.queryParameters['download-movie-number'],
       );
 
-  DesktopActivityRouteData get _self => this as DesktopActivityRouteData;
+  DesktopDownloadTasksRouteData get _self =>
+      this as DesktopDownloadTasksRouteData;
 
   @override
   String get location => GoRouteData.$location(
-    '/desktop/system/activity',
+    '/desktop/system/download-tasks',
     queryParams: {
       if (_self.downloadMovieNumber != null)
         'download-movie-number': _self.downloadMovieNumber,

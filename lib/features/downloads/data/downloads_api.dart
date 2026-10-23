@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
@@ -8,6 +12,9 @@ class DownloadsApi {
   const DownloadsApi({required ApiClient apiClient}) : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+
+  /// `POST /download-requests/manual/torrent` 的后端大小上限（10 MiB）。
+  static const int maxManualTorrentBytes = 10 * 1024 * 1024;
 
   /// `POST /download-tasks/imports` 的单次受理上限（对应后端请求体的
   /// `max_length=100`）。
@@ -41,6 +48,74 @@ class DownloadsApi {
         'movie_number': movieNumber,
         'candidate': candidate.toCreatePayloadJson(),
       },
+      receiveTimeout: const Duration(minutes: 2),
+    );
+    return DownloadRequestResponseDto.fromJson(response);
+  }
+
+  /// 手动提交一条磁力链接。`movie_number` 仅 JAV 使用，`collection_id` 仅视频使用。
+  Future<DownloadRequestResponseDto> createManualDownloadRequest({
+    required int clientId,
+    required ManualDownloadMediaKind mediaKind,
+    required String sourceUri,
+    String? movieNumber,
+    int? collectionId,
+    String? displayName,
+    bool deleteSourceAfterImport = false,
+  }) async {
+    final response = await _apiClient.post(
+      '/download-requests/manual',
+      data: <String, dynamic>{
+        'client_id': clientId,
+        'media_kind': mediaKind.apiValue,
+        'source_uri': sourceUri,
+        if (mediaKind == ManualDownloadMediaKind.jav &&
+            movieNumber != null &&
+            movieNumber.trim().isNotEmpty)
+          'movie_number': movieNumber.trim(),
+        if (mediaKind == ManualDownloadMediaKind.video && collectionId != null)
+          'collection_id': collectionId,
+        if (displayName != null && displayName.trim().isNotEmpty)
+          'display_name': displayName.trim(),
+        'delete_source_after_import': deleteSourceAfterImport,
+      },
+      receiveTimeout: const Duration(minutes: 2),
+    );
+    return DownloadRequestResponseDto.fromJson(response);
+  }
+
+  /// 手动上传一个 `.torrent` 文件；字段与磁力接口一致，源改为 multipart `file`。
+  Future<DownloadRequestResponseDto> createManualTorrentDownloadRequest({
+    required int clientId,
+    required ManualDownloadMediaKind mediaKind,
+    required Uint8List torrentBytes,
+    required String fileName,
+    String? movieNumber,
+    int? collectionId,
+    String? displayName,
+    bool deleteSourceAfterImport = false,
+  }) async {
+    final formData = FormData.fromMap(<String, dynamic>{
+      'client_id': '$clientId',
+      'media_kind': mediaKind.apiValue,
+      if (mediaKind == ManualDownloadMediaKind.jav &&
+          movieNumber != null &&
+          movieNumber.trim().isNotEmpty)
+        'movie_number': movieNumber.trim(),
+      if (mediaKind == ManualDownloadMediaKind.video && collectionId != null)
+        'collection_id': '$collectionId',
+      if (displayName != null && displayName.trim().isNotEmpty)
+        'display_name': displayName.trim(),
+      'delete_source_after_import': '$deleteSourceAfterImport',
+      'file': MultipartFile.fromBytes(
+        torrentBytes,
+        filename: fileName,
+        contentType: MediaType('application', 'x-bittorrent'),
+      ),
+    });
+    final response = await _apiClient.post(
+      '/download-requests/manual/torrent',
+      data: formData,
       receiveTimeout: const Duration(minutes: 2),
     );
     return DownloadRequestResponseDto.fromJson(response);
@@ -106,7 +181,11 @@ class DownloadsApi {
   ) async {
     var acceptedCount = 0;
     final skippedTaskIds = <int>[];
-    for (var start = 0; start < taskIds.length; start += _batchImportChunkSize) {
+    for (
+      var start = 0;
+      start < taskIds.length;
+      start += _batchImportChunkSize
+    ) {
       final end = start + _batchImportChunkSize <= taskIds.length
           ? start + _batchImportChunkSize
           : taskIds.length;

@@ -8,17 +8,12 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_provider.dart';
 import 'package:sakuramedia/features/activity/presentation/providers/activity_center_state.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
-import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/theme.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 
 void main() {
-  testWidgets('shows task and download tabs without removed task UI', (
-    tester,
-  ) async {
+  testWidgets('shows task center without removed download tab', (tester) async {
     const pluginId = 'sakuramedia_115_provider';
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
@@ -82,10 +77,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('desktop-activity-page')), findsOneWidget);
-    expect(find.byKey(const Key('activity-tab-tasks')), findsOneWidget);
+    expect(find.byKey(const Key('activity-tasks-tab')), findsOneWidget);
+    expect(find.byKey(const Key('activity-tab-download-tasks')), findsNothing);
     expect(
-      find.byKey(const Key('activity-tab-download-tasks')),
-      findsOneWidget,
+      find.byKey(const Key('download-tasks-selection-entry')),
+      findsNothing,
     );
     expect(find.byKey(const Key('activity-task-201')), findsOneWidget);
 
@@ -517,7 +513,10 @@ void main() {
     final entry = find.byKey(const Key('activity-task-failed-items-301'));
     expect(entry, findsOneWidget);
     expect(find.text('处理失败文件（1）'), findsOneWidget);
-    expect(find.byKey(const Key('activity-task-failed-items-302')), findsOneWidget);
+    expect(
+      find.byKey(const Key('activity-task-failed-items-302')),
+      findsOneWidget,
+    );
     expect(find.text('查看跳过文件（2）'), findsOneWidget);
 
     await tester.tap(entry);
@@ -530,25 +529,18 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('retained page follows visibility and updated download intent', (
-    tester,
-  ) async {
+  testWidgets('retained task center follows visibility', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     _RetainedActivityCenter.instance = null;
-    _RetainedDownloadTaskCenter.instance = null;
 
     var isVisible = false;
-    String? movieNumber;
     late StateSetter rebuild;
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           activityCenterProvider.overrideWith(_RetainedActivityCenter.new),
-          downloadTaskCenterProvider.overrideWith(
-            _RetainedDownloadTaskCenter.new,
-          ),
         ],
         child: MaterialApp(
           theme: sakuraDesktopThemeData,
@@ -557,11 +549,7 @@ void main() {
               rebuild = setState;
               return TickerMode(
                 enabled: isVisible,
-                child: Scaffold(
-                  body: DesktopActivityPage(
-                    initialDownloadMovieNumber: movieNumber,
-                  ),
-                ),
+                child: const Scaffold(body: DesktopActivityPage()),
               );
             },
           ),
@@ -573,307 +561,82 @@ void main() {
     final activity = _RetainedActivityCenter.instance!;
     expect(activity.pauseCalls, 1);
     expect(activity.resumeCalls, 0);
-    expect(_RetainedDownloadTaskCenter.instance, isNull);
 
     rebuild(() => isVisible = true);
     await tester.pumpAndSettle();
     expect(activity.resumeCalls, 1);
 
-    rebuild(() => movieNumber = 'ABC-001');
-    await tester.pumpAndSettle();
-    final downloads = _RetainedDownloadTaskCenter.instance!;
-    expect(downloads.appliedFilters.single.search, 'ABC-001');
-    expect(activity.current.activeTab, ActivityTab.downloadTasks);
-
-    rebuild(() => movieNumber = 'ABC-002');
-    await tester.pumpAndSettle();
-    expect(downloads.appliedFilters.map((filter) => filter.search), [
-      'ABC-001',
-      'ABC-002',
-    ]);
-
     rebuild(() => isVisible = false);
     await tester.pumpAndSettle();
     expect(activity.pauseCalls, 2);
-    expect(downloads.pauseCalls, 1);
-    expect(downloads.current.pollingState, DownloadTaskPollingState.idle);
 
     rebuild(() => isVisible = true);
     await tester.pumpAndSettle();
     expect(activity.resumeCalls, 2);
-    expect(downloads.resumeCalls, 1);
-    expect(downloads.current.pollingState, DownloadTaskPollingState.polling);
   });
 
-  testWidgets('batch deletes selected download tasks with progress', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final sessionStore = SessionStore.inMemory();
-    await sessionStore.saveBaseUrl('https://api.example.com');
-    await sessionStore.saveTokens(
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
-    );
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    addTearDown(sessionStore.dispose);
-    _enqueueActivityBootstrap(bundle);
-    final page = <String, dynamic>{
-      'items': <Map<String, dynamic>>[
-        _downloadTaskJson(401),
-        _downloadTaskJson(402),
-        _downloadTaskJson(403),
-      ],
-      'page': 1,
-      'page_size': 20,
-      'total': 3,
-    };
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-tasks',
-      body: page,
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-clients',
-      body: const <Map<String, dynamic>>[],
-    );
+  testWidgets(
+    'executable jobs dialog fits short window and list scrolls to end',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 540);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final sessionStore = SessionStore.inMemory();
+      await sessionStore.saveBaseUrl('https://api.example.com');
+      await sessionStore.saveTokens(
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
+      );
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+      addTearDown(sessionStore.dispose);
+      _enqueueActivityBootstrap(bundle);
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/system/jobs',
+        body: <Map<String, dynamic>>[
+          for (var index = 1; index <= 8; index++)
+            <String, dynamic>{
+              'task_key': 'job_$index',
+              'plugin_id': 'plugin_a',
+              'cli_help': '插件任务 $index',
+              'manual_trigger_allowed': true,
+            },
+        ],
+      );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: bundle.riverpodOverrides(),
-        child: MaterialApp(
-          theme: sakuraDesktopThemeData,
-          home: const OKToast(child: Scaffold(body: DesktopActivityPage())),
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: bundle.riverpodOverrides(),
+          child: MaterialApp(
+            theme: sakuraDesktopThemeData,
+            home: const Scaffold(body: DesktopActivityPage()),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-tasks',
-      body: page,
-    );
-    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('download-tasks-selection-entry')));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('download-tasks-selection-header')),
-      findsOneWidget,
-    );
-    expect(find.text('已选 0 个'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const Key('download-tasks-select-all-button')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('已选 3 个'), findsOneWidget);
-    // 多选态行内动作让位，选中态勾选标记出现在封面上。
-    expect(find.byKey(const Key('download-task-delete-401')), findsNothing);
+      await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
+      await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(const Key('download-tasks-batch-delete-button')),
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('download-task-delete-dialog')),
-      findsOneWidget,
-    );
-    expect(find.text('是否删除 3 个下载任务？'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const Key('download-task-delete-files-checkbox')),
-    );
-    await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final listFinder = find.byKey(const Key('activity-executable-jobs-list'));
+      expect(listFinder, findsOneWidget);
+      expect(find.byKey(const Key('activity-job-job_1')), findsOneWidget);
 
-    bundle.adapter.enqueueJson(
-      method: 'POST',
-      path: '/batch-operations',
-      statusCode: 202,
-      body: {
-        'task_run_id': 7,
-        'task_key': 'batch_operation',
-        'state': 'pending',
-      },
-    );
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('download-task-delete-dialog')),
-        matching: find.text('删除'),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final submit = bundle.adapter.requests
-        .where((request) => request.path == '/batch-operations')
-        .toList();
-    expect(submit, hasLength(1));
-    expect(submit.single.body, {
-      'operation': 'download_task_delete',
-      'ids': [401, 402, 403],
-      'delete_files': true,
-    });
-    expect(
-      bundle.adapter.requests.where((request) => request.method == 'DELETE'),
-      isEmpty,
-    );
-    // 提交后列表不即时变化，等任务完成后手动刷新。
-    expect(find.byKey(const Key('download-task-401')), findsOneWidget);
-    expect(
-      find.byKey(const Key('download-tasks-selection-header')),
-      findsNothing,
-    );
-    await tester.pump(const Duration(seconds: 3));
-  });
-
-  testWidgets('completed download task exposes files button and file list', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final sessionStore = SessionStore.inMemory();
-    await sessionStore.saveBaseUrl('https://api.example.com');
-    await sessionStore.saveTokens(
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
-    );
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    addTearDown(sessionStore.dispose);
-    _enqueueActivityBootstrap(bundle);
-    final page = <String, dynamic>{
-      'items': <Map<String, dynamic>>[
-        <String, dynamic>{
-          ..._downloadTaskJson(401),
-          'state': 'completed',
-          'progress': 1.0,
-          'import_status': 'completed',
-        },
-        _downloadTaskJson(402),
-      ],
-      'page': 1,
-      'page_size': 20,
-      'total': 2,
-    };
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-tasks',
-      body: page,
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-clients',
-      body: const <Map<String, dynamic>>[],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: bundle.riverpodOverrides(),
-        child: MaterialApp(
-          theme: sakuraDesktopThemeData,
-          home: const OKToast(child: Scaffold(body: DesktopActivityPage())),
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('activity-job-job_8')),
+        120,
+        scrollable: find.descendant(
+          of: listFinder,
+          matching: find.byType(Scrollable),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-tasks',
-      body: page,
-    );
-    await tester.tap(find.byKey(const Key('activity-tab-download-tasks')));
-    await tester.pumpAndSettle();
-
-    // 只有已完成任务的卡片带「查看文件」入口。
-    expect(find.byKey(const Key('download-task-files-401')), findsOneWidget);
-    expect(find.byKey(const Key('download-task-files-402')), findsNothing);
-
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/download-tasks/401/files',
-      body: [
-        {
-          'name': 'ABC-00401.mkv',
-          'relative_path': 'ABC-00401/ABC-00401.mkv',
-          'size_bytes': 1048576,
-          'is_video': true,
-        },
-      ],
-    );
-    await tester.tap(find.byKey(const Key('download-task-files-401')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('download-task-files-modal')), findsOneWidget);
-    expect(find.text('ABC-00401.mkv'), findsOneWidget);
-  });
-
-  testWidgets('executable jobs dialog fits short window and list scrolls to end', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 540);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final sessionStore = SessionStore.inMemory();
-    await sessionStore.saveBaseUrl('https://api.example.com');
-    await sessionStore.saveTokens(
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-      expiresAt: DateTime.parse('2026-08-10T12:00:00Z'),
-    );
-    final bundle = await createTestApiBundle(sessionStore);
-    addTearDown(bundle.dispose);
-    addTearDown(sessionStore.dispose);
-    _enqueueActivityBootstrap(bundle);
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/system/jobs',
-      body: <Map<String, dynamic>>[
-        for (var index = 1; index <= 8; index++)
-          <String, dynamic>{
-            'task_key': 'job_$index',
-            'plugin_id': 'plugin_a',
-            'cli_help': '插件任务 $index',
-            'manual_trigger_allowed': true,
-          },
-      ],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: bundle.riverpodOverrides(),
-        child: MaterialApp(
-          theme: sakuraDesktopThemeData,
-          home: const Scaffold(body: DesktopActivityPage()),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const Key('activity-jobs-toggle')));
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    final listFinder = find.byKey(const Key('activity-executable-jobs-list'));
-    expect(listFinder, findsOneWidget);
-    expect(find.byKey(const Key('activity-job-job_1')), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('activity-job-job_8')),
-      120,
-      scrollable: find.descendant(
-        of: listFinder,
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.byKey(const Key('activity-job-job_8')), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      );
+      expect(find.byKey(const Key('activity-job-job_8')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 void _enqueueActivityBootstrap(TestApiBundle bundle) {
@@ -945,63 +708,4 @@ class _RetainedActivityCenter extends ActivityCenter {
     resumeCalls++;
     state = AsyncData(current.copyWith(connectionMessage: '轮询中'));
   }
-
-  @override
-  void setActiveTab(ActivityTab tab, {int? highlightTaskRunId}) {
-    state = AsyncData(
-      current.copyWith(
-        activeTab: tab,
-        highlightedTaskRunId: highlightTaskRunId,
-      ),
-    );
-  }
-}
-
-class _RetainedDownloadTaskCenter extends DownloadTaskCenter {
-  static _RetainedDownloadTaskCenter? instance;
-
-  final List<DownloadTaskFilterState> appliedFilters =
-      <DownloadTaskFilterState>[];
-  int pauseCalls = 0;
-  int resumeCalls = 0;
-
-  DownloadTaskCenterState get current =>
-      state.value ?? DownloadTaskCenterState.initial;
-
-  @override
-  Future<DownloadTaskCenterState> build() async {
-    instance = this;
-    return DownloadTaskCenterState.initial;
-  }
-
-  @override
-  Future<void> applyFilter(DownloadTaskFilterState next) async {
-    appliedFilters.add(next);
-    final current = state.value;
-    if (current != null) {
-      state = AsyncData(current.copyWith(filter: next));
-    }
-  }
-
-  @override
-  void pausePolling() {
-    pauseCalls++;
-    state = AsyncData(
-      current.copyWith(pollingState: DownloadTaskPollingState.idle),
-    );
-  }
-
-  @override
-  Future<void> resumePolling() async {
-    resumeCalls++;
-    state = AsyncData(
-      current.copyWith(pollingState: DownloadTaskPollingState.polling),
-    );
-  }
-
-  @override
-  Future<void> startPolling() async {}
-
-  @override
-  void stopPolling() {}
 }

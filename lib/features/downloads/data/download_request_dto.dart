@@ -2,6 +2,14 @@ import 'package:sakuramedia/core/json/json_parse.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart'
     show MovieImageDto;
 
+/// 手动下载的资源类型，对应后端 `media_kind`。
+enum ManualDownloadMediaKind {
+  jav,
+  video;
+
+  String get apiValue => name;
+}
+
 class DownloadTaskDto {
   const DownloadTaskDto({
     required this.id,
@@ -18,6 +26,7 @@ class DownloadTaskDto {
     this.movieTitle,
     this.movieCover,
     this.movieThinCover,
+    this.displayName,
   });
 
   final int id;
@@ -41,6 +50,9 @@ class DownloadTaskDto {
   /// 后端 JOIN 出的竖版封面。旧后端不返回该字段时为 null，移动端回退使用 [movieCover]。
   final MovieImageDto? movieThinCover;
 
+  /// 用户手动提交时填写的显示名称；旧后端不返回该字段时为 null。
+  final String? displayName;
+
   factory DownloadTaskDto.fromJson(Map<String, dynamic> json) {
     final coverRaw = json['movie_cover'];
     final thinCoverRaw = json['movie_thin_cover'];
@@ -63,6 +75,7 @@ class DownloadTaskDto {
       movieThinCover: thinCoverRaw is Map<String, dynamic>
           ? MovieImageDto.fromJson(thinCoverRaw)
           : null,
+      displayName: json['display_name'] as String?,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/desktop/actors_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/desktop/activity_page.dart';
+import 'package:sakuramedia/features/downloads/presentation/pages/desktop/download_tasks_page.dart';
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actors_page.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/configuration_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/desktop_discover_page.dart';
@@ -331,6 +332,20 @@ const List<_NavSeed> _desktopNavSeeds = [
     ],
   ),
   _NavSeed(
+    id: 'download-tasks',
+    label: '下载任务',
+    icon: Icons.download_for_offline_outlined,
+    section: '管理',
+    items: [
+      _NavItemSeed(
+        slug: 'system/download-tasks',
+        label: '下载任务',
+        icon: Icons.download_for_offline_outlined,
+        description: '查看下载进度、导入状态，并手动提交磁力链接或种子文件。',
+      ),
+    ],
+  ),
+  _NavSeed(
     id: 'activity',
     label: '任务中心',
     icon: Icons.bolt_outlined,
@@ -340,7 +355,7 @@ const List<_NavSeed> _desktopNavSeeds = [
         slug: 'system/activity',
         label: '任务中心',
         icon: Icons.bolt_outlined,
-        description: '后台任务、元数据任务与下载任务的统一入口，所有操作回执的落点。',
+        description: '后台任务与元数据任务的统一入口，所有操作回执的落点。',
       ),
     ],
   ),
@@ -411,6 +426,7 @@ final Map<String, WidgetBuilder> _desktopRouteBuilders =
       desktopVideosPath: (_) => const DesktopVideoListPage(),
       desktopRankingsPath: (_) => const DesktopRankingsPage(),
       desktopActivityPath: (_) => const DesktopActivityPage(),
+      desktopDownloadTasksPath: (_) => const DesktopDownloadTasksPage(),
       desktopMediaPath: (_) => const DesktopMediaManagementPage(),
       desktopNotificationsPath: (_) => const DesktopNotificationsPage(),
       desktopConfigurationPath: (_) => const DesktopConfigurationPage(),

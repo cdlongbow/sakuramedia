@@ -48,6 +48,8 @@ extension AppNavigationActions on BuildContext {
         return const DesktopConfigurationRouteData().go(this);
       case desktopActivityPath:
         return const DesktopActivityRouteData().go(this);
+      case desktopDownloadTasksPath:
+        return const DesktopDownloadTasksRouteData().go(this);
       case desktopNotificationsPath:
         return const DesktopNotificationsRouteData().go(this);
       case mobileOverviewPath:
@@ -94,19 +96,19 @@ extension AppNavigationActions on BuildContext {
     const DesktopSystemDiagnosticsRouteData().push(this);
   }
 
-  /// 跳转到任务中心的「下载任务」tab，并按指定番号过滤。
+  /// 跳转到独立下载任务页，并按指定番号过滤。
   ///
   /// 订阅管理页的卡片用它查看该订阅片对应的下载记录；筛选走 query 参数，
-  /// 由 [DesktopActivityPage] 在打开时消费。
+  /// 由 [DesktopDownloadTasksPage] 在打开时消费。
   void goDesktopDownloadTasks({required String movieNumber}) {
     GoRouter.optionURLReflectsImperativeAPIs = true;
-    DesktopActivityRouteData(downloadMovieNumber: movieNumber).go(this);
+    DesktopDownloadTasksRouteData(downloadMovieNumber: movieNumber).go(this);
   }
 
-  /// 移动端任务中心同款跳转：定位「下载任务」tab 并按番号过滤。
+  /// 移动端下载任务同款跳转：定位下载任务页并按番号过滤。
   void goMobileDownloadTasks({required String movieNumber}) {
     GoRouter.optionURLReflectsImperativeAPIs = true;
-    MobileActivityRouteData(downloadMovieNumber: movieNumber).go(this);
+    MobileDownloadTasksRouteData(downloadMovieNumber: movieNumber).go(this);
   }
 
   void pushDesktopMovieSeries({

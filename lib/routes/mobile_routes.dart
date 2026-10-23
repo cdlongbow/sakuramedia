@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/account/presentation/pages/mobile/account_s
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_detail_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/activity_page.dart';
 import 'package:sakuramedia/features/activity/presentation/pages/mobile/notifications_page.dart';
+import 'package:sakuramedia/features/downloads/presentation/pages/mobile/download_tasks_page.dart';
 import 'package:sakuramedia/features/auth/presentation/login_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/pages/mobile/discover_moments_page.dart';
 import 'package:sakuramedia/features/discovery/presentation/pages/mobile/discover_movies_page.dart';
@@ -476,11 +477,7 @@ class MobileMediaImportRouteData extends _MobileSubpageRouteData
 @TypedGoRoute<MobileActivityRouteData>(path: mobileActivityPath)
 class MobileActivityRouteData extends _MobileSubpageRouteData
     with $MobileActivityRouteData {
-  const MobileActivityRouteData({this.downloadMovieNumber});
-
-  /// 打开任务中心后直接定位到「下载任务」tab 并按番号过滤的意图，与桌面任务
-  /// 中心入口同款；走 query 参数，普通入口不携带。
-  final String? downloadMovieNumber;
+  const MobileActivityRouteData();
 
   @override
   String get pageName => 'mobile-activity';
@@ -493,8 +490,33 @@ class MobileActivityRouteData extends _MobileSubpageRouteData
 
   @override
   Widget buildSubpage(BuildContext context, GoRouterState state) {
+    return const MobileActivityPage();
+  }
+}
+
+@TypedGoRoute<MobileDownloadTasksRouteData>(path: mobileDownloadTasksPath)
+class MobileDownloadTasksRouteData extends _MobileSubpageRouteData
+    with $MobileDownloadTasksRouteData {
+  const MobileDownloadTasksRouteData({this.downloadMovieNumber});
+
+  /// 打开下载任务页后按番号过滤的意图；走 query 参数，普通入口不携带。
+  final String? downloadMovieNumber;
+
+  @override
+  String get pageName => 'mobile-download-tasks';
+
+  @override
+  String get title => '下载任务';
+
+  @override
+  String get defaultLocation => mobileOverviewPath;
+
+  @override
+  Widget buildSubpage(BuildContext context, GoRouterState state) {
     // query 解析由生成的 `_fromState` 完成（kebab-case），这里只转发。
-    return MobileActivityPage(initialDownloadMovieNumber: downloadMovieNumber);
+    return MobileDownloadTasksPage(
+      initialDownloadMovieNumber: downloadMovieNumber,
+    );
   }
 }
 
@@ -1286,6 +1308,9 @@ void _handleOverviewDrawerSelection(BuildContext hostContext, String key) {
       return;
     case 'media-import':
       const MobileMediaImportRouteData().push(hostContext);
+      return;
+    case 'download-tasks':
+      const MobileDownloadTasksRouteData().push(hostContext);
       return;
     case 'activity':
       const MobileActivityRouteData().push(hostContext);

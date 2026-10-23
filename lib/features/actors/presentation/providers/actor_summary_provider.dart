@@ -158,6 +158,7 @@ class ActorSummary extends _$ActorSummary
       isSubscribed: actor.isSubscribed,
       subscribeActor: ref.read(actorsApiProvider).subscribeActor,
       unsubscribeActor: ref.read(actorsApiProvider).unsubscribeActor,
+      l10n: ref.read(appLocalizationsProvider),
     );
     if (isDisposed) {
       return const ActorSubscriptionToggleResult.ignored();

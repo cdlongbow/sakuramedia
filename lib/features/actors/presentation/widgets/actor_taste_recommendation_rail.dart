@@ -5,6 +5,7 @@ import 'package:sakuramedia/features/actors/presentation/providers/actor_subscri
 import 'package:sakuramedia/features/discovery/data/taste_profile_dto.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/taste/taste_actress_section.dart';
@@ -49,14 +50,14 @@ class ActorTasteRecommendationRail extends ConsumerWidget {
         );
 
     final subscribedSection = TasteActressSection(
-      title: '已订阅',
+      title: AppLocalizations.of(context).actorTasteSubscribedTitle,
       entries: subscribed,
       onActorTap: (entry) => onActorTap(entry.actor.id),
       onFollowTap: toggleFollow,
       isFollowUpdating: (entry) => updatingActorIds.contains(entry.actor.id),
     );
     final recommendedSection = TasteActressSection(
-      title: '你可能想关注',
+      title: AppLocalizations.of(context).actorTasteRecommendedTitle,
       entries: recommended,
       onActorTap: (entry) => onActorTap(entry.actor.id),
       onFollowTap: toggleFollow,
@@ -80,7 +81,7 @@ class ActorTasteRecommendationRail extends ConsumerWidget {
       child: TasteEntrance(
         child: TastePanel(
           key: const Key('actor-taste-recommendation'),
-          title: '常看女优',
+          title: AppLocalizations.of(context).actorTastePanelTitle,
           icon: Icons.auto_awesome_rounded,
           sampleMovieCount: profile.sampleMovieCount,
           compact: true,
@@ -98,14 +99,14 @@ class ActorTasteRecommendationRail extends ConsumerWidget {
         enabled: true,
         child: TastePanel(
           sampleMovieCount: 0,
-          title: '常看女优',
+          title: AppLocalizations.of(context).actorTastePanelTitle,
           icon: Icons.auto_awesome_rounded,
           compact: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               TasteActressSection(
-                title: '已订阅',
+                title: AppLocalizations.of(context).actorTasteSubscribedTitle,
                 entries: placeholders
                     .take(3)
                     .map(
@@ -118,7 +119,7 @@ class ActorTasteRecommendationRail extends ConsumerWidget {
               ),
               SizedBox(height: context.appSpacing.lg),
               TasteActressSection(
-                title: '你可能想关注',
+                title: AppLocalizations.of(context).actorTasteRecommendedTitle,
                 entries: placeholders
                     .skip(3)
                     .map(

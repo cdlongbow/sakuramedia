@@ -1265,5 +1265,416 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "subscriptionStatusImported": "Imported",
+  "subscriptionStatusDownloading": "Downloading",
+  "subscriptionStatusImportFailed": "Import failed",
+  "subscriptionStatusExhausted": "Abandoned",
+  "subscriptionStatusFailed": "Lookup failed",
+  "subscriptionStatusMissing": "No source yet",
+  "subscriptionStatusPending": "Waiting for lookup",
+  "subscriptionStatusUnknown": "Unknown status",
+  "subscriptionStatusMediaRemoved": "Media removed",
+  "subscriptionStatusNotImported": "Not imported",
+  "subscriptionStatusAll": "All",
+  "subscriptionSortFieldSubscribedAt": "Subscribed at",
+  "subscriptionSortFieldReleaseDate": "Release date",
+  "subscriptionSortFieldLastSearchedAt": "Last searched",
+  "subscriptionSortFieldAttemptCount": "Miss count",
+  "subscriptionFilterTriggerSearch": "Search “{query}”",
+  "@subscriptionFilterTriggerSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionFilterTriggerAll": "All",
+  "subscriptionFilterSearchLabel": "Search",
+  "subscriptionFilterSearchHint": "Movie number or title, press Enter to apply",
+  "subscriptionFilterSearchClearTooltip": "Clear search",
+  "subscriptionFeedbackMovieSubscribed": "Subscribed to the movie",
+  "subscriptionFeedbackMovieUnsubscribed": "Unsubscribed from the movie",
+  "subscriptionFeedbackMovieBlockedByMedia": "Delete the media before unsubscribing",
+  "subscriptionFeedbackActorSubscribed": "Subscribed to the actor",
+  "subscriptionFeedbackActorUnsubscribed": "Unsubscribed from the actor",
+  "subscriptionBatchSubscribeFailed": "Failed to subscribe to the selected movies",
+  "subscriptionBatchSubscribedCount": "Subscribed to {count} movies",
+  "@subscriptionBatchSubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedCount": "Unsubscribed from {count} movies",
+  "@subscriptionBatchUnsubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSubscribedPartial": "Subscribed to {count} movies, {skipped} not processed",
+  "@subscriptionBatchSubscribedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedPartial": "Unsubscribed from {count} movies, {skipped} not processed",
+  "@subscriptionBatchUnsubscribedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSkippedCount": "{count} movies not processed",
+  "@subscriptionBatchSkippedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionForceUnsubscribeTitle": "Force unsubscribe",
+  "subscriptionForceUnsubscribeMessage": "All media files and records of {count} movies will be deleted before unsubscribing. The operation stops on failure, and deleted media cannot be restored.",
+  "@subscriptionForceUnsubscribeMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionForceUnsubscribeConfirmLabel": "Delete and unsubscribe",
+  "subscriptionBatchSkippedTitle": "Some movies were not processed",
+  "subscriptionBatchSubscribedSkippedSummary": "Subscribed to {count} movies; the remaining {skipped} were not processed for the reasons below",
+  "@subscriptionBatchSubscribedSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribedSkippedSummary": "Unsubscribed from {count} movies; the remaining {skipped} were not processed for the reasons below",
+  "@subscriptionBatchUnsubscribedSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchAllSkippedSummary": "{count} movies were not processed for the reasons below",
+  "@subscriptionBatchAllSkippedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchSkippedHasMediaHeader": "Media already exists, cannot unsubscribe",
+  "subscriptionBatchSkippedNotFoundHeader": "The library has no such movie number",
+  "subscriptionBatchForceDeleteLabel": "Delete media and force unsubscribe",
+  "subscriptionSkippedNumbersCount": "{count} movies",
+  "@subscriptionSkippedNumbersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionActionViewDownloads": "View download tasks",
+  "subscriptionActionViewDownloadsSubtitle": "Check the download progress of this movie",
+  "subscriptionActionViewFiles": "View files",
+  "subscriptionActionViewFilesSubtitle": "Check the files of the download task",
+  "subscriptionActionRetriggerImport": "Re-import",
+  "subscriptionActionRetriggerImportSubtitle": "Resubmit the latest failed or skipped import task",
+  "subscriptionActionSearchMagnet": "Magnet search",
+  "subscriptionActionSearchMagnetSubtitle": "Search for a source manually and submit the download",
+  "subscriptionActionDeleteDownloads": "Delete download tasks",
+  "subscriptionActionDeleteDownloadsSubtitle": "Optionally delete the files in the download client as well",
+  "subscriptionActionUnsubscribe": "Unsubscribe",
+  "subscriptionActionUnsubscribeSubtitle": "Stop looking for sources automatically; existing files are kept",
+  "subscriptionImportMediaRemovedHint": "Note: this movie was imported successfully before, but its media was removed from the library",
+  "subscriptionImportStatusHint": "Note: {status}",
+  "@subscriptionImportStatusHint": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionRowNoReleaseInfo": "No release or subscription info",
+  "subscriptionRowMoreActions": "More actions",
+  "subscriptionListTotalCount": "{count} movies",
+  "@subscriptionListTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionListRefreshing": "Refreshing",
+  "subscriptionSelectionSelectAll": "Select all ({count})",
+  "@subscriptionSelectionSelectAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionSelectionClearAll": "Clear selection",
+  "subscriptionSelectionCount": "{count} selected",
+  "@subscriptionSelectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchDeleteTasksLabel": "Delete tasks",
+  "subscriptionBatchUnsubscribeWithCount": "Unsubscribe ({count})",
+  "@subscriptionBatchUnsubscribeWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchQueryingDownloadTasks": "Querying download tasks",
+  "subscriptionBatchNoDownloadTasks": "The selected movies have no download tasks",
+  "subscriptionDownloadTasksLoadFailed": "Failed to load the download tasks",
+  "subscriptionBatchNoRetriggerTasks": "The selected movies have no task that can be re-imported",
+  "subscriptionBatchRetriggerSubmitted": "Submitted {count} re-imports",
+  "@subscriptionBatchRetriggerSubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchRetriggerSubmittedSkipped": "Submitted {count} re-imports, {skipped} skipped",
+  "@subscriptionBatchRetriggerSubmittedSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchRetriggerSubmitFailed": "Failed to submit the re-import. Please try again later.",
+  "subscriptionBatchUnsubscribeConfirmTitle": "Unsubscribe from {count} movies?",
+  "@subscriptionBatchUnsubscribeConfirmTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subscriptionBatchUnsubscribeConfirmMessage": "They will no longer look for sources automatically. Movies that already have local media are skipped, and no files are deleted.",
+  "subscriptionQueryExplanation": "After you subscribe to a movie, the system searches the indexers for downloadable sources on a schedule and submits the download automatically. New releases (within 90 days of release) are searched in every round without a limit; older movies are searched at most 3 times by default and are marked as abandoned once the attempts run out, so you can reset them to queue again. Lookup errors do not consume an attempt and are retried in the next round. A reset does not clear the torrent blacklist — dead torrents are not retried, the system looks for new ones instead.",
+  "subscriptionListEmptyFiltered": "No subscribed movies match the current filter.",
+  "subscriptionEmptyNoSearchMatch": "No subscribed movies match “{query}”. Try another movie number or title fragment.",
+  "@subscriptionEmptyNoSearchMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "subscriptionEmptyMissingTitle": "No subscriptions without a source",
+  "subscriptionEmptyMissingMessage": "Every subscribed movie either has a source already or is still being searched.",
+  "subscriptionEmptyExhaustedTitle": "No abandoned subscriptions",
+  "subscriptionEmptyExhaustedMessage": "No movie was abandoned after repeated misses, so nothing needs a manual reset.",
+  "subscriptionEmptyImportFailedTitle": "No movies stuck at import",
+  "subscriptionEmptyImportFailedMessage": "Every finished download was imported successfully.",
+  "subscriptionEmptyFailedTitle": "The indexers are all working",
+  "subscriptionEmptyFailedMessage": "The latest source lookup had no errors.",
+  "subscriptionEmptyPendingTitle": "No subscriptions waiting for a lookup",
+  "subscriptionEmptyPendingMessage": "Newly subscribed movies land here first and move to another status after the next scheduled lookup.",
+  "subscriptionEmptyDownloadingTitle": "No downloads in progress",
+  "subscriptionEmptyDownloadingMessage": "Movies with a found source show up here; follow the progress in the task center.",
+  "subscriptionEmptyImportedTitle": "No imported movies yet",
+  "subscriptionEmptyImportedMessage": "Movies show up here once their source is downloaded and imported into the media library.",
+  "subscriptionEmptyNoneTitle": "No movies subscribed yet",
+  "subscriptionEmptyNoneMessage": "Subscribe from a movie list or detail page, then follow the lookup progress here.",
+  "subscriptionEmptySeeAll": "View all subscriptions",
+  "subscriptionImportTaskSubmitted": "Import task submitted",
+  "subscriptionImportSubmitFailed": "Failed to submit the import. Please try again later.",
+  "subscriptionDownloadTaskMissing": "The download task no longer exists",
+  "subscriptionFollowEmpty": "No followed movies yet",
+  "subscriptionFollowLoadFailed": "Failed to load the new actor releases. Please try again later.",
+  "subscriptionFollowEmptyDescription": "No new actor releases yet. Subscribe to the actors you like; the scheduled task will sync them here.",
+  "subscriptionRefreshFailed": "Refresh failed",
+  "actorSubscriptionStatusAll": "All",
+  "actorSubscriptionStatusSubscribed": "Subscribed",
+  "actorSubscriptionStatusUnsubscribed": "Not subscribed",
+  "actorGenderAll": "All",
+  "actorGenderFemale": "Female",
+  "actorGenderMale": "Male",
+  "actorSortFieldSubscribedAt": "Recently subscribed",
+  "actorSortFieldName": "Name",
+  "actorSortFieldMovieCount": "Movies",
+  "actorSortFieldPlayableMovieCount": "Playable movies",
+  "actorSortFieldAge": "Age",
+  "actorSortFieldHeight": "Height",
+  "actorSortFieldBust": "Bust",
+  "actorSortFieldWaist": "Waist",
+  "actorSortFieldHips": "Hips",
+  "actorSortFieldWaistHipRatio": "Waist-hip ratio",
+  "actorSortFieldCup": "Cup",
+  "actorDetailNotFound": "Actor not found",
+  "actorDetailLoadFailed": "Failed to load the actor details. Please try again later.",
+  "actorSubscribeFailed": "Failed to subscribe to the actor",
+  "actorUnsubscribeFailed": "Failed to unsubscribe from the actor",
+  "actorSearchCollapseTooltip": "Collapse search",
+  "actorSearchTooltip": "Search actors",
+  "actorListEmpty": "No actors yet — go search for some",
+  "actorListEmptyFiltered": "No actors match the current filters",
+  "actorListTotalCount": "{count} actors",
+  "@actorListTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorFilterTooltip": "Filter",
+  "actorLocalSubscriptionHint": "Local actors are not synced with new releases; subscribing only keeps them in your favorites.",
+  "actorMergeTooltip": "Merge actors",
+  "actorEditProfileTooltip": "Edit actor profile",
+  "actorMovieYearsLoadFailed": "Failed to load the years",
+  "actorMergeCompleted": "Merged {count} actors",
+  "@actorMergeCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorTagFilterLabel": "Tags · {count}",
+  "@actorTagFilterLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMovieCountLabel": "Movies · {count}",
+  "@actorMovieCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMoviesEmpty": "No movie data",
+  "actorBirthdayLabel": "Birthday",
+  "actorBirthdayValue": "{month}/{day}/{year}",
+  "@actorBirthdayValue": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      },
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "actorAgeLabel": "Age",
+  "actorAgeValue": "{age}",
+  "@actorAgeValue": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "actorBirthplaceLabel": "Birthplace",
+  "actorBloodTypeLabel": "Blood type",
+  "actorHeightLabel": "Height",
+  "actorCupLabel": "Cup",
+  "actorBustLabel": "Bust",
+  "actorWaistLabel": "Waist",
+  "actorHipsLabel": "Hips",
+  "actorProfileCollapseTooltip": "Collapse details",
+  "actorProfileExpandTooltip": "Expand details",
+  "actorProfileEditorTitle": "Edit actor profile",
+  "actorProfileAliasLabel": "Alias",
+  "actorProfileAliasHint": "Add an alias; it is shown in place of the original name.",
+  "actorProfileBasicSectionTitle": "Basic info",
+  "actorProfileGenderLabel": "Gender",
+  "actorGenderFemaleOption": "Female",
+  "actorGenderMaleOption": "Male",
+  "actorProfileHeightLabel": "Height (cm)",
+  "actorProfileBustLabel": "Bust (cm)",
+  "actorProfileWaistLabel": "Waist (cm)",
+  "actorProfileHipsLabel": "Hips (cm)",
+  "actorProfileCupHint": "For example C or F",
+  "actorProfileBloodTypeHint": "A, B, O or AB",
+  "actorProfileCurrentAvatar": "Current avatar",
+  "actorProfileImageFormatHint": "JPEG, PNG and WebP are supported; the image is uploaded when you save.",
+  "actorProfilePickImage": "Choose image",
+  "actorProfileChangeImage": "Change image",
+  "actorProfileImageUnreadable": "Could not read the selected image. Please try another one.",
+  "actorProfileImagePickerUnavailable": "The image picker is not loaded yet. Please fully restart the app and try again.",
+  "actorProfileImageOpenFailed": "Failed to open the image picker. Please try again later.",
+  "actorProfileSaveFailed": "Failed to save the actor profile. Please try again later.",
+  "actorProfileAliasTooLong": "The alias cannot be longer than 255 characters",
+  "actorProfileBirthdayFormatInvalid": "Enter a date in YYYY-MM-DD format",
+  "actorProfileBirthdayInFuture": "The birthday cannot be later than today",
+  "actorProfilePositiveIntegerRequired": "Enter a positive integer",
+  "actorProfileCupFormatInvalid": "Enter a single uppercase letter",
+  "actorProfileTextTooLong": "The value cannot be longer than 255 characters",
+  "actorProfileBloodTypeFormatInvalid": "Enter A, B, O or AB",
+  "actorMergeSearchFailed": "Failed to search for actors. Please try again later.",
+  "actorMergeFailed": "Failed to merge the actors. Please try again later.",
+  "actorMergeTitle": "Merge actors",
+  "actorMergeSubtitle": "The current actor is kept; the movies, subscriptions and aliases of the selected actors are merged into it. This cannot be undone.",
+  "actorMergeSubmitLabel": "Merge",
+  "actorMergeSubmitLabelWithCount": "Merge {count} actors",
+  "@actorMergeSubmitLabelWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "actorMergeSearchLabel": "Search for actors to merge in",
+  "actorMergeSearchHint": "Type a name, then pick from the results",
+  "actorMergeSelectedSummary": "{count} selected: {names}",
+  "@actorMergeSelectedSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "actorMergeEmptyResult": "No matching actors found",
+  "actorTasteSubscribedTitle": "Subscribed",
+  "actorTasteRecommendedTitle": "You may want to follow",
+  "actorTastePanelTitle": "Frequent actors",
+  "actorRefreshFailed": "Refresh failed"
 }

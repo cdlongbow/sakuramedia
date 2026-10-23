@@ -17,6 +17,7 @@ import 'package:sakuramedia/features/discovery/presentation/providers/taste_prof
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
@@ -106,7 +107,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     if (!mounted) {
       return;
     }
-    showActorSubscriptionFeedback(result);
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   @override
@@ -118,7 +119,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     final items = paged?.items ?? const [];
     final isInitialLoading = actorsAsync.isLoading && summary == null;
     final initialErrorMessage = actorsAsync.hasError && summary == null
-        ? '女优列表加载失败，请稍后重试'
+        ? AppLocalizations.of(context).errorActorListLoadFailed
         : null;
 
     return ColoredBox(
@@ -129,8 +130,8 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
           children: [
             AppListHeader(
               filterButtonKey: const Key('mobile-actors-filter-button'),
-              filterTooltip: '筛选',
-              filterLabel: filter.triggerLabel,
+              filterTooltip: AppLocalizations.of(context).actorFilterTooltip,
+              filterLabel: filter.triggerLabel(AppLocalizations.of(context)),
               onFilterTap: _openFilterDrawer,
               filterUpdate:
                   paged?.filterUpdate ?? const FilterUpdateState.idle(),
@@ -143,7 +144,9 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                   : <Widget>[
                       AppListHeaderInfo(
                         key: const Key('mobile-actors-total'),
-                        label: '${paged?.total ?? 0} 位',
+                        label: AppLocalizations.of(
+                          context,
+                        ).actorListTotalCount(paged?.total ?? 0),
                       ),
                     ],
               actionSlots: _searchExpanded
@@ -160,7 +163,11 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                       ActorListSearchToggle(
                         key: const Key('mobile-actors-search-toggle'),
                         isActive: _searchExpanded || filter.query != null,
-                        tooltip: _searchExpanded ? '收起搜索' : '搜索女优',
+                        tooltip: _searchExpanded
+                            ? AppLocalizations.of(
+                                context,
+                              ).actorSearchCollapseTooltip
+                            : AppLocalizations.of(context).actorSearchTooltip,
                         onTap: _toggleSearch,
                       ),
                     ],
@@ -181,7 +188,9 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                         ActorListSearchToggle(
                           key: const Key('mobile-actors-search-toggle'),
                           isActive: true,
-                          tooltip: '收起搜索',
+                          tooltip: AppLocalizations.of(
+                            context,
+                          ).actorSearchCollapseTooltip,
                           onTap: _toggleSearch,
                         ),
                       ],
@@ -240,8 +249,10 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                               summary?.isSubscriptionUpdating(actor.id) ??
                               false,
                           emptyMessage: !filter.hasActiveFilters
-                              ? '暂无女优，去搜索看看吧'
-                              : '当前筛选条件下暂无匹配女优',
+                              ? AppLocalizations.of(context).actorListEmpty
+                              : AppLocalizations.of(
+                                  context,
+                                ).actorListEmptyFiltered,
                         ),
                       ),
                     // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
@@ -273,7 +284,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
         .refresh();
     await ref.read(tasteProfileProvider.notifier).refresh();
     if (error != null && mounted) {
-      showToast('刷新失败');
+      showToast(AppLocalizations.of(context).actorRefreshFailed);
     }
   }
 

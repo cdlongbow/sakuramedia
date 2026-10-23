@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/movie_subscription_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
@@ -41,14 +42,15 @@ class MovieSubscriptionFilterSectionGroup extends HookWidget {
       onChanged(next);
     }
 
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppTextField(
           fieldKey: const Key('movie-subscriptions-filter-search-field'),
           controller: searchController,
-          label: '搜索',
-          hintText: '番号 / 标题，回车生效',
+          label: l10n.subscriptionFilterSearchLabel,
+          hintText: l10n.subscriptionFilterSearchHint,
           textInputAction: TextInputAction.search,
           prefix: Icon(
             Icons.search_rounded,
@@ -63,7 +65,7 @@ class MovieSubscriptionFilterSectionGroup extends HookWidget {
                   ),
                   icon: const Icon(Icons.close_rounded),
                   size: AppIconButtonSize.mini,
-                  tooltip: '清除搜索',
+                  tooltip: l10n.subscriptionFilterSearchClearTooltip,
                   onPressed: () => submitSearch(''),
                 )
               : null,

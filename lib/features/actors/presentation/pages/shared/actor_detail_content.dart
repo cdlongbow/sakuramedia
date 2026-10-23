@@ -27,6 +27,7 @@ import 'package:sakuramedia/features/subscriptions/presentation/subscription_fee
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -274,7 +275,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       }
       setState(() {
         _isMovieYearsLoading = false;
-        _movieYearsErrorMessage = '年份加载失败';
+        _movieYearsErrorMessage = AppLocalizations.of(
+          context,
+        ).actorMovieYearsLoadFailed;
       });
     }
   }
@@ -290,7 +293,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     if (!mounted) {
       return;
     }
-    showMovieSubscriptionFeedback(result);
+    showMovieSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Future<void> _toggleActorSubscription({required bool isSubscribed}) async {
@@ -298,6 +301,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isActorSubscriptionUpdating = true;
     });
@@ -322,7 +326,10 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       result = ActorSubscriptionToggleResult.failed(
         message: apiErrorMessage(
           error,
-          fallback: isSubscribed ? '取消订阅女优失败' : '订阅女优失败',
+          fallback: isSubscribed
+              ? l10n.actorUnsubscribeFailed
+              : l10n.actorSubscribeFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -345,7 +352,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     setState(() {
       _isActorSubscriptionUpdating = false;
     });
-    showActorSubscriptionFeedback(result);
+    showActorSubscriptionFeedback(result, l10n: AppLocalizations.of(context));
   }
 
   Future<void> _openActorEditor(ActorDetailDto actor) async {
@@ -389,7 +396,11 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
       _hasLoadedMovieYears = false;
       _movieYearOptions = const <MovieFilterYearOption>[];
     });
-    showToast('已合并 ${result.sourceActorIds.length} 位女优');
+    showToast(
+      AppLocalizations.of(
+        context,
+      ).actorMergeCompleted(result.sourceActorIds.length),
+    );
   }
 
   /// 影片区顶栏：与影片 / 女优列表页共用同一条 `AppListHeader`。
@@ -404,7 +415,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
     return AppListHeader(
       filterButtonKey: const Key('actor-detail-filter-trigger'),
       filterLabel: tagSelection.hasSelection
-          ? '标签 · ${tagSelection.selectedCount}'
+          ? AppLocalizations.of(
+              context,
+            ).actorTagFilterLabel(tagSelection.selectedCount)
           : _filterState.triggerLabel,
       filterPanelKey: const Key('actor-detail-filter-panel'),
       filterUpdate: paged?.filterUpdate ?? const FilterUpdateState.idle(),
@@ -435,7 +448,12 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         onReset: _resetFilters,
       ),
       informationSlots: [
-        if (paged != null) AppListHeaderInfo(label: '作品 · ${paged.total} 部'),
+        if (paged != null)
+          AppListHeaderInfo(
+            label: AppLocalizations.of(
+              context,
+            ).actorMovieCountLabel(paged.total),
+          ),
       ],
       actionSlots: [
         MovieSortMenuButton(
@@ -498,7 +516,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
         if (onRefreshFailure != null) {
           onRefreshFailure(context);
         } else {
-          showToast('刷新失败');
+          showToast(AppLocalizations.of(context).actorRefreshFailed);
         }
       }
     }
@@ -546,7 +564,8 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
             if (actorState?.errorMessage != null || actorState?.actor == null) {
               return widget.errorBuilder(
                 context,
-                actorState?.errorMessage ?? '女优详情暂时无法加载，请稍后重试',
+                actorState?.errorMessage ??
+                    AppLocalizations.of(context).actorDetailLoadFailed,
                 () => unawaited(
                   ref
                       .read(actorDetailProvider(widget.actorId).notifier)
@@ -669,7 +688,9 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                                   movie.movieNumber,
                                 ) ??
                                 false,
-                            emptyMessage: '暂无影片数据',
+                            emptyMessage: AppLocalizations.of(
+                              context,
+                            ).actorMoviesEmpty,
                             selectionMode: selectionMode,
                             isMovieSelected: (movie) =>
                                 isSelected(movie.movieNumber),

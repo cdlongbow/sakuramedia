@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 订阅管理列表的筛选状态（不可变值对象）。
 ///
@@ -78,7 +79,11 @@ class MovieSubscriptionFilterState {
   }
 
   /// 顶栏筛选入口里的摘要文案。排序由独立入口表达，这里只报搜索。
-  String get triggerLabel => hasSearch ? '搜索「$trimmedSearch」' : '全部';
+  ///
+  /// 调用方负责传入当前语言的 [AppLocalizations]。
+  String triggerLabel(AppLocalizations l10n) => hasSearch
+      ? l10n.subscriptionFilterTriggerSearch(trimmedSearch)
+      : l10n.subscriptionFilterTriggerAll;
 
   @override
   bool operator ==(Object other) {

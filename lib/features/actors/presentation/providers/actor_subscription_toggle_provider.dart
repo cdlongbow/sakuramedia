@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_events_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
@@ -27,6 +28,7 @@ class ActorSubscriptionToggle extends _$ActorSubscriptionToggle {
       isSubscribed: isSubscribed,
       subscribeActor: ref.read(actorsApiProvider).subscribeActor,
       unsubscribeActor: ref.read(actorsApiProvider).unsubscribeActor,
+      l10n: ref.read(appLocalizationsProvider),
     );
     if (result.status == ActorSubscriptionToggleStatus.subscribed ||
         result.status == ActorSubscriptionToggleStatus.unsubscribed) {

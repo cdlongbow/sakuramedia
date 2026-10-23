@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/downloads/presentation/providers/download_t
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
 import 'package:sakuramedia/widgets/domain/subscriptions/movie_subscription_sort_menu_button.dart';
@@ -126,7 +127,9 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
             controller: effectiveScrollController,
             slivers: [
               SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
-              const SliverToBoxAdapter(child: _queryExplanationTip),
+              SliverToBoxAdapter(
+                child: _queryExplanationTip(AppLocalizations.of(context)),
+              ),
               SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
               _ListBodySliver(
                 onOpenMovie: onOpenMovie,
@@ -209,6 +212,7 @@ class _ListHeader extends ConsumerWidget {
     final total = current?.paged.total ?? 0;
     final hasItems = current?.paged.items.isNotEmpty ?? false;
     final isInitialLoading = asyncState.isLoading && !asyncState.hasValue;
+    final l10n = AppLocalizations.of(context);
 
     void applyFilter(MovieSubscriptionFilterState next) {
       unawaited(ref.read(managerProvider.notifier).applyFilterState(next));
@@ -232,7 +236,7 @@ class _ListHeader extends ConsumerWidget {
           ? () => _openMobileFilterDrawer(context, ref, filter)
           : null,
       filterButtonKey: const Key('movie-subscriptions-filter-button'),
-      filterLabel: filter.triggerLabel,
+      filterLabel: filter.triggerLabel(l10n),
       filterPanelKey: mobile
           ? null
           : const Key('movie-subscriptions-filter-panel'),
@@ -246,7 +250,7 @@ class _ListHeader extends ConsumerWidget {
       informationSlots: <Widget>[
         AppListHeaderInfo(
           key: const Key('movie-subscriptions-total-info'),
-          label: '共 $total 部',
+          label: l10n.subscriptionListTotalCount(total),
         ),
       ],
       actionSlots: <Widget>[
@@ -269,7 +273,9 @@ class _ListHeader extends ConsumerWidget {
         AppIconButton(
           key: const Key('movie-subscriptions-refresh-button'),
           icon: const Icon(Icons.refresh_rounded),
-          tooltip: isInitialLoading ? '刷新中' : '刷新',
+          tooltip: isInitialLoading
+              ? l10n.subscriptionListRefreshing
+              : l10n.commonRefresh,
           onPressed: isInitialLoading ? null : () => _refresh(ref),
         ),
       ],
@@ -376,11 +382,14 @@ class _SelectionHeader extends HookConsumerWidget {
 
     final loadedCount = state.paged.items.length;
     final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
-    final selectAllLabel = allSelected ? '取消全选' : '全选（$loadedCount）';
+    final l10n = AppLocalizations.of(context);
+    final selectAllLabel = allSelected
+        ? l10n.subscriptionSelectionClearAll
+        : l10n.subscriptionSelectionSelectAll(loadedCount);
 
     return AppSelectionHeaderToolbar(
       key: const Key('movie-subscriptions-selection-header'),
-      countLabel: '已选 ${state.selectionCount} 部',
+      countLabel: l10n.subscriptionSelectionCount(state.selectionCount),
       countKey: const Key('movie-subscriptions-selection-count'),
       selectAllLabel: selectAllLabel,
       selectAllKey: const Key('movie-subscriptions-select-all-button'),
@@ -438,16 +447,19 @@ class _MobileSelectionHeader extends ConsumerWidget {
     final busy = state.isBatchRunning || batchDeleting || batchImporting;
     final loadedCount = state.paged.items.length;
     final allSelected = loadedCount > 0 && state.selectionCount >= loadedCount;
+    final l10n = AppLocalizations.of(context);
 
     return AppListHeader.selection(
       key: const Key('movie-subscriptions-selection-header'),
-      selectionLabel: '已选 ${state.selectionCount} 部',
+      selectionLabel: l10n.subscriptionSelectionCount(state.selectionCount),
       selectionExitButtonKey: const Key('movie-subscriptions-selection-exit'),
       onExitSelection: busy ? null : notifier.exitSelectionMode,
       actionSlots: <Widget>[
         AppTextButton(
           key: const Key('movie-subscriptions-select-all-button'),
-          label: allSelected ? '取消全选' : '全选（$loadedCount）',
+          label: allSelected
+              ? l10n.subscriptionSelectionClearAll
+              : l10n.subscriptionSelectionSelectAll(loadedCount),
           size: AppTextButtonSize.small,
           onPressed: busy || loadedCount == 0
               ? null
@@ -525,10 +537,11 @@ List<Widget> _buildBatchActions(
   required VoidCallback onDeleteDownloads,
 }) {
   final busy = state.isBatchRunning || loadingDownloads || loadingImports;
+  final l10n = AppLocalizations.of(context);
   return <Widget>[
     AppButton(
       key: const Key('movie-subscriptions-batch-retrigger-imports-button'),
-      label: '重新导入',
+      label: l10n.subscriptionActionRetriggerImport,
       size: size,
       icon: compactLabels ? null : const Icon(Icons.refresh_rounded),
       isLoading: loadingImports,
@@ -536,7 +549,9 @@ List<Widget> _buildBatchActions(
     ),
     AppButton(
       key: const Key('movie-subscriptions-batch-delete-downloads-button'),
-      label: compactLabels ? '删除任务' : '删除下载任务',
+      label: compactLabels
+          ? l10n.subscriptionBatchDeleteTasksLabel
+          : l10n.subscriptionActionDeleteDownloads,
       size: size,
       variant: AppButtonVariant.danger,
       icon: compactLabels ? null : const Icon(Icons.delete_outline_rounded),
@@ -545,7 +560,9 @@ List<Widget> _buildBatchActions(
     ),
     AppButton(
       key: const Key('movie-subscriptions-batch-unsubscribe-button'),
-      label: compactLabels ? '取消订阅' : '取消订阅（${state.selectionCount}）',
+      label: compactLabels
+          ? l10n.subscriptionActionUnsubscribe
+          : l10n.subscriptionBatchUnsubscribeWithCount(state.selectionCount),
       size: size,
       variant: AppButtonVariant.danger,
       icon: compactLabels ? null : const Icon(Icons.bookmark_remove_outlined),
@@ -572,7 +589,9 @@ Future<void> _deleteSelectedDownloads(
     final tasks = <DownloadTaskDto>[];
     final result = await runLocalBatchOperation<String>(
       context,
-      title: '正在查询下载任务',
+      title: AppLocalizations.of(
+        context,
+      ).subscriptionBatchQueryingDownloadTasks,
       items: state.selectedMovieNumbers.toList(),
       action: (number) async {
         tasks.addAll(
@@ -584,7 +603,7 @@ Future<void> _deleteSelectedDownloads(
     onLoadingChanged(false);
     if (result.failed.isNotEmpty) return;
     if (tasks.isEmpty) {
-      showToast('所选影片没有下载任务');
+      showToast(AppLocalizations.of(context).subscriptionBatchNoDownloadTasks);
       return;
     }
     final deleteFiles = await showDownloadTaskDeleteDialog(
@@ -601,7 +620,15 @@ Future<void> _deleteSelectedDownloads(
     );
   } catch (error) {
     if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).subscriptionDownloadTasksLoadFailed,
+          l10n: AppLocalizations.of(context),
+        ),
+      );
     }
   } finally {
     if (context.mounted) onLoadingChanged(false);
@@ -626,7 +653,9 @@ Future<void> _retriggerSelectedImports(
     final taskIds = <int>[];
     final result = await runLocalBatchOperation<String>(
       context,
-      title: '正在查询下载任务',
+      title: AppLocalizations.of(
+        context,
+      ).subscriptionBatchQueryingDownloadTasks,
       items: state.selectedMovieNumbers.toList(),
       action: (number) async {
         final tasks = await ref.refresh(
@@ -644,7 +673,7 @@ Future<void> _retriggerSelectedImports(
     onLoadingChanged(false);
     if (result.failed.isNotEmpty) return;
     if (taskIds.isEmpty) {
-      showToast('所选影片没有可重新导入的任务');
+      showToast(AppLocalizations.of(context).subscriptionBatchNoRetriggerTasks);
       return;
     }
     final accepted = await ref
@@ -654,16 +683,27 @@ Future<void> _retriggerSelectedImports(
     ref.invalidate(downloadTaskCenterProvider);
     await ref.read(managerProvider.notifier).refresh();
     if (context.mounted) {
+      final l10n = AppLocalizations.of(context);
       final skipped = accepted.skippedTaskIds.length;
       showToast(
         skipped > 0
-            ? '已提交 ${accepted.acceptedCount} 个重新导入，$skipped 个已跳过'
-            : '已提交 ${accepted.acceptedCount} 个重新导入',
+            ? l10n.subscriptionBatchRetriggerSubmittedSkipped(
+                accepted.acceptedCount,
+                skipped,
+              )
+            : l10n.subscriptionBatchRetriggerSubmitted(accepted.acceptedCount),
       );
     }
   } catch (error) {
     if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: '提交重新导入失败，请稍后重试'));
+      final l10n = AppLocalizations.of(context);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.subscriptionBatchRetriggerSubmitFailed,
+          l10n: l10n,
+        ),
+      );
     }
   } finally {
     if (context.mounted) onLoadingChanged(false);
@@ -677,12 +717,13 @@ Future<void> _confirmBatchUnsubscribe(
 ) async {
   final managerProvider = movieSubscriptionManagerProvider(state.filter.status);
   final count = state.selectionCount;
+  final l10n = AppLocalizations.of(context);
   final confirmed = await showAppConfirmDialog(
     context,
     dialogKey: const Key('movie-subscriptions-batch-unsubscribe-dialog'),
-    title: '取消订阅 $count 部影片？',
-    message: '取消后它们不再自动找资源。已有本地媒体的影片会被跳过，不会删除任何文件。',
-    confirmLabel: '取消订阅',
+    title: l10n.subscriptionBatchUnsubscribeConfirmTitle(count),
+    message: l10n.subscriptionBatchUnsubscribeConfirmMessage,
+    confirmLabel: l10n.subscriptionActionUnsubscribe,
     danger: true,
   );
   if (!confirmed) return;
@@ -694,14 +735,9 @@ Future<void> _confirmBatchUnsubscribe(
 
 // --- 查询说明 ----------------------------------------------------------------
 
-const _queryExplanationTip = AppNoticeCard(
+AppNoticeCard _queryExplanationTip(AppLocalizations l10n) => AppNoticeCard(
   leadingIcon: Icons.info_outline_rounded,
-  description:
-      '订阅影片后，系统通过定时任务在索引器中搜索可下载资源，找到后自动提交下载。'
-      '新片（发行 90 天内）每轮查询、不限次数；'
-      '老片默认至多查 3 次，用尽则标记「已放弃」，需手动重置后重新排队。'
-      '查询出错不消耗次数，下一轮自动重试。'
-      '重置不会清除种子黑名单——已判死的种子不再重试，系统会去寻找新的种子。',
+  description: l10n.subscriptionQueryExplanation,
 );
 
 // --- 列表体 -----------------------------------------------------------------
@@ -743,8 +779,10 @@ class _ListBodySliver extends ConsumerWidget {
       asyncState: asyncPaged,
       pagedOf: (paged) => paged,
       itemSpacing: context.appSpacing.sm,
-      initialErrorMessage: '订阅列表加载失败，请稍后重试',
-      emptyMessage: '当前筛选下没有订阅影片。',
+      initialErrorMessage: AppLocalizations.of(
+        context,
+      ).errorSubscriptionListLoadFailed,
+      emptyMessage: AppLocalizations.of(context).subscriptionListEmptyFiltered,
       emptyBuilder: (context) => const _EmptyState(),
       // loading 用占位订阅渲染真实行，由 [AppSkeletonizer] 灰化。
       skeletonBuilder: (context) {
@@ -804,54 +842,55 @@ class _EmptyState extends ConsumerWidget {
         ) ??
         MovieSubscriptionFilterState.initial;
 
+    final l10n = AppLocalizations.of(context);
     if (filter.hasSearch) {
       return AppEmptyState(
         key: const Key('movie-subscriptions-empty-state'),
         icon: Icons.search_off_rounded,
-        message: '没有匹配「${filter.trimmedSearch}」的订阅影片。换个番号或标题片段再试。',
+        message: l10n.subscriptionEmptyNoSearchMatch(filter.trimmedSearch),
       );
     }
 
     final (icon, title, message) = switch (filter.status) {
       MovieSubscriptionStatus.missing => (
         Icons.check_circle_outline_rounded,
-        '没有缺资源的订阅',
-        '所有订阅影片要么已经拿到资源，要么还在正常查询中。',
+        l10n.subscriptionEmptyMissingTitle,
+        l10n.subscriptionEmptyMissingMessage,
       ),
       MovieSubscriptionStatus.exhausted => (
         Icons.check_circle_outline_rounded,
-        '没有被放弃的订阅',
-        '没有影片因多次没找到资源而放弃，不需要手动重置。',
+        l10n.subscriptionEmptyExhaustedTitle,
+        l10n.subscriptionEmptyExhaustedMessage,
       ),
       MovieSubscriptionStatus.importFailed => (
         Icons.check_circle_outline_rounded,
-        '没有卡在导入的影片',
-        '下载完成的影片都顺利入库了。',
+        l10n.subscriptionEmptyImportFailedTitle,
+        l10n.subscriptionEmptyImportFailedMessage,
       ),
       MovieSubscriptionStatus.failed => (
         Icons.check_circle_outline_rounded,
-        '索引器一切正常',
-        '最近一轮资源查询没有出错。',
+        l10n.subscriptionEmptyFailedTitle,
+        l10n.subscriptionEmptyFailedMessage,
       ),
       MovieSubscriptionStatus.pending => (
         Icons.hourglass_empty_rounded,
-        '没有待查的订阅',
-        '新订阅的影片会先落在这里，等下一轮定时任务查过就转到别的状态。',
+        l10n.subscriptionEmptyPendingTitle,
+        l10n.subscriptionEmptyPendingMessage,
       ),
       MovieSubscriptionStatus.downloading => (
         Icons.download_outlined,
-        '没有正在下载的订阅',
-        '找到种子的影片会出现在这里，进度可以去任务中心看。',
+        l10n.subscriptionEmptyDownloadingTitle,
+        l10n.subscriptionEmptyDownloadingMessage,
       ),
       MovieSubscriptionStatus.imported => (
         Icons.inbox_outlined,
-        '还没有入库的订阅影片',
-        '资源下载并导入媒体库后，影片会归到这里。',
+        l10n.subscriptionEmptyImportedTitle,
+        l10n.subscriptionEmptyImportedMessage,
       ),
       MovieSubscriptionStatus.unknown || null => (
         Icons.bookmark_border_rounded,
-        '还没有订阅任何影片',
-        '在影片列表或详情页点订阅，之后就能在这里跟进求片进度。',
+        l10n.subscriptionEmptyNoneTitle,
+        l10n.subscriptionEmptyNoneMessage,
       ),
     };
 
@@ -868,7 +907,7 @@ class _EmptyState extends ConsumerWidget {
           SizedBox(height: context.appSpacing.md),
           AppButton(
             key: const Key('movie-subscriptions-empty-see-all-button'),
-            label: '查看全部订阅',
+            label: l10n.subscriptionEmptySeeAll,
             size: AppButtonSize.small,
             variant: AppButtonVariant.secondary,
             onPressed: () => ref
@@ -948,12 +987,19 @@ class _RowConsumer extends HookConsumerWidget {
       try {
         await ref.read(downloadsApiProvider).triggerDownloadTaskImport(task.id);
         if (!context.mounted) return;
-        showToast('已提交导入任务');
+        showToast(AppLocalizations.of(context).subscriptionImportTaskSubmitted);
         ref.invalidate(downloadTaskCenterProvider);
         await notifier.refresh();
       } catch (error) {
         if (context.mounted) {
-          showToast(apiErrorMessage(error, fallback: '提交导入失败，请稍后重试'));
+          final l10n = AppLocalizations.of(context);
+          showToast(
+            apiErrorMessage(
+              error,
+              fallback: l10n.subscriptionImportSubmitFailed,
+              l10n: l10n,
+            ),
+          );
         }
       } finally {
         if (context.mounted) retriggering.value = false;
@@ -966,7 +1012,9 @@ class _RowConsumer extends HookConsumerWidget {
         final currentTasks = await ref.refresh(tasksProvider.future);
         if (!context.mounted) return;
         if (currentTasks.isEmpty) {
-          showToast('下载任务已不存在');
+          showToast(
+            AppLocalizations.of(context).subscriptionDownloadTaskMissing,
+          );
           await notifier.refresh();
           return;
         }
@@ -985,7 +1033,15 @@ class _RowConsumer extends HookConsumerWidget {
         );
       } catch (error) {
         if (context.mounted) {
-          showToast(apiErrorMessage(error, fallback: '下载任务加载失败'));
+          showToast(
+            apiErrorMessage(
+              error,
+              fallback: AppLocalizations.of(
+                context,
+              ).subscriptionDownloadTasksLoadFailed,
+              l10n: AppLocalizations.of(context),
+            ),
+          );
         }
       } finally {
         if (context.mounted) deleting.value = false;

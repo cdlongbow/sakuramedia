@@ -175,8 +175,11 @@ class _DesktopDownloadTasksPageState
     }
     final search = filter.normalizedSearch;
     if (search.isNotEmpty) {
-      final movieNumber = task.movieNumber ?? '';
-      if (!movieNumber.toLowerCase().contains(search.toLowerCase())) {
+      final movieNumber = task.movieNumber?.trim() ?? '';
+      // 后端按 `DownloadTask.movie == movie_number.strip()` 精确过滤；这里
+      // 不能再按不等长的子串判断，否则会误判为“可见”而跳过去「全部」的兜底，
+      // 让刚创建的任务被筛选隐藏。
+      if (movieNumber != search) {
         return false;
       }
     }

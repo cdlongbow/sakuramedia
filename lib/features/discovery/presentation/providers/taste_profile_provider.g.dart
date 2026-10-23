@@ -36,7 +36,7 @@ final class TasteProfileProvider
   TasteProfile create() => TasteProfile();
 }
 
-String _$tasteProfileHash() => r'a5da4b2e269aad2e5c7060a61406e4785ce30c37';
+String _$tasteProfileHash() => r'88e2e24aa8a9b43f5f6043863059866f080a7883';
 
 /// 口味画像：发现页与女优页共用一份，订阅变更由事件广播就地补丁。
 

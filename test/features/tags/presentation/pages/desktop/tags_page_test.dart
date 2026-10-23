@@ -23,6 +23,11 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     bundle = await createTestApiBundle(sessionStore);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _emptyTasteProfileJson(),
+    );
   });
 
   tearDown(() {
@@ -111,6 +116,41 @@ void main() {
     expect(find.byKey(const Key('tags-selector-dialog')), findsNothing);
     expect(find.text('请选择标签查看影片'), findsOneWidget);
     expect(find.byKey(const Key('tags-option-1')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('常看标签可直接选中并触发影片筛选', (tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: [
+        {'tag_id': 1, 'name': '标签一', 'movie_count': 10},
+        {'tag_id': 2, 'name': '标签二', 'movie_count': 8},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(tagId: 1, name: '标签一'),
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/movies',
+      body: moviesPage(),
+    );
+
+    await pumpTagsPage(tester);
+
+    expect(find.byKey(const Key('taste-quick-tags')), findsOneWidget);
+    expect(find.byKey(const Key('taste-quick-tag-1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('taste-quick-tag-1')));
+    await settleFilterRequest(tester);
+
+    expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
+    final request = bundle.adapter.requests
+        .where((request) => request.uri.path == '/movies')
+        .last;
+    expect(request.uri.queryParameters['tag_ids'], '1');
     expect(tester.takeException(), isNull);
   });
 
@@ -216,4 +256,31 @@ void main() {
     // 切到「全部」后追加一次 and 请求。
     expect(movieTagMatches(), <String?>['or', 'and']);
   });
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson({
+  required int tagId,
+  required String name,
+}) {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[
+      <String, dynamic>{
+        'tag_id': tagId,
+        'name': name,
+        'matched_movie_count': 12,
+      },
+    ],
+  };
 }

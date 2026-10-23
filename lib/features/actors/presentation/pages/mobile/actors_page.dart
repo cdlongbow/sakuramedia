@@ -12,6 +12,8 @@ import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filt
 import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
+import 'package:sakuramedia/features/actors/presentation/widgets/actor_taste_recommendation_rail.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -205,6 +207,14 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
             controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: <Widget>[
+              if (filter.isDefault)
+                SliverToBoxAdapter(
+                  child: ActorTasteRecommendationRail(
+                    onActorTap: (actorId) => MobileActorDetailRouteData(
+                      actorId: actorId,
+                    ).push(context),
+                  ),
+                ),
               SliverMainAxisGroup(
                 key: const Key('mobile-actors-page'),
                 slivers: [
@@ -253,6 +263,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     final error = await ref
         .read(actorSummaryProvider(_scope).notifier)
         .refresh();
+    await ref.read(tasteProfileProvider.notifier).refresh();
     if (error != null && mounted) {
       showToast('刷新失败');
     }

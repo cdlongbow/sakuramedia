@@ -1,16 +1,17 @@
 import 'dart:async';
 
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
-import 'package:sakuramedia/widgets/domain/tags/tag_selector_panel.dart';
+import 'package:sakuramedia/features/tags/presentation/widgets/taste_quick_tags.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
+import 'package:sakuramedia/widgets/domain/tags/tag_selector_panel.dart';
 
-/// 固定区只显示入口和横向摘要；完整标签云在自适应弹窗内滚动查看。
+/// 标签页固定选择区：选择入口、横向已选摘要、匹配模式与常看标签。
 ///
 /// 点入口：移动端弹全高底部抽屉，桌面弹居中对话框；弹窗里的
 /// [TagSelectorPanel] 以 `scrollableTagCloud` 展示全部标签。
@@ -20,6 +21,7 @@ class TagSelectionHeader extends ConsumerWidget {
     required this.scope,
     required this.mobile,
   });
+
   final TagSelectionScope scope;
   final bool mobile;
 
@@ -45,9 +47,10 @@ class TagSelectionHeader extends ConsumerWidget {
             isSelected: selection.hasSelection,
             onPressed: () => _openSelector(context),
           );
-    return Padding(
+    final selector = Padding(
       padding: EdgeInsets.only(bottom: context.appSpacing.sm),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           trigger,
           if (selection.hasSelection) ...[
@@ -88,6 +91,24 @@ class TagSelectionHeader extends ConsumerWidget {
           ],
         ],
       ),
+    );
+    final quickTags = TasteQuickTags(scope: scope);
+    if (mobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[selector, quickTags],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: context.appSpacing.xxxl * 8),
+          child: selector,
+        ),
+        SizedBox(width: context.appSpacing.md),
+        Flexible(child: quickTags),
+      ],
     );
   }
 

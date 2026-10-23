@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_subscription_toggle_result.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actor_subscription_toggle_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subscription_toggle_provider.dart';
 import 'package:sakuramedia/theme.dart';
@@ -44,6 +45,21 @@ void showMovieSubscriptionFeedback(MovieSubscriptionToggleResult result) {
 
 void showActorSubscriptionFeedback(ActorSubscriptionToggleResult result) {
   _showSubscriptionFeedback(actorSubscriptionFeedbackMessage(result));
+}
+
+/// 女优订阅切换 + 统一 toast 反馈，供各女优卡片入口复用。
+Future<void> toggleActorSubscriptionWithFeedback(
+  BuildContext context,
+  WidgetRef ref, {
+  required int actorId,
+  required bool isSubscribed,
+}) async {
+  final result = await ref
+      .read(actorSubscriptionToggleProvider.notifier)
+      .toggle(actorId: actorId, isSubscribed: isSubscribed);
+  if (context.mounted) {
+    showActorSubscriptionFeedback(result);
+  }
 }
 
 void _showSubscriptionFeedback(String? message) {

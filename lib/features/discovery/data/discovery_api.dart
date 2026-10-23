@@ -3,6 +3,7 @@ import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/discovery/data/daily_recommendation_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/hot_actress_release_movie_dto.dart';
 import 'package:sakuramedia/features/discovery/data/moment_recommendation_dto.dart';
+import 'package:sakuramedia/features/discovery/data/taste_profile_dto.dart';
 
 class DiscoveryApi {
   const DiscoveryApi({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -42,5 +43,10 @@ class DiscoveryApi {
       response,
       HotActressReleaseMovieDto.fromJson,
     );
+  }
+
+  Future<TasteProfileDto> getTasteProfile() async {
+    final response = await _apiClient.get('/taste-profile');
+    return TasteProfileDto.fromJson(response);
   }
 }

@@ -152,8 +152,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, __) =>
-              const Scaffold(body: MobileOverviewDiscoverTab()),
+          builder: (_, __) => const Scaffold(body: MobileOverviewDiscoverTab()),
         ),
         GoRoute(
           path: '$mobileMoviesPath/:movieNumber',
@@ -188,6 +187,35 @@ void main() {
     expect(find.text('movie-detail'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('移动发现 Tab 把口味画像放在女优上新之前', (tester) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDiscoveryResponses(bundle);
+    _enqueueFollowPage(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(),
+    );
+
+    await _pumpDiscoveryWidget(
+      tester,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      child: const MobileOverviewDiscoverTab(),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('taste-profile-panel')), findsOneWidget);
+    expect(find.text('口味女优'), findsOneWidget);
+    final panelTop = tester
+        .getTopLeft(find.byKey(const Key('taste-profile-panel')))
+        .dy;
+    final followTop = tester.getTopLeft(find.text('女优上新')).dy;
+    expect(panelTop, lessThan(followTop));
+  });
 }
 
 Future<void> _longPressMovieCard(WidgetTester tester, String key) async {
@@ -220,6 +248,11 @@ Future<void> _pumpDiscoveryWidget(
   required TestApiBundle bundle,
   required Widget child,
 }) {
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/taste-profile',
+    body: _emptyTasteProfileJson(),
+  );
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
@@ -243,6 +276,11 @@ Future<void> _pumpDiscoveryRouterApp(
   required TestApiBundle bundle,
   required GoRouter router,
 }) {
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/taste-profile',
+    body: _emptyTasteProfileJson(),
+  );
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
@@ -276,10 +314,7 @@ void _enqueueMomentPreviewMovie(TestApiBundle bundle) {
       'movie_number': 'ABC-001',
       'title': 'Movie 1',
       'series_name': '',
-      'cover_image': <String, dynamic>{
-        'id': 1,
-        'origin': '/cover.jpg',
-      },
+      'cover_image': <String, dynamic>{'id': 1, 'origin': '/cover.jpg'},
       'release_date': null,
       'duration_minutes': 0,
       'score': 0,
@@ -487,5 +522,53 @@ Map<String, dynamic> _momentJson(int index) {
       'is_subscribed': false,
       'can_play': true,
     },
+  };
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson() {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'unsubscribed_actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'tags': <dynamic>[
+      <String, dynamic>{
+        'tag_id': 91,
+        'name': '口味标签',
+        'matched_movie_count': 12,
+      },
+    ],
   };
 }

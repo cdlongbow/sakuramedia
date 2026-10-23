@@ -16,6 +16,11 @@ void main() {
     final session = SessionStore.inMemory();
     await session.saveBaseUrl('https://api.example.com');
     bundle = await createTestApiBundle(session);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _emptyTasteProfileJson(),
+    );
   });
 
   tearDown(() {
@@ -55,10 +60,7 @@ void main() {
       find.byKey(const Key('mobile-actors-search-toggle')),
       findsOneWidget,
     );
-    expect(
-      find.byKey(const Key('mobile-actors-search-field')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('mobile-actors-search-field')), findsNothing);
     expect(bundle.adapter.hitCount('GET', '/actors'), 1);
 
     bundle.adapter.enqueueJson(
@@ -68,10 +70,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('mobile-actors-search-toggle')));
     await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('mobile-actors-search-field')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('mobile-actors-search-field')), findsOneWidget);
 
     // 展开后筛选入口原位保留，数量胶囊暂时隐藏，输入框与 icon 共存。
     expect(
@@ -117,6 +116,20 @@ void main() {
     expect(clearedRequest.uri.queryParameters.containsKey('query'), isFalse);
     expect(clearedRequest.uri.queryParameters['subscription_status'], 'all');
   });
+
+  testWidgets('移动女优页顶部展示口味推荐条', (tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(),
+    );
+
+    await pumpPage(tester);
+
+    expect(find.byKey(const Key('actor-taste-recommendation')), findsOneWidget);
+    expect(find.text('常看女优'), findsOneWidget);
+    expect(find.text('口味女优'), findsOneWidget);
+  });
 }
 
 Map<String, dynamic> _actorsJson({int total = 1}) {
@@ -134,5 +147,47 @@ Map<String, dynamic> _actorsJson({int total = 1}) {
     'page': 1,
     'page_size': 24,
     'total': total,
+  };
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson() {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'unsubscribed_actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'tags': <dynamic>[],
   };
 }

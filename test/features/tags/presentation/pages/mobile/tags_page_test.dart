@@ -27,6 +27,11 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     bundle = await createTestApiBundle(sessionStore);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _emptyTasteProfileJson(),
+    );
   });
 
   tearDown(() {
@@ -135,6 +140,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('请选择标签查看影片'), findsOneWidget);
     expect(find.byKey(const Key('tags-option-1')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('常看标签可直接选中并触发影片筛选', (tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: [
+        {'tag_id': 1, 'name': '标签一', 'movie_count': 10},
+        {'tag_id': 2, 'name': '标签二', 'movie_count': 8},
+      ],
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(tagId: 1, name: '标签一'),
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/movies',
+      body: moviesPage(),
+    );
+
+    await tester.pumpWidget(wrap(const MobileTagsPage()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('taste-quick-tags')), findsOneWidget);
+    expect(find.byKey(const Key('taste-quick-tag-1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('taste-quick-tag-1')));
+    await settleFilterRequest(tester);
+
+    expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
+    final request = bundle.adapter.requests
+        .where((request) => request.uri.path == '/movies')
+        .last;
+    expect(request.uri.queryParameters['tag_ids'], '1');
     expect(tester.takeException(), isNull);
   });
 
@@ -249,9 +290,7 @@ void main() {
     },
   );
 
-  testWidgets('详情跳入的预选标签首拉不等防抖，加载中显示骨架而不是空态', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('详情跳入的预选标签首拉不等防抖，加载中显示骨架而不是空态', (WidgetTester tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
@@ -277,27 +316,22 @@ void main() {
 
     // 请求在途时是占位骨架，不是「该标签下暂无影片」。
     expect(find.text('该标签下暂无影片'), findsNothing);
-    expect(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('movie-summary-card-REAL-777')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
+    expect(find.byKey(const Key('movie-summary-card-REAL-777')), findsNothing);
 
     held.complete(moviesResponse('REAL-777'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('movie-summary-card-REAL-777')), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-summary-card-REAL-777')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
     expect(find.text('该标签下暂无影片'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('一级入口首次选标签：防抖窗口和请求在途都是骨架，不是空态', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('一级入口首次选标签：防抖窗口和请求在途都是骨架，不是空态', (WidgetTester tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
@@ -326,18 +360,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     expect(bundle.adapter.hitCount('GET', '/movies'), 0);
     expect(find.text('该标签下暂无影片'), findsNothing);
-    expect(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
 
     // 请求在途：仍保持骨架，居中的筛选进度层不再叠上来遮住它。
     await tester.pump(const Duration(milliseconds: 200));
     expect(bundle.adapter.hitCount('GET', '/movies'), 1);
-    expect(
-      find.byKey(const Key('movie-summary-card-ABC-001')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
     expect(
       find.byKey(const Key('app-filter-result-loading-overlay')),
       findsNothing,
@@ -346,7 +374,10 @@ void main() {
     held.complete(moviesResponse('REAL-777'));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('movie-summary-card-REAL-777')), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-summary-card-REAL-777')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsNothing);
     expect(find.text('该标签下暂无影片'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -421,4 +452,31 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson({
+  required int tagId,
+  required String name,
+}) {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[
+      <String, dynamic>{
+        'tag_id': tagId,
+        'name': name,
+        'matched_movie_count': 12,
+      },
+    ],
+  };
 }

@@ -10,6 +10,8 @@ import 'package:sakuramedia/features/discovery/presentation/moment_recommendatio
 import 'package:sakuramedia/features/discovery/presentation/pages/shared/discovery_recommendation_content.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
+import 'package:sakuramedia/features/discovery/presentation/widgets/taste_profile_section.dart';
 import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
@@ -65,6 +67,13 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(height: context.appSpacing.sm),
+              TasteProfileSection(
+                onTagTap: (tagId) =>
+                    MobileTagMoviesRouteData(tagId: tagId).push(context),
+                onActorTap: (actorId) =>
+                    MobileActorDetailRouteData(actorId: actorId).push(context),
+              ),
+              SizedBox(height: context.appSpacing.lg),
               _buildFollowSection(context, ref, follow),
               SizedBox(height: context.appSpacing.lg),
               _buildHotActressSection(context, ref, hotActress),
@@ -97,6 +106,7 @@ class MobileOverviewDiscoverTab extends ConsumerWidget {
       ref
           .read(discoveryMomentPreviewProvider(_momentPageSize).notifier)
           .refresh(),
+      ref.read(tasteProfileProvider.notifier).refresh(),
     ]);
   }
 

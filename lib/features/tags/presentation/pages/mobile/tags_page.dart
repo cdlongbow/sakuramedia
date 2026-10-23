@@ -11,7 +11,7 @@ import 'package:sakuramedia/features/movies/presentation/providers/movie_summary
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_provider.dart';
 import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_scope.dart';
 import 'package:sakuramedia/features/tags/presentation/tag_movie_summary_content.dart';
-import 'package:sakuramedia/widgets/domain/tags/tag_selection_header.dart';
+import 'package:sakuramedia/features/tags/presentation/widgets/tag_selection_header.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -30,7 +30,6 @@ class MobileTagsPage extends ConsumerStatefulWidget {
 }
 
 class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
-  final _tagHeaderKey = GlobalKey();
   late final TagSelectionScope _selectionScope = widget.initialTagId == null
       ? const TagSelectionScope.mobileRoot()
       : TagSelectionScope.mobileDetail(initialTagId: widget.initialTagId!);
@@ -142,9 +141,6 @@ class _MobileTagsPageState extends ConsumerState<MobileTagsPage> {
     );
   }
 
-  Widget _buildSelectorPanel() => TagSelectionHeader(
-    key: _tagHeaderKey,
-    scope: _selectionScope,
-    mobile: true,
-  );
+  Widget _buildSelectorPanel() =>
+      TagSelectionHeader(scope: _selectionScope, mobile: true);
 }

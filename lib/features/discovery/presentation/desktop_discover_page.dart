@@ -10,6 +10,8 @@ import 'package:sakuramedia/features/discovery/presentation/moment_recommendatio
 import 'package:sakuramedia/features/discovery/presentation/pages/shared/discovery_recommendation_content.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_providers.dart';
 import 'package:sakuramedia/features/discovery/presentation/providers/discovery_preview_state.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
+import 'package:sakuramedia/features/discovery/presentation/widgets/taste_profile_section.dart';
 import 'package:sakuramedia/features/moments/presentation/actions/moment_preview_flow.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_placeholders.dart';
@@ -67,6 +69,7 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
       ref
           .read(discoveryMomentPreviewProvider(_previewPageSize).notifier)
           .refresh(),
+      ref.read(tasteProfileProvider.notifier).refresh(),
     ]);
   }
 
@@ -103,6 +106,14 @@ class _DesktopDiscoverPageState extends ConsumerState<DesktopDiscoverPage> {
             key: const Key('desktop-discover-page'),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              TasteProfileSection(
+                onTagTap: (tagId) => context.pushDesktopTags(tagId: tagId),
+                onActorTap: (actorId) => context.pushDesktopActorDetail(
+                  actorId: actorId,
+                  fallbackPath: desktopDiscoverPath,
+                ),
+              ),
+              SizedBox(height: context.appSpacing.xl),
               _buildFollowSection(context, follow),
               SizedBox(height: context.appSpacing.xl),
               _buildHotActressSection(context, hotActress),

@@ -42,10 +42,7 @@ void main() {
               'javdb_id': 'abc-id',
               'movie_number': 'ABC-001',
               'title': 'Movie title',
-              'cover_image': <String, dynamic>{
-                'id': 1,
-                'origin': 'large.jpg',
-              },
+              'cover_image': <String, dynamic>{'id': 1, 'origin': 'large.jpg'},
               'thin_cover_image': null,
               'release_date': '2026-05-01',
               'duration_minutes': 120,
@@ -196,4 +193,69 @@ void main() {
       expect(page.items.single.hotActressName, '女优 A');
     },
   );
+
+  test('getTasteProfile parses ranked actresses and tags', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(),
+    );
+
+    final profile = await discoveryApi.getTasteProfile();
+
+    expect(adapter.requests.single.path, '/taste-profile');
+    expect(profile.sampleMovieCount, 42);
+    expect(profile.subscribedActresses.single.actor.displayName, '女优 A');
+    expect(profile.subscribedActresses.single.actor.isSubscribed, isTrue);
+    expect(profile.subscribedActresses.single.matchedMovieCount, 12);
+    expect(profile.unsubscribedActresses.single.actor.id, 2);
+    expect(profile.tags.single.name, '剧情');
+    expect(profile.tags.single.matchedMovieCount, 9);
+  });
+}
+
+Map<String, dynamic> _tasteProfileJson() {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'generated_at': '2026-10-23T04:00:00',
+    'actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': _actorJson(id: 1, name: '女优 A', isSubscribed: true),
+        'matched_movie_count': 12,
+        'score': 38.0,
+      },
+    ],
+    'unsubscribed_actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': _actorJson(id: 2, name: '女优 B', isSubscribed: false),
+        'matched_movie_count': 5,
+        'score': 11.0,
+      },
+    ],
+    'tags': <dynamic>[
+      <String, dynamic>{
+        'tag_id': 7,
+        'name': '剧情',
+        'matched_movie_count': 9,
+        'score': 21.0,
+      },
+    ],
+  };
+}
+
+Map<String, dynamic> _actorJson({
+  required int id,
+  required String name,
+  required bool isSubscribed,
+}) {
+  return <String, dynamic>{
+    'id': id,
+    'javdb_id': 'actor-$id',
+    'name': name,
+    'alias_name': '',
+    'display_name': name,
+    'profile_image': <String, dynamic>{'id': id, 'origin': 'actor-$id.jpg'},
+    'is_subscribed': isSubscribed,
+    'movie_count': 10,
+  };
 }

@@ -253,7 +253,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('movie-summary-card-ABC-004')), findsOneWidget);
+      expect(
+        find.byKey(const Key('movie-summary-card-ABC-004')),
+        findsOneWidget,
+      );
       expect(bundle.adapter.hitCount('GET', '/daily-recommendations'), 2);
     },
   );
@@ -275,7 +278,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('movie-summary-card-HOT-004')), findsOneWidget);
+      expect(
+        find.byKey(const Key('movie-summary-card-HOT-004')),
+        findsOneWidget,
+      );
       expect(bundle.adapter.hitCount('GET', '/hot-actress-releases'), 2);
     },
   );
@@ -324,7 +330,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
+      expect(
+        find.byKey(const Key('movie-summary-card-ABC-001')),
+        findsOneWidget,
+      );
       expect(find.text('加载更多推荐影片失败，请点击重试'), findsOneWidget);
       expect(bundle.adapter.hitCount('GET', '/daily-recommendations'), 2);
     },
@@ -422,40 +431,39 @@ void main() {
     },
   );
 
-  testWidgets(
-    'desktop recommendation preview opens the movie from the cover',
-    (tester) async {
-      final sessionStore = await _buildSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
-      _enqueueMomentPage(bundle, page: 1, start: 1, count: 1, total: 1);
-      _enqueueMomentPreviewMovie(bundle);
-      _enqueueEmptyMediaPoints(bundle, mediaId: 101);
+  testWidgets('desktop recommendation preview opens the movie from the cover', (
+    tester,
+  ) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueMomentPage(bundle, page: 1, start: 1, count: 1, total: 1);
+    _enqueueMomentPreviewMovie(bundle);
+    _enqueueEmptyMediaPoints(bundle, mediaId: 101);
 
-      await _pumpDiscoveryRouter(
-        tester,
-        sessionStore: sessionStore,
-        bundle: bundle,
-        child: const DesktopDiscoverMomentsPage(),
-      );
-      await tester.pumpAndSettle();
+    await _pumpDiscoveryRouter(
+      tester,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      child: const DesktopDiscoverMomentsPage(),
+    );
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('moment-card-1')));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('moment-card-1')));
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('image-search-result-preview-dialog')),
-        findsOneWidget,
-      );
-      await tester.tap(
-        find.byKey(const Key('image-search-result-preview-movie-cover')),
-      );
-      await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('image-search-result-preview-dialog')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('image-search-result-preview-movie-cover')),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.text('movie-detail'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(find.text('movie-detail'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'desktop recommendation preview opens the actor from the avatar',
@@ -586,6 +594,37 @@ void main() {
       expect(find.text('加载更多推荐影片失败，请点击重试'), findsOneWidget);
     },
   );
+
+  testWidgets('desktop discover puts the taste profile above the follow rail', (
+    tester,
+  ) async {
+    final sessionStore = await _buildSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDiscoveryResponses(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(),
+    );
+
+    await _pumpDiscoveryWidget(
+      tester,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      child: const DesktopDiscoverPage(),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('taste-profile-panel')), findsOneWidget);
+    expect(find.text('口味女优'), findsOneWidget);
+    expect(find.text('你可能想关注'), findsOneWidget);
+    final panelTop = tester
+        .getTopLeft(find.byKey(const Key('taste-profile-panel')))
+        .dy;
+    final followTop = tester.getTopLeft(find.text('女优上新')).dy;
+    expect(panelTop, lessThan(followTop));
+  });
 }
 
 Future<SessionStore> _buildSessionStore() async {
@@ -605,6 +644,11 @@ Future<void> _pumpDiscoveryWidget(
   required TestApiBundle bundle,
   required Widget child,
 }) {
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/taste-profile',
+    body: _emptyTasteProfileJson(),
+  );
   return tester.pumpWidget(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
@@ -628,9 +672,17 @@ Future<void> _pumpDiscoveryRouter(
   required TestApiBundle bundle,
   required Widget child,
 }) async {
+  bundle.adapter.setFallbackJson(
+    method: 'GET',
+    path: '/taste-profile',
+    body: _emptyTasteProfileJson(),
+  );
   final router = GoRouter(
     routes: [
-      GoRoute(path: '/', builder: (_, __) => Scaffold(body: child)),
+      GoRoute(
+        path: '/',
+        builder: (_, __) => Scaffold(body: child),
+      ),
       GoRoute(
         path: '/desktop/library/movies/:movieNumber',
         builder: (_, __) => const Scaffold(body: Text('movie-detail')),
@@ -646,10 +698,7 @@ Future<void> _pumpDiscoveryRouter(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(
-          theme: sakuraThemeData,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
       ),
     ),
   );
@@ -723,10 +772,7 @@ void _enqueueMomentPreviewMovie(TestApiBundle bundle) {
       'movie_number': 'ABC-001',
       'title': 'Movie 1',
       'series_name': '',
-      'cover_image': <String, dynamic>{
-        'id': 1,
-        'origin': '/cover.jpg',
-      },
+      'cover_image': <String, dynamic>{'id': 1, 'origin': '/cover.jpg'},
       'release_date': null,
       'duration_minutes': 0,
       'score': 0,
@@ -928,5 +974,53 @@ Map<String, dynamic> _momentJson(int index) {
       'is_subscribed': false,
       'can_play': true,
     },
+  };
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson() {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'unsubscribed_actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'tags': <dynamic>[
+      <String, dynamic>{
+        'tag_id': 91,
+        'name': '口味标签',
+        'matched_movie_count': 12,
+      },
+    ],
   };
 }

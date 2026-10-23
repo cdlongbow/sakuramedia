@@ -13,10 +13,12 @@ class AppInlineErrorBanner extends StatelessWidget {
     super.key,
     required this.message,
     required this.onRetry,
+    this.retryKey,
   });
 
   final String message;
   final Future<void> Function() onRetry;
+  final Key? retryKey;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +51,7 @@ class AppInlineErrorBanner extends StatelessWidget {
             ),
             SizedBox(width: context.appSpacing.sm),
             AppButton(
+              key: retryKey,
               label: '重试',
               size: AppButtonSize.xSmall,
               variant: AppButtonVariant.secondary,

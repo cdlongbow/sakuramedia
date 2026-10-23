@@ -14,6 +14,12 @@
 
 包含 `ActorAvatar`、`ActorSummaryCard` 和 `ActorFilterSections`。女优数据和筛选状态由 actors feature 提供。`ActorSummaryCard` 与影片卡同参数（`lg` 圆角、常驻 1px 边框与卡片阴影）：收起态底部渐变上常显姓名（Tooltip 补全截断），桌面悬停渐显姓名、资料行（影片数 / 年龄 / 出生年月 / 身高 / 胸围 / 腰围 / 臀围 / 罩杯，字段随列表接口下发、缺项跳过）与订阅 / 取消订阅动作，收起态姓名层淡出；演员页没有多选 / 右键菜单业务，卡片不接入。
 
+## taste
+
+路径：`lib/widgets/domain/taste/`
+
+口味画像的展示件：`TastePanel` 渐变外壳、`TasteActressCard` / `TasteActressRail` / `TasteActressSection` 横向女优卡与分组、`TasteSplitLayout` 的 640px 双栏 / 堆叠布局、`TasteSectionLabel` 与 `TasteEntrance`。女优页和发现页共用同一套；数据由 discovery 的 `tasteProfileProvider` 提供，订阅切换统一走 `toggleActorSubscriptionWithFeedback`。分组在拉取时冻结，订阅 / 取消只翻心形状态，卡片留在原组，下一次刷新再由服务端重新分组。`TasteTagPill` 只服务发现页，放在 `features/discovery/presentation/widgets/`。
+
 ## movies
 
 路径：`lib/widgets/domain/movies/`

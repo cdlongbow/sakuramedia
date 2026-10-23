@@ -10,6 +10,8 @@ import 'package:sakuramedia/features/actors/presentation/controllers/listing/act
 import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_provider.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_summary_scope.dart';
+import 'package:sakuramedia/features/actors/presentation/widgets/actor_taste_recommendation_rail.dart';
+import 'package:sakuramedia/features/discovery/presentation/providers/taste_profile_provider.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
@@ -115,7 +117,10 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
   void _resetFilters() => _applyFilter(ActorFilterState.initial);
 
   Future<void> _refresh() async {
-    await ref.read(actorSummaryProvider(_scope).notifier).refresh();
+    await Future.wait<void>([
+      ref.read(actorSummaryProvider(_scope).notifier).refresh(),
+      ref.read(tasteProfileProvider.notifier).refresh(),
+    ]);
   }
 
   Future<void> _toggleActorSubscription(int actorId) async {
@@ -184,6 +189,15 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
               key: const PageStorageKey<String>('desktop:actors:list'),
               controller: _scrollController,
               slivers: [
+                if (filter.isDefault)
+                  SliverToBoxAdapter(
+                    child: ActorTasteRecommendationRail(
+                      onActorTap: (actorId) => context.pushDesktopActorDetail(
+                        actorId: actorId,
+                        fallbackPath: desktopActorsPath,
+                      ),
+                    ),
+                  ),
                 SliverMainAxisGroup(
                   slivers: [
                     if (!(paged?.filterUpdate.hasFailed ?? false) ||

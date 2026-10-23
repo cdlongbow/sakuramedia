@@ -28,6 +28,11 @@ void main() {
       expiresAt: DateTime.parse('2026-03-10T12:00:00Z'),
     );
     bundle = await createTestApiBundle(sessionStore);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _emptyTasteProfileJson(),
+    );
   });
 
   tearDown(() {
@@ -156,10 +161,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('actors-search-field')), findsOneWidget);
 
-    await tester.enterText(
-      find.byKey(const Key('actors-search-field')),
-      '三上',
-    );
+    await tester.enterText(find.byKey(const Key('actors-search-field')), '三上');
     await tester.pump();
 
     // 防抖窗口内不请求，旧列表继续显示。
@@ -223,10 +225,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('actors-search-toggle')));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('actors-search-field')),
-      '三上',
-    );
+    await tester.enterText(find.byKey(const Key('actors-search-field')), '三上');
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
     expect(find.text('1 位'), findsOneWidget);
@@ -296,6 +295,26 @@ void main() {
       lessThan(firstCardTop),
     );
   });
+
+  testWidgets('桌面女优页顶部展示口味推荐条', (tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _actorsJson(total: 3),
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: _tasteProfileJson(),
+    );
+
+    await _pumpActorsPage(tester, sessionStore: sessionStore, bundle: bundle);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('actor-taste-recommendation')), findsOneWidget);
+    expect(find.text('常看女优'), findsOneWidget);
+    expect(find.text('口味女优'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpActorsPage(
@@ -356,5 +375,47 @@ Map<String, dynamic> _actorItem({
     'alias_name': '',
     'profile_image': null,
     'is_subscribed': isSubscribed,
+  };
+}
+
+Map<String, dynamic> _emptyTasteProfileJson() {
+  return const <String, dynamic>{
+    'sample_movie_count': 0,
+    'actresses': <dynamic>[],
+    'unsubscribed_actresses': <dynamic>[],
+    'tags': <dynamic>[],
+  };
+}
+
+Map<String, dynamic> _tasteProfileJson() {
+  return <String, dynamic>{
+    'sample_movie_count': 42,
+    'actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'unsubscribed_actresses': <dynamic>[
+      <String, dynamic>{
+        'actor': <String, dynamic>{
+          'id': 91,
+          'javdb_id': 'taste-actor-91',
+          'name': '口味女优',
+          'alias_name': '',
+          'display_name': '口味女优',
+          'is_subscribed': false,
+        },
+        'matched_movie_count': 9,
+      },
+    ],
+    'tags': <dynamic>[],
   };
 }

@@ -20,10 +20,15 @@ class FilePickerWithBytesException implements Exception {
 }
 
 /// 选择单个文件并读取字节。
+///
+/// 传 [maxBytes] 时优先读取平台文件长度并在读取内容前拒绝超限文件，避免把
+/// 大文件整体读进内存后才报错。平台无法提供长度时仍会在读完后兜底。
 Future<PickedFileWithBytes?> pickFileWithBytes({
   List<String>? allowedExtensions,
   FileType type = FileType.custom,
   String? initialDirectory,
+  int? maxBytes,
+  String tooLargeMessage = '文件过大',
   required String unreadableMessage,
   required String pickerUnavailableMessage,
   required String openFailureMessage,
@@ -39,6 +44,18 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
       return null;
     }
 
+    if (maxBytes != null) {
+      int? knownLength;
+      try {
+        knownLength = await file.length();
+      } catch (_) {
+        // 平台不提供长度时继续按字节兜底。
+      }
+      if (knownLength != null && knownLength > maxBytes) {
+        throw FilePickerWithBytesException(tooLargeMessage);
+      }
+    }
+
     final Uint8List bytes;
     try {
       bytes = await file.readAsBytes();
@@ -47,6 +64,9 @@ Future<PickedFileWithBytes?> pickFileWithBytes({
     }
     if (bytes.isEmpty) {
       throw FilePickerWithBytesException(unreadableMessage);
+    }
+    if (maxBytes != null && bytes.length > maxBytes) {
+      throw FilePickerWithBytesException(tooLargeMessage);
     }
     return PickedFileWithBytes(bytes: bytes, fileName: file.name);
   } on MissingPluginException catch (error, stackTrace) {

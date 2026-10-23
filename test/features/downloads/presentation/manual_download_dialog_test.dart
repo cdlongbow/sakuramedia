@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,7 @@ import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
 import 'package:sakuramedia/features/downloads/presentation/manual_download_dialog.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 import '../../../support/test_api_bundle.dart';
 
@@ -402,6 +405,52 @@ void main() {
     expect(find.text('该资源已有下载任务且已进入导入流程'), findsOneWidget);
   });
 
+  testWidgets('提交中不能用关闭按钮或遮罩关闭弹窗', (tester) async {
+    final bundle = await _openDialog(tester);
+    await tester.tap(find.byKey(const Key('manual-download-kind-video')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('manual-download-magnet-field')),
+      'magnet:?xt=urn:btih:abc',
+    );
+    final gate = Completer<void>();
+    bundle.adapter.enqueueResponder(
+      method: 'POST',
+      path: '/download-requests/manual',
+      responder: (options, body) async {
+        await gate.future;
+        return ResponseBody.fromString(
+          jsonEncode(_manualTaskJson()),
+          201,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        );
+      },
+    );
+
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pump();
+    final closeButton = tester.widget<AppInteractiveSurface>(
+      find.byKey(const Key('manual-download-close-button')),
+    );
+    expect(closeButton.enabled, isFalse);
+
+    await tester.tap(find.byKey(const Key('manual-download-close-button')));
+    await tester.pump();
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+
+    // 点遮罩同样不能关闭：PopScope 会拦住 maybePop。
+    await tester.tapAt(const Offset(8, 8));
+    await tester.pump();
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('manual-download-modal')), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+  });
+
   testWidgets('opens as bottom drawer on mobile without overflow', (
     tester,
   ) async {
@@ -449,16 +498,18 @@ void main() {
     // PornBox 不需要番号解析，直接验证文件大小门禁。
     await tester.tap(find.byKey(const Key('manual-download-kind-video')));
     await tester.pumpAndSettle();
-    picker.selectedFile = _SelectedFile(
+    final oversized = _SelectedFile(
       name: 'big.torrent',
       bytes: Uint8List(DownloadsApi.maxManualTorrentBytes + 1),
     );
+    picker.selectedFile = oversized;
 
     await tester.tap(
       find.byKey(const Key('manual-download-pick-torrent-button')),
     );
     await tester.pumpAndSettle();
     expect(find.text('种子文件不能超过 10 MB'), findsOneWidget);
+    expect(oversized.readCount, 0, reason: '超限文件不应被整体读入内存');
 
     await tester.tap(find.byKey(const Key('manual-download-submit-button')));
     await tester.pumpAndSettle();
@@ -683,8 +734,17 @@ final class _SelectedFile extends PlatformFile {
 
   final Uint8List? bytes;
 
+  int readCount = 0;
+
+  @override
+  int? lengthSync() => bytes?.length;
+
+  @override
+  Future<int?> length() async => bytes?.length;
+
   @override
   Future<Uint8List> readAsBytes() async {
+    readCount++;
     if (bytes == null) throw StateError('Cannot read selected file');
     return bytes!;
   }

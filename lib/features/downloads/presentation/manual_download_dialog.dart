@@ -21,11 +21,13 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_single_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_picker_field.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_switch.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
@@ -59,6 +61,11 @@ Future<ManualDownloadResult?> showManualDownloadDialog(
     modalKey: const Key('manual-download-modal'),
     desktopWidth: hostContext.appLayoutTokens.dialogWidthMd,
     mobileHeightFactor: 0.9,
+    // 表单在请求期间不能被 X / 下拉 / 点遮罩关掉；关闭入口在内容区，由
+    // _isSubmitting 控制。遮罩仍由内部 PopScope 兜底。
+    enableDrag: false,
+    showDrawerHandle: false,
+    showDesktopCloseButton: false,
     builder: (_) => _ManualDownloadDialog(hostContext: hostContext),
   );
 }
@@ -431,6 +438,8 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       final picked = await pickFileWithBytes(
         type: isMobile ? FileType.any : FileType.custom,
         allowedExtensions: isMobile ? null : const <String>['torrent'],
+        maxBytes: DownloadsApi.maxManualTorrentBytes,
+        tooLargeMessage: '种子文件不能超过 10 MB',
         unreadableMessage: '无法读取所选种子文件，请换一个文件再试',
         pickerUnavailableMessage: '文件选择器尚未加载，请完整重启应用后再试',
         openFailureMessage: '打开文件选择器失败，请稍后再试',
@@ -586,23 +595,44 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '手动添加下载',
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s16,
-                weight: AppTextWeight.semibold,
-                tone: AppTextTone.primary,
-              ),
-            ),
-            SizedBox(height: spacing.xs),
-            Text(
-              '粘贴磁力链接或上传 .torrent 文件，提交到下载器。',
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                tone: AppTextTone.secondary,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '手动添加下载',
+                        style: resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s16,
+                          weight: AppTextWeight.semibold,
+                          tone: AppTextTone.primary,
+                        ),
+                      ),
+                      SizedBox(height: spacing.xs),
+                      Text(
+                        '粘贴磁力链接或上传 .torrent 文件，提交到下载器。',
+                        style: resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s12,
+                          tone: AppTextTone.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                AppIconButton(
+                  key: const Key('manual-download-close-button'),
+                  tooltip: '关闭',
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
             ),
             SizedBox(height: spacing.lg),
             Flexible(
@@ -707,8 +737,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                       else
                         _VideoCollectionField(
                           collectionId: _collectionId,
-                          onTap: _isSubmitting ? null : _pickCollection,
-                          onCreate: _isSubmitting ? null : _createCollection,
+                          onTap: _pickCollection,
+                          onCreate: _createCollection,
+                          enabled: !_isSubmitting,
                         ),
                       SizedBox(height: spacing.md),
                       AppTextField(
@@ -724,9 +755,10 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                       _buildDeleteSourceRow(context),
                       if (_submitError != null) ...[
                         SizedBox(height: spacing.md),
-                        _InlineErrorPanel(
+                        AppInlineErrorBanner(
                           key: const Key('manual-download-submit-error'),
                           message: _submitError!,
+                          tone: AppInlineErrorTone.error,
                         ),
                       ],
                     ],
@@ -1040,9 +1072,10 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       case _MovieResolutionPhase.failed:
         return Padding(
           padding: EdgeInsets.only(top: spacing.sm),
-          child: _InlineErrorPanel(
+          child: AppInlineErrorBanner(
             key: const Key('manual-download-movie-resolution-error'),
             message: resolution.message ?? '番号查询失败',
+            tone: AppInlineErrorTone.error,
           ),
         );
       case _MovieResolutionPhase.resolved:
@@ -1056,45 +1089,6 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
           ),
         );
     }
-  }
-}
-
-class _InlineErrorPanel extends StatelessWidget {
-  const _InlineErrorPanel({super.key, required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Container(
-      padding: EdgeInsets.all(spacing.md),
-      decoration: BoxDecoration(
-        color: context.appColors.errorSurface,
-        borderRadius: context.appRadius.mdBorder,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            size: context.appComponentTokens.iconSizeMd,
-            color: context.appTextPalette.error,
-          ),
-          SizedBox(width: spacing.sm),
-          Expanded(
-            child: Text(
-              message,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                tone: AppTextTone.error,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1217,11 +1211,13 @@ class _VideoCollectionField extends ConsumerWidget {
     required this.collectionId,
     required this.onTap,
     required this.onCreate,
+    required this.enabled,
   });
 
   final int? collectionId;
-  final VoidCallback? onTap;
-  final VoidCallback? onCreate;
+  final VoidCallback onTap;
+  final VoidCallback onCreate;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1237,98 +1233,13 @@ class _VideoCollectionField extends ConsumerWidget {
         }
       }
     }
-    return _CollectionPickerField(
+    return VideoCollectionPickerField(
       valueLabel: name,
       onTap: onTap,
       onCreate: onCreate,
-    );
-  }
-}
-
-class _CollectionPickerField extends StatelessWidget {
-  const _CollectionPickerField({
-    required this.valueLabel,
-    required this.onTap,
-    required this.onCreate,
-  });
-
-  final String? valueLabel;
-  final VoidCallback? onTap;
-  final VoidCallback? onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final formTokens = context.appFormTokens;
-    final label = valueLabel?.trim() ?? '';
-    final enabled = onTap != null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              '加入合集（可选）',
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                tone: AppTextTone.secondary,
-              ),
-            ),
-            const Spacer(),
-            AppTextButton(
-              key: const Key('manual-download-create-collection-button'),
-              label: '新建合集',
-              size: AppTextButtonSize.small,
-              onPressed: onCreate,
-            ),
-          ],
-        ),
-        SizedBox(height: formTokens.labelGap),
-        MouseRegion(
-          cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-          child: GestureDetector(
-            key: const Key('manual-download-collection-field'),
-            onTap: onTap,
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                horizontal: formTokens.fieldHorizontalPadding,
-                vertical: formTokens.fieldVerticalPadding,
-              ),
-              decoration: BoxDecoration(
-                color: colors.surfaceMuted,
-                borderRadius: context.appRadius.smBorder,
-                border: Border.all(color: colors.borderSubtle),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label.isEmpty ? '不加入合集' : label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        tone: label.isEmpty
-                            ? AppTextTone.muted
-                            : AppTextTone.primary,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: context.appSpacing.sm),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: context.appComponentTokens.iconSizeSm,
-                    color: context.appTextPalette.secondary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      enabled: enabled,
+      fieldKey: const Key('manual-download-collection-field'),
+      createButtonKey: const Key('manual-download-create-collection-button'),
     );
   }
 }

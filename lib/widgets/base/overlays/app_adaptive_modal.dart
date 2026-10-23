@@ -68,6 +68,7 @@ Future<T?> showAppAdaptiveModal<T>({
   double? mobileMaxHeightFactor,
   bool barrierDismissible = true,
   bool enableDrag = true,
+  bool showDrawerHandle = true,
   bool showDesktopCloseButton = true,
   AppAdaptiveModalVariant variant = AppAdaptiveModalVariant.auto,
 }) {
@@ -80,6 +81,7 @@ Future<T?> showAppAdaptiveModal<T>({
       maxHeightFactor: mobileMaxHeightFactor,
       enableDrag: enableDrag,
       isDismissible: barrierDismissible,
+      showHandle: showDrawerHandle,
       builder: (drawerContext) => AppAdaptiveModalShellScope(
         isDrawer: true,
         child: builder(drawerContext),

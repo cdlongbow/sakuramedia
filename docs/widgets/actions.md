@@ -10,13 +10,19 @@
 
 路径：`lib/widgets/base/actions/app_text_button.dart`
 
-低强调文字操作，支持背景样式、强调色和尺寸。用于次要操作、筛选清除和卡片内联动作。选中态由 `selectedStyle` 区分：默认 `tinted`（主色文字 + 淡主色底，筛选弹层里的 chip）；页面内联的排序/切换传 `plain`（主色文字 + 加粗，无底色）。
+低强调文字操作，支持背景样式、强调色和尺寸。用于次要操作、筛选清除和卡片内联动作。选中态由 `selectedStyle` 区分：默认 `tinted`（主色文字 + 淡主色底，筛选弹层里的 chip）；页面内联的排序/切换传 `plain`（主色文字 + 加粗，无底色）。异步操作传 `isLoading: true`：沿用正常态配色、图标位换转圈，并自动禁用点击。
 
 ## `AppIconButton`
 
 路径：`lib/widgets/base/actions/app_icon_button.dart`
 
 图标操作按钮，支持 `mini`、`compact`、`regular` 尺寸。必须提供可理解的 tooltip 或等价语义。
+
+## `AppGlassIconButton`
+
+路径：`lib/widgets/base/actions/app_glass_icon_button.dart`
+
+玻璃材质的圆形图标按钮，统一 `chrome` 档 [AppGlassSurface](layout-shell.md) 容器。用于沉浸/媒体内容上的返回键等需要浮在封面上的单图标操作；尺寸、图标大小和颜色由调用方按场景传入。
 
 ## `AppInteractiveSurface`
 

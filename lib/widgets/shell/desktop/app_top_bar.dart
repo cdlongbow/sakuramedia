@@ -10,9 +10,8 @@ import 'package:sakuramedia/features/status/presentation/providers/server_capabi
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_glass_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
-import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
@@ -174,33 +173,18 @@ class AppTopBar extends ConsumerWidget {
     final spacing = context.appSpacing;
     const leftInset = AppPageInsets.desktop;
     const rightInset = AppPageInsets.desktop;
-    final backButtonSize = context.appComponentTokens.buttonHeightSm;
 
     return Row(
       children: [
         SizedBox(width: isSidebarCollapsed ? collapsedLeading : leftInset),
         if (config.isBackEnabled)
-          Tooltip(
-            message: '返回',
-            child: AppInteractiveSurface(
-              key: const Key('topbar-back-button'),
-              onTap: () => _handleBack(context),
-              semanticLabel: '返回',
-              child: AppGlassSurface(
-                tone: AppGlassTone.chrome,
-                borderRadius: context.appRadius.pillBorder,
-                child: SizedBox.square(
-                  dimension: backButtonSize,
-                  child: Center(
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: context.appComponentTokens.iconSizeXs,
-                      color: context.appTextPalette.onMedia,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          AppGlassIconButton(
+            key: const Key('topbar-back-button'),
+            tooltip: '返回',
+            semanticLabel: '返回',
+            onPressed: () => _handleBack(context),
+            icon: Icons.arrow_back_ios_new_rounded,
+            iconSize: context.appComponentTokens.iconSizeXs,
           ),
         Expanded(child: AppWindowDragArea(child: const SizedBox.expand())),
         if (!hideActions) ...[

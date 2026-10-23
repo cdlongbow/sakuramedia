@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_inline_spinner.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 
 enum AppTextButtonSize { medium, small, xSmall, xxSmall, xxxSmall }
@@ -30,6 +31,7 @@ class AppTextButton extends StatelessWidget {
     this.labelKey,
     this.size = AppTextButtonSize.medium,
     this.isSelected = false,
+    this.isLoading = false,
     this.selectedStyle = AppTextButtonSelectedStyle.tinted,
     this.emphasis = AppTextButtonEmphasis.normal,
     this.backgroundStyle = AppTextButtonBackgroundStyle.transparent,
@@ -41,11 +43,18 @@ class AppTextButton extends StatelessWidget {
   final Key? labelKey;
   final AppTextButtonSize size;
   final bool isSelected;
+
+  /// 忙碌态：不可点击，但沿用正常态配色，并把图标位换成转圈。
+  final bool isLoading;
+
   final AppTextButtonSelectedStyle selectedStyle;
   final AppTextButtonEmphasis emphasis;
   final AppTextButtonBackgroundStyle backgroundStyle;
 
-  bool get _isEnabled => onPressed != null;
+  bool get _isEnabled => onPressed != null && !isLoading;
+
+  /// 加载中沿用正常态配色：内联强调按钮不应在等待时看起来像禁用。
+  bool get _usesActiveStyle => _isEnabled || isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +122,7 @@ class AppTextButton extends StatelessWidget {
     ).copyWith(height: 1, leadingDistribution: TextLeadingDistribution.even);
 
     return Opacity(
-      opacity: _isEnabled ? 1 : 0.56,
+      opacity: _usesActiveStyle ? 1 : 0.56,
       child: AppInteractiveSurface(
         enabled: _isEnabled,
         onTap: onPressed,
@@ -122,7 +131,7 @@ class AppTextButton extends StatelessWidget {
           height: height,
           padding: EdgeInsets.symmetric(horizontal: horizontal),
           decoration: BoxDecoration(
-            color: _isEnabled
+            color: _usesActiveStyle
                 ? backgroundColor
                 : disabledColor.withValues(alpha: 0.32),
             borderRadius: borderRadius,
@@ -130,22 +139,32 @@ class AppTextButton extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null)
+              if (isLoading)
+                SizedBox(
+                  width: iconSize,
+                  height: iconSize,
+                  child: AppInlineSpinner(color: foregroundColor),
+                )
+              else if (icon != null)
                 IconTheme(
                   data: IconThemeData(
                     size: iconSize,
-                    color: _isEnabled ? foregroundColor : colors.borderStrong,
+                    color: _usesActiveStyle
+                        ? foregroundColor
+                        : colors.borderStrong,
                   ),
                   child: icon!,
                 ),
-              if (icon != null) SizedBox(width: gap),
+              if (isLoading || icon != null) SizedBox(width: gap),
               Flexible(
                 child: Text(
                   key: labelKey,
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: labelStyle.copyWith(
-                    color: _isEnabled ? foregroundColor : colors.borderStrong,
+                    color: _usesActiveStyle
+                        ? foregroundColor
+                        : colors.borderStrong,
                   ),
                 ),
               ),
@@ -154,7 +173,9 @@ class AppTextButton extends StatelessWidget {
                 IconTheme(
                   data: IconThemeData(
                     size: iconSize,
-                    color: _isEnabled ? foregroundColor : colors.borderStrong,
+                    color: _usesActiveStyle
+                        ? foregroundColor
+                        : colors.borderStrong,
                   ),
                   child: trailingIcon!,
                 ),

@@ -675,16 +675,30 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                                   unawaited(_resolveMovieNumber()),
                               onChanged: _onMovieNumberChanged,
                               validator: _validateMovieNumber,
+                              // 紧凑按钮后缀：保留 tightSuffix 以维持 32/36 的
+                              // token 高度，不被默认 48px 后缀最小约束拉伸；
+                              // 左右留白与输入文字、边框拉开距离。
                               tightSuffix: true,
-                              suffix: AppTextButton(
-                                key: const Key(
-                                  'manual-download-movie-number-query-button',
+                              suffix: Padding(
+                                padding: EdgeInsetsDirectional.only(
+                                  start: spacing.xs,
+                                  end: spacing.sm,
                                 ),
-                                label: '查询',
-                                size: AppTextButtonSize.xSmall,
-                                onPressed: _canQueryMovieNumber
-                                    ? () => unawaited(_resolveMovieNumber())
-                                    : null,
+                                child: AppTextButton(
+                                  key: const Key(
+                                    'manual-download-movie-number-query-button',
+                                  ),
+                                  label: _movieResolution.isResolving
+                                      ? '查询中'
+                                      : '查询',
+                                  icon: const Icon(Icons.search_rounded),
+                                  size: AppTextButtonSize.small,
+                                  emphasis: AppTextButtonEmphasis.accent,
+                                  isLoading: _movieResolution.isResolving,
+                                  onPressed: _canQueryMovieNumber
+                                      ? () => unawaited(_resolveMovieNumber())
+                                      : null,
+                                ),
                               ),
                             ),
                             _buildMovieResolutionStatus(context),

@@ -1,3 +1,4 @@
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
@@ -230,5 +231,47 @@ void main() {
           .first,
     );
     expect(iconTheme.data.size, sakuraThemeData.appComponentTokens.iconSizeSm);
+  });
+
+  testWidgets('app text button loading keeps accent style and blocks taps', (
+    WidgetTester tester,
+  ) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: AppTextButton(
+            label: '查询中',
+            icon: const Icon(Icons.search_rounded),
+            size: AppTextButtonSize.small,
+            emphasis: AppTextButtonEmphasis.accent,
+            isLoading: true,
+            onPressed: () => taps++,
+          ),
+        ),
+      ),
+    );
+
+    final container = tester.widget<AnimatedContainer>(
+      find.byType(AnimatedContainer),
+    );
+    expect(
+      (container.decoration! as BoxDecoration).color,
+      sakuraThemeData.colorScheme.primary.withValues(alpha: 0.08),
+    );
+    expect(find.byIcon(Icons.search_rounded), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CircularProgressIndicator ||
+            widget is CupertinoActivityIndicator,
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byType(AppTextButton));
+    await tester.pump();
+    expect(taps, 0);
   });
 }

@@ -1,0 +1,112 @@
+import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+
+/// 「加入合集」只读选择条：外观对齐 `AppSelectField`，点击打开可搜索单选弹层。
+///
+/// 下载手动添加与视频导入共用。名称由调用方解析后通过 [valueLabel] 传入，
+/// 本组件不订阅 provider，避免两个 feature 各自复制一套 provider 装配。
+class VideoCollectionPickerField extends StatelessWidget {
+  const VideoCollectionPickerField({
+    super.key,
+    required this.valueLabel,
+    required this.onTap,
+    this.onCreate,
+    this.enabled = true,
+    this.fieldKey,
+    this.createButtonKey,
+  });
+
+  /// 已选合集名；null/空显示「不加入合集」。
+  final String? valueLabel;
+
+  final VoidCallback onTap;
+
+  /// 新建合集入口；null 时不渲染按钮。
+  final VoidCallback? onCreate;
+
+  final bool enabled;
+
+  /// 触发条的测试 Key。
+  final Key? fieldKey;
+
+  /// 「新建合集」按钮的测试 Key。
+  final Key? createButtonKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final formTokens = context.appFormTokens;
+    final label = valueLabel?.trim() ?? '';
+    final canCreate = onCreate != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '加入合集（可选）',
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s12,
+                tone: AppTextTone.secondary,
+              ),
+            ),
+            const Spacer(),
+            if (canCreate)
+              AppTextButton(
+                key: createButtonKey,
+                label: '新建合集',
+                size: AppTextButtonSize.small,
+                onPressed: enabled ? onCreate : null,
+              ),
+          ],
+        ),
+        SizedBox(height: formTokens.labelGap),
+        MouseRegion(
+          cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          child: GestureDetector(
+            key: fieldKey,
+            onTap: enabled ? onTap : null,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: formTokens.fieldHorizontalPadding,
+                vertical: formTokens.fieldVerticalPadding,
+              ),
+              decoration: BoxDecoration(
+                color: colors.surfaceMuted,
+                borderRadius: context.appRadius.smBorder,
+                border: Border.all(color: colors.borderSubtle),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label.isEmpty ? '不加入合集' : label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s14,
+                        tone: label.isEmpty
+                            ? AppTextTone.muted
+                            : AppTextTone.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: context.appSpacing.sm),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: context.appComponentTokens.iconSizeSm,
+                    color: context.appTextPalette.secondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

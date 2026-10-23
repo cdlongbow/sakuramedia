@@ -7,9 +7,9 @@ import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_single_dialog.dart';
+import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_picker_field.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_import_source_picker.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_library_selector_field.dart';
@@ -220,92 +220,12 @@ class _VideoImportDialogState extends ConsumerState<VideoImportDialog> {
         }
       }
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              '加入合集（可选）',
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                tone: AppTextTone.secondary,
-              ),
-            ),
-            const Spacer(),
-            AppTextButton(
-              key: const Key('video-import-create-collection-button'),
-              label: '新建合集',
-              size: AppTextButtonSize.small,
-              onPressed: _createCollection,
-            ),
-          ],
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        _CollectionPickerField(
-          valueLabel: selectedName,
-          onTap: _pickCollection,
-        ),
-      ],
-    );
-  }
-}
-
-/// 只读合集选择触发条：外观对齐 `AppSelectField`，点击打开可搜索单选弹层。
-class _CollectionPickerField extends StatelessWidget {
-  const _CollectionPickerField({required this.valueLabel, required this.onTap});
-
-  final String? valueLabel;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final formTokens = context.appFormTokens;
-    final label = valueLabel?.trim() ?? '';
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        key: const Key('video-import-collection-field'),
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(
-            horizontal: formTokens.fieldHorizontalPadding,
-            vertical: formTokens.fieldVerticalPadding,
-          ),
-          decoration: BoxDecoration(
-            color: colors.surfaceMuted,
-            borderRadius: context.appRadius.smBorder,
-            border: Border.all(color: colors.borderSubtle),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label.isEmpty ? '不加入合集' : label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s14,
-                    tone: label.isEmpty
-                        ? AppTextTone.muted
-                        : AppTextTone.primary,
-                  ),
-                ),
-              ),
-              SizedBox(width: context.appSpacing.sm),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: context.appComponentTokens.iconSizeSm,
-                color: context.appTextPalette.secondary,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return VideoCollectionPickerField(
+      valueLabel: selectedName,
+      onTap: _pickCollection,
+      onCreate: _createCollection,
+      fieldKey: const Key('video-import-collection-field'),
+      createButtonKey: const Key('video-import-create-collection-button'),
     );
   }
 }

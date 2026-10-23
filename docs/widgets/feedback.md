@@ -49,10 +49,18 @@
 
 骨架只描述布局轮廓：占位数据是 `BoneMock` 文案而非真实业务数据；首屏骨架必须与数据到位后的布局同形，避免列表整片跳变。
 
+## 胶囊和徽章
+
+- `AppPill`：`lib/widgets/base/layout/cards/app_pill.dart`，纯展示的胶囊/徽章容器。统一 tone（neutral / muted / primary / info / warning / error / success / selected）、尺寸（compact / regular / prominent）、圆角、内边距和文字层级；业务侧不要再写 `Container + BoxDecoration + Border.all`。需要多段文字或图标时用 `AppPill.custom`。
+- `AppPillButton`：同一文件的点击包装，内部走 `AppInteractiveSurface`，并补 button / selected 语义。
+- `AppBadge`：`app_badge.dart`，短状态/计数徽章；API 保持 `label + tone + size`，渲染由 `AppPill` 承载。
+- `AppStatusChip`：`app_status_chip.dart`，状态标签；业务只提供 `AppStatusChipPalette`（tone + icon），不要在自己那边配背景色/前景色。
+- `AppMediaBadge`：`lib/widgets/base/layout/glass/app_media_badge.dart`，压在封面/视频上的玻璃角标；4K/8K、热度、排名共用。
+- 选择规则：只读状态用 `AppBadge` / `AppStatusChip`，可点标签用 `AppPillButton`，媒体图上的角标用 `AppMediaBadge`；纯文字说明不要套胶囊。
+
 ## 确认和状态
 
 - `showAppConfirmDialog`：路径 `app_confirm_dialog.dart`，桌面/移动自适应确认弹窗；破坏性动作传 danger 语义。
-- `AppStatusChip`：路径 `app_status_chip.dart`，展示有限集合的状态标签。
 
 异步确认动作应使用组件提供的 loading、取消禁用和错误反馈；API 请求仍由调用方或 Provider 负责。
 

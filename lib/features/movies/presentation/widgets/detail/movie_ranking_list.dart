@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_pill.dart';
 
 /// 影片详情「榜单」区块：每条上榜记录一枚紧凑的荣誉徽章（奖杯 + 名次 + 榜单 · 周期），
 /// 徽章按流式排列，不占整行。
@@ -30,38 +31,21 @@ class _MovieRankingChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    final tokens = context.appComponentTokens;
     final label = [
       ranking.boardName.trim(),
       ranking.periodLabel.trim(),
     ].where((part) => part.isNotEmpty).join(' · ');
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.movieDetailPillHorizontalPadding,
-        vertical: tokens.movieDetailPillVerticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: colors.warningSurface,
-        borderRadius: context.appRadius.xsBorder,
-        border: Border.all(
-          color: resolveAppTextToneColor(
-            context,
-            AppTextTone.warning,
-          ).withValues(alpha: 0.24),
-        ),
+    return AppPill.custom(
+      tone: AppPillTone.warning,
+      size: AppPillSize.prominent,
+      leading: Icon(
+        Icons.emoji_events_rounded,
+        color: context.appColors.movieDetailScoreIcon,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.emoji_events_rounded,
-            size: tokens.iconSize3xs,
-            color: colors.movieDetailScoreIcon,
-          ),
-          SizedBox(width: spacing.xs),
+        children: <Widget>[
           Text(
             '#${ranking.rank}',
             style: resolveAppTextStyle(
@@ -72,7 +56,7 @@ class _MovieRankingChip extends StatelessWidget {
             ),
           ),
           if (label.isNotEmpty) ...[
-            SizedBox(width: spacing.xs),
+            SizedBox(width: context.appSpacing.xs),
             Flexible(
               child: Text(
                 label,

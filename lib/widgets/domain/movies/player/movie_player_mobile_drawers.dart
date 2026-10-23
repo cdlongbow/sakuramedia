@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
@@ -269,7 +270,8 @@ class _MoviePlayerMobileDrawerSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
-    return MoviePlayerGlassSurface(
+    return AppGlassSurface(
+      tone: AppGlassTone.overlay,
       width: width ?? overlayTokens.playerDrawerWidth,
       height: double.infinity,
       borderRadius: _moviePlayerDrawerBorderRadius(overlayTokens),
@@ -349,7 +351,8 @@ class _MoviePlayerInfoSideDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
-    return MoviePlayerGlassSurface(
+    return AppGlassSurface(
+      tone: AppGlassTone.overlay,
       width: overlayTokens.playerInfoDrawerWidth,
       height: double.infinity,
       borderRadius: _moviePlayerDrawerBorderRadius(overlayTokens),

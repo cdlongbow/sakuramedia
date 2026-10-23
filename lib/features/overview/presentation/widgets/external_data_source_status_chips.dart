@@ -30,7 +30,7 @@ class ExternalDataSourceStatusChips extends StatelessWidget {
         AppStatusChip(
           key: Key('$keyPrefix-external-data-source-javdb'),
           label: 'JavDB',
-          palette: _resolvePalette(context, javdbHealthy),
+          palette: _resolvePalette(javdbHealthy),
           isBusy: isTesting,
           dense: true,
         ),
@@ -38,12 +38,12 @@ class ExternalDataSourceStatusChips extends StatelessWidget {
     );
   }
 
-  AppStatusChipPalette _resolvePalette(BuildContext context, bool? healthy) {
+  AppStatusChipPalette _resolvePalette(bool? healthy) {
     if (healthy == null) {
-      return AppStatusChipPalette.neutral(context);
+      return AppStatusChipPalette.neutral();
     }
     return healthy
-        ? AppStatusChipPalette.success(context)
-        : AppStatusChipPalette.error(context);
+        ? AppStatusChipPalette.success()
+        : AppStatusChipPalette.error();
   }
 }

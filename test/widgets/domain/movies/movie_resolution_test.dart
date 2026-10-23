@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranked_movie_list_item_dto.dart';
@@ -118,6 +119,15 @@ void main() {
               expect(subscription.overlaps(heat), isFalse);
               expect(heat.left, subscription.left);
               expect(heat.top, greaterThan(quality.bottom));
+              // 固定宽度的玻璃角标不能把 4K/8K 文本挤成省略号。
+              expect(
+                tester
+                    .renderObject<RenderParagraph>(
+                      find.text(width >= 7680 ? '8K' : '4K'),
+                    )
+                    .didExceedMaxLines,
+                isFalse,
+              );
             }
             // 清晰度蕴含可播放：4K/8K 卡不再重复显示可播放标。
             expect(

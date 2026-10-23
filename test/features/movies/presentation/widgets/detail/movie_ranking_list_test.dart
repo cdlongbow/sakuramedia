@@ -40,7 +40,7 @@ void main() {
     expect(find.text('TOP250 · 总榜'), findsOneWidget);
     expect(find.text('#40'), findsOneWidget);
     expect(find.text('#18'), findsOneWidget);
-    // 每条上榜记录都用同一套荣誉徽章（奖杯 + 奶油金底 + 标签同款圆角）。
+    // 每条上榜记录都用同一套荣誉徽章（奖杯 + 奶油金底 + 药丸圆角）。
     expect(find.byIcon(Icons.emoji_events_rounded), findsNWidgets(2));
     final container = tester.widget<Container>(
       find
@@ -49,7 +49,7 @@ void main() {
     );
     final decoration = container.decoration! as BoxDecoration;
     expect(decoration.color, AppColors.defaults().warningSurface);
-    expect(decoration.borderRadius, AppRadius.defaults().xsBorder);
+    expect(decoration.borderRadius, AppRadius.defaults().pillBorder);
     expect(tester.takeException(), isNull);
   });
 

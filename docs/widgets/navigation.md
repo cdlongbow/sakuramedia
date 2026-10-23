@@ -6,6 +6,12 @@
 
 统一桌面、紧凑和移动顶部 Tab 的样式与选中态。Tab 的数据和切换行为由页面或路由负责。
 
+## `AppSegmentedControl`
+
+路径：`lib/widgets/base/forms/app_segmented_control.dart`
+
+单选分段控件：玻璃凹槽 track + 实色选中 pill，带选中动画和 button / selected 语义。选项少、需要一眼看到全部时用；放不下时传 `scrollable`。它是页面内的筛选/切换控件，不要拿它替代页面级 `AppTabBar`。
+
 ## `AppListHeader`
 
 路径：`app_list_header.dart`

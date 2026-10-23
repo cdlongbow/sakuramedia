@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_pill.dart';
 
 /// 视频「所属合集」的可点击胶囊组：
 ///
@@ -56,53 +56,15 @@ class _VideoCollectionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    final tokens = context.appComponentTokens;
-    final textPalette = context.appTextPalette;
-
     final label = collection.name.trim().isEmpty ? '未命名合集' : collection.name;
 
-    return Material(
-      color: colors.surfaceMuted,
-      shape: RoundedRectangleBorder(
-        borderRadius: context.appRadius.pillBorder,
-        side: BorderSide(color: colors.borderSubtle),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: AppInteractiveSurface(
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.folder_outlined,
-                size: tokens.iconSize3xs,
-                color: textPalette.secondary,
-              ),
-              SizedBox(width: spacing.xs),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.regular,
-                    tone: AppTextTone.secondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AppPillButton(
+      label: label,
+      tone: AppPillTone.neutral,
+      size: AppPillSize.prominent,
+      leading: const Icon(Icons.folder_outlined),
+      onTap: onTap,
+      semanticLabel: '查看合集「$label」',
     );
   }
 }

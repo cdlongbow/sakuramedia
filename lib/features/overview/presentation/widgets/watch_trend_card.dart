@@ -7,8 +7,8 @@ import 'package:sakuramedia/features/overview/presentation/widgets/overview_card
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/forms/app_segmented_control.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// 观看趋势卡：时间窗口分段 + 自绘柱状图。
@@ -39,10 +39,19 @@ class WatchTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selector = _RangeSelector(
-      range: range,
-      narrow: compactSelector,
+    final selector = AppSegmentedControl<WatchTrendRange>(
+      key: const Key('overview-watch-trend-range-selector'),
+      items: <AppSegmentedItem<WatchTrendRange>>[
+        for (final item in _visibleRanges)
+          AppSegmentedItem<WatchTrendRange>(
+            key: Key('overview-watch-trend-range-${item.apiValue}'),
+            value: item,
+            label: item.shortLabel,
+          ),
+      ],
+      selected: range,
       onChanged: onRangeChanged,
+      scrollable: true,
     );
 
     return AppContentCard(
@@ -61,6 +70,21 @@ class WatchTrendCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<WatchTrendRange> get _visibleRanges {
+    if (!compactSelector) {
+      return WatchTrendRange.values;
+    }
+    final base = <WatchTrendRange>[
+      WatchTrendRange.last7Days,
+      WatchTrendRange.last30Days,
+      WatchTrendRange.lastYear,
+    ];
+    if (!base.contains(range)) {
+      base.add(range);
+    }
+    return base;
   }
 
   Widget _buildBody(BuildContext context) {
@@ -140,100 +164,6 @@ class WatchTrendCard extends StatelessWidget {
 
 /// 图表 + 轴标签的固定总高：加载骨架、空态、有数据态共用，避免卡片跳动。
 const double _chartAreaHeight = 96;
-
-class _RangeSelector extends StatelessWidget {
-  const _RangeSelector({
-    required this.range,
-    required this.narrow,
-    required this.onChanged,
-  });
-
-  static const double _chipHorizontalPadding = 12;
-  static const double _chipVerticalPadding = 5;
-
-  final WatchTrendRange range;
-  final bool narrow;
-  final ValueChanged<WatchTrendRange> onChanged;
-
-  List<WatchTrendRange> get _ranges {
-    if (!narrow) {
-      return WatchTrendRange.values;
-    }
-    final base = <WatchTrendRange>[
-      WatchTrendRange.last7Days,
-      WatchTrendRange.last30Days,
-      WatchTrendRange.lastYear,
-    ];
-    if (!base.contains(range)) {
-      base.add(range);
-    }
-    return base;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    return Container(
-      padding: EdgeInsets.all(spacing.xs / 2),
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceMuted,
-        borderRadius: context.appRadius.pillBorder,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          for (final item in _ranges)
-            _RangeChip(
-              range: item,
-              isSelected: item == range,
-              onTap: () => onChanged(item),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RangeChip extends StatelessWidget {
-  const _RangeChip({
-    required this.range,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final WatchTrendRange range;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final chip = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: _RangeSelector._chipHorizontalPadding,
-        vertical: _RangeSelector._chipVerticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: isSelected ? context.appColors.surfaceCard : null,
-        borderRadius: context.appRadius.pillBorder,
-      ),
-      child: Text(
-        range.shortLabel,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s12,
-          weight: isSelected ? AppTextWeight.medium : AppTextWeight.regular,
-          tone: isSelected ? AppTextTone.primary : AppTextTone.secondary,
-        ),
-      ),
-    );
-
-    return AppInteractiveSurface(
-      key: Key('overview-watch-trend-range-${range.apiValue}'),
-      onTap: onTap,
-      child: chip,
-    );
-  }
-}
 
 class _TrendBarChart extends StatelessWidget {
   const _TrendBarChart({required this.buckets, required this.range});

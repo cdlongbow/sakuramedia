@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/base/overlays/overlay_entry_rebuild.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_menu_widgets.dart';
 
@@ -354,8 +355,9 @@ class _MoviePlayerSpeedMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final overlayTokens = context.appOverlayTokens;
 
-    return MoviePlayerGlassSurface(
+    return AppGlassSurface(
       key: const Key('movie-player-speed-menu'),
+      tone: AppGlassTone.overlay,
       width: overlayTokens.menuWidthSm,
       padding: EdgeInsets.symmetric(
         vertical: overlayTokens.menuVerticalPadding,

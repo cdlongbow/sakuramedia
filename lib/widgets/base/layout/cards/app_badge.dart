@@ -1,10 +1,13 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_pill.dart';
 
 enum AppBadgeTone { neutral, primary, info, warning, error, success }
 
 enum AppBadgeSize { compact, regular }
 
+/// 静态徽章：短状态/计数文字。
+///
+/// 视觉由 [AppPill] 统一承载；这里只保留业务侧使用的 tone/size API。
 class AppBadge extends StatelessWidget {
   const AppBadge({
     super.key,
@@ -19,49 +22,20 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    final (backgroundColor, foregroundColor) = switch (tone) {
-      AppBadgeTone.neutral => (
-        colors.surfaceMuted,
-        context.appTextPalette.secondary,
-      ),
-      AppBadgeTone.primary => (
-        colors.selectionSurface,
-        context.appTextPalette.accent,
-      ),
-      AppBadgeTone.info => (colors.infoSurface, context.appTextPalette.info),
-      AppBadgeTone.warning => (
-        colors.warningSurface,
-        context.appTextPalette.warning,
-      ),
-      AppBadgeTone.error => (colors.errorSurface, context.appTextPalette.error),
-      AppBadgeTone.success => (
-        colors.successSurface,
-        context.appTextPalette.success,
-      ),
-    };
-    final verticalPadding =
-        size == AppBadgeSize.compact ? spacing.xs / 2 : spacing.xs;
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.sm,
-        vertical: verticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: context.appRadius.pillBorder,
-      ),
-      child: Text(
-        label,
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s10,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.muted,
-        ).copyWith(color: foregroundColor),
-      ),
+    return AppPill(
+      label: label,
+      tone: switch (tone) {
+        AppBadgeTone.neutral => AppPillTone.neutral,
+        AppBadgeTone.primary => AppPillTone.primary,
+        AppBadgeTone.info => AppPillTone.info,
+        AppBadgeTone.warning => AppPillTone.warning,
+        AppBadgeTone.error => AppPillTone.error,
+        AppBadgeTone.success => AppPillTone.success,
+      },
+      size: switch (size) {
+        AppBadgeSize.compact => AppPillSize.compact,
+        AppBadgeSize.regular => AppPillSize.regular,
+      },
     );
   }
 }

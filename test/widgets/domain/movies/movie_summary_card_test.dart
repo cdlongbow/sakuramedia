@@ -10,6 +10,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_media_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
@@ -111,11 +112,10 @@ void main() {
         .where((icon) => icon.icon == Icons.local_fire_department_rounded)
         .single;
     expect(heatIcon.color, AppColors.defaults().movieDetailHeatIcon);
-    final heatBadgeContainer = tester.widget<Container>(
+    final heatBadge = tester.widget<AppMediaBadge>(
       find.byKey(const Key('movie-summary-card-heat-ABC-001')),
     );
-    final heatBadgeDecoration = heatBadgeContainer.decoration as BoxDecoration;
-    expect(heatBadgeDecoration.color, AppColors.defaults().mediaOverlayStrong);
+    expect(heatBadge.label, '42');
 
     await _hoverCard(tester, 'ABC-001');
 

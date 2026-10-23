@@ -58,7 +58,7 @@ class IndexerConnectionTestPanel extends StatelessWidget {
             ),
             AppStatusChip(
               label: _statusLabel,
-              palette: _statusPalette(context),
+              palette: _statusPalette(),
               isBusy: isTesting,
               dense: true,
             ),
@@ -107,27 +107,17 @@ class IndexerConnectionTestPanel extends StatelessWidget {
     );
   }
 
-  AppStatusChipPalette _statusPalette(BuildContext context) {
+  AppStatusChipPalette _statusPalette() {
     if (isTesting) {
-      // 独有的 "radar 检测中" 态：accent 色（选中面），非标 4 态之一，保留就地构造。
-      final colors = context.appColors;
-      return AppStatusChipPalette(
-        background: colors.selectionSurface,
-        borderColor: colors.selectionBorder,
-        tone: AppTextTone.accent,
-        foreground: resolveAppTextToneColor(context, AppTextTone.accent),
-        icon: Icons.radar_rounded,
-      );
+      // 独有的 "radar 检测中" 态：accent 色（选中面），非标 4 态之一。
+      return AppStatusChipPalette.primary(icon: Icons.radar_rounded);
     }
     if (!_hasResult) {
-      return AppStatusChipPalette.neutral(
-        context,
-        icon: Icons.hourglass_empty_rounded,
-      );
+      return AppStatusChipPalette.neutral(icon: Icons.hourglass_empty_rounded);
     }
     return _isHealthy
-        ? AppStatusChipPalette.success(context)
-        : AppStatusChipPalette.error(context);
+        ? AppStatusChipPalette.success()
+        : AppStatusChipPalette.error();
   }
 }
 

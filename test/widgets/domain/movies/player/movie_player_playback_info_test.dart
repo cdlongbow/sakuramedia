@@ -202,30 +202,37 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final surface = Color.alphaBlend(_drawerSurfaceColor(tester), Colors.white);
-    final valueContrast = _contrastRatio(
-      _textColor(tester, 'backend.example.com'),
-      surface,
-    );
-    final labelContrast = _contrastRatio(
-      _textColor(tester, '网关主机'),
-      surface,
-    );
+    final surfaces = _drawerSurfaceColors(
+      tester,
+    ).map((color) => Color.alphaBlend(color, Colors.white)).toList();
+    final valueContrast = surfaces
+        .map(
+          (surface) => _contrastRatio(
+            _textColor(tester, 'backend.example.com'),
+            surface,
+          ),
+        )
+        .reduce(math.min);
+    final labelContrast = surfaces
+        .map((surface) => _contrastRatio(_textColor(tester, '网关主机'), surface))
+        .reduce(math.min);
     expect(valueContrast, greaterThanOrEqualTo(4.5));
     expect(labelContrast, greaterThanOrEqualTo(4.5));
   });
 }
 
-Color _drawerSurfaceColor(WidgetTester tester) {
-  final container = tester.widget<Container>(
-    find
-        .descendant(
-          of: find.byKey(const Key('movie-player-info-side-drawer')),
-          matching: find.byType(Container),
-        )
-        .first,
+List<Color> _drawerSurfaceColors(WidgetTester tester) {
+  final containers = tester.widgetList<Container>(
+    find.descendant(
+      of: find.byKey(const Key('movie-player-info-side-drawer')),
+      matching: find.byType(Container),
+    ),
   );
-  return (container.decoration! as BoxDecoration).color!;
+  final surface = containers.firstWhere((container) {
+    final decoration = container.decoration;
+    return decoration is BoxDecoration && decoration.gradient != null;
+  });
+  return (surface.decoration! as BoxDecoration).gradient!.colors;
 }
 
 Color _textColor(WidgetTester tester, String text) {

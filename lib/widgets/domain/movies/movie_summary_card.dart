@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -10,6 +9,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_cover_card.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_media_badge.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_cover_bottom_shade.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_trigger.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
@@ -405,7 +405,7 @@ class MovieSummaryCard extends StatelessWidget {
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
     final heatWidth =
-        spacing.sm * 2 + tokens.iconSizeXs + spacing.xs + heatText.width + 2;
+        spacing.sm * 2 + tokens.iconSize3xs + spacing.xs + heatText.width + 2;
     heatText.dispose();
     final statusWidth =
         tokens.movieCardStatusBadgeSize +
@@ -462,39 +462,16 @@ class _ResolutionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final componentTokens = context.appComponentTokens;
     final spacing = context.appSpacing;
     return IgnorePointer(
-      child: ClipRRect(
-        borderRadius: context.appRadius.pillBorder,
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: spacing.xs, sigmaY: spacing.xs),
-          child: Container(
-            key: Key('movie-summary-card-resolution-$movieNumber'),
-            width: componentTokens.movieCardStatusBadgeSize + spacing.sm,
-            height: componentTokens.movieCardStatusBadgeSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: colors.mediaOverlayStrong,
-              borderRadius: context.appRadius.pillBorder,
-              border: Border.all(color: colors.mediaOverlayBorder),
-            ),
-            child: Text(
-              movie.maxMediaWidth >= 7680 ? '8K' : '4K',
-              style:
-                  resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s12,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.onMedia,
-                  ).copyWith(
-                    height: 1,
-                    leadingDistribution: TextLeadingDistribution.even,
-                  ),
-            ),
-          ),
-        ),
+      child: AppMediaBadge(
+        key: Key('movie-summary-card-resolution-$movieNumber'),
+        label: movie.maxMediaWidth >= 7680 ? '8K' : '4K',
+        width: componentTokens.movieCardStatusBadgeSize + spacing.sm,
+        height: componentTokens.movieCardStatusBadgeSize,
+        padding: EdgeInsets.zero,
+        size: AppMediaBadgeSize.prominent,
       ),
     );
   }
@@ -509,34 +486,13 @@ class _HeatBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final spacing = context.appSpacing;
-    return Container(
+    return AppMediaBadge(
       key: Key('movie-summary-card-heat-$movieNumber'),
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.sm,
-        vertical: spacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: colors.mediaOverlayStrong,
-        borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: colors.mediaOverlayBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.local_fire_department_rounded,
-            size: context.appComponentTokens.iconSizeXs,
-            color: colors.movieDetailHeatIcon,
-          ),
-          SizedBox(width: spacing.xs),
-          Text(
-            _formatMovieHeat(heat),
-            key: Key('movie-summary-card-heat-text-$movieNumber'),
-            style: _onMediaStyle(context, size: AppTextSize.s10),
-          ),
-        ],
+      labelKey: Key('movie-summary-card-heat-text-$movieNumber'),
+      label: _formatMovieHeat(heat),
+      leading: Icon(
+        Icons.local_fire_department_rounded,
+        color: context.appColors.movieDetailHeatIcon,
       ),
     );
   }
@@ -637,27 +593,9 @@ class _RankBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Container(
+    return AppMediaBadge(
       key: Key('movie-summary-card-rank-$movieNumber'),
-      padding: EdgeInsets.symmetric(
-        horizontal: context.appSpacing.sm,
-        vertical: context.appSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: colors.mediaOverlayStrong,
-        borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: colors.mediaOverlayBorder),
-      ),
-      child: Text(
-        '#$rank',
-        style: resolveAppTextStyle(
-          context,
-          size: AppTextSize.s10,
-          weight: AppTextWeight.regular,
-          tone: AppTextTone.onMedia,
-        ),
-      ),
+      label: '#$rank',
     );
   }
 }

@@ -474,7 +474,8 @@ void main() {
       WidgetTester tester,
     ) async {
       _enqueueMediaLibraries(bundle, libraries: const []);
-      _enqueueBlacklistedMoviesPage(bundle, page: 1);
+      // 首页只有 4 项，确定铺不满视口；第二页补齐 24 项。
+      _enqueueBlacklistedMoviesPage(bundle, page: 1, itemCount: 4);
       _enqueueBlacklistedMoviesPage(bundle, page: 2);
 
       await _pumpPage(tester, bundle, sessionStore: sessionStore);
@@ -2441,13 +2442,17 @@ void _enqueueAdvancedConfig(TestApiBundle bundle) {
 }
 
 /// 屏蔽影片分页响应：每页 24 条、共 48 条（足够滚一屏）。
-void _enqueueBlacklistedMoviesPage(TestApiBundle bundle, {required int page}) {
+void _enqueueBlacklistedMoviesPage(
+  TestApiBundle bundle, {
+  required int page,
+  int itemCount = 24,
+}) {
   bundle.adapter.enqueueJson(
     method: 'GET',
     path: '/movies',
     body: <String, dynamic>{
       'items': <Map<String, dynamic>>[
-        for (var index = 0; index < 24; index++)
+        for (var index = 0; index < itemCount; index++)
           <String, dynamic>{
             'id': (page - 1) * 24 + index + 1,
             'javdb_id': 'javdb-BL-$page-$index',

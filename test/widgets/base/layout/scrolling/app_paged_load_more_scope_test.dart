@@ -195,6 +195,91 @@ void main() {
     expect(calls, 0);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('追加内容后不会用旧 metrics 多翻一页', (tester) async {
+    var calls = 0;
+    late StateSetter rebuild;
+    var itemCount = 1;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              rebuild = setState;
+              return AppPagedLoadMoreScope(
+                canLoadMore: () => true,
+                onLoadMore: () async {
+                  calls++;
+                  if (calls == 1) {
+                    rebuild(() => itemCount = 20);
+                  }
+                },
+                child: ListView.builder(
+                  itemCount: itemCount,
+                  itemExtent: 100,
+                  itemBuilder: (_, __) => const SizedBox(),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(calls, 1, reason: '追加一页已足够铺满视口，不应再预取下一页');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('兄弟级横向滚动不会驱动分页', (tester) async {
+    var calls = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppPagedLoadMoreScope(
+            canLoadMore: () => true,
+            onLoadMore: () async => calls++,
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 80,
+                  child: ListView(
+                    key: const Key('sibling-horizontal-list'),
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (var index = 0; index < 20; index++)
+                        const SizedBox(width: 100, height: 80),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: 30,
+                    itemExtent: 100,
+                    itemBuilder: (_, __) => const SizedBox(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(calls, 0);
+
+    await tester.drag(
+      find.byKey(const Key('sibling-horizontal-list')),
+      const Offset(-2000, 0),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(calls, 0, reason: '横向列表与纵向列表是兄弟，不应触发纵向分页');
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _ScopeHarness extends StatefulWidget {

@@ -41,7 +41,12 @@ class AppPagedLoadMoreScope extends StatefulWidget {
 class _AppPagedLoadMoreScopeState extends State<AppPagedLoadMoreScope> {
   static const double _underfillTolerance = 0.5;
 
-  ScrollMetrics? _metrics;
+  /// 最近一次通知来自哪个纵向滚动视图。
+  ///
+  /// 只记录 context，不缓存 [ScrollMetrics]：`ScrollMetricsNotification` 在布局
+  /// 结束后通过 microtask 派发，而 build 里排的 post-frame callback 会先执行，
+  /// 缓存 metrics 会让 append / 隐藏 Tab 用上一帧的 extentAfter 继续补页。
+  /// 真正需要判定时再回读这个滚动视图的实时 position。
   BuildContext? _metricsContext;
   bool _checkScheduled = false;
   bool _loadInFlight = false;
@@ -57,10 +62,11 @@ class _AppPagedLoadMoreScopeState extends State<AppPagedLoadMoreScope> {
 
     return NotificationListener<ScrollMetricsNotification>(
       onNotification: (notification) {
-        if (notification.depth != 0) {
+        if (notification.depth != 0 ||
+            notification.metrics.axis != Axis.vertical) {
           return false;
         }
-        _recordMetrics(notification.metrics, notification.context);
+        _recordMetricsContext(notification.context);
         if (notification.metrics.extentAfter <= _underfillTolerance) {
           _scheduleCheck();
         }
@@ -68,10 +74,11 @@ class _AppPagedLoadMoreScopeState extends State<AppPagedLoadMoreScope> {
       },
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.depth != 0) {
+          if (notification.depth != 0 ||
+              notification.metrics.axis != Axis.vertical) {
             return false;
           }
-          _recordMetrics(notification.metrics, notification.context);
+          _recordMetricsContext(notification.context);
           if ((notification is ScrollUpdateNotification ||
                   notification is ScrollEndNotification) &&
               notification.metrics.extentAfter <= widget.triggerOffset) {
@@ -84,8 +91,10 @@ class _AppPagedLoadMoreScopeState extends State<AppPagedLoadMoreScope> {
     );
   }
 
-  void _recordMetrics(ScrollMetrics metrics, BuildContext? context) {
-    _metrics = metrics;
+  void _recordMetricsContext(BuildContext? context) {
+    if (context == null || !context.mounted) {
+      return;
+    }
     _metricsContext = context;
   }
 
@@ -106,18 +115,26 @@ class _AppPagedLoadMoreScopeState extends State<AppPagedLoadMoreScope> {
         return;
       }
 
-      final metrics = _metrics;
       final metricsContext = _metricsContext;
-      if (metrics == null ||
-          metricsContext == null ||
-          !metricsContext.mounted) {
+      if (metricsContext == null || !metricsContext.mounted) {
+        return;
+      }
+
+      // 回读实时 position，不能使用通知里的 metrics 快照：本回调可能在本次
+      // layout 产生的 ScrollMetricsNotification 之前执行。
+      final scrollable = metricsContext
+          .findAncestorStateOfType<ScrollableState>();
+      final position = scrollable?.position;
+      if (position == null ||
+          !position.hasContentDimensions ||
+          position.axis != Axis.vertical) {
         return;
       }
 
       final threshold = allowScrollThreshold
           ? widget.triggerOffset
           : _underfillTolerance;
-      if (metrics.extentAfter > threshold || !widget.canLoadMore()) {
+      if (position.extentAfter > threshold || !widget.canLoadMore()) {
         return;
       }
 

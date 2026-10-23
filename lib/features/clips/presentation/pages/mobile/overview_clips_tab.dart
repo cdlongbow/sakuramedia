@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_filter.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_overview_provider.dart';
+import 'package:sakuramedia/features/overview/presentation/providers/mobile_overview_tab_index_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/rename_clip_dialog.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
@@ -118,6 +119,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     final collectionsAsync = ref.watch(clipCollectionsOverviewProvider);
     final clipsState = clipsAsync.value;
     final clips = clipsState?.paged.items ?? const <MediaClipDto>[];
+    // 概览 TabBarView 保活当前 Tab，但不会关闭 TickerMode；隐藏时只看
+    // enabled 阻止自动补页，避免用离开时的旧滚动位置在后台继续翻页。
+    final isActive = ref.watch(mobileOverviewTabIndexProvider) == 1;
 
     return Column(
       children: [
@@ -129,6 +133,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             isLoading: clipsState?.paged.filterUpdate.isLoading ?? false,
             hasPreviousItems: clips.isNotEmpty,
             child: AppPagedLoadMoreScope(
+              enabled: isActive,
               canLoadMore: () =>
                   ref
                       .read(clipsOverviewProvider)

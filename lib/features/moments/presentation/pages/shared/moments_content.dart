@@ -58,6 +58,7 @@ class MomentsContent extends HookConsumerWidget {
     this.previewDrawerKey,
     this.enablePullToRefresh = false,
     this.useMobileFilterDrawer = false,
+    this.enabled = true,
     this.onOpenCollections,
     this.onOpenCollectionDetail,
   });
@@ -80,6 +81,9 @@ class MomentsContent extends HookConsumerWidget {
 
   /// 顶栏筛选入口点开什么：`true` 弹底部抽屉（移动端），`false` 就地展开浮层（桌面端）。
   final bool useMobileFilterDrawer;
+
+  /// 所在 Tab 是否可见；隐藏的 keep-alive Tab 不应继续自动补页。
+  final bool enabled;
 
   final VoidCallback? onOpenCollections;
   final ValueChanged<int>? onOpenCollectionDetail;
@@ -233,20 +237,21 @@ class MomentsContent extends HookConsumerWidget {
       isLoading: paged.filterUpdate.isLoading,
       hasPreviousItems: paged.items.isNotEmpty,
       child: AppPagedLoadMoreScope(
+        enabled: enabled,
         canLoadMore: () =>
             ref.read(momentsProvider).value?.paged.canAutoLoadMore ?? false,
         onLoadMore: () => ref.read(momentsProvider.notifier).loadMore(),
-      child: enablePullToRefresh
-          ? AppAdaptiveRefreshScrollView(
-              onRefresh: () => _handleRefresh(context, ref),
-              controller: scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: <Widget>[sliver],
-            )
-          : CustomScrollView(
-              controller: scrollController,
-              slivers: <Widget>[sliver],
-            ),
+        child: enablePullToRefresh
+            ? AppAdaptiveRefreshScrollView(
+                onRefresh: () => _handleRefresh(context, ref),
+                controller: scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: <Widget>[sliver],
+              )
+            : CustomScrollView(
+                controller: scrollController,
+                slivers: <Widget>[sliver],
+              ),
       ),
     );
     final pageWithSelectionBar = useMobileFilterDrawer && selectionMode.value

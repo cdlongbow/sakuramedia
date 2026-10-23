@@ -1638,6 +1638,10 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
   EdgeInsetsGeometry get bodyPadding => AppPageInsets.compactStandard;
   bool get immersive => false;
 
+  /// 非沉浸子页是否随滚动收起 AppBar。默认全局开启；个别需要常驻的子页
+  /// 覆盖为 false。immersive 子页由 shell 自动忽略。
+  bool get autoHideAppBar => true;
+
   Widget buildSubpage(BuildContext context, GoRouterState state);
 
   @override
@@ -1656,6 +1660,7 @@ abstract class _MobileSubpageRouteData extends GoRouteData {
         currentPath: state.uri.path,
         bodyPadding: bodyPadding,
         immersive: immersive,
+        autoHideAppBar: autoHideAppBar,
         child: buildSubpage(context, state),
       ),
     );

@@ -45,6 +45,7 @@ class AppMobileSubpageShell extends StatefulWidget {
     this.currentPath,
     this.bodyPadding = AppPageInsets.compactStandard,
     this.immersive = false,
+    this.autoHideAppBar = false,
   });
 
   final String title;
@@ -56,6 +57,12 @@ class AppMobileSubpageShell extends StatefulWidget {
   /// 沉浸详情：透明底 + 返回栏悬浮在内容之上（影片详情用）。
   final bool immersive;
 
+  /// 非沉浸子页是否随滚动收起 AppBar：滚离顶部隐藏，回到顶部才恢复。
+  ///
+  /// 移动路由层对所有非沉浸子页传 true；直接使用 shell 时默认 false，
+  /// 需要滚动收起时显式开启。immersive 子页始终忽略该开关。
+  final bool autoHideAppBar;
+
   @override
   State<AppMobileSubpageShell> createState() => _AppMobileSubpageShellState();
 }
@@ -64,10 +71,28 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   /// 子页面报上来的真实标题；为 null 时用路由给的静态标题。
   final ValueNotifier<String?> _titleOverride = ValueNotifier<String?>(null);
 
+  /// autoHideAppBar 子页是否已滚离顶部。
+  bool _appBarHidden = false;
+
+  static const Duration _appBarAnimationDuration = Duration(milliseconds: 180);
+
   @override
   void dispose() {
     _titleOverride.dispose();
     super.dispose();
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    // depth 0：页面自身的主滚动；depth 1：TabBarView / PageView 里的纵向列表
+    // （媒体管理、下载器等 tab 子页）。更深的嵌套滚动不驱动 AppBar。
+    if (notification.depth > 1 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    final hidden = notification.metrics.pixels > 0;
+    if (hidden != _appBarHidden) {
+      setState(() => _appBarHidden = hidden);
+    }
+    return false;
   }
 
   @override
@@ -75,6 +100,44 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
     final router = GoRouter.maybeOf(context);
     final navigator = Navigator.maybeOf(context);
     final immersive = widget.immersive;
+    final autoHideAppBar = widget.autoHideAppBar && !immersive;
+    final appBar = _buildAppBar(context, immersive: immersive);
+    final pageChild = autoHideAppBar
+        ? NotificationListener<ScrollNotification>(
+            onNotification: _handleScrollNotification,
+            child: widget.child,
+          )
+        : widget.child;
+    final body = Padding(
+      key: const Key('mobile-subpage-body-padding'),
+      padding: widget.bodyPadding,
+      child: AppMobileSubpageTitle(notifier: _titleOverride, child: pageChild),
+    );
+    final scaffold = autoHideAppBar
+        ? Scaffold(
+            backgroundColor: context.appColors.surfaceCard,
+            body: Column(
+              children: [
+                AnimatedSize(
+                  duration: _appBarAnimationDuration,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: _appBarHidden
+                      ? const SizedBox(width: double.infinity)
+                      : SizedBox(height: kToolbarHeight, child: appBar),
+                ),
+                Expanded(child: body),
+              ],
+            ),
+          )
+        : Scaffold(
+            backgroundColor: immersive
+                ? Colors.transparent
+                : context.appColors.surfaceCard,
+            extendBodyBehindAppBar: immersive,
+            appBar: appBar,
+            body: body,
+          );
     final content = PopScope<void>(
       canPop: _canPop(router, navigator),
       onPopInvokedWithResult: (didPop, _) {
@@ -107,111 +170,97 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
             //（`AppAdaptiveRefreshScrollView` / `BoxScrollView` 已统一处理），
             // 贴底操作条自带 `SafeArea(top: false)`。新加子页面时别忘了这一条。
             bottom: false,
-            child: Scaffold(
-              backgroundColor: immersive
-                  ? Colors.transparent
-                  : context.appColors.surfaceCard,
-              extendBodyBehindAppBar: immersive,
-              appBar: AppBar(
-                key: const Key('mobile-subpage-topbar'),
-                backgroundColor: immersive
-                    ? Colors.transparent
-                    : context.appColors.surfaceCard,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                flexibleSpace: immersive
-                    ? DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              context.appColors.mediaOverlayStrong.withValues(
-                                alpha: 0.55,
-                              ),
-                              context.appColors.mediaOverlayStrong.withValues(
-                                alpha: 0,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : null,
-                leadingWidth:
-                    context.appComponentTokens.mobileSubpageLeadingWidth,
-                titleSpacing: 0, // 默认 16
-                leading: immersive
-                    ? Center(
-                        child: Tooltip(
-                          message: '返回',
-                          child: AppInteractiveSurface(
-                            key: const Key('mobile-subpage-back-button'),
-                            onTap: () => _handleBack(context),
-                            semanticLabel: '返回',
-                            child: AppGlassSurface(
-                              tone: AppGlassTone.chrome,
-                              borderRadius: context.appRadius.pillBorder,
-                              child: SizedBox.square(
-                                dimension:
-                                    context.appComponentTokens.buttonHeightSm,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.arrow_back_ios_new_rounded,
-                                    size: context.appComponentTokens.iconSizeSm,
-                                    color: context.appTextPalette.onMedia,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    : IconButton(
-                        iconSize: context.appComponentTokens.iconSizeSm,
-                        key: const Key('mobile-subpage-back-button'),
-                        onPressed: () => _handleBack(context),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        tooltip: '返回',
-                      ),
-                title: immersive
-                    // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。
-                    ? null
-                    : ValueListenableBuilder<String?>(
-                        valueListenable: _titleOverride,
-                        builder: (context, override, _) {
-                          final resolved =
-                              (override != null && override.trim().isNotEmpty)
-                              ? override
-                              : widget.title;
-                          return Text(
-                            resolved,
-                            key: const Key('mobile-subpage-title'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: resolveAppTextStyle(
-                              context,
-                              size: AppTextSize.s14,
-                              weight: AppTextWeight.medium,
-                              tone: AppTextTone.primary,
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              body: Padding(
-                key: const Key('mobile-subpage-body-padding'),
-                padding: widget.bodyPadding,
-                child: AppMobileSubpageTitle(
-                  notifier: _titleOverride,
-                  child: widget.child,
-                ),
-              ),
-            ),
+            child: scaffold,
           ),
         ),
       ),
     );
     return content;
+  }
+
+  AppBar _buildAppBar(BuildContext context, {required bool immersive}) {
+    return AppBar(
+      key: const Key('mobile-subpage-topbar'),
+      backgroundColor: immersive
+          ? Colors.transparent
+          : context.appColors.surfaceCard,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      flexibleSpace: immersive
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    context.appColors.mediaOverlayStrong.withValues(
+                      alpha: 0.55,
+                    ),
+                    context.appColors.mediaOverlayStrong.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            )
+          : null,
+      leadingWidth: context.appComponentTokens.mobileSubpageLeadingWidth,
+      titleSpacing: 0, // 默认 16
+      leading: immersive
+          ? Center(
+              child: Tooltip(
+                message: '返回',
+                child: AppInteractiveSurface(
+                  key: const Key('mobile-subpage-back-button'),
+                  onTap: () => _handleBack(context),
+                  semanticLabel: '返回',
+                  child: AppGlassSurface(
+                    tone: AppGlassTone.chrome,
+                    borderRadius: context.appRadius.pillBorder,
+                    child: SizedBox.square(
+                      dimension: context.appComponentTokens.buttonHeightSm,
+                      child: Center(
+                        child: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: context.appComponentTokens.iconSizeSm,
+                          color: context.appTextPalette.onMedia,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : IconButton(
+              iconSize: context.appComponentTokens.iconSizeSm,
+              key: const Key('mobile-subpage-back-button'),
+              onPressed: () => _handleBack(context),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              tooltip: '返回',
+            ),
+      title: immersive
+          // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。
+          ? null
+          : ValueListenableBuilder<String?>(
+              valueListenable: _titleOverride,
+              builder: (context, override, _) {
+                final resolved =
+                    (override != null && override.trim().isNotEmpty)
+                    ? override
+                    : widget.title;
+                return Text(
+                  resolved,
+                  key: const Key('mobile-subpage-title'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s14,
+                    weight: AppTextWeight.medium,
+                    tone: AppTextTone.primary,
+                  ),
+                );
+              },
+            ),
+    );
   }
 
   void _handleBack(BuildContext context) {

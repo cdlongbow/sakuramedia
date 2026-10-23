@@ -328,6 +328,90 @@ void main() {
     );
   });
 
+  testWidgets('autoHideAppBar 子页滚动离顶隐藏 AppBar，回顶才恢复', (tester) async {
+    await _pumpShellWithBottomInset(
+      tester,
+      AppMobileSubpageShell(
+        title: '视频合集',
+        defaultLocation: '/mobile/overview',
+        autoHideAppBar: true,
+        child: ListView.builder(
+          key: const Key('subpage-auto-hide-list'),
+          itemCount: 60,
+          itemBuilder: (_, index) => SizedBox(height: 40, child: Text('$index')),
+        ),
+      ),
+    );
+
+    final topBar = find.byKey(const Key('mobile-subpage-topbar'));
+    final list = find.byKey(const Key('subpage-auto-hide-list'));
+    expect(topBar, findsOneWidget);
+    expect(tester.getTopLeft(list).dy, 47 + 56 + 8);
+
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)),
+        )
+        .position;
+
+    position.jumpTo(200);
+    await tester.pumpAndSettle();
+    expect(topBar, findsNothing);
+    expect(tester.getTopLeft(list).dy, 47 + 8);
+
+    // 向上滚但不回顶：AppBar 保持隐藏。
+    position.jumpTo(120);
+    await tester.pumpAndSettle();
+    expect(topBar, findsNothing);
+    expect(tester.getTopLeft(list).dy, 47 + 8);
+
+    position.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(topBar, findsOneWidget);
+    expect(tester.getTopLeft(list).dy, 47 + 56 + 8);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tab 子页里的纵向列表也能收起 AppBar', (tester) async {
+    await _pumpShellWithBottomInset(
+      tester,
+      AppMobileSubpageShell(
+        title: '媒体管理',
+        defaultLocation: '/mobile/overview',
+        autoHideAppBar: true,
+        child: PageView(
+          children: [
+            ListView.builder(
+              key: const Key('subpage-tab-list'),
+              itemCount: 60,
+              itemBuilder:
+                  (_, index) => SizedBox(height: 40, child: Text('$index')),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final topBar = find.byKey(const Key('mobile-subpage-topbar'));
+    final list = find.byKey(const Key('subpage-tab-list'));
+    expect(topBar, findsOneWidget);
+
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)),
+        )
+        .position;
+
+    position.jumpTo(200);
+    await tester.pumpAndSettle();
+    expect(topBar, findsNothing);
+
+    position.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(topBar, findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('裸 ListView 子页靠 Flutter 自动补齐底部安全区', (
     tester,
   ) async {

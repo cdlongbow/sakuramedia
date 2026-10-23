@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
@@ -17,16 +16,18 @@ part 'download_task_center_provider.g.dart';
 @Riverpod(keepAlive: true, retry: kNoAsyncNotifierRetry)
 class DownloadTaskCenter extends _$DownloadTaskCenter
     with
-        PagedAsyncNotifierMixin<DownloadTaskCenterState, DownloadTaskRowState> {
+        PagedAsyncNotifierMixin<DownloadTaskCenterState, DownloadTaskRowState>,
+        FilterablePagedAsyncNotifierMixin<
+          DownloadTaskCenterState,
+          DownloadTaskRowState,
+          DownloadTaskFilterState
+        > {
   static const int _pageSize = 20;
   static const Duration _pollingInterval = Duration(seconds: 30);
 
-  DownloadTaskFilterState _activeFilter = DownloadTaskFilterState.initial;
-  late final DebouncedLatestRequest _filterRequests = DebouncedLatestRequest();
   Timer? _pollTimer;
   bool _pollRequested = false;
   bool _pollingEnabled = true;
-  int _filterGeneration = 0;
   List<DownloadClientOption>? _pendingClientOptions;
   Map<int, String>? _pendingClientNames;
 
@@ -38,6 +39,22 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
 
   @override
   String get loadMoreErrorText => '加载更多失败，请点击重试';
+
+  @override
+  DownloadTaskFilterState get initialFilter => DownloadTaskFilterState.initial;
+
+  @override
+  DownloadTaskCenterState applyFilterToState(
+    DownloadTaskCenterState state,
+    DownloadTaskFilterState filter,
+  ) {
+    // 筛选结果整批换掉后旧选中项多半不在列表里，直接退出多选。
+    return state.copyWith(
+      filter: filter,
+      selectionMode: false,
+      selectedTaskIds: const <int>{},
+    );
+  }
 
   @override
   PagedListState<DownloadTaskRowState> pagedOf(DownloadTaskCenterState s) =>
@@ -57,7 +74,7 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     int page,
     int pageSize,
   ) async {
-    final filter = _activeFilter;
+    final filter = activeFilter;
     final response = await ref
         .read(downloadsApiProvider)
         .getDownloadTasks(
@@ -87,123 +104,35 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
     attachDisposeGuard();
     ref.onDispose(() {
       _pollTimer?.cancel();
-      // cancel 而不是 dispose：provider 重建（invalidate）也会执行这里注册的
-      // onDispose，dispose 会把协调器永久标记为已销毁，重建后的筛选请求再也写不回。
-      _filterRequests.cancel();
     });
     unawaited(_loadClientOptionsInBackground());
     final paged = await loadInitialPage();
     final result = _mergePendingClientData(
       DownloadTaskCenterState.initial.copyWith(
         paged: paged,
-        filter: _activeFilter,
+        filter: activeFilter,
       ),
     );
     if (_pollRequested && _pollingEnabled && !isDisposed) _beginPolling();
     return result;
   }
 
-  @override
-  Future<String?> refresh() async {
-    await retryFilter();
-    return state.value?.paged.filterUpdate.errorMessage;
-  }
-
-  Future<void> applyFilter(DownloadTaskFilterState next) {
-    if (_activeFilter == next) return Future<void>.value();
-    _activeFilter = next;
-    _filterGeneration++;
-    final current = state.value;
-    if (current == null) return _filterRequests.schedule(_loadSelectedFilter);
-    invalidateInFlightLoadMore();
-    state = AsyncData(
-      current.copyWith(
-        filter: next,
-        // 筛选结果整批换掉后旧选中项多半不在列表里，直接退出多选。
-        selectionMode: false,
-        selectedTaskIds: const <int>{},
-        paged: current.paged.copyWith(
-          isLoadingMore: false,
-          loadMoreErrorMessage: null,
-          filterUpdate: const FilterUpdateState.waiting(),
-        ),
-      ),
-    );
-    return _filterRequests.schedule(_loadSelectedFilter);
-  }
-
-  Future<void> retryFilter() {
-    final current = state.value;
-    if (current != null) {
-      invalidateInFlightLoadMore();
-      state = AsyncData(
-        current.copyWith(
-          paged: current.paged.copyWith(
-            isLoadingMore: false,
-            loadMoreErrorMessage: null,
-            filterUpdate: const FilterUpdateState.loading(),
-          ),
-        ),
-      );
-    }
-    return _filterRequests.runNow(_loadSelectedFilter);
-  }
-
-  Future<void> _loadSelectedFilter(int requestId) async {
-    final current = state.value;
-    if (current == null) {
-      await super.reload();
-      return;
-    }
-    if (isDisposed || !_filterRequests.isCurrent(requestId)) return;
-    state = AsyncData(
-      current.copyWith(
-        paged: current.paged.copyWith(
-          isLoadingMore: false,
-          loadMoreErrorMessage: null,
-          filterUpdate: const FilterUpdateState.loading(),
-        ),
-      ),
-    );
-    try {
-      final firstPage = await loadInitialPage();
-      if (isDisposed || !_filterRequests.isCurrent(requestId)) return;
-      final current = state.value;
-      if (current != null) {
-        state = AsyncData(
-          current.copyWith(
-            paged: firstPage,
-            selectedTaskIds: _pruneSelection(
-              current.selectedTaskIds,
-              firstPage,
-            ),
-          ),
-        );
-      }
-    } catch (error) {
-      if (isDisposed || !_filterRequests.isCurrent(requestId)) return;
-      final current = state.value;
-      if (current != null) {
-        state = AsyncData(
-          current.copyWith(
-            paged: current.paged.copyWith(
-              filterUpdate: FilterUpdateState.failed(
-                apiErrorMessage(error, fallback: '筛选结果更新失败，请重试'),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-  }
+  /// 兼容页面现有调用；实际语义由 [FilterablePagedAsyncNotifierMixin] 提供。
+  Future<void> applyFilter(DownloadTaskFilterState next) =>
+      applyFilterState(next);
 
   @override
-  Future<void> loadMore() {
+  Future<void> retryFilter() async {
+    await super.retryFilter();
+    _pruneSelectionInState();
+  }
+
+  void _pruneSelectionInState() {
     final current = state.value;
-    if (current != null && !current.paged.filterUpdate.isIdle) {
-      return Future<void>.value();
-    }
-    return super.loadMore();
+    if (current == null) return;
+    final pruned = _pruneSelection(current.selectedTaskIds, current.paged);
+    if (pruned.length == current.selectedTaskIds.length) return;
+    state = AsyncData(current.copyWith(selectedTaskIds: pruned));
   }
 
   /// 页面进入下载任务 tab 时开始快照轮询。
@@ -217,6 +146,9 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
   void stopPolling() {
     if (isDisposed) return;
     _pollRequested = false;
+    // 完整停止（页面 dispose）不同于 pause：复位开关，避免页面因分支缓存
+    // 驱逐后重新挂载时 startPolling 被上一次 pause 的 false 永久短路。
+    _pollingEnabled = true;
     _pollTimer?.cancel();
     _pollTimer = null;
     _setPollingState(DownloadTaskPollingState.idle);
@@ -256,13 +188,13 @@ class DownloadTaskCenter extends _$DownloadTaskCenter
         state.value == null) {
       return;
     }
-    final generation = _filterGeneration;
+    final requestedFilter = activeFilter;
     try {
       final firstPage = await fetchPage(1, _pageSize);
       if (isDisposed ||
           !_pollRequested ||
           !_pollingEnabled ||
-          generation != _filterGeneration) {
+          requestedFilter != activeFilter) {
         return;
       }
       final current = state.value;

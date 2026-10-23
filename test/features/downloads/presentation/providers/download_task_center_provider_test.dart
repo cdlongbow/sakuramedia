@@ -93,6 +93,25 @@ void main() {
     expect(state.paged.items.single.task.id, 3);
   });
 
+  test('stopPolling after pause allows a remounted page to restart polling', () async {
+    _enqueueTaskPage(bundle, [taskJson(id: 1)]);
+    _enqueueClients(bundle);
+    await container.read(downloadTaskCenterProvider.future);
+
+    final controller = container.read(downloadTaskCenterProvider.notifier);
+    _enqueueTaskPage(bundle, [taskJson(id: 2)]);
+    await controller.startPolling();
+    controller.pausePolling();
+    controller.stopPolling();
+
+    _enqueueTaskPage(bundle, [taskJson(id: 3)]);
+    await controller.startPolling();
+
+    final state = container.read(downloadTaskCenterProvider).requireValue;
+    expect(state.pollingState, DownloadTaskPollingState.polling);
+    expect(state.paged.items.single.task.id, 3);
+  });
+
   test('delete updates the current snapshot', () async {
     _enqueueTaskPage(bundle, [taskJson(id: 3)]);
     _enqueueClients(bundle);

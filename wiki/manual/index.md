@@ -4,6 +4,18 @@
 
 教程以桌面端的页面名称和入口为准。移动端可用于浏览与观看，页面布局和可用管理入口有所不同；需要配置系统或集中处理订阅、导入问题时，请使用桌面端。
 
+[想先看效果？播放 45 秒演示 →](/#demo)
+
+## 界面速览
+
+> 截图使用演示数据，封面与缩略图已虚化。
+
+<ScreenshotGrid :columns="3">
+  <Screenshot loading="eager" src="/images/readme/desktop-discover.png" alt="SakuraMedia 发现页" caption="女优上新、热门新片和今日推荐。" />
+  <Screenshot loading="eager" src="/images/readme/desktop-image-search.png" alt="SakuraMedia 以图搜图结果页" caption="用画面或文字搜索已索引的库内图片。" />
+  <Screenshot loading="eager" src="/images/readme/clips-page.png" alt="SakuraMedia 切片页" caption="切片合集与全部切片。" />
+</ScreenshotGrid>
+
 ## 选择你的起点
 
 | 你现在想做什么 | 阅读顺序 |

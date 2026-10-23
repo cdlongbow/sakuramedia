@@ -2,6 +2,8 @@
 
 你可以从一个番号开始，也可以从演员、标签或榜单慢慢挑选。发现阶段的目标，是选出真正想订阅的影片。
 
+<Screenshot src="/images/readme/desktop-discover.png" alt="SakuraMedia 发现页" caption="发现页按女优上新、热门新片和今日推荐等分区展示。" />
+
 ## 本地搜索与联网搜索
 
 搜索页有「影片」和「女优」两类结果。

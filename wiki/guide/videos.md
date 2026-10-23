@@ -29,6 +29,8 @@ PornBox 用于浏览和管理普通视频，例如没有番号的收藏、录制
 
 从 PornBox 列表打开视频详情，再进入播放。有观看进度时，可以通过续播提示继续；缩略图由后台生成，刚导入时可能需要等待。
 
+<Screenshot src="/images/readme/pornbox-collection.png" alt="PornBox 视频合集详情" caption="合集详情可以调整成员顺序，并从当前顺序开始播放。" />
+
 移动端也有 PornBox 浏览和播放入口，管理教程中的页面路径以桌面端为准。
 
 ## 用视频合集组织内容
@@ -40,6 +42,8 @@ PornBox 用于浏览和管理普通视频，例如没有番号的收藏、录制
 - 删除合集不会删除视频；删除视频时会移除它在合集中的成员关系。
 
 视频合集与影片播放列表、时刻合集、切片合集管理不同对象，按你要整理的内容选择。
+
+<Screenshot variant="narrow" src="/images/readme/pornbox-timeline.png" alt="PornBox 合集连播缩略图" caption="合集连播时，右侧缩略图把各集关键帧拼成一条时间轴。" />
 
 ## 与影片订阅的区别
 

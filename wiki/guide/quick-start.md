@@ -169,11 +169,15 @@ http://你的IP:38000
 
 使用「本地存储与 qBittorrent」时，媒体库路径填写 `/mnt/volume1/media/sakuramedia`，手动导入根目录填写 `/mnt/volume1/media/av`。
 
+<Screenshot src="/images/guide/media-library-form.png" alt="新增媒体库表单" caption="界面示意：新增媒体库；字段由所选存储插件提供。" />
+
 #### 3. 添加下载器
 
 进入「系统设置 → 下载器 → 新增」，选择目标媒体库。系统会根据该媒体库所属的 provider 显示下载配置字段，填写后保存。下载完成后，provider 返回的 `completed_source_ref` 会被自动导入流程使用。
 
 使用「本地存储与 qBittorrent」时，qBittorrent 保存根目录填写 qBittorrent 容器内的路径，例如 `/downloads`；后端下载根目录填写后端容器内同一目录的挂载路径，例如 `/mnt/volume1/media/downloads`。
+
+<Screenshot src="/images/guide/download-client-form.png" alt="添加下载器表单" caption="界面示意：添加下载器时选择目标媒体库，并填写插件提供的配置字段。" />
 
 #### 4. 配置索引器并绑定下载器
 

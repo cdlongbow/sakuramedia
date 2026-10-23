@@ -17,6 +17,10 @@
 3. 在以图搜图页面查看结果，按需要调整范围和筛选。
 4. 打开感兴趣的结果查看详情；具备可播放来源的缩略图结果，可以跳到对应时间继续观看。
 
+<Screenshot src="/images/readme/thumbnail-menu.png" alt="缩略图操作菜单" caption="从缩略图菜单选择「相似图片」发起搜索。" />
+
+<Screenshot src="/images/readme/desktop-image-search.png" alt="SakuraMedia 以图搜图结果页" caption="以图搜图和文字搜图共用结果页，按相似度排序。" />
+
 影片剧情图的操作菜单也可以发起相似图片搜索。图片相似并不代表有同样的演员、情节或内容，需要自己查看结果。
 
 ## 结果能看图，为什么不能直接播放

@@ -20,9 +20,11 @@
 
 打开搜索入口，输入番号或关键词，默认会在本地资料库中搜索。第一次使用时，本地可能没有任何资料，可以点结果区的「从外部数据源获取」，或开启搜索框的「联网搜索」。
 
-![搜索页的联网搜索开关](/guide/images/online-search-network-toggle.png)
+<Screenshot src="/images/guide/online-search-network-toggle.png" alt="搜索框右侧的联网搜索开关" caption="搜索框右侧的联网开关；开启后才向外部数据源查询。" />
 
 找到结果后，打开详情，核对番号、封面和演员，确认是你想要的影片。在线搜索会获取资料，视频文件还需要下载或导入。
+
+<Screenshot src="/images/readme/desktop-detail.png" alt="SakuraMedia 影片详情页" caption="在详情中核对番号、封面和演员；媒体列表在页面下方。" />
 
 没有结果时，先检查输入的关键词和联网开关，再到「概览」检查元数据来源的连通性。
 
@@ -48,6 +50,8 @@
 ## 5. 打开媒体播放
 
 进入影片详情，从媒体列表选择一个版本播放。有多个文件时，留意文件名、大小和媒体库。
+
+<Screenshot src="/images/readme/desktop-player.png" alt="SakuraMedia 播放器与缩略图面板" caption="有可用媒体后，选择版本进入播放器；右侧缩略图可以快速定位。" />
 
 能播放后，这条流程就走通了。订阅会继续保留；之后可以订阅更多影片，或[关注喜欢的女优](./discover)。
 

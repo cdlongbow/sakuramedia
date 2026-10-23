@@ -45,7 +45,3 @@ features:
     details: 将已入库媒体批量迁往支持的目标库，保留同一条媒体记录及观影关联；目标确认可用后再清理源文件链接。
     link: /guide/media-storage-transfer
 ---
-
-<p align="center">
-  <img src="/images/sakuramedia-home-hero.png" alt="SakuraMedia 海报图" />
-</p>

@@ -636,7 +636,53 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     }
 
     if (!_hasLoadMoreError) {
-      return null;
+      if (!_autoLoadHalted || !searchState.hasMore) {
+        return null;
+      }
+      // 连续多页没有可见新增时自动补页会主动停下；保留一个显式出口，避免
+      // hasMore 仍为 true 时列表被静默截断。
+      return Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surfaceMuted,
+            borderRadius: context.appRadius.mdBorder,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: spacing.lg,
+              vertical: spacing.sm,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '已暂停自动加载',
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s12,
+                    weight: AppTextWeight.regular,
+                    tone: AppTextTone.secondary,
+                  ),
+                ),
+                SizedBox(width: spacing.sm),
+                TextButton(
+                  onPressed: _loadMoreManually,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: spacing.sm,
+                      vertical: spacing.xs,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('继续加载'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Center(
@@ -759,7 +805,27 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
       _autoLoadNoGrowthStreak += 1;
     }
     if (_autoLoadNoGrowthStreak >= _maxAutoLoadNoGrowthStreak) {
-      _autoLoadHalted = true;
+      if (!_autoLoadHalted) {
+        setState(() => _autoLoadHalted = true);
+      }
+    }
+  }
+
+  /// 用户手动继续加载：成功拿到可见新增后恢复自动补页。
+  Future<void> _loadMoreManually() async {
+    if (_searchState.isLoadingMore) {
+      return;
+    }
+    final baselineItemCount = _searchState.items.length;
+    await _notifier.loadMore();
+    if (!mounted) {
+      return;
+    }
+    if (_searchState.items.length > baselineItemCount) {
+      setState(() {
+        _autoLoadNoGrowthStreak = 0;
+        _autoLoadHalted = false;
+      });
     }
   }
 

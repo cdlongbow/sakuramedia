@@ -39,6 +39,7 @@ SakuraMedia 的媒体存储、下载和部分自动化能力由插件提供。�
 | 插件 | 插件 ID | 用途 | 地址 |
 |---|---|---|---|
 | 115 网盘 Provider | `sakuramedia_115_provider` | 接入 115 网盘，提供目录浏览、影片导入、115 离线下载、302/后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_115_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_115_provider/releases/latest) |
+| 光鸭云盘 Provider | `sakuramedia_guangyapan_provider` | 接入光鸭云盘，提供目录浏览、影片导入、302 直链或后端代理播放、缩略图、片段，以及磁力/种子云添加下载。 | [源码](https://github.com/tinypinglite/sakuramedia_guangyapan_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_guangyapan_provider/releases/latest) |
 | 本地存储与 qBittorrent | `sakuramedia_local_provider` | 接入本地媒体目录，提供手动导入、qBittorrent 下载、后端代理播放、缩略图和片段。 | [源码](https://github.com/tinypinglite/sakuramedia_local_provider) · [下载最新版](https://github.com/tinypinglite/sakuramedia_local_provider/releases/latest) |
 | 女优资料补全 | `sakuramedia_actor_metadata` | 从 JavDB 和 MinnanoAV 补全本地女优资料，包括生日、身高、三围、罩杯、出生地、血型和性别。 | [源码](https://github.com/tinypinglite/sakuramedia-actor-metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia-actor-metadata/releases/latest) |
 | JavBus 元数据 | `sakuramedia_javbus_metadata` | JavDB 未收录时，按番号从 JavBus 补全影片标题、发行日期、时长、片商、演员、标签、封面和剧照等元数据。 | [源码](https://github.com/tinypinglite/sakuramedia_javbus_metadata) · [下载最新版](https://github.com/tinypinglite/sakuramedia_javbus_metadata/releases/latest) |

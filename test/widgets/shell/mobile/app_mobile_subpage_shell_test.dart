@@ -412,6 +412,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('切换 Tab 后恢复 AppBar，避免新 Tab 丢失返回键和标题', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: AppMobileSubpageShell(
+          title: '媒体管理',
+          defaultLocation: '/mobile/overview',
+          autoHideAppBar: true,
+          child: DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                const TabBar(tabs: [Tab(text: 'A'), Tab(text: 'B')]),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      ListView.builder(
+                        key: const Key('subpage-tab-a-list'),
+                        itemCount: 60,
+                        itemBuilder:
+                            (_, index) =>
+                                SizedBox(height: 40, child: Text('a$index')),
+                      ),
+                      const Center(child: Text('empty-b')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final topBar = find.byKey(const Key('mobile-subpage-topbar'));
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(
+            of: find.byKey(const Key('subpage-tab-a-list')),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .position;
+    position.jumpTo(300);
+    await tester.pumpAndSettle();
+    expect(topBar, findsNothing);
+
+    await tester.tap(find.text('B'));
+    await tester.pumpAndSettle();
+
+    expect(topBar, findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('裸 ListView 子页靠 Flutter 自动补齐底部安全区', (
     tester,
   ) async {

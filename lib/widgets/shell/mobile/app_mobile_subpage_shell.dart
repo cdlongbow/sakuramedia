@@ -2,8 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
-import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
+import 'package:sakuramedia/widgets/base/actions/app_glass_icon_button.dart';
 import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 让子页面把「真实标题」报给外层返回栏的信箱。
@@ -83,6 +82,16 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
+    // depth 0 的横向 PageView / TabBarView 切换：新 Tab 可能停在顶部，也可能
+    // 内容不足一屏，不会再发出纵向通知；先恢复 AppBar 避免返回键/标题消失。
+    // 若新 Tab 本身停留在滚动位置，后续纵向滚动会重新收起。
+    if (notification.depth == 0 &&
+        notification.metrics.axis == Axis.horizontal) {
+      if (_appBarHidden) {
+        setState(() => _appBarHidden = false);
+      }
+      return false;
+    }
     // depth 0：页面自身的主滚动；depth 1：TabBarView / PageView 里的纵向列表
     // （媒体管理、下载器等 tab 子页）。更深的嵌套滚动不驱动 AppBar。
     if (notification.depth > 1 || notification.metrics.axis != Axis.vertical) {
@@ -206,27 +215,13 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
       titleSpacing: 0, // 默认 16
       leading: immersive
           ? Center(
-              child: Tooltip(
-                message: '返回',
-                child: AppInteractiveSurface(
-                  key: const Key('mobile-subpage-back-button'),
-                  onTap: () => _handleBack(context),
-                  semanticLabel: '返回',
-                  child: AppGlassSurface(
-                    tone: AppGlassTone.chrome,
-                    borderRadius: context.appRadius.pillBorder,
-                    child: SizedBox.square(
-                      dimension: context.appComponentTokens.buttonHeightSm,
-                      child: Center(
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: context.appComponentTokens.iconSizeSm,
-                          color: context.appTextPalette.onMedia,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              child: AppGlassIconButton(
+                key: const Key('mobile-subpage-back-button'),
+                tooltip: '返回',
+                semanticLabel: '返回',
+                onPressed: () => _handleBack(context),
+                icon: Icons.arrow_back_ios_new_rounded,
+                iconSize: context.appComponentTokens.iconSizeSm,
               ),
             )
           : IconButton(

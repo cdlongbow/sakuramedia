@@ -154,15 +154,7 @@ class _MobileNotificationsPageState
           child: AppPagedLoadMoreScope(
             enabled: _segment == _NotificationSegment.all,
             canLoadMore: () {
-              final state = ref.read(notificationCenterProvider);
-              return state.initialized &&
-                  !state.isInitialLoading &&
-                  state.initialErrorMessage == null &&
-                  state.filterUpdate.isIdle &&
-                  !state.isRefreshing &&
-                  state.hasMore &&
-                  !state.isLoadingMore &&
-                  state.loadMoreErrorMessage == null;
+              return ref.read(notificationCenterProvider).canAutoLoadMore;
             },
             onLoadMore: () => ref
                 .read(notificationCenterProvider.notifier)

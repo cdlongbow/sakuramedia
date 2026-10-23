@@ -46,6 +46,17 @@ class NotificationCenterState {
   bool get isPollingFallback =>
       connectionState == NotificationConnectionState.polling;
 
+  /// 当前是否允许自动请求下一页；失败后只保留页脚的显式重试。
+  bool get canAutoLoadMore =>
+      initialized &&
+      !isInitialLoading &&
+      initialErrorMessage == null &&
+      filterUpdate.isIdle &&
+      !isRefreshing &&
+      hasMore &&
+      !isLoadingMore &&
+      loadMoreErrorMessage == null;
+
   NotificationCenterState copyWith({
     bool? initialized,
     bool? isInitialLoading,

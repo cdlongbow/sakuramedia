@@ -271,20 +271,9 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage> {
         isLoading: tasksView.taskFilterUpdate.isLoading,
         hasPreviousItems: tasksView.hasTaskItems,
         child: AppPagedLoadMoreScope(
-          canLoadMore: () {
-            final activity = ref.read(activityCenterProvider).value;
-            if (activity == null ||
-                !activity.initialized ||
-                activity.isInitialLoading ||
-                activity.initialErrorMessage != null) {
-              return false;
-            }
-            return activity.taskFilterUpdate.isIdle &&
-                !activity.isRefreshingTaskHistory &&
-                activity.hasMoreTasks &&
-                !activity.isLoadingMoreTasks &&
-                activity.taskLoadMoreErrorMessage == null;
-          },
+          canLoadMore: () =>
+              ref.read(activityCenterProvider).value?.canAutoLoadMoreTasks ??
+              false,
           onLoadMore: _controller.loadMoreTasks,
           child: CustomScrollView(
             controller: _pageScrollController,

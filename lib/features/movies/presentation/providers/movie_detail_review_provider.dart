@@ -38,6 +38,16 @@ class MovieDetailReviewState {
   final String? loadMoreErrorMessage;
   final FilterUpdateState filterUpdate;
 
+  /// 当前是否允许自动请求下一页；失败后只保留页脚重试。
+  bool get canAutoLoadMore =>
+      !isInitialLoading &&
+      initialErrorMessage == null &&
+      filterUpdate.isIdle &&
+      hasNextPage &&
+      !isLoadingMore &&
+      loadMoreErrorMessage == null &&
+      items.isNotEmpty;
+
   MovieDetailReviewState copyWith({
     MovieReviewSort? sort,
     List<MovieReviewDto>? items,

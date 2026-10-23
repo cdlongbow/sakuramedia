@@ -394,16 +394,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
 
     return AppSelectableTextScrollConfiguration(
       child: AppPagedLoadMoreScope(
-        canLoadMore: () {
-          final current = _state;
-          return !current.isInitialLoading &&
-              current.initialErrorMessage == null &&
-              current.filterUpdate.isIdle &&
-              current.hasNextPage &&
-              !current.isLoadingMore &&
-              current.loadMoreErrorMessage == null &&
-              current.items.isNotEmpty;
-        },
+        canLoadMore: () => _state.canAutoLoadMore,
         onLoadMore: _controller.loadMore,
       child: ListView.separated(
         controller: _scrollController,

@@ -60,6 +60,17 @@ class ActivityCenterState {
   bool get isPollingFallback =>
       connectionState == ActivityConnectionState.polling;
 
+  /// 任务历史是否允许自动补页；失败后只保留页脚/筛选栏的显式重试。
+  bool get canAutoLoadMoreTasks =>
+      initialized &&
+      !isInitialLoading &&
+      initialErrorMessage == null &&
+      taskFilterUpdate.isIdle &&
+      !isRefreshingTaskHistory &&
+      hasMoreTasks &&
+      !isLoadingMoreTasks &&
+      taskLoadMoreErrorMessage == null;
+
   bool isTriggeringJob(String taskKey) => triggeringTaskKeys.contains(taskKey);
 
   /// 任务 key 到中文展示名的映射（按 key 排序），原始 key 仍用于接口过滤。

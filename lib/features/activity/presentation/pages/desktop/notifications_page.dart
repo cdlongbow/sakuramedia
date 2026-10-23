@@ -90,15 +90,7 @@ class _DesktopNotificationsPageState
           hasPreviousItems: header.hasItems,
           child: AppPagedLoadMoreScope(
             canLoadMore: () {
-              final state = ref.read(notificationCenterProvider);
-              return state.initialized &&
-                  !state.isInitialLoading &&
-                  state.initialErrorMessage == null &&
-                  state.filterUpdate.isIdle &&
-                  !state.isRefreshing &&
-                  state.hasMore &&
-                  !state.isLoadingMore &&
-                  state.loadMoreErrorMessage == null;
+              return ref.read(notificationCenterProvider).canAutoLoadMore;
             },
             onLoadMore: () => ref
                 .read(notificationCenterProvider.notifier)

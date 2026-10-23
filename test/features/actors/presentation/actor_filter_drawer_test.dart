@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:sakuramedia/features/actors/presentation/controllers/listing/act
 import 'package:sakuramedia/features/actors/presentation/pages/mobile/actor_filter_drawer.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 void main() {
   testWidgets('女优筛选抽屉与桌面面板同构且即时生效', (tester) async {
@@ -89,5 +92,81 @@ void main() {
 
     expect(applied, hasLength(3));
     expect(applied.last.isDefault, isTrue);
+  });
+
+  testWidgets('切换订阅筛选加载新选项时资料筛选区保持同形不塌陷', (tester) async {
+    const options = ActorFilterOptionsDto(
+      age: ActorFilterRangeDto(min: 20, max: 40, populatedCount: 2),
+      heightCm: ActorFilterRangeDto(min: 150, max: 170, populatedCount: 2),
+      cups: [
+        ActorCupFilterOptionDto(value: 'B', count: 1),
+        ActorCupFilterOptionDto(value: 'C', count: 1),
+      ],
+    );
+    final pending = Completer<ActorFilterOptionsDto>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          actorFilterOptionsProvider(
+            const ActorFilterOptionsScope(
+              subscriptionStatus: ActorSubscriptionStatus.subscribed,
+              gender: ActorGender.all,
+            ),
+          ).overrideWith((ref) async => options),
+          actorFilterOptionsProvider(
+            const ActorFilterOptionsScope(
+              subscriptionStatus: ActorSubscriptionStatus.all,
+              gender: ActorGender.all,
+            ),
+          ).overrideWith((ref) => pending.future),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => showMobileActorFilterDrawer(
+                  context,
+                  current: ActorFilterState.initial,
+                  onChanged: (_) {},
+                ),
+                child: const Text('打开筛选'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('打开筛选'));
+    await tester.pumpAndSettle();
+
+    final sortTopBefore = tester.getTopLeft(find.text('排序方式')).dy;
+
+    final subscriptionSection = find.byWidgetPredicate(
+      (widget) => widget is MovieFilterChoiceSection<ActorSubscriptionStatus>,
+    );
+    await tester.tap(
+      find.descendant(of: subscriptionSection, matching: find.text('全部')),
+    );
+    await tester.pump();
+
+    // 新 scope 仍在加载：年龄 / 身高滑块由占位数据撑住，不再整块消失。
+    expect(find.text('正在加载资料筛选选项'), findsNothing);
+    expect(find.byKey(const Key('actor-filter-年龄-slider')), findsOneWidget);
+    expect(find.byKey(const Key('actor-filter-身高-slider')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('排序方式')).dy,
+      closeTo(sortTopBefore, 0.5),
+    );
+
+    pending.complete(options);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('actor-filter-年龄-slider')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('排序方式')).dy,
+      closeTo(sortTopBefore, 0.5),
+    );
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -233,9 +235,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('互动数范围加载失败时显示重试，不回退写死上限', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('互动数范围加载失败时显示重试，不回退写死上限', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -263,6 +263,106 @@ void main() {
     expect(find.text('互动数范围加载失败'), findsOneWidget);
     expect(find.text('重试'), findsOneWidget);
     expect(find.byKey(const Key('movie-filter-heat-slider')), findsNothing);
+  });
+
+  testWidgets('互动数范围加载态用同形滑块占位，不塌陷成一行文案', (tester) async {
+    final pending = Completer<MovieInteractionFilterOptionsDto>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          movieInteractionFilterOptionsProvider.overrideWith(
+            (ref) => pending.future,
+          ),
+        ],
+        child: MaterialApp(
+          theme: sakuraThemeData,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: MovieFilterSectionGroup(
+                filterState: MovieFilterState.initial,
+                onChanged: (_) {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('互动数范围加载中'), findsNothing);
+    for (final metric in MovieInteractionMetric.values) {
+      expect(
+        find.byKey(Key('movie-filter-${metric.apiValue}-slider')),
+        findsOneWidget,
+      );
+    }
+    final loadingHeight = tester
+        .getSize(find.byType(MovieInteractionRangeFilterSectionGroup))
+        .height;
+
+    pending.complete(testInteractionFilterOptions);
+    await tester.pumpAndSettle();
+
+    for (final metric in MovieInteractionMetric.values) {
+      expect(
+        find.byKey(Key('movie-filter-${metric.apiValue}-slider')),
+        findsOneWidget,
+      );
+    }
+    final loadedHeight = tester
+        .getSize(find.byType(MovieInteractionRangeFilterSectionGroup))
+        .height;
+    expect(loadedHeight, loadingHeight);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('年份加载态用同形药丸占位，不显示一行加载文案', (tester) async {
+    final yearOptions = List<MovieFilterYearOption>.generate(
+      10,
+      (index) => MovieFilterYearOption(year: 2026 - index, movieCount: 1),
+    );
+    final loading = ValueNotifier<bool>(true);
+    addTearDown(loading.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 320,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: loading,
+                builder: (context, isLoading, _) => MovieYearFilterSection(
+                  options: yearOptions,
+                  selectedYears: const <int>{},
+                  isLoading: isLoading,
+                  errorMessage: null,
+                  onRetry: null,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('年份加载中'), findsNothing);
+    expect(find.byKey(const Key('movie-filter-year-all')), findsOneWidget);
+    final loadingHeight = tester
+        .getSize(find.byType(MovieYearFilterSection))
+        .height;
+
+    loading.value = false;
+    await tester.pump();
+
+    final loadedHeight = tester
+        .getSize(find.byType(MovieYearFilterSection))
+        .height;
+    expect(loadedHeight, loadingHeight);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('影片筛选面板可选 FC2 番号来源并重置回默认', (WidgetTester tester) async {

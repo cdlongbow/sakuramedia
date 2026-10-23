@@ -1,10 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/actors/data/dto/actor_filter_options_dto.dart';
+import 'package:sakuramedia/features/actors/presentation/actor_placeholders.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/providers/actor_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 /// 演员筛选所有 section 的纵向 Column。
@@ -61,21 +63,12 @@ class ActorFilterSectionGroup extends ConsumerWidget {
               onChanged(filterState.copyWith(hasPlayableMovies: value)),
         ),
         SizedBox(height: context.appSpacing.lg),
-        options.when(
-          data: (value) => ActorProfileFilterSections(
-            filterState: filterState,
-            options: value,
-            onChanged: onChanged,
-          ),
-          loading: () => const _ActorProfileFilterOptionsMessage(
-            message: '正在加载资料筛选选项',
-            loading: true,
-          ),
-          error: (_, _) => _ActorProfileFilterOptionsMessage(
-            message: '资料筛选选项加载失败',
-            onRetry: () =>
-                ref.invalidate(actorFilterOptionsProvider(optionsScope)),
-          ),
+        _ActorProfileFilterSectionsAsync(
+          options: options,
+          filterState: filterState,
+          onChanged: onChanged,
+          onRetry: () =>
+              ref.invalidate(actorFilterOptionsProvider(optionsScope)),
         ),
         SizedBox(height: context.appSpacing.lg),
         FilterSortSection<ActorSortField>(
@@ -93,29 +86,70 @@ class ActorFilterSectionGroup extends ConsumerWidget {
   }
 }
 
+class _ActorProfileFilterSectionsAsync extends StatefulWidget {
+  const _ActorProfileFilterSectionsAsync({
+    required this.options,
+    required this.filterState,
+    required this.onChanged,
+    required this.onRetry,
+  });
+
+  final AsyncValue<ActorFilterOptionsDto> options;
+  final ActorFilterState filterState;
+  final ValueChanged<ActorFilterState> onChanged;
+  final VoidCallback onRetry;
+
+  @override
+  State<_ActorProfileFilterSectionsAsync> createState() =>
+      _ActorProfileFilterSectionsAsyncState();
+}
+
+class _ActorProfileFilterSectionsAsyncState
+    extends State<_ActorProfileFilterSectionsAsync> {
+  /// 上一次成功加载的 options。切换订阅 / 性别会创建新的 family 实例，
+  /// 新实例没有缓存；沿用旧数据渲染骨架，可以保持与真实内容完全同形。
+  ActorFilterOptionsDto? _lastOptions;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = widget.options.value;
+    if (data != null) {
+      _lastOptions = data;
+    }
+    return widget.options.when(
+      data: (value) => ActorProfileFilterSections(
+        filterState: widget.filterState,
+        options: value,
+        onChanged: widget.onChanged,
+      ),
+      loading: () => AppSkeletonizer(
+        child: ActorProfileFilterSections(
+          filterState: widget.filterState,
+          options: _lastOptions ?? actorFilterOptionsPlaceholder(),
+          onChanged: (_) {},
+        ),
+      ),
+      error: (_, _) => _ActorProfileFilterOptionsMessage(
+        message: '资料筛选选项加载失败',
+        onRetry: widget.onRetry,
+      ),
+    );
+  }
+}
+
 class _ActorProfileFilterOptionsMessage extends StatelessWidget {
   const _ActorProfileFilterOptionsMessage({
     required this.message,
-    this.loading = false,
     this.onRetry,
   });
 
   final String message;
-  final bool loading;
   final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (loading) ...[
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          SizedBox(width: context.appSpacing.sm),
-        ],
         Text(
           message,
           style: resolveAppTextStyle(

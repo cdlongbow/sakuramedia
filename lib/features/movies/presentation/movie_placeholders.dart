@@ -1,7 +1,9 @@
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
+import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
+import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 /// 影片相关加载态占位数据：真实 DTO + [BoneMock] 文案，
@@ -84,6 +86,30 @@ List<MovieSubtitleItemDto> movieSubtitlePlaceholders({int count = 3}) {
       createdAt: null,
       url: '',
     ),
+    growable: false,
+  );
+}
+
+/// 互动数筛选范围加载态占位：六个指标都给正数上限，
+/// 让真实滑块分节全部渲染出来，由 `AppSkeletonizer` 灰化并屏蔽交互。
+MovieInteractionFilterOptionsDto movieInteractionFilterOptionsPlaceholder() {
+  return const MovieInteractionFilterOptionsDto(
+    movieCount: 0,
+    heat: MovieInteractionDistributionDto(p999: 10000, max: 20000),
+    score: MovieInteractionDistributionDto(p999: 4.8, max: 5),
+    scoreNumber: MovieInteractionDistributionDto(p999: 5000, max: 10000),
+    watchedCount: MovieInteractionDistributionDto(p999: 3000, max: 6000),
+    wantWatchCount: MovieInteractionDistributionDto(p999: 3000, max: 6000),
+    commentCount: MovieInteractionDistributionDto(p999: 500, max: 1000),
+  );
+}
+
+/// 发行年份加载态占位：标签带影片数，宽度与真实年份药丸接近。
+List<MovieFilterYearOption> movieFilterYearPlaceholders({int count = 10}) {
+  final latestYear = DateTime.now().year;
+  return List<MovieFilterYearOption>.generate(
+    count,
+    (index) => MovieFilterYearOption(year: latestYear - index, movieCount: 12),
     growable: false,
   );
 }

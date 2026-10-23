@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_interaction_filter_options_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/listing/movie_filter_state.dart';
+import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_interaction_filter_options_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -315,11 +316,19 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
         ),
         SizedBox(height: context.appSpacing.sm),
         options.when(
-          loading: () => _buildStatus(context, '互动数范围加载中', loading: true),
+          // 面板每次打开都会重新拉取范围；用同形占位滑块撑住高度，
+          // 避免加载期间整组分节塌陷成一行文案。
+          loading: () => AppSkeletonizer(
+            child: _buildSections(
+              context,
+              movieInteractionFilterOptionsPlaceholder(),
+            ),
+          ),
           error: (_, _) => _buildStatus(
             context,
             '互动数范围加载失败',
-            onRetry: () => ref.invalidate(movieInteractionFilterOptionsProvider),
+            onRetry: () =>
+                ref.invalidate(movieInteractionFilterOptionsProvider),
           ),
           data: (value) => _buildSections(context, value),
         ),
@@ -363,20 +372,11 @@ class MovieInteractionRangeFilterSectionGroup extends ConsumerWidget {
   Widget _buildStatus(
     BuildContext context,
     String message, {
-    bool loading = false,
     VoidCallback? onRetry,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (loading) ...[
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-          ),
-          SizedBox(width: context.appSpacing.sm),
-        ],
         Text(
           message,
           style: resolveAppTextStyle(
@@ -752,12 +752,6 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
     widget.onChanged(next);
   }
 
-  List<_MovieYearChoice> get _choices => <_MovieYearChoice>[
-    const _MovieYearChoice(value: null, label: '全部年份'),
-    for (final option in widget.options)
-      _MovieYearChoice(value: option.year, label: option.label),
-  ];
-
   int _collapsedChoiceCount(
     BuildContext context,
     List<_MovieYearChoice> choices,
@@ -824,32 +818,20 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
         ),
         SizedBox(height: context.appSpacing.sm),
         if (widget.isLoading)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator.adaptive(
-                  backgroundColor: switch (Theme.of(context).platform) {
-                    TargetPlatform.iOS || TargetPlatform.macOS => Theme.of(context).colorScheme.primary,
-                    _ => null,
-                  },
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color?>(Theme.of(context).colorScheme.primary),
-                ),
+          // 首次打开面板时年份选项还在加载：用同形年份药丸撑住两行高度，
+          // 避免整节塌陷成一行「年份加载中」再展开。
+          AppSkeletonizer(
+            child: LayoutBuilder(
+              builder: (context, constraints) => _buildYearChoices(
+                context,
+                constraints,
+                // 刷新时沿用已有年份，保持与加载前完全同形；首次加载才用占位项。
+                options: widget.options.isNotEmpty
+                    ? widget.options
+                    : movieFilterYearPlaceholders(),
+                interactive: false,
               ),
-              SizedBox(width: context.appSpacing.sm),
-              Text(
-                '年份加载中',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.muted,
-                ),
-              ),
-            ],
+            ),
           )
         else if (widget.errorMessage != null)
           Row(
@@ -874,61 +856,79 @@ class _MovieYearFilterSectionState extends State<MovieYearFilterSection> {
           )
         else
           LayoutBuilder(
-            builder: (context, constraints) {
-              final choices = _choices;
-              final collapsedCount = _collapsedChoiceCount(
-                context,
-                choices,
-                constraints.maxWidth,
-              );
-              final hasHiddenChoices = choices.length > collapsedCount;
-              final visibleChoices = _isExpanded || !hasHiddenChoices
-                  ? choices
-                  : choices.take(collapsedCount);
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: context.appSpacing.sm,
-                    runSpacing: context.appSpacing.sm,
-                    children: [
-                      for (final choice in visibleChoices)
-                        AppTextButton(
-                          key: Key(
-                            choice.value == null
-                                ? 'movie-filter-year-all'
-                                : 'movie-filter-year-${choice.value}',
-                          ),
-                          label: choice.label,
-                          size: AppTextButtonSize.xSmall,
-                          isSelected: choice.value == null
-                              ? widget.selectedYears.isEmpty
-                              : widget.selectedYears.contains(choice.value),
-                          onPressed: () => _toggleChoice(choice.value),
-                        ),
-                    ],
-                  ),
-                  if (hasHiddenChoices) ...[
-                    SizedBox(height: context.appSpacing.sm),
-                    AppTextButton(
-                      key: const Key('movie-filter-year-expand-toggle'),
-                      label: _isExpanded ? '收起年份' : '展开全部年份',
-                      size: AppTextButtonSize.xSmall,
-                      trailingIcon: Icon(
-                        _isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                      ),
-                      onPressed: () => setState(() {
-                        _isExpanded = !_isExpanded;
-                      }),
-                    ),
-                  ],
-                ],
-              );
-            },
+            builder: (context, constraints) => _buildYearChoices(
+              context,
+              constraints,
+              options: widget.options,
+              interactive: true,
+            ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildYearChoices(
+    BuildContext context,
+    BoxConstraints constraints, {
+    required List<MovieFilterYearOption> options,
+    required bool interactive,
+  }) {
+    final choices = <_MovieYearChoice>[
+      const _MovieYearChoice(value: null, label: '全部年份'),
+      for (final option in options)
+        _MovieYearChoice(value: option.year, label: option.label),
+    ];
+    final collapsedCount = _collapsedChoiceCount(
+      context,
+      choices,
+      constraints.maxWidth,
+    );
+    final hasHiddenChoices = choices.length > collapsedCount;
+    final visibleChoices = _isExpanded || !hasHiddenChoices
+        ? choices
+        : choices.take(collapsedCount);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: context.appSpacing.sm,
+          runSpacing: context.appSpacing.sm,
+          children: [
+            for (final choice in visibleChoices)
+              AppTextButton(
+                key: Key(
+                  choice.value == null
+                      ? 'movie-filter-year-all'
+                      : 'movie-filter-year-${choice.value}',
+                ),
+                label: choice.label,
+                size: AppTextButtonSize.xSmall,
+                isSelected: choice.value == null
+                    ? widget.selectedYears.isEmpty
+                    : widget.selectedYears.contains(choice.value),
+                onPressed: interactive
+                    ? () => _toggleChoice(choice.value)
+                    : null,
+              ),
+          ],
+        ),
+        if (hasHiddenChoices) ...[
+          SizedBox(height: context.appSpacing.sm),
+          AppTextButton(
+            key: const Key('movie-filter-year-expand-toggle'),
+            label: _isExpanded ? '收起年份' : '展开全部年份',
+            size: AppTextButtonSize.xSmall,
+            trailingIcon: Icon(
+              _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            ),
+            onPressed: interactive
+                ? () => setState(() {
+                    _isExpanded = !_isExpanded;
+                  })
+                : null,
+          ),
+        ],
       ],
     );
   }

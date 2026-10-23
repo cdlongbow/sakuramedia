@@ -6,10 +6,15 @@ import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
 
 /// 下载任务删除确认弹窗：返回用户勾选的「同时删除下载器文件」选项；
-/// 取消返回 `null`。实际删除由调用方提交批量操作任务执行。
+/// 取消返回 `null`。
+///
+/// - 传 [onConfirm] 时由弹窗执行删除：确认按钮显示 loading、请求期间禁止
+///   取消/关闭，成功后才关闭；失败 toast 并保持打开，可重试或取消。
+/// - 不传时仅收集选项，实际删除由调用方提交批量操作任务执行。
 Future<bool?> showDownloadTaskDeleteDialog(
   BuildContext context, {
   required List<DownloadTaskDto> tasks,
+  Future<void> Function(bool deleteFiles)? onConfirm,
 }) async {
   var deleteFiles = false;
   final blacklistableTaskCount = tasks
@@ -25,6 +30,8 @@ Future<bool?> showDownloadTaskDeleteDialog(
     message: '是否删除 ${tasks.length} 个下载任务？',
     danger: true,
     confirmLabel: '删除',
+    failureFallback: '删除失败',
+    onConfirm: onConfirm == null ? null : () => onConfirm(deleteFiles),
     extraContent: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

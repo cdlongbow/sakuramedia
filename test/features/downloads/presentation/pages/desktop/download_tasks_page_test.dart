@@ -10,6 +10,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/downloads/presentation/pages/desktop/download_tasks_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 
@@ -227,6 +228,89 @@ void main() {
       findsNothing,
     );
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('single delete keeps dialog open until request completes', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final sessionStore = await _loggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+    _fallbackDownloadPage(
+      bundle,
+      tasks: <Map<String, dynamic>>[
+        _downloadTaskJson(401),
+        _downloadTaskJson(402),
+      ],
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/download-clients',
+      body: const <Map<String, dynamic>>[],
+    );
+    final gate = Completer<void>();
+    bundle.adapter.enqueueResponder(
+      method: 'DELETE',
+      path: '/download-tasks/401',
+      responder: (options, body) async {
+        await gate.future;
+        return ResponseBody.fromBytes(const <int>[], 204);
+      },
+    );
+
+    await tester.pumpWidget(_desktopApp(bundle));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('download-task-delete-401')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('download-task-delete-dialog')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const Key('download-task-delete-files-checkbox')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('download-task-delete-dialog')),
+        matching: find.text('删除'),
+      ),
+    );
+    // loading spinner 持续排帧，不能用 pumpAndSettle。
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final deletes = bundle.adapter.requests
+        .where((request) => request.method == 'DELETE')
+        .toList(growable: false);
+    expect(deletes, hasLength(1));
+    expect(deletes.single.path, '/download-tasks/401');
+    expect(deletes.single.uri.queryParameters['delete_files'], 'true');
+    expect(deletes.single.uri.queryParameters['confirm_delete_files'], 'true');
+    // 请求未完成：弹窗与任务行都还在，确认按钮转圈。
+    expect(
+      find.byKey(const Key('download-task-delete-dialog')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('download-task-401')), findsOneWidget);
+    expect(
+      tester.widget<AppButton>(find.widgetWithText(AppButton, '删除')).isLoading,
+      isTrue,
+    );
+
+    gate.complete();
+    await tester.pumpAndSettle();
+
+    // 删除成功后弹窗才关闭，任务行被移除。
+    expect(find.byKey(const Key('download-task-delete-dialog')), findsNothing);
+    expect(find.byKey(const Key('download-task-401')), findsNothing);
+    expect(find.byKey(const Key('download-task-402')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('completed download task exposes files button and file list', (

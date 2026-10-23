@@ -299,26 +299,19 @@ Future<void> _deleteSelectedTasks(BuildContext context, WidgetRef ref) async {
   if (submitted) notifier.exitSelectionMode();
 }
 
-/// 单条删除保持同步：确认后直接调用删除接口，不做排队。
+/// 单条删除保持同步：确认后在弹窗内等待删除接口完成，成功才关闭弹窗。
 Future<void> _deleteTask(
   BuildContext context,
   WidgetRef ref,
   DownloadTaskDto task,
 ) async {
-  final deleteFiles = await showDownloadTaskDeleteDialog(
+  final notifier = ref.read(downloadTaskCenterProvider.notifier);
+  await showDownloadTaskDeleteDialog(
     context,
     tasks: [task],
+    onConfirm: (deleteFiles) =>
+        notifier.deleteTask(task.id, deleteFiles: deleteFiles),
   );
-  if (!context.mounted || deleteFiles == null) return;
-  try {
-    await ref
-        .read(downloadTaskCenterProvider.notifier)
-        .deleteTask(task.id, deleteFiles: deleteFiles);
-  } catch (error) {
-    if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: '删除失败'));
-    }
-  }
 }
 
 List<Widget> buildDownloadTaskSlivers({required VoidCallback onManualAdd}) {

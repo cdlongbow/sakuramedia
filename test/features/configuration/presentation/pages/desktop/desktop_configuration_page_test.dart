@@ -263,6 +263,7 @@ void main() {
       expect(find.textContaining('用于识别重复媒体'), findsOneWidget);
       expect(find.text('媒体缩略图打包回填'), findsOneWidget);
       expect(find.text('影片图片打包回填'), findsOneWidget);
+      expect(find.text('演员性别回填'), findsOneWidget);
       expect(find.textContaining('打包存储'), findsNWidgets(2));
 
       bundle.adapter.enqueueJson(
@@ -362,6 +363,30 @@ void main() {
         bundle.adapter.hitCount(
           'POST',
           '/system/jobs/movie_asset_pack_backfill/runs',
+        ),
+        1,
+      );
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/jobs/actor_gender_backfill/runs',
+        body: <String, dynamic>{
+          'task_run_id': 5,
+          'task_key': 'actor_gender_backfill',
+          'state': 'pending',
+        },
+      );
+      final actorGenderRunButton = find.byKey(
+        const Key('configuration-system-maintenance-actor_gender_backfill-run'),
+      );
+      await tester.ensureVisible(actorGenderRunButton);
+      await tester.pumpAndSettle();
+      await tester.tap(actorGenderRunButton);
+      await tester.pumpAndSettle();
+      expect(
+        bundle.adapter.hitCount(
+          'POST',
+          '/system/jobs/actor_gender_backfill/runs',
         ),
         1,
       );

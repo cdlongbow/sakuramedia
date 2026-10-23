@@ -44,6 +44,7 @@ class _SystemMaintenanceContentState
   static const _fileHashBackfillTaskKey = 'media_file_hash_backfill';
   static const _thumbnailPackBackfillTaskKey = 'media_thumbnail_pack_backfill';
   static const _movieAssetPackBackfillTaskKey = 'movie_asset_pack_backfill';
+  static const _actorGenderBackfillTaskKey = 'actor_gender_backfill';
 
   StatusImageSearchDto? _imageSearchStatus;
   String? _errorMessage;
@@ -168,6 +169,15 @@ class _SystemMaintenanceContentState
           description:
               '把影片的封面、薄封面与剧情图从单文件整理为打包存储，减少服务器上的小文件数量。只处理尚未打包的影片，媒体库较大时可能运行较久。',
           successMessage: '影片图片打包回填任务已提交，进度请在任务中心查看',
+        ),
+        SizedBox(height: context.appSpacing.xl),
+        _buildMaintenanceTaskCard(
+          context,
+          taskKey: _actorGenderBackfillTaskKey,
+          title: '演员性别回填',
+          description:
+              '按影片元数据修正演员的存量性别，人工锁定的资料不会被覆盖。任务会一次处理完所有候选，逐条访问 JavDB 并限速，演员数量较多时可能运行较久。',
+          successMessage: '演员性别回填任务已提交，进度请在任务中心查看',
         ),
       ],
     );

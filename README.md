@@ -22,7 +22,7 @@
 
 <p align="center">
   <a href="https://github.com/tinypinglite/sakuramedia/releases/latest"><img src="https://img.shields.io/github/v/release/tinypinglite/sakuramedia?style=flat-square" alt="Latest release" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/github/license/tinypinglite/sakuramedia?style=flat-square" alt="License" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue?style=flat-square" alt="License" /></a>
 </p>
 
 <p align="center">
@@ -215,7 +215,7 @@ NAS 不是必须的：后端可以跑在任何能长期运行 Docker 的机器�
 - 请在使用前了解并遵守当地法律法规；如使用行为违反当地法律，请勿使用。
 - 禁止将本软件用于商业用途。
 - 若不同意上述任意一条，请勿使用。
-- License: [GNU GPL v3](./LICENSE)
+- License: [PolyForm Noncommercial 1.0.0](./LICENSE)
 
 <h2 align="center">Star History</h2>
 

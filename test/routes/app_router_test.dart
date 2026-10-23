@@ -3255,10 +3255,10 @@ void main() {
       router.routeInformationProvider.value.uri.path,
       '/desktop/library/movies/ABC-001',
     );
-    expect(find.byKey(const Key('app-topbar-title')), findsOneWidget);
-    expect(find.text('影片详情'), findsOneWidget);
+    expect(find.byKey(const Key('app-topbar-title')), findsNothing);
+    expect(find.text('影片详情'), findsNothing);
     expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
-    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(find.text('Movie 1'), findsOneWidget);
   });
 
   testWidgets('desktop router opens actor detail route inside shell', (
@@ -3498,7 +3498,7 @@ void main() {
       router.routeInformationProvider.value.uri.path,
       '/desktop/library/movies/ABC-001',
     );
-    expect(find.text('影片详情'), findsOneWidget);
+    expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
   });
 
   testWidgets('top bar back returns to overview after opening movie detail', (

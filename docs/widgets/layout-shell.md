@@ -31,6 +31,12 @@
 
 这些组件位于 `lib/widgets/base/layout/cards/`。尺寸和间距走 theme token，页面只传语义内容和必要布局参数。
 
+## 玻璃材质
+
+- `AppGlassSurface`：`lib/widgets/base/layout/glass/app_glass_surface.dart`。统一玻璃表面：1px 渐变描边 + 顶部高光 + 小面积背景模糊。`AppGlassTone.chrome` 用于浮在媒体内容上的窗口级控件（顶栏、浮动返回键），带浮层阴影；`AppGlassTone.control` 用于动作组、eyebrow、评分/进度 chip，不带阴影。
+- 玻璃只用于 chrome 和可点击的次级控件；不可点的内容/状态标签（番号、上次看到、评分文字）保持普通文本或标准材质，不套玻璃。内容卡和正文也不透明，主操作仍用实色品牌色。
+- 背景模糊只在 `AppGlassSurface` 内部使用，业务页面不要各自拼半透明色 + `BackdropFilter` + 边框。
+
 
 ## 固定列表控制栏与吸顶
 

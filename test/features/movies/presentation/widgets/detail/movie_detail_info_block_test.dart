@@ -90,12 +90,10 @@ void main() {
 
     await tester.pumpWidget(
       _buildBlock(
-        overlayTitle: 'ABC-001 Sample Title',
+        eyebrow: 'ABC-001',
+        overlayTitle: 'Sample Title',
         metaItems: const [
-          MovieDetailMetaItem(
-            icon: Icons.star_outline_rounded,
-            text: '4.5',
-          ),
+          MovieDetailMetaItem(icon: Icons.star_outline_rounded, text: '4.5'),
           MovieDetailMetaItem(
             icon: Icons.chat_bubble_outline_rounded,
             text: '10',
@@ -114,7 +112,8 @@ void main() {
       find.byKey(const Key('movie-detail-hero-overlay-meta')),
       findsOneWidget,
     );
-    expect(find.text('ABC-001 Sample Title'), findsOneWidget);
+    expect(find.text('Sample Title'), findsOneWidget);
+    expect(find.text('ABC-001'), findsOneWidget);
     // 顺序：评分 → 评论 → 厂商；图标段带图标，文字段裸文本。
     final metaRow = find.byKey(const Key('movie-detail-hero-overlay-meta'));
     expect(
@@ -170,9 +169,7 @@ void main() {
     );
     expect(find.text('20.99 GB'), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const Key('movie-detail-playlist-trigger')),
-    );
+    await tester.tap(find.byKey(const Key('movie-detail-playlist-trigger')));
     await tester.pump();
 
     expect(playlistTapped, isTrue);
@@ -288,6 +285,7 @@ Widget _buildBlock({
   bool isSubscribed = false,
   bool isFavorite = false,
   String? overlayTitle,
+  String? eyebrow,
   List<MovieDetailMetaItem> metaItems = const [],
   String? fileSizeLabel,
   VoidCallback? onPlayTap,
@@ -307,6 +305,7 @@ Widget _buildBlock({
           isSubscribed: isSubscribed,
           isFavorite: isFavorite,
           overlayTitle: overlayTitle,
+          eyebrow: eyebrow,
           metaItems: metaItems,
           fileSizeLabel: fileSizeLabel,
           onPlayTap: onPlayTap,

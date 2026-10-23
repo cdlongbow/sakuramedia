@@ -11,6 +11,8 @@ import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
@@ -55,17 +57,12 @@ class AppTopBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isSidebarCollapsed = ref.watch(appShellSidebarCollapsedProvider);
-    final spacing = context.appSpacing;
-    const leftInset = AppPageInsets.desktop;
-    const rightInset = AppPageInsets.desktop;
-    final backButtonSlotWidth = config.isBackEnabled ? 40.0 : 0.0;
-    final titleLeadingGap = config.isBackEnabled ? spacing.sm : 0.0;
     // 收起态前导留白让出壳层固定的收起/展开按钮占位；与侧栏宽度
     // 用同款 180ms 线性动画，标题随之平滑滑动而不是跳变。
     final collapsedLeading =
         sidebarToggleButtonLeft(context) +
         sidebarToggleButtonSize +
-        spacing.sm;
+        context.appSpacing.sm;
 
     return Container(
       key: const Key('desktop-shell-topbar'),
@@ -86,69 +83,139 @@ class AppTopBar extends ConsumerWidget {
           SizedBox(
             key: const Key('topbar-header'),
             height: context.appComponentTokens.desktopTitleBarHeight,
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: isSidebarCollapsed ? collapsedLeading : leftInset,
-                ),
-                if (config.isBackEnabled)
-                  SizedBox(
-                    width: backButtonSlotWidth,
-                    child: AppIconButton(
-                      key: const Key('topbar-back-button'),
-                      tooltip: '返回',
-                      onPressed: () => _handleBack(context),
-                      padding: EdgeInsets.zero,
-                      icon: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: context.appComponentTokens.iconSizeXs,
-                        color: overlay
-                            ? context.appTextPalette.onMedia
-                            : null,
-                      ),
-                    ),
+            child: overlay
+                ? _buildOverlayHeader(
+                    context,
+                    isSidebarCollapsed: isSidebarCollapsed,
+                    collapsedLeading: collapsedLeading,
+                  )
+                : _buildStandardHeader(
+                    context,
+                    isSidebarCollapsed: isSidebarCollapsed,
+                    collapsedLeading: collapsedLeading,
                   ),
-                if (titleLeadingGap > 0) SizedBox(width: titleLeadingGap),
-                Expanded(
-                  child: AppWindowDragArea(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        config.title,
-                        key: const Key('app-topbar-title'),
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s14,
-                          weight: AppTextWeight.semibold,
-                          tone: overlay
-                              ? AppTextTone.onMedia
-                              : AppTextTone.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (!hideActions) ...[
-                  _TopBarSearchEntry(
-                    currentPath: currentPath,
-                    overlay: overlay,
-                  ),
-                  SizedBox(width: spacing.xs),
-                  if (onRefresh != null)
-                    _TopBarRefreshButton(
-                      onPressed: onRefresh!,
-                      isRefreshing: isRefreshing,
-                      overlay: overlay,
-                    ),
-                ],
-                SizedBox(width: rightInset),
-                if (usesAppWindowsCaption) AppWindowsCaption(overlay: overlay),
-              ],
-            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStandardHeader(
+    BuildContext context, {
+    required bool isSidebarCollapsed,
+    required double collapsedLeading,
+  }) {
+    final spacing = context.appSpacing;
+    const leftInset = AppPageInsets.desktop;
+    const rightInset = AppPageInsets.desktop;
+    final backButtonSlotWidth = config.isBackEnabled ? 40.0 : 0.0;
+    final titleLeadingGap = config.isBackEnabled ? spacing.sm : 0.0;
+
+    return Row(
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: isSidebarCollapsed ? collapsedLeading : leftInset,
+        ),
+        if (config.isBackEnabled)
+          SizedBox(
+            width: backButtonSlotWidth,
+            child: AppIconButton(
+              key: const Key('topbar-back-button'),
+              tooltip: '返回',
+              onPressed: () => _handleBack(context),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: context.appComponentTokens.iconSizeXs,
+              ),
+            ),
+          ),
+        if (titleLeadingGap > 0) SizedBox(width: titleLeadingGap),
+        Expanded(
+          child: AppWindowDragArea(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                config.title,
+                key: const Key('app-topbar-title'),
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s14,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.primary,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (!hideActions) ...[
+          _TopBarSearchEntry(currentPath: currentPath),
+          SizedBox(width: spacing.xs),
+          if (onRefresh != null)
+            _TopBarRefreshButton(
+              onPressed: onRefresh!,
+              isRefreshing: isRefreshing,
+            ),
+        ],
+        SizedBox(width: rightInset),
+        if (usesAppWindowsCaption) AppWindowsCaption(),
+      ],
+    );
+  }
+
+  /// 沉浸页顶栏：只留一颗圆形玻璃返回键，页面标题由内容区自己承载。
+  /// 搜索/刷新在沉浸页通常隐藏；若调用方仍开启，则按普通图标放在右侧。
+  Widget _buildOverlayHeader(
+    BuildContext context, {
+    required bool isSidebarCollapsed,
+    required double collapsedLeading,
+  }) {
+    final spacing = context.appSpacing;
+    const leftInset = AppPageInsets.desktop;
+    const rightInset = AppPageInsets.desktop;
+    final backButtonSize = context.appComponentTokens.buttonHeightSm;
+
+    return Row(
+      children: [
+        SizedBox(width: isSidebarCollapsed ? collapsedLeading : leftInset),
+        if (config.isBackEnabled)
+          Tooltip(
+            message: '返回',
+            child: AppInteractiveSurface(
+              key: const Key('topbar-back-button'),
+              onTap: () => _handleBack(context),
+              semanticLabel: '返回',
+              child: AppGlassSurface(
+                tone: AppGlassTone.chrome,
+                borderRadius: context.appRadius.pillBorder,
+                child: SizedBox.square(
+                  dimension: backButtonSize,
+                  child: Center(
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: context.appComponentTokens.iconSizeXs,
+                      color: context.appTextPalette.onMedia,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        Expanded(child: AppWindowDragArea(child: const SizedBox.expand())),
+        if (!hideActions) ...[
+          _TopBarSearchEntry(currentPath: currentPath, overlay: true),
+          SizedBox(width: spacing.xs),
+          if (onRefresh != null)
+            _TopBarRefreshButton(
+              onPressed: onRefresh!,
+              isRefreshing: isRefreshing,
+              overlay: true,
+            ),
+        ],
+        SizedBox(width: rightInset),
+        if (usesAppWindowsCaption) AppWindowsCaption(overlay: true),
+      ],
     );
   }
 
@@ -396,9 +463,10 @@ class _TopBarRefreshButton extends StatelessWidget {
             height: iconSize,
             child: CircularProgressIndicator.adaptive(
               backgroundColor: switch (Theme.of(context).platform) {
-                TargetPlatform.iOS || TargetPlatform.macOS => overlay
-                    ? context.appTextPalette.onMedia
-                    : context.appTextPalette.muted,
+                TargetPlatform.iOS || TargetPlatform.macOS =>
+                  overlay
+                      ? context.appTextPalette.onMedia
+                      : context.appTextPalette.muted,
                 _ => null,
               },
               strokeWidth: 2,

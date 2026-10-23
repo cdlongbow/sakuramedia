@@ -80,7 +80,7 @@ void main() {
 
     await pumpPage(tester);
 
-    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(find.text('Movie 1'), findsOneWidget);
     expect(
       find.byKey(const Key('movie-detail-hero-overlay-title')),
       findsOneWidget,
@@ -105,7 +105,7 @@ void main() {
     );
 
     expect(registered, isEmpty);
-    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(find.text('Movie 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

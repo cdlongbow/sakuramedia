@@ -344,6 +344,7 @@ class MovieDetailPageContent extends StatelessWidget {
                 width: double.infinity,
                 child: MovieDetailInfoBlock(
                   overlayTitle: _resolveOverlayTitle(movie),
+                  eyebrow: movie.movieNumber,
                   metaItems: _resolveMetaItems(context, movie),
                   fileSizeLabel: _resolveFileSizeLabel(
                     mediaItems,
@@ -703,14 +704,15 @@ double _resolveHeroInfoOverlap(
   return (heroHeight * _desktopHeroInfoOverlapFactor).clamp(0.0, heroHeight);
 }
 
-/// 压在封面上的标题：番号打头（同行同字号），标题为空或与番号相同时只剩番号。
+/// 压在封面上的标题：番号由信息块顶部的 eyebrow 单独承载，这里只返回标题；
+/// 标题为空或与番号相同时返回空串，避免重复。
 String _resolveOverlayTitle(MovieDetailDto movie) {
   final number = movie.movieNumber.trim();
-  final title = movie.preferredTitle;
+  final title = movie.preferredTitle.trim();
   if (title.isEmpty || title == number) {
-    return number;
+    return '';
   }
-  return '$number $title';
+  return title;
 }
 
 /// 标题下的元信息段：评分｜评论数｜想看｜看过｜热度｜上映日期｜时长｜厂商｜导演，

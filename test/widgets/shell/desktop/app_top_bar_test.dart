@@ -205,9 +205,9 @@ void main() {
 
       expect(find.byKey(const Key('topbar-search-button')), findsNothing);
       expect(find.byKey(const Key('topbar-refresh-button')), findsNothing);
-      // 返回与标题保留。
+      // 沉浸顶栏只留返回键；页面标题由内容区自己承载。
       expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
-      expect(find.text('影片详情'), findsOneWidget);
+      expect(find.text('影片详情'), findsNothing);
     },
   );
 

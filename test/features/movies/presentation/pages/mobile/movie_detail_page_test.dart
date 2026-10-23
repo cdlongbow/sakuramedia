@@ -83,14 +83,11 @@ void main() {
       find.byKey(const Key('mobile-movie-detail-page-surface')),
       findsOneWidget,
     );
-    expect(find.text('ABC-001 Movie 1'), findsOneWidget);
+    expect(find.text('Movie 1'), findsOneWidget);
     final content = tester.widget<MovieDetailPageContent>(
       find.byType(MovieDetailPageContent),
     );
-    expect(
-      content.surfaceColor,
-      sakuraMobileThemeData.appColors.surfaceCard,
-    );
+    expect(content.surfaceColor, sakuraMobileThemeData.appColors.surfaceCard);
     expect(tester.takeException(), isNull);
   });
 
@@ -110,9 +107,7 @@ void main() {
     await tester.pump();
 
     // 滚到底：留白正好占屏幕最后 34pt，最后一块内容停在它上方。
-    final insetRect = tester.getRect(
-      find.byKey(bottomSafeAreaScrollInsetKey),
-    );
+    final insetRect = tester.getRect(find.byKey(bottomSafeAreaScrollInsetKey));
     expect(insetRect.height, moreOrLessEquals(34));
     expect(insetRect.bottom, moreOrLessEquals(844));
   });
@@ -202,7 +197,11 @@ void main() {
     await pumpPage(tester);
 
     final clipCard = find.byKey(const Key('movie-clip-strip-card-1'));
-    await tester.ensureVisible(clipCard);
+    await tester.scrollUntilVisible(
+      clipCard,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     // 卡片滚到视口中央：底部悬浮信息栏会盖住贴边的内容，居中后 tap 才落在卡上。
     await Scrollable.ensureVisible(
       tester.element(clipCard),

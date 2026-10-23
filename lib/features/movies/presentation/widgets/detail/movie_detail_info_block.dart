@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 
 /// 影片详情照片下方的标题操作信息块：标题全宽在上，
@@ -11,6 +12,7 @@ class MovieDetailInfoBlock extends StatelessWidget {
     super.key,
     required this.isSubscribed,
     this.overlayTitle,
+    this.eyebrow,
     this.metaItems = const <MovieDetailMetaItem>[],
     this.fileSizeLabel,
     this.watchLabel,
@@ -35,8 +37,11 @@ class MovieDetailInfoBlock extends StatelessWidget {
 
   final bool isSubscribed;
 
-  /// 全宽标题（番号打头，为 null/空时不显示）。
+  /// 全宽主标题（不含番号，番号由 [eyebrow] 承载）；为 null/空时不显示。
   final String? overlayTitle;
+
+  /// 标题上方的小标签（通常是番号）；为 null/空时不显示。
+  final String? eyebrow;
 
   /// 标题下的元信息段（评分｜评论｜想看｜看过｜热度｜上映日期｜时长｜厂商｜导演），
   /// 为空时整行不显示。
@@ -115,64 +120,69 @@ class MovieDetailInfoBlock extends StatelessWidget {
           onMergePlaybackTap: onMergePlaybackTap,
           isMergePlaybackLoading: isMergePlaybackLoading,
           onInspectorPaneTap: onInspectorPaneTap,
-          // 窄屏（移动端）的键不带底色/边框，纯图标更紧凑。
-          showKeySurface: isWide,
         );
         final hasActions = actions.isVisible;
         final title = overlayTitle?.trim() ?? '';
-        if (title.isEmpty && !hasInfo && !hasActions) {
+        final eyebrow = this.eyebrow?.trim() ?? '';
+        if (title.isEmpty && eyebrow.isEmpty && !hasInfo && !hasActions) {
           return const SizedBox.shrink();
         }
-        return Padding(
-          padding: EdgeInsets.fromLTRB(spacing.md, spacing.sm, spacing.md, 0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (title.isNotEmpty)
-                Text(
-                  title,
-                  key: const Key('movie-detail-hero-overlay-title'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: resolveAppTextStyle(
-                    context,
-                    size: AppTextSize.s18,
-                    weight: AppTextWeight.semibold,
-                    tone: AppTextTone.primary,
-                  ),
+        final content = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (eyebrow.isNotEmpty) ...[
+              _InfoEyebrow(label: eyebrow),
+              if (title.isNotEmpty) SizedBox(height: spacing.xs),
+            ],
+            if (title.isNotEmpty)
+              Text(
+                title,
+                key: const Key('movie-detail-hero-overlay-title'),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s18,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.primary,
                 ),
-              if (hasInfo || hasActions) ...[
-                SizedBox(height: spacing.xs),
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (hasActions) ...[
-                        SizedBox(width: actionsColumnWidth, child: actions),
-                        SizedBox(width: spacing.md),
-                      ],
+              ),
+            if (hasInfo || hasActions) ...[
+              SizedBox(height: isWide ? spacing.md : spacing.xs),
+              if (isWide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (hasActions) ...[
+                      SizedBox(width: actionsColumnWidth, child: actions),
+                      if (hasInfo) SizedBox(width: spacing.md),
+                    ],
+                    if (hasInfo)
                       Expanded(
                         child: _InfoColumn(
                           info: info,
                           ratingPanel: ratingPanel,
                         ),
                       ),
-                    ],
-                  )
-                else
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _InfoColumn(info: info, ratingPanel: ratingPanel),
-                      if (hasInfo) SizedBox(height: spacing.sm),
-                      if (hasActions) actions,
-                    ],
-                  ),
-              ],
+                  ],
+                )
+              else
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _InfoColumn(info: info, ratingPanel: ratingPanel),
+                    if (hasInfo) SizedBox(height: spacing.sm),
+                    if (hasActions) actions,
+                  ],
+                ),
             ],
-          ),
+          ],
+        );
+        return Padding(
+          padding: EdgeInsets.fromLTRB(spacing.md, spacing.sm, spacing.md, 0),
+          child: content,
         );
       },
     );
@@ -196,6 +206,29 @@ class MovieDetailMetaItem {
   final IconData? icon;
   final Color? iconColor;
   final String text;
+}
+
+/// 标题上方的番号文字：内容层信息，不做玻璃材质。
+class _InfoEyebrow extends StatelessWidget {
+  const _InfoEyebrow({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      key: const Key('movie-detail-hero-overlay-eyebrow'),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: resolveAppTextStyle(
+        context,
+        size: AppTextSize.s12,
+        weight: AppTextWeight.medium,
+        tone: AppTextTone.secondary,
+      ),
+    );
+  }
 }
 
 /// 右信息列的数据快照，避免 Column/Row 两处重复判空。
@@ -284,7 +317,7 @@ class _InfoColumn extends StatelessWidget {
               for (var index = 0; index < info.metaItems.length; index++) ...[
                 if (index > 0)
                   Text(
-                    '｜',
+                    '·',
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -321,38 +354,28 @@ class _InfoColumn extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Tooltip(
               message: info.watchTooltip ?? info.watchLabel!,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: spacing.sm,
-                  vertical: spacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: context.appColors.mediaOverlayStrong,
-                  borderRadius: context.appRadius.smBorder,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.history_rounded,
-                      size: context.appComponentTokens.iconSizeXs,
-                      color: context.appTextPalette.onMedia,
-                    ),
-                    SizedBox(width: spacing.xs),
-                    Flexible(
-                      child: Text(
-                        info.watchLabel!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: resolveAppTextStyle(
-                          context,
-                          size: AppTextSize.s12,
-                          tone: AppTextTone.onMedia,
-                        ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.history_rounded,
+                    size: context.appComponentTokens.iconSizeXs,
+                    color: context.appTextPalette.secondary,
+                  ),
+                  SizedBox(width: spacing.xs),
+                  Flexible(
+                    child: Text(
+                      info.watchLabel!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: resolveAppTextStyle(
+                        context,
+                        size: AppTextSize.s12,
+                        tone: AppTextTone.secondary,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -381,7 +404,6 @@ class _InfoActionsColumn extends StatelessWidget {
     required this.onMergePlaybackTap,
     required this.isMergePlaybackLoading,
     required this.onInspectorPaneTap,
-    required this.showKeySurface,
   });
 
   final VoidCallback? onPlayTap;
@@ -400,9 +422,6 @@ class _InfoActionsColumn extends StatelessWidget {
   final VoidCallback? onMergePlaybackTap;
   final bool isMergePlaybackLoading;
   final ValueChanged<MovieDetailInspectorPane>? onInspectorPaneTap;
-
-  /// 键是否带浅底+圆角（宽屏 true）；窄屏纯图标、无底色边框。
-  final bool showKeySurface;
 
   bool get _hasMerge => mergePlaybackLabel?.trim().isNotEmpty == true;
 
@@ -429,7 +448,6 @@ class _InfoActionsColumn extends StatelessWidget {
       _InfoActionKey(
         key: const Key('movie-detail-hero-subscription-icon'),
         tooltip: isSubscribed ? '已订阅' : '订阅',
-        showSurface: showKeySurface,
         onTap: isSubscriptionUpdating ? null : onSubscriptionTap,
         child: isSubscriptionUpdating
             ? SizedBox(
@@ -456,7 +474,6 @@ class _InfoActionsColumn extends StatelessWidget {
       _InfoActionKey(
         key: const Key('movie-detail-playlist-trigger'),
         tooltip: playlistTooltip,
-        showSurface: showKeySurface,
         onTap: onPlaylistTap,
         child: Icon(
           Icons.playlist_add_rounded,
@@ -468,7 +485,6 @@ class _InfoActionsColumn extends StatelessWidget {
       _InfoActionKey(
         key: const Key('movie-detail-hero-favorite-icon'),
         tooltip: isFavorite ? '取消收藏' : '收藏影片',
-        showSurface: showKeySurface,
         onTap: isFavoriteUpdating ? null : onFavoriteTap,
         child: isFavoriteUpdating
             ? SizedBox(
@@ -496,7 +512,6 @@ class _InfoActionsColumn extends StatelessWidget {
         _InfoActionKey(
           key: const Key('movie-detail-hero-review-icon'),
           tooltip: '评论',
-          showSurface: showKeySurface,
           onTap: () => inspectorPaneTap(MovieDetailInspectorPane.review),
           child: Icon(
             Icons.chat_bubble_outline_rounded,
@@ -507,7 +522,6 @@ class _InfoActionsColumn extends StatelessWidget {
         _InfoActionKey(
           key: const Key('movie-detail-hero-thumbnail-icon'),
           tooltip: '缩略图',
-          showSurface: showKeySurface,
           onTap: () => inspectorPaneTap(MovieDetailInspectorPane.thumbnail),
           child: Icon(
             Icons.photo_library_outlined,
@@ -516,11 +530,7 @@ class _InfoActionsColumn extends StatelessWidget {
           ),
         ),
       ],
-      _InfoMoreKey(
-        isUpdating: isMoreActionsUpdating,
-        onTap: onMoreActionsTap,
-        showSurface: showKeySurface,
-      ),
+      _InfoMoreKey(isUpdating: isMoreActionsUpdating, onTap: onMoreActionsTap),
     ];
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -536,20 +546,29 @@ class _InfoActionsColumn extends StatelessWidget {
             isMergeLoading: isMergePlaybackLoading,
           ),
         SizedBox(height: spacing.xs),
-        Row(
-          children: <Widget>[
-            for (var index = 0; index < keys.length; index++) ...<Widget>[
-              if (index > 0) SizedBox(width: spacing.xs),
-              Expanded(child: keys[index]),
+        AppGlassSurface(
+          tone: AppGlassTone.control,
+          borderRadius: context.appRadius.mdBorder,
+          child: Row(
+            children: <Widget>[
+              for (var index = 0; index < keys.length; index++) ...<Widget>[
+                if (index > 0)
+                  SizedBox(
+                    width: 1,
+                    height: tokens.iconSizeSm,
+                    child: ColoredBox(color: context.appColors.divider),
+                  ),
+                Expanded(child: keys[index]),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );
   }
 }
 
-/// 白色分体播放键：左右五五开（左播放 / 右合并），浅底上加细边框保可读。
+/// 播放键：品牌色填充的播放主键 + 次级描边合并键（有合并时约 2:1）。
 class _InfoSplitPlayButton extends StatelessWidget {
   const _InfoSplitPlayButton({
     required this.onPlayTap,
@@ -571,26 +590,30 @@ class _InfoSplitPlayButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.appComponentTokens;
     final primary = Theme.of(context).colorScheme.primary;
-    return Container(
-      height: tokens.buttonHeightMd,
-      decoration: BoxDecoration(
-        color: context.appColors.surfaceCard.withValues(alpha: 0.82),
-        borderRadius: context.appRadius.pillBorder,
-        border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
-      ),
-      child: Row(
-        children: [
-          Expanded(
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    final playEnabled = onPlayTap != null || isPlayLoading;
+    final playForeground = playEnabled
+        ? onPrimary
+        : context.appTextPalette.secondary;
+    final playBackground = playEnabled
+        ? primary
+        : context.appColors.surfaceMuted;
+
+    return Row(
+      children: [
+        Expanded(
+          flex: hasMerge ? 2 : 1,
+          child: Container(
+            height: tokens.buttonHeightMd,
+            decoration: BoxDecoration(
+              color: playBackground,
+              borderRadius: context.appRadius.pillBorder,
+            ),
             child: AppInteractiveSurface(
               enabled: onPlayTap != null,
               key: const Key('movie-detail-hero-play-button'),
               onTap: onPlayTap,
-              child: Container(
-                height: tokens.buttonHeightMd,
-                padding: EdgeInsets.symmetric(
-                  horizontal: tokens.buttonHorizontalPaddingMd,
-                ),
+              child: Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -601,14 +624,16 @@ class _InfoSplitPlayButton extends StatelessWidget {
                         height: tokens.iconSizeSm,
                         child: CircularProgressIndicator.adaptive(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color?>(primary),
+                          valueColor: AlwaysStoppedAnimation<Color?>(
+                            playForeground,
+                          ),
                         ),
                       )
                     else ...[
                       Icon(
                         Icons.play_arrow_rounded,
                         size: tokens.iconSizeSm,
-                        color: primary,
+                        color: playForeground,
                       ),
                       SizedBox(width: tokens.buttonGapMd),
                       Text(
@@ -618,7 +643,7 @@ class _InfoSplitPlayButton extends StatelessWidget {
                           size: AppTextSize.s14,
                           weight: AppTextWeight.medium,
                           tone: AppTextTone.primary,
-                        ).copyWith(color: primary),
+                        ).copyWith(color: playForeground),
                       ),
                     ],
                   ],
@@ -626,83 +651,80 @@ class _InfoSplitPlayButton extends StatelessWidget {
               ),
             ),
           ),
-          if (hasMerge) ...[
-            SizedBox(
-              width: 1,
-              height: tokens.iconSizeSm,
-              child: ColoredBox(
-                color: primary.withValues(alpha: 0.25),
+        ),
+        if (hasMerge) ...[
+          SizedBox(width: tokens.buttonGapXs),
+          Expanded(
+            child: Container(
+              height: tokens.buttonHeightMd,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: context.appRadius.pillBorder,
+                border: Border.all(color: primary.withValues(alpha: 0.45)),
               ),
-            ),
-            Expanded(
               child: Tooltip(
                 message: mergeTooltip,
                 child: AppInteractiveSurface(
                   enabled: onMergeTap != null,
                   key: const Key('movie-detail-merge-playback-button'),
                   onTap: onMergeTap,
-                  child: SizedBox(
-                    height: tokens.buttonHeightMd,
-                    child: Center(
-                      child: isMergeLoading
-                          ? SizedBox(
-                              width: tokens.iconSizeXs,
-                              height: tokens.iconSizeXs,
-                              child: CircularProgressIndicator.adaptive(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color?>(
-                                  primary,
-                                ),
+                  child: Center(
+                    child: isMergeLoading
+                        ? SizedBox(
+                            width: tokens.iconSizeXs,
+                            height: tokens.iconSizeXs,
+                            child: CircularProgressIndicator.adaptive(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color?>(
+                                primary,
                               ),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.merge_rounded,
-                                  size: tokens.iconSizeSm,
-                                  color: primary,
-                                ),
-                                SizedBox(width: tokens.buttonGapMd),
-                                Text(
-                                  '合并',
-                                  style: resolveAppTextStyle(
-                                    context,
-                                    size: AppTextSize.s14,
-                                    weight: AppTextWeight.medium,
-                                    tone: AppTextTone.primary,
-                                  ).copyWith(color: primary),
-                                ),
-                              ],
                             ),
-                    ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.merge_rounded,
+                                size: tokens.iconSizeSm,
+                                color: primary,
+                              ),
+                              SizedBox(width: tokens.buttonGapMd),
+                              Text(
+                                '合并',
+                                style: resolveAppTextStyle(
+                                  context,
+                                  size: AppTextSize.s14,
+                                  weight: AppTextWeight.medium,
+                                  tone: AppTextTone.primary,
+                                ).copyWith(color: primary),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
 
 /// 中性小操作键（订阅 / 播放列表 / 评论 / 收藏 / 缩略图）。
 ///
-/// 宽屏：浅底 + 圆角；窄屏（[showSurface] 为 false）：纯图标，无底色边框。
+/// 底色与描边由外层 [AppGlassSurface] 动作组统一承载，这里只负责图标和点击。
 class _InfoActionKey extends StatelessWidget {
   const _InfoActionKey({
     super.key,
     required this.tooltip,
     required this.onTap,
     required this.child,
-    this.showSurface = true,
   });
 
   final String tooltip;
   final VoidCallback? onTap;
   final Widget child;
-  final bool showSurface;
 
   @override
   Widget build(BuildContext context) {
@@ -712,14 +734,8 @@ class _InfoActionKey extends StatelessWidget {
         enabled: onTap != null,
         onTap: onTap,
         semanticLabel: tooltip,
-        child: Container(
+        child: SizedBox(
           height: context.appComponentTokens.buttonHeightMd,
-          decoration: showSurface
-              ? BoxDecoration(
-                  color: context.appColors.surfaceMuted,
-                  borderRadius: context.appRadius.mdBorder,
-                )
-              : null,
           child: Center(child: child),
         ),
       ),
@@ -729,28 +745,17 @@ class _InfoActionKey extends StatelessWidget {
 
 /// 更多操作键：需要点击位置弹菜单，用 onTapDown 接。
 class _InfoMoreKey extends StatelessWidget {
-  const _InfoMoreKey({
-    required this.isUpdating,
-    required this.onTap,
-    this.showSurface = true,
-  });
+  const _InfoMoreKey({required this.isUpdating, required this.onTap});
 
   final bool isUpdating;
   final Future<void> Function(Offset globalPosition)? onTap;
-  final bool showSurface;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.appComponentTokens;
-    final button = Container(
+    final button = SizedBox(
       key: const Key('movie-detail-hero-more-actions-button'),
       height: tokens.buttonHeightMd,
-      decoration: showSurface
-          ? BoxDecoration(
-              color: context.appColors.surfaceMuted,
-              borderRadius: context.appRadius.mdBorder,
-            )
-          : null,
       child: Center(
         child: isUpdating
             ? SizedBox(

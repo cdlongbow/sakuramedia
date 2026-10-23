@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
+import 'package:sakuramedia/widgets/base/layout/glass/app_glass_surface.dart';
 import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 让子页面把「真实标题」报给外层返回栏的信箱。
@@ -138,18 +140,39 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
                 leadingWidth:
                     context.appComponentTokens.mobileSubpageLeadingWidth,
                 titleSpacing: 0, // 默认 16
-                leading: IconButton(
-                  iconSize: context.appComponentTokens.iconSizeSm,
-                  key: const Key('mobile-subpage-back-button'),
-                  onPressed: () => _handleBack(context),
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: immersive
-                        ? context.appTextPalette.onMedia
-                        : null,
-                  ),
-                  tooltip: '返回',
-                ),
+                leading: immersive
+                    ? Center(
+                        child: Tooltip(
+                          message: '返回',
+                          child: AppInteractiveSurface(
+                            key: const Key('mobile-subpage-back-button'),
+                            onTap: () => _handleBack(context),
+                            semanticLabel: '返回',
+                            child: AppGlassSurface(
+                              tone: AppGlassTone.chrome,
+                              borderRadius: context.appRadius.pillBorder,
+                              child: SizedBox.square(
+                                dimension:
+                                    context.appComponentTokens.buttonHeightSm,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: context.appComponentTokens.iconSizeSm,
+                                    color: context.appTextPalette.onMedia,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : IconButton(
+                        iconSize: context.appComponentTokens.iconSizeSm,
+                        key: const Key('mobile-subpage-back-button'),
+                        onPressed: () => _handleBack(context),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        tooltip: '返回',
+                      ),
                 title: immersive
                     // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。
                     ? null

@@ -63,8 +63,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // 标题行：番号打头 + 同行标题。
-    expect(find.text('ABC-001 Sample Movie'), findsOneWidget);
+    // 标题行：番号在 eyebrow，标题是主标题。
+    expect(find.text('Sample Movie'), findsOneWidget);
+    expect(find.text('ABC-001'), findsOneWidget);
     expect(find.text('上次看到 32:18'), findsOneWidget);
     expect(find.text('片单1'), findsOneWidget);
     expect(find.text('共 3 个'), findsOneWidget);
@@ -118,8 +119,26 @@ void main() {
               ),
             );
             await tester.pumpAndSettle();
-            expect(find.text('标签'), showTags ? findsOneWidget : findsNothing);
-            expect(find.text('演员'), showActors ? findsOneWidget : findsNothing);
+            if (showTags) {
+              await tester.scrollUntilVisible(
+                find.text('标签'),
+                200,
+                scrollable: find.byType(Scrollable).first,
+              );
+              expect(find.text('标签'), findsOneWidget);
+            } else {
+              expect(find.text('标签'), findsNothing);
+            }
+            if (showActors) {
+              await tester.scrollUntilVisible(
+                find.text('演员'),
+                200,
+                scrollable: find.byType(Scrollable).first,
+              );
+              expect(find.text('演员'), findsOneWidget);
+            } else {
+              expect(find.text('演员'), findsNothing);
+            }
             expect(find.text('榜单'), findsNothing);
             expect(find.text('暂无观看记录'), findsNothing);
             expect(find.textContaining('上次看到'), findsNothing);
@@ -130,6 +149,8 @@ void main() {
                 200,
                 scrollable: find.byType(Scrollable).first,
               );
+              await tester.ensureVisible(find.text('剧情'));
+              await tester.pumpAndSettle();
               await tester.tap(find.text('剧情'));
               expect(tagTaps, 1);
             }
@@ -139,6 +160,8 @@ void main() {
                 200,
                 scrollable: find.byType(Scrollable).first,
               );
+              await tester.ensureVisible(find.text('演员一'));
+              await tester.pumpAndSettle();
               await tester.tap(find.text('演员一'));
               expect(actorTaps, 1);
             }

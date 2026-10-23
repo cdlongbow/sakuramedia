@@ -222,6 +222,7 @@ class _SakuraAppState extends ConsumerState<_SakuraApp>
             child: ScrollConfiguration(
               behavior: const MaterialScrollBehavior().copyWith(
                 dragDevices: kAppScrollDragDevices,
+                scrollbars: false,
               ),
               child: child ?? const SizedBox.shrink(),
             ),

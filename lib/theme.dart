@@ -158,6 +158,15 @@ ThemeData _buildSakuraThemeData({
     hoverColor: hoverOverlay,
     focusColor: pressOverlay,
     colorScheme: colorScheme,
+    // 应用全局不显示滚动条；同时兜住显式 Scrollbar 和多行 TextField
+    // 内强制开启的滚动条（EditableText 会覆盖 ScrollBehavior 的 scrollbars）。
+    scrollbarTheme: const ScrollbarThemeData(
+      thumbColor: WidgetStatePropertyAll(Colors.transparent),
+      trackColor: WidgetStatePropertyAll(Colors.transparent),
+      trackBorderColor: WidgetStatePropertyAll(Colors.transparent),
+      thickness: WidgetStatePropertyAll<double>(0),
+      interactive: false,
+    ),
     textTheme: textScale
         .toTextTheme(textWeights)
         .apply(

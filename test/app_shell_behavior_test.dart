@@ -669,16 +669,19 @@ void main() {
     expect(find.byKey(const Key('sidebar-search-image')), findsNothing);
     expect(find.byKey(const Key('sidebar-search-text-image')), findsNothing);
 
-    // 顶栏收起态只有图标；点击后展开输入框与两个图搜后缀，并自动聚焦。
+    // 顶栏默认展开输入框与两个图搜后缀；点击图标可收起，再点展开并聚焦。
     expect(find.byKey(const Key('topbar-search-button')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-image')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-search-text-image')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('topbar-search-button')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('topbar-search-field')), findsNothing);
 
     await tester.tap(find.byKey(const Key('topbar-search-button')));
     await tester.pumpAndSettle();
-
     expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
-    expect(find.byKey(const Key('topbar-search-image')), findsOneWidget);
-    expect(find.byKey(const Key('topbar-search-text-image')), findsOneWidget);
     expect(_topBarSearchFieldHasFocus(tester), isTrue);
   });
 
@@ -712,8 +715,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('topbar-search-button')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('topbar-search-text-image')));
     await tester.pumpAndSettle();
 
@@ -797,8 +798,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('topbar-search-button')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('topbar-search-image')));
     await tester.pumpAndSettle();
 
@@ -832,7 +831,7 @@ void main() {
   });
 
   testWidgets(
-    'desktop top bar search submits query and collapses from collapsed sidebar',
+    'desktop top bar search submits query from collapsed sidebar',
     (WidgetTester tester) async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
@@ -872,8 +871,6 @@ void main() {
       await tester.tap(find.byKey(const Key('sidebar-toggle-button')));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('topbar-search-button')));
-      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('topbar-search-input')),
         'SSNI-888',
@@ -885,9 +882,9 @@ void main() {
         router.routeInformationProvider.value.uri.path,
         '/desktop/search/SSNI-888',
       );
-      // 提交后收起：只剩图标，没有残留输入框。
+      // 提交后保持默认展开。
       expect(find.byKey(const Key('topbar-search-button')), findsOneWidget);
-      expect(find.byKey(const Key('topbar-search-field')), findsNothing);
+      expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
     },
   );
 
@@ -908,9 +905,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('topbar-search-button')));
-    await tester.pumpAndSettle();
+    // 默认展开；聚焦后按 ESC 收起。
     expect(find.byKey(const Key('topbar-search-field')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('topbar-search-input')));
+    await tester.pumpAndSettle();
+    expect(_topBarSearchFieldHasFocus(tester), isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();

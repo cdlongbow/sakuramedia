@@ -261,22 +261,7 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
 
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode(debugLabel: 'topbar-search');
-  bool _expanded = false;
-
-  @override
-  void didUpdateWidget(covariant _TopBarSearchEntry oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 切页后收起并清空，避免在下一个页面上残留上一次的搜索词。
-    // didUpdateWidget 处于 build 期，不能直接 setState/clear/unfocus，
-    // 推迟到下一帧由 _collapse() 统一处理。
-    if (oldWidget.currentPath != widget.currentPath && _expanded) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _collapse();
-        }
-      });
-    }
-  }
+  bool _expanded = true;
 
   @override
   void dispose() {
@@ -322,7 +307,6 @@ class _TopBarSearchEntryState extends ConsumerState<_TopBarSearchEntry> {
       return;
     }
     context.pushDesktopSearch(query: query, fallbackPath: widget.currentPath);
-    _collapse();
   }
 
   void _openTextImageSearch() {

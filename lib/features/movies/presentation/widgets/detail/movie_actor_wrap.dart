@@ -53,7 +53,9 @@ class MovieActorWrap extends StatelessWidget {
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.42),
+                      color: context.appColors.mediaOverlayStrong.withValues(
+                        alpha: 0.42,
+                      ),
                       shape: BoxShape.circle,
                     ),
                     child: Center(

@@ -684,6 +684,7 @@ class _TagCloudItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
     final (size, weight) = _styleFor(tier);
     final tone = selected || personalized
         ? AppTextTone.accent
@@ -696,8 +697,8 @@ class _TagCloudItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: EdgeInsets.symmetric(
-          horizontal: mobile ? 10 : 8,
-          vertical: mobile ? 8 : 6,
+          horizontal: spacing.sm,
+          vertical: mobile ? spacing.sm : spacing.xs,
         ),
         decoration: BoxDecoration(
           color: selected

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
@@ -46,7 +47,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _searchController = TextEditingController(
       text: ref.read(actorSummaryProvider(_scope)).value?.filter.query ?? '',
     );
@@ -67,24 +68,8 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
   void dispose() {
     _pageCacheHandle.release();
     _searchController.dispose();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(actorSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(actorSummaryProvider(_scope).notifier).loadMore());
   }
 
   void _applyFilter(ActorFilterState nextState) {
@@ -185,6 +170,16 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
           child: AppFilterResultLoadingOverlay(
             isLoading: paged?.filterUpdate.isLoading ?? false,
             hasPreviousItems: items.isNotEmpty,
+            child: AppPagedLoadMoreScope(
+              canLoadMore: () =>
+                  ref
+                      .read(actorSummaryProvider(_scope))
+                      .value
+                      ?.paged
+                      .canAutoLoadMore ??
+                  false,
+              onLoadMore: () =>
+                  ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
             child: CustomScrollView(
               key: const PageStorageKey<String>('desktop:actors:list'),
               controller: _scrollController,
@@ -209,7 +204,8 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                               ? actorListItemPlaceholders(count: 24)
                               : items,
                           errorMessage: initialErrorMessage,
-                          onActorTap: (actor) => context.pushDesktopActorDetail(
+                            onActorTap: (actor) =>
+                                context.pushDesktopActorDetail(
                             actorId: actor.id,
                             fallbackPath: desktopActorsPath,
                           ),
@@ -226,12 +222,14 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                     // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
                     PagedLoadMoreFooterSliver(
                       watchFooter: (ref) => ref.watch(
-                        actorSummaryProvider(
-                          _scope,
-                        ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                          actorSummaryProvider(_scope).select(
+                            (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                          ),
                       ),
                       onLoadMore: (ref) => unawaited(
-                        ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
+                          ref
+                              .read(actorSummaryProvider(_scope).notifier)
+                              .loadMore(),
                       ),
                     ),
                   ],
@@ -240,6 +238,7 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -321,4 +320,3 @@ class _ActorsHeader extends StatelessWidget {
     );
   }
 }
-

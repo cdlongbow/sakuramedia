@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -106,29 +107,13 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    final summary = ref.read(movieSummaryProvider(_scope)).value;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
   }
 
   @override
@@ -270,7 +255,18 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
             scrollController: _scrollController,
             isLoading: paged?.filterUpdate.isLoading ?? false,
             hasPreviousItems: paged?.items.isNotEmpty ?? false,
+            child: AppPagedLoadMoreScope(
+              canLoadMore: () =>
+                  ref
+                      .read(movieSummaryProvider(_scope))
+                      .value
+                      ?.paged
+                      .canAutoLoadMore ??
+                  false,
+              onLoadMore: () =>
+                  ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
             child: listContent,
+            ),
           );
         },
       ),

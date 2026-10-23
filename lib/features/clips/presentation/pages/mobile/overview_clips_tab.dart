@@ -36,6 +36,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_cover_card.dart';
@@ -62,16 +63,9 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   bool _railRefreshScheduled = false;
 
   @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -92,20 +86,6 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
       }
       unawaited(ref.read(clipCollectionsOverviewProvider.notifier).refresh());
     });
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    if (position.pixels < position.maxScrollExtent - 320) {
-      return;
-    }
-    final paged = ref.read(clipsOverviewProvider).value?.paged;
-    if (paged != null && paged.loadMoreErrorMessage == null) {
-      unawaited(ref.read(clipsOverviewProvider.notifier).loadMore());
-    }
   }
 
   Future<void> _refresh() async {
@@ -148,6 +128,16 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
             scrollController: _scrollController,
             isLoading: clipsState?.paged.filterUpdate.isLoading ?? false,
             hasPreviousItems: clips.isNotEmpty,
+            child: AppPagedLoadMoreScope(
+              canLoadMore: () =>
+                  ref
+                      .read(clipsOverviewProvider)
+                      .value
+                      ?.paged
+                      .canAutoLoadMore ??
+                  false,
+              onLoadMore: () =>
+                  ref.read(clipsOverviewProvider.notifier).loadMore(),
             child: AppAdaptiveRefreshScrollView(
               key: const Key('mobile-clips-tab-scroll'),
               controller: _scrollController,
@@ -178,6 +168,7 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
               ],
             ),
           ),
+        ),
         ),
         if (selectionMode) _buildBatchBar(context),
       ],
@@ -657,4 +648,3 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     if (submitted) exitSelection();
   }
 }
-

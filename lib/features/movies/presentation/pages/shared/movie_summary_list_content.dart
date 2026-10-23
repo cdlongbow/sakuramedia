@@ -20,6 +20,7 @@ import 'package:sakuramedia/features/tags/presentation/providers/tag_selection_s
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
@@ -157,29 +158,13 @@ class _MovieSummaryListContentState
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(movieSummaryProvider(widget.scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(movieSummaryProvider(widget.scope).notifier).loadMore());
   }
 
   void _applyFilter(MovieFilterState nextState) {
@@ -396,6 +381,17 @@ class _MovieSummaryListContentState
           // 结果区已经在渲染骨架时，不再叠居中的筛选进度层，避免遮住骨架。
           isLoading: view.filterUpdate.isLoading && !isInitialLoading,
           hasPreviousItems: items.isNotEmpty,
+          child: AppPagedLoadMoreScope(
+            canLoadMore: () =>
+                ref
+                    .read(movieSummaryProvider(widget.scope))
+                    .value
+                    ?.paged
+                    .canAutoLoadMore ??
+                false,
+            onLoadMore: () => ref
+                .read(movieSummaryProvider(widget.scope).notifier)
+                .loadMore(),
           child: widget.bodyBuilder(
             context,
             _scrollController,
@@ -442,9 +438,12 @@ class _MovieSummaryListContentState
                           view.updating.contains(movie.movieNumber),
                       emptyMessage:
                           widget.emptyMessage ??
-                          (filter.isDefault ? '暂无影片，去搜索看看吧' : '当前筛选条件下暂无匹配影片'),
+                            (filter.isDefault
+                                ? '暂无影片，去搜索看看吧'
+                                : '当前筛选条件下暂无匹配影片'),
                       selectionMode: selectionMode,
-                      isMovieSelected: (movie) => isSelected(movie.movieNumber),
+                        isMovieSelected: (movie) =>
+                            isSelected(movie.movieNumber),
                       onMovieSelectedChanged: (movie, _) =>
                           toggleSelect(movie.movieNumber),
                     ),
@@ -467,6 +466,7 @@ class _MovieSummaryListContentState
             widget.enableRefresh ? _handleRefresh : null,
           ),
         ),
+      ),
       ),
     );
 

@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:flutter_test/flutter_test.dart';
@@ -114,16 +118,69 @@ void main() {
     expect(find.byKey(const Key('tags-selected-3')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('超大屏首屏未铺满时自动加载下一页', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(2560, 3000);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 48, count: 24),
+    );
+    final pageTwoGate = Completer<void>();
+    bundle.adapter.enqueueResponder(
+      method: 'GET',
+      path: '/movies',
+      responder: (_, __) async {
+        await pageTwoGate.future;
+        return ResponseBody.fromString(
+          jsonEncode(_moviesJson(total: 48, count: 24, page: 2)),
+          200,
+          headers: const <String, List<String>>{
+            Headers.contentTypeHeader: <String>[Headers.jsonContentType],
+          },
+        );
+      },
+    );
+
+    await tester.pumpWidget(wrap(const DesktopMoviesPage()));
+    for (var index = 0; index < 6; index++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    final scroll = tester
+        .widget<CustomScrollView>(find.byType(CustomScrollView))
+        .controller!;
+    expect(scroll.position.maxScrollExtent, 0);
+    expect(bundle.adapter.hitCount('GET', '/movies'), 2);
+
+    pageTwoGate.complete();
+    for (var index = 0; index < 6; index++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.byKey(const Key('movie-summary-card-ABC-025')), findsOneWidget);
+    expect(bundle.adapter.hitCount('GET', '/movies'), 2);
+    expect(tester.takeException(), isNull);
+  });
 }
 
-Map<String, dynamic> _moviesJson({int total = 2}) {
+Map<String, dynamic> _moviesJson({int total = 2, int? count, int page = 1}) {
+  final itemCount = count ?? total;
+  final start = (page - 1) * 24;
   return <String, dynamic>{
     'items': <Map<String, dynamic>>[
-      for (var index = 0; index < total; index++)
+      for (var index = 0; index < itemCount; index++)
         <String, dynamic>{
-          'javdb_id': 'MovieA$index',
-          'movie_number': 'ABC-00${index + 1}',
-          'title': 'Movie $index',
+          'javdb_id': 'MovieA${start + index}',
+          'movie_number':
+              'ABC-${(start + index + 1).toString().padLeft(3, '0')}',
+          'title': 'Movie ${start + index}',
           'cover_image': null,
           'release_date': '2024-01-02',
           'duration_minutes': 120,
@@ -131,7 +188,7 @@ Map<String, dynamic> _moviesJson({int total = 2}) {
           'can_play': true,
         },
     ],
-    'page': 1,
+    'page': page,
     'page_size': 24,
     'total': total,
   };

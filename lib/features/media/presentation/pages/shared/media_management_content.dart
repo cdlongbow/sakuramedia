@@ -22,12 +22,12 @@ import 'package:sakuramedia/features/media/presentation/widgets/shared/media_tra
 import 'package:sakuramedia/features/media/presentation/widgets/shared/multi_version_movies_section.dart';
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
-import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/keep_alive_page.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
 
 /// 删除媒体后同步 videos 域缓存的统一入口（共享规则见
@@ -40,17 +40,6 @@ void _reportDeletedPornboxVideos(
     items,
     ref.read(videoMutationEventsProvider.notifier).reportDeleted,
   );
-}
-
-/// loadMore 失败存续期间滚动不自动重试（对齐 moments/discovery）；
-/// 恢复分页的唯一入口是页脚重试按钮。
-void _loadMoreUnlessFailed(
-  String? loadMoreError,
-  Future<void> Function() loadMore,
-) {
-  if (loadMoreError == null) {
-    unawaited(loadMore());
-  }
 }
 
 /// 「媒体管理」双端共享内容（桌面 / 移动壳收敛的 content 层）。
@@ -100,37 +89,10 @@ class MediaManagementContent extends HookConsumerWidget {
     if (versionsVisited.value) ref.watch(versionsProvider);
     // 四个 tab 各持一个滚动控制器：TabBarView 的页面会被保活，共用一个控制器
     // 会同时挂到多个滚动视图上。
-    final listScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => _loadMoreUnlessFailed(
-        ref.read(mediaBrowseProvider).value?.paged.loadMoreErrorMessage,
-        () => ref.read(mediaBrowseProvider.notifier).loadMore(),
-      ),
-    );
-    final duplicateScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => _loadMoreUnlessFailed(
-        ref
-            .read(duplicateMediaProvider(duplicateKind.value))
-            .value
-            ?.loadMoreErrorMessage,
-        () => ref
-            .read(duplicateMediaProvider(duplicateKind.value).notifier)
-            .loadMore(),
-      ),
-      keys: [duplicateKind.value],
-    );
-    final versionsScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => _loadMoreUnlessFailed(
-        ref.read(versionsProvider).value?.loadMoreErrorMessage,
-        () => ref.read(versionsProvider.notifier).loadMore(),
-      ),
-      keys: [includeVr.value, includeFc2.value],
-    );
-    final invalidScrollController = usePagedLoadMoreScroll(
-      onReachBottom: () => _loadMoreUnlessFailed(
-        ref.read(invalidMediaProvider).value?.paged.loadMoreErrorMessage,
-        () => ref.read(invalidMediaProvider.notifier).loadMore(),
-      ),
-    );
+    final listScrollController = useScrollController();
+    final duplicateScrollController = useScrollController();
+    final versionsScrollController = useScrollController();
+    final invalidScrollController = useScrollController();
     ref.listen(mediaBrowseProvider.select((value) => value.value?.filter), (
       previous,
       next,
@@ -184,117 +146,164 @@ class MediaManagementContent extends HookConsumerWidget {
               key: Key('$keyPrefix-tab-view'),
               controller: tabController,
               children: [
-                AppKeepAlive(
-                  child: MediaListSection(
-                    scrollController: listScrollController,
-                    isDeleting: isDeleting.value,
-                    isTransferring: isTransferring.value,
-                    isResettingThumbnails: isResettingThumbnails.value,
-                    onBatchDelete: () => _openBatchDeleteDialog(
-                      context,
-                      ref,
-                      isDeleting,
-                      selectionMode,
-                    ),
-                    onBatchTransfer: () => _openBatchTransferDialog(
-                      context,
-                      ref,
-                      isTransferring,
-                      selectionMode,
-                    ),
-                    onBatchResetThumbnails: () =>
-                        _openBatchThumbnailResetDialog(
-                          context,
-                          ref,
-                          isResettingThumbnails,
-                          selectionMode,
-                        ),
-                    onRefresh: () => _refreshAll(
-                      ref,
-                      currentTab: currentTab,
-                      duplicateKind: duplicateKind.value,
-                      versionsProvider: versionsProvider,
-                    ),
-                    onOpenMovieDetail: onOpenMovieDetail,
-                    keyPrefix: keyPrefix,
-                    mobile: mobile,
-                    selectionMode: selectionMode.value,
-                    onEnterSelection: () => selectionMode.value = true,
-                    onExitSelection: exitSelectionMode,
-                    onDeleteItem: (item) => _openSingleDeleteDialog(
-                      context,
-                      ref,
-                      item,
-                      deletingMediaId,
-                    ),
-                    deletingItemId: deletingMediaId,
-                    onTransferItem: (item) => _submitTransfer(
-                      context,
-                      ref,
-                      mediaIds: [item.id],
-                      isTransferring: isTransferring,
-                      transferringMediaId: transferringMediaId,
-                    ),
-                    transferringItemId: transferringMediaId,
-                    onRetryThumbnails: (item) => _handleItemThumbnailAction(
-                      context,
-                      ref,
-                      item,
-                      isResettingThumbnails,
-                      retryingThumbnailMediaId,
-                    ),
-                    retryingThumbnailMediaId: retryingThumbnailMediaId,
-                    onOpenRowActions: (item) => _openMediaRowActions(
-                      context,
-                      ref,
-                      item,
-                      isResettingThumbnails: isResettingThumbnails,
+                AppPagedLoadMoreScope(
+                  enabled: currentTab == 0,
+                  canLoadMore: () =>
+                      ref
+                          .read(mediaBrowseProvider)
+                          .value
+                          ?.paged
+                          .canAutoLoadMore ??
+                      false,
+                  onLoadMore: () =>
+                      ref.read(mediaBrowseProvider.notifier).loadMore(),
+                  child: AppKeepAlive(
+                    child: MediaListSection(
+                      scrollController: listScrollController,
+                      isDeleting: isDeleting.value,
+                      isTransferring: isTransferring.value,
+                      isResettingThumbnails: isResettingThumbnails.value,
+                      onBatchDelete: () => _openBatchDeleteDialog(
+                        context,
+                        ref,
+                        isDeleting,
+                        selectionMode,
+                      ),
+                      onBatchTransfer: () => _openBatchTransferDialog(
+                        context,
+                        ref,
+                        isTransferring,
+                        selectionMode,
+                      ),
+                      onBatchResetThumbnails: () =>
+                          _openBatchThumbnailResetDialog(
+                            context,
+                            ref,
+                            isResettingThumbnails,
+                            selectionMode,
+                          ),
+                      onRefresh: () => _refreshAll(
+                        ref,
+                        currentTab: currentTab,
+                        duplicateKind: duplicateKind.value,
+                        versionsProvider: versionsProvider,
+                      ),
+                      onOpenMovieDetail: onOpenMovieDetail,
+                      keyPrefix: keyPrefix,
+                      mobile: mobile,
+                      selectionMode: selectionMode.value,
+                      onEnterSelection: () => selectionMode.value = true,
+                      onExitSelection: exitSelectionMode,
+                      onDeleteItem: (item) => _openSingleDeleteDialog(
+                        context,
+                        ref,
+                        item,
+                        deletingMediaId,
+                      ),
+                      deletingItemId: deletingMediaId,
+                      onTransferItem: (item) => _submitTransfer(
+                        context,
+                        ref,
+                        mediaIds: [item.id],
+                        isTransferring: isTransferring,
+                        transferringMediaId: transferringMediaId,
+                      ),
+                      transferringItemId: transferringMediaId,
+                      onRetryThumbnails: (item) => _handleItemThumbnailAction(
+                        context,
+                        ref,
+                        item,
+                        isResettingThumbnails,
+                        retryingThumbnailMediaId,
+                      ),
                       retryingThumbnailMediaId: retryingThumbnailMediaId,
-                      isTransferring: isTransferring,
-                      transferringMediaId: transferringMediaId,
-                      deletingMediaId: deletingMediaId,
+                      onOpenRowActions: (item) => _openMediaRowActions(
+                        context,
+                        ref,
+                        item,
+                        isResettingThumbnails: isResettingThumbnails,
+                        retryingThumbnailMediaId: retryingThumbnailMediaId,
+                        isTransferring: isTransferring,
+                        transferringMediaId: transferringMediaId,
+                        deletingMediaId: deletingMediaId,
+                      ),
                     ),
                   ),
                 ),
-                AppKeepAlive(
-                  child: DuplicateMediaSection(
-                    key: Key('$keyPrefix-duplicate-media-section'),
-                    scrollController: duplicateScrollController,
-                    kind: duplicateKind.value,
-                    onKindChanged: (next) {
-                      if (duplicateKind.value == next) return;
-                      duplicateKind.value = next;
-                      if (duplicateScrollController.hasClients) {
-                        duplicateScrollController.jumpTo(0);
-                      }
-                    },
-                    keyPrefix: keyPrefix,
-                    mobile: mobile,
-                    onRefresh: () => _refreshAll(
-                      ref,
-                      currentTab: currentTab,
-                      duplicateKind: duplicateKind.value,
-                      versionsProvider: versionsProvider,
+                AppPagedLoadMoreScope(
+                  enabled: currentTab == _duplicateTabIndex,
+                  canLoadMore: () =>
+                      ref
+                          .read(duplicateMediaProvider(duplicateKind.value))
+                          .value
+                          ?.canAutoLoadMore ??
+                      false,
+                  onLoadMore: () => ref
+                      .read(
+                        duplicateMediaProvider(duplicateKind.value).notifier,
+                      )
+                      .loadMore(),
+                  child: AppKeepAlive(
+                    child: DuplicateMediaSection(
+                      key: Key('$keyPrefix-duplicate-media-section'),
+                      scrollController: duplicateScrollController,
+                      kind: duplicateKind.value,
+                      onKindChanged: (next) {
+                        if (duplicateKind.value == next) return;
+                        duplicateKind.value = next;
+                        if (duplicateScrollController.hasClients) {
+                          duplicateScrollController.jumpTo(0);
+                        }
+                      },
+                      keyPrefix: keyPrefix,
+                      mobile: mobile,
+                      onRefresh: () => _refreshAll(
+                        ref,
+                        currentTab: currentTab,
+                        duplicateKind: duplicateKind.value,
+                        versionsProvider: versionsProvider,
+                      ),
+                      onOpenMovieDetail: onOpenMovieDetail,
+                      onOpenVideoCollectionDetail:
+                          onOpenVideoCollectionDetail,
                     ),
-                    onOpenMovieDetail: onOpenMovieDetail,
-                    onOpenVideoCollectionDetail: onOpenVideoCollectionDetail,
                   ),
                 ),
-                AppKeepAlive(
-                  child: MultiVersionMoviesSection(
-                    includeVr: includeVr,
-                    includeFc2: includeFc2,
-                    scrollController: versionsScrollController,
-                    keyPrefix: keyPrefix,
-                    mobile: mobile,
-                    onOpenMovieDetail: onOpenMovieDetail,
+                AppPagedLoadMoreScope(
+                  enabled: currentTab == _versionsTabIndex,
+                  canLoadMore: () =>
+                      ref.read(versionsProvider).value?.canAutoLoadMore ??
+                      false,
+                  onLoadMore: () =>
+                      ref.read(versionsProvider.notifier).loadMore(),
+                  child: AppKeepAlive(
+                    child: MultiVersionMoviesSection(
+                      includeVr: includeVr,
+                      includeFc2: includeFc2,
+                      scrollController: versionsScrollController,
+                      keyPrefix: keyPrefix,
+                      mobile: mobile,
+                      onOpenMovieDetail: onOpenMovieDetail,
+                    ),
                   ),
                 ),
-                AppKeepAlive(
-                  child: InvalidMediaSection(
-                    key: Key('$keyPrefix-invalid-media-section'),
-                    scrollController: invalidScrollController,
-                    mobile: mobile,
+                AppPagedLoadMoreScope(
+                  enabled: currentTab == 3,
+                  canLoadMore: () =>
+                      ref
+                          .read(invalidMediaProvider)
+                          .value
+                          ?.paged
+                          .canAutoLoadMore ??
+                      false,
+                  onLoadMore: () =>
+                      ref.read(invalidMediaProvider.notifier).loadMore(),
+                  child: AppKeepAlive(
+                    child: InvalidMediaSection(
+                      key: Key('$keyPrefix-invalid-media-section'),
+                      scrollController: invalidScrollController,
+                      mobile: mobile,
+                    ),
                   ),
                 ),
               ],
@@ -530,7 +539,8 @@ class MediaManagementContent extends HookConsumerWidget {
     ValueNotifier<int?> retryingThumbnailMediaId,
   ) async {
     final force =
-        item.thumbnailGenerationState == MediaThumbnailGenerationState.succeeded;
+        item.thumbnailGenerationState ==
+        MediaThumbnailGenerationState.succeeded;
     if (force) {
       final confirmed = await showAppConfirmDialog(
         context,

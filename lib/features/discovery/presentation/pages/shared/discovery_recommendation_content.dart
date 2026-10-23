@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
@@ -16,13 +17,13 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_collectio
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
-import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/domain/moments/moment_grid.dart';
@@ -90,8 +91,7 @@ class DiscoveryMoviesContent extends StatelessWidget {
           );
         }),
       ),
-      readLoadMoreError: (ref) =>
-          ref.read(provider).value?.loadMoreErrorMessage,
+      canLoadMore: (ref) => ref.read(provider).value?.canAutoLoadMore ?? false,
     );
   }
 }
@@ -153,8 +153,7 @@ class HotActressReleasesContent extends StatelessWidget {
           );
         }),
       ),
-      readLoadMoreError: (ref) =>
-          ref.read(provider).value?.loadMoreErrorMessage,
+      canLoadMore: (ref) => ref.read(provider).value?.canAutoLoadMore ?? false,
       useDefaultSubscriptionActions: true,
       secondaryLabelOf: (item) {
         final name = item.hotActressName.trim();
@@ -176,7 +175,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
     required this.emptyMessage,
     required this.watch,
     required this.watchLoadMoreFooter,
-    required this.readLoadMoreError,
+    required this.canLoadMore,
     required this.loadMore,
     required this.reload,
     required this.refresh,
@@ -202,8 +201,8 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
   )
   watchLoadMoreFooter;
 
-  /// 读 loadMore 失败存续（不订阅）：滚动守卫用它判断失败存续期间不自动重试。
-  final String? Function(WidgetRef ref) readLoadMoreError;
+  /// 读实时分页状态，判断当前是否允许自动请求下一页。
+  final bool Function(WidgetRef ref) canLoadMore;
   final Future<void> Function(WidgetRef ref) loadMore;
   final Future<void> Function(WidgetRef ref) reload;
   final Future<String?> Function(WidgetRef ref) refresh;
@@ -216,17 +215,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = watch(ref);
     final paged = async.value ?? PagedListState<T>();
-    final scrollController = usePagedLoadMoreScroll(
-      onReachBottom: () {
-        // 对齐旧 PagedLoadController：loadMore 失败存续期间滚动不自动重试，
-        // 恢复分页的唯一入口是 footer 的重试按钮。
-        // 读独立取值（不订阅，避免翻页状态触发本体重建）。
-        if (readLoadMoreError(ref) == null) {
-          unawaited(loadMore(ref));
-        }
-      },
-      triggerOffset: 300,
-    );
+    final scrollController = useScrollController();
 
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
@@ -253,6 +242,9 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
       header: SizedBox(height: headerGap),
       child: AppPageRefreshScope(
         onRefresh: () => _handleRefresh(context, ref),
+        child: AppPagedLoadMoreScope(
+          canLoadMore: () => canLoadMore(ref),
+          onLoadMore: () => loadMore(ref),
         child: enablePullToRefresh
             ? ColoredBox(
                 color: backgroundColor,
@@ -270,6 +262,7 @@ class _DiscoveryMovieListContent<T> extends HookConsumerWidget {
                   slivers: [sliver],
                 ),
               ),
+      ),
       ),
     );
   }
@@ -378,18 +371,7 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
     );
     final paged =
         async.value ?? const PagedListState<MomentRecommendationDto>();
-    final scrollController = usePagedLoadMoreScroll(
-      onReachBottom: () {
-        // 同影片页：loadMore 失败存续期间滚动不自动重试。
-        // 读实时状态（build 闭包里的 paged 已做 loadMore 中立化）。
-        final loadMoreError =
-            ref.read(provider).value?.loadMoreErrorMessage;
-        if (loadMoreError == null) {
-          unawaited(ref.read(provider.notifier).loadMore());
-        }
-      },
-      triggerOffset: 300,
-    );
+    final scrollController = useScrollController();
 
     final sliver = SliverMainAxisGroup(
       key: Key('$keyPrefix-page'),
@@ -419,6 +401,9 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
       header: SizedBox(height: headerGap),
       child: AppPageRefreshScope(
         onRefresh: () => _handleRefresh(context, ref),
+        child: AppPagedLoadMoreScope(
+          canLoadMore: () => ref.read(provider).value?.canAutoLoadMore ?? false,
+          onLoadMore: () => ref.read(provider.notifier).loadMore(),
         child: enablePullToRefresh
             ? ColoredBox(
                 color: backgroundColor,
@@ -436,6 +421,7 @@ class DiscoveryMomentsContent extends HookConsumerWidget {
                   slivers: [sliver],
                 ),
               ),
+      ),
       ),
     );
   }

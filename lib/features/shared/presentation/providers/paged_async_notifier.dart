@@ -161,6 +161,15 @@ class PagedListState<T> {
   bool get isEmpty => items.isEmpty;
   bool get isNotEmpty => items.isNotEmpty;
 
+  /// 当前是否允许自动请求下一页。
+  ///
+  /// 失败后不自动重试；页脚的显式重试按钮仍可直接调用 `loadMore()`。
+  bool get canAutoLoadMore =>
+      hasMore &&
+      !isLoadingMore &&
+      loadMoreErrorMessage == null &&
+      filterUpdate.isIdle;
+
   /// 首页响应直接组装为初始 State。
   factory PagedListState.fromFirstPage(PaginatedResponseDto<T> response) {
     return PagedListState<T>(

@@ -135,10 +135,11 @@ void main() {
 Map<String, dynamic> _actorsJson({int total = 1}) {
   return <String, dynamic>{
     'items': <Map<String, dynamic>>[
+      for (var index = 0; index < total; index++)
       <String, dynamic>{
-        'id': 1,
-        'javdb_id': 'javdb-1',
-        'name': '演员一号',
+          'id': index + 1,
+          'javdb_id': 'javdb-${index + 1}',
+          'name': index == 0 ? '演员一号' : '演员${index + 1}',
         'alias_name': '',
         'profile_image': null,
         'is_subscribed': true,

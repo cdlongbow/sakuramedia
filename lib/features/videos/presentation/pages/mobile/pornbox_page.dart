@@ -36,6 +36,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -71,7 +72,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -88,9 +89,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
   @override
   void dispose() {
     _pageCacheHandle.release();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -130,20 +129,6 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     unawaited(
       ref.read(videoSummaryProvider(_scope).notifier).applyFilter(next),
     );
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(videoSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(videoSummaryProvider(_scope).notifier).loadMore());
   }
 
   List<VideoItemListItemDto> get _loadedVideos =>
@@ -330,12 +315,24 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
               scrollController: _scrollController,
               isLoading: paged.filterUpdate.isLoading,
               hasPreviousItems: paged.items.isNotEmpty,
+              child: AppPagedLoadMoreScope(
+                canLoadMore: () =>
+                    ref
+                        .read(videoSummaryProvider(_scope))
+                        .value
+                        ?.paged
+                        .canAutoLoadMore ??
+                    false,
+                onLoadMore: () =>
+                    ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
               child: AppAdaptiveRefreshScrollView(
                 key: const PageStorageKey<String>('mobile:pornbox:list'),
                 controller: _scrollController,
                 onRefresh: _refresh,
                 slivers: <Widget>[
-                  SliverToBoxAdapter(child: _buildCollectionsSection(context)),
+                    SliverToBoxAdapter(
+                      child: _buildCollectionsSection(context),
+                    ),
                   AppPinnedListHeader(
                     key: _listHeaderKey,
                     color: context.appColors.surfaceCard,
@@ -350,8 +347,10 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                   _buildVideosSliver(
                     context,
                     paged: paged,
-                    isInitialLoading: videosAsync.isLoading && summary == null,
-                    initialErrorMessage: videosAsync.hasError && summary == null
+                      isInitialLoading:
+                          videosAsync.isLoading && summary == null,
+                      initialErrorMessage:
+                          videosAsync.hasError && summary == null
                         ? '视频列表加载失败，请稍后重试'
                         : null,
                   ),
@@ -360,17 +359,20 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                   PagedLoadMoreFooterSliver(
                     hiddenSpacing: PagedFooterSpacing.lg,
                     watchFooter: (ref) => ref.watch(
-                      videoSummaryProvider(
-                        _scope,
-                      ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                        videoSummaryProvider(_scope).select(
+                          (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                        ),
                     ),
                     onLoadMore: (ref) => unawaited(
-                      ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
+                        ref
+                            .read(videoSummaryProvider(_scope).notifier)
+                            .loadMore(),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
           ),
           if (selectionMode) _buildBatchBar(context),
         ],
@@ -675,4 +677,3 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     );
   }
 }
-

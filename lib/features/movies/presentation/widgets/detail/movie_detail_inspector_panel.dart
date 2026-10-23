@@ -24,6 +24,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_over
 import 'package:sakuramedia/widgets/base/feedback/app_filter_update_bar.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_selectable_text_scroll_configuration.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
@@ -283,38 +284,18 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
   MovieDetailReviewState get _state =>
       ref.read(movieDetailReviewProvider(widget.movieNumber));
 
-  static const double _loadMoreExtentAfterThreshold = 200;
   late final ScrollController _scrollController;
-  int _lastAutoLoadTriggerItemCount = -1;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_handleScroll);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _handleScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    if (_scrollController.position.extentAfter >
-        _loadMoreExtentAfterThreshold) {
-      _lastAutoLoadTriggerItemCount = -1;
-      return;
-    }
-    if (_state.items.length == _lastAutoLoadTriggerItemCount) {
-      return;
-    }
-    _lastAutoLoadTriggerItemCount = _state.items.length;
-    _controller.loadMore();
   }
 
   void _handleSortChange(MovieReviewSort sort) {
@@ -324,7 +305,6 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
-    _lastAutoLoadTriggerItemCount = -1;
     unawaited(_controller.setSort(sort));
   }
 
@@ -413,6 +393,18 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
     }
 
     return AppSelectableTextScrollConfiguration(
+      child: AppPagedLoadMoreScope(
+        canLoadMore: () {
+          final current = _state;
+          return !current.isInitialLoading &&
+              current.initialErrorMessage == null &&
+              current.filterUpdate.isIdle &&
+              current.hasNextPage &&
+              !current.isLoadingMore &&
+              current.loadMoreErrorMessage == null &&
+              current.items.isNotEmpty;
+        },
+        onLoadMore: _controller.loadMore,
       child: ListView.separated(
         controller: _scrollController,
         key: const Key('movie-detail-review-list'),
@@ -428,6 +420,7 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
             onRetryLoadMore: _controller.loadMore,
           );
         },
+      ),
       ),
     );
   }

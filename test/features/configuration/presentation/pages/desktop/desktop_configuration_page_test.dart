@@ -470,7 +470,7 @@ void main() {
       expect(find.text('还没有屏蔽任何影片'), findsOneWidget);
     });
 
-    testWidgets('loads the next page of blacklisted movies on scroll', (
+    testWidgets('fills the blacklisted movie viewport automatically', (
       WidgetTester tester,
     ) async {
       _enqueueMediaLibraries(bundle, libraries: const []);
@@ -482,15 +482,9 @@ void main() {
         tester,
         const Key('configuration-tab-blacklisted-movies'),
       );
-      expect(bundle.adapter.hitCount('GET', '/movies'), 1);
-
-      // 滚到底自动加载下一页（不再有手动「加载更多」按钮）。
-      await tester.drag(
-        find.text('已屏蔽的影片不会出现在普通列表和推荐中。右键影片可取消屏蔽。'),
-        const Offset(0, -3000),
-      );
       await tester.pumpAndSettle();
 
+      // 首页未铺满视口，无需滚动就应继续拉取下一页。
       expect(bundle.adapter.hitCount('GET', '/movies'), 2);
       final secondPage = bundle.adapter.requests
           .where((request) => request.path == '/movies')

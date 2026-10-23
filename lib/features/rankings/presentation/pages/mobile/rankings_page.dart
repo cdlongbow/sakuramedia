@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_inline_error_banner.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
@@ -69,7 +70,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -86,24 +87,8 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
   @override
   void dispose() {
     _pageCacheHandle.release();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(rankingSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(rankingSummaryProvider(_scope).notifier).loadMore());
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
@@ -164,7 +149,17 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
 
   Widget _buildScrollView(BuildContext context, RankingSummaryState summary) {
     final hasNoSources = summary.filters.hasNoSources;
-    return AppAdaptiveRefreshScrollView(
+    return AppPagedLoadMoreScope(
+      canLoadMore: () =>
+          ref
+              .read(rankingSummaryProvider(_scope))
+              .value
+              ?.paged
+              .canAutoLoadMore ??
+          false,
+      onLoadMore: () =>
+          ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
+      child: AppAdaptiveRefreshScrollView(
       key: const PageStorageKey<String>('mobile:rankings:list'),
       onRefresh: _handleRefresh,
       controller: _scrollController,
@@ -176,7 +171,9 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
             if (hasNoSources &&
                 !(summary.paged.filterUpdate.hasFailed &&
                     summary.paged.items.isEmpty))
-              const SliverToBoxAdapter(child: AppEmptyState(message: '暂无可用排行榜'))
+                const SliverToBoxAdapter(
+                  child: AppEmptyState(message: '暂无可用排行榜'),
+                )
             else if (!summary.paged.filterUpdate.hasFailed ||
                 summary.paged.items.isNotEmpty)
               AppSkeletonizer.sliver(
@@ -230,6 +227,7 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
           ],
         ),
       ],
+      ),
     );
   }
 

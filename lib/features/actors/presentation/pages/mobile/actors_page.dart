@@ -22,6 +22,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
@@ -45,7 +46,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _searchController = TextEditingController(
       text: ref.read(actorSummaryProvider(_scope)).value?.filter.query ?? '',
     );
@@ -66,24 +67,8 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
   void dispose() {
     _pageCacheHandle.release();
     _searchController.dispose();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(actorSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(actorSummaryProvider(_scope).notifier).loadMore());
   }
 
   void _applyFilter(ActorFilterState nextState) {
@@ -201,6 +186,16 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
           surfaceColor: context.appColors.surfaceCard,
           isLoading: paged?.filterUpdate.isLoading ?? false,
           hasPreviousItems: items.isNotEmpty,
+          child: AppPagedLoadMoreScope(
+            canLoadMore: () =>
+                ref
+                    .read(actorSummaryProvider(_scope))
+                    .value
+                    ?.paged
+                    .canAutoLoadMore ??
+                false,
+            onLoadMore: () =>
+                ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
           child: AppAdaptiveRefreshScrollView(
             key: const PageStorageKey<String>('mobile:actors:list'),
             onRefresh: _handleRefresh,
@@ -233,7 +228,8 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                         onActorSubscriptionTap: (actor) =>
                             _toggleActorSubscription(actor.id),
                         isActorSubscriptionUpdating: (actor) =>
-                            summary?.isSubscriptionUpdating(actor.id) ?? false,
+                              summary?.isSubscriptionUpdating(actor.id) ??
+                              false,
                         emptyMessage: filter.isDefault
                             ? '暂无女优，去搜索看看吧'
                             : '当前筛选条件下暂无匹配女优',
@@ -242,12 +238,14 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                   // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
                   PagedLoadMoreFooterSliver(
                     watchFooter: (ref) => ref.watch(
-                      actorSummaryProvider(
-                        _scope,
-                      ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                        actorSummaryProvider(_scope).select(
+                          (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                        ),
                     ),
                     onLoadMore: (ref) => unawaited(
-                      ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
+                        ref
+                            .read(actorSummaryProvider(_scope).notifier)
+                            .loadMore(),
                     ),
                   ),
                 ],
@@ -255,6 +253,7 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -280,4 +279,3 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
     );
   }
 }
-

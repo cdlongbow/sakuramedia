@@ -31,6 +31,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_filter_result_loading_overlay.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
@@ -184,30 +185,14 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
     _tagSelectionActive.dispose();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    final summary = ref.read(movieSummaryProvider(_scope)).value;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
   }
 
   void _applyFilter(MovieFilterState nextState) {
@@ -581,6 +566,16 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
               scrollController: _scrollController,
               isLoading: movies?.paged.filterUpdate.isLoading ?? false,
               hasPreviousItems: movies?.paged.items.isNotEmpty ?? false,
+              child: AppPagedLoadMoreScope(
+                canLoadMore: () =>
+                    ref
+                        .read(movieSummaryProvider(_scope))
+                        .value
+                        ?.paged
+                        .canAutoLoadMore ??
+                    false,
+                onLoadMore: () =>
+                    ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
               child: widget.bodyBuilder(
                 context,
                 _scrollController,
@@ -640,8 +635,12 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                                 globalPosition: globalPosition,
                                 isSubscribed: movie.isSubscribed,
                                 onBlacklisted: () => ref
-                                    .read(movieSummaryProvider(_scope).notifier)
-                                    .removeMovies(<String>[movie.movieNumber]),
+                                      .read(
+                                        movieSummaryProvider(_scope).notifier,
+                                      )
+                                      .removeMovies(<String>[
+                                        movie.movieNumber,
+                                      ]),
                                 onEnterSelection:
                                     widget.useMobileSelectionLayout
                                     ? () {
@@ -673,13 +672,16 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                     if (footer != null)
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.only(top: context.appSpacing.md),
+                            padding: EdgeInsets.only(
+                              top: context.appSpacing.md,
+                            ),
                           child: footer,
                         ),
                       ),
                   ],
                 ),
                 widget.enableRefresh ? _handleRefresh : null,
+              ),
               ),
             );
           },

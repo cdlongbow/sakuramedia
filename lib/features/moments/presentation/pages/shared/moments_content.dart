@@ -21,7 +21,6 @@ import 'package:sakuramedia/features/moments/presentation/providers/moments_stat
 import 'package:sakuramedia/features/shared/data/batch_operation_dto.dart';
 import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/batch_operation_submission_provider.dart';
-import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
@@ -35,6 +34,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_bot
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
@@ -150,21 +150,7 @@ class MomentsContent extends HookConsumerWidget {
     }, [filter.sortOrder, filter.kindFilter]);
 
     final listHeaderKey = useMemoized(() => GlobalKey());
-    final scrollController = usePagedLoadMoreScroll(
-      onReachBottom: () {
-        // 对齐旧基类：loadMore 失败存续期间滚动不自动重试。
-        // 读实时状态（build 闭包里的 paged 已做 loadMore 中立化）。
-        final loadMoreError = ref
-            .read(momentsProvider)
-            .value
-            ?.paged
-            .loadMoreErrorMessage;
-        if (loadMoreError == null) {
-          unawaited(ref.read(momentsProvider.notifier).loadMore());
-        }
-      },
-      triggerOffset: 300,
-    );
+    final scrollController = useScrollController();
 
     final sliver = SliverMainAxisGroup(
       key: rootKey,
@@ -246,6 +232,10 @@ class MomentsContent extends HookConsumerWidget {
       scrollController: scrollController,
       isLoading: paged.filterUpdate.isLoading,
       hasPreviousItems: paged.items.isNotEmpty,
+      child: AppPagedLoadMoreScope(
+        canLoadMore: () =>
+            ref.read(momentsProvider).value?.paged.canAutoLoadMore ?? false,
+        onLoadMore: () => ref.read(momentsProvider.notifier).loadMore(),
       child: enablePullToRefresh
           ? AppAdaptiveRefreshScrollView(
               onRefresh: () => _handleRefresh(context, ref),
@@ -257,6 +247,7 @@ class MomentsContent extends HookConsumerWidget {
               controller: scrollController,
               slivers: <Widget>[sliver],
             ),
+      ),
     );
     final pageWithSelectionBar = useMobileFilterDrawer && selectionMode.value
         ? Column(
@@ -720,9 +711,8 @@ class MomentsContent extends HookConsumerWidget {
           item: item,
           fallbackPath: previewFallbackPath,
         ),
-        onItemAddToCollection: (item) => unawaited(
-          addMomentItemToCollection(context, item: item),
-        ),
+        onItemAddToCollection: (item) =>
+            unawaited(addMomentItemToCollection(context, item: item)),
         onItemDelete: (item) => unawaited(_deleteItem(context, ref, item)),
         selectionMode: selectionMode,
         isSelected: isSelected,
@@ -753,9 +743,7 @@ class MomentsContent extends HookConsumerWidget {
       return;
     }
     try {
-      await ref
-          .read(mediaApiProvider)
-          .deleteMediaPoint(pointId: item.pointId);
+      await ref.read(mediaApiProvider).deleteMediaPoint(pointId: item.pointId);
       if (!context.mounted) {
         return;
       }

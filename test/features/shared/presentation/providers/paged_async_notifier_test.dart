@@ -135,6 +135,31 @@ PaginatedResponseDto<int> _page({
 );
 
 void main() {
+  group('PagedListState.canAutoLoadMore', () {
+    test('只在有下一页且当前可请求时为 true', () {
+      const paged = PagedListState<int>(
+        items: [1],
+        currentPage: 1,
+        total: 2,
+        hasMore: true,
+      );
+
+      expect(paged.canAutoLoadMore, isTrue);
+      expect(paged.copyWith(hasMore: false).canAutoLoadMore, isFalse);
+      expect(paged.copyWith(isLoadingMore: true).canAutoLoadMore, isFalse);
+      expect(
+        paged.copyWith(loadMoreErrorMessage: 'boom').canAutoLoadMore,
+        isFalse,
+      );
+      expect(
+        paged
+            .copyWith(filterUpdate: const FilterUpdateState.waiting())
+            .canAutoLoadMore,
+        isFalse,
+      );
+    });
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PagedListState', () {

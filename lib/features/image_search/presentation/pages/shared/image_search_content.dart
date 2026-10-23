@@ -38,6 +38,7 @@ import 'package:sakuramedia/features/image_search/presentation/widgets/image_sea
 import 'package:sakuramedia/features/image_search/presentation/widgets/image_search_result_preview_dialog.dart';
 import 'package:sakuramedia/features/moment_collections/presentation/widgets/add_to_moment_collection_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
@@ -96,19 +97,14 @@ class ImageSearchContent extends ConsumerStatefulWidget {
 }
 
 class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
-  static const int _maxAutoLoadAttempts = 5;
   static const int _maxAutoLoadNoGrowthStreak = 2;
-  static const double _loadMoreTriggerOffset = 300;
 
   late final ImageSearchScope _scope;
   late final RiverpodPageHandle _pageCacheHandle;
   late final ScrollController _scrollController;
   late final TextEditingController _textController;
-  final AppPopoverController _filterPopoverController =
-      AppPopoverController();
+  final AppPopoverController _filterPopoverController = AppPopoverController();
   ImageSearchFilterState? _desktopFilterDraft;
-  bool _isViewportFillCheckScheduled = false;
-  int _autoLoadAttempts = 0;
   int _autoLoadNoGrowthStreak = 0;
   bool _autoLoadHalted = false;
 
@@ -120,7 +116,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   void initState() {
     super.initState();
     _scope = ImageSearchScope(_resolveStateKey());
-    _scrollController = ScrollController()..addListener(_handleScroll);
+    _scrollController = ScrollController();
     _textController = TextEditingController();
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
@@ -155,9 +151,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   @override
   void dispose() {
     _pageCacheHandle.release();
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
+    _scrollController.dispose();
     _textController.dispose();
     super.dispose();
   }
@@ -262,36 +256,38 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     final loadMoreFooter = searchState.hasSource
         ? _buildLoadMoreFooter(context)
         : null;
-    ref.listen(imageSearchProvider(_scope), (_, __) {
-      _scheduleViewportFillCheck();
-    });
-
     return AppPageRefreshScope(
       onRefresh: _handleTopBarRefresh,
       child: Material(
         color: widget.surfaceColor,
-        child: CustomScrollView(
-          key: PageStorageKey<String>('image-search-scroll:${_scope.cacheKey}'),
-          controller: _scrollController,
-          slivers: [
-            SliverToBoxAdapter(child: _buildSearchComposer(context)),
-            if (searchState.inputKind == ImageSearchInputKind.image &&
-                searchState.hasSource &&
-                searchState.isPreviewExpanded) ...[
-              SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
-              SliverToBoxAdapter(child: _buildPreviewPanel(context)),
-            ],
-            SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
-            _buildResultSectionSliver(context),
-            if (loadMoreFooter != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: spacing.md),
-                  child: loadMoreFooter,
+        child: AppPagedLoadMoreScope(
+          canLoadMore: _canAutoLoadMore,
+          onLoadMore: _autoLoadMoreForViewport,
+          child: CustomScrollView(
+            key: PageStorageKey<String>(
+              'image-search-scroll:${_scope.cacheKey}',
+            ),
+            controller: _scrollController,
+            slivers: [
+              SliverToBoxAdapter(child: _buildSearchComposer(context)),
+              if (searchState.inputKind == ImageSearchInputKind.image &&
+                  searchState.hasSource &&
+                  searchState.isPreviewExpanded) ...[
+                SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
+                SliverToBoxAdapter(child: _buildPreviewPanel(context)),
+              ],
+              SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
+              _buildResultSectionSliver(context),
+              if (loadMoreFooter != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: spacing.md),
+                    child: loadMoreFooter,
+                  ),
                 ),
-              ),
-            ...bottomSafeAreaSliver(context),
-          ],
+              ...bottomSafeAreaSliver(context),
+            ],
+          ),
         ),
       ),
     );
@@ -702,7 +698,6 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   }
 
   void _resetAutoLoadState() {
-    _autoLoadAttempts = 0;
     _autoLoadNoGrowthStreak = 0;
     _autoLoadHalted = false;
   }
@@ -710,35 +705,6 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
   bool get _hasLoadMoreError =>
       _searchState.errorMessage == '加载更多失败，请稍后重试' &&
       _searchState.items.isNotEmpty;
-
-  void _handleScroll() {
-    final searchState = _searchState;
-    if (!_scrollController.hasClients ||
-        searchState.isSearching ||
-        searchState.isLoadingMore ||
-        searchState.errorMessage != null ||
-        !searchState.hasMore) {
-      return;
-    }
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - _loadMoreTriggerOffset) {
-      unawaited(_notifier.loadMore());
-    }
-  }
-
-  void _scheduleViewportFillCheck() {
-    if (_isViewportFillCheckScheduled || !mounted) {
-      return;
-    }
-    _isViewportFillCheckScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _isViewportFillCheckScheduled = false;
-      if (!mounted || !_shouldAutoLoadMoreForViewport()) {
-        return;
-      }
-      _autoLoadMoreForViewport();
-    });
-  }
 
   String _resolveStateKey() {
     final routeLocation = _currentRouteLocation();
@@ -761,15 +727,13 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
     }
   }
 
-  bool _shouldAutoLoadMoreForViewport() {
+  bool _canAutoLoadMore() {
     final searchState = _searchState;
     if (!searchState.hasMore ||
         searchState.isSearching ||
         searchState.isLoadingMore ||
         _autoLoadHalted ||
-        _autoLoadAttempts >= _maxAutoLoadAttempts ||
-        _hasLoadMoreError ||
-        !_scrollController.hasClients) {
+        _hasLoadMoreError) {
       return false;
     }
     if (searchState.items.isEmpty) {
@@ -779,37 +743,24 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
           currentMovieNumber != null &&
           currentMovieNumber.isNotEmpty;
     }
-    final position = _scrollController.position;
-    if (position.maxScrollExtent <= 0) {
-      return true;
-    }
-    if (position.pixels <= 0) {
-      return false;
-    }
-    return position.pixels >= position.maxScrollExtent - _loadMoreTriggerOffset;
+    return true;
   }
 
-  void _autoLoadMoreForViewport() {
+  Future<void> _autoLoadMoreForViewport() async {
     final baselineItemCount = _searchState.items.length;
-    _autoLoadAttempts += 1;
-    unawaited(
-      _notifier.loadMore().whenComplete(() {
-        if (!mounted) {
-          return;
-        }
-        final hasVisibleGrowth = _searchState.items.length > baselineItemCount;
-        if (hasVisibleGrowth) {
-          _autoLoadNoGrowthStreak = 0;
-        } else {
-          _autoLoadNoGrowthStreak += 1;
-        }
-        if (_autoLoadAttempts >= _maxAutoLoadAttempts ||
-            _autoLoadNoGrowthStreak >= _maxAutoLoadNoGrowthStreak) {
-          _autoLoadHalted = true;
-        }
-        _scheduleViewportFillCheck();
-      }),
-    );
+    await _notifier.loadMore();
+    if (!mounted) {
+      return;
+    }
+    final hasVisibleGrowth = _searchState.items.length > baselineItemCount;
+    if (hasVisibleGrowth) {
+      _autoLoadNoGrowthStreak = 0;
+    } else {
+      _autoLoadNoGrowthStreak += 1;
+    }
+    if (_autoLoadNoGrowthStreak >= _maxAutoLoadNoGrowthStreak) {
+      _autoLoadHalted = true;
+    }
   }
 
   void _updateDesktopFilterDraft(ImageSearchFilterState filter) {
@@ -1170,9 +1121,7 @@ class _ImageSearchContentState extends ConsumerState<ImageSearchContent> {
         }
         return;
       }
-      await ref
-          .read(mediaApiProvider)
-          .deleteMediaPoint(pointId: point.pointId);
+      await ref.read(mediaApiProvider).deleteMediaPoint(pointId: point.pointId);
       if (mounted) {
         showToast('已删除标记');
       }

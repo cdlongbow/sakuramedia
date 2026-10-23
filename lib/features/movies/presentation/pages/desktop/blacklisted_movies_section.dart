@@ -9,7 +9,6 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
-import 'package:sakuramedia/features/shared/presentation/hooks/paged_scroll_hook.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
@@ -18,13 +17,14 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_section_error.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 enum _BlacklistedMovieAction { unblacklist }
 
 /// 系统设置「屏蔽影片」分类页：自持滚动容器，滚到底自动加载下一页
-/// （与其它列表页同一套 `usePagedLoadMoreScroll`）。
+/// （与其它列表页同一套 `AppPagedLoadMoreScope`）。
 class BlacklistedMoviesSection extends HookConsumerWidget {
   const BlacklistedMoviesSection({super.key, required this.active});
 
@@ -40,23 +40,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
     if (active) {
       activated.value = true;
     }
-    final scrollController = usePagedLoadMoreScroll(
-      onReachBottom: () {
-        // loadMore 失败存续期间滚动不自动重试（对齐 moments/discovery）；
-        // 恢复分页的唯一入口是页脚重试按钮。
-        final loadMoreError = ref
-            .read(movieSummaryProvider(_scope))
-            .value
-            ?.paged
-            .loadMoreErrorMessage;
-        if (loadMoreError == null) {
-          unawaited(
-            ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
-          );
-        }
-      },
-      enabled: active,
-    );
+    final scrollController = useScrollController();
     if (!activated.value) {
       return const SizedBox.shrink();
     }
@@ -86,10 +70,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
         SliverToBoxAdapter(
           child: AppSectionError(
             title: '屏蔽影片加载失败',
-            message: apiErrorMessage(
-              async.error!,
-              fallback: '屏蔽影片加载失败，请稍后重试。',
-            ),
+            message: apiErrorMessage(async.error!, fallback: '屏蔽影片加载失败，请稍后重试。'),
             onRetry: () =>
                 ref.read(movieSummaryProvider(_scope).notifier).reload(),
           ),
@@ -127,9 +108,9 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
         PagedLoadMoreFooterSliver(
           topSpacing: PagedFooterSpacing.lg,
           watchFooter: (ref) => ref.watch(
-            movieSummaryProvider(_scope).select(
-              (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
-            ),
+            movieSummaryProvider(
+              _scope,
+            ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
           ),
           onLoadMore: (ref) => unawaited(
             ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
@@ -138,18 +119,26 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
       ]);
     }
 
-    return CustomScrollView(
-      controller: scrollController,
-      slivers: [
-        AppSkeletonizer.sliver(
-          enabled: isLoading,
-          child: SliverPadding(
-            // 与系统设置其它分类页一致的内边距（右侧 + 底部）。
-            padding: EdgeInsets.only(right: spacing.lg, bottom: spacing.xxl),
-            sliver: SliverMainAxisGroup(slivers: slivers),
+    return AppPagedLoadMoreScope(
+      enabled: active,
+      canLoadMore: () =>
+          ref.read(movieSummaryProvider(_scope)).value?.paged.canAutoLoadMore ??
+          false,
+      onLoadMore: () =>
+          ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          AppSkeletonizer.sliver(
+            enabled: isLoading,
+            child: SliverPadding(
+              // 与系统设置其它分类页一致的内边距（右侧 + 底部）。
+              padding: EdgeInsets.only(right: spacing.lg, bottom: spacing.xxl),
+              sliver: SliverMainAxisGroup(slivers: slivers),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -183,10 +172,7 @@ class BlacklistedMoviesSection extends HookConsumerWidget {
       context: context,
       globalPosition: globalPosition,
       items: const <AppMenuItem<_BlacklistedMovieAction>>[
-        AppMenuItem(
-          value: _BlacklistedMovieAction.unblacklist,
-          label: '取消屏蔽',
-        ),
+        AppMenuItem(value: _BlacklistedMovieAction.unblacklist, label: '取消屏蔽'),
       ],
     );
     if (action == _BlacklistedMovieAction.unblacklist && context.mounted) {

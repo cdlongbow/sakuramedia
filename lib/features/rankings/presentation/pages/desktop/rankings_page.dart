@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/app/providers/riverpod_page_cache_provider.dart';
@@ -69,7 +70,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -86,24 +87,8 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
   @override
   void dispose() {
     _pageCacheHandle.release();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(rankingSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(rankingSummaryProvider(_scope).notifier).loadMore());
   }
 
   Future<void> _toggleMovieSubscription(String movieNumber) async {
@@ -237,6 +222,16 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
           child: AppFilterResultLoadingOverlay(
             isLoading: summary.paged.filterUpdate.isLoading,
             hasPreviousItems: summary.paged.items.isNotEmpty,
+            child: AppPagedLoadMoreScope(
+              canLoadMore: () =>
+                  ref
+                      .read(rankingSummaryProvider(_scope))
+                      .value
+                      ?.paged
+                      .canAutoLoadMore ??
+                  false,
+              onLoadMore: () =>
+                  ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
             child: CustomScrollView(
               key: const PageStorageKey<String>('desktop:rankings:list'),
               controller: _scrollController,
@@ -263,7 +258,8 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                               ? rankedMoviePlaceholders(count: 24)
                               : summary.paged.items,
                           errorMessage: summary.initialErrorMessage,
-                          onMovieTap: (movie) => context.pushDesktopMovieDetail(
+                            onMovieTap: (movie) =>
+                                context.pushDesktopMovieDetail(
                             movieNumber: movie.movieNumber,
                             fallbackPath: desktopRankingsPath,
                           ),
@@ -279,8 +275,8 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                           onMovieToggleCollectionType:
                               _hoverFeatureActions.toggleCollectionType,
                           onMovieBlacklist: _hoverFeatureActions.blacklist,
-                          isMovieSubscriptionUpdating: (movie) =>
-                              summary.isSubscriptionUpdating(movie.movieNumber),
+                            isMovieSubscriptionUpdating: (movie) => summary
+                                .isSubscriptionUpdating(movie.movieNumber),
                           emptyMessage: '暂无榜单数据',
                           selectionMode: selectionMode,
                           isMovieSelected: (movie) =>
@@ -292,9 +288,9 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                     // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
                     PagedLoadMoreFooterSliver(
                       watchFooter: (ref) => ref.watch(
-                        rankingSummaryProvider(
-                          _scope,
-                        ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                          rankingSummaryProvider(_scope).select(
+                            (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                          ),
                       ),
                       onLoadMore: (ref) => unawaited(
                         ref
@@ -308,6 +304,7 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
             ),
           ),
         ),
+      ),
       ),
     );
   }

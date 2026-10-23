@@ -13,6 +13,8 @@ import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -74,6 +76,7 @@ class _AddClipsToCollectionDialogState
   int _nextOffset = 0;
   int _total = 0;
   String? _errorMessage;
+  String? _loadMoreErrorMessage;
   int _requestSeq = 0;
 
   bool get _hasMore => _nextOffset < _total;
@@ -84,7 +87,6 @@ class _AddClipsToCollectionDialogState
   void initState() {
     super.initState();
     _memberIds = <int>{...widget.memberClipIds};
-    _scrollController.addListener(_onScroll);
     _loadInitial();
   }
 
@@ -92,20 +94,8 @@ class _AddClipsToCollectionDialogState
   void dispose() {
     _searchTimer?.cancel();
     _searchController.dispose();
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 160) {
-      _loadMore();
-    }
   }
 
   Future<void> _loadInitial() async {
@@ -114,6 +104,7 @@ class _AddClipsToCollectionDialogState
       _isLoading = true;
       _isLoadingMore = false;
       _errorMessage = null;
+      _loadMoreErrorMessage = null;
     });
     try {
       final result = await _fetch(page: 1);
@@ -140,7 +131,10 @@ class _AddClipsToCollectionDialogState
   }
 
   Future<void> _loadMore() async {
-    if (_isLoading || _isLoadingMore || !_hasMore) {
+    if (_isLoading ||
+        _isLoadingMore ||
+        !_hasMore ||
+        _loadMoreErrorMessage != null) {
       return;
     }
     final seq = _requestSeq;
@@ -159,16 +153,21 @@ class _AddClipsToCollectionDialogState
         final incoming = result.items
             .skip(skip)
             .where((clip) => !loadedIds.contains(clip.clipId));
+        final consumed = math.max(0, result.items.length - skip);
         _clips.addAll(incoming);
-        _nextOffset += math.max(0, result.items.length - skip);
-        _total = result.total;
+        _nextOffset += consumed;
+        _total = consumed == 0 ? _nextOffset : result.total;
+        _loadMoreErrorMessage = null;
       });
     } catch (error) {
-      // 已有数据时保持静默、下次滚动可重试；列表为空说明是「加入后自动续拉」，
-      // 必须落错误态，否则空列表会反复触发续拉、请求打不停。
-      if (mounted && seq == _requestSeq && _clips.isEmpty) {
+      if (mounted && seq == _requestSeq) {
         setState(() {
-          _errorMessage = apiErrorMessage(error, fallback: '切片加载失败');
+          final message = apiErrorMessage(error, fallback: '切片加载失败');
+          if (_clips.isEmpty) {
+            _errorMessage = message;
+          } else {
+            _loadMoreErrorMessage = message;
+          }
         });
       }
     } finally {
@@ -176,6 +175,11 @@ class _AddClipsToCollectionDialogState
         setState(() => _isLoadingMore = false);
       }
     }
+  }
+
+  void _retryLoadMore() {
+    setState(() => _loadMoreErrorMessage = null);
+    unawaited(_loadMore());
   }
 
   Future<PaginatedResponseDto<MediaClipDto>> _fetch({required int page}) {
@@ -274,28 +278,33 @@ class _AddClipsToCollectionDialogState
     }
 
     final spacing = context.appSpacing;
-    final list = ListView.separated(
-      key: const Key('add-clips-list'),
-      controller: _scrollController,
-      // 抽屉里由外层 Expanded 限高，无需 shrinkWrap；弹窗里靠 shrinkWrap + 限高。
-      shrinkWrap: !_isDrawer,
-      itemCount: _clips.length + (_hasMore ? 1 : 0),
-      separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
-      itemBuilder: (context, index) {
-        if (index >= _clips.length) {
-          return const Padding(
-            padding: EdgeInsets.all(12),
-            child: Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-              ),
-            ),
-          );
-        }
-        return _buildClipOption(context, _clips[index]);
-      },
+    final list = AppPagedLoadMoreScope(
+      canLoadMore: () =>
+          !_isLoading &&
+          !_isLoadingMore &&
+          _hasMore &&
+          _errorMessage == null &&
+          _loadMoreErrorMessage == null,
+      onLoadMore: _loadMore,
+      child: ListView.separated(
+        key: const Key('add-clips-list'),
+        controller: _scrollController,
+        // 抽屉里由外层 Expanded 限高，无需 shrinkWrap；弹窗里靠 shrinkWrap + 限高。
+        shrinkWrap: !_isDrawer,
+        itemCount:
+            _clips.length + (_hasMore || _loadMoreErrorMessage != null ? 1 : 0),
+        separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
+        itemBuilder: (context, index) {
+          if (index >= _clips.length) {
+            return AppPagedLoadMoreFooter(
+              isLoading: _loadMoreErrorMessage == null,
+              errorMessage: _loadMoreErrorMessage,
+              onRetry: _retryLoadMore,
+            );
+          }
+          return _buildClipOption(context, _clips[index]);
+        },
+      ),
     );
     if (_isDrawer) {
       return list;

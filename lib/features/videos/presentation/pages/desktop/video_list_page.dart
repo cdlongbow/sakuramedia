@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_pinned_list_header.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_mutation_events_provider.dart';
@@ -63,7 +64,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
     _pageCacheHandle = ref
         .read(riverpodPageCacheProvider)
         .obtain(
@@ -80,9 +81,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
   @override
   void dispose() {
     _pageCacheHandle.release();
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -101,20 +100,6 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
       }
       unawaited(ref.read(videoCollectionsOverviewProvider.notifier).refresh());
     });
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final summary = ref.read(videoSummaryProvider(_scope)).value;
-    final position = _scrollController.position;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(videoSummaryProvider(_scope).notifier).loadMore());
   }
 
   void _applySort(VideoFilterState next) {
@@ -303,6 +288,16 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
           scrollController: _scrollController,
           isLoading: paged?.filterUpdate.isLoading ?? false,
           hasPreviousItems: paged?.items.isNotEmpty ?? false,
+          child: AppPagedLoadMoreScope(
+            canLoadMore: () =>
+                ref
+                    .read(videoSummaryProvider(_scope))
+                    .value
+                    ?.paged
+                    .canAutoLoadMore ??
+                false,
+            onLoadMore: () =>
+                ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
           child: CustomScrollView(
             key: const PageStorageKey<String>('desktop:videos:list'),
             controller: _scrollController,
@@ -328,7 +323,9 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
                 filterState: filter,
                 onFilterChanged: _applySort,
                 onRetryFilter: () => unawaited(
-                  ref.read(videoSummaryProvider(_scope).notifier).retryFilter(),
+                    ref
+                        .read(videoSummaryProvider(_scope).notifier)
+                        .retryFilter(),
                 ),
                 contentKey: const Key('videos-page-list'),
                 totalKey: const Key('videos-page-total'),
@@ -349,6 +346,7 @@ class _DesktopVideoListPageState extends ConsumerState<DesktopVideoListPage>
             ],
           ),
         ),
+      ),
       ),
     );
   }

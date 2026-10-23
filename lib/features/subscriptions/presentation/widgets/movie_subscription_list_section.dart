@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart' show HookConsumerWidget;
@@ -84,21 +85,6 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
     // 移动端删除下载任务 / 重新导入的 loading：顶栏（退出 / 全选）和贴底操作条要同步禁用。
     final batchDeleting = useState(false);
     final batchImporting = useState(false);
-    useEffect(() {
-      void loadMoreIfNeeded() {
-        if (!effectiveScrollController.hasClients) return;
-        final current = ref.read(managerProvider).value;
-        if (current == null ||
-            current.paged.loadMoreErrorMessage != null ||
-            effectiveScrollController.position.extentAfter > 300) {
-          return;
-        }
-        unawaited(ref.read(managerProvider.notifier).loadMore());
-      }
-
-      effectiveScrollController.addListener(loadMoreIfNeeded);
-      return () => effectiveScrollController.removeListener(loadMoreIfNeeded);
-    }, [effectiveScrollController, managerProvider]);
     ref.listen(managerProvider.select((value) => value.value?.filter), (
       previous,
       next,
@@ -130,6 +116,10 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
             : context.appColors.surfaceElevated,
         isLoading: pagedView.isLoading,
         hasPreviousItems: pagedView.hasPreviousItems,
+        child: AppPagedLoadMoreScope(
+          canLoadMore: () =>
+              ref.read(managerProvider).value?.paged.canAutoLoadMore ?? false,
+          onLoadMore: () => ref.read(managerProvider.notifier).loadMore(),
         child: CustomScrollView(
           key: PageStorageKey(managerProvider),
           controller: effectiveScrollController,
@@ -156,6 +146,7 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
             ...bottomSafeAreaSliver(context),
           ],
         ),
+      ),
       ),
     );
     if (!mobile) return resultView;
@@ -542,9 +533,7 @@ List<Widget> _buildBatchActions(
     ),
     AppButton(
       key: const Key('movie-subscriptions-batch-unsubscribe-button'),
-      label: compactLabels
-          ? '取消订阅'
-          : '取消订阅（${state.selectionCount}）',
+      label: compactLabels ? '取消订阅' : '取消订阅（${state.selectionCount}）',
       size: size,
       variant: AppButtonVariant.danger,
       icon: compactLabels ? null : const Icon(Icons.bookmark_remove_outlined),
@@ -727,9 +716,8 @@ class _ListBodySliver extends ConsumerWidget {
     // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
       managerProvider.select(
-        (asyncState) => asyncState.whenData(
-          (state) => withoutLoadMoreStatus(state.paged),
-        ),
+        (asyncState) =>
+            asyncState.whenData((state) => withoutLoadMoreStatus(state.paged)),
       ),
     );
     final notifier = ref.read(managerProvider.notifier);
@@ -1043,7 +1031,9 @@ class _RowConsumer extends HookConsumerWidget {
       isRetriggering: retriggering.value,
       onOpenActions: () => unawaited(openActions()),
       onSearchMagnet: searchMagnet,
-      onDeleteDownloads: tasks == null || tasks.isEmpty ? null : deleteDownloads,
+      onDeleteDownloads: tasks == null || tasks.isEmpty
+          ? null
+          : deleteDownloads,
       onUnsubscribe: () => unawaited(_unsubscribeRow(ref, item.movieNumber)),
     );
   }

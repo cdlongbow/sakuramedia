@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/activity/presentation/notification_card.dar
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -38,12 +39,10 @@ enum _NotificationSegment { all, unread }
 class _MobileNotificationsPageState
     extends ConsumerState<MobileNotificationsPage>
     with SingleTickerProviderStateMixin {
-  static const double _loadMoreTriggerOffset = 300;
   static const int _skeletonCount = 6;
 
   late final TabController _segmentController;
   final ScrollController _scrollController = ScrollController();
-  Object? _lastAutoLoadSignature;
 
   _NotificationSegment _segment = _NotificationSegment.all;
   Set<int> _unreadSnapshotIds = <int>{};
@@ -53,11 +52,9 @@ class _MobileNotificationsPageState
   void initState() {
     super.initState();
     _segmentController = TabController(length: 2, vsync: this);
-    _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(ref.read(notificationCenterProvider.notifier).initialize());
-        _maybeAutoLoadMore();
       }
     });
   }
@@ -65,59 +62,8 @@ class _MobileNotificationsPageState
   @override
   void dispose() {
     _segmentController.dispose();
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _handleScroll() => _maybeAutoLoadMore();
-
-  /// 只在「已加载条数 / hasMore / 筛选 / 分段」变化时补视口，避免每次重建（含
-  /// 轮询 tick）都触发下一页自动加载。滚动事件仍直接走 [_maybeAutoLoadMore]。
-  void _scheduleAutoLoadOnListChange() {
-    final state = ref.read(notificationCenterProvider);
-    final signature = Object.hash(
-      state.notifications.length,
-      state.hasMore,
-      state.filter,
-      _segment.index,
-    );
-    if (signature == _lastAutoLoadSignature) {
-      return;
-    }
-    _lastAutoLoadSignature = signature;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _maybeAutoLoadMore();
-      }
-    });
-  }
-
-  void _maybeAutoLoadMore() {
-    // 「未读」段是基于冻结快照的本地过滤，再翻页也不会增加可见的未读项；若此时因
-    // 空列表/短内容判到底而自动翻页，会把整条通知历史逐页抽干。故仅「全部」段自动翻页。
-    if (_segment == _NotificationSegment.unread) {
-      return;
-    }
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    final reachedEnd =
-        position.maxScrollExtent <= 0 ||
-        position.pixels >= position.maxScrollExtent - _loadMoreTriggerOffset;
-    if (!reachedEnd) {
-      return;
-    }
-    final state = ref.read(notificationCenterProvider);
-    if (state.hasMore &&
-        !state.isLoadingMore &&
-        state.loadMoreErrorMessage == null) {
-      unawaited(
-        ref.read(notificationCenterProvider.notifier).loadMoreNotifications(),
-      );
-    }
   }
 
   /// 仅在快照「脏」且数据就绪时重拍未读快照;期间冻结,保证浏览稳定。
@@ -192,7 +138,6 @@ class _MobileNotificationsPageState
       }),
     );
     _ensureSnapshot();
-    _scheduleAutoLoadOnListChange();
     final spacing = context.appSpacing;
 
     return Column(
@@ -206,6 +151,22 @@ class _MobileNotificationsPageState
         ),
         SizedBox(height: spacing.sm),
         Expanded(
+          child: AppPagedLoadMoreScope(
+            enabled: _segment == _NotificationSegment.all,
+            canLoadMore: () {
+              final state = ref.read(notificationCenterProvider);
+              return state.initialized &&
+                  !state.isInitialLoading &&
+                  state.initialErrorMessage == null &&
+                  state.filterUpdate.isIdle &&
+                  !state.isRefreshing &&
+                  state.hasMore &&
+                  !state.isLoadingMore &&
+                  state.loadMoreErrorMessage == null;
+            },
+            onLoadMore: () => ref
+                .read(notificationCenterProvider.notifier)
+                .loadMoreNotifications(),
           child: AppAdaptiveRefreshScrollView(
             controller: _scrollController,
             onRefresh: _handleRefresh,
@@ -238,11 +199,16 @@ class _MobileNotificationsPageState
             ],
           ),
         ),
+        ),
       ],
     );
   }
 
-  Widget _buildHeader(BuildContext context, {required int unreadCount, required bool isMarkingAllRead}) {
+  Widget _buildHeader(
+    BuildContext context, {
+    required int unreadCount,
+    required bool isMarkingAllRead,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -336,9 +302,7 @@ class _MobileNotificationsBodySliver extends ConsumerWidget {
         hasScrollBody: false,
         child: AppEmptyState(
           key: const Key('mobile-notifications-empty'),
-          message: segment == _NotificationSegment.unread
-              ? '没有未读消息'
-              : '暂无消息',
+          message: segment == _NotificationSegment.unread ? '没有未读消息' : '暂无消息',
         ),
       );
     }
@@ -355,9 +319,7 @@ class _MobileNotificationsBodySliver extends ConsumerWidget {
         final item = visible[index];
         final isLast = index == visible.length - 1;
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: isLast ? 0 : context.appSpacing.sm,
-          ),
+          padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.sm),
           child: RepaintBoundary(
             child: _MobileNotificationRowItem(
               itemId: item.id,
@@ -400,13 +362,13 @@ class _MobileNotificationRowItem extends ConsumerWidget {
         fallback;
     if (!item.isRead) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(notificationCenterProvider.notifier).onNotificationDisplayed(item.id);
+        ref
+            .read(notificationCenterProvider.notifier)
+            .onNotificationDisplayed(item.id);
       });
     }
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: isLast ? 0 : context.appSpacing.sm,
-      ),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.sm),
       child: RepaintBoundary(
         child: MobileNotificationCard(
           notification: item,

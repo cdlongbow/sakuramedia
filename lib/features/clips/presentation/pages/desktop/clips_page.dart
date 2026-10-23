@@ -37,6 +37,7 @@ import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_sc
 import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_toolbar.dart';
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_actions_panel.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
@@ -61,16 +62,9 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   bool _railRefreshScheduled = false;
 
   @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -92,21 +86,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
       }
       unawaited(ref.read(clipCollectionsOverviewProvider.notifier).refresh());
     });
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    if (position.pixels < position.maxScrollExtent - 320) {
-      return;
-    }
-    // 对齐旧基类：loadMore 失败存续期间滚动不自动重试。
-    final paged = ref.read(clipsOverviewProvider).value?.paged;
-    if (paged != null && paged.loadMoreErrorMessage == null) {
-      unawaited(ref.read(clipsOverviewProvider.notifier).loadMore());
-    }
   }
 
   Future<void> _handleRefresh() async {
@@ -152,11 +131,24 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
               scrollController: _scrollController,
               isLoading: clipsState?.paged.filterUpdate.isLoading ?? false,
               hasPreviousItems: clips.isNotEmpty,
+              child: AppPagedLoadMoreScope(
+                canLoadMore: () =>
+                    ref
+                        .read(clipsOverviewProvider)
+                        .value
+                        ?.paged
+                        .canAutoLoadMore ??
+                    false,
+                onLoadMore: () =>
+                    ref.read(clipsOverviewProvider.notifier).loadMore(),
               child: CustomScrollView(
                 controller: _scrollController,
                 slivers: <Widget>[
                   SliverToBoxAdapter(
-                    child: _buildCollectionsSection(context, collectionsAsync),
+                      child: _buildCollectionsSection(
+                        context,
+                        collectionsAsync,
+                      ),
                   ),
                   AppPinnedListHeader(
                     key: _listHeaderKey,
@@ -182,6 +174,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
                     ),
                   ),
                 ],
+              ),
               ),
             );
           },
@@ -255,9 +248,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         ? clipCollectionPlaceholders(count: 4)
         : collections;
     if (display.isEmpty) {
-      return const CollectionHintBox(
-        message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧',
-      );
+      return const CollectionHintBox(message: '还没有合集，点「新建」把喜欢的切片攒成一个连播合集吧');
     }
     final spacing = context.appSpacing;
     return AppSkeletonizer(
@@ -436,7 +427,9 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
         .value
         ?.paged
         .filterUpdate;
-    if (!isInitialLoading && clips.isEmpty && (filterUpdate?.hasFailed ?? false)) {
+    if (!isInitialLoading &&
+        clips.isEmpty &&
+        (filterUpdate?.hasFailed ?? false)) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
     if (!isInitialLoading && clips.isEmpty) {
@@ -499,11 +492,7 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
 
   void _playClip(MediaClipDto clip) {
     unawaited(
-      launchClipPlayback(
-        context,
-        streamUrl: clip.streamUrl,
-        title: clip.title,
-      ),
+      launchClipPlayback(context, streamUrl: clip.streamUrl, title: clip.title),
     );
   }
 
@@ -646,4 +635,3 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     if (submitted) exitSelection();
   }
 }
-

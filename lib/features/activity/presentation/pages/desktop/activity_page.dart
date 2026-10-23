@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/app_platform.dart';
@@ -19,7 +20,6 @@ import 'package:sakuramedia/features/activity/presentation/job_params_dialog.dar
 import 'package:sakuramedia/features/downloads/presentation/download_task_pane.dart';
 import 'package:sakuramedia/features/downloads/presentation/download_task_filter_state.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_provider.dart';
-import 'package:sakuramedia/features/downloads/presentation/providers/download_task_center_state.dart';
 import 'package:sakuramedia/features/shared/presentation/providers/paged_async_notifier.dart';
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/theme.dart';
@@ -55,12 +55,8 @@ class DesktopActivityPage extends ConsumerStatefulWidget {
 
 class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     with SingleTickerProviderStateMixin {
-  static const double _loadMoreTriggerOffset = 300;
-
   late final TabController _tabController;
   late final ScrollController _pageScrollController;
-  bool _isViewportWorkScheduled = false;
-  Object? _lastViewportSignature;
   ActivityTab? _lastActiveTab = ActivityTab.tasks;
   bool _hasOpenedDownloadTasks = false;
   bool? _isPageVisible;
@@ -72,12 +68,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(_handleTabChanged);
-    _pageScrollController = ScrollController()..addListener(_handlePageScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scheduleViewportWork();
-      }
-    });
+    _pageScrollController = ScrollController();
     // 订阅卡片跳转进来的下载意图：等首帧后统一走同一路径（切 tab + 应用筛选），
     // 避免与 activity provider 的 bootstrap 初始化互相踩。
     _scheduleInitialDownloadIntent();
@@ -158,9 +149,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
     _tabController
       ..removeListener(_handleTabChanged)
       ..dispose();
-    _pageScrollController
-      ..removeListener(_handlePageScroll)
-      ..dispose();
+    _pageScrollController.dispose();
     super.dispose();
   }
 
@@ -204,92 +193,6 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       // 离开下载 tab 顺手退出多选，回来时不再残留选中态。
       downloadController.exitSelectionMode();
     }
-  }
-
-  /// provider 变化时只在「已加载条数 / hasMore / activeTab」真正变化时才重查视口，
-  /// 避免 3 秒轮询 tick 凭空触发下一页自动加载。
-  void _handleControllerChanged() {
-    final activity = ref.read(activityCenterProvider).value;
-    if (activity == null) return;
-    final Object signature;
-    switch (activity.activeTab) {
-      case ActivityTab.tasks:
-        signature = Object.hash(
-          ActivityTab.tasks,
-          activity.taskRuns.length,
-          activity.hasMoreTasks,
-        );
-      case ActivityTab.downloadTasks:
-        final download = ref.read(downloadTaskCenterProvider).value;
-        signature = Object.hash(
-          ActivityTab.downloadTasks,
-          download?.paged.items.length ?? 0,
-          download?.paged.hasMore ?? false,
-        );
-    }
-    if (signature == _lastViewportSignature) {
-      return;
-    }
-    _lastViewportSignature = signature;
-    _scheduleViewportWork();
-  }
-
-  void _handlePageScroll() {
-    _maybeAutoLoadMore();
-  }
-
-  void _scheduleViewportWork() {
-    if (_isViewportWorkScheduled || !mounted) {
-      return;
-    }
-    _isViewportWorkScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _isViewportWorkScheduled = false;
-      if (!mounted) {
-        return;
-      }
-      _maybeAutoLoadMore();
-    });
-  }
-
-  void _maybeAutoLoadMore() {
-    final activity = ref.read(activityCenterProvider).value;
-    if (!_pageScrollController.hasClients ||
-        activity == null ||
-        activity.isInitialLoading ||
-        activity.initialErrorMessage != null) {
-      return;
-    }
-    if (!_shouldAutoLoadMoreForViewport()) {
-      return;
-    }
-
-    switch (activity.activeTab) {
-      case ActivityTab.tasks:
-        if (activity.hasMoreTasks &&
-            !activity.isLoadingMoreTasks &&
-            activity.taskLoadMoreErrorMessage == null) {
-          unawaited(_controller.loadMoreTasks());
-        }
-        break;
-      case ActivityTab.downloadTasks:
-        final downloadCenter = ref.read(downloadTaskCenterProvider).value;
-        if (downloadCenter != null &&
-            downloadCenter.paged.hasMore &&
-            !downloadCenter.paged.isLoadingMore &&
-            downloadCenter.paged.loadMoreErrorMessage == null) {
-          unawaited(ref.read(downloadTaskCenterProvider.notifier).loadMore());
-        }
-        break;
-    }
-  }
-
-  bool _shouldAutoLoadMoreForViewport() {
-    final position = _pageScrollController.position;
-    if (position.maxScrollExtent <= 0) {
-      return true;
-    }
-    return position.pixels >= position.maxScrollExtent - _loadMoreTriggerOffset;
   }
 
   Future<void> _triggerJob(JobMetadataDto job) async {
@@ -382,7 +285,8 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
             activityCenterProvider.select((v) {
               final state = v.value;
               final runs = state?.taskRuns ?? const <TaskRunDto>[];
-              if (runs.isEmpty && (state?.taskFilterUpdate.hasFailed ?? false)) {
+              if (runs.isEmpty &&
+                  (state?.taskFilterUpdate.hasFailed ?? false)) {
                 return null;
               }
               return (
@@ -445,8 +349,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
         final state = asyncValue.value;
         return (
           activeTab: state?.activeTab ?? ActivityTab.tasks,
-          taskFilter:
-              state?.taskFilter ?? ActivityTaskFilterState.initial,
+          taskFilter: state?.taskFilter ?? ActivityTaskFilterState.initial,
           taskFilterUpdate:
               state?.taskFilterUpdate ?? const FilterUpdateState.idle(),
           hasTaskItems: state?.taskRuns.isNotEmpty ?? false,
@@ -474,8 +377,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
                 filterUpdate:
                     asyncValue.value?.paged.filterUpdate ??
                     const FilterUpdateState.idle(),
-                hasItems:
-                    asyncValue.value?.paged.items.isNotEmpty ?? false,
+                hasItems: asyncValue.value?.paged.items.isNotEmpty ?? false,
               ),
             ),
           )
@@ -510,16 +412,6 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
             _pageScrollController.jumpTo(0);
           }
         },
-      );
-    }
-    ref.listen<AsyncValue<ActivityCenterState>>(
-      activityCenterProvider,
-      (_, __) => _handleControllerChanged(),
-    );
-    if (_hasOpenedDownloadTasks || activeTab == ActivityTab.downloadTasks) {
-      ref.listen<AsyncValue<DownloadTaskCenterState>>(
-        downloadTaskCenterProvider,
-        (_, __) => _handleControllerChanged(),
       );
     }
     final filterUpdate = switch (activeTab) {
@@ -558,6 +450,42 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
       child: AppFilterResultLoadingOverlay(
         isLoading: filterUpdate.isLoading,
         hasPreviousItems: hasPreviousItems,
+        child: AppPagedLoadMoreScope(
+          canLoadMore: () {
+            final activity = ref.read(activityCenterProvider).value;
+            if (activity == null ||
+                !activity.initialized ||
+                activity.isInitialLoading ||
+                activity.initialErrorMessage != null) {
+              return false;
+            }
+            return switch (activity.activeTab) {
+              ActivityTab.tasks =>
+                activity.taskFilterUpdate.isIdle &&
+                    !activity.isRefreshingTaskHistory &&
+                    activity.hasMoreTasks &&
+                    !activity.isLoadingMoreTasks &&
+                    activity.taskLoadMoreErrorMessage == null,
+              ActivityTab.downloadTasks =>
+                _hasOpenedDownloadTasks &&
+                    (ref
+                            .read(downloadTaskCenterProvider)
+                            .value
+                            ?.paged
+                            .canAutoLoadMore ??
+                        false),
+            };
+          },
+          onLoadMore: () {
+            final activeTab =
+                ref.read(activityCenterProvider).value?.activeTab ??
+                ActivityTab.tasks;
+            return switch (activeTab) {
+              ActivityTab.tasks => _controller.loadMoreTasks(),
+              ActivityTab.downloadTasks =>
+                ref.read(downloadTaskCenterProvider.notifier).loadMore(),
+            };
+          },
           child: CustomScrollView(
             controller: _pageScrollController,
             slivers: [
@@ -567,6 +495,7 @@ class _DesktopActivityPageState extends ConsumerState<DesktopActivityPage>
               ...bottomSafeAreaSliver(context),
             ],
           ),
+        ),
       ),
     );
     return AppPageRefreshScope(
@@ -624,8 +553,7 @@ class _ActiveRunsSliver extends ConsumerWidget {
     final view = ref.watch(
       activityCenterProvider.select(
         (asyncValue) => (
-          runs:
-              asyncValue.value?.activeTaskRuns ?? const <TaskRunDto>[],
+          runs: asyncValue.value?.activeTaskRuns ?? const <TaskRunDto>[],
           highlightedId: asyncValue.value?.highlightedTaskRunId,
         ),
       ),
@@ -948,7 +876,8 @@ class _ExecutableJobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lastTaskRun = job.lastTaskRun;
-    final canTrigger = job.disabledReason == null && job.manualTriggerAllowed && !isTriggering;
+    final canTrigger =
+        job.disabledReason == null && job.manualTriggerAllowed && !isTriggering;
 
     return AppContentCard(
       key: Key('activity-job-${job.taskKey}'),
@@ -965,7 +894,9 @@ class _ExecutableJobCard extends StatelessWidget {
       headerTrailing: Skeleton.shade(
         child: AppButton(
           key: Key('activity-job-trigger-${job.taskKey}'),
-          label: job.disabledReason != null ? '未启用' : job.manualTriggerAllowed
+          label: job.disabledReason != null
+              ? '未启用'
+              : job.manualTriggerAllowed
               ? (isTriggering
                     ? '提交中'
                     : job.paramsSchema == null
@@ -1205,9 +1136,7 @@ class _ExecutableJobsDialogContentState
                 final job = visibleJobs[index];
                 return _ExecutableJobCard(
                   job: job,
-                  isTriggering: widget.controller.isTriggeringJob(
-                    job.taskKey,
-                  ),
+                  isTriggering: widget.controller.isTriggeringJob(job.taskKey),
                   onTrigger: () => widget.onTriggerJob(job),
                 );
               },

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/activity/presentation/activity_placeholders.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
@@ -30,78 +31,22 @@ class DesktopNotificationsPage extends ConsumerStatefulWidget {
 
 class _DesktopNotificationsPageState
     extends ConsumerState<DesktopNotificationsPage> {
-  static const double _loadMoreTriggerOffset = 300;
-
   final ScrollController _scrollController = ScrollController();
-  Object? _lastAutoLoadSignature;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         unawaited(ref.read(notificationCenterProvider.notifier).initialize());
-        _maybeAutoLoadMore();
       }
     });
   }
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _handleScroll() {
-    _maybeAutoLoadMore();
-  }
-
-  /// 只在「已加载条数 / hasMore / 筛选」变化时补视口，避免每次重建（含轮询 tick）
-  /// 都触发下一页自动加载。滚动事件仍直接走 [_maybeAutoLoadMore]。
-  void _scheduleAutoLoadOnListChange() {
-    final state = ref.read(notificationCenterProvider);
-    final signature = Object.hash(
-      state.notifications.length,
-      state.hasMore,
-      state.filter,
-    );
-    if (signature == _lastAutoLoadSignature) {
-      return;
-    }
-    _lastAutoLoadSignature = signature;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _maybeAutoLoadMore();
-      }
-    });
-  }
-
-  void _maybeAutoLoadMore() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    if (!_shouldAutoLoadMoreForViewport()) {
-      return;
-    }
-    final state = ref.read(notificationCenterProvider);
-    if (state.hasMore &&
-        !state.isLoadingMore &&
-        state.loadMoreErrorMessage == null) {
-      unawaited(
-        ref.read(notificationCenterProvider.notifier).loadMoreNotifications(),
-      );
-    }
-  }
-
-  bool _shouldAutoLoadMoreForViewport() {
-    final position = _scrollController.position;
-    if (position.maxScrollExtent <= 0) {
-      return true;
-    }
-    return position.pixels >= position.maxScrollExtent - _loadMoreTriggerOffset;
   }
 
   @override
@@ -127,7 +72,6 @@ class _DesktopNotificationsPageState
         _scrollController.jumpTo(0);
       }
     });
-    _scheduleAutoLoadOnListChange();
     return AppPageRefreshScope(
       onRefresh: ref
           .read(notificationCenterProvider.notifier)
@@ -144,6 +88,21 @@ class _DesktopNotificationsPageState
         child: AppFilterResultLoadingOverlay(
           isLoading: header.filterUpdate.isLoading,
           hasPreviousItems: header.hasItems,
+          child: AppPagedLoadMoreScope(
+            canLoadMore: () {
+              final state = ref.read(notificationCenterProvider);
+              return state.initialized &&
+                  !state.isInitialLoading &&
+                  state.initialErrorMessage == null &&
+                  state.filterUpdate.isIdle &&
+                  !state.isRefreshing &&
+                  state.hasMore &&
+                  !state.isLoadingMore &&
+                  state.loadMoreErrorMessage == null;
+            },
+            onLoadMore: () => ref
+                .read(notificationCenterProvider.notifier)
+                .loadMoreNotifications(),
           child: CustomScrollView(
             controller: _scrollController,
             // 收敛视口外预构建，避免卡片「提前已读」。
@@ -178,10 +137,12 @@ class _DesktopNotificationsPageState
           ),
         ),
       ),
+      ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, {
+  Widget _buildHeader(
+    BuildContext context, {
     required ActivityNotificationFilterState filter,
     required int unreadCount,
     required bool isMarkingAllRead,
@@ -260,9 +221,7 @@ class _NotificationsBodySliver extends ConsumerWidget {
                 bottom: isLast ? 0 : context.appSpacing.md,
               ),
               child: RepaintBoundary(
-                child: NotificationCard(
-                  notification: placeholders[index],
-                ),
+                child: NotificationCard(notification: placeholders[index]),
               ),
             );
           }, childCount: placeholders.length),
@@ -293,12 +252,8 @@ class _NotificationsBodySliver extends ConsumerWidget {
         final itemId = ids[index];
         final isLast = index == ids.length - 1;
         return Padding(
-          padding: EdgeInsets.only(
-            bottom: isLast ? 0 : context.appSpacing.md,
-          ),
-          child: RepaintBoundary(
-            child: _NotificationRowItem(itemId: itemId),
-          ),
+          padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.md),
+          child: RepaintBoundary(child: _NotificationRowItem(itemId: itemId)),
         );
       }, childCount: ids.length),
     );

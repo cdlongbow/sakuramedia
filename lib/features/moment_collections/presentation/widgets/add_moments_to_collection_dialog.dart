@@ -13,6 +13,8 @@ import 'package:sakuramedia/features/media/presentation/media_placeholders.dart'
 import 'package:sakuramedia/features/moment_collections/presentation/providers/moment_collections_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/forms/app_picker_header.dart';
@@ -87,6 +89,7 @@ class _AddMomentsToCollectionDialogState
   int _nextOffset = 0;
   int _total = 0;
   String? _errorMessage;
+  String? _loadMoreErrorMessage;
   int _requestSeq = 0;
 
   bool get _hasMore => _nextOffset < _total;
@@ -97,7 +100,6 @@ class _AddMomentsToCollectionDialogState
   void initState() {
     super.initState();
     _memberIds = <int>{...widget.memberPointIds};
-    _scrollController.addListener(_onScroll);
     _loadInitial();
   }
 
@@ -105,20 +107,8 @@ class _AddMomentsToCollectionDialogState
   void dispose() {
     _searchTimer?.cancel();
     _searchController.dispose();
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 160) {
-      _loadMore();
-    }
   }
 
   Future<void> _loadInitial() async {
@@ -127,6 +117,7 @@ class _AddMomentsToCollectionDialogState
       _isLoading = true;
       _isLoadingMore = false;
       _errorMessage = null;
+      _loadMoreErrorMessage = null;
     });
     try {
       final result = await _fetch(page: 1);
@@ -153,7 +144,10 @@ class _AddMomentsToCollectionDialogState
   }
 
   Future<void> _loadMore() async {
-    if (_isLoading || _isLoadingMore || !_hasMore) {
+    if (_isLoading ||
+        _isLoadingMore ||
+        !_hasMore ||
+        _loadMoreErrorMessage != null) {
       return;
     }
     final seq = _requestSeq;
@@ -172,16 +166,21 @@ class _AddMomentsToCollectionDialogState
         final incoming = result.items
             .skip(skip)
             .where((point) => !loadedIds.contains(point.pointId));
+        final consumed = math.max(0, result.items.length - skip);
         _points.addAll(incoming);
-        _nextOffset += math.max(0, result.items.length - skip);
-        _total = result.total;
+        _nextOffset += consumed;
+        _total = consumed == 0 ? _nextOffset : result.total;
+        _loadMoreErrorMessage = null;
       });
     } catch (error) {
-      // 已有数据时保持静默、下次滚动可重试；列表为空说明是「加入后自动续拉」，
-      // 必须落错误态，否则空列表会反复触发续拉、请求打不停。
-      if (mounted && seq == _requestSeq && _points.isEmpty) {
+      if (mounted && seq == _requestSeq) {
         setState(() {
-          _errorMessage = apiErrorMessage(error, fallback: '时刻加载失败');
+          final message = apiErrorMessage(error, fallback: '时刻加载失败');
+          if (_points.isEmpty) {
+            _errorMessage = message;
+          } else {
+            _loadMoreErrorMessage = message;
+          }
         });
       }
     } finally {
@@ -189,6 +188,11 @@ class _AddMomentsToCollectionDialogState
         setState(() => _isLoadingMore = false);
       }
     }
+  }
+
+  void _retryLoadMore() {
+    setState(() => _loadMoreErrorMessage = null);
+    unawaited(_loadMore());
   }
 
   Future<PaginatedResponseDto<MediaPointListItemDto>> _fetch({
@@ -319,28 +323,34 @@ class _AddMomentsToCollectionDialogState
     }
 
     final spacing = context.appSpacing;
-    final list = ListView.separated(
-      key: const Key('add-moments-list'),
-      controller: _scrollController,
-      // 抽屉里由外层 Expanded 限高，无需 shrinkWrap；弹窗里靠 shrinkWrap + 限高。
-      shrinkWrap: !_isDrawer,
-      itemCount: _points.length + (_hasMore ? 1 : 0),
-      separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
-      itemBuilder: (context, index) {
-        if (index >= _points.length) {
-          return const Padding(
-            padding: EdgeInsets.all(12),
-            child: Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator.adaptive(strokeWidth: 2),
-              ),
-            ),
-          );
-        }
-        return _buildPointOption(context, _points[index]);
-      },
+    final list = AppPagedLoadMoreScope(
+      canLoadMore: () =>
+          !_isLoading &&
+          !_isLoadingMore &&
+          _hasMore &&
+          _errorMessage == null &&
+          _loadMoreErrorMessage == null,
+      onLoadMore: _loadMore,
+      child: ListView.separated(
+        key: const Key('add-moments-list'),
+        controller: _scrollController,
+        // 抽屉里由外层 Expanded 限高，无需 shrinkWrap；弹窗里靠 shrinkWrap + 限高。
+        shrinkWrap: !_isDrawer,
+        itemCount:
+            _points.length +
+            (_hasMore || _loadMoreErrorMessage != null ? 1 : 0),
+        separatorBuilder: (context, index) => SizedBox(height: spacing.sm),
+        itemBuilder: (context, index) {
+          if (index >= _points.length) {
+            return AppPagedLoadMoreFooter(
+              isLoading: _loadMoreErrorMessage == null,
+              errorMessage: _loadMoreErrorMessage,
+              onRetry: _retryLoadMore,
+            );
+          }
+          return _buildPointOption(context, _points[index]);
+        },
+      ),
     );
     if (_isDrawer) {
       return list;

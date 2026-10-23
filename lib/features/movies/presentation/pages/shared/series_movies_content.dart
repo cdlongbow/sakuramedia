@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layout.dart';
+import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
@@ -118,29 +119,13 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
   void initState() {
     super.initState();
     _initialSeriesName = _normalizeSeriesName(widget.initialSeriesName);
-    _scrollController = ScrollController()..addListener(_loadMoreIfNeeded);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_loadMoreIfNeeded)
-      ..dispose();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  void _loadMoreIfNeeded() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    final position = _scrollController.position;
-    final summary = ref.read(movieSummaryProvider(_scope)).value;
-    if (summary == null ||
-        summary.paged.loadMoreErrorMessage != null ||
-        position.pixels < position.maxScrollExtent - 300) {
-      return;
-    }
-    unawaited(ref.read(movieSummaryProvider(_scope).notifier).loadMore());
   }
 
   String _displaySeriesName(MovieSummaryState? summary) {
@@ -222,6 +207,16 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
               SizedBox(height: widget.sectionSpacing),
             ],
           ),
+          child: AppPagedLoadMoreScope(
+            canLoadMore: () =>
+                ref
+                    .read(movieSummaryProvider(_scope))
+                    .value
+                    ?.paged
+                    .canAutoLoadMore ??
+                false,
+            onLoadMore: () =>
+                ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
           child: widget.bodyBuilder(
             context,
             _scrollController,
@@ -231,12 +226,14 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
                 // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
                 PagedLoadMoreFooterSliver(
                   watchFooter: (ref) => ref.watch(
-                    movieSummaryProvider(
-                      _scope,
-                    ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                      movieSummaryProvider(_scope).select(
+                        (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                      ),
                   ),
                   onLoadMore: (ref) => unawaited(
-                    ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
+                      ref
+                          .read(movieSummaryProvider(_scope).notifier)
+                          .loadMore(),
                   ),
                 ),
               ],
@@ -244,6 +241,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
             widget.enableRefresh ? _handleRefresh : null,
           ),
         ),
+      ),
       ),
     );
 
@@ -363,8 +361,7 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
         },
         onMovieSubscriptionTap: (movie) =>
             _toggleMovieSubscription(movie.movieNumber),
-        onMovieToggleCollectionType:
-            _hoverFeatureActions.toggleCollectionType,
+        onMovieToggleCollectionType: _hoverFeatureActions.toggleCollectionType,
         onMovieBlacklist: _hoverFeatureActions.blacklist,
         isMovieSubscriptionUpdating: (movie) =>
             summary?.isSubscriptionUpdating(movie.movieNumber) ?? false,
@@ -384,4 +381,3 @@ class _SeriesMoviesContentState extends ConsumerState<SeriesMoviesContent>
     return trimmed;
   }
 }
-

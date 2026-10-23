@@ -73,19 +73,10 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
       showToast('暂无可用 Provider，请先在“插件”设置中安装并启用媒体 Provider。');
       return;
     }
-    final payload = await showDialog<CreateMediaLibraryPayload>(
+    await showDialog<void>(
       context: context,
       builder: (_) => MediaLibraryDialog(title: '新增媒体库', providers: providers),
     );
-    if (!mounted || payload == null) {
-      return;
-    }
-    try {
-      await ref.read(mediaLibrariesProvider.notifier).create(payload);
-      showToast('媒体库已创建');
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '创建媒体库失败'));
-    }
   }
 
   Future<void> _editLibrary(MediaLibraryDto library) async {
@@ -94,7 +85,7 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
     if (!mounted) {
       return;
     }
-    final payload = await showDialog<UpdateMediaLibraryPayload>(
+    await showDialog<void>(
       context: context,
       builder: (_) => MediaLibraryDialog(
         title: '编辑媒体库',
@@ -102,17 +93,6 @@ class _MediaLibrariesSectionState extends ConsumerState<MediaLibrariesSection> {
         initialLibrary: library,
       ),
     );
-    if (!mounted || payload == null) {
-      return;
-    }
-    try {
-      await ref
-          .read(mediaLibrariesProvider.notifier)
-          .updateLibrary(libraryId: library.id, payload: payload);
-      showToast('媒体库已更新');
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '更新媒体库失败'));
-    }
   }
 
   Future<void> _deleteLibrary(MediaLibraryDto library) async {
@@ -281,7 +261,7 @@ MediaProviderDto? _findProvider(
   return null;
 }
 
-class MediaLibraryDialog extends StatefulWidget {
+class MediaLibraryDialog extends ConsumerStatefulWidget {
   const MediaLibraryDialog({
     super.key,
     required this.title,
@@ -294,14 +274,16 @@ class MediaLibraryDialog extends StatefulWidget {
   final MediaLibraryDto? initialLibrary;
 
   @override
-  State<MediaLibraryDialog> createState() => _MediaLibraryDialogState();
+  ConsumerState<MediaLibraryDialog> createState() =>
+      _MediaLibraryDialogState();
 }
 
-class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
+class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late String? _selectedProviderKey;
   late ProviderConfigFormController _providerConfigController;
+  bool _isSubmitting = false;
 
   bool get _isEditing => widget.initialLibrary != null;
 
@@ -350,8 +332,8 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
     });
   }
 
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false) ||
+  Future<void> _submit() async {
+    if (_isSubmitting || !(_formKey.currentState?.validate() ?? false) ||
         _selectedProviderKey == null) {
       return;
     }
@@ -361,12 +343,34 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
       providerConfigController: _providerConfigController,
       isEditing: _isEditing,
     );
-    if (_isEditing && _selectedProvider == null) {
-      Navigator.of(context).pop(UpdateMediaLibraryPayload(name: value.name));
-    } else if (_isEditing) {
-      Navigator.of(context).pop(value.toUpdatePayload());
-    } else {
-      Navigator.of(context).pop(value.toCreatePayload());
+    setState(() => _isSubmitting = true);
+    try {
+      if (_isEditing) {
+        await ref
+            .read(mediaLibrariesProvider.notifier)
+            .updateLibrary(
+              libraryId: widget.initialLibrary!.id,
+              payload: _selectedProvider == null
+                  ? UpdateMediaLibraryPayload(name: value.name)
+                  : value.toUpdatePayload(),
+            );
+      } else {
+        await ref
+            .read(mediaLibrariesProvider.notifier)
+            .create(value.toCreatePayload());
+      }
+      if (!mounted) return;
+      showToast(_isEditing ? '媒体库已更新' : '媒体库已创建');
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: _isEditing ? '更新媒体库失败' : '创建媒体库失败',
+        ),
+      );
     }
   }
 
@@ -400,7 +404,7 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
               SizedBox(height: spacing.xl),
               MediaLibraryFormFields(
                 nameController: _nameController,
-                enabled: true,
+                enabled: !_isSubmitting,
                 onNameSubmitted: (_) => _submit(),
               ),
               SizedBox(height: spacing.lg),
@@ -408,7 +412,7 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
                 MediaLibraryProviderSelectField(
                   providers: widget.providers,
                   value: _selectedProviderKey,
-                  enabled: !_isEditing,
+                  enabled: !_isEditing && !_isSubmitting,
                   onChanged: _selectProvider,
                 )
               else
@@ -420,6 +424,7 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
                 SizedBox(height: spacing.lg),
                 ProviderConfigFormFields(
                   controller: _providerConfigController,
+                  enabled: !_isSubmitting,
                   isEditing: _isEditing,
                 ),
               ],
@@ -428,16 +433,19 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
                 children: [
                   Expanded(
                     child: AppButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       label: '取消',
                     ),
                   ),
                   SizedBox(width: spacing.md),
                   Expanded(
                     child: AppButton(
-                      onPressed: _submit,
+                      onPressed: _isSubmitting ? null : _submit,
                       label: '保存',
                       variant: AppButtonVariant.primary,
+                      isLoading: _isSubmitting,
                     ),
                   ),
                 ],

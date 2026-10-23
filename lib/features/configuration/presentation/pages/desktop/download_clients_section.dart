@@ -40,7 +40,7 @@ class _DownloadClientsSectionState
     List<MediaLibraryDto> libraries,
     List<MediaProviderDto> providers,
   ) async {
-    final payload = await showDialog<CreateDownloadClientPayload>(
+    await showDialog<void>(
       context: context,
       builder: (_) => DownloadClientDialog(
         libraries: libraries,
@@ -48,13 +48,6 @@ class _DownloadClientsSectionState
         title: '添加下载器',
       ),
     );
-    if (!mounted || payload == null) return;
-    try {
-      await ref.read(downloadClientsProvider.notifier).create(payload);
-      showToast('下载器已创建');
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '创建下载器失败'));
-    }
   }
 
   Future<void> _editClient(
@@ -62,7 +55,7 @@ class _DownloadClientsSectionState
     List<MediaLibraryDto> libraries,
     List<MediaProviderDto> providers,
   ) async {
-    final payload = await showDialog<UpdateDownloadClientPayload>(
+    await showDialog<void>(
       context: context,
       builder: (_) => DownloadClientDialog(
         libraries: libraries,
@@ -71,15 +64,6 @@ class _DownloadClientsSectionState
         initialClient: client,
       ),
     );
-    if (!mounted || payload == null) return;
-    try {
-      await ref
-          .read(downloadClientsProvider.notifier)
-          .updateClient(clientId: client.id, payload: payload);
-      showToast('下载器已更新');
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '更新下载器失败'));
-    }
   }
 
   Future<void> _deleteClient(DownloadClientDto client) async {
@@ -373,6 +357,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
   late ProviderConfigFormController _providerConfigController;
   int? _selectedLibraryId;
   bool _isTesting = false;
+  bool _isSubmitting = false;
   DownloadClientDiagnosticReportDto? _diagnosticReport;
 
   bool get _isEditing => widget.initialClient != null;
@@ -435,8 +420,8 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
     old.dispose();
   }
 
-  void _submit() {
-    if (_isTesting) return;
+  Future<void> _submit() async {
+    if (_isSubmitting || _isTesting) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final value = DownloadClientFormValue.fromControllers(
       nameController: _nameController,
@@ -446,13 +431,37 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
       providerConfigAvailable:
           _providerForLibrary(_selectedLibraryId)?.supportsDownloads ?? false,
     );
-    Navigator.of(
-      context,
-    ).pop(_isEditing ? value.toUpdatePayload() : value.toCreatePayload());
+    setState(() => _isSubmitting = true);
+    try {
+      if (_isEditing) {
+        await ref
+            .read(downloadClientsProvider.notifier)
+            .updateClient(
+              clientId: widget.initialClient!.id,
+              payload: value.toUpdatePayload(),
+            );
+      } else {
+        await ref
+            .read(downloadClientsProvider.notifier)
+            .create(value.toCreatePayload());
+      }
+      if (!mounted) return;
+      showToast(_isEditing ? '下载器已更新' : '下载器已创建');
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: _isEditing ? '更新下载器失败' : '创建下载器失败',
+        ),
+      );
+    }
   }
 
   Future<void> _testClient() async {
-    if (_isTesting) return;
+    if (_isTesting || _isSubmitting) return;
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final value = DownloadClientFormValue.fromControllers(
@@ -521,7 +530,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                 onLibraryChanged: _selectLibrary,
                 providerConfigController: _providerConfigController,
                 isEditing: _isEditing,
-                enabled: !_isTesting,
+                enabled: !_isTesting && !_isSubmitting,
               ),
               if (_diagnosticReport != null) ...[
                 SizedBox(height: spacing.lg),
@@ -532,7 +541,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                 children: [
                   Expanded(
                     child: AppButton(
-                      onPressed: _isTesting
+                      onPressed: _isTesting || _isSubmitting
                           ? null
                           : () => Navigator.of(context).pop(),
                       label: '取消',
@@ -541,16 +550,21 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                   SizedBox(width: spacing.md),
                   Expanded(
                     child: AppButton(
-                      onPressed: _isTesting ? null : _submit,
+                      onPressed: _isTesting || _isSubmitting
+                          ? null
+                          : _submit,
                       label: '保存',
                       variant: AppButtonVariant.primary,
+                      isLoading: _isSubmitting,
                     ),
                   ),
                   SizedBox(width: spacing.md),
                   Expanded(
                     child: AppButton(
                       key: const Key('download-client-test-button'),
-                      onPressed: _isTesting ? null : _testClient,
+                      onPressed: _isTesting || _isSubmitting
+                          ? null
+                          : _testClient,
                       label: '测试配置',
                       icon: const Icon(Icons.rule_rounded),
                       size: AppButtonSize.small,

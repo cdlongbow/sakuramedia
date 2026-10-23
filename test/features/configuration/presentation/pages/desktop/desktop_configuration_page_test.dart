@@ -768,6 +768,133 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
     });
 
+    testWidgets(
+      'keeps the media library dialog open with input after a failed save',
+      (WidgetTester tester) async {
+        _enqueueMediaLibraries(bundle, libraries: const []);
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries',
+          statusCode: 409,
+          body: {
+            'error': {
+              'code': 'media_library_invalid',
+              'message': '媒体库目录不可写',
+            },
+          },
+        );
+
+        await _pumpPage(tester, bundle, sessionStore: sessionStore);
+        await _openMediaLibrariesTab(tester);
+        await tester.tap(
+          find.byKey(const Key('configuration-media-library-create-button')),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byKey(const Key('media-library-name-field')),
+          'Archive',
+        );
+        await tester.tap(find.text('保存'));
+        await tester.pumpAndSettle();
+
+        expect(bundle.adapter.hitCount('POST', '/media-libraries'), 1);
+        expect(
+          bundle.adapter.requests.firstWhere(
+            (request) =>
+                request.method == 'POST' &&
+                request.path == '/media-libraries',
+          ).body,
+          <String, dynamic>{
+            'name': 'Archive',
+            'provider_key': 'demo',
+            'provider_config': <String, dynamic>{},
+          },
+        );
+        expect(
+          find.byKey(const Key('media-library-name-field')),
+          findsOneWidget,
+        );
+        expect(find.text('Archive'), findsOneWidget);
+        expect(find.text('媒体库目录不可写'), findsOneWidget);
+
+        bundle.adapter.enqueueJson(
+          method: 'POST',
+          path: '/media-libraries',
+          statusCode: 201,
+          body: const <String, dynamic>{
+            'id': 2,
+            'name': 'Archive',
+            'provider_key': 'demo',
+            'provider_config': <String, dynamic>{},
+          },
+        );
+        await tester.tap(find.text('保存'));
+        await tester.pumpAndSettle();
+
+        expect(bundle.adapter.hitCount('POST', '/media-libraries'), 2);
+        expect(
+          find.byKey(const Key('media-library-name-field')),
+          findsNothing,
+        );
+        expect(find.byKey(const Key('media-library-card-2')), findsOneWidget);
+        expect(find.text('媒体库已创建'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 3));
+      },
+    );
+
+    testWidgets(
+      'sends only the name when editing a library whose provider is unavailable',
+      (WidgetTester tester) async {
+        _enqueueMediaLibraries(
+          bundle,
+          libraries: const [
+            {
+              'id': 1,
+              'name': 'Main Library',
+              'provider_key': 'missing-provider',
+              'provider_config': {'root': '/media'},
+            },
+          ],
+        );
+        bundle.adapter.enqueueJson(
+          method: 'PATCH',
+          path: '/media-libraries/1',
+          body: const <String, dynamic>{
+            'id': 1,
+            'name': 'Renamed Missing',
+            'provider_key': 'missing-provider',
+            'provider_config': <String, dynamic>{'root': '/media'},
+          },
+        );
+
+        await _pumpPage(tester, bundle, sessionStore: sessionStore);
+        await _openMediaLibrariesTab(tester);
+        await tester.tap(find.byKey(const Key('media-library-edit-1')));
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('当前不可用'), findsOneWidget);
+        await tester.enterText(
+          find.byKey(const Key('media-library-name-field')),
+          'Renamed Missing',
+        );
+        await tester.tap(find.text('保存'));
+        await tester.pumpAndSettle();
+
+        final patchRequest = bundle.adapter.requests.firstWhere(
+          (request) =>
+              request.method == 'PATCH' &&
+              request.path == '/media-libraries/1',
+        );
+        expect(patchRequest.body, <String, dynamic>{
+          'name': 'Renamed Missing',
+        });
+        expect(find.text('Renamed Missing'), findsOneWidget);
+        expect(find.text('媒体库已更新'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 3));
+      },
+    );
+
     testWidgets('renders account security form in account tab', (
       WidgetTester tester,
     ) async {

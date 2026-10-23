@@ -215,7 +215,6 @@ class _RangeChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? context.appColors.surfaceCard : null,
         borderRadius: context.appRadius.pillBorder,
-        boxShadow: isSelected ? context.appShadows.card : null,
       ),
       child: Text(
         range.shortLabel,

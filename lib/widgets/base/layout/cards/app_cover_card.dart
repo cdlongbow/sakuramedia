@@ -8,7 +8,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/selection_check_b
 ///
 /// 外观固定为设计语言基线，调用方不要再手写这几层：
 /// `surfaceCard` 底、`lg` 圆角、常驻 1px `borderSubtle` 边框（选中换 2px
-/// `selectionBorder`）、`appShadows.card` 阴影、`ClipRRect` 圆角裁剪、
+/// `selectionBorder`）、`ClipRRect` 圆角裁剪、
 /// `AppSkeletonUnite` 强制同圆角合并骨块（防卡内药丸角标把整卡画成椭圆）。
 ///
 /// 封面区组装规则：
@@ -139,7 +139,6 @@ class AppCoverCard extends StatelessWidget {
           color: selected ? colors.selectionBorder : colors.borderSubtle,
           width: selected ? 2 : 1,
         ),
-        boxShadow: context.appShadows.card,
       ),
       child: ClipRRect(
         borderRadius: radius,

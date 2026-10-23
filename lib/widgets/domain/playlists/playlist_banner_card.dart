@@ -47,7 +47,6 @@ class PlaylistBannerCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(color: colors.borderSubtle),
-        boxShadow: context.appShadows.card,
       ),
       clipBehavior: Clip.antiAlias,
       // 骨架态整条横幅收敛成一块 shimmer 圆角块（非骨架态原样渲染）。

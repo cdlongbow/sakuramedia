@@ -169,7 +169,6 @@ class _FilterResultLoadingIndicator extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surfaceCard,
             borderRadius: context.appRadius.mdBorder,
-            boxShadow: context.appShadows.card,
           ),
           child: Padding(
             padding: EdgeInsets.all(spacing.md),

@@ -29,7 +29,6 @@ class AppContentCard extends StatelessWidget {
         color: context.appColors.surfaceCard,
         borderRadius: context.appRadius.lgBorder,
         border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: context.appShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

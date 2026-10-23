@@ -170,11 +170,7 @@ void main() {
     expect(sidebarTokens.itemHeight, 44);
     expect(AppPageInsets.desktopStandard.left, 24);
     expect(AppPageInsets.compactStandard.left, 8);
-    expect(shadows.card, isNotEmpty);
-    // 卡片阴影必须跟着圆角走：模糊半径不能到圆角量级，且要负 spread 内缩，
-    // 否则四角会糊成一块「方形底色」（见 AppShadows.card 注释）。
-    expect(shadows.card.single.blurRadius, lessThan(radius.lg));
-    expect(shadows.card.single.spreadRadius, lessThan(0));
+    expect(shadows.panel, isNotEmpty);
   });
 
   test('fadedBy scales the existing alpha instead of replacing it', () {
@@ -222,11 +218,15 @@ void main() {
     expect(sakuraMobileThemeData.appComponentTokens.buttonHeight3xs, 24);
     expect(sakuraMobileThemeData.appComponentTokens.downloadTaskCoverWidth, 96);
     expect(
-      sakuraMobileThemeData.appComponentTokens.importMetadataCandidateCoverWidth,
+      sakuraMobileThemeData
+          .appComponentTokens
+          .importMetadataCandidateCoverWidth,
       128,
     );
     expect(
-      sakuraMobileThemeData.appComponentTokens.importMetadataCandidateCoverHeight,
+      sakuraMobileThemeData
+          .appComponentTokens
+          .importMetadataCandidateCoverHeight,
       72,
     );
     expect(sakuraMobileThemeData.appComponentTokens.switchTrackWidth, 44);

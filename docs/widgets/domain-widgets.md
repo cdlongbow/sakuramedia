@@ -6,13 +6,13 @@
 
 路径：`lib/widgets/base/layout/cards/app_cover_card.dart`
 
-「整卡即封面」的卡片（影片 / 女优 / 切片 / 时刻 / 视频 / 合集成员 / 合集封面 / 图搜）统一由 `AppCoverCard` 提供外观：`surfaceCard` 底、`lg` 圆角、常驻 1px 边框（选中换 2px）、卡片阴影、圆角裁剪与 `AppSkeletonUnite` 同圆角合并骨块；封面区可按 `coverAspectRatio` 定比例或铺满父约束，`infoBuilder` 非空时组装 `AppCoverHoverInfo` 悬停披露层，`overlays` / `overlaysBuilder` 放常驻角标，`selectionMode` 时统一叠勾选徽标，`footer` 放封面下方常驻内容（合集标题）。外层手势（整卡点击、右键 / 长按菜单、订阅命中分流）由调用方在壳外组合；不要再手写这套装饰与裁剪。
+「整卡即封面」的卡片（影片 / 女优 / 切片 / 时刻 / 视频 / 合集成员 / 合集封面 / 图搜）统一由 `AppCoverCard` 提供外观：`surfaceCard` 底、`lg` 圆角、常驻 1px 边框（选中换 2px）、圆角裁剪与 `AppSkeletonUnite` 同圆角合并骨块；封面区可按 `coverAspectRatio` 定比例或铺满父约束，`infoBuilder` 非空时组装 `AppCoverHoverInfo` 悬停披露层，`overlays` / `overlaysBuilder` 放常驻角标，`selectionMode` 时统一叠勾选徽标，`footer` 放封面下方常驻内容（合集标题）。外层手势（整卡点击、右键 / 长按菜单、订阅命中分流）由调用方在壳外组合；不要再手写这套装饰与裁剪。
 
 ## actors
 
 路径：`lib/widgets/domain/actors/`
 
-包含 `ActorAvatar`、`ActorSummaryCard` 和 `ActorFilterSections`。女优数据和筛选状态由 actors feature 提供。`ActorSummaryCard` 与影片卡同参数（`lg` 圆角、常驻 1px 边框与卡片阴影）：收起态底部渐变上常显姓名（Tooltip 补全截断），桌面悬停渐显姓名、资料行（影片数 / 年龄 / 出生年月 / 身高 / 胸围 / 腰围 / 臀围 / 罩杯，字段随列表接口下发、缺项跳过）与订阅 / 取消订阅动作，收起态姓名层淡出；演员页没有多选 / 右键菜单业务，卡片不接入。
+包含 `ActorAvatar`、`ActorSummaryCard` 和 `ActorFilterSections`。女优数据和筛选状态由 actors feature 提供。`ActorSummaryCard` 与影片卡同参数（`lg` 圆角、常驻 1px 边框）：收起态底部渐变上常显姓名（Tooltip 补全截断），桌面悬停渐显姓名、资料行（影片数 / 年龄 / 出生年月 / 身高 / 胸围 / 腰围 / 臀围 / 罩杯，字段随列表接口下发、缺项跳过）与订阅 / 取消订阅动作，收起态姓名层淡出；演员页没有多选 / 右键菜单业务，卡片不接入。
 
 ## taste
 
@@ -28,7 +28,7 @@
 
 `SubscriptionHeartBadge` 点击时经 `core/platform/haptic_feedback.dart` 播放一次选择触感（iOS / Android），桌面端无副作用。
 
-`MovieSummaryCard` 整卡即封面：收起态番号（+ 推荐理由）与排名徽标压在底部渐变上常显，触摸端停留在这层；指针悬停时与全站封面卡共用同一套底部披露层（180ms ease-out），标题/时长/日期与整行动作按钮（播放 / 订阅 / 标记合集-单体 / 屏蔽影片，按回调与订阅状态显隐，放不下时自动折行）淡入，收起态主键层淡出；排名徽标只在收起态显示。卡片参数与全站封面卡一致（`lg` 圆角、`surfaceCard` 底色、常驻 1px 边框与卡片阴影）。系统开启「减弱动态效果」时退化为瞬时切换。右键与长按打开影片操作菜单（原「更多」按钮已移除）。`MovieSummaryGrid` / `MovieSummarySliver` / `MovieSummaryRail` 共用 `MovieSummaryCardWiring` 装配卡片回调，改卡片交互只改这一处。
+`MovieSummaryCard` 整卡即封面：收起态番号（+ 推荐理由）与排名徽标压在底部渐变上常显，触摸端停留在这层；指针悬停时与全站封面卡共用同一套底部披露层（180ms ease-out），标题/时长/日期与整行动作按钮（播放 / 订阅 / 标记合集-单体 / 屏蔽影片，按回调与订阅状态显隐，放不下时自动折行）淡入，收起态主键层淡出；排名徽标只在收起态显示。卡片参数与全站封面卡一致（`lg` 圆角、`surfaceCard` 底色、常驻 1px 边框）。系统开启「减弱动态效果」时退化为瞬时切换。右键与长按打开影片操作菜单（原「更多」按钮已移除）。`MovieSummaryGrid` / `MovieSummarySliver` / `MovieSummaryRail` 共用 `MovieSummaryCardWiring` 装配卡片回调，改卡片交互只改这一处。
 
 `MovieSummaryCard` 左上角在订阅心后显示有效媒体的最高分辨率角标：宽度 ≥7680 为 8K，3840 ≤宽度 <7680 为 4K 档；低于 4K、缺失或无效媒体不显示。清晰度角标只在存在有效媒体时出现，而有效媒体即 `canPlay`，所以 4K/8K 卡上不再重复显示可播放标，可播放标只出现在低于 4K 的可播放卡上；两者都受选择模式与 `showStatusBadges` 控制。清晰度角标使用与热度一致的半透明灰色底并局部模糊，文字固定白色，圆角、边框粗细与颜色复用热度标签；一行空间不足时热度标签换到下一行左侧，按实际文字宽度判断以避免遮挡。
 

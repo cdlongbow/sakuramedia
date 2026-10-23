@@ -7,7 +7,7 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 /// 共用的实体列表卡片外壳。
 ///
 /// 内部 shell 完全对齐三份已有 `_MobileXxxCard`：
-/// - Container(outer decoration: surfaceCard + lgBorder + borderSubtle + shadows.card)
+/// - Container(outer decoration: surfaceCard + lgBorder + borderSubtle)
 ///   → Row [
 ///       Expanded(Material transparent → InkWell(bodyKey, onTap) → Padding(md) → Row [ leading, md, Expanded(Column [ Row[title + titleTrailing], ...body ]) ]),
 ///       optional trailingAction（InkWell 之外的独立按钮，如 media_libraries 的更多按钮）

@@ -359,7 +359,6 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                   badgeTone: readyLibraries
                       ? AppBadgeTone.success
                       : AppBadgeTone.warning,
-                  showShadow: true,
                   actionLabel: '前往媒体库',
                   onActionTap: () => GoRouter.of(
                     context,
@@ -375,7 +374,6 @@ class _MobileDownloadersPageState extends ConsumerState<MobileDownloadersPage>
                   badgeTone: clients.isNotEmpty
                       ? AppBadgeTone.success
                       : AppBadgeTone.warning,
-                  showShadow: true,
                   actionLabel: '切换到下载器',
                   onActionTap: () => _tabController.animateTo(0),
                 ),

@@ -287,7 +287,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           color: colors.surfaceCard.withValues(alpha: 0.94),
                           borderRadius: radius.lgBorder,
                           border: Border.all(color: colors.borderSubtle),
-                          boxShadow: context.appShadows.card,
                         ),
                         child: Form(
                           key: _formKey,

@@ -35,17 +35,6 @@ class TastePanel extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: radius,
         border: Border.all(color: colors.primary.withValues(alpha: 0.16)),
-        boxShadow: <BoxShadow>[
-          ...context.appShadows.card,
-          // 品牌色光晕：模糊半径仍需小于卡片圆角，否则会在四角糊出一层
-          // 片状粉色底板（与 `appShadows.card` 同一个坑），这里再叠负 spread。
-          BoxShadow(
-            color: colors.primary.withValues(alpha: 0.06),
-            blurRadius: context.appShadows.cardBlur,
-            spreadRadius: context.appShadows.cardSpread,
-            offset: Offset(0, spacing.xs),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: radius,

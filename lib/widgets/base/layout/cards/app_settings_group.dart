@@ -68,7 +68,6 @@ class AppSettingsGroup extends StatelessWidget {
             color: colors.surfaceCard,
             borderRadius: context.appRadius.lgBorder,
             border: Border.all(color: colors.borderSubtle),
-            boxShadow: context.appShadows.card,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

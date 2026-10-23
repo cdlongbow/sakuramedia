@@ -9,8 +9,6 @@ import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 ///
 /// - 带 [badgeLabel] 时右上角显示状态 badge(用于流程进度)。
 /// - 带 [tip] 时正文下方多一个 surfaceMuted 提示块。
-/// - [showShadow]=true 时卡片加 `context.appShadows.card`(流程卡默认加,
-///   单独提示卡默认不加)。
 class MobileConfigOnboardingCard extends StatelessWidget {
   const MobileConfigOnboardingCard({
     super.key,
@@ -21,7 +19,6 @@ class MobileConfigOnboardingCard extends StatelessWidget {
     this.tip,
     this.badgeLabel,
     this.badgeTone,
-    this.showShadow = false,
   });
 
   final String title;
@@ -31,7 +28,6 @@ class MobileConfigOnboardingCard extends StatelessWidget {
   final String? tip;
   final String? badgeLabel;
   final AppBadgeTone? badgeTone;
-  final bool showShadow;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +38,6 @@ class MobileConfigOnboardingCard extends StatelessWidget {
         color: context.appColors.surfaceCard,
         borderRadius: context.appRadius.lgBorder,
         border: Border.all(color: context.appColors.borderSubtle),
-        boxShadow: showShadow ? context.appShadows.card : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

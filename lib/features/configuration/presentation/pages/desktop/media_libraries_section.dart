@@ -385,6 +385,7 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
         vertical: context.appLayoutTokens.dialogInsetPadding,
       ),
       width: context.appLayoutTokens.dialogWidthMd,
+      showCloseButton: !_isSubmitting,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -429,26 +430,29 @@ class _MediaLibraryDialogState extends ConsumerState<MediaLibraryDialog> {
                 ),
               ],
               SizedBox(height: spacing.xl),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      label: '取消',
+              PopScope(
+                canPop: !_isSubmitting,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        label: '取消',
+                      ),
                     ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      onPressed: _isSubmitting ? null : _submit,
-                      label: '保存',
-                      variant: AppButtonVariant.primary,
-                      isLoading: _isSubmitting,
+                    SizedBox(width: spacing.md),
+                    Expanded(
+                      child: AppButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        label: '保存',
+                        variant: AppButtonVariant.primary,
+                        isLoading: _isSubmitting,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

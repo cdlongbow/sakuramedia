@@ -506,6 +506,7 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
         vertical: context.appLayoutTokens.dialogInsetPadding,
       ),
       width: context.appLayoutTokens.dialogWidthMd,
+      showCloseButton: !_isSubmitting,
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -537,41 +538,44 @@ class _DownloadClientDialogState extends ConsumerState<DownloadClientDialog> {
                 DownloadClientDiagnosticResultView(report: _diagnosticReport!),
               ],
               SizedBox(height: spacing.xl),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      onPressed: _isTesting || _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      label: '取消',
+              PopScope(
+                canPop: !_isSubmitting,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        onPressed: _isTesting || _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                        label: '取消',
+                      ),
                     ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      onPressed: _isTesting || _isSubmitting
-                          ? null
-                          : _submit,
-                      label: '保存',
-                      variant: AppButtonVariant.primary,
-                      isLoading: _isSubmitting,
+                    SizedBox(width: spacing.md),
+                    Expanded(
+                      child: AppButton(
+                        onPressed: _isTesting || _isSubmitting
+                            ? null
+                            : _submit,
+                        label: '保存',
+                        variant: AppButtonVariant.primary,
+                        isLoading: _isSubmitting,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: spacing.md),
-                  Expanded(
-                    child: AppButton(
-                      key: const Key('download-client-test-button'),
-                      onPressed: _isTesting || _isSubmitting
-                          ? null
-                          : _testClient,
-                      label: '测试配置',
-                      icon: const Icon(Icons.rule_rounded),
-                      size: AppButtonSize.small,
-                      isLoading: _isTesting,
+                    SizedBox(width: spacing.md),
+                    Expanded(
+                      child: AppButton(
+                        key: const Key('download-client-test-button'),
+                        onPressed: _isTesting || _isSubmitting
+                            ? null
+                            : _testClient,
+                        label: '测试配置',
+                        icon: const Icon(Icons.rule_rounded),
+                        size: AppButtonSize.small,
+                        isLoading: _isTesting,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

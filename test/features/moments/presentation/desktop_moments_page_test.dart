@@ -102,7 +102,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('时刻合集'), findsOneWidget);
-    expect(find.text('全部时刻'), findsOneWidget);
+    expect(find.text('全部时刻'), findsNothing);
     expect(
       find.byKey(const Key('moments-create-collection-button')),
       findsOneWidget,
@@ -115,7 +115,7 @@ void main() {
     expect(find.byTooltip('加入合集'), findsNothing);
     expect(
       tester.getTopLeft(find.text('时刻合集')).dy,
-      lessThan(tester.getTopLeft(find.text('全部时刻')).dy),
+      lessThan(tester.getTopLeft(find.byKey(const Key('moment-card-10'))).dy),
     );
     expect(tester.takeException(), isNull);
   });

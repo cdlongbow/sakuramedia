@@ -35,6 +35,7 @@ import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_scaffold.dart';
+import 'package:sakuramedia/widgets/domain/activity/activity_task_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/media_import/import_failed_items_dialog.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -1114,25 +1115,12 @@ class _TaskFilterBar extends StatelessWidget {
           ),
         ),
         SizedBox(
-          width: layoutTokens.filterFieldWidthXl,
-          child: AppSelectField<ActivityTaskSort>(
-            key: const Key('activity-task-sort-filter'),
-            value: controller.taskFilter.sort,
-            size: AppSelectFieldSize.compact,
-            textStyle: filterTextStyle,
-            items: ActivityTaskSort.values
-                .map(
-                  (value) => DropdownMenuItem<ActivityTaskSort>(
-                    value: value,
-                    child: Text(value.label),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (value) => controller.applyTaskFilter(
-              controller.taskFilter.copyWith(
-                sort: value ?? ActivityTaskSort.startedAtDesc,
-              ),
-            ),
+          height: context.appComponentTokens.mobileTopTabHeight,
+          child: ActivityTaskSortMenuButton(
+            triggerKey: const Key('activity-task-sort-trigger'),
+            panelKey: const Key('activity-task-sort-panel'),
+            filterState: controller.taskFilter,
+            onChanged: controller.applyTaskFilter,
           ),
         ),
       ],
@@ -1149,7 +1137,7 @@ class _MobileTaskFilterEntry extends StatelessWidget {
   Widget build(BuildContext context) {
     final filter = controller.taskFilter;
     final taskKeyLabels = controller.knownTaskKeyLabels;
-    final isSelected = filter != ActivityTaskFilterState.initial;
+    final isSelected = filter.hasActiveFilters;
     return Row(
       children: [
         Expanded(
@@ -1166,6 +1154,18 @@ class _MobileTaskFilterEntry extends StatelessWidget {
           ),
         ),
         SizedBox(width: context.appSpacing.md),
+        SizedBox(
+          height: context.appComponentTokens.mobileTopTabHeight,
+          child: ActivityTaskSortMenuButton(
+            triggerKey: const Key('mobile-activity-task-sort-trigger'),
+            drawerKey: const Key('mobile-activity-task-sort-drawer'),
+            keyPrefix: 'mobile-activity-task',
+            filterState: filter,
+            onChanged: (next) => unawaited(controller.applyTaskFilter(next)),
+            useDrawer: true,
+          ),
+        ),
+        SizedBox(width: context.appSpacing.sm),
         AppButton(
           key: const Key('mobile-activity-task-filter-button'),
           label: isSelected ? '已筛选' : '筛选',
@@ -1238,8 +1238,8 @@ class _MobileTaskFilterDrawerContentState
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: const Key('mobile-activity-task-filter-scroll-view'),
       footer: AppFilterPanelFooter(
-        isDefault: _local == ActivityTaskFilterState.initial,
-        onReset: () => _apply(ActivityTaskFilterState.initial),
+        isDefault: !_local.hasActiveFilters,
+        onReset: () => _apply(_local.resetFilters()),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1307,23 +1307,6 @@ class _MobileTaskFilterDrawerContentState
             ],
             onChanged: (value) => _apply(_local.copyWith(triggerType: value)),
           ),
-          SizedBox(height: context.appSpacing.md),
-          AppSelectField<ActivityTaskSort>(
-            key: const Key('mobile-activity-task-sort-filter'),
-            label: '排序方式',
-            value: _local.sort,
-            items: ActivityTaskSort.values
-                .map(
-                  (value) => DropdownMenuItem<ActivityTaskSort>(
-                    value: value,
-                    child: Text(value.label),
-                  ),
-                )
-                .toList(growable: false),
-            onChanged: (value) => _apply(
-              _local.copyWith(sort: value ?? ActivityTaskSort.startedAtDesc),
-            ),
-          ),
         ],
       ),
     );
@@ -1342,8 +1325,7 @@ String _taskFilterSummary(
   if (filter.triggerType != null) {
     values.add(_labelForTriggerType(filter.triggerType!));
   }
-  values.add(filter.sort.label);
-  return values.join(' · ');
+  return values.isEmpty ? '全部任务' : values.join(' · ');
 }
 
 class _TaskRunCard extends StatelessWidget {

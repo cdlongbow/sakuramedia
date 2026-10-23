@@ -64,7 +64,10 @@ void main() {
     expect(find.text('1.1w'), findsOneWidget);
     expect(find.text('2w'), findsOneWidget);
     expect(find.text('1.6w'), findsOneWidget);
-    expect(find.byKey(const Key('movie-filter-actor-age-section-title')), findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-filter-actor-age-section-title')),
+      findsOneWidget,
+    );
     expect(find.text('18'), findsOneWidget);
     expect(find.text('50+'), findsOneWidget);
     expect(find.text('${DateTime.now().year}'), findsOneWidget);
@@ -115,10 +118,7 @@ void main() {
     );
     expect(heatRange?.min, isNull);
     expect(heatRange?.max, isNotNull);
-    expect(
-      heatRange!.max,
-      lessThan(testInteractionFilterOptions.heat.p999!),
-    );
+    expect(heatRange!.max, lessThan(testInteractionFilterOptions.heat.p999!));
 
     // 左 thumb 同样松手才生效：下限非 0 时映射为具体的 heat_min。
     await tester.dragFrom(
@@ -140,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(applied, hasLength(5));
-    expect(applied.last.isDefault, isTrue);
+    expect(applied.last.hasActiveFilters, isFalse);
     expect(applied.last.interaction.isDefault, isTrue);
   });
 
@@ -204,5 +204,42 @@ void main() {
     expect(applied.last.actorAgeMin, isNotNull);
     expect(applied.last.actorAgeMin, greaterThan(movieFilterActorAgeSliderMin));
     expect(applied.last.actorAgeMax, applied.first.actorAgeMax);
+  });
+
+  testWidgets('重置筛选保留排序', (tester) async {
+    final applied = <MovieFilterState>[];
+    const current = MovieFilterState(
+      status: MovieStatusFilter.subscribed,
+      sortField: MovieSortField.heat,
+      sortDirection: SortDirection.asc,
+    );
+    await tester.pumpWidget(
+      wrapApp(
+        Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () async {
+                await showMobileMovieFilterDrawer(
+                  context,
+                  current: current,
+                  onChanged: applied.add,
+                );
+              },
+              child: const Text('打开筛选'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('打开筛选'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('重置'));
+    await tester.pumpAndSettle();
+
+    expect(applied, hasLength(1));
+    expect(applied.single.status, MovieStatusFilter.all);
+    expect(applied.single.sortField, MovieSortField.heat);
+    expect(applied.single.sortDirection, SortDirection.asc);
   });
 }

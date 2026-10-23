@@ -14,6 +14,7 @@ import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/tags/tag_filter_section.dart';
 
 class MobileMoviesPage extends ConsumerStatefulWidget {
@@ -79,21 +80,18 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
       totalKey: const Key('mobile-movies-page-total'),
       tagSelectionScope: _tagSelectionScope,
       sectionSpacing: context.appSpacing.md,
-      onMovieTap:
-          (context, movieNumber) => MobileMovieDetailRouteData(
-            movieNumber: movieNumber,
-          ).push(context),
+      onMovieTap: (context, movieNumber) =>
+          MobileMovieDetailRouteData(movieNumber: movieNumber).push(context),
       headerBuilder: _buildMobileHeader,
       useMobileSelectionLayout: true,
-      bodyBuilder:
-          (context, scrollController, sliver, onRefresh) =>
-              AppAdaptiveRefreshScrollView(
-                key: const PageStorageKey<String>('mobile:movies:list'),
-                onRefresh: onRefresh!,
-                controller: scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: <Widget>[sliver],
-              ),
+      bodyBuilder: (context, scrollController, sliver, onRefresh) =>
+          AppAdaptiveRefreshScrollView(
+            key: const PageStorageKey<String>('mobile:movies:list'),
+            onRefresh: onRefresh!,
+            controller: scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: <Widget>[sliver],
+          ),
       enableRefresh: true,
       onRefreshFailure: (_) => showToast('刷新失败'),
     );
@@ -115,6 +113,15 @@ class _MobileMoviesPageState extends ConsumerState<MobileMoviesPage> {
         AppListHeaderInfo(
           key: const Key('mobile-movies-total'),
           label: '${args.total} 部',
+        ),
+      ],
+      actionSlots: [
+        MovieSortMenuButton(
+          triggerKey: const Key('mobile-movies-sort-trigger'),
+          drawerKey: const Key('mobile-movies-sort-drawer'),
+          filterState: args.filterState,
+          onChanged: args.onApply,
+          useDrawer: true,
         ),
       ],
     );

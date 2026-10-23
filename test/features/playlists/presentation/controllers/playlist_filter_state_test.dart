@@ -6,7 +6,7 @@ void main() {
     test('initial is default and keeps null sort/resolution', () {
       const state = PlaylistFilterState.initial;
 
-      expect(state.isDefault, isTrue);
+      expect(state.hasActiveFilters, isFalse);
       expect(state.sortField, isNull);
       expect(state.sortDirection, SortDirection.desc);
       expect(state.resolution, isNull);
@@ -34,7 +34,7 @@ void main() {
 
       final cleared = filtered.copyWith(sortField: null);
       expect(cleared.sortField, isNull);
-      expect(cleared.isDefault, isTrue);
+      expect(cleared.hasActiveFilters, isFalse);
     });
 
     test('copyWith clears resolution back to null (sentinel)', () {
@@ -45,10 +45,10 @@ void main() {
 
       final cleared = filtered.copyWith(resolution: null);
       expect(cleared.resolution, isNull);
-      expect(cleared.isDefault, isTrue);
+      expect(cleared.hasActiveFilters, isFalse);
     });
 
-    test('triggerLabel: 单维度时报该维度、两维都非默认时用「·」拼合', () {
+    test('triggerLabel 只反映分辨率，不再混入排序', () {
       expect(
         PlaylistFilterState.initial
             .copyWith(resolution: PlaylistResolutionFilter.k4k)
@@ -59,9 +59,8 @@ void main() {
         PlaylistFilterState.initial
             .copyWith(sortField: PlaylistSortField.addedAt)
             .triggerLabel,
-        '最近入库',
+        '全部',
       );
-      // 分辨率 + 排序同时非默认 → 复合展示，避免只显示分辨率把排序藏了。
       expect(
         PlaylistFilterState.initial
             .copyWith(
@@ -69,8 +68,30 @@ void main() {
               sortField: PlaylistSortField.bitrate,
             )
             .triggerLabel,
-        '4K · 码率',
+        '4K',
       );
+    });
+
+    test('只改排序不影响筛选默认态', () {
+      const state = PlaylistFilterState(
+        sortField: PlaylistSortField.heat,
+        sortDirection: SortDirection.asc,
+      );
+      expect(state.hasActiveFilters, isFalse);
+      expect(state.sortField, PlaylistSortField.heat);
+      expect(state.sortDirection, SortDirection.asc);
+    });
+
+    test('resetFilters 保留排序', () {
+      const state = PlaylistFilterState(
+        sortField: PlaylistSortField.bitrate,
+        sortDirection: SortDirection.asc,
+        resolution: PlaylistResolutionFilter.k4k,
+      );
+      final reset = state.resetFilters();
+      expect(reset.hasActiveFilters, isFalse);
+      expect(reset.sortField, PlaylistSortField.bitrate);
+      expect(reset.sortDirection, SortDirection.asc);
     });
 
     test('matches compares all fields', () {

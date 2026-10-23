@@ -295,12 +295,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('mobile filter drawer reuses the shared panel and applies sort', (
+  testWidgets('mobile sort drawer applies direction independently of filters', (
     tester,
   ) async {
     _enqueuePage(adapter, [_item('ABP-123')]);
     await _pumpPage(tester, sessionStore, apiClient);
 
+    // 筛选抽屉只保留搜索，排序不在其中。
     await tester.tap(
       find.byKey(const Key('movie-subscriptions-filter-button')),
     );
@@ -311,15 +312,32 @@ void main() {
     );
     expect(
       find.byKey(const Key('movie-subscriptions-filter-sort-field')),
-      findsOneWidget,
+      findsNothing,
     );
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
 
     _enqueuePage(adapter, [_item('ABP-123')]);
     await tester.tap(
-      find.byKey(const Key('movie-subscriptions-filter-sort-field')),
+      find.byKey(const Key('movie-subscriptions-sort-trigger')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('订阅时间 · 旧到新').last);
+    expect(
+      find.byKey(const Key('mobile-movie-subscriptions-sort-drawer')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const Key('mobile-movie-subscriptions-sort-direction-asc'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(
+        const Key('mobile-movie-subscriptions-sort-direction-asc'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(

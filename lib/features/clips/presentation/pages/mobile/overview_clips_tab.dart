@@ -283,7 +283,6 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
   // ----------------------------------------------------------- 切片区
 
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
-    final spacing = context.appSpacing;
     final hasClips = clips.isNotEmpty;
     final summary = ref.watch(
       clipsOverviewProvider.select(
@@ -299,23 +298,6 @@ class _MobileOverviewClipsTabState extends ConsumerState<MobileOverviewClipsTab>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: spacing.sm),
-          child: Row(
-            children: [
-              Text(
-                '全部切片',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
         // 与「时刻」页同构：选择态原地改写操作行，两态等高不跳版。
         if (selectionMode)
           _buildSelectionHeader(context, clips)

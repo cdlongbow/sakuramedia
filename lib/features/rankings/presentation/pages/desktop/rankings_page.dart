@@ -26,6 +26,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
+import 'package:sakuramedia/widgets/domain/rankings/ranking_sort_menu_button.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranked_movie_summary_grid.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filter_sections.dart';
 
@@ -161,13 +162,6 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
               .read(rankingSummaryProvider(_scope).notifier)
               .selectInteraction(value),
         ),
-        selectedSortField: summary.filters.selectedSortField,
-        selectedSortDirection: summary.filters.selectedSortDirection,
-        onSortChanged: (field, dir) => _applyFilterChange(
-          () => ref
-              .read(rankingSummaryProvider(_scope).notifier)
-              .selectSort(field, dir),
-        ),
       ),
       informationSlots: [
         AppListHeaderInfo(
@@ -181,7 +175,19 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
             icon: Icons.schedule_rounded,
           ),
       ],
-      actionSlots: [buildEnterSelectionButton()],
+      actionSlots: [
+        RankingSortMenuButton(
+          triggerKey: const Key('rankings-sort-trigger'),
+          panelKey: const Key('rankings-sort-panel'),
+          filterState: summary.filters,
+          onSortChanged: (field, direction) => _applyFilterChange(
+            () => ref
+                .read(rankingSummaryProvider(_scope).notifier)
+                .selectSort(field, direction),
+          ),
+        ),
+        buildEnterSelectionButton(),
+      ],
     );
   }
 
@@ -232,79 +238,79 @@ class _DesktopRankingsPageState extends ConsumerState<DesktopRankingsPage>
                   false,
               onLoadMore: () =>
                   ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
-            child: CustomScrollView(
-              key: const PageStorageKey<String>('desktop:rankings:list'),
-              controller: _scrollController,
-              slivers: [
-                SliverMainAxisGroup(
-                  key: const Key('desktop-rankings-page'),
-                  slivers: [
-                    if (hasNoSources &&
-                        !(summary.paged.filterUpdate.hasFailed &&
-                            summary.paged.items.isEmpty))
-                      const SliverToBoxAdapter(
-                        child: AppEmptyState(message: '暂无可用排行榜'),
-                      )
-                    else if (!summary.paged.filterUpdate.hasFailed ||
-                        summary.paged.items.isNotEmpty)
-                      AppSkeletonizer.sliver(
-                        enabled:
-                            summary.filters.isLoading &&
-                            summary.paged.items.isEmpty,
-                        child: RankedMovieSummarySliver(
-                          items:
+              child: CustomScrollView(
+                key: const PageStorageKey<String>('desktop:rankings:list'),
+                controller: _scrollController,
+                slivers: [
+                  SliverMainAxisGroup(
+                    key: const Key('desktop-rankings-page'),
+                    slivers: [
+                      if (hasNoSources &&
+                          !(summary.paged.filterUpdate.hasFailed &&
+                              summary.paged.items.isEmpty))
+                        const SliverToBoxAdapter(
+                          child: AppEmptyState(message: '暂无可用排行榜'),
+                        )
+                      else if (!summary.paged.filterUpdate.hasFailed ||
+                          summary.paged.items.isNotEmpty)
+                        AppSkeletonizer.sliver(
+                          enabled:
                               summary.filters.isLoading &&
-                                  summary.paged.items.isEmpty
-                              ? rankedMoviePlaceholders(count: 24)
-                              : summary.paged.items,
-                          errorMessage: summary.initialErrorMessage,
+                              summary.paged.items.isEmpty,
+                          child: RankedMovieSummarySliver(
+                            items:
+                                summary.filters.isLoading &&
+                                    summary.paged.items.isEmpty
+                                ? rankedMoviePlaceholders(count: 24)
+                                : summary.paged.items,
+                            errorMessage: summary.initialErrorMessage,
                             onMovieTap: (movie) =>
                                 context.pushDesktopMovieDetail(
-                            movieNumber: movie.movieNumber,
-                            fallbackPath: desktopRankingsPath,
-                          ),
-                          onMovieMenuRequest: (movie, globalPosition) =>
-                              requestMovieCollectionMenu(
-                                context,
-                                movie.movieNumber,
-                                globalPosition,
-                                isSubscribed: movie.isSubscribed,
-                              ),
-                          onMovieSubscriptionTap: (movie) =>
-                              _toggleMovieSubscription(movie.movieNumber),
-                          onMovieToggleCollectionType:
-                              _hoverFeatureActions.toggleCollectionType,
-                          onMovieBlacklist: _hoverFeatureActions.blacklist,
+                                  movieNumber: movie.movieNumber,
+                                  fallbackPath: desktopRankingsPath,
+                                ),
+                            onMovieMenuRequest: (movie, globalPosition) =>
+                                requestMovieCollectionMenu(
+                                  context,
+                                  movie.movieNumber,
+                                  globalPosition,
+                                  isSubscribed: movie.isSubscribed,
+                                ),
+                            onMovieSubscriptionTap: (movie) =>
+                                _toggleMovieSubscription(movie.movieNumber),
+                            onMovieToggleCollectionType:
+                                _hoverFeatureActions.toggleCollectionType,
+                            onMovieBlacklist: _hoverFeatureActions.blacklist,
                             isMovieSubscriptionUpdating: (movie) => summary
                                 .isSubscriptionUpdating(movie.movieNumber),
-                          emptyMessage: '暂无榜单数据',
-                          selectionMode: selectionMode,
-                          isMovieSelected: (movie) =>
-                              isSelected(movie.movieNumber),
-                          onMovieSelectedChanged: (movie, _) =>
-                              toggleSelect(movie.movieNumber),
+                            emptyMessage: '暂无榜单数据',
+                            selectionMode: selectionMode,
+                            isMovieSelected: (movie) =>
+                                isSelected(movie.movieNumber),
+                            onMovieSelectedChanged: (movie, _) =>
+                                toggleSelect(movie.movieNumber),
+                          ),
                         ),
-                      ),
-                    // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
-                    PagedLoadMoreFooterSliver(
-                      watchFooter: (ref) => ref.watch(
+                      // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                      PagedLoadMoreFooterSliver(
+                        watchFooter: (ref) => ref.watch(
                           rankingSummaryProvider(_scope).select(
                             (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
                           ),
+                        ),
+                        onLoadMore: (ref) => unawaited(
+                          ref
+                              .read(rankingSummaryProvider(_scope).notifier)
+                              .loadMore(),
+                        ),
                       ),
-                      onLoadMore: (ref) => unawaited(
-                        ref
-                            .read(rankingSummaryProvider(_scope).notifier)
-                            .loadMore(),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

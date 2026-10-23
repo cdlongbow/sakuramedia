@@ -77,11 +77,15 @@ void main() {
     expect(find.byType(AppListHeader), findsOneWidget);
     expect(find.byType(AppFilterTotalHeader), findsNothing);
 
-    // 筛选入口与移动端共用同一个按钮，摘要报当前排序字段。
+    // 筛选入口只报合集归属；排序是独立的第二个入口。
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('videos-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
-    expect(entry.label, isNotNull);
+    expect(entry.label, '全部');
+    expect(find.byKey(const Key('videos-sort-trigger')), findsOneWidget);
 
     // 总数走只读信息胶囊；「选择」在右侧操作槽。
     expect(find.byKey(const Key('videos-page-total')), findsOneWidget);
@@ -169,7 +173,7 @@ void main() {
     expect(find.byType(AppSelectionHeaderToolbar), findsNothing);
   });
 
-  testWidgets('桌面筛选浮层与移动抽屉同构，点选排序即时生效', (WidgetTester tester) async {
+  testWidgets('桌面筛选与排序入口分离，点选排序即时生效', (WidgetTester tester) async {
     enqueueInitialLoad();
 
     await _pumpVideoListPage(
@@ -182,11 +186,15 @@ void main() {
     await tester.tap(find.byKey(const Key('videos-filter-trigger')));
     await tester.pumpAndSettle();
 
-    // 面板内容与移动抽屉逐节一致（排序字段 + 升降序）。
+    // 筛选面板只保留合集归属，排序不在其中。
     expect(find.byKey(const Key('videos-filter-panel')), findsOneWidget);
-    expect(find.text('排序字段'), findsOneWidget);
-    expect(find.text('升降序'), findsOneWidget);
+    expect(find.text('合集'), findsOneWidget);
+    expect(find.text('排序字段'), findsNothing);
+    expect(find.text('升降序'), findsNothing);
     expect(find.text('确定'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('videos-filter-trigger')));
+    await tester.pumpAndSettle();
 
     adapter.enqueueJson(
       method: 'GET',
@@ -194,12 +202,17 @@ void main() {
       body: _videosJson(total: 1),
     );
 
-    await tester.tap(find.byKey(const Key('videos-filter-sort-title')));
+    await tester.tap(find.byKey(const Key('videos-sort-trigger')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('videos-sort-panel')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('videos-sort-field-title')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // 即时生效：点选当场触发带新排序的重新拉取。
-    final lastRequest = adapter.requests.last;
-    expect(lastRequest.path, '/videos');
+    final lastRequest = adapter.requests.lastWhere(
+      (request) => request.uri.path == '/videos',
+    );
     expect(lastRequest.uri.queryParameters['sort'], startsWith('title:'));
     expect(find.text('1 个'), findsOneWidget);
   });

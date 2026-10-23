@@ -85,6 +85,16 @@ void main() {
     );
     expect(find.byKey(const Key('activity-task-201')), findsOneWidget);
 
+    // 排序入口和筛选下拉在同一行、靠左，不能被 Wrap 的有界宽度拉满后居中。
+    final sortCenter = tester.getCenter(
+      find.byKey(const Key('activity-task-sort-trigger')),
+    );
+    final stateCenter = tester.getCenter(
+      find.byKey(const Key('activity-task-state-filter')),
+    );
+    expect(sortCenter.dy, closeTo(stateCenter.dy, 1));
+    expect(sortCenter.dx, greaterThan(stateCenter.dx));
+
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/system/jobs',

@@ -151,31 +151,51 @@ class _MobileActorDetailHeader extends StatelessWidget {
         ),
         SizedBox(width: context.appSpacing.md),
         Expanded(
-          child: SelectionArea(
-            child: Text(
-              actor.displayName,
-              key: const Key('mobile-actor-detail-name'),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s14,
-                weight: AppTextWeight.regular,
-                tone: AppTextTone.primary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SelectionArea(
+                child: Text(
+                  actor.displayName,
+                  key: const Key('mobile-actor-detail-name'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s14,
+                    weight: AppTextWeight.regular,
+                    tone: AppTextTone.primary,
+                  ),
+                ),
               ),
-            ),
+              if (actor.isLocal) ...[
+                SizedBox(height: context.appSpacing.xs),
+                Text(
+                  '本地女优不会同步新作品，订阅仅作为收藏。',
+                  key: const Key('mobile-actor-detail-local-subscription-hint'),
+                  style: resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s10,
+                    tone: AppTextTone.muted,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         SizedBox(width: context.appSpacing.md),
-        AppIconButton(
-          key: const Key('mobile-actor-detail-merge-button'),
-          icon: const Icon(Icons.call_merge_outlined),
-          size: AppIconButtonSize.mini,
-          tooltip: '合并女优',
-          semanticLabel: '合并女优',
-          onPressed: onMergeTap,
-        ),
-        SizedBox(width: context.appSpacing.sm),
+        if (!actor.isLocal) ...[
+          AppIconButton(
+            key: const Key('mobile-actor-detail-merge-button'),
+            icon: const Icon(Icons.call_merge_outlined),
+            size: AppIconButtonSize.mini,
+            tooltip: '合并女优',
+            semanticLabel: '合并女优',
+            onPressed: onMergeTap,
+          ),
+          SizedBox(width: context.appSpacing.sm),
+        ],
         AppIconButton(
           key: const Key('mobile-actor-detail-edit-button'),
           icon: const Icon(Icons.edit_outlined),

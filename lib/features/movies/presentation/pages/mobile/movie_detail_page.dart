@@ -7,6 +7,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
@@ -23,6 +24,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_deta
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subtitles_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/clip_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_launcher.dart';
@@ -174,7 +176,8 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             selectedPreviewUrl: detailState.selectedPreviewUrl,
             isSubscribed: isSubscribed,
             isSubscriptionUpdating: isSubscriptionUpdating,
-            isMoreActionsUpdating: activeMovieAction != null &&
+            isMoreActionsUpdating:
+                activeMovieAction != null &&
                 activeMovieAction != MovieDetailActionType.toggleFavorite,
             selectedMediaId: selectedMedia?.mediaId,
             similarMovies: detailState.similarMovies,
@@ -234,6 +237,11 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
             onRequestMediaPointMenu: showMediaPointActions,
             onActorTap: (actor) =>
                 MobileActorDetailRouteData(actorId: actor.id).push(context),
+            moviesApi: ref.read(moviesApiProvider),
+            actorsApi: ref.read(actorsApiProvider),
+            onActorsChanged: () => ref
+                .read(movieDetailProvider(widget.movieNumber).notifier)
+                .refresh(),
             onTagTap: (tag) => context.pushMobileTags(tagId: tag.tagId),
             onSeriesTap: movie.seriesId == null
                 ? null
@@ -390,6 +398,8 @@ class _MobileMovieDetailPageState extends ConsumerState<MobileMovieDetailPage>
     return showMobileMovieDetailInspectorBottomSheet(
       context: context,
       movieNumber: movie.movieNumber,
+      movieTitle: movie.title,
+      movieCoverUrl: movie.preferredCoverUrl,
       selectedMedia: selectedMedia,
       pane: pane,
       onSearchSimilar: (thumbnail, imageUrl, fileName) {

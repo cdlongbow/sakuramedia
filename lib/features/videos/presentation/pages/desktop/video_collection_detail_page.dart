@@ -26,7 +26,7 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
       keyPrefix: 'video-collection',
       useMobileSelectionLayout: false,
       hoistTitleToSubpageShell: false,
-      useMobileFilterDrawer: false,
+      useMobileSortDrawer: false,
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppButton(
           key: const Key('video-collection-play-all-button'),
@@ -93,4 +93,3 @@ class DesktopVideoCollectionDetailPage extends StatelessWidget {
     );
   }
 }
-

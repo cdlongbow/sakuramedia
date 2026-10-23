@@ -41,4 +41,14 @@ void main() {
 
     expect(detail.rankings, isEmpty);
   });
+
+  test('movie detail parses manual actor list ownership', () {
+    final managed = MovieDetailDto.fromJson(<String, dynamic>{
+      'is_actors_manually_managed': true,
+    });
+    final automatic = MovieDetailDto.fromJson(<String, dynamic>{});
+
+    expect(managed.isActorsManuallyManaged, isTrue);
+    expect(automatic.isActorsManuallyManaged, isFalse);
+  });
 }

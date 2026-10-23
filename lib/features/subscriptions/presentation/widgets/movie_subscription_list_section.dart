@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/shared/presentation/batch_operation_submit.
 import 'package:sakuramedia/features/shared/presentation/widgets/paged_load_more_footer_sliver.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_files_dialog.dart';
+import 'package:sakuramedia/widgets/domain/subscriptions/movie_subscription_sort_menu_button.dart';
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -120,33 +121,33 @@ class MovieSubscriptionListSection extends HookConsumerWidget {
           canLoadMore: () =>
               ref.read(managerProvider).value?.paged.canAutoLoadMore ?? false,
           onLoadMore: () => ref.read(managerProvider.notifier).loadMore(),
-        child: CustomScrollView(
-          key: PageStorageKey(managerProvider),
-          controller: effectiveScrollController,
-          slivers: [
-            SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
-            const SliverToBoxAdapter(child: _queryExplanationTip),
-            SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
-            _ListBodySliver(
-              onOpenMovie: onOpenMovie,
-              onOpenDownloads: onOpenDownloads,
-              mobile: mobile,
-            ),
-            // loadMore 的 loading / 失败提示独立订阅：翻页状态翻转只重建这个
-            // footer，不重建上面的列表本体。
-            PagedLoadMoreFooterSliver(
-              watchFooter: (ref) => ref.watch(
-                managerProvider.select(
-                  (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
-                ),
+          child: CustomScrollView(
+            key: PageStorageKey(managerProvider),
+            controller: effectiveScrollController,
+            slivers: [
+              SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
+              const SliverToBoxAdapter(child: _queryExplanationTip),
+              SliverToBoxAdapter(child: SizedBox(height: spacing.md)),
+              _ListBodySliver(
+                onOpenMovie: onOpenMovie,
+                onOpenDownloads: onOpenDownloads,
+                mobile: mobile,
               ),
-              onLoadMore: (ref) =>
-                  unawaited(ref.read(managerProvider.notifier).loadMore()),
-            ),
-            ...bottomSafeAreaSliver(context),
-          ],
+              // loadMore 的 loading / 失败提示独立订阅：翻页状态翻转只重建这个
+              // footer，不重建上面的列表本体。
+              PagedLoadMoreFooterSliver(
+                watchFooter: (ref) => ref.watch(
+                  managerProvider.select(
+                    (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                  ),
+                ),
+                onLoadMore: (ref) =>
+                    unawaited(ref.read(managerProvider.notifier).loadMore()),
+              ),
+              ...bottomSafeAreaSliver(context),
+            ],
+          ),
         ),
-      ),
       ),
     );
     if (!mobile) return resultView;
@@ -249,6 +250,17 @@ class _ListHeader extends ConsumerWidget {
         ),
       ],
       actionSlots: <Widget>[
+        MovieSubscriptionSortMenuButton(
+          triggerKey: const Key('movie-subscriptions-sort-trigger'),
+          panelKey: const Key('movie-subscriptions-sort-panel'),
+          drawerKey: const Key('mobile-movie-subscriptions-sort-drawer'),
+          keyPrefix: mobile
+              ? 'mobile-movie-subscriptions'
+              : 'movie-subscriptions',
+          filterState: filter,
+          onChanged: applyFilter,
+          useDrawer: mobile,
+        ),
         AppSelectionEntryButton(
           onPressed: hasItems
               ? () => ref.read(managerProvider.notifier).enterSelectionMode()
@@ -276,7 +288,7 @@ Future<void> _openMobileFilterDrawer(
   return showAppBottomDrawer<void>(
     context: context,
     drawerKey: const Key('movie-subscriptions-filter-drawer'),
-    // 内容自适应高度（最多 60% 屏高），避免「搜索 + 排序」的短面板拖一大片空白。
+    // 内容自适应高度（最多 60% 屏高），避免「搜索」的短面板拖一大片空白。
     maxHeightFactor: 0.6,
     builder: (_) => _MobileFilterDrawerContent(
       initial: filter,

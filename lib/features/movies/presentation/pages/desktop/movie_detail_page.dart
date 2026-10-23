@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/app/page_cache_keys.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/features/actors/presentation/providers/actors_api_provider.dart';
 import 'package:sakuramedia/features/cast/data/cast_director.dart';
 import 'package:sakuramedia/features/external_player/data/external_player_channel.dart';
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
@@ -24,6 +25,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_deta
 import 'package:sakuramedia/features/movies/presentation/providers/movie_clips_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_subtitles_provider.dart';
+import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_plot_image_actions.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/movie_playlist_picker_dialog.dart';
@@ -163,7 +165,8 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
       selectedPreviewUrl: detailState.selectedPreviewUrl,
       isSubscribed: isSubscribed,
       isSubscriptionUpdating: isSubscriptionUpdating,
-      isMoreActionsUpdating: activeMovieAction != null &&
+      isMoreActionsUpdating:
+          activeMovieAction != null &&
           activeMovieAction != MovieDetailActionType.toggleFavorite,
       selectedMediaId: selectedMedia?.mediaId,
       similarMovies: detailState.similarMovies,
@@ -222,6 +225,10 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
         actorId: actor.id,
         fallbackPath: buildDesktopMovieDetailRoutePath(widget.movieNumber),
       ),
+      moviesApi: ref.read(moviesApiProvider),
+      actorsApi: ref.read(actorsApiProvider),
+      onActorsChanged: () =>
+          ref.read(movieDetailProvider(widget.movieNumber).notifier).refresh(),
       onSeriesTap: movie.seriesId == null
           ? null
           : () => context.pushDesktopMovieSeries(
@@ -346,6 +353,8 @@ class _DesktopMovieDetailPageState extends ConsumerState<DesktopMovieDetailPage>
     return showMovieDetailInspectorDialog(
       context: context,
       movieNumber: movie.movieNumber,
+      movieTitle: movie.title,
+      movieCoverUrl: movie.preferredCoverUrl,
       selectedMedia: selectedMedia,
       pane: pane,
     );

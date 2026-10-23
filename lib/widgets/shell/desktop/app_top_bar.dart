@@ -10,7 +10,6 @@ import 'package:sakuramedia/features/status/presentation/providers/server_capabi
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_glass_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
@@ -163,8 +162,9 @@ class AppTopBar extends ConsumerWidget {
     );
   }
 
-  /// 沉浸页顶栏：只留一颗圆形玻璃返回键，页面标题由内容区自己承载。
-  /// 搜索/刷新在沉浸页通常隐藏；若调用方仍开启，则按普通图标放在右侧。
+  /// 沉浸页顶栏：只留一颗普通返回键（与其它顶栏同一套按钮），页面标题由
+  /// 内容区自己承载。搜索/刷新在沉浸页通常隐藏；若调用方仍开启，则按普通
+  /// 图标放在右侧。
   Widget _buildOverlayHeader(
     BuildContext context, {
     required bool isSidebarCollapsed,
@@ -178,13 +178,20 @@ class AppTopBar extends ConsumerWidget {
       children: [
         SizedBox(width: isSidebarCollapsed ? collapsedLeading : leftInset),
         if (config.isBackEnabled)
-          AppGlassIconButton(
-            key: const Key('topbar-back-button'),
-            tooltip: '返回',
-            semanticLabel: '返回',
-            onPressed: () => _handleBack(context),
-            icon: Icons.arrow_back_ios_new_rounded,
-            iconSize: context.appComponentTokens.iconSizeXs,
+          SizedBox(
+            width: 40.0,
+            child: AppIconButton(
+              key: const Key('topbar-back-button'),
+              tooltip: '返回',
+              semanticLabel: '返回',
+              onPressed: () => _handleBack(context),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: context.appComponentTokens.iconSizeXs,
+                color: context.appTextPalette.onMedia,
+              ),
+            ),
           ),
         Expanded(child: AppWindowDragArea(child: const SizedBox.expand())),
         if (!hideActions) ...[

@@ -85,7 +85,7 @@ void main() {
     expect(find.byKey(const Key('mobile-rated-movies-page')), findsOneWidget);
     expect(find.byKey(const Key('movie-summary-card-ABC-001')), findsOneWidget);
     expect(find.text('总分 4.0'), findsOneWidget);
-    expect(find.text('总分 · 降序'), findsOneWidget);
+    expect(find.byKey(const Key('rated-movies-sort-trigger')), findsOneWidget);
     expect(
       bundle.adapter.requests
           .lastWhere((request) => request.uri.path == '/movies')
@@ -95,10 +95,10 @@ void main() {
     );
 
     bundle.adapter.enqueueJson(method: 'GET', path: '/movies', body: pageBody);
-    await tester.tap(find.byKey(const Key('rated-movies-filter-trigger')));
+    await tester.tap(find.byKey(const Key('rated-movies-sort-trigger')));
     await tester.pumpAndSettle();
     expect(
-      find.byKey(const Key('mobile-rated-movies-filter-drawer')),
+      find.byKey(const Key('mobile-rated-movies-sort-drawer')),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const Key('rated-movies-sort-dimension-1')));

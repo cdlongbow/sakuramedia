@@ -127,6 +127,16 @@ void main() {
     expect(container.read(tagSelectionProvider(scope)).selectedTagIds, <int>[
       1,
     ]);
+
+    notifier.replaceSelection(<int>[2], matchMode: TagMatchMode.or);
+    expect(container.read(tagSelectionProvider(scope)).selectedTagIds, <int>[
+      2,
+    ]);
+    expect(
+      container.read(tagSelectionProvider(scope)).matchMode,
+      TagMatchMode.or,
+    );
+
     notifier.clear();
     expect(container.read(tagSelectionProvider(scope)).hasSelection, isFalse);
   });

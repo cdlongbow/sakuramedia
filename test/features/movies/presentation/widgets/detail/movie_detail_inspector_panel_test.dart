@@ -10,6 +10,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/data/downloads_api.dart';
@@ -119,67 +121,86 @@ class _FakeDownloadsApi extends DownloadsApi {
   );
 }
 
+class _FakeDownloadClientsApi extends DownloadClientsApi {
+  _FakeDownloadClientsApi({required ApiClient apiClient})
+    : super(apiClient: apiClient);
+
+  @override
+  Future<List<DownloadClientDto>> getClients() async {
+    return const <DownloadClientDto>[
+      DownloadClientDto(
+        id: 1,
+        name: 'qb-main',
+        libraryId: 1,
+        createdAt: null,
+        updatedAt: null,
+      ),
+    ];
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('inspector releases the provider of its own function on unmount', (
-    WidgetTester tester,
-  ) async {
-    // 每个弹窗只收编自己那一个 provider 的 KeepAliveLink；逐个功能验一遍，
-    // 防止某条分支漏 close。
-    Future<void> expectReleased({
-      required MovieDetailInspectorPane pane,
-      required bool Function(ProviderContainer container) exists,
-    }) async {
-      final container = await _pumpInspectorPanel(
-        tester,
-        panelHeight: 480,
-        pane: pane,
-        fetchMovieReviews:
-            ({
-              required String movieNumber,
-              required int page,
-              required int pageSize,
-              required MovieReviewSort sort,
-            }) async => const <MovieReviewDto>[],
+  testWidgets(
+    'inspector releases the provider of its own function on unmount',
+    (WidgetTester tester) async {
+      // 每个弹窗只收编自己那一个 provider 的 KeepAliveLink；逐个功能验一遍，
+      // 防止某条分支漏 close。
+      Future<void> expectReleased({
+        required MovieDetailInspectorPane pane,
+        required bool Function(ProviderContainer container) exists,
+      }) async {
+        final container = await _pumpInspectorPanel(
+          tester,
+          panelHeight: 480,
+          pane: pane,
+          fetchMovieReviews:
+              ({
+                required String movieNumber,
+                required int page,
+                required int pageSize,
+                required MovieReviewSort sort,
+              }) async => const <MovieReviewDto>[],
+        );
+        await tester.pump();
+
+        expect(exists(container), isTrue);
+
+        // 只换掉面板、保留同一个 scope：ProviderScope 卸载时会 cancel 掉 riverpod
+        // 的 vsync timer，整棵树拆掉的话待释放队列永远不会结算。
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const MaterialApp(home: SizedBox.shrink()),
+          ),
+        );
+        // autoDispose 的实际释放挂在 `Timer(Duration.zero)`，要推进时钟才结算。
+        await tester.pump(const Duration(milliseconds: 16));
+
+        // 回归守卫：link 必须由面板在 dispose 里 close。provider 自持 link 而无人
+        // close 会形成「link 不关 → 永不 dispose → onDispose 里的 close 永不执行」
+        // 的死锁式泄漏，打开过弹窗的影片会常驻到登出。
+        expect(exists(container), isFalse);
+      }
+
+      await expectReleased(
+        pane: MovieDetailInspectorPane.review,
+        exists: (container) =>
+            container.exists(movieDetailReviewProvider('ABC-001')),
       );
-      await tester.pump();
-
-      expect(exists(container), isTrue);
-
-      // 只换掉面板、保留同一个 scope：ProviderScope 卸载时会 cancel 掉 riverpod
-      // 的 vsync timer，整棵树拆掉的话待释放队列永远不会结算。
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const MaterialApp(home: SizedBox.shrink()),
-        ),
+      await expectReleased(
+        pane: MovieDetailInspectorPane.magnetSearch,
+        exists: (container) =>
+            container.exists(movieDetailMagnetProvider('ABC-001')),
       );
-      // autoDispose 的实际释放挂在 `Timer(Duration.zero)`，要推进时钟才结算。
-      await tester.pump(const Duration(milliseconds: 16));
-
-      // 回归守卫：link 必须由面板在 dispose 里 close。provider 自持 link 而无人
-      // close 会形成「link 不关 → 永不 dispose → onDispose 里的 close 永不执行」
-      // 的死锁式泄漏，打开过弹窗的影片会常驻到登出。
-      expect(exists(container), isFalse);
-    }
-
-    await expectReleased(
-      pane: MovieDetailInspectorPane.review,
-      exists: (container) =>
-          container.exists(movieDetailReviewProvider('ABC-001')),
-    );
-    await expectReleased(
-      pane: MovieDetailInspectorPane.magnetSearch,
-      exists: (container) =>
-          container.exists(movieDetailMagnetProvider('ABC-001')),
-    );
-    await expectReleased(
-      pane: MovieDetailInspectorPane.thumbnail,
-      exists: (container) =>
-          container.exists(movieDetailThumbnailProvider(mediaId: null)),
-    );
-  });
+      await expectReleased(
+        pane: MovieDetailInspectorPane.thumbnail,
+        exists: (container) =>
+            container.exists(movieDetailThumbnailProvider(mediaId: null)),
+      );
+    },
+  );
 
   testWidgets(
     'movie detail inspector review loading skeleton keeps at least three items',
@@ -452,6 +473,37 @@ void main() {
     expect(clipboardArguments, <String, dynamic>{'text': 'hot-review-1'});
   });
 
+  testWidgets('review selection exposes a movie number search action', (
+    WidgetTester tester,
+  ) async {
+    String? searchedText;
+
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 480,
+      platform: TargetPlatform.android,
+      onSearchSelection: (value) => searchedText = value,
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => <MovieReviewDto>[_buildReview(prefix: 'hot')],
+    );
+    await tester.pumpAndSettle();
+
+    final contentFinder = find.byKey(const Key('movie-detail-review-content'));
+    await tester.longPress(contentFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('全选'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('搜索番号'));
+    await tester.pumpAndSettle();
+
+    expect(searchedText, 'hot-review-1');
+  });
+
   testWidgets(
     'review content stays mouse-drag selectable while app-wide mouse drag scroll is on',
     (WidgetTester tester) async {
@@ -516,6 +568,59 @@ void main() {
       }
     },
   );
+
+  testWidgets('review magnet opens a prefilled compact download dialog', (
+    WidgetTester tester,
+  ) async {
+    const hash = '0123456789abcdef0123456789abcdef01234567';
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 560,
+      movieTitle: 'Review Movie',
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async => <MovieReviewDto>[
+            MovieReviewDto(
+              id: 7,
+              score: 5,
+              content: '资源在这里 magnet:?xt=urn:btih:$hash&dn=movie.mp4 自取',
+              createdAt: DateTime.parse('2026-03-10T08:00:00Z'),
+              username: 'magnet-user',
+              likeCount: 1,
+              watchCount: 2,
+            ),
+          ],
+    );
+    await tester.pumpAndSettle();
+
+    final addButton = find.byKey(
+      const Key('movie-detail-review-add-magnet-7-0'),
+    );
+    expect(addButton, findsOneWidget);
+    expect(find.text('添加磁力下载'), findsOneWidget);
+
+    await tester.tap(addButton);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+    expect(find.text('magnet:?xt=urn:btih:$hash&dn=movie.mp4'), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+    expect(find.text('当前影片'), findsOneWidget);
+    expect(find.text('Review Movie'), findsOneWidget);
+    expect(find.byKey(const Key('manual-download-kind-jav')), findsNothing);
+    expect(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'movie detail magnet dialog shows sort controls and updates direction semantics',
@@ -716,57 +821,56 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
   });
 
-  testWidgets(
-    'movie detail thumbnail dialog toggles clip selection mode',
-    (WidgetTester tester) async {
-      await _pumpInspectorPanel(
-        tester,
-        panelHeight: 520,
-        pane: MovieDetailInspectorPane.thumbnail,
-        fetchMovieReviews:
-            ({
-              required String movieNumber,
-              required int page,
-              required int pageSize,
-              required MovieReviewSort sort,
-            }) async {
-              return const <MovieReviewDto>[];
-            },
-      );
-      await tester.pumpAndSettle();
+  testWidgets('movie detail thumbnail dialog toggles clip selection mode', (
+    WidgetTester tester,
+  ) async {
+    await _pumpInspectorPanel(
+      tester,
+      panelHeight: 520,
+      pane: MovieDetailInspectorPane.thumbnail,
+      fetchMovieReviews:
+          ({
+            required String movieNumber,
+            required int page,
+            required int pageSize,
+            required MovieReviewSort sort,
+          }) async {
+            return const <MovieReviewDto>[];
+          },
+    );
+    await tester.pumpAndSettle();
 
-      final toggleFinder = find.byKey(
-        const Key('movie-detail-thumbnail-clip-toggle'),
-      );
-      expect(toggleFinder, findsOneWidget);
-      expect(
-        find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
-        findsNothing,
-      );
+    final toggleFinder = find.byKey(
+      const Key('movie-detail-thumbnail-clip-toggle'),
+    );
+    expect(toggleFinder, findsOneWidget);
+    expect(
+      find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
+      findsNothing,
+    );
 
-      await tester.tap(toggleFinder);
-      await tester.pumpAndSettle();
+    await tester.tap(toggleFinder);
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
-        findsOneWidget,
-      );
-      expect(find.text('点击缩略图设为起点'), findsOneWidget);
-      // 未选起止点时「创建」按钮禁用。
-      final createButton = tester.widget<AppButton>(
-        find.byKey(const Key('movie-detail-thumbnail-clip-create')),
-      );
-      expect(createButton.onPressed, isNull);
+    expect(
+      find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
+      findsOneWidget,
+    );
+    expect(find.text('点击缩略图设为起点'), findsOneWidget);
+    // 未选起止点时「创建」按钮禁用。
+    final createButton = tester.widget<AppButton>(
+      find.byKey(const Key('movie-detail-thumbnail-clip-create')),
+    );
+    expect(createButton.onPressed, isNull);
 
-      await tester.tap(toggleFinder);
-      await tester.pumpAndSettle();
+    await tester.tap(toggleFinder);
+    await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
-        findsNothing,
-      );
-    },
-  );
+    expect(
+      find.byKey(const Key('movie-detail-thumbnail-clip-selection-status')),
+      findsNothing,
+    );
+  });
 
   test('thumbnail action descriptors disable unavailable optional actions', () {
     const thumbnail = MovieMediaThumbnailDto(
@@ -820,13 +924,15 @@ void main() {
   });
 }
 
-
 Future<ProviderContainer> _pumpInspectorPanel(
   WidgetTester tester, {
   required double panelHeight,
   MovieDetailInspectorPane pane = MovieDetailInspectorPane.review,
   TargetPlatform? platform,
   bool useAppScrollConfiguration = false,
+  String? movieTitle,
+  String? movieCoverUrl,
+  ValueChanged<String>? onSearchSelection,
   required _FetchMovieReviews fetchMovieReviews,
   _SearchCandidates? searchCandidates,
   _CreateDownloadRequest? createDownloadRequest,
@@ -863,6 +969,9 @@ Future<ProviderContainer> _pumpInspectorPanel(
       sessionStoreProvider.overrideWithValue(sessionStore),
       moviesApiProvider.overrideWithValue(fakeMoviesApi),
       downloadsApiProvider.overrideWithValue(fakeDownloadsApi),
+      downloadClientsApiProvider.overrideWithValue(
+        _FakeDownloadClientsApi(apiClient: apiClient),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -885,11 +994,17 @@ Future<ProviderContainer> _pumpInspectorPanel(
                   child: _inspectorPanelScaffold(
                     panelHeight: panelHeight,
                     pane: pane,
+                    movieTitle: movieTitle,
+                    movieCoverUrl: movieCoverUrl,
+                    onSearchSelection: onSearchSelection,
                   ),
                 )
               : _inspectorPanelScaffold(
                   panelHeight: panelHeight,
                   pane: pane,
+                  movieTitle: movieTitle,
+                  movieCoverUrl: movieCoverUrl,
+                  onSearchSelection: onSearchSelection,
                 ),
         ),
       ),
@@ -902,6 +1017,9 @@ Future<ProviderContainer> _pumpInspectorPanel(
 Widget _inspectorPanelScaffold({
   required double panelHeight,
   MovieDetailInspectorPane pane = MovieDetailInspectorPane.review,
+  String? movieTitle,
+  String? movieCoverUrl,
+  ValueChanged<String>? onSearchSelection,
 }) {
   return Scaffold(
     body: Center(
@@ -910,8 +1028,11 @@ Widget _inspectorPanelScaffold({
         height: panelHeight,
         child: MovieDetailInspectorPanel(
           movieNumber: 'ABC-001',
+          movieTitle: movieTitle,
+          movieCoverUrl: movieCoverUrl,
           selectedMedia: null,
           pane: pane,
+          onSearchSelection: onSearchSelection,
         ),
       ),
     ),

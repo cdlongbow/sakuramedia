@@ -9,6 +9,7 @@ class AppContentCard extends StatelessWidget {
     this.padding,
     this.titleStyle,
     this.headerBottomSpacing,
+    this.headerLeading,
     this.headerTrailing,
   });
 
@@ -17,11 +18,29 @@ class AppContentCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final TextStyle? titleStyle;
   final double? headerBottomSpacing;
+
+  /// 标题前的图标/状态块；只在有 [title] 时渲染。
+  final Widget? headerLeading;
   final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
     final title = this.title;
+    final titleText = title == null
+        ? null
+        : Text(
+            title,
+            style:
+                titleStyle ??
+                resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s14,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.primary,
+                ),
+          );
+    final hasHeaderLeading = headerLeading != null;
+    final hasHeaderTrailing = headerTrailing != null;
     return Container(
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(context.appSpacing.lg),
@@ -33,37 +52,21 @@ class AppContentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
-            if (headerTrailing == null)
-              Text(
-                title,
-                style:
-                    titleStyle ??
-                    resolveAppTextStyle(
-                      context,
-                      size: AppTextSize.s14,
-                      weight: AppTextWeight.semibold,
-                      tone: AppTextTone.primary,
-                    ),
-              )
+          if (titleText != null) ...[
+            if (!hasHeaderLeading && !hasHeaderTrailing)
+              titleText
             else
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style:
-                          titleStyle ??
-                          resolveAppTextStyle(
-                            context,
-                            size: AppTextSize.s14,
-                            weight: AppTextWeight.semibold,
-                            tone: AppTextTone.primary,
-                          ),
-                    ),
-                  ),
-                  SizedBox(width: context.appSpacing.md),
-                  headerTrailing!,
+                  if (hasHeaderLeading) ...[
+                    headerLeading!,
+                    SizedBox(width: context.appSpacing.md),
+                  ],
+                  Expanded(child: titleText),
+                  if (hasHeaderTrailing) ...[
+                    SizedBox(width: context.appSpacing.md),
+                    headerTrailing!,
+                  ],
                 ],
               ),
             SizedBox(height: headerBottomSpacing ?? context.appSpacing.lg),

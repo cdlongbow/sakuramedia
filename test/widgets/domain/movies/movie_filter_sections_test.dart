@@ -56,7 +56,7 @@ void main() {
                 yearOptions: yearOptions,
               ),
               filterPanelFooter: AppFilterPanelFooter(
-                isDefault: filterState.isDefault,
+                isDefault: !filterState.hasActiveFilters,
                 onReset: onReset,
               ),
             ),
@@ -231,7 +231,7 @@ void main() {
     await tester.tap(find.byKey(const Key('movie-filter-year-all')));
     await tester.pumpAndSettle();
     expect(changedState?.years, isEmpty);
-    expect(filterState.isDefault, isTrue);
+    expect(filterState.hasActiveFilters, isFalse);
     expect(tester.takeException(), isNull);
   });
 
@@ -400,14 +400,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(changedState?.numberSource, MovieNumberSourceFilter.fc2);
-    expect(filterState.isDefault, isFalse);
+    expect(filterState.hasActiveFilters, isTrue);
     expect(find.text('重置'), findsOneWidget);
 
     await tester.tap(find.text('重置'));
     await tester.pumpAndSettle();
 
     expect(filterState.numberSource, MovieNumberSourceFilter.all);
-    expect(filterState.isDefault, isTrue);
+    expect(filterState.hasActiveFilters, isFalse);
     expect(tester.takeException(), isNull);
   });
 }

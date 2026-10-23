@@ -39,6 +39,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/tags/tag_filter_section.dart';
 
@@ -212,7 +213,7 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
   }
 
   void _resetFilters() {
-    _applyFilter(MovieFilterState.initial);
+    _applyFilter(_filterState.resetFilters());
     if (ref.read(tagSelectionProvider(_tagSelectionScope)).hasSelection) {
       ref.read(tagSelectionProvider(_tagSelectionScope).notifier).clear();
     }
@@ -430,13 +431,20 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
               onYearOptionsRetry: () => unawaited(_loadMovieYears(force: true)),
             ),
       filterPanelFooter: AppFilterPanelFooter(
-        isDefault: _filterState.isDefault && !tagSelection.hasSelection,
+        isDefault: !_filterState.hasActiveFilters && !tagSelection.hasSelection,
         onReset: _resetFilters,
       ),
       informationSlots: [
         if (paged != null) AppListHeaderInfo(label: '作品 · ${paged.total} 部'),
       ],
       actionSlots: [
+        MovieSortMenuButton(
+          triggerKey: const Key('actor-detail-sort-trigger'),
+          drawerKey: const Key('mobile-actor-detail-sort-drawer'),
+          filterState: _filterState,
+          onChanged: _applyFilter,
+          useDrawer: widget.useMobileFilterDrawer,
+        ),
         // 移动端多选入口挂在卡片长按菜单里，顶栏不常驻「选择」。
         if (!widget.useMobileSelectionLayout) buildEnterSelectionButton(),
       ],
@@ -576,112 +584,112 @@ class _ActorDetailContentState extends ConsumerState<ActorDetailContent>
                     false,
                 onLoadMore: () =>
                     ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
-              child: widget.bodyBuilder(
-                context,
-                _scrollController,
-                SliverMainAxisGroup(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: KeyedSubtree(
-                        key: widget.contentKey,
-                        child: widget.headerBuilder(
-                          context,
-                          actor,
-                          isActorSubscribed,
-                          _isActorSubscriptionUpdating,
-                          _isActorSubscriptionUpdating
-                              ? null
-                              : () => _toggleActorSubscription(
-                                  isSubscribed: isActorSubscribed,
-                                ),
-                          () => unawaited(_openActorEditor(actor)),
-                          () => unawaited(_openActorMerger(actor)),
+                child: widget.bodyBuilder(
+                  context,
+                  _scrollController,
+                  SliverMainAxisGroup(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: KeyedSubtree(
+                          key: widget.contentKey,
+                          child: widget.headerBuilder(
+                            context,
+                            actor,
+                            isActorSubscribed,
+                            _isActorSubscriptionUpdating,
+                            _isActorSubscriptionUpdating
+                                ? null
+                                : () => _toggleActorSubscription(
+                                    isSubscribed: isActorSubscribed,
+                                  ),
+                            () => unawaited(_openActorEditor(actor)),
+                            () => unawaited(_openActorMerger(actor)),
+                          ),
                         ),
                       ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(height: widget.sectionSpacing),
-                    ),
-                    AppPinnedListHeader(
-                      key: _listHeaderKey,
-                      color: widget.surfaceColor,
-                      child: selectionMode
-                          ? (widget.useMobileSelectionLayout
-                                ? buildMobileBatchSelectionHeader()
-                                : buildBatchSelectionToolbar())
-                          : _buildFilterHeader(context, movies?.paged),
-                    ),
-                    SliverToBoxAdapter(
-                      child: SizedBox(height: widget.sectionSpacing),
-                    ),
-                    if (!(movies?.paged.filterUpdate.hasFailed ?? false) ||
-                        (movies?.paged.items.isNotEmpty ?? false))
-                      AppSkeletonizer.sliver(
-                        enabled: moviesAsync.isLoading && movies == null,
-                        child: MovieSummarySliver(
-                          items: moviesAsync.isLoading && movies == null
-                              ? movieListItemPlaceholders(count: 24)
-                              : movies?.paged.items ?? const [],
-                          errorMessage: moviesAsync.hasError && movies == null
-                              ? _scope.initialLoadErrorText
-                              : null,
-                          onMovieTap: (movie) =>
-                              widget.onMovieTap(context, movie.movieNumber),
-                          onMovieMenuRequest: (movie, globalPosition) {
-                            unawaited(
-                              showMovieCollectionFeatureActionMenu(
-                                context: context,
-                                movieNumber: movie.movieNumber,
-                                globalPosition: globalPosition,
-                                isSubscribed: movie.isSubscribed,
-                                onBlacklisted: () => ref
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: widget.sectionSpacing),
+                      ),
+                      AppPinnedListHeader(
+                        key: _listHeaderKey,
+                        color: widget.surfaceColor,
+                        child: selectionMode
+                            ? (widget.useMobileSelectionLayout
+                                  ? buildMobileBatchSelectionHeader()
+                                  : buildBatchSelectionToolbar())
+                            : _buildFilterHeader(context, movies?.paged),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: widget.sectionSpacing),
+                      ),
+                      if (!(movies?.paged.filterUpdate.hasFailed ?? false) ||
+                          (movies?.paged.items.isNotEmpty ?? false))
+                        AppSkeletonizer.sliver(
+                          enabled: moviesAsync.isLoading && movies == null,
+                          child: MovieSummarySliver(
+                            items: moviesAsync.isLoading && movies == null
+                                ? movieListItemPlaceholders(count: 24)
+                                : movies?.paged.items ?? const [],
+                            errorMessage: moviesAsync.hasError && movies == null
+                                ? _scope.initialLoadErrorText
+                                : null,
+                            onMovieTap: (movie) =>
+                                widget.onMovieTap(context, movie.movieNumber),
+                            onMovieMenuRequest: (movie, globalPosition) {
+                              unawaited(
+                                showMovieCollectionFeatureActionMenu(
+                                  context: context,
+                                  movieNumber: movie.movieNumber,
+                                  globalPosition: globalPosition,
+                                  isSubscribed: movie.isSubscribed,
+                                  onBlacklisted: () => ref
                                       .read(
                                         movieSummaryProvider(_scope).notifier,
                                       )
                                       .removeMovies(<String>[
                                         movie.movieNumber,
                                       ]),
-                                onEnterSelection:
-                                    widget.useMobileSelectionLayout
-                                    ? () {
-                                        enterSelection();
-                                        toggleSelect(movie.movieNumber);
-                                      }
-                                    : null,
-                              ),
-                            );
-                          },
-                          onMovieSubscriptionTap: (movie) =>
-                              _toggleMovieSubscription(movie.movieNumber),
-                          onMovieToggleCollectionType:
-                              _hoverFeatureActions.toggleCollectionType,
-                          onMovieBlacklist: _hoverFeatureActions.blacklist,
-                          isMovieSubscriptionUpdating: (movie) =>
-                              movies?.isSubscriptionUpdating(
-                                movie.movieNumber,
-                              ) ??
-                              false,
-                          emptyMessage: '暂无影片数据',
-                          selectionMode: selectionMode,
-                          isMovieSelected: (movie) =>
-                              isSelected(movie.movieNumber),
-                          onMovieSelectedChanged: (movie, _) =>
-                              toggleSelect(movie.movieNumber),
+                                  onEnterSelection:
+                                      widget.useMobileSelectionLayout
+                                      ? () {
+                                          enterSelection();
+                                          toggleSelect(movie.movieNumber);
+                                        }
+                                      : null,
+                                ),
+                              );
+                            },
+                            onMovieSubscriptionTap: (movie) =>
+                                _toggleMovieSubscription(movie.movieNumber),
+                            onMovieToggleCollectionType:
+                                _hoverFeatureActions.toggleCollectionType,
+                            onMovieBlacklist: _hoverFeatureActions.blacklist,
+                            isMovieSubscriptionUpdating: (movie) =>
+                                movies?.isSubscriptionUpdating(
+                                  movie.movieNumber,
+                                ) ??
+                                false,
+                            emptyMessage: '暂无影片数据',
+                            selectionMode: selectionMode,
+                            isMovieSelected: (movie) =>
+                                isSelected(movie.movieNumber),
+                            onMovieSelectedChanged: (movie, _) =>
+                                toggleSelect(movie.movieNumber),
+                          ),
                         ),
-                      ),
-                    if (footer != null)
-                      SliverToBoxAdapter(
-                        child: Padding(
+                      if (footer != null)
+                        SliverToBoxAdapter(
+                          child: Padding(
                             padding: EdgeInsets.only(
                               top: context.appSpacing.md,
                             ),
-                          child: footer,
+                            child: footer,
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
+                  widget.enableRefresh ? _handleRefresh : null,
                 ),
-                widget.enableRefresh ? _handleRefresh : null,
-              ),
               ),
             );
           },

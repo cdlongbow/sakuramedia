@@ -59,9 +59,13 @@ void main() {
 
     // 筛选入口与移动端共用同一个按钮，摘要只报订阅状态这一主维度。
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('actors-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(entry.label, '已订阅');
+    expect(find.byKey(const Key('actors-sort-trigger')), findsOneWidget);
 
     // 总数走只读信息胶囊，不再是顶栏右侧裸文本。
     expect(
@@ -118,7 +122,10 @@ void main() {
       findsNothing,
     );
     final pendingEntry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('actors-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(pendingEntry.label, '未订阅');
 
@@ -136,7 +143,10 @@ void main() {
     expect(find.text('1 位'), findsOneWidget);
 
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('actors-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(entry.label, '未订阅');
   });

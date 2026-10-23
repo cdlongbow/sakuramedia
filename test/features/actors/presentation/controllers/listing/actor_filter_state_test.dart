@@ -1,10 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 void main() {
   group('ActorSortField', () {
     test('可播放影片数映射后端排序字段', () {
-      expect(ActorSortField.playableMovieCount.apiValue, 'playable_movie_count');
+      expect(
+        ActorSortField.playableMovieCount.apiValue,
+        'playable_movie_count',
+      );
       expect(ActorSortField.playableMovieCount.label, '可播放影片数');
     });
   });
@@ -14,14 +18,14 @@ void main() {
       const state = ActorFilterState.initial;
       expect(state.query, isNull);
       expect(state.hasPlayableMovies, isFalse);
-      expect(state.isDefault, isTrue);
+      expect(state.hasActiveFilters, isFalse);
     });
 
-    test('关键词与可播放筛选影响 isDefault', () {
-      expect(const ActorFilterState(query: '三上').isDefault, isFalse);
+    test('关键词与可播放筛选影响 hasActiveFilters', () {
+      expect(const ActorFilterState(query: '三上').hasActiveFilters, isTrue);
       expect(
-        const ActorFilterState(hasPlayableMovies: true).isDefault,
-        isFalse,
+        const ActorFilterState(hasPlayableMovies: true).hasActiveFilters,
+        isTrue,
       );
     });
 
@@ -79,7 +83,43 @@ void main() {
       expect(base == const ActorFilterState(query: '三上'), isFalse);
       expect(base == const ActorFilterState(hasPlayableMovies: true), isFalse);
       expect(
-        base.hashCode == const ActorFilterState(hasPlayableMovies: true).hashCode,
+        base.hashCode ==
+            const ActorFilterState(hasPlayableMovies: true).hashCode,
+        isFalse,
+      );
+    });
+  });
+
+  group('排序与筛选分离', () {
+    test('hasActiveFilters 不含排序', () {
+      const state = ActorFilterState(
+        sortField: ActorSortField.age,
+        sortDirection: SortDirection.asc,
+      );
+      expect(state.hasActiveFilters, isFalse);
+    });
+
+    test('resetFilters 清空筛选但保留排序', () {
+      const state = ActorFilterState(
+        gender: ActorGender.female,
+        sortField: ActorSortField.heightCm,
+        sortDirection: SortDirection.asc,
+      );
+      final reset = state.resetFilters();
+      expect(reset.hasActiveFilters, isFalse);
+      expect(reset.sortField, ActorSortField.heightCm);
+      expect(reset.sortDirection, SortDirection.asc);
+    });
+
+    test('isSearching 只看关键词，relevance 只看默认字段', () {
+      expect(ActorFilterState.initial.isSearching, isFalse);
+      expect(const ActorFilterState(query: '三上').isSearching, isTrue);
+      expect(const ActorFilterState(query: '三上').usesRelevanceSort, isTrue);
+      expect(
+        const ActorFilterState(
+          query: '三上',
+          sortField: ActorSortField.movieCount,
+        ).usesRelevanceSort,
         isFalse,
       );
     });

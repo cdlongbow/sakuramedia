@@ -32,6 +32,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_mobile_filter_drawer_sca
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart'
     show AppFilterPanelFooter;
+import 'package:sakuramedia/widgets/domain/media/media_sort_menu_button.dart';
 
 /// 「媒体管理」列表 tab 的主体：筛选头 + 白底 media card 列表（桌面 / 移动共用）。
 ///
@@ -275,10 +276,13 @@ class _MediaListHeader extends ConsumerWidget {
   }
 
   void _resetFilter(WidgetRef ref) {
+    final current =
+        ref.read(mediaBrowseProvider).value?.filter ??
+        MediaBrowseFilterState.initial;
     unawaited(
       ref
           .read(mediaBrowseProvider.notifier)
-          .applyFilterState(MediaBrowseFilterState.initial),
+          .applyFilterState(current.resetFilters()),
     );
   }
 
@@ -370,6 +374,14 @@ class _MediaListHeader extends ConsumerWidget {
           ),
         ],
         actionSlots: [
+          MediaSortMenuButton(
+            triggerKey: Key('$keyPrefix-sort-trigger'),
+            drawerKey: Key('$keyPrefix-sort-drawer'),
+            keyPrefix: keyPrefix,
+            filterState: filter,
+            onChanged: (next) => _applyFilter(ref, next),
+            useDrawer: true,
+          ),
           AppTextButton(
             key: Key('$keyPrefix-enter-selection-button'),
             label: '选择',
@@ -480,8 +492,8 @@ class _MediaListMobileFilterDrawerContentState
     return AppMobileFilterDrawerScaffold(
       scrollViewKey: widget.scrollViewKey,
       footer: AppFilterPanelFooter(
-        isDefault: _local.isDefault,
-        onReset: () => _apply(MediaBrowseFilterState.initial),
+        isDefault: !_local.hasActiveFilters,
+        onReset: () => _apply(_local.resetFilters()),
       ),
       child: MediaBrowseFilterSectionGroup(
         filterState: _local,
@@ -536,9 +548,8 @@ class _MediaListBodySliver extends ConsumerWidget {
     // 不重建列表 sliver（页脚由 [PagedLoadMoreFooterSliver] 展示）。
     final asyncPaged = ref.watch(
       mediaBrowseProvider.select(
-        (asyncState) => asyncState.whenData(
-          (state) => withoutLoadMoreStatus(state.paged),
-        ),
+        (asyncState) =>
+            asyncState.whenData((state) => withoutLoadMoreStatus(state.paged)),
       ),
     );
 
@@ -820,7 +831,8 @@ class _MediaMobileSelectionBar extends ConsumerWidget {
             label: resetThumbnailsLabel,
             size: AppButtonSize.small,
             // 「重新生成」比「重试」长，去掉图标保证 4 字完整显示。
-            icon: resetThumbnailsMode ==
+            icon:
+                resetThumbnailsMode ==
                     MediaBrowseThumbnailGenerationFilter.terminal
                 ? const Icon(Icons.refresh_rounded)
                 : null,

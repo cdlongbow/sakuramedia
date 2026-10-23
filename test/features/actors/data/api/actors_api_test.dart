@@ -49,10 +49,7 @@ void main() {
             'javdb_id': 'ActorA1',
             'name': '三上悠亚',
             'alias_name': '三上悠亚 / 鬼头桃菜',
-            'profile_image': <String, dynamic>{
-              'id': 10,
-              'origin': 'large.jpg',
-            },
+            'profile_image': <String, dynamic>{'id': 10, 'origin': 'large.jpg'},
             'is_subscribed': true,
             'movie_count': 42,
             'age': 28,
@@ -145,11 +142,7 @@ void main() {
       },
     );
 
-    await actorsApi.getActors(
-      query: '',
-      sort: '',
-      cups: const <String>[],
-    );
+    await actorsApi.getActors(query: '', sort: '', cups: const <String>[]);
 
     final query = adapter.requests.single.uri.queryParameters;
     expect(query.containsKey('query'), isFalse);
@@ -194,10 +187,7 @@ void main() {
         'javdb_id': 'ActorA1',
         'name': '三上悠亚',
         'alias_name': '三上悠亚 / 鬼头桃菜',
-        'profile_image': <String, dynamic>{
-          'id': 10,
-          'origin': 'large.jpg',
-        },
+        'profile_image': <String, dynamic>{'id': 10, 'origin': 'large.jpg'},
         'is_subscribed': true,
         'birthday': '1993-08-16',
         'age': 33,
@@ -490,6 +480,45 @@ void main() {
       'source_actor_ids': <int>[2, 3],
     });
   });
+
+  test(
+    'createLocalActor posts trimmed identity and parses local detail',
+    () async {
+      adapter.enqueueJson(
+        method: 'POST',
+        path: '/actors',
+        statusCode: 201,
+        body: <String, dynamic>{
+          'id': 9,
+          'javdb_id': null,
+          'name': '本地女优',
+          'alias_name': '本地女优 / 别名A / 别名B',
+          'display_name': '本地女优',
+          'profile_image': null,
+          'is_subscribed': false,
+          'gender': 1,
+          'mutation_revision': 0,
+        },
+      );
+
+      final detail = await actorsApi.createLocalActor(
+        name: ' 本地女优 ',
+        aliasName: ' 别名A / 别名B ',
+      );
+
+      expect(detail.summary.id, 9);
+      expect(detail.summary.isLocal, isTrue);
+      expect(detail.summary.displayName, '本地女优');
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.path, '/actors');
+      expect(request.body, <String, dynamic>{
+        'name': '本地女优',
+        'alias_name': '别名A / 别名B',
+        'gender': 1,
+      });
+    },
+  );
 }
 
 Map<String, dynamic> _actorDetailResponse() {

@@ -61,7 +61,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('重置'));
     await tester.pumpAndSettle();
-    expect(applied.last.isDefault, isTrue);
+    expect(applied.last.hasActiveFilters, isFalse);
     expect(tester.takeException(), isNull);
   });
 }

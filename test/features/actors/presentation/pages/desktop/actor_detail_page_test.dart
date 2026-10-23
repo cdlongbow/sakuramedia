@@ -70,7 +70,12 @@ void main() {
     expect(find.byType(AppListHeader), findsOneWidget);
     expect(
       tester
-          .widget<AppFilterEntryButton>(find.byType(AppFilterEntryButton))
+          .widget<AppFilterEntryButton>(
+            find.descendant(
+              of: find.byKey(const Key('actor-detail-filter-trigger')),
+              matching: find.byType(AppFilterEntryButton),
+            ),
+          )
           .label,
       isNotNull,
     );
@@ -465,7 +470,10 @@ void main() {
     expect(tagged.uri.queryParameters['tag_match'], 'or');
     // 入口摘要直接反映标签条件。
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('actor-detail-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(entry.label, '标签 · 1');
 
@@ -578,6 +586,54 @@ void main() {
     expect(find.byKey(const Key('tags-option-70')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('本地女优详情隐藏合并入口并提示订阅仅作收藏', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 1000);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1',
+      body: _localActorJson(),
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 0),
+    );
+
+    await tester.pumpWidget(wrap(const DesktopActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('actor-detail-local-subscription-hint')),
+      findsOneWidget,
+    );
+    expect(find.text('本地女优不会同步新作品，订阅仅作为收藏。'), findsOneWidget);
+    expect(find.byKey(const Key('actor-detail-merge-button')), findsNothing);
+    expect(find.byKey(const Key('actor-detail-edit-button')), findsOneWidget);
+    expect(
+      find.byKey(const Key('actor-detail-subscription-1')),
+      findsOneWidget,
+    );
+  });
+}
+
+Map<String, dynamic> _localActorJson() {
+  return <String, dynamic>{
+    'id': 1,
+    'javdb_id': null,
+    'name': '本地女优',
+    'alias_name': '本地女优',
+    'display_name': '本地女优',
+    'profile_image': null,
+    'is_subscribed': false,
+    'gender': 1,
+    'mutation_revision': 0,
+  };
 }
 
 Map<String, dynamic> _actorJson() {

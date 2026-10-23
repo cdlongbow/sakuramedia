@@ -106,6 +106,24 @@ class ActorsApi {
     return ActorDetailDto.fromJson(response);
   }
 
+  /// 创建没有 JavDB 身份的用户自建女优。
+  Future<ActorDetailDto> createLocalActor({
+    required String name,
+    String? aliasName,
+    int gender = 1,
+  }) async {
+    final normalizedAlias = aliasName?.trim() ?? '';
+    final response = await _apiClient.post(
+      '/actors',
+      data: <String, dynamic>{
+        'name': name.trim(),
+        if (normalizedAlias.isNotEmpty) 'alias_name': normalizedAlias,
+        'gender': gender,
+      },
+    );
+    return ActorDetailDto.fromJson(response);
+  }
+
   Future<ActorDetailDto> uploadActorProfileImage({
     required int actorId,
     required int expectedRevision,

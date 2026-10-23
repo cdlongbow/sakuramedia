@@ -106,6 +106,39 @@ class PlaylistsOverview extends _$PlaylistsOverview
     unawaited(_savePlaylistOrder(updated));
   }
 
+  /// 只重排用户列表，系统列表保持原槽位。
+  ///
+  /// 概览页把系统列表和用户列表分区展示，用户列表的拖拽索引是子集内的
+  /// 最终下标（`SliverReorderableList.onReorderItem` 语义），不能直接套用
+  /// [reorderPlaylists] 的全量插入下标。
+  void reorderCustomPlaylists(int oldIndex, int newIndex) {
+    final current = state.value;
+    if (current == null) return;
+    final custom = current.playlists
+        .where((playlist) => !playlist.isSystem)
+        .toList(growable: false);
+    if (oldIndex < 0 ||
+        oldIndex >= custom.length ||
+        newIndex < 0 ||
+        newIndex >= custom.length ||
+        newIndex == oldIndex) {
+      return;
+    }
+
+    final reordered = List<PlaylistDto>.from(custom);
+    final moved = reordered.removeAt(oldIndex);
+    reordered.insert(newIndex, moved);
+
+    var customIndex = 0;
+    final updated = current.playlists
+        .map(
+          (playlist) => playlist.isSystem ? playlist : reordered[customIndex++],
+        )
+        .toList(growable: false);
+    state = AsyncData(current.copyWith(playlists: updated));
+    unawaited(_savePlaylistOrder(updated));
+  }
+
   /// 通过 API 创建新播放列表并前置插入到本地列表。
   Future<PlaylistDto> createNewPlaylist({
     required String name,

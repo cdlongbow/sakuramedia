@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/tags/presentation/pages/desktop/tags_page.dart';
 import 'package:sakuramedia/theme.dart';
 
+import '../../../../../support/fake_http_client_adapter.dart';
 import '../../../../../support/test_api_bundle.dart';
 
 void main() {
@@ -28,33 +29,19 @@ void main() {
       path: '/taste-profile',
       body: _emptyTasteProfileJson(),
     );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesPage(),
+    );
   });
 
   tearDown(() {
     bundle.dispose();
   });
 
-  Map<String, dynamic> moviesPage() => <String, dynamic>{
-    'items': <Map<String, dynamic>>[
-      <String, dynamic>{
-        'javdb_id': 'MovieA1',
-        'movie_number': 'ABC-001',
-        'title': 'Movie 1',
-        'cover_image': null,
-        'release_date': '2024-01-02',
-        'duration_minutes': 120,
-        'is_subscribed': false,
-        'can_play': true,
-      },
-    ],
-    'page': 1,
-    'page_size': 24,
-    'total': 1,
-  };
-
-  List<String?> movieTagMatches() => bundle.adapter.requests
+  List<RecordedRequest> movieRequests() => bundle.adapter.requests
       .where((request) => request.uri.path == '/movies')
-      .map((request) => request.uri.queryParameters['tag_match'])
       .toList(growable: false);
 
   Future<void> pumpTagsPage(WidgetTester tester) async {
@@ -78,7 +65,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('弹窗可连续选择并清空，页面摘要跟随选择', (tester) async {
+  testWidgets('浏览态连续选择、清空，确认后才请求影片', (tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
@@ -87,45 +74,51 @@ void main() {
         {'tag_id': 2, 'name': '标签二', 'movie_count': 8},
       ],
     );
-    bundle.adapter.setFallbackJson(
-      method: 'GET',
-      path: '/movies',
-      body: moviesPage(),
-    );
     await pumpTagsPage(tester);
-    expect(find.byKey(const Key('tags-option-1')), findsNothing);
-    await tester.tap(find.byKey(const Key('tags-selector-trigger')));
+
+    expect(find.text('按标签发现'), findsOneWidget);
+    expect(find.byKey(const Key('tags-cloud-tag-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-browse-confirm')), findsNothing);
+    expect(movieRequests(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('tags-cloud-tag-1')));
+    await tester.pump();
+    expect(find.byKey(const Key('tags-browse-selected-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-browse-confirm')), findsOneWidget);
+    expect(movieRequests(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('tags-cloud-tag-2')));
+    await tester.pump();
+    expect(find.byKey(const Key('tags-browse-selected-2')), findsOneWidget);
+    expect(find.byKey(const Key('tags-browse-match-or')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('tags-browse-clear')));
+    await tester.pump();
+    expect(find.byKey(const Key('tags-browse-selected-1')), findsNothing);
+    expect(find.byKey(const Key('tags-browse-confirm')), findsNothing);
+    expect(movieRequests(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('tags-cloud-tag-1')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
-    // 标签页的 chips 继续显示影片数量。
-    expect(find.text('标签一 · 10'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('tags-option-1')));
+    await tester.tap(find.byKey(const Key('tags-browse-confirm')));
     await settleFilterRequest(tester);
-    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('tags-option-2')));
-    await settleFilterRequest(tester);
-    expect(find.byKey(const Key('tags-selected-1')), findsOneWidget);
-    expect(find.byKey(const Key('tags-selected-2')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('tags-clear-all')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tags-selector-dialog')), findsOneWidget);
-    expect(find.byKey(const Key('tags-selected-1')), findsNothing);
-    expect(find.byKey(const Key('tags-selected-2')), findsNothing);
-    await tester.tapAt(const Offset(790, 590));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('tags-selector-dialog')), findsNothing);
-    expect(find.text('请选择标签查看影片'), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-1')), findsNothing);
+
+    expect(find.byKey(const Key('tags-edit-selection')), findsOneWidget);
+    expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-page-movies')), findsOneWidget);
+    expect(movieRequests(), hasLength(1));
+    expect(movieRequests().single.uri.queryParameters['tag_ids'], '1');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('常看标签可直接选中并触发影片筛选', (tester) async {
+  testWidgets('常看标签进入为你区，选中后确认进入结果', (tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
       body: [
         {'tag_id': 1, 'name': '标签一', 'movie_count': 10},
         {'tag_id': 2, 'name': '标签二', 'movie_count': 8},
+        {'tag_id': 3, 'name': '标签三', 'movie_count': 6},
       ],
     );
     bundle.adapter.enqueueJson(
@@ -133,86 +126,104 @@ void main() {
       path: '/taste-profile',
       body: _tasteProfileJson(tagId: 1, name: '标签一'),
     );
-    bundle.adapter.setFallbackJson(
-      method: 'GET',
-      path: '/movies',
-      body: moviesPage(),
-    );
-
     await pumpTagsPage(tester);
 
-    expect(find.byKey(const Key('taste-quick-tags')), findsOneWidget);
-    expect(find.byKey(const Key('taste-quick-tag-1')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('taste-quick-tag-1')));
+    expect(find.text('为你'), findsOneWidget);
+    expect(find.byKey(const Key('taste-cloud-tag-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-cloud-tag-1')), findsNothing);
+    expect(movieRequests(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('taste-cloud-tag-1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-browse-selected-1')), findsOneWidget);
+    expect(movieRequests(), isEmpty);
+
+    await tester.tap(find.byKey(const Key('tags-browse-confirm')));
     await settleFilterRequest(tester);
 
     expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
-    final request = bundle.adapter.requests
-        .where((request) => request.uri.path == '/movies')
-        .last;
-    expect(request.uri.queryParameters['tag_ids'], '1');
+    expect(movieRequests(), hasLength(1));
+    expect(movieRequests().single.uri.queryParameters['tag_ids'], '1');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('弹窗可滚动查看全部标签，末尾标签懒构建', (WidgetTester tester) async {
+  testWidgets('搜索可找到长尾标签并直接确认', (tester) async {
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/tags',
       body: <Map<String, dynamic>>[
-        for (var i = 0; i < 200; i++)
+        for (var index = 0; index < 200; index++)
           <String, dynamic>{
-            'tag_id': i,
-            'name': 'tag$i',
-            'movie_count': 300 - i,
+            'tag_id': index,
+            'name': index == 199 ? '冷门标签' : 'tag$index',
+            'movie_count': 300 - index,
           },
       ],
     );
-
     await pumpTagsPage(tester);
-    await tester.tap(find.byKey(const Key('tags-selector-trigger')));
+
+    expect(find.byKey(const Key('tags-cloud-tag-199')), findsNothing);
+    await tester.enterText(find.byKey(const Key('tags-browse-search')), '冷门');
     await tester.pumpAndSettle();
 
-    // 全部标签按影片数降序：首屏是热门标签，末尾标签不在已构建的懒加载块里。
-    expect(find.text('全部标签 · 200'), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-0')), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-199')), findsNothing);
+    expect(find.text('搜索结果'), findsOneWidget);
+    expect(find.byKey(const Key('tags-search-option-199')), findsOneWidget);
+    expect(find.byKey(const Key('tags-cloud-tag-0')), findsNothing);
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('tags-option-199')),
-      400,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('tags-cloud-scroll')),
-        matching: find.byType(Scrollable),
+    await tester.tap(find.byKey(const Key('tags-search-option-199')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('tags-browse-confirm')));
+    await settleFilterRequest(tester);
+
+    expect(find.byKey(const Key('tags-summary-199')), findsOneWidget);
+    expect(movieRequests(), hasLength(1));
+    expect(movieRequests().single.uri.queryParameters['tag_ids'], '199');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('结果页修改后取消恢复原选择，清空回到浏览态', (tester) async {
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/tags',
+      body: [
+        {'tag_id': 1, 'name': '标签一', 'movie_count': 10},
+        {'tag_id': 2, 'name': '标签二', 'movie_count': 8},
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: OKToast(
+          child: MaterialApp(
+            theme: sakuraThemeData,
+            home: const Scaffold(body: DesktopTagsPage(initialTagId: 1)),
+          ),
+        ),
       ),
     );
-    expect(find.byKey(const Key('tags-option-199')), findsOneWidget);
+    await settleFilterRequest(tester);
+
+    expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tags-edit-selection')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-browse-selected-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-browse-cancel')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('tags-cloud-tag-2')));
+    await tester.pump();
+    expect(find.byKey(const Key('tags-browse-selected-2')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('tags-browse-cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('tags-summary-1')), findsOneWidget);
+    expect(find.byKey(const Key('tags-summary-2')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('tags-summary-clear')));
+    await tester.pumpAndSettle();
+    expect(find.text('按标签发现'), findsOneWidget);
+    expect(find.byKey(const Key('tags-edit-selection')), findsNothing);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('搜索在全部标签里过滤结果', (WidgetTester tester) async {
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/tags',
-      body: <Map<String, dynamic>>[
-        for (var i = 0; i < 200; i++)
-          <String, dynamic>{
-            'tag_id': i,
-            'name': i == 199 ? '冷门标签' : 'tag$i',
-            'movie_count': 300 - i,
-          },
-      ],
-    );
-
-    await pumpTagsPage(tester);
-    await tester.tap(find.byKey(const Key('tags-selector-trigger')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byKey(const Key('tags-search-field')), '冷门');
-    await tester.pumpAndSettle();
-
-    expect(find.text('搜索结果 · 1'), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-199')), findsOneWidget);
-    expect(find.byKey(const Key('tags-option-0')), findsNothing);
   });
 
   testWidgets('switching tag match mode reloads movies with tag_match=and', (
@@ -227,8 +238,8 @@ void main() {
           <String, dynamic>{'tag_id': 2, 'name': '单体作品', 'movie_count': 80},
         ],
       )
-      ..enqueueJson(method: 'GET', path: '/movies', body: moviesPage())
-      ..enqueueJson(method: 'GET', path: '/movies', body: moviesPage());
+      ..enqueueJson(method: 'GET', path: '/movies', body: _moviesPage())
+      ..enqueueJson(method: 'GET', path: '/movies', body: _moviesPage());
 
     await tester.pumpWidget(
       ProviderScope(
@@ -244,18 +255,44 @@ void main() {
     await tester.pump();
     // 预选标签首拉不等 250ms 防抖窗口。
     await tester.pump(const Duration(milliseconds: 100));
-    expect(movieTagMatches(), <String?>['or']);
+    expect(
+      movieRequests().map(
+        (request) => request.uri.queryParameters['tag_match'],
+      ),
+      <String?>['or'],
+    );
     await settleFilterRequest(tester);
-
-    // 预选标签首拉影片默认走 or。
-    expect(movieTagMatches(), <String?>['or']);
 
     await tester.tap(find.byKey(const Key('tags-summary-match')));
     await settleFilterRequest(tester);
 
-    // 切到「全部」后追加一次 and 请求。
-    expect(movieTagMatches(), <String?>['or', 'and']);
+    expect(
+      movieRequests().map(
+        (request) => request.uri.queryParameters['tag_match'],
+      ),
+      <String?>['or', 'and'],
+    );
   });
+}
+
+Map<String, dynamic> _moviesPage() {
+  return <String, dynamic>{
+    'items': <Map<String, dynamic>>[
+      <String, dynamic>{
+        'javdb_id': 'MovieA1',
+        'movie_number': 'ABC-001',
+        'title': 'Movie 1',
+        'cover_image': null,
+        'release_date': '2024-01-02',
+        'duration_minutes': 120,
+        'is_subscribed': false,
+        'can_play': true,
+      },
+    ],
+    'page': 1,
+    'page_size': 24,
+    'total': 1,
+  };
 }
 
 Map<String, dynamic> _emptyTasteProfileJson() {

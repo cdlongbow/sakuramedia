@@ -1,7 +1,7 @@
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 
-class MovieDetailDto {
+class MovieDetailDto with MovieCoverSelection {
   const MovieDetailDto({
     this.id = 0,
     required this.javdbId,
@@ -29,6 +29,7 @@ class MovieDetailDto {
     required this.thinCoverImage,
     required this.plotImages,
     required this.actors,
+    this.isActorsManuallyManaged = false,
     required this.tags,
     required this.mediaItems,
     this.mergePlaybackCandidates = const <MovieMergePlaybackCandidateDto>[],
@@ -48,6 +49,7 @@ class MovieDetailDto {
   final String seriesName;
   final String makerName;
   final String directorName;
+  @override
   final MovieImageDto? coverImage;
   final DateTime? releaseDate;
   final int durationMinutes;
@@ -62,9 +64,14 @@ class MovieDetailDto {
   final bool isBlacklisted;
   final bool canPlay;
   final String summary;
+  @override
   final MovieImageDto? thinCoverImage;
   final List<MovieImageDto> plotImages;
   final List<MovieActorDto> actors;
+
+  /// 演员表被人工编辑后为 true：元数据刷新不会再覆盖演员关联。
+  final bool isActorsManuallyManaged;
+
   final List<MovieTagDto> tags;
   final List<MovieMediaItemDto> mediaItems;
   final List<MovieMergePlaybackCandidateDto> mergePlaybackCandidates;
@@ -119,6 +126,8 @@ class MovieDetailDto {
         json['actors'],
         (item) => MovieActorDto.fromJson(item),
       ),
+      isActorsManuallyManaged:
+          json['is_actors_manually_managed'] as bool? ?? false,
       tags: _listFromJson(json['tags'], (item) => MovieTagDto.fromJson(item)),
       mediaItems: _listFromJson(
         json['media_items'],

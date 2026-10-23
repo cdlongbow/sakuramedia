@@ -1,22 +1,17 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/movie_subscription_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
-import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 
-/// 订阅管理列表的筛选面板内容：搜索 + 排序。
+/// 订阅管理列表的筛选面板内容：搜索。
 ///
 /// 桌面 `AppListHeader` 的就地浮层与移动底部抽屉共用同一份，避免双份维护。
 /// 底栏 / 重置按钮由调用方附加（`AppFilterPanelFooter`）。
 ///
 /// 状态分段签**不在**这里——它是页面的一级维度、自带计数，收进筛选面板等于把最
-/// 重要的入口藏起来。
-///
-/// 排序用下拉而不是 chip 分节：七个选项的文案都是「维度 · 方向」的长标签，铺成
-/// chip 会把面板撑得很高，也压掉了搜索框的存在感。
+/// 重要的入口藏起来。排序也不在这里，见 `MovieSubscriptionSortMenuButton`。
 class MovieSubscriptionFilterSectionGroup extends HookWidget {
   const MovieSubscriptionFilterSectionGroup({
     super.key,
@@ -46,7 +41,6 @@ class MovieSubscriptionFilterSectionGroup extends HookWidget {
       onChanged(next);
     }
 
-    final spacing = context.appSpacing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -62,37 +56,19 @@ class MovieSubscriptionFilterSectionGroup extends HookWidget {
             color: context.appTextPalette.muted,
           ),
           // 有内容才给清除按钮：空态挂一个禁用的 X 只是噪音。
-          suffix:
-              filterState.hasSearch
-                  ? AppIconButton(
-                    key: const Key(
-                      'movie-subscriptions-filter-search-clear-button',
-                    ),
-                    icon: const Icon(Icons.close_rounded),
-                    size: AppIconButtonSize.mini,
-                    tooltip: '清除搜索',
-                    onPressed: () => submitSearch(''),
-                  )
-                  : null,
+          suffix: filterState.hasSearch
+              ? AppIconButton(
+                  key: const Key(
+                    'movie-subscriptions-filter-search-clear-button',
+                  ),
+                  icon: const Icon(Icons.close_rounded),
+                  size: AppIconButtonSize.mini,
+                  tooltip: '清除搜索',
+                  onPressed: () => submitSearch(''),
+                )
+              : null,
           tightSuffix: true,
           onFieldSubmitted: submitSearch,
-        ),
-        SizedBox(height: spacing.lg),
-        AppSelectField<MovieSubscriptionSort>(
-          key: const Key('movie-subscriptions-filter-sort-field'),
-          label: '排序',
-          value: filterState.sort,
-          items: <DropdownMenuItem<MovieSubscriptionSort>>[
-            for (final sort in MovieSubscriptionSort.values)
-              DropdownMenuItem<MovieSubscriptionSort>(
-                value: sort,
-                child: Text(sort.label),
-              ),
-          ],
-          onChanged: (sort) {
-            if (sort == null || sort == filterState.sort) return;
-            onChanged(filterState.copyWith(sort: sort));
-          },
         ),
       ],
     );

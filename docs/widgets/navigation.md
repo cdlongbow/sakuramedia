@@ -34,6 +34,20 @@
 
 列表页打开筛选浮层或抽屉的入口。当前筛选摘要由调用方提供。
 
+## `AppSortMenuButton`
+
+路径：`app_sort_menu_button.dart`
+
+列表的独立排序入口。排序是视图偏好，不是筛选条件：它不进筛选面板，筛选摘要和「重置筛选」也不包含排序。桌面用 `AppFilterPopover` 锚定浮层，移动用底部抽屉；两端按钮外观和内容一致，选中即应用并关闭。
+
+- 字段类型由调用方提供；方向使用跨 feature 共享的 `SortDirection`，不依赖具体业务域的排序枚举。
+- 可空排序（`selectedField == null` 表示后端默认 / 手动顺序）通过 `allowDefaultOption` 提供「默认」chip；方向行由 `directionVisibleWhen` 控制。
+- 字段很多的列表仍需要独立入口时，优先放 `AppListHeader.actionSlots` 第一项；移动端只显示图标。
+
+feature 侧用 `MovieSortMenuButton`、`PlaylistSortMenuButton` 等 domain 适配器把状态映射到这个组件，不要在页面里重复拼接 chip 或抽屉。
+
+二选一排序（切片、时刻的「最新 / 最早」）保留现有的内联按钮或筛选分节，不强制套用排序入口；多字段排序统一走上面的组件。
+
 ## `AppMobileFilterDrawerScaffold`
 
 路径：`app_mobile_filter_drawer_scaffold.dart`

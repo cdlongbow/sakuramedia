@@ -1,37 +1,31 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
-import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
 import 'package:sakuramedia/features/rankings/presentation/rankings_placeholders.dart';
 import 'package:sakuramedia/features/shared/data/movie_interaction_filter.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
 
 /// 榜单筛选 section 锚点——chip 点击后定位到对应 section。
-enum RankingFilterAnchor { source, board, period, sort }
+enum RankingFilterAnchor { source, board, period }
 
 class RankingFilterSectionKeys {
   RankingFilterSectionKeys({
     GlobalKey? source,
     GlobalKey? board,
     GlobalKey? period,
-    GlobalKey? sort,
   }) : source = source ?? GlobalKey(),
        board = board ?? GlobalKey(),
-       period = period ?? GlobalKey(),
-       sort = sort ?? GlobalKey();
+       period = period ?? GlobalKey();
 
   final GlobalKey source;
   final GlobalKey board;
   final GlobalKey period;
-  final GlobalKey sort;
 
   GlobalKey forAnchor(RankingFilterAnchor anchor) => switch (anchor) {
     RankingFilterAnchor.source => source,
     RankingFilterAnchor.board => board,
     RankingFilterAnchor.period => period,
-    RankingFilterAnchor.sort => sort,
   };
 }
 
@@ -50,9 +44,6 @@ class RankingFilterSectionGroup extends StatelessWidget {
     required this.onSourceChanged,
     required this.onBoardChanged,
     required this.onPeriodChanged,
-    required this.selectedSortField,
-    required this.selectedSortDirection,
-    required this.onSortChanged,
     required this.interaction,
     required this.onInteractionChanged,
     this.isBoardLoading = false,
@@ -67,10 +58,6 @@ class RankingFilterSectionGroup extends StatelessWidget {
   final ValueChanged<RankingSourceDto> onSourceChanged;
   final ValueChanged<RankingBoardDto> onBoardChanged;
   final ValueChanged<String> onPeriodChanged;
-  final RankingSortField? selectedSortField;
-  final SortDirection selectedSortDirection;
-  final void Function(RankingSortField? field, SortDirection direction)
-  onSortChanged;
   final MovieInteractionFilter interaction;
   final ValueChanged<MovieInteractionFilter> onInteractionChanged;
   final RankingFilterSectionKeys? sectionKeys;
@@ -96,8 +83,8 @@ class RankingFilterSectionGroup extends StatelessWidget {
             title: '来源',
             options: sources,
             selectedValue: selectedSource,
-            optionKeyBuilder:
-                (value) => Key('rankings-filter-source-${value.sourceKey}'),
+            optionKeyBuilder: (value) =>
+                Key('rankings-filter-source-${value.sourceKey}'),
             labelBuilder: (value) => value.name,
             onSelected: onSourceChanged,
           ),
@@ -110,8 +97,8 @@ class RankingFilterSectionGroup extends StatelessWidget {
             options: boardOptions,
             selectedValue: selectedBoard,
             isLoading: isBoardLoading,
-            optionKeyBuilder:
-                (value) => Key('rankings-filter-board-${value.boardKey}'),
+            optionKeyBuilder: (value) =>
+                Key('rankings-filter-board-${value.boardKey}'),
             labelBuilder: (value) => value.name,
             onSelected: onBoardChanged,
           ),
@@ -133,88 +120,6 @@ class RankingFilterSectionGroup extends StatelessWidget {
         MovieInteractionRangeFilterSectionGroup(
           filter: interaction,
           onChanged: onInteractionChanged,
-        ),
-        SizedBox(height: context.appSpacing.lg),
-        KeyedSubtree(
-          key: sectionKeys?.sort,
-          child: RankingSortSection(
-            selectedSortField: selectedSortField,
-            selectedSortDirection: selectedSortDirection,
-            onSortChanged: onSortChanged,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class RankingSortSection extends StatelessWidget {
-  const RankingSortSection({
-    super.key,
-    required this.selectedSortField,
-    required this.selectedSortDirection,
-    required this.onSortChanged,
-  });
-
-  final RankingSortField? selectedSortField;
-  final SortDirection selectedSortDirection;
-  final void Function(RankingSortField? field, SortDirection direction)
-  onSortChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '排序',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            AppTextButton(
-              key: const Key('rankings-filter-sort-default'),
-              label: '默认（名次）',
-              size: AppTextButtonSize.xSmall,
-              isSelected: selectedSortField == null,
-              onPressed: () => onSortChanged(null, selectedSortDirection),
-            ),
-            for (final field in RankingSortField.values)
-              if (field != RankingSortField.rank)
-                AppTextButton(
-                  key: Key('rankings-filter-sort-${field.apiValue}'),
-                  label: field.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: selectedSortField == field,
-                  onPressed: () => onSortChanged(field, selectedSortDirection),
-                ),
-            if (selectedSortField != null)
-              AppTextButton(
-                key: const Key('rankings-filter-sort-direction'),
-                label: selectedSortDirection.label,
-                icon: Icon(
-                  selectedSortDirection == SortDirection.desc
-                      ? Icons.south_rounded
-                      : Icons.north_rounded,
-                ),
-                size: AppTextButtonSize.xSmall,
-                onPressed: () => onSortChanged(
-                  selectedSortField,
-                  selectedSortDirection == SortDirection.desc
-                      ? SortDirection.asc
-                      : SortDirection.desc,
-                ),
-              ),
-          ],
         ),
       ],
     );

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_icon.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
@@ -57,6 +58,13 @@ class WatchTrendCard extends StatelessWidget {
     return AppContentCard(
       key: const Key('overview-watch-trend-card'),
       title: '观看趋势',
+      titleStyle: resolveAppTextStyle(
+        context,
+        size: AppTextSize.s16,
+        weight: AppTextWeight.semibold,
+        tone: AppTextTone.primary,
+      ),
+      headerLeading: const OverviewCardIcon(icon: Icons.insights_rounded),
       headerTrailing: compactSelector ? null : selector,
       headerBottomSpacing: context.appSpacing.lg,
       child: Column(

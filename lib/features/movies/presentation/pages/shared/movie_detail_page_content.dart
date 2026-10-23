@@ -4,7 +4,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
+import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/player/movie_subtitle_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -15,7 +17,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_bottom_safe_area_sliver.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_no_pull_down_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_wrap.dart';
+import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_actor_section.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_hero_card.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_info_block.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
@@ -62,6 +64,9 @@ class MovieDetailPageContent extends StatelessWidget {
     this.onSubscriptionTap,
     this.onMoreActionsTap,
     this.onActorTap,
+    this.moviesApi,
+    this.actorsApi,
+    this.onActorsChanged,
     this.onSeriesTap,
     this.onTagTap,
     this.onRequestPlotImageMenu,
@@ -125,6 +130,12 @@ class MovieDetailPageContent extends StatelessWidget {
   final VoidCallback? onSubscriptionTap;
   final Future<void> Function(Offset globalPosition)? onMoreActionsTap;
   final ValueChanged<MovieActorDto>? onActorTap;
+
+  /// 演员表编辑依赖；三项同时存在时演员区块才显示管理入口。
+  final MoviesApi? moviesApi;
+  final ActorsApi? actorsApi;
+  final Future<void> Function()? onActorsChanged;
+
   final VoidCallback? onSeriesTap;
   final ValueChanged<MovieTagDto>? onTagTap;
   final Future<void> Function(
@@ -424,11 +435,15 @@ class MovieDetailPageContent extends StatelessWidget {
           title: '标签',
           child: MovieTagWrap(tags: movie.tags, onTagTap: onTagTap),
         ),
-      if (orderedActors.isNotEmpty)
-        MovieDetailSection(
-          title: '演员',
-          child: MovieActorWrap(actors: orderedActors, onActorTap: onActorTap),
-        ),
+      MovieActorSection(
+        movieNumber: movie.movieNumber,
+        actors: orderedActors,
+        isActorsManuallyManaged: movie.isActorsManuallyManaged,
+        onActorTap: onActorTap,
+        moviesApi: moviesApi,
+        actorsApi: actorsApi,
+        onActorsChanged: onActorsChanged,
+      ),
       if (mediaItems.isNotEmpty)
         MovieDetailSection(
           title: '媒体源',

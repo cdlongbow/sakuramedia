@@ -68,6 +68,20 @@ void main() {
 
     expect(find.byKey(const Key('media-management-tab-list')), findsOneWidget);
     expect(
+      find.byKey(const Key('media-management-sort-trigger')),
+      findsOneWidget,
+    );
+    // 筛选与排序入口贴左、同一行，不能被有界父级拉满后居中。
+    final filterRect = tester.getRect(
+      find.byKey(const Key('media-management-filter-trigger')),
+    );
+    final sortRect = tester.getRect(
+      find.byKey(const Key('media-management-sort-trigger')),
+    );
+    expect(filterRect.left, lessThan(100));
+    expect(filterRect.center.dy, closeTo(sortRect.center.dy, 0.5));
+    expect(filterRect.right, lessThan(sortRect.left));
+    expect(
       find.byKey(const Key('media-management-tab-maintenance')),
       findsOneWidget,
     );

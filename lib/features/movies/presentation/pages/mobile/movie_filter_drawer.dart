@@ -29,9 +29,10 @@ Future<void> showMobileMovieFilterDrawer(
     maxHeightFactor: 0.6,
     builder: (sheetContext) => AppMobileFilterDrawer<MovieFilterState>(
       current: current,
-      initial: MovieFilterState.initial,
+      // 重置只清筛选条件，保留排序入口选择的排序。
+      initial: current.resetFilters(),
       onChanged: onChanged,
-      isDefault: (value) => value.isDefault,
+      isDefault: (value) => !value.hasActiveFilters,
       extraActive: extraActive,
       onExtraReset: onResetExtra,
       scrollViewKey: const Key('mobile-movies-filter-scroll-view'),

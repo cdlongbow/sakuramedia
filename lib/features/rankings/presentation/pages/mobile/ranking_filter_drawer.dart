@@ -13,7 +13,7 @@ import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filte
 ///
 /// chip 选中态即时更新；榜单结果由 Provider 统一防抖刷新。
 /// 抽屉没有“确定”按钮，关闭仅靠下拉或点遮罩。
-/// [initialAnchor] 用于 chip 点击后定位到对应 section（source/board/period/sort）。
+/// [initialAnchor] 用于 chip 点击后定位到对应 section（source/board/period）。
 ///
 Future<void> showMobileRankingFilterDrawer(
   BuildContext context, {
@@ -129,20 +129,6 @@ class _MobileRankingFilterDrawerContentState
             ref
                 .read(rankingSummaryProvider(widget.scope).notifier)
                 .selectInteraction(interaction),
-          );
-        },
-        selectedSortField: filters.selectedSortField,
-        selectedSortDirection: filters.selectedSortDirection,
-        onSortChanged: (field, direction) {
-          if (filters.selectedSortField == field &&
-              filters.selectedSortDirection == direction) {
-            return;
-          }
-          widget.onFilterChanged?.call();
-          unawaited(
-            ref
-                .read(rankingSummaryProvider(widget.scope).notifier)
-                .selectSort(field, direction),
           );
         },
         sectionKeys: _sectionKeys,

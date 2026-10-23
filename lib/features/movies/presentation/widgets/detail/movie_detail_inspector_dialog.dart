@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_playback_
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_detail_inspector_panel.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
@@ -17,9 +18,14 @@ Future<void> showMovieDetailInspectorDialog({
   required String movieNumber,
   required MovieMediaItemDto? selectedMedia,
   required MovieDetailInspectorPane pane,
+  String? movieTitle,
+  String? movieCoverUrl,
 }) {
   return showDialog<void>(
     context: context,
+    // 挂在 shell navigator 上，搜索页才能 push 到弹窗之上；弹窗在搜索期间
+    // 保持 mounted，返回时评论列表的滚动位置和分页状态都原样保留。
+    useRootNavigator: false,
     builder: (dialogContext) {
       return AppDesktopDialog(
         dialogKey: const Key('movie-detail-inspector-dialog'),
@@ -28,8 +34,14 @@ Future<void> showMovieDetailInspectorDialog({
         height: dialogContext.appComponentTokens.movieDetailDialogMinHeight,
         child: MovieDetailInspectorPanel(
           movieNumber: movieNumber,
+          movieTitle: movieTitle,
+          movieCoverUrl: movieCoverUrl,
           selectedMedia: selectedMedia,
           pane: pane,
+          onSearchSelection: (query) => dialogContext.pushDesktopSearch(
+            query: query,
+            fallbackPath: buildDesktopMovieDetailRoutePath(movieNumber),
+          ),
           onSearchSimilar: (thumbnail, imageUrl, fileName) async {
             if (!context.mounted || !dialogContext.mounted) {
               return;
@@ -83,6 +95,8 @@ Future<void> showMobileMovieDetailInspectorBottomSheet({
   required String movieNumber,
   required MovieMediaItemDto? selectedMedia,
   required MovieDetailInspectorPane pane,
+  String? movieTitle,
+  String? movieCoverUrl,
   required Future<void> Function(
     MovieMediaThumbnailDto thumbnail,
     String imageUrl,
@@ -99,11 +113,14 @@ Future<void> showMobileMovieDetailInspectorBottomSheet({
     builder: (_) {
       return MovieDetailInspectorPanel(
         movieNumber: movieNumber,
+        movieTitle: movieTitle,
+        movieCoverUrl: movieCoverUrl,
         selectedMedia: selectedMedia,
         pane: pane,
         thumbnailPreviewPresentation: MoviePlotPreviewPresentation.bottomDrawer,
         onSearchSimilar: onSearchSimilar,
         onPlay: onPlay,
+        onSearchSelection: (query) => context.pushMobileSearch(query: query),
       );
     },
   );

@@ -70,17 +70,6 @@ class ActorFilterSectionGroup extends ConsumerWidget {
           onRetry: () =>
               ref.invalidate(actorFilterOptionsProvider(optionsScope)),
         ),
-        SizedBox(height: context.appSpacing.lg),
-        FilterSortSection<ActorSortField>(
-          fields: ActorSortField.values,
-          selectedField: filterState.sortField,
-          fieldLabelBuilder: (value) => value.label,
-          onFieldChanged: (value) =>
-              onChanged(filterState.copyWith(sortField: value)),
-          selectedDirection: filterState.sortDirection,
-          onDirectionChanged: (value) =>
-              onChanged(filterState.copyWith(sortDirection: value)),
-        ),
       ],
     );
   }

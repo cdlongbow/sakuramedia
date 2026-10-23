@@ -82,6 +82,21 @@ moments feature 负责。`MomentCard` 整卡即封面、收起态不铺文字；
 - `lib/widgets/domain/media_import/`：`MediaImportSourcePicker` 和 `MediaLibrarySelectorField` 由桌面、移动端的 JAV / 视频导入表单共用。移动端路径与目录选择按钮分行显示，文件行支持触摸和长名称；浏览、分页、重试与选择回调保持一致。
 - `lib/widgets/base/operations/batch/`：`BatchProgressDialog` 等通用批量任务反馈，不绑定单一业务域。
 
+## 列表排序入口适配器
+
+以下适配器只负责把各 feature 的筛选状态映射到共享 `AppSortMenuButton`，不重复实现浮层、抽屉或 chip 外观：
+
+- `lib/widgets/domain/movies/movie_sort_menu_button.dart`：影片库、标签结果、女优详情作品共用；切字段时清空个人评分维度。
+- `lib/widgets/domain/actors/actor_sort_menu_button.dart`：搜索态显示「相关度」并禁用入口。
+- `lib/widgets/domain/playlists/playlist_sort_menu_button.dart`：`sortField == null` 显示「最近触达」。
+- `lib/widgets/domain/videos/video_sort_menu_button.dart`、`video_collection_sort_menu_button.dart`：视频列表与合集成员；合集的手动顺序隐藏方向分节。
+- `lib/widgets/domain/rankings/ranking_sort_menu_button.dart`：默认项「默认（名次）」。
+- `lib/widgets/domain/media/media_sort_menu_button.dart`：`sortField == null` 显示「默认排序」。
+- `lib/widgets/domain/subscriptions/movie_subscription_sort_menu_button.dart`：字段 + 方向映射回完整 `MovieSubscriptionSort`；「没找到次数」隐藏方向。
+- `lib/widgets/domain/activity/activity_task_sort_menu_button.dart`：任务历史的字段 + 方向。
+
+新增列表排序时优先复用这些适配器或按同一模式扩展，不要在页面里手写筛选面板排序分节。
+
 新增业务展示件时先确认复用范围，再决定放在这里还是 feature 私有目录；文档只同步当前实际文件和公共使用边界。
 
 下载任务删除确认复用 `lib/widgets/domain/downloads/download_task_delete_dialog.dart`，支持展示一个或多个任务，每次独立选择是否同时删除下载器中的文件。 批量入口通过 `showProgress` 复用 `runBatchOperation` 展示处理进度和成功、失败数量。

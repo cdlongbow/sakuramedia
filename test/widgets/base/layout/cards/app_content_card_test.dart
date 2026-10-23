@@ -54,4 +54,25 @@ void main() {
     expect(find.text('更多'), findsOneWidget);
     expect(find.text('内容'), findsOneWidget);
   });
+
+  testWidgets('app content card renders a leading slot beside the title', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: const Scaffold(
+          body: AppContentCard(
+            key: Key('card'),
+            title: '标题',
+            headerLeading: Icon(Icons.insights_rounded),
+            child: Text('内容'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.insights_rounded), findsOneWidget);
+    expect(find.text('标题'), findsOneWidget);
+  });
 }

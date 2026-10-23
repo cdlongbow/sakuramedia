@@ -3337,6 +3337,71 @@ void main() {
     expect(find.text('三上悠亚 / 鬼头桃菜'), findsOneWidget);
   });
 
+  testWidgets('desktop tags root hides shell topbar, tag detail keeps it', (
+    WidgetTester tester,
+  ) async {
+    final sessionStore = await _buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/tags',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{'tag_id': 1, 'name': '巨乳', 'movie_count': 100},
+      ],
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/taste-profile',
+      body: const <String, dynamic>{
+        'sample_movie_count': 0,
+        'actresses': <dynamic>[],
+        'unsubscribed_actresses': <dynamic>[],
+        'tags': <dynamic>[],
+      },
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/movies',
+      body: const <String, dynamic>{
+        'items': <dynamic>[],
+        'page': 1,
+        'page_size': 24,
+        'total': 0,
+      },
+    );
+    final router = buildDesktopRouter(sessionStore: sessionStore);
+
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: bundle.riverpodOverrides(),
+        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    router.go(desktopTagsPath);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('desktop-shell-topbar')), findsNothing);
+    expect(find.text('按标签发现'), findsOneWidget);
+    expect(find.byKey(const Key('tags-page')), findsOneWidget);
+
+    router.go('$desktopTagsPath/1');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('desktop-shell-topbar')), findsOneWidget);
+    expect(find.byKey(const Key('topbar-back-button')), findsOneWidget);
+
+    router.go(desktopTagsPath);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('desktop-shell-topbar')), findsNothing);
+  });
+
   testWidgets('desktop router opens movie player route outside shell', (
     WidgetTester tester,
   ) async {
@@ -4298,6 +4363,216 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('topbar-back-button')), findsNothing);
+  });
+
+  testWidgets('评论内搜索番号返回后保留弹窗和评论滚动位置', (WidgetTester tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final sessionStore = await _buildLoggedInSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueDesktopOverviewResponses(bundle);
+    _enqueueMovieDetailResponse(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/ABC-001/reviews',
+      body: <Map<String, dynamic>>[
+        for (var index = 0; index < 20; index++)
+          <String, dynamic>{
+            'id': index + 1,
+            'score': 5,
+            'content': '评论 $index 提到 SSNI-888',
+            'created_at': '2026-03-10T08:00:00Z',
+            'username': 'tester-$index',
+            'like_count': 8,
+            'watch_count': 15,
+          },
+      ],
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/movies',
+      body: _emptyPagedMovies(),
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/actors',
+      body: _emptyPagedMovies(),
+    );
+
+    final router = buildDesktopRouter(sessionStore: sessionStore);
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+      includeShellController: true,
+    );
+    await tester.pumpAndSettle();
+
+    router.go('/desktop/library/movies/ABC-001');
+    await tester.pumpAndSettle();
+
+    final reviewButton = find.byKey(const Key('movie-detail-hero-review-icon'));
+    await tester.ensureVisible(reviewButton);
+    await tester.tap(reviewButton);
+    await tester.pumpAndSettle();
+
+    final dialogFinder = find.byKey(const Key('movie-detail-inspector-dialog'));
+    expect(dialogFinder, findsOneWidget);
+
+    final reviewListFinder = find.byKey(const Key('movie-detail-review-list'));
+    final scrollableFinder = find
+        .descendant(of: reviewListFinder, matching: find.byType(Scrollable))
+        .first;
+    await tester.drag(reviewListFinder, const Offset(0, -240));
+    await tester.pumpAndSettle();
+    final offsetBeforeSearch = tester
+        .state<ScrollableState>(scrollableFinder)
+        .position
+        .pixels;
+    expect(offsetBeforeSearch, greaterThan(0));
+
+    await tester.longPress(
+      find.byKey(const Key('movie-detail-review-content')).hitTestable().first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('搜索番号'));
+    await tester.pumpAndSettle();
+
+    // 搜索页必须可交互：它压在评论弹窗之上，而不是被弹窗的 barrier 挡住。
+    expect(
+      find.byKey(const Key('catalog-search-page-input')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(dialogFinder.hitTestable(), findsNothing);
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(dialogFinder.hitTestable(), findsOneWidget);
+    expect(
+      tester.state<ScrollableState>(scrollableFinder).position.pixels,
+      moreOrLessEquals(offsetBeforeSearch),
+    );
+  });
+
+  testWidgets('移动端评论内搜索番号返回后保留抽屉和评论滚动位置', (WidgetTester tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final sessionStore = await _buildLoggedInSessionStore(
+      platform: AppPlatform.mobile,
+    );
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    _enqueueMobileMoviesResponse(bundle);
+    _enqueueMovieDetailResponse(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies/ABC-001/reviews',
+      body: <Map<String, dynamic>>[
+        for (var index = 0; index < 20; index++)
+          <String, dynamic>{
+            'id': index + 1,
+            'score': 5,
+            'content': '评论 $index 提到 SSNI-888',
+            'created_at': '2026-03-10T08:00:00Z',
+            'username': 'tester-$index',
+            'like_count': 8,
+            'watch_count': 15,
+          },
+      ],
+    );
+    bundle.adapter.setFallbackJson(
+      method: 'GET',
+      path: '/actors',
+      body: _emptyPagedMovies(),
+    );
+
+    final router = buildMobileRouter(sessionStore: sessionStore);
+    await _pumpRouterApp(
+      tester,
+      router: router,
+      sessionStore: sessionStore,
+      bundle: bundle,
+    );
+    await tester.pumpAndSettle();
+
+    router.go(buildMobileMovieDetailRoutePath('ABC-001'));
+    await tester.pumpAndSettle();
+
+    final reviewButton = find.byKey(const Key('movie-detail-hero-review-icon'));
+    await tester.ensureVisible(reviewButton);
+    await tester.tap(reviewButton);
+    await tester.pumpAndSettle();
+
+    final sheetFinder = find.byKey(
+      const Key('movie-detail-inspector-bottom-sheet'),
+    );
+    expect(sheetFinder, findsOneWidget);
+
+    final reviewListFinder = find.byKey(const Key('movie-detail-review-list'));
+    final scrollableFinder = find
+        .descendant(of: reviewListFinder, matching: find.byType(Scrollable))
+        .first;
+    await tester.drag(reviewListFinder, const Offset(0, -180));
+    await tester.pumpAndSettle();
+    final offsetBeforeSearch = tester
+        .state<ScrollableState>(scrollableFinder)
+        .position
+        .pixels;
+    expect(offsetBeforeSearch, greaterThan(0));
+
+    // 移动端抽屉会接管长按拖拽，直接构造选区并拉起选择菜单更稳定。
+    final contentFinder = find
+        .byKey(const Key('movie-detail-review-content'))
+        .hitTestable()
+        .first;
+    final editableState = tester.state<EditableTextState>(
+      find.descendant(of: contentFinder, matching: find.byType(EditableText)),
+    );
+    final reviewText = editableState.textEditingValue.text;
+    editableState.userUpdateTextEditingValue(
+      TextEditingValue(
+        text: reviewText,
+        selection: TextSelection(
+          baseOffset: 0,
+          extentOffset: reviewText.length,
+        ),
+      ),
+      SelectionChangedCause.longPress,
+    );
+    editableState.showToolbar();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('搜索番号'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('catalog-search-page-input')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(sheetFinder.hitTestable(), findsNothing);
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(sheetFinder.hitTestable(), findsOneWidget);
+    expect(
+      tester.state<ScrollableState>(scrollableFinder).position.pixels,
+      moreOrLessEquals(offsetBeforeSearch),
+    );
   });
 }
 

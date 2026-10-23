@@ -111,18 +111,32 @@ class ActorFilterState {
 
   static const ActorFilterState initial = ActorFilterState();
 
-  bool get isDefault =>
-      subscriptionStatus == ActorSubscriptionStatus.subscribed &&
-      gender == ActorGender.all &&
-      !hasPlayableMovies &&
-      query == null &&
-      sortField == ActorSortField.subscribedAt &&
-      sortDirection == SortDirection.desc &&
-      ageMin == null &&
-      ageMax == null &&
-      heightMin == null &&
-      heightMax == null &&
-      cups.isEmpty;
+  /// 是否存在生效的筛选条件。
+  ///
+  /// **不含排序**：排序是视图偏好，不是筛选条件；「重置筛选」、空态文案和
+  /// 口味推荐条都只应看这里。
+  bool get hasActiveFilters =>
+      subscriptionStatus != ActorSubscriptionStatus.subscribed ||
+      gender != ActorGender.all ||
+      hasPlayableMovies ||
+      query != null ||
+      ageMin != null ||
+      ageMax != null ||
+      heightMin != null ||
+      heightMax != null ||
+      cups.isNotEmpty;
+
+  bool get isSearching => query != null;
+
+  /// 搜索且仍使用默认字段时，后端按相关度排序。
+  bool get usesRelevanceSort =>
+      isSearching && sortField == ActorSortField.subscribedAt;
+
+  /// 重置筛选条件但保留当前排序。
+  ActorFilterState resetFilters() => ActorFilterState.initial.copyWith(
+    sortField: sortField,
+    sortDirection: sortDirection,
+  );
 
   String get sortExpression =>
       '${sortField.apiValue}:${sortDirection.apiValue}';

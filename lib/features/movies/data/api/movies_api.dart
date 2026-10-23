@@ -156,6 +156,22 @@ class MoviesApi {
     return MovieDetailDto.fromJson(response);
   }
 
+  /// 幂等加入演员；首次编辑后影片演员表转为人工管理。
+  Future<void> addMovieActor({
+    required String movieNumber,
+    required int actorId,
+  }) {
+    return _apiClient.putNoContent('/movies/$movieNumber/actors/$actorId');
+  }
+
+  /// 幂等移除演员；只解除关联，不删除女优资料。
+  Future<void> removeMovieActor({
+    required String movieNumber,
+    required int actorId,
+  }) {
+    return _apiClient.deleteNoContent('/movies/$movieNumber/actors/$actorId');
+  }
+
   Future<MovieMergedPlaybackDto> getMergedPlayback({
     required String movieNumber,
     required int libraryId,

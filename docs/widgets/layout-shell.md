@@ -49,7 +49,7 @@
 
 ## 移动子页 AppBar
 
-`AppMobileSubpageShell(autoHideAppBar: true)` 让非沉浸子页的 AppBar 随滚动收起：滚离顶部隐藏，向上滚不恢复，回到顶部才恢复；AppBar 高度动画到 0，内容区同步上移。页面主滚动和 `TabBarView` / `PageView` 里的纵向列表都会驱动；更深的嵌套滚动不驱动。顶部 `SafeArea` 保持不变，内容不会进入状态栏区域。immersive 子页不使用该开关。移动路由层对所有非沉浸子页默认开启；个别需要常驻 AppBar 的子页可在路由数据里覆盖 `autoHideAppBar => false`。直接使用 shell 时该参数默认 false。
+`AppMobileSubpageShell(autoHideAppBar: true)` 让子页的 AppBar 随滚动收起：滚离顶部隐藏，向上滚不恢复，回到顶部才恢复。普通子页的 AppBar 高度动画到 0，内容区同步上移；immersive 子页的返回栏本来就悬浮在内容上，收起时只淡出，正文保持全幅铺底不位移。页面主滚动和 `TabBarView` / `PageView` 里的纵向列表都会驱动；更深的嵌套滚动不驱动。普通子页顶部 `SafeArea` 保持不变，内容不会进入状态栏区域。移动路由层对所有子页默认开启；个别需要常驻 AppBar 的子页可在路由数据里覆盖 `autoHideAppBar => false`。直接使用 shell 时该参数默认 false。
 
 页面保留自己的滚动控制器、缓存键、Provider 和分页回调；不通过嵌套纵向列表或全量 `shrinkWrap` 网格实现固定栏。已有固定的合集详情布局可直接沿用。
 

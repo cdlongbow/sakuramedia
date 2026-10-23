@@ -450,6 +450,9 @@ class DesktopShellRouteData extends ShellRouteData {
       ),
       shellNavigatorKey: desktopShellNavigatorKey,
       navGroups: desktopNavGroups,
+      // 标签页的浏览态是页面中心的一整块主题墙，隐藏顶栏只保留标题栏高度的
+      // 顶部留白；从影片详情带 tagId 进入的标签结果页仍保留顶栏的返回入口。
+      showTopBar: state.uri.path != desktopTagsPath,
       child: navigator,
     );
   }

@@ -266,14 +266,14 @@ void main() {
       statusCode: 204,
     );
     final changes = <ActorSubscriptionChange>[];
-    final subscription = container.listen(
-      actorSubscriptionEventsProvider,
-      (_, next) {
-        if (next.hasValue) {
-          changes.add(next.requireValue);
-        }
-      },
-    );
+    final subscription = container.listen(actorSubscriptionEventsProvider, (
+      _,
+      next,
+    ) {
+      if (next.hasValue) {
+        changes.add(next.requireValue);
+      }
+    });
     addTearDown(subscription.close);
 
     final result = await container
@@ -327,6 +327,42 @@ void main() {
     expect(state.paged.total, 1);
   });
 
+  test('收藏列表外的新女优时重拉已订阅筛选', () async {
+    const scope = ActorSummaryScope.desktop();
+    await prime(scope, <Map<String, dynamic>>[_actor(1)], total: 1);
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors',
+      body: _page(
+        items: <Map<String, dynamic>>[_actor(9), _actor(1)],
+        total: 2,
+      ),
+    );
+
+    container
+        .read(actorSubscriptionEventsProvider.notifier)
+        .reportChange(actorId: 9, isSubscribed: true);
+    await _waitFor(
+      () =>
+          container
+              .read(actorSummaryProvider(scope))
+              .value
+              ?.paged
+              .items
+              .length ==
+          2,
+    );
+
+    expect(adapter.requests, hasLength(2));
+    expect(
+      adapter.requests.last.uri.queryParameters['subscription_status'],
+      'subscribed',
+    );
+    final state = container.read(actorSummaryProvider(scope)).requireValue;
+    expect(state.paged.items.map((actor) => actor.id), <int>[9, 1]);
+    expect(state.paged.total, 2);
+  });
+
   test('desktop/mobile family 状态隔离', () async {
     const desktop = ActorSummaryScope.desktop();
     const mobile = ActorSummaryScope.mobile();
@@ -362,10 +398,7 @@ void main() {
     final updated = ActorListItemDto.fromJson(<String, dynamic>{
       ..._actor(1),
       'display_name': '新的显示名',
-      'profile_image': <String, dynamic>{
-        'id': 10,
-        'origin': 'large.jpg',
-      },
+      'profile_image': <String, dynamic>{'id': 10, 'origin': 'large.jpg'},
       'movie_count': 12,
       'age': 28,
       'birthday': '1998-05-03',
@@ -470,6 +503,14 @@ void main() {
 Future<void> _settle() async {
   await Future<void>.delayed(Duration.zero);
   await Future<void>.delayed(Duration.zero);
+}
+
+Future<void> _waitFor(bool Function() predicate) async {
+  for (var index = 0; index < 50; index++) {
+    if (predicate()) return;
+    await Future<void>.delayed(Duration.zero);
+  }
+  fail('条件未在预期轮次内满足');
 }
 
 Map<String, dynamic> _page({

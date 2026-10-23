@@ -318,7 +318,7 @@ class _HeaderSlotsViewport extends StatelessWidget {
                   children: _withSpacing(informationSlots, spacing.xs),
                 ),
                 if (informationSlots.isNotEmpty && actionSlots.isNotEmpty)
-                  SizedBox(width: spacing.lg),
+                  SizedBox(width: spacing.md),
                 Row(
                   key: const Key('app-list-header-action-slots'),
                   mainAxisSize: MainAxisSize.min,

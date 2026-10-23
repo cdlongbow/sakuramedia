@@ -25,6 +25,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_s
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_scope.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class MobileActorsPage extends ConsumerStatefulWidget {
@@ -148,6 +149,14 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
               actionSlots: _searchExpanded
                   ? const <Widget>[]
                   : <Widget>[
+                      ActorSortMenuButton(
+                        triggerKey: const Key('mobile-actors-sort-trigger'),
+                        drawerKey: const Key('mobile-actors-sort-drawer'),
+                        keyPrefix: 'mobile-actors',
+                        filterState: filter,
+                        onChanged: _applyFilter,
+                        useDrawer: true,
+                      ),
                       ActorListSearchToggle(
                         key: const Key('mobile-actors-search-toggle'),
                         isActive: _searchExpanded || filter.query != null,
@@ -196,64 +205,64 @@ class _MobileActorsPageState extends ConsumerState<MobileActorsPage> {
                 false,
             onLoadMore: () =>
                 ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
-          child: AppAdaptiveRefreshScrollView(
-            key: const PageStorageKey<String>('mobile:actors:list'),
-            onRefresh: _handleRefresh,
-            controller: _scrollController,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: <Widget>[
-              if (filter.isDefault)
-                SliverToBoxAdapter(
-                  child: ActorTasteRecommendationRail(
-                    onActorTap: (actorId) => MobileActorDetailRouteData(
-                      actorId: actorId,
-                    ).push(context),
+            child: AppAdaptiveRefreshScrollView(
+              key: const PageStorageKey<String>('mobile:actors:list'),
+              onRefresh: _handleRefresh,
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                if (!filter.hasActiveFilters)
+                  SliverToBoxAdapter(
+                    child: ActorTasteRecommendationRail(
+                      onActorTap: (actorId) => MobileActorDetailRouteData(
+                        actorId: actorId,
+                      ).push(context),
+                    ),
                   ),
-                ),
-              SliverMainAxisGroup(
-                key: const Key('mobile-actors-page'),
-                slivers: [
-                  if (!(paged?.filterUpdate.hasFailed ?? false) ||
-                      items.isNotEmpty)
-                    AppSkeletonizer.sliver(
-                      enabled: isInitialLoading,
-                      child: ActorSummarySliver(
-                        items: isInitialLoading
-                            ? actorListItemPlaceholders(count: 24)
-                            : items,
-                        errorMessage: initialErrorMessage,
-                        onActorTap: (actor) => MobileActorDetailRouteData(
-                          actorId: actor.id,
-                        ).push(context),
-                        onActorSubscriptionTap: (actor) =>
-                            _toggleActorSubscription(actor.id),
-                        isActorSubscriptionUpdating: (actor) =>
+                SliverMainAxisGroup(
+                  key: const Key('mobile-actors-page'),
+                  slivers: [
+                    if (!(paged?.filterUpdate.hasFailed ?? false) ||
+                        items.isNotEmpty)
+                      AppSkeletonizer.sliver(
+                        enabled: isInitialLoading,
+                        child: ActorSummarySliver(
+                          items: isInitialLoading
+                              ? actorListItemPlaceholders(count: 24)
+                              : items,
+                          errorMessage: initialErrorMessage,
+                          onActorTap: (actor) => MobileActorDetailRouteData(
+                            actorId: actor.id,
+                          ).push(context),
+                          onActorSubscriptionTap: (actor) =>
+                              _toggleActorSubscription(actor.id),
+                          isActorSubscriptionUpdating: (actor) =>
                               summary?.isSubscriptionUpdating(actor.id) ??
                               false,
-                        emptyMessage: filter.isDefault
-                            ? '暂无女优，去搜索看看吧'
-                            : '当前筛选条件下暂无匹配女优',
+                          emptyMessage: !filter.hasActiveFilters
+                              ? '暂无女优，去搜索看看吧'
+                              : '当前筛选条件下暂无匹配女优',
+                        ),
                       ),
-                    ),
-                  // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
-                  PagedLoadMoreFooterSliver(
-                    watchFooter: (ref) => ref.watch(
+                    // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                    PagedLoadMoreFooterSliver(
+                      watchFooter: (ref) => ref.watch(
                         actorSummaryProvider(_scope).select(
                           (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
                         ),
-                    ),
-                    onLoadMore: (ref) => unawaited(
+                      ),
+                      onLoadMore: (ref) => unawaited(
                         ref
                             .read(actorSummaryProvider(_scope).notifier)
                             .loadMore(),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

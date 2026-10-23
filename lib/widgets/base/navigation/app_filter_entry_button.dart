@@ -18,6 +18,8 @@ import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dar
 ///    吃满整行（顶栏 44），达到 iOS HIG 的 44×44 / 对齐 Material 的 touch
 ///    target 扩展做法。反馈由同一个 [AppInteractiveSurface] 提供，撑满高度的
 ///    空白处透明、变淡不可见，视觉上只作用在胶囊上。
+/// 4. **宽度只包裹胶囊。** 父级是 Wrap / Expanded 等有界宽度时也不能横向铺满；
+///    否则胶囊会居中、相邻入口被挤到下一行。
 class AppFilterEntryButton extends StatelessWidget {
   const AppFilterEntryButton({
     super.key,
@@ -57,7 +59,12 @@ class AppFilterEntryButton extends StatelessWidget {
         onTap: onTap,
         child: SizedBox(
           height: double.infinity,
-          child: Center(
+          // widthFactor = 1：只撑满父级高度，宽度保持胶囊自身大小。
+          // 父级是 Wrap / Expanded 等有界宽度时，普通 Center 会横向铺满，
+          // 导致胶囊居中、相邻入口被挤到下一行。
+          child: Align(
+            alignment: Alignment.center,
+            widthFactor: 1,
             child: Container(
               height: componentTokens.buttonHeightXs,
               padding: EdgeInsets.symmetric(
@@ -76,7 +83,8 @@ class AppFilterEntryButton extends StatelessWidget {
                     ConstrainedBox(
                       // 摘要可能很长，给个上限免得把信息槽 / 操作槽挤没。
                       constraints: BoxConstraints(
-                        maxWidth: componentTokens.mobileFilterEntryMaxLabelWidth,
+                        maxWidth:
+                            componentTokens.mobileFilterEntryMaxLabelWidth,
                       ),
                       child: Text(
                         resolvedLabel,

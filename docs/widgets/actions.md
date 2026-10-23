@@ -18,12 +18,6 @@
 
 图标操作按钮，支持 `mini`、`compact`、`regular` 尺寸。必须提供可理解的 tooltip 或等价语义。
 
-## `AppGlassIconButton`
-
-路径：`lib/widgets/base/actions/app_glass_icon_button.dart`
-
-玻璃材质的圆形图标按钮，统一 `chrome` 档 [AppGlassSurface](layout-shell.md) 容器。用于沉浸/媒体内容上的返回键等需要浮在封面上的单图标操作；尺寸、图标大小和颜色由调用方按场景传入。
-
 ## `AppInteractiveSurface`
 
 路径：`lib/widgets/base/interaction/app_interactive_surface.dart`

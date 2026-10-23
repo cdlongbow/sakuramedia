@@ -10,7 +10,7 @@ import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
 /// 影片筛选的所有 section（状态 / 分辨率 / 合集类型 / 番号来源 / 互动数范围 /
-/// 出演年龄 / 年份 / 排序 / 可选标签）的纵向 Column。
+/// 出演年龄 / 年份 / 可选标签）的纵向 Column。
 ///
 /// 桌面 `AppListHeader` 的就地浮层 panel 和移动 `MobileMovieFilterDrawer` 都用它，
 /// 避免双份维护。底栏/重置按钮由调用方自己附加。
@@ -125,17 +125,6 @@ class MovieFilterSectionGroup extends StatelessWidget {
             onChanged: (value) => onChanged(filterState.copyWith(years: value)),
           ),
         ],
-        SizedBox(height: context.appSpacing.lg),
-        FilterSortSection<MovieSortField>(
-          fields: MovieSortField.values,
-          selectedField: filterState.sortField,
-          fieldLabelBuilder: (value) => value.label,
-          onFieldChanged: (value) =>
-              onChanged(filterState.copyWith(sortField: value)),
-          selectedDirection: filterState.sortDirection,
-          onDirectionChanged: (value) =>
-              onChanged(filterState.copyWith(sortDirection: value)),
-        ),
         if (tagSection != null) ...[
           SizedBox(height: context.appSpacing.lg),
           tagSection!,
@@ -939,72 +928,4 @@ class _MovieYearChoice {
 
   final int? value;
   final String label;
-}
-
-/// 排序方式分节：字段 chips + 升降序 chips，影片 / 女优等列表共用。
-class FilterSortSection<F> extends StatelessWidget {
-  const FilterSortSection({
-    super.key,
-    required this.fields,
-    required this.selectedField,
-    required this.fieldLabelBuilder,
-    required this.onFieldChanged,
-    required this.selectedDirection,
-    required this.onDirectionChanged,
-  });
-
-  final List<F> fields;
-  final F selectedField;
-  final String Function(F field) fieldLabelBuilder;
-  final ValueChanged<F> onFieldChanged;
-  final SortDirection selectedDirection;
-  final ValueChanged<SortDirection> onDirectionChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '排序方式',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: fields
-              .map(
-                (value) => AppTextButton(
-                  label: fieldLabelBuilder(value),
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == selectedField,
-                  onPressed: () => onFieldChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        SizedBox(height: context.appSpacing.md),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: SortDirection.values
-              .map(
-                (value) => AppTextButton(
-                  label: value.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == selectedDirection,
-                  onPressed: () => onDirectionChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
 }

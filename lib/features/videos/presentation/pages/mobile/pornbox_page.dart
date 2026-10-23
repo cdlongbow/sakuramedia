@@ -17,7 +17,7 @@ import 'package:sakuramedia/features/videos/presentation/widgets/collections/add
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/create_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
 import 'package:sakuramedia/features/videos/presentation/actions/video_playback_launcher.dart';
-import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_sort_drawer.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_filter_drawer.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collections_overview_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
@@ -41,6 +41,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_card.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart';
+import 'package:sakuramedia/widgets/domain/videos/video_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
@@ -116,7 +117,7 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
     ]);
   }
 
-  void _applySort(VideoFilterState next) {
+  void _applyFilter(VideoFilterState next) {
     final current =
         ref.read(videoSummaryProvider(_scope)).value?.filter ??
         VideoFilterState.initial;
@@ -325,54 +326,54 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
                     false,
                 onLoadMore: () =>
                     ref.read(videoSummaryProvider(_scope).notifier).loadMore(),
-              child: AppAdaptiveRefreshScrollView(
-                key: const PageStorageKey<String>('mobile:pornbox:list'),
-                controller: _scrollController,
-                onRefresh: _refresh,
-                slivers: <Widget>[
+                child: AppAdaptiveRefreshScrollView(
+                  key: const PageStorageKey<String>('mobile:pornbox:list'),
+                  controller: _scrollController,
+                  onRefresh: _refresh,
+                  slivers: <Widget>[
                     SliverToBoxAdapter(
                       child: _buildCollectionsSection(context),
                     ),
-                  AppPinnedListHeader(
-                    key: _listHeaderKey,
-                    color: context.appColors.surfaceCard,
-                    child: _buildVideosHeader(
+                    AppPinnedListHeader(
+                      key: _listHeaderKey,
+                      color: context.appColors.surfaceCard,
+                      child: _buildVideosHeader(
+                        context,
+                        paged: paged,
+                        videos: paged.items,
+                        filter: filter,
+                        total: paged.total,
+                      ),
+                    ),
+                    _buildVideosSliver(
                       context,
                       paged: paged,
-                      videos: paged.items,
-                      filter: filter,
-                      total: paged.total,
-                    ),
-                  ),
-                  _buildVideosSliver(
-                    context,
-                    paged: paged,
                       isInitialLoading:
                           videosAsync.isLoading && summary == null,
                       initialErrorMessage:
                           videosAsync.hasError && summary == null
-                        ? '视频列表加载失败，请稍后重试'
-                        : null,
-                  ),
-                  // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
-                  // 隐藏时保留 lg 底部边距（原语义）。
-                  PagedLoadMoreFooterSliver(
-                    hiddenSpacing: PagedFooterSpacing.lg,
-                    watchFooter: (ref) => ref.watch(
+                          ? '视频列表加载失败，请稍后重试'
+                          : null,
+                    ),
+                    // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                    // 隐藏时保留 lg 底部边距（原语义）。
+                    PagedLoadMoreFooterSliver(
+                      hiddenSpacing: PagedFooterSpacing.lg,
+                      watchFooter: (ref) => ref.watch(
                         videoSummaryProvider(_scope).select(
                           (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
                         ),
-                    ),
-                    onLoadMore: (ref) => unawaited(
+                      ),
+                      onLoadMore: (ref) => unawaited(
                         ref
                             .read(videoSummaryProvider(_scope).notifier)
                             .loadMore(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           if (selectionMode) _buildBatchBar(context),
         ],
@@ -527,9 +528,9 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
 
     return AppListHeader(
       filterButtonKey: const Key('mobile-pornbox-filter-button'),
-      filterTooltip: '排序筛选',
+      filterTooltip: '筛选',
       filterLabel: filter.triggerLabel,
-      onFilterTap: _openSortDrawer,
+      onFilterTap: _openFilterDrawer,
       filterUpdate: paged.filterUpdate,
       hasPreviousFilterItems: videos.isNotEmpty,
       onRetryFilter: () => unawaited(
@@ -541,16 +542,26 @@ class _MobilePornboxPageState extends ConsumerState<MobilePornboxPage>
           label: '$total 个',
         ),
       ],
+      actionSlots: [
+        VideoSortMenuButton(
+          triggerKey: const Key('mobile-pornbox-sort-trigger'),
+          drawerKey: const Key('mobile-pornbox-sort-drawer'),
+          keyPrefix: 'mobile-pornbox',
+          filterState: filter,
+          onChanged: _applyFilter,
+          useDrawer: true,
+        ),
+      ],
     );
   }
 
-  Future<void> _openSortDrawer() async {
-    await showMobileVideoSortDrawer(
+  Future<void> _openFilterDrawer() async {
+    await showMobileVideoFilterDrawer(
       context,
       current:
           ref.read(videoSummaryProvider(_scope)).value?.filter ??
           VideoFilterState.initial,
-      onChanged: _applySort,
+      onChanged: _applyFilter,
     );
   }
 

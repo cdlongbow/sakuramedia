@@ -104,12 +104,12 @@ void main() {
       findsOneWidget,
     );
 
-    // 排序收进标准筛选入口：默认摘要「总分 · 降序」。
-    expect(find.text('总分 · 降序'), findsOneWidget);
+    // 排序收进标准筛选入口：默认摘要「总分 ↓」。
+    expect(find.text('总分 ↓'), findsOneWidget);
 
     // 切换到单维度排序后重新请求，并带上 dimension_<id> sort。
     bundle.adapter.enqueueJson(method: 'GET', path: '/movies', body: pageBody);
-    await tester.tap(find.byKey(const Key('rated-movies-filter-trigger')));
+    await tester.tap(find.byKey(const Key('rated-movies-sort-trigger')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('rated-movies-sort-dimension-1')));
     await tester.pump();
@@ -121,8 +121,10 @@ void main() {
     expect(dimensionRequest.uri.queryParameters['rated'], 'true');
     expect(dimensionRequest.uri.queryParameters['sort'], 'dimension_1:desc');
 
-    // 升降序也走同一面板。
+    // 选中字段后浮层关闭；重新打开再切升降序。
     bundle.adapter.enqueueJson(method: 'GET', path: '/movies', body: pageBody);
+    await tester.tap(find.byKey(const Key('rated-movies-sort-trigger')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('rated-movies-sort-asc')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -177,7 +179,7 @@ void main() {
         'total': 0,
       },
     );
-    await tester.tap(find.byKey(const Key('rated-movies-filter-trigger')));
+    await tester.tap(find.byKey(const Key('rated-movies-sort-trigger')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('rated-movies-sort-asc')));
     await tester.pump();
@@ -246,7 +248,7 @@ void main() {
 
     // 先切到维度排序。
     bundle.adapter.enqueueJson(method: 'GET', path: '/movies', body: pageBody);
-    await tester.tap(find.byKey(const Key('rated-movies-filter-trigger')));
+    await tester.tap(find.byKey(const Key('rated-movies-sort-trigger')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('rated-movies-sort-dimension-1')));
     await tester.pump();
@@ -259,9 +261,7 @@ void main() {
       'dimension_1:desc',
     );
 
-    // 关闭排序面板，打开维度管理。
-    await tester.tap(find.byKey(const Key('rated-movies-filter-trigger')));
-    await tester.pumpAndSettle();
+    // 选中字段后排序面板已关闭，直接打开维度管理。
     await tester.tap(find.byKey(const Key('rated-movies-dimension-manage')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('rating-dimension-1')), findsOneWidget);

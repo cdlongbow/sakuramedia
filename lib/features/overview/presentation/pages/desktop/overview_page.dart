@@ -124,7 +124,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: SizedBox(height: context.appSpacing.lg),
+                  child: SizedBox(height: context.appSpacing.md),
                 ),
                 SliverToBoxAdapter(
                   child: AssetSummaryCard(

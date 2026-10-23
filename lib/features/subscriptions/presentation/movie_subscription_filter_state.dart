@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/features/subscriptions/data/dto/movie_subscription_status.dart';
 
 /// 订阅管理列表的筛选状态（不可变值对象）。
@@ -40,10 +41,9 @@ class MovieSubscriptionFilterState {
   }) {
     return MovieSubscriptionFilterState(
       // status 可空且「置为 null」有独立语义（= 全部），所以走哨兵而非 `??`。
-      status:
-          identical(status, _kSentinel)
-              ? this.status
-              : status as MovieSubscriptionStatus?,
+      status: identical(status, _kSentinel)
+          ? this.status
+          : status as MovieSubscriptionStatus?,
       sort: sort ?? this.sort,
       search: search ?? this.search,
     );
@@ -53,22 +53,32 @@ class MovieSubscriptionFilterState {
 
   bool get hasSearch => trimmedSearch.isNotEmpty;
 
-  /// 筛选面板（排序 + 搜索）是否停在默认值——决定面板底部「重置」是否可点。
+  /// 排序字段与方向，由完整的 [sort] 值派生，供排序面板使用。
+  MovieSubscriptionSortField get sortField => sort.field;
+  SortDirection get sortDirection => sort.direction;
+
+  MovieSubscriptionFilterState withSortField(
+    MovieSubscriptionSortField field,
+  ) => copyWith(sort: field.withDirection(sortDirection));
+
+  MovieSubscriptionFilterState withSortDirection(SortDirection direction) =>
+      copyWith(sort: sortField.withDirection(direction));
+
+  /// 是否存在生效的筛选条件。**不含排序**。
+  bool get hasActiveFilters => hasSearch;
+
+  /// 筛选面板（仅搜索）是否停在默认值——决定面板底部「重置」是否可点。
   ///
   /// 刻意**不含 [status]**：状态是分段签，重置面板不该把用户切走的签也拨回去。
-  bool get isPanelDefault =>
-      sort == MovieSubscriptionSort.subscribedAtDesc && !hasSearch;
+  bool get isPanelDefault => !hasActiveFilters;
 
-  /// 只清面板维度，保留当前分段签。
+  /// 只清面板维度，保留当前分段签与排序。
   MovieSubscriptionFilterState resetPanel() {
-    return MovieSubscriptionFilterState(status: status);
+    return MovieSubscriptionFilterState(status: status, sort: sort);
   }
 
-  /// 顶栏筛选入口里的摘要文案。
-  ///
-  /// 按 `AppListHeader` 的约定只报**一个**主维度：搜索一旦生效就是用户此刻最关心
-  /// 的口径，否则退回排序。状态不进这里——它已经由分段签表达。
-  String get triggerLabel => hasSearch ? '搜索「$trimmedSearch」' : sort.label;
+  /// 顶栏筛选入口里的摘要文案。排序由独立入口表达，这里只报搜索。
+  String get triggerLabel => hasSearch ? '搜索「$trimmedSearch」' : '全部';
 
   @override
   bool operator ==(Object other) {

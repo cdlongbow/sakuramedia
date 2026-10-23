@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_browse_provider.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
 
@@ -57,7 +58,7 @@ void main() {
 
     expect(state.paged.items, hasLength(1));
     expect(state.paged.items.first.id, 1);
-    expect(state.filter.isDefault, isTrue);
+    expect(state.filter.hasActiveFilters, isFalse);
     expect(
       adapter.requests.single.uri.queryParameters.containsKey('sort'),
       isFalse,
@@ -92,7 +93,7 @@ void main() {
               kind: MediaListItemKind.jav,
               libraryId: 8,
               sortField: MediaBrowseSortField.heat,
-              sortDirection: MediaBrowseSortDirection.desc,
+              sortDirection: SortDirection.desc,
             ),
           );
 

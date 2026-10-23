@@ -7,10 +7,7 @@ import 'package:sakuramedia/features/videos/presentation/controllers/listing/vid
 /// 判断「是否变化」，并统一收敛 apiValue 拼接。
 @immutable
 class VideoCollectionSort {
-  const VideoCollectionSort({
-    this.field,
-    this.direction = SortDirection.asc,
-  });
+  const VideoCollectionSort({this.field, this.direction = SortDirection.asc});
 
   /// 手动顺序（后端 `position:asc`）。
   static const VideoCollectionSort manual = VideoCollectionSort();

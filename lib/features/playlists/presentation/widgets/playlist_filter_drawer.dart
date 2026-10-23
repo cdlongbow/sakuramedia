@@ -20,9 +20,10 @@ Future<void> showMobilePlaylistFilterDrawer(
     maxHeightFactor: 0.6,
     builder: (sheetContext) => AppMobileFilterDrawer<PlaylistFilterState>(
       current: current,
-      initial: PlaylistFilterState.initial,
+      // 重置只清筛选条件，保留排序入口选择的排序。
+      initial: current.resetFilters(),
       onChanged: onChanged,
-      isDefault: (value) => value.isDefault,
+      isDefault: (value) => !value.hasActiveFilters,
       scrollViewKey: const Key('mobile-playlist-filter-scroll-view'),
       contentBuilder: (context, local, onApply) =>
           PlaylistFilterSectionGroup(filterState: local, onChanged: onApply),

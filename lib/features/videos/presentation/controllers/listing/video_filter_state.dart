@@ -41,16 +41,23 @@ class VideoFilterState {
 
   static const VideoFilterState initial = VideoFilterState();
 
-  bool get isDefault =>
-      sortField == VideoSortField.createdAt &&
-      sortDirection == SortDirection.desc &&
-      !uncollected;
+  /// 是否存在生效的筛选条件。
+  ///
+  /// **不含排序**：排序是视图偏好，不是筛选条件；「重置筛选」和空态文案
+  /// 都只应看这里。
+  bool get hasActiveFilters => uncollected;
 
   String get sortExpression =>
       '${sortField.apiValue}:${sortDirection.apiValue}';
 
-  String get triggerLabel =>
-      uncollected ? '未归类 · ${sortField.label}' : sortField.label;
+  /// 筛选入口只反映合集归属，不再混入排序。
+  String get triggerLabel => uncollected ? '未归类' : '全部';
+
+  /// 重置筛选条件但保留当前排序。
+  VideoFilterState resetFilters() => VideoFilterState.initial.copyWith(
+    sortField: sortField,
+    sortDirection: sortDirection,
+  );
 
   bool matches(VideoFilterState other) =>
       sortField == other.sortField &&

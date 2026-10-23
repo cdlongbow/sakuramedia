@@ -159,10 +159,11 @@ NAS 不是必须的：后端可以跑在任何能长期运行 Docker 的机器�
 
 | 组合 | 存储 | 下载 | 适合 |
 | --- | --- | --- | --- |
-| 💾 本地 + qBittorrent | 本地磁盘 / NAS 挂载目录 | qBittorrent | 有本地空间，希望影片留在自己手里 |
+| 💾 本地 + qBittorrent（后端镜像预装） | 本地磁盘 / NAS 挂载目录 | qBittorrent | 有本地空间，希望影片留在自己手里 |
 | ☁️ 115 网盘 + 离线下载 | 115 网盘 | 115 离线下载 | 不想占本地空间，适合迷你主机、服务器或 VPS |
+| ☁️ 光鸭云盘 + 云添加 | 光鸭云盘 | 光鸭云添加 | 不想占本地空间，适合迷你主机、服务器或 VPS |
 
-> 存储层和下载器都通过插件接入，可只装一种，也可同时安装；把本地影片迁移到 115 时需要两种都装。
+> 存储和下载都通过插件接入。后端镜像已预装「本地存储与 qBittorrent」；115 网盘和光鸭云盘是可选插件，需要自行在「系统设置 → 插件」中安装。
 
 ## 下载与安装
 
@@ -181,9 +182,9 @@ NAS 不是必须的：后端可以跑在任何能长期运行 Docker 的机器�
 
 1. **部署后端**：按 [快速开始](https://tinypinglite.github.io/sakuramedia/guide/quick-start) 用 Docker Compose 启动后端，默认端口 `38000`。后端建议 4 核 CPU、2GB 以上内存，运行数据放在 SSD；影片存 115 时不需要大容量本地盘。
 2. **下载并登录客户端**：首次登录填写后端地址，例如 `http://你的IP:38000`；默认账号 `account / account`，登录后请立即修改密码。
-3. **完成首次配置**：在「系统设置 → 插件」安装存储插件（本地存储或 115 网盘）并重启容器；然后创建媒体库，按需添加下载器与索引器（Jackett / Prowlarr）。如果只想先用已有影片，可以只装存储插件，直接导入。
+3. **创建媒体库并导入影片**：后端镜像已预装「本地存储与 qBittorrent」，创建媒体库后即可导入宿主机上已有的影片；需要自动下载时，再按 [自动下载与索引器](https://tinypinglite.github.io/sakuramedia/guide/auto-download) 配置 qBittorrent 和索引器（Jackett / Prowlarr）。
 
-完整步骤、字段说明和插件选择见 [快速开始](https://tinypinglite.github.io/sakuramedia/guide/quick-start) 与 [推荐插件](https://tinypinglite.github.io/sakuramedia/guide/plugins)。
+完整步骤、路径映射、自动下载和插件选择见 [快速开始](https://tinypinglite.github.io/sakuramedia/guide/quick-start)、[容器路径与硬链接](https://tinypinglite.github.io/sakuramedia/guide/container-paths)、[自动下载与索引器](https://tinypinglite.github.io/sakuramedia/guide/auto-download) 与 [推荐插件](https://tinypinglite.github.io/sakuramedia/guide/plugins)。
 
 ## 适合谁
 

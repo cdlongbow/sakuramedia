@@ -44,6 +44,9 @@ class ActorListItemDto {
     return aliasName.trim().isNotEmpty ? aliasName : name;
   }
 
+  /// 用户自建女优没有 JavDB 身份，后端返回 null，这里归一为空串。
+  bool get isLocal => javdbId.isEmpty;
+
   ActorListItemDto copyWith({
     int? id,
     String? javdbId,

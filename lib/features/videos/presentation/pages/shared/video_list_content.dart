@@ -15,6 +15,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_filter_sections.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/listing/video_summary_grid.dart';
+import 'package:sakuramedia/widgets/domain/videos/video_sort_menu_button.dart';
 
 /// 视频列表「排序条 + 总数 + 网格 + 分页底栏」的 Sliver 呈现层。
 ///
@@ -125,8 +126,9 @@ class VideoListContent extends StatelessWidget {
                       onChanged: onFilterChanged,
                     ),
                     filterPanelFooter: AppFilterPanelFooter(
-                      isDefault: filterState.isDefault,
-                      onReset: () => onFilterChanged(VideoFilterState.initial),
+                      isDefault: !filterState.hasActiveFilters,
+                      onReset: () =>
+                          onFilterChanged(filterState.resetFilters()),
                     ),
                     filterUpdate: paged.filterUpdate,
                     hasPreviousFilterItems: paged.items.isNotEmpty,
@@ -137,7 +139,15 @@ class VideoListContent extends StatelessWidget {
                         label: '${paged.total} 个',
                       ),
                     ],
-                    actionSlots: [if (actions != null) actions],
+                    actionSlots: [
+                      VideoSortMenuButton(
+                        triggerKey: const Key('videos-sort-trigger'),
+                        panelKey: const Key('videos-sort-panel'),
+                        filterState: filterState,
+                        onChanged: onFilterChanged,
+                      ),
+                      if (actions != null) actions,
+                    ],
                   ),
               SizedBox(height: sectionSpacing),
             ],
@@ -176,4 +186,3 @@ class VideoListContent extends StatelessWidget {
     );
   }
 }
-

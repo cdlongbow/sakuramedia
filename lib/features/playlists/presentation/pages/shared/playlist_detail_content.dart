@@ -43,6 +43,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
+import 'package:sakuramedia/widgets/domain/playlists/playlist_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 
@@ -201,7 +202,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                   isMovieSubscriptionUpdating: (movie) =>
                       movies?.isSubscriptionUpdating(movie.movieNumber) ??
                       false,
-                  emptyMessage: _filterState.isDefault
+                  emptyMessage: !_filterState.hasActiveFilters
                       ? '暂无影片数据'
                       : '当前筛选条件下暂无匹配影片',
                   selectionMode: selectionMode,
@@ -265,7 +266,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
                   false,
               onLoadMore: () =>
                   ref.read(movieSummaryProvider(_scope).notifier).loadMore(),
-            child: listContent,
+              child: listContent,
             ),
           );
         },
@@ -377,7 +378,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
               onChanged: _applyFilter,
             ),
       filterPanelFooter: AppFilterPanelFooter(
-        isDefault: _filterState.isDefault,
+        isDefault: !_filterState.hasActiveFilters,
         onReset: _resetFilters,
       ),
       informationSlots: [
@@ -386,7 +387,18 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
           label: '$totalMovies 部影片',
         ),
       ],
-      actionSlots: [buildEnterSelectionButton()],
+      actionSlots: [
+        PlaylistSortMenuButton(
+          triggerKey: const Key('playlist-detail-sort-trigger'),
+          panelKey: const Key('playlist-detail-sort-panel'),
+          drawerKey: const Key('mobile-playlist-detail-sort-drawer'),
+          keyPrefix: isMobile ? 'mobile-playlist' : 'playlist',
+          filterState: _filterState,
+          onChanged: _applyFilter,
+          useDrawer: isMobile,
+        ),
+        buildEnterSelectionButton(),
+      ],
     );
   }
 
@@ -407,7 +419,7 @@ class _PlaylistDetailContentState extends ConsumerState<PlaylistDetailContent>
   }
 
   void _resetFilters() {
-    _applyFilter(PlaylistFilterState.initial);
+    _applyFilter(_filterState.resetFilters());
   }
 
   Future<void> _openFilterDrawer() async {

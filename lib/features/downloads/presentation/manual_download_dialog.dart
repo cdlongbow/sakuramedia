@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
@@ -52,27 +51,77 @@ class ManualDownloadResult {
   final String clientName;
 }
 
+/// 从评论等上下文打开手动下载时的预填信息。
+///
+/// 传入后弹窗进入紧凑模式：磁力、影片和下载类型都视为已确定，只保留磁力
+/// 输入、影片卡片和下载器选择，不再要求用户重新查询番号。
+class ManualDownloadPrefill {
+  const ManualDownloadPrefill({
+    required this.magnetUri,
+    required this.movieNumber,
+    this.movieTitle,
+    this.movieCoverUrl,
+  });
+
+  final String magnetUri;
+  final String movieNumber;
+  final String? movieTitle;
+  final String? movieCoverUrl;
+}
+
 /// 打开手动添加下载表单：桌面居中弹窗，移动端底部抽屉。
 Future<ManualDownloadResult?> showManualDownloadDialog(
-  BuildContext hostContext,
-) {
+  BuildContext hostContext, {
+  ManualDownloadPrefill? prefill,
+}) {
   return showAppAdaptiveModal<ManualDownloadResult>(
     context: hostContext,
     modalKey: const Key('manual-download-modal'),
     desktopWidth: hostContext.appLayoutTokens.dialogWidthMd,
     mobileHeightFactor: 0.9,
+    // 预填场景字段少，让抽屉按内容收缩，避免在评论弹窗上再盖一个近乎全屏的
+    // 抽屉；完整表单仍保持原来的 90% 高度。
+    mobileMaxHeightFactor: prefill == null ? null : 0.72,
     // 表单在请求期间不能被 X / 下拉 / 点遮罩关掉；关闭入口在内容区，由
     // _isSubmitting 控制。遮罩仍由内部 PopScope 兜底。
     enableDrag: false,
     showDrawerHandle: false,
     showDesktopCloseButton: false,
-    builder: (_) => _ManualDownloadDialog(hostContext: hostContext),
+    builder: (_) =>
+        _ManualDownloadDialog(hostContext: hostContext, prefill: prefill),
   );
 }
 
 enum _MovieResolutionPhase { idle, resolving, resolved, failed }
 
-enum _MovieResolutionSource { local, online }
+enum _MovieResolutionSource { local, online, currentMovie }
+
+/// 弹窗内展示影片时只需要这三个字段；预填场景不强行构造一个完整的
+/// [MovieListItemDto]。
+@immutable
+class _MovieSummary {
+  const _MovieSummary({
+    required this.movieNumber,
+    required this.title,
+    this.coverUrl,
+  });
+
+  final String movieNumber;
+  final String title;
+  final String? coverUrl;
+
+  factory _MovieSummary.fromListItem(MovieListItemDto movie) {
+    final thinCover = movie.thinCoverImage?.origin.trim() ?? '';
+    final wideCover = movie.coverImage?.origin.trim() ?? '';
+    return _MovieSummary(
+      movieNumber: movie.movieNumber,
+      title: movie.title,
+      coverUrl: thinCover.isNotEmpty
+          ? thinCover
+          : (wideCover.isNotEmpty ? wideCover : null),
+    );
+  }
+}
 
 @immutable
 class _MovieResolution {
@@ -119,7 +168,7 @@ class _MovieResolution {
   final String? message;
 
   /// 仅在 resolved 阶段有值。
-  final MovieListItemDto? movie;
+  final _MovieSummary? movie;
 
   final _MovieResolutionSource? source;
 
@@ -130,10 +179,13 @@ class _MovieResolution {
 }
 
 class _ManualDownloadDialog extends ConsumerStatefulWidget {
-  const _ManualDownloadDialog({required this.hostContext});
+  const _ManualDownloadDialog({required this.hostContext, this.prefill});
 
   /// 打开弹层的页面 context；弹层自身 context 在 pop 后失效，导航要用它。
   final BuildContext hostContext;
+
+  /// 从评论等上下文带入的预填信息；非空时使用紧凑表单。
+  final ManualDownloadPrefill? prefill;
 
   @override
   ConsumerState<_ManualDownloadDialog> createState() =>
@@ -160,6 +212,31 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
   int _movieQueryVersion = 0;
   StreamSubscription<MovieSearchStreamUpdate>? _activeMovieSearch;
   bool _hasAttemptedSubmit = false;
+
+  bool get _isCompact => widget.prefill != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefill = widget.prefill;
+    if (prefill == null) return;
+
+    _magnetController.text = prefill.magnetUri;
+    _movieNumberController.text = prefill.movieNumber;
+    _source = _ManualDownloadSource.magnet;
+    _mediaKind = ManualDownloadMediaKind.jav;
+    final coverUrl = prefill.movieCoverUrl?.trim() ?? '';
+    _movieResolution = _MovieResolution.resolved(
+      rawInput: prefill.movieNumber,
+      parsedNumber: prefill.movieNumber,
+      movie: _MovieSummary(
+        movieNumber: prefill.movieNumber,
+        title: prefill.movieTitle?.trim() ?? '',
+        coverUrl: coverUrl.isEmpty ? null : coverUrl,
+      ),
+      source: _MovieResolutionSource.currentMovie,
+    );
+  }
 
   @override
   void dispose() {
@@ -404,7 +481,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
       _movieResolution = _MovieResolution.resolved(
         rawInput: raw,
         parsedNumber: parsed,
-        movie: movie,
+        movie: _MovieSummary.fromListItem(movie),
         source: source,
       );
     });
@@ -603,7 +680,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '手动添加下载',
+                        _isCompact ? '添加磁力下载' : '手动添加下载',
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s16,
@@ -613,7 +690,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                       ),
                       SizedBox(height: spacing.xs),
                       Text(
-                        '粘贴磁力链接或上传 .torrent 文件，提交到下载器。',
+                        _isCompact
+                            ? '磁力已从评论填入，确认下载器后提交。'
+                            : '粘贴磁力链接或上传 .torrent 文件，提交到下载器。',
                         style: resolveAppTextStyle(
                           context,
                           size: AppTextSize.s12,
@@ -641,127 +720,12 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const _FormSectionLabel('资源'),
-                      SizedBox(height: spacing.sm),
-                      _buildChoiceRow<_ManualDownloadSource>(
-                        options: const [
-                          (_ManualDownloadSource.magnet, '磁力链接'),
-                          (_ManualDownloadSource.torrent, '种子文件'),
-                        ],
-                        selected: _source,
-                        keyOf: (value) =>
-                            Key('manual-download-source-${value.name}'),
-                        onChanged: (value) => setState(() => _source = value),
-                      ),
-                      SizedBox(height: spacing.md),
-                      if (_source == _ManualDownloadSource.magnet)
-                        AppTextField(
-                          fieldKey: const Key('manual-download-magnet-field'),
-                          controller: _magnetController,
-                          label: '磁力链接',
-                          hintText: 'magnet:?xt=urn:btih:...',
-                          helperText:
-                              '只接受 magnet: 链接；HTTP 种子地址请下载 .torrent 后上传。',
-                          minLines: 2,
-                          maxLines: 3,
-                          keyboardType: TextInputType.url,
-                          enabled: !_isSubmitting,
-                          validator: _validateMagnet,
-                        )
-                      else
-                        _buildTorrentField(context),
-                      SizedBox(height: spacing.xl),
-                      const _FormSectionLabel('下载设置'),
-                      SizedBox(height: spacing.sm),
-                      _buildClientField(clientsAsync, selectedClient),
-                      SizedBox(height: spacing.md),
-                      _buildChoiceRow<ManualDownloadMediaKind>(
-                        options: const [
-                          (ManualDownloadMediaKind.jav, 'JAV 影片'),
-                          (ManualDownloadMediaKind.video, 'PornBox'),
-                        ],
-                        selected: _mediaKind,
-                        keyOf: (value) =>
-                            Key('manual-download-kind-${value.apiValue}'),
-                        onChanged: _onMediaKindChanged,
-                      ),
-                      SizedBox(height: spacing.md),
-                      if (_mediaKind == ManualDownloadMediaKind.jav)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            AppTextField(
-                              fieldKey: const Key(
-                                'manual-download-movie-number-field',
-                              ),
-                              controller: _movieNumberController,
-                              label: '番号',
-                              hintText: '例如 ABC-123 或 FC2-PPV-123',
-                              helperText: '点「查询」或回车解析并匹配；本地没有时会在线搜索并入库。',
-                              enabled: !_isSubmitting,
-                              textInputAction: TextInputAction.search,
-                              onFieldSubmitted: (_) =>
-                                  unawaited(_resolveMovieNumber()),
-                              onChanged: _onMovieNumberChanged,
-                              validator: _validateMovieNumber,
-                              // 紧凑按钮后缀：保留 tightSuffix 以维持 32/36 的
-                              // token 高度，不被默认 48px 后缀最小约束拉伸；
-                              // 左右留白与输入文字、边框拉开距离。
-                              tightSuffix: true,
-                              suffix: Padding(
-                                padding: EdgeInsetsDirectional.only(
-                                  start: spacing.xs,
-                                  end: spacing.sm,
-                                ),
-                                child: AppTextButton(
-                                  key: const Key(
-                                    'manual-download-movie-number-query-button',
-                                  ),
-                                  label: _movieResolution.isResolving
-                                      ? '查询中'
-                                      : '查询',
-                                  icon: const Icon(Icons.search_rounded),
-                                  size: AppTextButtonSize.small,
-                                  emphasis: AppTextButtonEmphasis.accent,
-                                  isLoading: _movieResolution.isResolving,
-                                  onPressed: _canQueryMovieNumber
-                                      ? () => unawaited(_resolveMovieNumber())
-                                      : null,
-                                ),
-                              ),
-                            ),
-                            _buildMovieResolutionStatus(context),
-                          ],
-                        )
-                      else
-                        _VideoCollectionField(
-                          collectionId: _collectionId,
-                          onTap: _pickCollection,
-                          onCreate: _createCollection,
-                          enabled: !_isSubmitting,
-                        ),
-                      SizedBox(height: spacing.md),
-                      AppTextField(
-                        fieldKey: const Key(
-                          'manual-download-display-name-field',
-                        ),
-                        controller: _displayNameController,
-                        label: '显示名称（可选）',
-                        helperText: '优先显示在下载任务列表；留空时使用影片标题或资源名称。',
-                        enabled: !_isSubmitting,
-                      ),
-                      SizedBox(height: spacing.md),
-                      _buildDeleteSourceRow(context),
-                      if (_submitError != null) ...[
-                        SizedBox(height: spacing.md),
-                        AppInlineErrorBanner(
-                          key: const Key('manual-download-submit-error'),
-                          message: _submitError!,
-                          tone: AppInlineErrorTone.error,
-                        ),
-                      ],
-                    ],
+                    children: _isCompact
+                        ? _buildCompactFormChildren(
+                            clientsAsync,
+                            selectedClient,
+                          )
+                        : _buildFullFormChildren(clientsAsync, selectedClient),
                   ),
                 ),
               ),
@@ -796,6 +760,154 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
     );
   }
 
+  /// 完整表单：手动添加下载入口使用，允许选择磁力/种子、媒体类型和番号。
+  List<Widget> _buildFullFormChildren(
+    AsyncValue<List<DownloadClientDto>> clientsAsync,
+    DownloadClientDto? selectedClient,
+  ) {
+    final spacing = context.appSpacing;
+    return <Widget>[
+      const _FormSectionLabel('资源'),
+      SizedBox(height: spacing.sm),
+      _buildChoiceRow<_ManualDownloadSource>(
+        options: const [
+          (_ManualDownloadSource.magnet, '磁力链接'),
+          (_ManualDownloadSource.torrent, '种子文件'),
+        ],
+        selected: _source,
+        keyOf: (value) => Key('manual-download-source-${value.name}'),
+        onChanged: (value) => setState(() => _source = value),
+      ),
+      SizedBox(height: spacing.md),
+      if (_source == _ManualDownloadSource.magnet)
+        _buildMagnetField()
+      else
+        _buildTorrentField(context),
+      SizedBox(height: spacing.xl),
+      const _FormSectionLabel('下载设置'),
+      SizedBox(height: spacing.sm),
+      _buildClientField(clientsAsync, selectedClient),
+      SizedBox(height: spacing.md),
+      _buildChoiceRow<ManualDownloadMediaKind>(
+        options: const [
+          (ManualDownloadMediaKind.jav, 'JAV 影片'),
+          (ManualDownloadMediaKind.video, 'PornBox'),
+        ],
+        selected: _mediaKind,
+        keyOf: (value) => Key('manual-download-kind-${value.apiValue}'),
+        onChanged: _onMediaKindChanged,
+      ),
+      SizedBox(height: spacing.md),
+      if (_mediaKind == ManualDownloadMediaKind.jav)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              fieldKey: const Key('manual-download-movie-number-field'),
+              controller: _movieNumberController,
+              label: '番号',
+              hintText: '例如 ABC-123 或 FC2-PPV-123',
+              helperText: '点「查询」或回车解析并匹配；本地没有时会在线搜索并入库。',
+              enabled: !_isSubmitting,
+              textInputAction: TextInputAction.search,
+              onFieldSubmitted: (_) => unawaited(_resolveMovieNumber()),
+              onChanged: _onMovieNumberChanged,
+              validator: _validateMovieNumber,
+              // 紧凑按钮后缀：保留 tightSuffix 以维持 32/36 的 token 高度，
+              // 不被默认 48px 后缀最小约束拉伸；左右留白与输入文字、边框
+              // 拉开距离。
+              tightSuffix: true,
+              suffix: Padding(
+                padding: EdgeInsetsDirectional.only(
+                  start: spacing.xs,
+                  end: spacing.sm,
+                ),
+                child: AppTextButton(
+                  key: const Key('manual-download-movie-number-query-button'),
+                  label: _movieResolution.isResolving ? '查询中' : '查询',
+                  icon: const Icon(Icons.search_rounded),
+                  size: AppTextButtonSize.small,
+                  emphasis: AppTextButtonEmphasis.accent,
+                  isLoading: _movieResolution.isResolving,
+                  onPressed: _canQueryMovieNumber
+                      ? () => unawaited(_resolveMovieNumber())
+                      : null,
+                ),
+              ),
+            ),
+            _buildMovieResolutionStatus(context),
+          ],
+        )
+      else
+        _VideoCollectionField(
+          collectionId: _collectionId,
+          onTap: _pickCollection,
+          onCreate: _createCollection,
+          enabled: !_isSubmitting,
+        ),
+      SizedBox(height: spacing.md),
+      AppTextField(
+        fieldKey: const Key('manual-download-display-name-field'),
+        controller: _displayNameController,
+        label: '显示名称（可选）',
+        helperText: '优先显示在下载任务列表；留空时使用影片标题或资源名称。',
+        enabled: !_isSubmitting,
+      ),
+      SizedBox(height: spacing.md),
+      _buildDeleteSourceRow(context),
+      if (_submitError != null) ...[
+        SizedBox(height: spacing.md),
+        AppInlineErrorBanner(
+          key: const Key('manual-download-submit-error'),
+          message: _submitError!,
+          tone: AppInlineErrorTone.error,
+        ),
+      ],
+    ];
+  }
+
+  /// 预填表单：磁力和影片已由调用方确定，只让用户确认下载器。
+  ///
+  /// 紧凑模式不再画「资源 / 下载设置」分组标题，下载器也不带字段名——
+  /// 这里只有磁力、影片和下载器三项，字段自身已经说明用途。
+  List<Widget> _buildCompactFormChildren(
+    AsyncValue<List<DownloadClientDto>> clientsAsync,
+    DownloadClientDto? selectedClient,
+  ) {
+    final spacing = context.appSpacing;
+    return <Widget>[
+      _buildMagnetField(compact: true),
+      _buildMovieResolutionStatus(context),
+      SizedBox(height: spacing.lg),
+      _buildClientField(clientsAsync, selectedClient, showLabel: false),
+      if (_submitError != null) ...[
+        SizedBox(height: spacing.md),
+        AppInlineErrorBanner(
+          key: const Key('manual-download-submit-error'),
+          message: _submitError!,
+          tone: AppInlineErrorTone.error,
+        ),
+      ],
+    ];
+  }
+
+  Widget _buildMagnetField({bool compact = false}) {
+    return AppTextField(
+      fieldKey: const Key('manual-download-magnet-field'),
+      controller: _magnetController,
+      label: '磁力链接',
+      hintText: 'magnet:?xt=urn:btih:...',
+      helperText: compact
+          ? '从评论识别，提交前可修改。'
+          : '只接受 magnet: 链接；HTTP 种子地址请下载 .torrent 后上传。',
+      minLines: 2,
+      maxLines: 3,
+      keyboardType: TextInputType.url,
+      enabled: !_isSubmitting,
+      validator: _validateMagnet,
+    );
+  }
+
   Widget _buildChoiceRow<T>({
     required List<(T, String)> options,
     required T selected,
@@ -825,8 +937,9 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
   Widget _buildClientField(
     AsyncValue<List<DownloadClientDto>> clientsAsync,
-    DownloadClientDto? selectedClient,
-  ) {
+    DownloadClientDto? selectedClient, {
+    bool showLabel = true,
+  }) {
     final spacing = context.appSpacing;
     if (clientsAsync.isLoading && !clientsAsync.hasValue) {
       return Row(
@@ -896,7 +1009,7 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 
     return AppSelectField<int?>(
       key: const Key('manual-download-client-field'),
-      label: '下载器',
+      label: showLabel ? '下载器' : null,
       value: selectedClient?.id,
       placeholder: '请选择下载器',
       items: clients
@@ -1095,15 +1208,13 @@ class _ManualDownloadDialogState extends ConsumerState<_ManualDownloadDialog> {
 class _ResolvedMovieCard extends StatelessWidget {
   const _ResolvedMovieCard({required this.movie, required this.source});
 
-  final MovieListItemDto movie;
+  final _MovieSummary movie;
   final _MovieResolutionSource source;
 
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
-    final thinCover = movie.thinCoverImage?.origin.trim() ?? '';
-    final wideCover = movie.coverImage?.origin.trim() ?? '';
-    final coverUrl = thinCover.isNotEmpty ? thinCover : wideCover;
+    final coverUrl = movie.coverUrl ?? '';
     return Container(
       key: const Key('manual-download-movie-resolution-card'),
       padding: EdgeInsets.all(spacing.md),
@@ -1156,9 +1267,11 @@ class _ResolvedMovieCard extends StatelessWidget {
                     SizedBox(width: spacing.xs),
                     AppBadge(
                       key: const Key('manual-download-movie-resolution-source'),
-                      label: source == _MovieResolutionSource.local
-                          ? '本地'
-                          : '在线',
+                      label: switch (source) {
+                        _MovieResolutionSource.local => '本地',
+                        _MovieResolutionSource.online => '在线',
+                        _MovieResolutionSource.currentMovie => '当前影片',
+                      },
                       tone: source == _MovieResolutionSource.local
                           ? AppBadgeTone.neutral
                           : AppBadgeTone.info,

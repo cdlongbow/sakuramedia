@@ -13,4 +13,10 @@ extension SortDirectionX on SortDirection {
     SortDirection.asc => '升序',
     SortDirection.desc => '降序',
   };
+
+  /// 排序入口摘要里使用的方向符号。
+  String get symbol => switch (this) {
+    SortDirection.asc => '↑',
+    SortDirection.desc => '↓',
+  };
 }

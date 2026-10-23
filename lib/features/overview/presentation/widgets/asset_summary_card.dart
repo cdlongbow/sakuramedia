@@ -6,7 +6,6 @@ import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
-import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 /// 媒体资产卡：一组分格数字 + 处理积压与合集资产两行脚注。
 ///
@@ -31,10 +30,9 @@ class AssetSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppContentCard(
+    return _AssetHeroSurface(
       key: const Key('overview-asset-summary-card'),
       title: '媒体资产',
-      headerBottomSpacing: context.appSpacing.lg,
       child: _buildBody(context),
     );
   }
@@ -115,10 +113,7 @@ class AssetSummaryCard extends StatelessWidget {
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < _twoColumnMinWidth;
         final rows = narrow
-            ? <List<_AssetMetric>>[
-                metrics.sublist(0, 2),
-                metrics.sublist(2, 4),
-              ]
+            ? <List<_AssetMetric>>[metrics.sublist(0, 2), metrics.sublist(2, 4)]
             : <List<_AssetMetric>>[metrics];
 
         return Column(
@@ -135,9 +130,7 @@ class AssetSummaryCard extends StatelessWidget {
             ],
             if (backlog.isNotEmpty || collections.isNotEmpty) ...<Widget>[
               Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: context.appSpacing.lg,
-                ),
+                padding: EdgeInsets.symmetric(vertical: context.appSpacing.lg),
                 child: Divider(
                   height: 1,
                   thickness: 1,
@@ -184,10 +177,7 @@ class AssetSummaryCard extends StatelessWidget {
       if (collections.playlists.count > 0)
         _FootnoteItem(label: '播放列表', count: collections.playlists.count),
       if (collections.videoCollections.count > 0)
-        _FootnoteItem(
-          label: '视频合集',
-          count: collections.videoCollections.count,
-        ),
+        _FootnoteItem(label: '视频合集', count: collections.videoCollections.count),
       if (collections.clipCollections.count > 0)
         _FootnoteItem(label: '片段合集', count: collections.clipCollections.count),
       if (collections.momentCollections.count > 0)
@@ -276,16 +266,21 @@ class _AssetMetricCell extends StatelessWidget {
           metric.value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s20,
-            weight: AppTextWeight.semibold,
-            tone: AppTextTone.primary,
-          ),
+          style:
+              resolveAppTextStyle(
+                context,
+                size: AppTextSize.s20,
+                weight: AppTextWeight.semibold,
+                tone: AppTextTone.primary,
+              ).copyWith(
+                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+              ),
         ),
         SizedBox(height: context.appSpacing.xs),
         Text(
-          narrow ? (metric.narrowSecondary ?? metric.secondary) : metric.secondary,
+          narrow
+              ? (metric.narrowSecondary ?? metric.secondary)
+              : metric.secondary,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: resolveAppTextStyle(
@@ -354,6 +349,153 @@ class _FootnoteLine extends StatelessWidget {
             TextSpan(text: formatCount(items[index].count), style: countStyle),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// 概览页唯一的主卡。
+///
+/// 借用发现页「观影偏好」的品牌渐变语言，但只保留一层弱光晕和渐变图标块，
+/// 不再叠水印图标——两处语义不同，视觉上保持同源而不互相抢焦点。
+class _AssetHeroSurface extends StatelessWidget {
+  const _AssetHeroSurface({
+    super.key,
+    required this.title,
+    required this.child,
+  });
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final appColors = context.appColors;
+    final spacing = context.appSpacing;
+    final radius = context.appRadius.lgBorder;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        border: Border.all(color: colors.primary.withValues(alpha: 0.16)),
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                appColors.surfaceCard,
+                Color.alphaBlend(
+                  colors.primary.withValues(alpha: 0.10),
+                  appColors.surfaceCard,
+                ),
+                Color.alphaBlend(
+                  colors.secondary.withValues(alpha: 0.16),
+                  appColors.surfaceCard,
+                ),
+              ],
+            ),
+          ),
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                top: -spacing.xxl,
+                right: -spacing.xl,
+                child: _AssetHeroGlow(color: colors.primary),
+              ),
+              Padding(
+                padding: EdgeInsets.all(spacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        const _AssetHeroIconTile(
+                          icon: Icons.video_library_rounded,
+                        ),
+                        SizedBox(width: spacing.md),
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: resolveAppTextStyle(
+                              context,
+                              size: AppTextSize.s16,
+                              weight: AppTextWeight.semibold,
+                              tone: AppTextTone.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: spacing.lg),
+                    child,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AssetHeroIconTile extends StatelessWidget {
+  const _AssetHeroIconTile({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      width: context.appSpacing.xxl,
+      height: context.appSpacing.xxl,
+      decoration: BoxDecoration(
+        borderRadius: context.appRadius.mdBorder,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[colors.primary, colors.secondary],
+        ),
+      ),
+      child: Icon(
+        icon,
+        size: context.appComponentTokens.iconSizeMd,
+        color: colors.onPrimary,
+      ),
+    );
+  }
+}
+
+class _AssetHeroGlow extends StatelessWidget {
+  const _AssetHeroGlow({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = context.appSpacing.xxxl * 3.5;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: <Color>[
+              color.withValues(alpha: 0.20),
+              color.withValues(alpha: 0),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -101,4 +101,12 @@ class TagSelection extends _$TagSelection {
       state = state.copyWith(selectedTagIds: const <int>[]);
     }
   }
+
+  /// 恢复一组已应用的选择；浏览态取消时用它回滚草稿。
+  void replaceSelection(List<int> tagIds, {TagMatchMode? matchMode}) {
+    state = state.copyWith(
+      selectedTagIds: List<int>.unmodifiable(tagIds),
+      matchMode: matchMode,
+    );
+  }
 }

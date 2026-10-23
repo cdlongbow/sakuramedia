@@ -328,6 +328,45 @@ void main() {
     );
   });
 
+  testWidgets('immersive 子页滚动时淡出悬浮返回栏，正文不位移', (tester) async {
+    await _pumpShellWithBottomInset(
+      tester,
+      AppMobileSubpageShell(
+        title: '影片详情',
+        defaultLocation: '/mobile/overview',
+        immersive: true,
+        autoHideAppBar: true,
+        child: ListView.builder(
+          key: const Key('subpage-immersive-list'),
+          itemCount: 60,
+          itemBuilder: (_, index) => SizedBox(height: 40, child: Text('$index')),
+        ),
+      ),
+    );
+
+    final backButton = find.byKey(const Key('mobile-subpage-back-button'));
+    final list = find.byKey(const Key('subpage-immersive-list'));
+    expect(backButton.hitTestable(), findsOneWidget);
+    final contentTopLeft = tester.getTopLeft(list);
+
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: list, matching: find.byType(Scrollable)),
+        )
+        .position;
+    position.jumpTo(200);
+    await tester.pumpAndSettle();
+
+    // 悬浮返回栏淡出后不再响应命中，正文保持全幅铺底。
+    expect(backButton.hitTestable(), findsNothing);
+    expect(tester.getTopLeft(list), contentTopLeft);
+
+    position.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(backButton.hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('autoHideAppBar 子页滚动离顶隐藏 AppBar，回顶才恢复', (tester) async {
     await _pumpShellWithBottomInset(
       tester,

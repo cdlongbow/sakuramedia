@@ -18,9 +18,10 @@ Future<void> showMobileActorFilterDrawer(
     maxHeightFactor: 0.85,
     builder: (sheetContext) => AppMobileFilterDrawer<ActorFilterState>(
       current: current,
-      initial: ActorFilterState.initial,
+      // 重置只清筛选条件，保留排序入口选择的排序。
+      initial: current.resetFilters(),
       onChanged: onChanged,
-      isDefault: (value) => value.isDefault,
+      isDefault: (value) => !value.hasActiveFilters,
       scrollViewKey: const Key('mobile-actors-filter-scroll-view'),
       contentBuilder: (context, local, onApply) =>
           ActorFilterSectionGroup(filterState: local, onChanged: onApply),

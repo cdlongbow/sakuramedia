@@ -951,7 +951,7 @@ const Map<String, String> _cronCopy = <String, String>{
 };
 
 const Map<String, String> _cronFieldHelper = <String, String>{
-  'actor_subscription_sync': '同步订阅演员的影片数据。',
+  'actor_subscription_sync': '同步已订阅 JavDB 女优的影片数据；本地女优没有远端来源，不会参与同步。',
   'subscribed_movie_auto_download': '自动下载已订阅但缺失的影片。',
   'download_task_sync': '同步下载任务状态。',
   'download_task_auto_import': '导入已完成的下载任务。',

@@ -695,6 +695,9 @@ mixin FilterablePagedAsyncNotifierMixin<S, T, F>
   @override
   Future<String?> refresh() async {
     await retryFilter();
+    // 页面缓存可能在刷新途中释放 provider（例如订阅事件触发的后台刷新），
+    // 异步回来后不能再读 state。
+    if (isDisposed) return null;
     final current = state.value;
     return current == null ? null : pagedOf(current).filterUpdate.errorMessage;
   }

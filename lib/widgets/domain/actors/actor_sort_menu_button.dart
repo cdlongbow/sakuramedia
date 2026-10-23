@@ -1,0 +1,54 @@
+import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/features/actors/presentation/controllers/listing/actor_filter_state.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
+
+/// 女优列表的排序入口适配器。
+///
+/// 搜索态下接口按相关度排序，排序字段不生效；入口显示「相关度」并禁用，
+/// 避免摘要与实际结果不一致。
+class ActorSortMenuButton extends StatelessWidget {
+  const ActorSortMenuButton({
+    super.key,
+    required this.filterState,
+    required this.onChanged,
+    this.useDrawer = false,
+    this.keyPrefix = 'actors',
+    this.triggerKey,
+    this.panelKey,
+    this.drawerKey,
+  });
+
+  final ActorFilterState filterState;
+  final ValueChanged<ActorFilterState> onChanged;
+  final bool useDrawer;
+  final String keyPrefix;
+  final Key? triggerKey;
+  final Key? panelKey;
+  final Key? drawerKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final searching = filterState.isSearching;
+    final relevance = filterState.usesRelevanceSort;
+    return AppSortMenuButton<ActorSortField>(
+      fields: ActorSortField.values,
+      selectedField: filterState.sortField,
+      fieldLabelBuilder: (value) => value.label,
+      onFieldChanged: (value) =>
+          onChanged(filterState.copyWith(sortField: value!)),
+      selectedDirection: filterState.sortDirection,
+      onDirectionChanged: (value) =>
+          onChanged(filterState.copyWith(sortDirection: value)),
+      useDrawer: useDrawer,
+      enabled: !searching,
+      triggerLabel: relevance ? '相关度' : null,
+      tooltip: relevance ? '搜索时按相关度排序' : (searching ? '搜索中暂不可调整排序' : '排序'),
+      triggerKey: triggerKey,
+      panelKey: panelKey,
+      drawerKey: drawerKey,
+      fieldKeyBuilder: (value) => Key('$keyPrefix-sort-field-${value.name}'),
+      directionKeyBuilder: (value) =>
+          Key('$keyPrefix-sort-direction-${value.name}'),
+    );
+  }
+}

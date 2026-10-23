@@ -79,7 +79,10 @@ void main() {
 
     // 筛选入口与移动端共用同一个按钮，摘要只报「榜单」这一主维度。
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('desktop-rankings-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(entry.label, '有码');
     expect(entry.icon, Icons.leaderboard_outlined);
@@ -117,7 +120,7 @@ void main() {
     await tester.tap(find.byKey(const Key('desktop-rankings-filter-trigger')));
     await tester.pumpAndSettle();
 
-    // 面板内容与移动抽屉逐节一致（来源 / 榜单 / 周期 / 互动数 / 排序）。
+    // 面板内容与移动抽屉逐节一致（来源 / 榜单 / 周期 / 互动数）。
     expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
     expect(find.text('JavDB'), findsWidgets);
     expect(find.text('有码'), findsWidgets);
@@ -125,7 +128,8 @@ void main() {
       find.byKey(const Key('movie-filter-interaction-group-title')),
       findsOneWidget,
     );
-    expect(find.byKey(const Key('rankings-filter-sort-score')), findsOneWidget);
+    expect(find.byKey(const Key('rankings-sort-trigger')), findsOneWidget);
+    expect(find.byKey(const Key('rankings-filter-sort-score')), findsNothing);
 
     bundle.adapter.enqueueJson(
       method: 'GET',
@@ -143,22 +147,24 @@ void main() {
     expect(find.byKey(const Key('rankings-filter-panel')), findsOneWidget);
     expect(find.text('1 部'), findsOneWidget);
 
+    // 排序不在筛选面板里，关闭筛选后从独立排序入口选择。
+    await tester.tap(find.byKey(const Key('desktop-rankings-filter-trigger')));
+    await tester.pumpAndSettle();
+
     bundle.adapter.enqueueJson(
       method: 'GET',
       path: '/ranking-sources/javdb/boards/censored/items',
       body: _rankingItemsJson(total: 1),
     );
-    final panelScrollable = find.descendant(
-      of: find.byKey(const Key('rankings-filter-panel')),
-      matching: find.byType(Scrollable),
-    );
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('rankings-filter-sort-score')),
-      200,
-      scrollable: panelScrollable.first,
-    );
-    await tester.tap(find.byKey(const Key('rankings-filter-sort-score')));
+    await tester.tap(find.byKey(const Key('rankings-sort-trigger')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('rankings-sort-panel')), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('rankings-sort-field-score')),
+    );
+    await tester.tap(find.byKey(const Key('rankings-sort-field-score')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(
       bundle.adapter.requests.last.uri.queryParameters['sort'],

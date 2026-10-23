@@ -91,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(applied, hasLength(3));
-    expect(applied.last.isDefault, isTrue);
+    expect(applied.last.hasActiveFilters, isFalse);
   });
 
   testWidgets('切换订阅筛选加载新选项时资料筛选区保持同形不塌陷', (tester) async {
@@ -141,7 +141,7 @@ void main() {
     await tester.tap(find.text('打开筛选'));
     await tester.pumpAndSettle();
 
-    final sortTopBefore = tester.getTopLeft(find.text('排序方式')).dy;
+    final anchorTopBefore = tester.getTopLeft(find.text('身高')).dy;
 
     final subscriptionSection = find.byWidgetPredicate(
       (widget) => widget is MovieFilterChoiceSection<ActorSubscriptionStatus>,
@@ -156,8 +156,8 @@ void main() {
     expect(find.byKey(const Key('actor-filter-年龄-slider')), findsOneWidget);
     expect(find.byKey(const Key('actor-filter-身高-slider')), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('排序方式')).dy,
-      closeTo(sortTopBefore, 0.5),
+      tester.getTopLeft(find.text('身高')).dy,
+      closeTo(anchorTopBefore, 0.5),
     );
 
     pending.complete(options);
@@ -165,8 +165,8 @@ void main() {
 
     expect(find.byKey(const Key('actor-filter-年龄-slider')), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('排序方式')).dy,
-      closeTo(sortTopBefore, 0.5),
+      tester.getTopLeft(find.text('身高')).dy,
+      closeTo(anchorTopBefore, 0.5),
     );
   });
 }

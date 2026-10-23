@@ -8,6 +8,8 @@ import 'package:oktoast/oktoast.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
+import 'package:sakuramedia/features/downloads/data/magnet_uri.dart';
+import 'package:sakuramedia/features/downloads/presentation/manual_download_dialog.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
@@ -48,12 +50,19 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
     required this.movieNumber,
     required this.selectedMedia,
     required this.pane,
+    this.movieTitle,
+    this.movieCoverUrl,
     this.thumbnailPreviewPresentation = MoviePlotPreviewPresentation.dialog,
     this.onSearchSimilar,
     this.onPlay,
+    this.onSearchSelection,
   });
 
   final String movieNumber;
+
+  /// 当前影片标题/封面；评论磁力快捷添加时用于预填下载弹窗。
+  final String? movieTitle;
+  final String? movieCoverUrl;
   final MovieMediaItemDto? selectedMedia;
 
   /// 本弹窗承载的功能（由入口键决定，弹窗内不可切换）。
@@ -66,6 +75,9 @@ class MovieDetailInspectorPanel extends ConsumerStatefulWidget {
   )?
   onSearchSimilar;
   final void Function(MovieMediaThumbnailDto thumbnail)? onPlay;
+
+  /// 评论内容选中非空文本后点「搜索番号」时回调；null 时不注册该菜单项。
+  final ValueChanged<String>? onSearchSelection;
 
   @override
   ConsumerState<MovieDetailInspectorPanel> createState() =>
@@ -226,6 +238,9 @@ class _MovieDetailInspectorPanelState
     return switch (widget.pane) {
       MovieDetailInspectorPane.review => _MovieDetailReviewTab(
         movieNumber: widget.movieNumber,
+        movieTitle: widget.movieTitle,
+        movieCoverUrl: widget.movieCoverUrl,
+        onSearchSelection: widget.onSearchSelection,
       ),
       MovieDetailInspectorPane.magnetSearch => MovieMagnetSearchContent(
         movieNumber: widget.movieNumber,
@@ -269,9 +284,17 @@ class _MovieDetailInspectorPanelState
 }
 
 class _MovieDetailReviewTab extends ConsumerStatefulWidget {
-  const _MovieDetailReviewTab({required this.movieNumber});
+  const _MovieDetailReviewTab({
+    required this.movieNumber,
+    this.movieTitle,
+    this.movieCoverUrl,
+    this.onSearchSelection,
+  });
 
   final String movieNumber;
+  final String? movieTitle;
+  final String? movieCoverUrl;
+  final ValueChanged<String>? onSearchSelection;
 
   @override
   ConsumerState<_MovieDetailReviewTab> createState() =>
@@ -306,6 +329,22 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
       _scrollController.jumpTo(0);
     }
     unawaited(_controller.setSort(sort));
+  }
+
+  Future<void> _addMagnetFromReview(String magnetUri) async {
+    final result = await showManualDownloadDialog(
+      context,
+      prefill: ManualDownloadPrefill(
+        magnetUri: magnetUri,
+        movieNumber: widget.movieNumber,
+        movieTitle: widget.movieTitle,
+        movieCoverUrl: widget.movieCoverUrl,
+      ),
+    );
+    if (result == null || !mounted) return;
+    showToast(
+      result.response.created ? '已提交到 ${result.clientName}' : '下载任务已存在',
+    );
   }
 
   @override
@@ -396,37 +435,54 @@ class _MovieDetailReviewTabState extends ConsumerState<_MovieDetailReviewTab> {
       child: AppPagedLoadMoreScope(
         canLoadMore: () => _state.canAutoLoadMore,
         onLoadMore: _controller.loadMore,
-      child: ListView.separated(
-        controller: _scrollController,
-        key: const Key('movie-detail-review-list'),
-        itemCount: state.items.length + 1,
-        separatorBuilder: (context, index) =>
-            SizedBox(height: context.appSpacing.sm),
-        itemBuilder: (context, index) {
-          if (index < state.items.length) {
-            return _MovieDetailReviewCard(review: state.items[index]);
-          }
-          return _MovieDetailReviewFooter(
-            state: state,
-            onRetryLoadMore: _controller.loadMore,
-          );
-        },
-      ),
+        child: ListView.separated(
+          controller: _scrollController,
+          key: const Key('movie-detail-review-list'),
+          itemCount: state.items.length + 1,
+          separatorBuilder: (context, index) =>
+              SizedBox(height: context.appSpacing.sm),
+          itemBuilder: (context, index) {
+            if (index < state.items.length) {
+              return _MovieDetailReviewCard(
+                review: state.items[index],
+                onAddMagnet: _addMagnetFromReview,
+                onSearchSelection: widget.onSearchSelection,
+              );
+            }
+            return _MovieDetailReviewFooter(
+              state: state,
+              onRetryLoadMore: _controller.loadMore,
+            );
+          },
+        ),
       ),
     );
   }
 }
 
 class _MovieDetailReviewCard extends StatelessWidget {
-  const _MovieDetailReviewCard({required this.review});
+  const _MovieDetailReviewCard({
+    required this.review,
+    this.onAddMagnet,
+    this.onSearchSelection,
+  });
 
   final MovieReviewDto review;
+
+  /// 为 null 时不展示磁力快捷入口（加载骨架等只读场景）。
+  final ValueChanged<String>? onAddMagnet;
+
+  /// 为 null 时不注册「搜索番号」选择菜单项。
+  final ValueChanged<String>? onSearchSelection;
 
   @override
   Widget build(BuildContext context) {
     final reviewDate = review.createdAt == null
         ? '--/--/--'
         : DateFormat('yy/MM/dd').format(review.createdAt!.toLocal());
+    final magnets = onAddMagnet == null
+        ? const <MagnetLink>[]
+        : extractMagnetLinks(review.content);
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(context.appSpacing.md),
@@ -512,7 +568,60 @@ class _MovieDetailReviewCard extends StatelessWidget {
               weight: AppTextWeight.regular,
               tone: AppTextTone.secondary,
             ),
+            contextMenuBuilder: (context, editableTextState) {
+              final editingValue = editableTextState.textEditingValue;
+              final selectedText = editingValue.selection
+                  .textInside(editingValue.text)
+                  .trim();
+              final buttonItems = editableTextState.contextMenuButtonItems;
+              if (onSearchSelection != null &&
+                  review.content.trim().isNotEmpty &&
+                  selectedText.isNotEmpty) {
+                buttonItems.insert(
+                  0,
+                  ContextMenuButtonItem(
+                    label: '搜索番号',
+                    onPressed: () {
+                      // 工具栏挂在 Overlay 上，不先收起会浮在目标路由上方。
+                      editableTextState.hideToolbar();
+                      onSearchSelection!(selectedText);
+                    },
+                  ),
+                );
+              }
+              return AdaptiveTextSelectionToolbar.buttonItems(
+                anchors: editableTextState.contextMenuAnchors,
+                buttonItems: buttonItems,
+              );
+            },
           ),
+          if (magnets.isNotEmpty) ...[
+            SizedBox(height: context.appSpacing.sm),
+            Wrap(
+              spacing: context.appSpacing.xs,
+              runSpacing: context.appSpacing.xs,
+              children: [
+                for (
+                  var magnetIndex = 0;
+                  magnetIndex < magnets.length;
+                  magnetIndex++
+                )
+                  AppTextButton(
+                    key: Key(
+                      'movie-detail-review-add-magnet-'
+                      '${review.id}-$magnetIndex',
+                    ),
+                    label: magnets.length == 1
+                        ? '添加磁力下载'
+                        : '添加磁力 ${magnetIndex + 1}',
+                    icon: const Icon(Icons.download_rounded),
+                    size: AppTextButtonSize.xSmall,
+                    emphasis: AppTextButtonEmphasis.accent,
+                    onPressed: () => onAddMagnet!(magnets[magnetIndex].uri),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

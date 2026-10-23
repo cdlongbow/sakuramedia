@@ -96,7 +96,10 @@ void main() {
     expect(tagged.uri.queryParameters['tag_match'], 'or');
     // 入口摘要直接反映标签条件。
     final entry = tester.widget<AppFilterEntryButton>(
-      find.byType(AppFilterEntryButton),
+      find.descendant(
+        of: find.byKey(const Key('movies-filter-trigger')),
+        matching: find.byType(AppFilterEntryButton),
+      ),
     );
     expect(entry.label, '标签 · 1');
 

@@ -46,7 +46,7 @@ import 'package:sakuramedia/widgets/domain/collections/collection_hint_box.dart'
 
 /// 切片首页：上方「切片合集」横滑区 + 下方「全部切片」网格（悬停预览、加入合集）。
 ///
-/// 「全部切片」表头右侧的「选择」入口进入多选模式后，网格切换为多选交互；选择栏支持
+/// 切片区表头右侧的「选择」入口进入多选模式后，网格切换为多选交互；选择栏支持
 /// 「加入合集 / 删除」两个批量动作，逻辑对齐 PornBox 桌面页。
 class DesktopClipsPage extends ConsumerStatefulWidget {
   const DesktopClipsPage({super.key});
@@ -285,7 +285,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
   // ----------------------------------------------------------- 切片区
 
   Widget _buildClipsHeader(BuildContext context, List<MediaClipDto> clips) {
-    final spacing = context.appSpacing;
     final hasClips = clips.isNotEmpty;
     // 顶栏只订阅排序与筛选更新态：翻页 loading/失败不重建顶栏。
     final headerView = ref.watch(
@@ -302,23 +301,6 @@ class _DesktopClipsPageState extends ConsumerState<DesktopClipsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: spacing.sm),
-          child: Row(
-            children: [
-              Text(
-                '全部切片',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
         // 与「时刻」页同构：选择态原地改写操作行，两态等高不跳版。
         if (selectionMode)
           _buildSelectionHeader(context, clips)

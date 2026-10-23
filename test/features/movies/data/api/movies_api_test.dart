@@ -1842,4 +1842,26 @@ void main() {
       ),
     );
   });
+
+  test('movie actor add/remove use idempotent no-content endpoints', () async {
+    adapter.enqueueJson(
+      method: 'PUT',
+      path: '/movies/ABC-001/actors/7',
+      statusCode: 204,
+    );
+    adapter.enqueueJson(
+      method: 'DELETE',
+      path: '/movies/ABC-001/actors/7',
+      statusCode: 204,
+    );
+
+    await moviesApi.addMovieActor(movieNumber: 'ABC-001', actorId: 7);
+    await moviesApi.removeMovieActor(movieNumber: 'ABC-001', actorId: 7);
+
+    expect(adapter.requests, hasLength(2));
+    expect(adapter.requests[0].method, 'PUT');
+    expect(adapter.requests[0].path, '/movies/ABC-001/actors/7');
+    expect(adapter.requests[1].method, 'DELETE');
+    expect(adapter.requests[1].path, '/movies/ABC-001/actors/7');
+  });
 }

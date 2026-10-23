@@ -5,17 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/session/providers/session_store_provider.dart';
+import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_provider.dart';
 import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_scope.dart';
+import 'package:sakuramedia/features/playlists/presentation/providers/playlists_overview_state.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_section_header.dart';
 import 'package:sakuramedia/widgets/domain/playlists/playlist_banner_card.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -76,28 +79,18 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      '播放列表',
-                      style: resolveAppTextStyle(
-                        context,
-                        size: AppTextSize.s14,
-                        weight: AppTextWeight.semibold,
-                        tone: AppTextTone.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    AppButton(
-                      key: const Key('playlists-create-button'),
-                      label: '新建播放列表',
-                      variant: AppButtonVariant.primary,
-                      onPressed: _openCreateDialog,
-                      size: AppButtonSize.small,
-                    ),
-                  ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AppIconButton(
+                    key: const Key('playlists-create-button'),
+                    icon: const Icon(Icons.add_rounded),
+                    tooltip: '新建播放列表',
+                    semanticLabel: '新建播放列表',
+                    onPressed: _openCreateDialog,
+                    iconColor: context.appTextPalette.primary,
+                  ),
                 ),
-                SizedBox(height: context.appSpacing.lg),
+                SizedBox(height: context.appSpacing.sm),
                 Expanded(child: _buildPlaylistsList(context, state, notifier)),
               ],
             ),
@@ -109,93 +102,137 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
 
   Widget _buildPlaylistsList(
     BuildContext context,
-    dynamic state,
-    dynamic notifier,
+    PlaylistsOverviewState state,
+    PlaylistsOverview notifier,
   ) {
     final playlists = state.playlists;
     if (playlists.isEmpty) {
       return const AppEmptyState(message: '暂无播放列表');
     }
+    final systemPlaylists = playlists
+        .where((playlist) => playlist.isSystem)
+        .toList(growable: false);
+    final customPlaylists = playlists
+        .where((playlist) => !playlist.isSystem)
+        .toList(growable: false);
+    final spacing = context.appSpacing;
 
-    if (playlists.length < 2) {
-      final playlist = playlists.single;
-      return ListView(
-        children: [
-          PlaylistBannerCard(
-            key: Key('playlist-banner-card-${playlist.id}'),
-            title: playlist.name,
-            coverImageUrl: state.coverUrlFor(playlist.id),
-            onTap: () => context.pushDesktopPlaylistDetail(
-              playlistId: playlist.id,
-              fallbackPath: desktopPlaylistsPath,
+    return CustomScrollView(
+      key: const Key('desktop-playlists-scroll'),
+      slivers: [
+        if (systemPlaylists.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: AppSectionHeader(
+              title: '系统列表',
+              trailingText: '${systemPlaylists.length} 个',
             ),
           ),
-        ],
-      );
-    }
-
-    return ReorderableListView.builder(
-      key: const Key('desktop-playlists-reorderable-list'),
-      buildDefaultDragHandles: false,
-      itemCount: playlists.length,
-      onReorder: notifier.reorderPlaylists,
-      itemBuilder: (context, index) {
-        final playlist = playlists[index];
-        final isHovered = _hoveredPlaylistId == playlist.id;
-        return Padding(
-          key: ValueKey<int>(playlist.id),
-          padding: EdgeInsets.only(bottom: context.appSpacing.sm),
-          child: MouseRegion(
-            onEnter: (_) => _setHoveredPlaylistId(playlist.id),
-            onExit: (_) {
-              if (_hoveredPlaylistId == playlist.id) {
-                _setHoveredPlaylistId(null);
-              }
+          SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
+          SliverList.builder(
+            itemCount: systemPlaylists.length,
+            itemBuilder: (context, index) {
+              final playlist = systemPlaylists[index];
+              return Padding(
+                key: ValueKey<int>(playlist.id),
+                padding: EdgeInsets.only(bottom: spacing.sm),
+                child: _buildBanner(context, state, playlist),
+              );
             },
-            child: Stack(
-              children: [
-                PlaylistBannerCard(
-                  key: Key('playlist-banner-card-${playlist.id}'),
-                  title: playlist.name,
-                  coverImageUrl: state.coverUrlFor(playlist.id),
-                  onTap: () => context.pushDesktopPlaylistDetail(
-                    playlistId: playlist.id,
-                    fallbackPath: desktopPlaylistsPath,
-                  ),
-                ),
-                Positioned(
-                  right: context.appSpacing.sm,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: IgnorePointer(
-                      ignoring: !isHovered,
-                      child: Visibility(
-                        visible: isHovered,
-                        child: ReorderableDragStartListener(
-                          index: index,
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.grab,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: context.appColors.surfaceCard.withValues(
-                                  alpha: 0.92,
-                                ),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: context.appColors.borderSubtle,
-                                ),
+          ),
+        ],
+        if (systemPlaylists.isNotEmpty && customPlaylists.isNotEmpty)
+          SliverToBoxAdapter(child: SizedBox(height: spacing.xl)),
+        if (customPlaylists.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: AppSectionHeader(
+              title: '我的播放列表',
+              trailingText: '${customPlaylists.length} 个',
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: spacing.sm)),
+          SliverReorderableList(
+            key: const Key('desktop-playlists-reorderable-list'),
+            itemCount: customPlaylists.length,
+            onReorderItem: notifier.reorderCustomPlaylists,
+            itemBuilder: (context, index) =>
+                _buildCustomItem(context, state, customPlaylists, index),
+          ),
+        ],
+        SliverToBoxAdapter(child: SizedBox(height: spacing.lg)),
+      ],
+    );
+  }
+
+  Widget _buildBanner(
+    BuildContext context,
+    PlaylistsOverviewState state,
+    PlaylistDto playlist,
+  ) {
+    return PlaylistBannerCard(
+      key: Key('playlist-banner-card-${playlist.id}'),
+      title: playlist.name,
+      coverImageUrl: state.coverUrlFor(playlist.id),
+      onTap: () => context.pushDesktopPlaylistDetail(
+        playlistId: playlist.id,
+        fallbackPath: desktopPlaylistsPath,
+      ),
+    );
+  }
+
+  Widget _buildCustomItem(
+    BuildContext context,
+    PlaylistsOverviewState state,
+    List<PlaylistDto> customPlaylists,
+    int index,
+  ) {
+    final playlist = customPlaylists[index];
+    final isHovered = _hoveredPlaylistId == playlist.id;
+    return Padding(
+      key: ValueKey<int>(playlist.id),
+      padding: EdgeInsets.only(bottom: context.appSpacing.sm),
+      child: MouseRegion(
+        onEnter: (_) => _setHoveredPlaylistId(playlist.id),
+        onExit: (_) {
+          if (_hoveredPlaylistId == playlist.id) {
+            _setHoveredPlaylistId(null);
+          }
+        },
+        child: Stack(
+          children: [
+            _buildBanner(context, state, playlist),
+            if (customPlaylists.length > 1)
+              Positioned(
+                right: context.appSpacing.sm,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: IgnorePointer(
+                    ignoring: !isHovered,
+                    child: Visibility(
+                      visible: isHovered,
+                      child: ReorderableDragStartListener(
+                        index: index,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.grab,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: context.appColors.surfaceCard.withValues(
+                                alpha: 0.92,
                               ),
-                              child: Padding(
-                                padding: EdgeInsets.all(context.appSpacing.xs),
-                                child: Icon(
-                                  Icons.unfold_more_rounded,
-                                  key: Key(
-                                    'playlist-reorder-handle-${playlist.id}',
-                                  ),
-                                  size: context.appComponentTokens.iconSizeMd,
-                                  color: context.appTextPalette.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: context.appColors.borderSubtle,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(context.appSpacing.xs),
+                              child: Icon(
+                                Icons.unfold_more_rounded,
+                                key: Key(
+                                  'playlist-reorder-handle-${playlist.id}',
                                 ),
+                                size: context.appComponentTokens.iconSizeMd,
+                                color: context.appTextPalette.primary,
                               ),
                             ),
                           ),
@@ -204,11 +241,10 @@ class _DesktopPlaylistsPageState extends ConsumerState<DesktopPlaylistsPage> {
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -241,18 +277,15 @@ class _DesktopPlaylistsLoadingState extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const AppSkeletonBlock(width: 88, height: 22),
-                const Spacer(),
-                AppSkeletonBlock(
-                  width: 108,
-                  height: context.appComponentTokens.buttonHeightSm,
-                  radius: context.appRadius.pillBorder,
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerRight,
+              child: AppSkeletonBlock(
+                width: appCompactIconButtonSize,
+                height: appCompactIconButtonSize,
+                radius: context.appRadius.smBorder,
+              ),
             ),
-            SizedBox(height: spacing.lg),
+            SizedBox(height: spacing.sm),
             Expanded(
               child: ListView.separated(
                 key: const Key('playlists-page-loading'),

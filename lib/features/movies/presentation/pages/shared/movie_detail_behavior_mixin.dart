@@ -887,7 +887,9 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
           );
         }
       case MovieDetailActionType.refreshMetadata:
-        await confirmRefreshMetadata();
+        await confirmRefreshMetadata(
+          isActorsManuallyManaged: movie.isActorsManuallyManaged,
+        );
       case MovieDetailActionType.openMagnetSearch:
         await openInspector(
           movie,
@@ -916,11 +918,15 @@ mixin MovieDetailBehaviorMixin<T extends ConsumerStatefulWidget>
   }
 
   /// 「刷新元数据」覆盖式刷新的共享二次确认（移动底部抽屉 / 桌面居中弹窗）。
-  Future<void> confirmRefreshMetadata() async {
+  Future<void> confirmRefreshMetadata({
+    bool isActorsManuallyManaged = false,
+  }) async {
     await showAppConfirmDialog(
       context,
       title: MovieDetailRefreshConfirmationCopy.title,
-      message: MovieDetailRefreshConfirmationCopy.description,
+      message: MovieDetailRefreshConfirmationCopy.descriptionFor(
+        isActorsManuallyManaged: isActorsManuallyManaged,
+      ),
       extraContent: Text(
         MovieDetailRefreshConfirmationCopy.hint,
         style: resolveAppTextStyle(

@@ -296,6 +296,58 @@ void main() {
     expect(find.byKey(const Key('tags-selected-3')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('移动端本地女优隐藏合并入口并提示订阅仅作收藏', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/actors/1',
+      body: _localActorJson(),
+    );
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/movies',
+      body: _moviesJson(total: 0),
+    );
+
+    await tester.pumpWidget(wrap(const MobileActorDetailPage(actorId: 1)));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('mobile-actor-detail-local-subscription-hint')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-actor-detail-merge-button')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('mobile-actor-detail-edit-button')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('mobile-actor-detail-subscription-1')),
+      findsOneWidget,
+    );
+  });
+}
+
+Map<String, dynamic> _localActorJson() {
+  return <String, dynamic>{
+    'id': 1,
+    'javdb_id': null,
+    'name': '本地女优',
+    'alias_name': '本地女优',
+    'display_name': '本地女优',
+    'profile_image': null,
+    'is_subscribed': false,
+    'gender': 1,
+  };
 }
 
 Map<String, dynamic> _actorJson() {

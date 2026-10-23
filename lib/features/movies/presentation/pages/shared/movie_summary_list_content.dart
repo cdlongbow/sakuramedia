@@ -29,6 +29,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_filter_sections.dart';
+import 'package:sakuramedia/widgets/domain/movies/movie_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/widgets/domain/tags/tag_filter_section.dart';
 
@@ -210,7 +211,11 @@ class _MovieSummaryListContentState
   }
 
   void _resetFilters() {
-    _applyFilter(MovieFilterState.initial);
+    final current =
+        ref.read(movieSummaryProvider(widget.scope)).value?.filter.movie ??
+        widget.scope.initialMovieFilter ??
+        MovieFilterState.initial;
+    _applyFilter(current.resetFilters());
     final tagSelectionScope = widget.tagSelectionScope;
     if (tagSelectionScope != null) {
       ref.read(tagSelectionProvider(tagSelectionScope).notifier).clear();
@@ -344,13 +349,21 @@ class _MovieSummaryListContentState
               : TagFilterSection(scope: tagSelectionScope),
         ),
         filterPanelFooter: AppFilterPanelFooter(
-          isDefault: filter.isDefault && !hasTagSelection,
+          isDefault: !filter.hasActiveFilters && !hasTagSelection,
           onReset: _resetFilters,
         ),
         informationSlots: [
           AppListHeaderInfo(key: widget.totalKey, label: '${view.total} 部'),
         ],
-        actionSlots: [buildEnterSelectionButton()],
+        actionSlots: [
+          MovieSortMenuButton(
+            triggerKey: const Key('movies-sort-trigger'),
+            panelKey: const Key('movies-sort-panel'),
+            filterState: filter,
+            onChanged: _applyFilter,
+          ),
+          buildEnterSelectionButton(),
+        ],
       );
     }
 
@@ -392,81 +405,81 @@ class _MovieSummaryListContentState
             onLoadMore: () => ref
                 .read(movieSummaryProvider(widget.scope).notifier)
                 .loadMore(),
-          child: widget.bodyBuilder(
-            context,
-            _scrollController,
-            SliverMainAxisGroup(
-              slivers: [
-                if (!view.filterUpdate.hasFailed || items.isNotEmpty)
-                  AppSkeletonizer.sliver(
-                    enabled: isInitialLoading,
-                    child: MovieSummarySliver(
-                      items: isInitialLoading
-                          ? movieListItemPlaceholders(count: 24)
-                          : items,
-                      errorMessage: initialErrorMessage,
-                      trailingLabelForMovie: widget.trailingLabelForMovie,
-                      onMovieTap: (movie) =>
-                          widget.onMovieTap(context, movie.movieNumber),
-                      onMovieMenuRequest: (movie, globalPosition) {
-                        unawaited(
-                          showMovieCollectionFeatureActionMenu(
-                            context: context,
-                            movieNumber: movie.movieNumber,
-                            globalPosition: globalPosition,
-                            isSubscribed: movie.isSubscribed,
-                            onBlacklisted: () => ref
-                                .read(
-                                  movieSummaryProvider(widget.scope).notifier,
-                                )
-                                .removeMovies(<String>[movie.movieNumber]),
-                            onEnterSelection: widget.useMobileSelectionLayout
-                                ? () {
-                                    enterSelection();
-                                    toggleSelect(movie.movieNumber);
-                                  }
-                                : null,
-                          ),
-                        );
-                      },
-                      onMovieSubscriptionTap: (movie) =>
-                          _toggleMovieSubscription(movie.movieNumber),
-                      onMovieToggleCollectionType:
-                          _hoverFeatureActions.toggleCollectionType,
-                      onMovieBlacklist: _hoverFeatureActions.blacklist,
-                      isMovieSubscriptionUpdating: (movie) =>
-                          view.updating.contains(movie.movieNumber),
-                      emptyMessage:
-                          widget.emptyMessage ??
-                            (filter.isDefault
+            child: widget.bodyBuilder(
+              context,
+              _scrollController,
+              SliverMainAxisGroup(
+                slivers: [
+                  if (!view.filterUpdate.hasFailed || items.isNotEmpty)
+                    AppSkeletonizer.sliver(
+                      enabled: isInitialLoading,
+                      child: MovieSummarySliver(
+                        items: isInitialLoading
+                            ? movieListItemPlaceholders(count: 24)
+                            : items,
+                        errorMessage: initialErrorMessage,
+                        trailingLabelForMovie: widget.trailingLabelForMovie,
+                        onMovieTap: (movie) =>
+                            widget.onMovieTap(context, movie.movieNumber),
+                        onMovieMenuRequest: (movie, globalPosition) {
+                          unawaited(
+                            showMovieCollectionFeatureActionMenu(
+                              context: context,
+                              movieNumber: movie.movieNumber,
+                              globalPosition: globalPosition,
+                              isSubscribed: movie.isSubscribed,
+                              onBlacklisted: () => ref
+                                  .read(
+                                    movieSummaryProvider(widget.scope).notifier,
+                                  )
+                                  .removeMovies(<String>[movie.movieNumber]),
+                              onEnterSelection: widget.useMobileSelectionLayout
+                                  ? () {
+                                      enterSelection();
+                                      toggleSelect(movie.movieNumber);
+                                    }
+                                  : null,
+                            ),
+                          );
+                        },
+                        onMovieSubscriptionTap: (movie) =>
+                            _toggleMovieSubscription(movie.movieNumber),
+                        onMovieToggleCollectionType:
+                            _hoverFeatureActions.toggleCollectionType,
+                        onMovieBlacklist: _hoverFeatureActions.blacklist,
+                        isMovieSubscriptionUpdating: (movie) =>
+                            view.updating.contains(movie.movieNumber),
+                        emptyMessage:
+                            widget.emptyMessage ??
+                            (!filter.hasActiveFilters
                                 ? '暂无影片，去搜索看看吧'
                                 : '当前筛选条件下暂无匹配影片'),
-                      selectionMode: selectionMode,
+                        selectionMode: selectionMode,
                         isMovieSelected: (movie) =>
                             isSelected(movie.movieNumber),
-                      onMovieSelectedChanged: (movie, _) =>
-                          toggleSelect(movie.movieNumber),
+                        onMovieSelectedChanged: (movie, _) =>
+                            toggleSelect(movie.movieNumber),
+                      ),
+                    ),
+                  // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
+                  PagedLoadMoreFooterSliver(
+                    watchFooter: (ref) => ref.watch(
+                      movieSummaryProvider(widget.scope).select(
+                        (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
+                      ),
+                    ),
+                    onLoadMore: (ref) => unawaited(
+                      ref
+                          .read(movieSummaryProvider(widget.scope).notifier)
+                          .loadMore(),
                     ),
                   ),
-                // loadMore 页脚独立订阅：翻页状态翻转只重建它，不重建上面网格。
-                PagedLoadMoreFooterSliver(
-                  watchFooter: (ref) => ref.watch(
-                    movieSummaryProvider(widget.scope).select(
-                      (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
-                    ),
-                  ),
-                  onLoadMore: (ref) => unawaited(
-                    ref
-                        .read(movieSummaryProvider(widget.scope).notifier)
-                        .loadMore(),
-                  ),
-                ),
-              ],
+                ],
+              ),
+              widget.enableRefresh ? _handleRefresh : null,
             ),
-            widget.enableRefresh ? _handleRefresh : null,
           ),
         ),
-      ),
       ),
     );
 

@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/actions/app_glass_icon_button.dart';
 import 'package:sakuramedia/widgets/shell/mobile/mobile_system_overlay.dart';
 
 /// 让子页面把「真实标题」报给外层返回栏的信箱。
@@ -56,10 +55,13 @@ class AppMobileSubpageShell extends StatefulWidget {
   /// 沉浸详情：透明底 + 返回栏悬浮在内容之上（影片详情用）。
   final bool immersive;
 
-  /// 非沉浸子页是否随滚动收起 AppBar：滚离顶部隐藏，回到顶部才恢复。
+  /// 子页是否随滚动收起 AppBar：滚离顶部隐藏，回到顶部才恢复。
   ///
-  /// 移动路由层对所有非沉浸子页传 true；直接使用 shell 时默认 false，
-  /// 需要滚动收起时显式开启。immersive 子页始终忽略该开关。
+  /// 非沉浸子页收起时 AppBar 高度归零、内容随之上移；沉浸子页的返回栏本来
+  /// 就悬浮在内容上，收起只做淡出，正文不位移。
+  ///
+  /// 移动路由层对所有子页传 true；直接使用 shell 时默认 false，
+  /// 需要滚动收起时显式开启。
   final bool autoHideAppBar;
 
   @override
@@ -109,7 +111,7 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
     final router = GoRouter.maybeOf(context);
     final navigator = Navigator.maybeOf(context);
     final immersive = widget.immersive;
-    final autoHideAppBar = widget.autoHideAppBar && !immersive;
+    final autoHideAppBar = widget.autoHideAppBar;
     final appBar = _buildAppBar(context, immersive: immersive);
     final pageChild = autoHideAppBar
         ? NotificationListener<ScrollNotification>(
@@ -122,31 +124,40 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
       padding: widget.bodyPadding,
       child: AppMobileSubpageTitle(notifier: _titleOverride, child: pageChild),
     );
-    final scaffold = autoHideAppBar
-        ? Scaffold(
-            backgroundColor: context.appColors.surfaceCard,
-            body: Column(
-              children: [
-                AnimatedSize(
-                  duration: _appBarAnimationDuration,
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: _appBarHidden
-                      ? const SizedBox(width: double.infinity)
-                      : SizedBox(height: kToolbarHeight, child: appBar),
-                ),
-                Expanded(child: body),
-              ],
+    final Widget scaffold;
+    if (autoHideAppBar && !immersive) {
+      scaffold = Scaffold(
+        backgroundColor: context.appColors.surfaceCard,
+        body: Column(
+          children: [
+            AnimatedSize(
+              duration: _appBarAnimationDuration,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: _appBarHidden
+                  ? const SizedBox(width: double.infinity)
+                  : SizedBox(height: kToolbarHeight, child: appBar),
             ),
-          )
-        : Scaffold(
-            backgroundColor: immersive
-                ? Colors.transparent
-                : context.appColors.surfaceCard,
-            extendBodyBehindAppBar: immersive,
-            appBar: appBar,
-            body: body,
-          );
+            Expanded(child: body),
+          ],
+        ),
+      );
+    } else {
+      scaffold = Scaffold(
+        backgroundColor: immersive
+            ? Colors.transparent
+            : context.appColors.surfaceCard,
+        extendBodyBehindAppBar: immersive,
+        appBar: immersive && autoHideAppBar
+            ? _AutoHideOverlayAppBar(
+                hidden: _appBarHidden,
+                duration: _appBarAnimationDuration,
+                child: appBar,
+              )
+            : appBar,
+        body: body,
+      );
+    }
     final content = PopScope<void>(
       canPop: _canPop(router, navigator),
       onPopInvokedWithResult: (didPop, _) {
@@ -213,24 +224,17 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
           : null,
       leadingWidth: context.appComponentTokens.mobileSubpageLeadingWidth,
       titleSpacing: 0, // 默认 16
-      leading: immersive
-          ? Center(
-              child: AppGlassIconButton(
-                key: const Key('mobile-subpage-back-button'),
-                tooltip: '返回',
-                semanticLabel: '返回',
-                onPressed: () => _handleBack(context),
-                icon: Icons.arrow_back_ios_new_rounded,
-                iconSize: context.appComponentTokens.iconSizeSm,
-              ),
-            )
-          : IconButton(
-              iconSize: context.appComponentTokens.iconSizeSm,
-              key: const Key('mobile-subpage-back-button'),
-              onPressed: () => _handleBack(context),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              tooltip: '返回',
-            ),
+      leading: IconButton(
+        iconSize: context.appComponentTokens.iconSizeSm,
+        key: const Key('mobile-subpage-back-button'),
+        onPressed: () => _handleBack(context),
+        icon: Icon(
+          Icons.arrow_back_ios_new_rounded,
+          // 沉浸页压在封面和顶部压暗渐变上，沿用媒体前景色保证可读。
+          color: immersive ? context.appTextPalette.onMedia : null,
+        ),
+        tooltip: '返回',
+      ),
       title: immersive
           // 沉浸页不占标题位：封面直通状态栏，顶栏只留返回键和渐变。
           ? null
@@ -284,5 +288,44 @@ class _AppMobileSubpageShellState extends State<AppMobileSubpageShell> {
   void _goToDefault(GoRouter? router, String location) {
     // 子页面优先交给路由系统处理；在纯组件宿主下没有 GoRouter 时保持静默。
     router?.go(location);
+  }
+}
+
+/// 沉浸子页的悬浮返回栏：滚离顶部时淡出，正文保持全幅铺底不位移。
+///
+/// 与普通子页不同，这里不能用高度动画——沉浸页的 AppBar 是叠在内容上的，
+/// 高度归零不会让内容上移，反而会闪一次布局。淡出期间仍保留 preferredSize，
+/// 隐藏后屏蔽命中和语义，避免透明返回键被点到或读屏读到。
+class _AutoHideOverlayAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _AutoHideOverlayAppBar({
+    required this.hidden,
+    required this.duration,
+    required this.child,
+  });
+
+  final bool hidden;
+  final Duration duration;
+
+  /// 必须是 [AppBar]：它自身携带状态栏高度和工具栏高度。
+  final AppBar child;
+
+  @override
+  Size get preferredSize => child.preferredSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: hidden,
+      child: ExcludeSemantics(
+        excluding: hidden,
+        child: AnimatedOpacity(
+          opacity: hidden ? 0 : 1,
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          child: child,
+        ),
+      ),
+    );
   }
 }

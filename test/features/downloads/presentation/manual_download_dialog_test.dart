@@ -69,6 +69,89 @@ void main() {
     );
   });
 
+  testWidgets('prefilled dialog skips movie query and submits compact form', (
+    tester,
+  ) async {
+    const hash = '0123456789abcdef0123456789abcdef01234567';
+    final bundle = await _openDialog(
+      tester,
+      prefill: const ManualDownloadPrefill(
+        magnetUri: 'magnet:?xt=urn:btih:$hash',
+        movieNumber: 'ABC-001',
+        movieTitle: 'Prefilled Movie',
+        movieCoverUrl: '',
+      ),
+    );
+
+    expect(find.text('添加磁力下载'), findsOneWidget);
+    expect(find.text('磁力已从评论填入，确认下载器后提交。'), findsOneWidget);
+    expect(find.text('magnet:?xt=urn:btih:$hash'), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+    expect(find.text('当前影片'), findsOneWidget);
+    expect(find.text('Prefilled Movie'), findsOneWidget);
+    expect(find.byKey(const Key('manual-download-kind-jav')), findsNothing);
+    expect(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      findsNothing,
+    );
+    // 紧凑弹窗只有磁力、影片和下载器三项，不再渲染分组标题和下载器字段名。
+    expect(find.text('资源'), findsNothing);
+    expect(find.text('下载设置'), findsNothing);
+    expect(find.text('下载器'), findsNothing);
+
+    bundle.adapter.enqueueJson(
+      method: 'POST',
+      path: '/download-requests/manual',
+      statusCode: 201,
+      body: _manualTaskJson(),
+    );
+    await tester.tap(find.byKey(const Key('manual-download-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('manual-download-modal')), findsNothing);
+    final request = bundle.adapter.requests.singleWhere(
+      (request) => request.path == '/download-requests/manual',
+    );
+    expect(request.body, {
+      'client_id': 1,
+      'media_kind': 'jav',
+      'source_uri': 'magnet:?xt=urn:btih:$hash',
+      'movie_number': 'ABC-001',
+      'delete_source_after_import': false,
+    });
+  });
+
+  testWidgets('prefilled dialog opens compact on mobile without overflow', (
+    tester,
+  ) async {
+    const hash = '0123456789abcdef0123456789abcdef01234567';
+    await _openDialog(
+      tester,
+      platform: AppPlatform.mobile,
+      size: const Size(390, 844),
+      prefill: const ManualDownloadPrefill(
+        magnetUri: 'magnet:?xt=urn:btih:$hash',
+        movieNumber: 'ABC-001',
+        movieTitle: 'Prefilled Movie',
+      ),
+    );
+
+    expect(find.byKey(const Key('manual-download-modal')), findsOneWidget);
+    expect(find.text('添加磁力下载'), findsOneWidget);
+    expect(
+      find.byKey(const Key('manual-download-movie-resolution-card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('manual-download-movie-number-field')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('submits jav magnet after resolving a local movie', (
     tester,
   ) async {
@@ -524,6 +607,7 @@ Future<TestApiBundle> _openDialog(
   WidgetTester tester, {
   AppPlatform platform = AppPlatform.desktop,
   Size size = const Size(1200, 900),
+  ManualDownloadPrefill? prefill,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -560,7 +644,7 @@ Future<TestApiBundle> _openDialog(
             : sakuraDesktopThemeData,
         home: AppPlatformScope(
           platform: platform,
-          child: const OKToast(child: _DialogHost()),
+          child: OKToast(child: _DialogHost(prefill: prefill)),
         ),
       ),
     ),
@@ -677,7 +761,9 @@ Map<String, dynamic> _manualTaskJson({
 };
 
 class _DialogHost extends StatefulWidget {
-  const _DialogHost();
+  const _DialogHost({this.prefill});
+
+  final ManualDownloadPrefill? prefill;
 
   @override
   State<_DialogHost> createState() => _DialogHostState();
@@ -694,7 +780,10 @@ class _DialogHostState extends State<_DialogHost> {
           key: const Key('open-manual-download'),
           label: '打开',
           onPressed: () async {
-            final next = await showManualDownloadDialog(context);
+            final next = await showManualDownloadDialog(
+              context,
+              prefill: widget.prefill,
+            );
             if (mounted) {
               setState(() => result = next);
             }

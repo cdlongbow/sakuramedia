@@ -353,6 +353,16 @@ extension AppNavigationActions on BuildContext {
     MobileTagMoviesRouteData(tagId: tagId).push(this);
   }
 
+  /// 以关键词打开移动端搜索页；空查询不跳转。
+  void pushMobileSearch({required String query}) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    MobileSearchQueryRouteData(query: trimmed).push(this);
+  }
+
   void pushMobileImageSearch({
     String? fallbackPath,
     String? initialFileName,

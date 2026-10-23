@@ -26,7 +26,7 @@ class MobileVideoCollectionDetailPage extends StatelessWidget {
       keyPrefix: 'mobile-video-collection',
       useMobileSelectionLayout: true,
       hoistTitleToSubpageShell: true,
-      useMobileFilterDrawer: true,
+      useMobileSortDrawer: true,
       playAllBuilder: (context, {required enabled, required onPlayFrom}) {
         return AppTextButton(
           key: const Key('mobile-video-collection-play-all-button'),

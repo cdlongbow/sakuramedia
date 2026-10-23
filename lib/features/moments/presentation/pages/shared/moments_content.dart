@@ -452,23 +452,6 @@ class MomentsContent extends HookConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: context.appSpacing.sm),
-          child: Row(
-            children: [
-              Text(
-                '全部时刻',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s14,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
         if (selectionMode)
           _buildSelectionHeader(
             context,

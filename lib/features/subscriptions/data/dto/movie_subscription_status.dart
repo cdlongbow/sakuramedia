@@ -6,6 +6,8 @@
 /// 状态（例如「有 media 就算已入库」），一律以后端下发的 `status` 为准。
 library;
 
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
+
 /// 七个互斥状态；[unknown] 只用于兜底后端将来新增的取值。
 ///
 /// 枚举顺序即后端 CASE 分支顺序（也就是判定优先级），不要按 UI 展示顺序重排——
@@ -98,6 +100,45 @@ enum MovieSubscriptionSort {
   attemptCountDesc,
 }
 
+/// 订阅列表的排序字段。与 [MovieSubscriptionSort] 一一对应，供排序面板把
+/// 「字段 + 方向」拆成两行 chip；API 仍使用 [MovieSubscriptionSort] 的完整值。
+enum MovieSubscriptionSortField {
+  subscribedAt,
+  releaseDate,
+  lastSearchedAt,
+  attemptCount,
+}
+
+extension MovieSubscriptionSortFieldX on MovieSubscriptionSortField {
+  String get label => switch (this) {
+    MovieSubscriptionSortField.subscribedAt => '订阅时间',
+    MovieSubscriptionSortField.releaseDate => '发行日期',
+    MovieSubscriptionSortField.lastSearchedAt => '最近查询',
+    MovieSubscriptionSortField.attemptCount => '没找到次数',
+  };
+
+  /// 没找到次数只有「多到少」，不提供升序。
+  bool get supportsDirection => this != MovieSubscriptionSortField.attemptCount;
+
+  MovieSubscriptionSort withDirection(SortDirection direction) =>
+      switch ((this, direction)) {
+        (MovieSubscriptionSortField.subscribedAt, SortDirection.desc) =>
+          MovieSubscriptionSort.subscribedAtDesc,
+        (MovieSubscriptionSortField.subscribedAt, SortDirection.asc) =>
+          MovieSubscriptionSort.subscribedAtAsc,
+        (MovieSubscriptionSortField.releaseDate, SortDirection.desc) =>
+          MovieSubscriptionSort.releaseDateDesc,
+        (MovieSubscriptionSortField.releaseDate, SortDirection.asc) =>
+          MovieSubscriptionSort.releaseDateAsc,
+        (MovieSubscriptionSortField.lastSearchedAt, SortDirection.desc) =>
+          MovieSubscriptionSort.lastSearchedAtDesc,
+        (MovieSubscriptionSortField.lastSearchedAt, SortDirection.asc) =>
+          MovieSubscriptionSort.lastSearchedAtAsc,
+        (MovieSubscriptionSortField.attemptCount, _) =>
+          MovieSubscriptionSort.attemptCountDesc,
+      };
+}
+
 extension MovieSubscriptionSortX on MovieSubscriptionSort {
   String get apiValue => switch (this) {
     MovieSubscriptionSort.subscribedAtDesc => 'subscribed_at:desc',
@@ -109,13 +150,24 @@ extension MovieSubscriptionSortX on MovieSubscriptionSort {
     MovieSubscriptionSort.attemptCountDesc => 'attempt_count:desc',
   };
 
-  String get label => switch (this) {
-    MovieSubscriptionSort.subscribedAtDesc => '订阅时间 · 新到旧',
-    MovieSubscriptionSort.subscribedAtAsc => '订阅时间 · 旧到新',
-    MovieSubscriptionSort.releaseDateDesc => '发行日期 · 新到旧',
-    MovieSubscriptionSort.releaseDateAsc => '发行日期 · 旧到新',
-    MovieSubscriptionSort.lastSearchedAtDesc => '最近查询 · 新到旧',
-    MovieSubscriptionSort.lastSearchedAtAsc => '最近查询 · 旧到新',
-    MovieSubscriptionSort.attemptCountDesc => '没找到次数 · 多到少',
+  MovieSubscriptionSortField get field => switch (this) {
+    MovieSubscriptionSort.subscribedAtDesc ||
+    MovieSubscriptionSort.subscribedAtAsc =>
+      MovieSubscriptionSortField.subscribedAt,
+    MovieSubscriptionSort.releaseDateDesc ||
+    MovieSubscriptionSort.releaseDateAsc =>
+      MovieSubscriptionSortField.releaseDate,
+    MovieSubscriptionSort.lastSearchedAtDesc ||
+    MovieSubscriptionSort.lastSearchedAtAsc =>
+      MovieSubscriptionSortField.lastSearchedAt,
+    MovieSubscriptionSort.attemptCountDesc =>
+      MovieSubscriptionSortField.attemptCount,
+  };
+
+  SortDirection get direction => switch (this) {
+    MovieSubscriptionSort.subscribedAtAsc ||
+    MovieSubscriptionSort.releaseDateAsc ||
+    MovieSubscriptionSort.lastSearchedAtAsc => SortDirection.asc,
+    _ => SortDirection.desc,
   };
 }

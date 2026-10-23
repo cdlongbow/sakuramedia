@@ -4,8 +4,10 @@ import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart'
     show AppFilterPanelFooter, AppFilterPopover, AppFilterPopoverAlignment;
+import 'package:sakuramedia/widgets/domain/media/media_sort_menu_button.dart';
 
 /// 「媒体管理」筛选工具栏：仿 `MovieFilterToolbar` 的 popover 触发按钮 +
 /// 内部分节面板 + 底部重置。
@@ -36,28 +38,44 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
       spacing: context.appSpacing.sm,
       runSpacing: context.appSpacing.sm,
       children: [
-        AppFilterPopover(
-          triggerLabel: filterState.triggerLabel,
-          triggerKey: const Key('media-management-filter-trigger'),
-          labelKey: const Key('media-management-filter-trigger-label'),
-          panelKey: const Key('media-management-filter-panel'),
-          scrollViewKey: const Key('media-management-filter-scroll-view'),
-          // 没有预设 chip 分担焦点，trigger 恒高亮（表明它就代表当前筛选态），
-          // 与影片 `isDefault || isCustom` 效果一致。
-          isSelected: true,
-          highlightWhenOpen: false,
-          panelExtraWidth: 240,
-          // 面板 trigger 位于 leading 最左端，向右延伸自然填入内容区、不会
-          // 反过来遮挡左侧配置分类栏（默认的 right-aligned 会往左溢出）。
-          alignment: AppFilterPopoverAlignment.leftAlignedToTrigger,
-          panelBuilder: (_) => MediaBrowseFilterSectionGroup(
-            filterState: filterState,
-            libraries: libraries,
-            onChanged: onChanged,
+        SizedBox(
+          height: context.appComponentTokens.mobileTopTabHeight,
+          child: AppFilterPopover(
+            triggerLabel: filterState.triggerLabel,
+            panelKey: const Key('media-management-filter-panel'),
+            scrollViewKey: const Key('media-management-filter-scroll-view'),
+            panelExtraWidth: 240,
+            // 面板 trigger 位于 leading 最左端，向右延伸自然填入内容区、不会
+            // 反过来遮挡左侧配置分类栏（默认的 right-aligned 会往左溢出）。
+            alignment: AppFilterPopoverAlignment.leftAlignedToTrigger,
+            triggerBuilder: (context, isOpen, toggle) => AppFilterEntryButton(
+              key: const Key('media-management-filter-trigger'),
+              icon: Icons.tune_rounded,
+              label: filterState.triggerLabel,
+              tooltip: '筛选',
+              trailingIcon: isOpen
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
+              onTap: toggle,
+            ),
+            panelBuilder: (_) => MediaBrowseFilterSectionGroup(
+              filterState: filterState,
+              libraries: libraries,
+              onChanged: onChanged,
+            ),
+            footer: AppFilterPanelFooter(
+              isDefault: !filterState.hasActiveFilters,
+              onReset: onReset,
+            ),
           ),
-          footer: AppFilterPanelFooter(
-            isDefault: filterState.isDefault,
-            onReset: onReset,
+        ),
+        SizedBox(
+          height: context.appComponentTokens.mobileTopTabHeight,
+          child: MediaSortMenuButton(
+            triggerKey: const Key('media-management-sort-trigger'),
+            panelKey: const Key('media-management-sort-panel'),
+            filterState: filterState,
+            onChanged: onChanged,
           ),
         ),
       ],
@@ -65,7 +83,8 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
   }
 }
 
-/// 面板内的分节 Column：归属 / 媒体库 / 缩略图 / 排序，各自 chip 选择。
+/// 面板内的分节 Column：归属 / 媒体库 / 缩略图，各自 chip 选择。
+/// 排序不在筛选面板里，见 `MediaSortMenuButton`。
 class MediaBrowseFilterSectionGroup extends StatelessWidget {
   const MediaBrowseFilterSectionGroup({
     super.key,
@@ -175,45 +194,6 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
               ),
           ],
         ),
-        SizedBox(height: spacing.lg),
-        _SectionTitle(text: '排序方式'),
-        SizedBox(height: spacing.sm),
-        Wrap(
-          spacing: spacing.sm,
-          runSpacing: spacing.sm,
-          children: [
-            for (final field in MediaBrowseSortField.values)
-              AppTextButton(
-                key: Key('media-sort-field-${field.name}'),
-                label: field.label,
-                size: AppTextButtonSize.xSmall,
-                isSelected: filterState.sortField == field,
-                // 已选字段再点则清空，退回后端默认（入库时间倒序）。
-                onPressed: () => onChanged(
-                  filterState.copyWith(
-                    sortField: filterState.sortField == field ? null : field,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        if (filterState.sortField != null) ...[
-          SizedBox(height: spacing.md),
-          Wrap(
-            spacing: spacing.sm,
-            children: [
-              for (final direction in MediaBrowseSortDirection.values)
-                AppTextButton(
-                  key: Key('media-sort-direction-${direction.name}'),
-                  label: direction.label,
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: filterState.sortDirection == direction,
-                  onPressed: () =>
-                      onChanged(filterState.copyWith(sortDirection: direction)),
-                ),
-            ],
-          ),
-        ],
       ],
     );
   }

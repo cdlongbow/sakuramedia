@@ -26,6 +26,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_filter_popover.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_filter_sections.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_list_search_field.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 
 class DesktopActorsPage extends ConsumerStatefulWidget {
@@ -99,7 +100,12 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
     setState(() => _searchExpanded = !_searchExpanded);
   }
 
-  void _resetFilters() => _applyFilter(ActorFilterState.initial);
+  void _resetFilters() {
+    final current =
+        ref.read(actorSummaryProvider(_scope)).value?.filter ??
+        ActorFilterState.initial;
+    _applyFilter(current.resetFilters());
+  }
 
   Future<void> _refresh() async {
     await Future.wait<void>([
@@ -180,65 +186,65 @@ class _DesktopActorsPageState extends ConsumerState<DesktopActorsPage> {
                   false,
               onLoadMore: () =>
                   ref.read(actorSummaryProvider(_scope).notifier).loadMore(),
-            child: CustomScrollView(
-              key: const PageStorageKey<String>('desktop:actors:list'),
-              controller: _scrollController,
-              slivers: [
-                if (filter.isDefault)
-                  SliverToBoxAdapter(
-                    child: ActorTasteRecommendationRail(
-                      onActorTap: (actorId) => context.pushDesktopActorDetail(
-                        actorId: actorId,
-                        fallbackPath: desktopActorsPath,
-                      ),
-                    ),
-                  ),
-                SliverMainAxisGroup(
-                  slivers: [
-                    if (!(paged?.filterUpdate.hasFailed ?? false) ||
-                        items.isNotEmpty)
-                      AppSkeletonizer.sliver(
-                        enabled: isInitialLoading,
-                        child: ActorSummarySliver(
-                          items: isInitialLoading
-                              ? actorListItemPlaceholders(count: 24)
-                              : items,
-                          errorMessage: initialErrorMessage,
-                            onActorTap: (actor) =>
-                                context.pushDesktopActorDetail(
-                            actorId: actor.id,
-                            fallbackPath: desktopActorsPath,
-                          ),
-                          onActorSubscriptionTap: (actor) =>
-                              _toggleActorSubscription(actor.id),
-                          isActorSubscriptionUpdating: (actor) =>
-                              summary?.isSubscriptionUpdating(actor.id) ??
-                              false,
-                          emptyMessage: filter.isDefault
-                              ? '暂无女优，去搜索看看吧'
-                              : '当前筛选条件下暂无匹配女优',
+              child: CustomScrollView(
+                key: const PageStorageKey<String>('desktop:actors:list'),
+                controller: _scrollController,
+                slivers: [
+                  if (!filter.hasActiveFilters)
+                    SliverToBoxAdapter(
+                      child: ActorTasteRecommendationRail(
+                        onActorTap: (actorId) => context.pushDesktopActorDetail(
+                          actorId: actorId,
+                          fallbackPath: desktopActorsPath,
                         ),
                       ),
-                    // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
-                    PagedLoadMoreFooterSliver(
-                      watchFooter: (ref) => ref.watch(
+                    ),
+                  SliverMainAxisGroup(
+                    slivers: [
+                      if (!(paged?.filterUpdate.hasFailed ?? false) ||
+                          items.isNotEmpty)
+                        AppSkeletonizer.sliver(
+                          enabled: isInitialLoading,
+                          child: ActorSummarySliver(
+                            items: isInitialLoading
+                                ? actorListItemPlaceholders(count: 24)
+                                : items,
+                            errorMessage: initialErrorMessage,
+                            onActorTap: (actor) =>
+                                context.pushDesktopActorDetail(
+                                  actorId: actor.id,
+                                  fallbackPath: desktopActorsPath,
+                                ),
+                            onActorSubscriptionTap: (actor) =>
+                                _toggleActorSubscription(actor.id),
+                            isActorSubscriptionUpdating: (actor) =>
+                                summary?.isSubscriptionUpdating(actor.id) ??
+                                false,
+                            emptyMessage: !filter.hasActiveFilters
+                                ? '暂无女优，去搜索看看吧'
+                                : '当前筛选条件下暂无匹配女优',
+                          ),
+                        ),
+                      // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+                      PagedLoadMoreFooterSliver(
+                        watchFooter: (ref) => ref.watch(
                           actorSummaryProvider(_scope).select(
                             (s) => pagedLoadMoreFooterSnapshot(s.value?.paged),
                           ),
-                      ),
-                      onLoadMore: (ref) => unawaited(
+                        ),
+                        onLoadMore: (ref) => unawaited(
                           ref
                               .read(actorSummaryProvider(_scope).notifier)
                               .loadMore(),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -281,7 +287,7 @@ class _ActorsHeader extends StatelessWidget {
         onChanged: onFilterChanged,
       ),
       filterPanelFooter: AppFilterPanelFooter(
-        isDefault: filterState.isDefault,
+        isDefault: !filterState.hasActiveFilters,
         onReset: onResetFilters,
       ),
       filterUpdate: filterUpdate,
@@ -295,7 +301,17 @@ class _ActorsHeader extends StatelessWidget {
                 label: '$total 位',
               ),
             ],
-      actionSlots: searchExpanded ? const <Widget>[] : <Widget>[searchToggle],
+      actionSlots: searchExpanded
+          ? const <Widget>[]
+          : <Widget>[
+              ActorSortMenuButton(
+                triggerKey: const Key('actors-sort-trigger'),
+                panelKey: const Key('actors-sort-panel'),
+                filterState: filterState,
+                onChanged: onFilterChanged,
+              ),
+              searchToggle,
+            ],
       center: searchExpanded
           ? Row(
               children: [

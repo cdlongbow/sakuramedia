@@ -13,6 +13,8 @@ import 'package:sakuramedia/widgets/shell/desktop/app_sidebar.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_top_bar.dart';
 import 'package:sakuramedia/widgets/shell/window/app_mac_traffic_lights.dart';
+import 'package:sakuramedia/widgets/shell/window/app_window_drag_area.dart';
+import 'package:sakuramedia/widgets/shell/window/app_windows_caption.dart';
 
 class AppDesktopShell extends StatefulWidget {
   const AppDesktopShell({
@@ -23,6 +25,7 @@ class AppDesktopShell extends StatefulWidget {
     required this.shellNavigatorKey,
     required this.navGroups,
     required this.child,
+    this.showTopBar = true,
   });
 
   final String currentPath;
@@ -31,6 +34,11 @@ class AppDesktopShell extends StatefulWidget {
   final GlobalKey<NavigatorState> shellNavigatorKey;
   final List<AppNavGroup> navGroups;
   final Widget child;
+
+  /// 是否渲染内容区顶栏。标签页传 false，只隐藏顶栏内容；
+  /// 顶部仍保留标题栏高度的留白，并保留侧栏、macOS 红绿灯和
+  /// Windows 窗口按钮。
+  final bool showTopBar;
 
   @override
   State<AppDesktopShell> createState() => _AppDesktopShellState();
@@ -118,12 +126,14 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
     // 数值与顶栏的悬浮开关。navigator 因此不换父级——换父级会让整条路由栈
     // （含背后已缓存的列表页）在切布局那一帧被重新激活并重排，进详情页会明显变慢。
     final titleBarHeight = context.appComponentTokens.desktopTitleBarHeight;
+    final showTopBar = widget.showTopBar;
     final EdgeInsets contentPadding;
     if (immersive) {
       // 顶栏透明悬浮在内容之上，内容全幅铺底。
       contentPadding = EdgeInsets.zero;
     } else if (widget.layout == AppShellLayout.standard) {
       // 顶栏在流内占位：内容整体下移一个顶栏高度，四周保留桌面标准内边距。
+      // 隐藏顶栏时同样保留这段高度，避免内容贴住窗口顶部和窗口按钮。
       contentPadding = EdgeInsets.only(
         top: titleBarHeight,
         left: AppPageInsets.desktop,
@@ -168,23 +178,42 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
                                 child: widget.child,
                               ),
                             ),
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              child: AppTopBar(
-                                currentPath: widget.currentPath,
-                                config: widget.topBarConfig,
-                                shellNavigatorKey: widget.shellNavigatorKey,
-                                onRefresh: current == null
-                                    ? null
-                                    : () => _runRefresh(current),
-                                isRefreshing:
-                                    current != null && _isRefreshing,
-                                overlay: immersive,
-                                hideActions: immersive,
+                            if (showTopBar)
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                child: AppTopBar(
+                                  currentPath: widget.currentPath,
+                                  config: widget.topBarConfig,
+                                  shellNavigatorKey: widget.shellNavigatorKey,
+                                  onRefresh: current == null
+                                      ? null
+                                      : () => _runRefresh(current),
+                                  isRefreshing:
+                                      current != null && _isRefreshing,
+                                  overlay: immersive,
+                                  hideActions: immersive,
+                                ),
+                              )
+                            else if (usesAppWindowsCaption) ...[
+                              // Windows 的窗口按钮由顶栏承载；隐藏顶栏时
+                              // 只保留按钮和拖拽区，避免丢失窗口操作。
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: AppWindowsCaption(),
                               ),
-                            ),
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                right: titleBarHeight * 3,
+                                height: titleBarHeight,
+                                child: AppWindowDragArea(
+                                  child: SizedBox.expand(),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -196,7 +225,8 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
                 if (defaultTargetPlatform == TargetPlatform.macOS)
                   Positioned(
                     left: appMacTrafficLightsLeft,
-                    top: (context.appComponentTokens.desktopTitleBarHeight -
+                    top:
+                        (context.appComponentTokens.desktopTitleBarHeight -
                             appMacTrafficLightButtonSize) /
                         2,
                     child: const AppMacTrafficLights(),
@@ -205,7 +235,8 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
                 // 不随侧栏宽度动画和顶栏布局切换移动。
                 Positioned(
                   left: sidebarToggleButtonLeft(context),
-                  top: (context.appComponentTokens.desktopTitleBarHeight -
+                  top:
+                      (context.appComponentTokens.desktopTitleBarHeight -
                           sidebarToggleButtonSize) /
                       2,
                   child: const AppSidebarToggleButton(),

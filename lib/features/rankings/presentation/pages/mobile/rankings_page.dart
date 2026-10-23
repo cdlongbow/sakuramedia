@@ -27,6 +27,7 @@ import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_batch_selection.dart';
+import 'package:sakuramedia/widgets/domain/rankings/ranking_sort_menu_button.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranked_movie_summary_grid.dart';
 import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filter_sections.dart';
 
@@ -160,73 +161,73 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
       onLoadMore: () =>
           ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
       child: AppAdaptiveRefreshScrollView(
-      key: const PageStorageKey<String>('mobile:rankings:list'),
-      onRefresh: _handleRefresh,
-      controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: <Widget>[
-        SliverMainAxisGroup(
-          key: const Key('mobile-rankings-page'),
-          slivers: [
-            if (hasNoSources &&
-                !(summary.paged.filterUpdate.hasFailed &&
-                    summary.paged.items.isEmpty))
+        key: const PageStorageKey<String>('mobile:rankings:list'),
+        onRefresh: _handleRefresh,
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          SliverMainAxisGroup(
+            key: const Key('mobile-rankings-page'),
+            slivers: [
+              if (hasNoSources &&
+                  !(summary.paged.filterUpdate.hasFailed &&
+                      summary.paged.items.isEmpty))
                 const SliverToBoxAdapter(
                   child: AppEmptyState(message: '暂无可用排行榜'),
                 )
-            else if (!summary.paged.filterUpdate.hasFailed ||
-                summary.paged.items.isNotEmpty)
-              AppSkeletonizer.sliver(
-                enabled:
-                    summary.filters.isLoading && summary.paged.items.isEmpty,
-                child: RankedMovieSummarySliver(
-                  items:
-                      summary.filters.isLoading && summary.paged.items.isEmpty
-                      ? rankedMoviePlaceholders(count: 24)
-                      : summary.paged.items,
-                  errorMessage: summary.initialErrorMessage,
-                  onMovieTap: (movie) => context.pushMobileMovieDetail(
-                    movieNumber: movie.movieNumber,
+              else if (!summary.paged.filterUpdate.hasFailed ||
+                  summary.paged.items.isNotEmpty)
+                AppSkeletonizer.sliver(
+                  enabled:
+                      summary.filters.isLoading && summary.paged.items.isEmpty,
+                  child: RankedMovieSummarySliver(
+                    items:
+                        summary.filters.isLoading && summary.paged.items.isEmpty
+                        ? rankedMoviePlaceholders(count: 24)
+                        : summary.paged.items,
+                    errorMessage: summary.initialErrorMessage,
+                    onMovieTap: (movie) => context.pushMobileMovieDetail(
+                      movieNumber: movie.movieNumber,
+                    ),
+                    onMovieMenuRequest: (movie, globalPosition) =>
+                        requestMovieCollectionMenu(
+                          context,
+                          movie.movieNumber,
+                          globalPosition,
+                          isSubscribed: movie.isSubscribed,
+                          onEnterSelection: () {
+                            enterSelection();
+                            toggleSelect(movie.movieNumber);
+                          },
+                        ),
+                    onMovieSubscriptionTap: (movie) =>
+                        _toggleMovieSubscription(movie.movieNumber),
+                    onMovieToggleCollectionType:
+                        _hoverFeatureActions.toggleCollectionType,
+                    onMovieBlacklist: _hoverFeatureActions.blacklist,
+                    isMovieSubscriptionUpdating: (movie) =>
+                        summary.isSubscriptionUpdating(movie.movieNumber),
+                    emptyMessage: '暂无榜单数据',
+                    selectionMode: selectionMode,
+                    isMovieSelected: (movie) => isSelected(movie.movieNumber),
+                    onMovieSelectedChanged: (movie, _) =>
+                        toggleSelect(movie.movieNumber),
                   ),
-                  onMovieMenuRequest: (movie, globalPosition) =>
-                      requestMovieCollectionMenu(
-                        context,
-                        movie.movieNumber,
-                        globalPosition,
-                        isSubscribed: movie.isSubscribed,
-                        onEnterSelection: () {
-                          enterSelection();
-                          toggleSelect(movie.movieNumber);
-                        },
-                      ),
-                  onMovieSubscriptionTap: (movie) =>
-                      _toggleMovieSubscription(movie.movieNumber),
-                  onMovieToggleCollectionType:
-                      _hoverFeatureActions.toggleCollectionType,
-                  onMovieBlacklist: _hoverFeatureActions.blacklist,
-                  isMovieSubscriptionUpdating: (movie) =>
-                      summary.isSubscriptionUpdating(movie.movieNumber),
-                  emptyMessage: '暂无榜单数据',
-                  selectionMode: selectionMode,
-                  isMovieSelected: (movie) => isSelected(movie.movieNumber),
-                  onMovieSelectedChanged: (movie, _) =>
-                      toggleSelect(movie.movieNumber),
+                ),
+              // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
+              PagedLoadMoreFooterSliver(
+                watchFooter: (ref) => ref.watch(
+                  rankingSummaryProvider(
+                    _scope,
+                  ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
+                ),
+                onLoadMore: (ref) => unawaited(
+                  ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
                 ),
               ),
-            // loadMore 页脚独立订阅：翻页 loading / 失败只重建页脚。
-            PagedLoadMoreFooterSliver(
-              watchFooter: (ref) => ref.watch(
-                rankingSummaryProvider(
-                  _scope,
-                ).select((s) => pagedLoadMoreFooterSnapshot(s.value?.paged)),
-              ),
-              onLoadMore: (ref) => unawaited(
-                ref.read(rankingSummaryProvider(_scope).notifier).loadMore(),
-              ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -273,6 +274,23 @@ class _MobileRankingsPageState extends ConsumerState<MobileRankingsPage>
             label: syncedAtLabel,
             icon: Icons.schedule_rounded,
           ),
+      ],
+      actionSlots: [
+        RankingSortMenuButton(
+          triggerKey: const Key('mobile-rankings-sort-trigger'),
+          drawerKey: const Key('mobile-rankings-sort-drawer'),
+          keyPrefix: 'mobile-rankings',
+          filterState: summary.filters,
+          useDrawer: true,
+          onSortChanged: (field, direction) {
+            _scrollToTop();
+            unawaited(
+              ref
+                  .read(rankingSummaryProvider(_scope).notifier)
+                  .selectSort(field, direction),
+            );
+          },
+        ),
       ],
     );
   }

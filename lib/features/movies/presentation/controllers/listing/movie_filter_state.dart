@@ -224,18 +224,26 @@ class MovieFilterState {
 
   static const MovieFilterState initial = MovieFilterState();
 
-  bool get isDefault =>
-      status == MovieStatusFilter.all &&
-      collectionType == MovieCollectionTypeFilter.single &&
-      numberSource == MovieNumberSourceFilter.all &&
-      sortField == MovieSortField.releaseDate &&
-      sortDirection == SortDirection.desc &&
-      dimensionSortId == null &&
-      years.isEmpty &&
-      interaction.isDefault &&
-      actorAgeMin == null &&
-      actorAgeMax == null &&
-      resolution == null;
+  /// 是否存在生效的筛选条件。
+  ///
+  /// **不含排序**：排序是视图偏好，不是筛选条件；「重置筛选」和空态文案
+  /// 都只应看这里。
+  bool get hasActiveFilters =>
+      status != MovieStatusFilter.all ||
+      collectionType != MovieCollectionTypeFilter.single ||
+      numberSource != MovieNumberSourceFilter.all ||
+      years.isNotEmpty ||
+      !interaction.isDefault ||
+      actorAgeMin != null ||
+      actorAgeMax != null ||
+      resolution != null;
+
+  /// 重置筛选条件但保留当前排序。
+  MovieFilterState resetFilters() => MovieFilterState.initial.copyWith(
+    sortField: sortField,
+    sortDirection: sortDirection,
+    dimensionSortId: dimensionSortId,
+  );
 
   bool get hasInteractionRange => !interaction.isDefault;
 

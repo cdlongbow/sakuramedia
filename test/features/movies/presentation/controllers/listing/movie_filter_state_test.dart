@@ -108,16 +108,16 @@ void main() {
       const state = MovieFilterState.initial;
       expect(state.interaction.isDefault, isTrue);
       expect(state.hasInteractionRange, isFalse);
-      expect(state.isDefault, isTrue);
+      expect(state.hasActiveFilters, isFalse);
       expect(state.triggerLabel, '全部');
     });
 
-    test('互动数条件影响 isDefault / hasInteractionRange / triggerLabel', () {
+    test('互动数条件影响 hasActiveFilters / hasInteractionRange / triggerLabel', () {
       final state = const MovieFilterState().copyWith(
         interaction: _range(MovieInteractionMetric.heat, min: 1000),
       );
       expect(state.hasInteractionRange, isTrue);
-      expect(state.isDefault, isFalse);
+      expect(state.hasActiveFilters, isTrue);
       expect(state.triggerLabel, '热度 ≥ 1000');
 
       final both = const MovieFilterState().copyWith(
@@ -150,11 +150,11 @@ void main() {
       expect(withHeatOnly.triggerLabel, '热度 ≤ 2000');
     });
 
-    test('多选年份影响 isDefault / triggerLabel / matches', () {
+    test('多选年份影响 hasActiveFilters / triggerLabel / matches', () {
       final multi = const MovieFilterState().copyWith(
         years: <int>{2022, 2024, 2023},
       );
-      expect(multi.isDefault, isFalse);
+      expect(multi.hasActiveFilters, isTrue);
       expect(multi.triggerLabel, '2024 等 3 个年份');
 
       expect(
@@ -165,14 +165,14 @@ void main() {
         multi.matches(const MovieFilterState(years: <int>{2024})),
         isFalse,
       );
-      expect(multi.copyWith(years: const <int>{}).isDefault, isTrue);
+      expect(multi.copyWith(years: const <int>{}).hasActiveFilters, isFalse);
     });
 
     test('copyWith 可显式清空年份条件', () {
       const withYears = MovieFilterState(years: <int>{2023, 2024});
       final cleared = withYears.copyWith(years: null);
       expect(cleared.years, isEmpty);
-      expect(cleared.isDefault, isTrue);
+      expect(cleared.hasActiveFilters, isFalse);
     });
 
     test('copyWith 可清空互动数条件', () {
@@ -183,7 +183,7 @@ void main() {
         interaction: MovieInteractionFilter.initial,
       );
       expect(cleared.interaction.isDefault, isTrue);
-      expect(cleared.isDefault, isTrue);
+      expect(cleared.hasActiveFilters, isFalse);
     });
 
     test('matches 比较互动数条件', () {
@@ -216,10 +216,10 @@ void main() {
       expect(state.hasActorAgeRange, isFalse);
     });
 
-    test('出演年龄条件影响 isDefault / hasActorAgeRange / triggerLabel', () {
+    test('出演年龄条件影响 hasActiveFilters / hasActorAgeRange / triggerLabel', () {
       final state = const MovieFilterState().copyWith(actorAgeMax: 25);
       expect(state.hasActorAgeRange, isTrue);
-      expect(state.isDefault, isFalse);
+      expect(state.hasActiveFilters, isTrue);
       expect(state.triggerLabel, '≤ 25 岁');
 
       final both = const MovieFilterState().copyWith(
@@ -248,7 +248,7 @@ void main() {
       final cleared = withAge.copyWith(actorAgeMin: null, actorAgeMax: null);
       expect(cleared.actorAgeMin, isNull);
       expect(cleared.actorAgeMax, isNull);
-      expect(cleared.isDefault, isTrue);
+      expect(cleared.hasActiveFilters, isFalse);
     });
 
     test('matches 比较出演年龄条件', () {
@@ -264,6 +264,35 @@ void main() {
     });
   });
 
+  group('排序与筛选分离', () {
+    test('hasActiveFilters 不含排序', () {
+      const sorted = MovieFilterState(
+        sortField: MovieSortField.heat,
+        sortDirection: SortDirection.asc,
+      );
+      expect(sorted.hasActiveFilters, isFalse);
+    });
+
+    test('resetFilters 清空筛选但保留排序', () {
+      final state = MovieFilterState.initial
+          .copyWith(
+            sortField: MovieSortField.heat,
+            sortDirection: SortDirection.asc,
+          )
+          .copyWith(status: MovieStatusFilter.subscribed);
+
+      final reset = state.resetFilters();
+      expect(reset.hasActiveFilters, isFalse);
+      expect(reset.sortField, MovieSortField.heat);
+      expect(reset.sortDirection, SortDirection.asc);
+
+      final defaultSortReset = const MovieFilterState(
+        status: MovieStatusFilter.subscribed,
+      ).resetFilters();
+      expect(defaultSortReset.hasActiveFilters, isFalse);
+    });
+  });
+
   group('我的评分排序', () {
     test('总分排序使用 my_score', () {
       const filter = MovieFilterState(sortField: MovieSortField.myScore);
@@ -275,7 +304,6 @@ void main() {
         sortField: MovieSortField.myScore,
       ).copyWith(dimensionSortId: 7, sortDirection: SortDirection.asc);
       expect(filter.sortExpression, 'dimension_7:asc');
-      expect(filter.isDefault, isFalse);
       expect(
         filter.copyWith(dimensionSortId: null).sortExpression,
         'my_score:asc',

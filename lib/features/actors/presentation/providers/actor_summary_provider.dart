@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
@@ -82,11 +84,23 @@ class ActorSummary extends _$ActorSummary
     });
     ref.listen(actorSubscriptionEventsProvider, (_, next) {
       final change = next.value;
-      if (change != null) {
-        // 订阅翻转保留行、就地翻态：状态筛选视图等刷新/重进自然收敛，
-        // 误触可原地点回来。
-        _patchSubscription(change.actorId, change.isSubscribed);
+      if (change == null) return;
+      final current = state.value;
+      final actorLoaded =
+          current?.paged.items.any((actor) => actor.id == change.actorId) ??
+          false;
+      if (!actorLoaded &&
+          change.isSubscribed &&
+          current?.filter.subscriptionStatus ==
+              ActorSubscriptionStatus.subscribed) {
+        // 收藏了一个当前列表里没有的女优（本地女优最常见）：就地翻态无法插入
+        // 新行，重拉第一页把她带进来。
+        unawaited(refresh());
+        return;
       }
+      // 订阅翻转保留行、就地翻态：状态筛选视图等刷新/重进自然收敛，
+      // 误触可原地点回来。
+      _patchSubscription(change.actorId, change.isSubscribed);
     });
     final paged = await loadInitialPage();
     return ActorSummaryState(paged: paged, filter: activeFilter);

@@ -1,4 +1,5 @@
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
+import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 
 /// 「媒体管理」可选的排序字段。`null` 表示不显式指定排序——由后端隐式使用
 /// `created_at:desc`（入库时间倒序）作为默认视图。
@@ -13,21 +14,6 @@ extension MediaBrowseSortFieldX on MediaBrowseSortField {
   String get label => switch (this) {
     MediaBrowseSortField.fileSize => '文件大小',
     MediaBrowseSortField.heat => '热度',
-  };
-}
-
-/// 排序方向。默认降序。仅在 [MediaBrowseFilterState.sortField] 非 null 时生效。
-enum MediaBrowseSortDirection { desc, asc }
-
-extension MediaBrowseSortDirectionX on MediaBrowseSortDirection {
-  String get apiValue => switch (this) {
-    MediaBrowseSortDirection.asc => 'asc',
-    MediaBrowseSortDirection.desc => 'desc',
-  };
-
-  String get label => switch (this) {
-    MediaBrowseSortDirection.asc => '升序',
-    MediaBrowseSortDirection.desc => '降序',
   };
 }
 
@@ -67,7 +53,7 @@ class MediaBrowseFilterState {
     this.libraryId,
     this.thumbnailGenerationState,
     this.sortField,
-    this.sortDirection = MediaBrowseSortDirection.desc,
+    this.sortDirection = SortDirection.desc,
   });
 
   final MediaBrowseKindFilter kind;
@@ -77,16 +63,17 @@ class MediaBrowseFilterState {
 
   /// `null` = 使用后端默认（入库时间倒序）；非 null 明确按选中字段+方向排序。
   final MediaBrowseSortField? sortField;
-  final MediaBrowseSortDirection sortDirection;
+  final SortDirection sortDirection;
 
   static const MediaBrowseFilterState initial = MediaBrowseFilterState();
 
-  bool get isDefault =>
-      kind == null &&
-      libraryId == null &&
-      thumbnailGenerationState == null &&
-      sortField == null &&
-      sortDirection == MediaBrowseSortDirection.desc;
+  /// 是否存在生效的筛选条件。**不含排序**。
+  bool get hasActiveFilters =>
+      kind != null || libraryId != null || thumbnailGenerationState != null;
+
+  /// 重置筛选条件但保留当前排序。
+  MediaBrowseFilterState resetFilters() => MediaBrowseFilterState.initial
+      .copyWith(sortField: sortField, sortDirection: sortDirection);
 
   /// 后端 `sort` 查询参数：未指定字段时不下发，让后端使用 `created_at:desc`；
   /// 选中字段后明确下发 `field:dir`。
@@ -114,7 +101,7 @@ class MediaBrowseFilterState {
     Object? libraryId = _sentinel,
     Object? thumbnailGenerationState = _sentinel,
     Object? sortField = _sentinel,
-    MediaBrowseSortDirection? sortDirection,
+    SortDirection? sortDirection,
     bool resetKind = false,
   }) {
     return MediaBrowseFilterState(

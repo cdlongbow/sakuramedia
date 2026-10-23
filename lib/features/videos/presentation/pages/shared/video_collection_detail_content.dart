@@ -18,7 +18,6 @@ import 'package:sakuramedia/features/videos/presentation/providers/video_mutatio
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/features/videos/presentation/video_placeholders.dart';
 import 'package:sakuramedia/features/videos/presentation/widgets/collections/pick_video_collection_dialog.dart';
-import 'package:sakuramedia/features/videos/presentation/widgets/collections/video_collection_filter_sections.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
@@ -34,6 +33,7 @@ import 'package:sakuramedia/widgets/base/interaction/selection/app_selection_too
 import 'package:sakuramedia/widgets/base/interaction/selection/multi_select_state_mixin.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/domain/collections/collection_member_views.dart';
+import 'package:sakuramedia/widgets/domain/videos/video_collection_sort_menu_button.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -87,7 +87,7 @@ class VideoCollectionDetailContent extends ConsumerStatefulWidget {
     required this.keyPrefix,
     this.useMobileSelectionLayout = false,
     this.hoistTitleToSubpageShell = false,
-    this.useMobileFilterDrawer = false,
+    this.useMobileSortDrawer = false,
     this.playAllBuilder,
     this.onMemberTap,
     this.playSingle,
@@ -108,7 +108,7 @@ class VideoCollectionDetailContent extends ConsumerStatefulWidget {
   final bool hoistTitleToSubpageShell;
 
   /// 顶栏筛选入口容器：`true` 弹底部抽屉（移动端），`false` 就地展开浮层（桌面端）。
-  final bool useMobileFilterDrawer;
+  final bool useMobileSortDrawer;
 
   final VideoCollectionPlayAllBuilder? playAllBuilder;
 
@@ -343,26 +343,10 @@ class _VideoCollectionDetailContentState
         : state.collection.itemCount;
     final playAllBuilder = widget.playAllBuilder;
     return AppListHeader(
-      filterButtonKey: Key('${widget.keyPrefix}-sort-trigger'),
-      filterIcon: Icons.swap_vert_rounded,
-      filterLabel: videoCollectionSortLabel(state.sort.field),
-      filterTooltip: _isMobile ? '排序' : null,
-      filterPanelKey: Key('${widget.keyPrefix}-sort-panel'),
       filterUpdate: state.filterUpdate,
       hasPreviousFilterItems: state.items.isNotEmpty,
       onRetryFilter: () =>
           unawaited(ref.read(_providerRef.notifier).retrySort()),
-      filterPanelExtraWidth: 180,
-      onFilterTap: widget.useMobileFilterDrawer
-          ? () => unawaited(_openSortDrawer(state))
-          : null,
-      filterPanelBuilder: widget.useMobileFilterDrawer
-          ? null
-          : (_) => VideoCollectionFilterSectionGroup(
-              sortField: state.sort.field,
-              sortDirection: state.sort.direction,
-              onChanged: _applySort,
-            ),
       informationSlots: [
         AppListHeaderInfo(
           key: Key('${widget.keyPrefix}-total'),
@@ -370,6 +354,15 @@ class _VideoCollectionDetailContentState
         ),
       ],
       actionSlots: [
+        VideoCollectionSortMenuButton(
+          triggerKey: Key('${widget.keyPrefix}-sort-trigger'),
+          panelKey: Key('${widget.keyPrefix}-sort-panel'),
+          drawerKey: const Key('mobile-video-collection-sort-drawer'),
+          keyPrefix: widget.keyPrefix,
+          sort: state.sort,
+          onChanged: _applySort,
+          useDrawer: widget.useMobileSortDrawer,
+        ),
         // 移动端「播放」入口在顶栏；桌面端在标题块。
         if (_isMobile && playAllBuilder != null)
           playAllBuilder(
@@ -401,15 +394,6 @@ class _VideoCollectionDetailContentState
     ref
         .read(_providerRef.notifier)
         .applySort(field: field, direction: direction);
-  }
-
-  Future<void> _openSortDrawer(VideoCollectionDetailState state) async {
-    await showMobileVideoCollectionFilterDrawer(
-      context,
-      sortField: state.sort.field,
-      sortDirection: state.sort.direction,
-      onChanged: _applySort,
-    );
   }
 
   /// 多选态顶栏：桌面原地改写整条顶栏（批量动作内联），移动端只留退出/计数/全选、
@@ -555,7 +539,8 @@ class _VideoCollectionDetailContentState
           // 还要补回外壳不再吞掉的底部安全区。
           padding: _isMobile
               ? EdgeInsets.only(
-                  bottom: context.appSpacing.lg +
+                  bottom:
+                      context.appSpacing.lg +
                       MediaQuery.paddingOf(context).bottom,
                 )
               : null,
@@ -789,7 +774,9 @@ class _VideoCollectionDetailContentState
 
   List<VideoCollectionItemDto> _selectedItems(
     VideoCollectionDetailState state,
-  ) => state.items.where((it) => isSelected(it.video.id)).toList(growable: false);
+  ) => state.items
+      .where((it) => isSelected(it.video.id))
+      .toList(growable: false);
 
   Future<void> _batchAddToOtherCollection(
     VideoCollectionDetailState state,

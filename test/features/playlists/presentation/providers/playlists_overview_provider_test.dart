@@ -73,16 +73,16 @@ void main() {
     int movieCount = 0,
     bool isSystem = false,
   }) => <String, dynamic>{
-        'id': id,
-        'name': name,
-        'description': '',
-        'movie_count': movieCount,
-        'is_system': isSystem,
-        'is_mutable': !isSystem,
-        'is_deletable': !isSystem,
-        'created_at': '2026-01-01T00:00:00Z',
-        'updated_at': '2026-01-01T00:00:00Z',
-      };
+    'id': id,
+    'name': name,
+    'description': '',
+    'movie_count': movieCount,
+    'is_system': isSystem,
+    'is_mutable': !isSystem,
+    'is_deletable': !isSystem,
+    'created_at': '2026-01-01T00:00:00Z',
+    'updated_at': '2026-01-01T00:00:00Z',
+  };
 
   test('build fetches playlists including system lists', () async {
     adapter.enqueueJson(
@@ -156,6 +156,34 @@ void main() {
     expect(orderStore.snapshot['test'], <int>[11, 10, 12]);
   });
 
+  test('reorderCustomPlaylists only moves custom playlists', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/playlists',
+      body: <Map<String, dynamic>>[
+        _playlistJson(id: 10, name: 'A'),
+        _playlistJson(id: 1, name: 'Favorites', isSystem: true),
+        _playlistJson(id: 11, name: 'B'),
+        _playlistJson(id: 12, name: 'C'),
+      ],
+    );
+
+    keepAlive(_scopeWithOrder);
+    await container.read(playlistsOverviewProvider(_scopeWithOrder).future);
+
+    container
+        .read(playlistsOverviewProvider(_scopeWithOrder).notifier)
+        .reorderCustomPlaylists(0, 2);
+    await Future<void>.delayed(Duration.zero);
+
+    final state = container
+        .read(playlistsOverviewProvider(_scopeWithOrder))
+        .requireValue;
+    // 系统列表仍在原槽位；用户列表 A 移到用户列表末尾。
+    expect(state.playlists.map((p) => p.id), <int>[11, 1, 12, 10]);
+    expect(orderStore.snapshot['test'], <int>[11, 1, 12, 10]);
+  });
+
   test('insertPlaylist prepends and persists new order', () async {
     adapter.enqueueJson(
       method: 'GET',
@@ -166,9 +194,7 @@ void main() {
     keepAlive(_scopeWithOrder);
     await container.read(playlistsOverviewProvider(_scopeWithOrder).future);
 
-    final playlist = PlaylistDto.fromJson(
-      _playlistJson(id: 99, name: 'New'),
-    );
+    final playlist = PlaylistDto.fromJson(_playlistJson(id: 99, name: 'New'));
     container
         .read(playlistsOverviewProvider(_scopeWithOrder).notifier)
         .insertPlaylist(playlist);
@@ -228,34 +254,37 @@ void main() {
     expect(orderStore.snapshot, isEmpty);
   });
 
-  test('mutation broadcast patches updated and deleted entries in place', () async {
-    adapter.enqueueJson(
-      method: 'GET',
-      path: '/playlists',
-      body: <Map<String, dynamic>>[
-        _playlistJson(id: 10, name: 'A'),
-        _playlistJson(id: 11, name: 'B'),
-      ],
-    );
+  test(
+    'mutation broadcast patches updated and deleted entries in place',
+    () async {
+      adapter.enqueueJson(
+        method: 'GET',
+        path: '/playlists',
+        body: <Map<String, dynamic>>[
+          _playlistJson(id: 10, name: 'A'),
+          _playlistJson(id: 11, name: 'B'),
+        ],
+      );
 
-    keepAlive(_scopeWithOrder);
-    await container.read(playlistsOverviewProvider(_scopeWithOrder).future);
+      keepAlive(_scopeWithOrder);
+      await container.read(playlistsOverviewProvider(_scopeWithOrder).future);
 
-    final events = container.read(playlistMutationEventsProvider.notifier);
-    events.reportUpdated(
-      PlaylistDto.fromJson(_playlistJson(id: 11, name: 'B2')),
-    );
-    var state = container
-        .read(playlistsOverviewProvider(_scopeWithOrder))
-        .requireValue;
-    expect(state.playlists.map((p) => p.name), <String>['A', 'B2']);
+      final events = container.read(playlistMutationEventsProvider.notifier);
+      events.reportUpdated(
+        PlaylistDto.fromJson(_playlistJson(id: 11, name: 'B2')),
+      );
+      var state = container
+          .read(playlistsOverviewProvider(_scopeWithOrder))
+          .requireValue;
+      expect(state.playlists.map((p) => p.name), <String>['A', 'B2']);
 
-    events.reportDeleted(10);
-    state = container
-        .read(playlistsOverviewProvider(_scopeWithOrder))
-        .requireValue;
-    expect(state.playlists.map((p) => p.id), <int>[11]);
-  });
+      events.reportDeleted(10);
+      state = container
+          .read(playlistsOverviewProvider(_scopeWithOrder))
+          .requireValue;
+      expect(state.playlists.map((p) => p.id), <int>[11]);
+    },
+  );
 
   test(
     'refresh keeps valid covers while it rechecks every non-empty playlist',
@@ -440,7 +469,8 @@ void main() {
     await container.read(playlistsOverviewProvider(_scopeNoOrder).future);
 
     await expectLater(
-      container.read(playlistsOverviewProvider(_scopeNoOrder).notifier)
+      container
+          .read(playlistsOverviewProvider(_scopeNoOrder).notifier)
           .refresh(),
       throwsA(anything),
     );
@@ -457,10 +487,7 @@ Map<String, dynamic> _moviesPage(String coverUrl) => <String, dynamic>{
   'items': <Map<String, dynamic>>[
     <String, dynamic>{
       'movie_number': 'ABC-001',
-      'cover_image': <String, dynamic>{
-        'id': 1,
-        'origin': coverUrl,
-      },
+      'cover_image': <String, dynamic>{'id': 1, 'origin': coverUrl},
     },
   ],
   'page': 1,

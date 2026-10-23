@@ -66,8 +66,7 @@ void main() {
       expect(
         blacklistedActions
             .firstWhere(
-              (action) =>
-                  action.type == MovieDetailActionType.toggleBlacklist,
+              (action) => action.type == MovieDetailActionType.toggleBlacklist,
             )
             .label,
         '取消屏蔽',
@@ -75,17 +74,20 @@ void main() {
     },
   );
 
-  test('buildMovieDetailActionDescriptors prepends cast action when enabled', () {
-    final actions = buildMovieDetailActionDescriptors(
-      isSubscribed: false,
-      isCollection: false,
-      isBlacklisted: false,
-      canCast: true,
-    );
+  test(
+    'buildMovieDetailActionDescriptors prepends cast action when enabled',
+    () {
+      final actions = buildMovieDetailActionDescriptors(
+        isSubscribed: false,
+        isCollection: false,
+        isBlacklisted: false,
+        canCast: true,
+      );
 
-    expect(actions.first.type, MovieDetailActionType.castToDevice);
-    expect(actions.first.label, '投屏到电视');
-  });
+      expect(actions.first.type, MovieDetailActionType.castToDevice);
+      expect(actions.first.label, '投屏到电视');
+    },
+  );
 
   test('buildMovieDetailActionDescriptors shows casting label when active', () {
     final actions = buildMovieDetailActionDescriptors(
@@ -220,6 +222,22 @@ void main() {
     );
     expect(MovieDetailRefreshConfirmationCopy.cancelLabel, '取消');
     expect(MovieDetailRefreshConfirmationCopy.confirmLabel, '确认刷新');
+    expect(
+      MovieDetailRefreshConfirmationCopy.descriptionFor(
+        isActorsManuallyManaged: false,
+      ),
+      MovieDetailRefreshConfirmationCopy.description,
+    );
+    expect(
+      MovieDetailRefreshConfirmationCopy.descriptionFor(
+        isActorsManuallyManaged: true,
+      ),
+      MovieDetailRefreshConfirmationCopy.manuallyManagedActorsDescription,
+    );
+    expect(
+      MovieDetailRefreshConfirmationCopy.manuallyManagedActorsDescription,
+      contains('演员表已手动管理'),
+    );
   });
 }
 
@@ -344,10 +362,7 @@ MovieDetailDto _movieDetail({
     seriesName: '',
     makerName: '',
     directorName: '',
-    coverImage: const MovieImageDto(
-      id: 1,
-      origin: '/covers/1.jpg',
-    ),
+    coverImage: const MovieImageDto(id: 1, origin: '/covers/1.jpg'),
     releaseDate: DateTime.parse('2024-01-01'),
     durationMinutes: 120,
     score: 4.5,

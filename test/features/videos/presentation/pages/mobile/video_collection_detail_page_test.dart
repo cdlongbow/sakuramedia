@@ -10,7 +10,6 @@ import 'package:sakuramedia/features/videos/data/api/video_collections_api.dart'
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_collection_detail_page.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
@@ -146,16 +145,9 @@ void main() {
     expect(find.text('3 个视频'), findsOneWidget);
   });
 
-  testWidgets('排序走底部抽屉，摘要默认是手动顺序', (WidgetTester tester) async {
+  testWidgets('排序走底部抽屉，默认是手动顺序', (WidgetTester tester) async {
     enqueueInitialLoad();
     await pumpPage(tester);
-
-    expect(
-      tester
-          .widget<AppFilterEntryButton>(find.byType(AppFilterEntryButton))
-          .label,
-      '手动顺序',
-    );
 
     await tester.tap(
       find.byKey(const Key('mobile-video-collection-sort-trigger')),
@@ -168,10 +160,12 @@ void main() {
     );
     // 面板与桌面浮层同构：手动顺序 + 各排序字段，手动顺序下隐藏方向分节。
     expect(
-      find.byKey(const Key('video-collection-sort-manual')),
+      find.byKey(const Key('mobile-video-collection-sort-default')),
       findsOneWidget,
     );
     expect(find.text('升降序'), findsNothing);
+    expect(find.text('升序'), findsNothing);
+    expect(find.text('降序'), findsNothing);
 
     adapter.enqueueJson(
       method: 'GET',
@@ -184,7 +178,9 @@ void main() {
       },
     );
 
-    await tester.tap(find.byKey(const Key('video-collection-sort-title')));
+    await tester.tap(
+      find.byKey(const Key('mobile-video-collection-sort-field-title')),
+    );
     await tester.pumpAndSettle();
 
     // 即时生效：点选当场带 sort 重新拉取成员。

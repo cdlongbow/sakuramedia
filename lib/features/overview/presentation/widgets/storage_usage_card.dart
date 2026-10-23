@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_format.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_icon.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_card_states.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
 import 'package:sakuramedia/features/status/presentation/status_placeholders.dart';
@@ -31,6 +32,13 @@ class StorageUsageCard extends StatelessWidget {
     return AppContentCard(
       key: const Key('overview-storage-usage-card'),
       title: '存储分布',
+      titleStyle: resolveAppTextStyle(
+        context,
+        size: AppTextSize.s16,
+        weight: AppTextWeight.semibold,
+        tone: AppTextTone.primary,
+      ),
+      headerLeading: const OverviewCardIcon(icon: Icons.storage_rounded),
       headerBottomSpacing: context.appSpacing.lg,
       child: _buildBody(context),
     );

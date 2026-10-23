@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/layout/cards/app_content_card.dart';
 
 import '../../../../support/test_api_bundle.dart';
 
@@ -26,7 +27,10 @@ Widget _wrap(Widget child) {
   final router = GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(path: '/', builder: (context, state) => Scaffold(body: child)),
+      GoRoute(
+        path: '/',
+        builder: (context, state) => Scaffold(body: child),
+      ),
     ],
   );
   return ProviderScope(
@@ -48,7 +52,7 @@ void main() {
     _bundle.dispose();
   });
 
-  testWidgets('未检测态渲染「开始检测」按钮 + Key 稳定', (tester) async {
+  testWidgets('未检测态是紧凑状态行而不是卡片', (tester) async {
     await tester.pumpWidget(_wrap(const SystemDiagnosticsStrip()));
 
     expect(find.byKey(const Key('system-diagnostics-strip')), findsOneWidget);
@@ -57,6 +61,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('组件诊断'), findsOneWidget);
+    expect(find.text('未检测'), findsOneWidget);
     expect(find.text('开始检测'), findsOneWidget);
+    expect(find.byType(AppContentCard), findsNothing);
   });
 }

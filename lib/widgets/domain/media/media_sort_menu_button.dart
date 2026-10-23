@@ -1,0 +1,53 @@
+import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
+import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
+
+/// 媒体浏览列表的排序入口适配器。
+///
+/// `sortField == null` 表示走后端默认（入库时间倒序），摘要显示「默认排序」；
+/// 只有选了字段才显示升降序。
+class MediaSortMenuButton extends StatelessWidget {
+  const MediaSortMenuButton({
+    super.key,
+    required this.filterState,
+    required this.onChanged,
+    this.useDrawer = false,
+    this.keyPrefix = 'media',
+    this.triggerKey,
+    this.panelKey,
+    this.drawerKey,
+  });
+
+  final MediaBrowseFilterState filterState;
+  final ValueChanged<MediaBrowseFilterState> onChanged;
+  final bool useDrawer;
+  final String keyPrefix;
+  final Key? triggerKey;
+  final Key? panelKey;
+  final Key? drawerKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSortMenuButton<MediaBrowseSortField>(
+      fields: MediaBrowseSortField.values,
+      selectedField: filterState.sortField,
+      fieldLabelBuilder: (value) => value.label,
+      onFieldChanged: (value) =>
+          onChanged(filterState.copyWith(sortField: value)),
+      selectedDirection: filterState.sortDirection,
+      onDirectionChanged: (value) =>
+          onChanged(filterState.copyWith(sortDirection: value)),
+      allowDefaultOption: true,
+      defaultOptionLabel: '默认排序',
+      directionVisibleWhen: (field) => field != null,
+      useDrawer: useDrawer,
+      triggerKey: triggerKey,
+      panelKey: panelKey,
+      drawerKey: drawerKey,
+      fieldKeyBuilder: (value) => Key('$keyPrefix-sort-field-${value.name}'),
+      directionKeyBuilder: (value) =>
+          Key('$keyPrefix-sort-direction-${value.name}'),
+      defaultOptionKey: Key('$keyPrefix-sort-default'),
+    );
+  }
+}

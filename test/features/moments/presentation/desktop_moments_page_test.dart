@@ -12,6 +12,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
 import '../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

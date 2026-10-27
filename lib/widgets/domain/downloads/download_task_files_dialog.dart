@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/format/file_size.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/downloads/data/download_task_file_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
@@ -90,7 +91,7 @@ class _DownloadTaskFilesDialogBodyState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '任务文件',
+          AppLocalizations.of(context).widgetDownloadFilesTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s18,
@@ -140,7 +141,10 @@ class _DownloadTaskFilesDialogBodyState
           return AppEmptyState(
             message: apiErrorMessage(
               snapshot.error!,
-              fallback: '任务文件读取失败，请稍后重试',
+              fallback: AppLocalizations.of(
+                context,
+              ).widgetDownloadFilesLoadFailed,
+              l10n: AppLocalizations.of(context),
             ),
             retryKey: const Key('download-task-files-retry'),
             onRetry: _retry,
@@ -151,7 +155,9 @@ class _DownloadTaskFilesDialogBodyState
           snapshot.data ?? const <DownloadTaskFileDto>[],
         )..sort((a, b) => b.sizeBytes.compareTo(a.sizeBytes));
         if (files.isEmpty) {
-          return const AppEmptyState(message: '该任务源内没有文件');
+          return AppEmptyState(
+            message: AppLocalizations.of(context).widgetDownloadFilesEmpty,
+          );
         }
         return ListView.separated(
           padding: EdgeInsets.symmetric(vertical: context.appSpacing.xs),

@@ -7,6 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/clips/clip_grid_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   late SessionStore sessionStore;
@@ -50,6 +51,12 @@ void main() {
       ProviderScope(
         overrides: [sessionStoreProvider.overrideWithValue(sessionStore)],
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           home: Scaffold(
             body: Center(

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
@@ -106,6 +107,7 @@ class ClipGridCard extends StatelessWidget {
   /// 悬停展开内容：单行「标题 + 番号 · 时长 · 大小」，下方一整行动作按钮
   /// （播放 / 影片 / 加入合集 / 重命名 / 删除，按回调是否为空显隐）。
   Widget _buildHoverInfo(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final play = onPlay;
     final openMovie = onOpenMovie;
@@ -119,35 +121,35 @@ class ClipGridCard extends StatelessWidget {
           icon: Icons.play_arrow_rounded,
           onTap: play,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.widgetClipActionPlay,
         ),
       if (openMovie != null)
         AppCoverHoverActionButton(
           key: Key('clip-grid-card-movie-${clip.clipId}'),
           icon: Icons.movie_outlined,
           onTap: openMovie,
-          tooltip: '影片',
+          tooltip: l10n.widgetClipActionMovie,
         ),
       if (addToCollection != null)
         AppCoverHoverActionButton(
           key: Key('clip-grid-card-add-collection-${clip.clipId}'),
           icon: Icons.playlist_add_rounded,
           onTap: addToCollection,
-          tooltip: '加入合集',
+          tooltip: l10n.widgetClipActionAddToCollection,
         ),
       if (rename != null)
         AppCoverHoverActionButton(
           key: Key('clip-grid-card-rename-${clip.clipId}'),
           icon: Icons.edit_outlined,
           onTap: rename,
-          tooltip: '重命名',
+          tooltip: l10n.widgetClipActionRename,
         ),
       if (delete != null)
         AppCoverHoverActionButton(
           key: Key('clip-grid-card-delete-${clip.clipId}'),
           icon: Icons.delete_outline_rounded,
           onTap: delete,
-          tooltip: '删除',
+          tooltip: l10n.commonDelete,
         ),
     ];
     return Column(
@@ -171,6 +173,7 @@ class ClipGridCard extends StatelessWidget {
     BuildContext context,
     Offset globalPosition,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final openMovie = onOpenMovie;
     final addToCollection = onAddToCollection;
     final rename = onRename;
@@ -180,18 +183,24 @@ class ClipGridCard extends StatelessWidget {
       globalPosition: globalPosition,
       items: [
         if (openMovie != null)
-          const AppMenuItem(value: _ClipCardAction.openMovie, label: '影片'),
+          AppMenuItem(
+            value: _ClipCardAction.openMovie,
+            label: l10n.widgetClipActionMovie,
+          ),
         if (addToCollection != null)
-          const AppMenuItem(
+          AppMenuItem(
             value: _ClipCardAction.addToCollection,
-            label: '加入合集',
+            label: l10n.widgetClipActionAddToCollection,
           ),
         if (rename != null)
-          const AppMenuItem(value: _ClipCardAction.rename, label: '重命名'),
+          AppMenuItem(
+            value: _ClipCardAction.rename,
+            label: l10n.widgetClipActionRename,
+          ),
         if (delete != null)
-          const AppMenuItem(
+          AppMenuItem(
             value: _ClipCardAction.delete,
-            label: '删除',
+            label: l10n.commonDelete,
             tone: AppTextTone.error,
           ),
       ],

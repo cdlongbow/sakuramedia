@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -31,18 +32,22 @@ class ClipSelectionStatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final hasSelection = startSeconds != null || endSeconds != null;
     final String hint;
     if (startSeconds == null) {
-      hint = '点击缩略图设为起点';
+      hint = l10n.widgetClipSelectionHintStart;
     } else if (endSeconds == null) {
-      hint = '起点 ${formatMediaTimecode(startSeconds!)} · 点击设为终点';
+      hint = l10n.widgetClipSelectionHintEnd(
+        formatMediaTimecode(startSeconds!),
+      );
     } else {
       final duration = durationSeconds ?? 0;
-      hint =
-          '起点 ${formatMediaTimecode(startSeconds!)} · '
-          '终点 ${formatMediaTimecode(endSeconds!)} · '
-          '时长 ${formatMediaTimecode(duration)}';
+      hint = l10n.widgetClipSelectionHintRange(
+        formatMediaTimecode(startSeconds!),
+        formatMediaTimecode(endSeconds!),
+        formatMediaTimecode(duration),
+      );
     }
 
     return Container(
@@ -74,7 +79,7 @@ class ClipSelectionStatusBar extends StatelessWidget {
           if (hasSelection) ...[
             AppTextButton(
               key: Key('$keyPrefix-clip-clear'),
-              label: '清除',
+              label: l10n.widgetClipSelectionClear,
               size: AppTextButtonSize.xSmall,
               onPressed: onClear,
             ),
@@ -82,7 +87,7 @@ class ClipSelectionStatusBar extends StatelessWidget {
           ],
           AppButton(
             key: Key('$keyPrefix-clip-create'),
-            label: '创建',
+            label: l10n.widgetClipSelectionCreate,
             size: AppButtonSize.small,
             variant: AppButtonVariant.primary,
             onPressed: canCreate ? onCreate : null,

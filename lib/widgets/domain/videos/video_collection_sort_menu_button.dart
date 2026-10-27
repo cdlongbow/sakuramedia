@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
 import 'package:sakuramedia/features/videos/presentation/providers/video_collection_sort.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 视频合集详情成员排序的入口适配器。
@@ -44,7 +45,7 @@ class VideoCollectionSortMenuButton extends StatelessWidget {
       onDirectionChanged: (value) =>
           onChanged(field: sort.field, direction: value),
       allowDefaultOption: true,
-      defaultOptionLabel: '手动顺序',
+      defaultOptionLabel: AppLocalizations.of(context).widgetVideoSortManual,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

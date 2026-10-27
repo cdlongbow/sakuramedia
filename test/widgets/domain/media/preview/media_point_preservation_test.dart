@@ -10,6 +10,7 @@ import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.da
 import 'package:sakuramedia/widgets/domain/moments/moment_preview_launcher.dart';
 
 import '../../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   late SessionStore session;
@@ -52,6 +53,12 @@ void main() {
           platform: mobile ? AppPlatform.mobile : AppPlatform.desktop,
           child: OKToast(
             child: MaterialApp(
+              locale: const Locale('zh'),
+              localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+                AppLocalizations.delegate,
+                ...GlobalMaterialLocalizations.delegates,
+              ],
+              supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
               theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
               home: Scaffold(
                 body: Builder(

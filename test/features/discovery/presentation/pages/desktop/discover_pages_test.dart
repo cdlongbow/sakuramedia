@@ -13,6 +13,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/movies/subscription_heart_badge.dart';
 
 import '../../../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   testWidgets(
@@ -654,6 +655,12 @@ Future<void> _pumpDiscoveryWidget(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
         child: MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraThemeData,
           onGenerateRoute: (settings) => MaterialPageRoute<void>(
             settings: settings,
@@ -698,7 +705,16 @@ Future<void> _pumpDiscoveryRouter(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          theme: sakuraThemeData,
+          routerConfig: router,
+        ),
       ),
     ),
   );

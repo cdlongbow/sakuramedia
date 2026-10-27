@@ -28,6 +28,8 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_de
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 
 /// 与应用全局 `kAppScrollDragDevices`（`lib/app/app.dart`）保持一致的指针集合，
@@ -881,6 +883,7 @@ void main() {
     );
 
     final actions = buildMediaThumbnailActionDescriptors(
+      l10n: AppLocalizationsZh(),
       thumbnail: thumbnail,
       point: null,
       canSearchSimilar: false,
@@ -981,7 +984,10 @@ Future<ProviderContainer> _pumpInspectorPanel(
       container: container,
       child: OKToast(
         child: MaterialApp(
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
           supportedLocales: const <Locale>[Locale('zh', 'CN')],
           theme: platform == null
               ? sakuraThemeData

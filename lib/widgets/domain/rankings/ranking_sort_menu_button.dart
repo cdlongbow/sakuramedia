@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/presentation/providers/ranking_summary_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 榜单排序入口适配器。
@@ -42,7 +43,9 @@ class RankingSortMenuButton extends StatelessWidget {
       onDirectionChanged: (value) =>
           onSortChanged(filterState.selectedSortField, value),
       allowDefaultOption: true,
-      defaultOptionLabel: '默认（名次）',
+      defaultOptionLabel: AppLocalizations.of(
+        context,
+      ).widgetRankingSortDefault,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -25,8 +26,8 @@ Future<T?> showCollectionTargetPicker<T extends Object>({
   int? excludedCollectionId,
   AppAdaptiveModalVariant variant = AppAdaptiveModalVariant.auto,
   Key? drawerKey,
-  String title = '加入合集',
-  String createButtonLabel = '新建合集并加入',
+  String? title,
+  String? createButtonLabel,
 }) {
   return showAppAdaptiveModal<T>(
     context: context,
@@ -75,8 +76,8 @@ class _CollectionTargetPicker<T extends Object> extends ConsumerStatefulWidget {
   /// 不在列表中显示的合集 id（从合集详情页发起「加入其它合集」时排除自身）。
   final int? excludedCollectionId;
 
-  final String title;
-  final String createButtonLabel;
+  final String? title;
+  final String? createButtonLabel;
 
   @override
   ConsumerState<_CollectionTargetPicker<T>> createState() =>
@@ -106,6 +107,7 @@ class _CollectionTargetPickerState<T extends Object>
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final collectionsAsync = widget.watchCollections(ref);
     // 抽屉形态：列表占据抽屉剩余空间并内部滚动，表头/按钮常驻，整体由抽屉 maxHeightFactor
     // 约束，避免矮屏上「表头 + 固定高列表 + 按钮」超过抽屉封顶导致溢出。桌面弹窗仍用固定上限。
@@ -120,7 +122,7 @@ class _CollectionTargetPickerState<T extends Object>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.title,
+          widget.title ?? l10n.widgetCollectionPickerTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s16,
@@ -132,7 +134,7 @@ class _CollectionTargetPickerState<T extends Object>
         AppSearchField(
           fieldKey: const Key('collection-target-picker-search-field'),
           controller: _searchController,
-          hintText: '搜索合集',
+          hintText: l10n.widgetCollectionPickerSearchHint,
           onChanged: (value) =>
               setState(() => _keyword = value.trim().toLowerCase()),
           clearKey: const Key('collection-target-picker-search-clear'),
@@ -144,13 +146,15 @@ class _CollectionTargetPickerState<T extends Object>
           children: [
             Expanded(
               child: AppButton(
-                label: widget.createButtonLabel,
+                label:
+                    widget.createButtonLabel ??
+                    l10n.widgetCollectionPickerCreateAndAdd,
                 onPressed: _createAndPick,
               ),
             ),
             SizedBox(width: spacing.md),
             AppButton(
-              label: '关闭',
+              label: l10n.widgetCollectionPickerClose,
               variant: AppButtonVariant.secondary,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -164,6 +168,7 @@ class _CollectionTargetPickerState<T extends Object>
     BuildContext context,
     AsyncValue<List<T>> collectionsAsync,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (collectionsAsync.isLoading && !collectionsAsync.hasValue) {
       return const Center(
         child: Padding(
@@ -174,7 +179,11 @@ class _CollectionTargetPickerState<T extends Object>
     }
     if (collectionsAsync.hasError && !collectionsAsync.hasValue) {
       return AppEmptyState(
-        message: apiErrorMessage(collectionsAsync.error!, fallback: '合集加载失败'),
+        message: apiErrorMessage(
+          collectionsAsync.error!,
+          fallback: l10n.widgetCollectionPickerLoadFailed,
+          l10n: l10n,
+        ),
       );
     }
     final allCollections = collectionsAsync.value ?? <T>[];
@@ -194,7 +203,9 @@ class _CollectionTargetPickerState<T extends Object>
     }
     if (collections.isEmpty) {
       return AppEmptyState(
-        message: allCollections.isEmpty ? '暂无合集，点击下方新建' : '没有匹配的合集',
+        message: allCollections.isEmpty
+            ? l10n.widgetCollectionPickerEmpty
+            : l10n.widgetCollectionPickerNoMatch,
       );
     }
     return ListView.separated(

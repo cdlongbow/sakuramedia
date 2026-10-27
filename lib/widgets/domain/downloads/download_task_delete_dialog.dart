@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
@@ -17,6 +18,7 @@ Future<bool?> showDownloadTaskDeleteDialog(
   Future<void> Function(bool deleteFiles)? onConfirm,
 }) async {
   var deleteFiles = false;
+  final l10n = AppLocalizations.of(context);
   final blacklistableTaskCount = tasks
       .where(
         (task) =>
@@ -26,11 +28,11 @@ Future<bool?> showDownloadTaskDeleteDialog(
   final confirmed = await showAppConfirmDialog(
     context,
     dialogKey: const Key('download-task-delete-dialog'),
-    title: '删除下载任务',
-    message: '是否删除 ${tasks.length} 个下载任务？',
+    title: l10n.widgetDownloadDeleteTitle,
+    message: l10n.widgetDownloadDeleteMessage(tasks.length),
     danger: true,
-    confirmLabel: '删除',
-    failureFallback: '删除失败',
+    confirmLabel: l10n.commonDelete,
+    failureFallback: l10n.widgetDownloadDeleteFailure,
     onConfirm: onConfirm == null ? null : () => onConfirm(deleteFiles),
     extraContent: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,8 +40,9 @@ Future<bool?> showDownloadTaskDeleteDialog(
         if (blacklistableTaskCount > 0) ...[
           AppNoticeCard(
             leadingIcon: Icons.warning_amber_rounded,
-            description:
-                '其中 $blacklistableTaskCount 个任务删除后，对应资源会加入资源黑名单，之后相同磁力/种子不会再次提交。',
+            description: l10n.widgetDownloadDeleteBlacklistNotice(
+              blacklistableTaskCount,
+            ),
           ),
           SizedBox(height: context.appSpacing.sm),
         ],
@@ -84,7 +87,9 @@ class _DeleteFilesCheckbox extends HookWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '同时删除下载器中的文件',
+                    AppLocalizations.of(
+                      context,
+                    ).widgetDownloadDeleteFilesLabel,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s12,
@@ -94,7 +99,9 @@ class _DeleteFilesCheckbox extends HookWidget {
                   ),
                   SizedBox(height: context.appSpacing.xs / 2),
                   Text(
-                    '不影响已导入媒体库的文件',
+                    AppLocalizations.of(
+                      context,
+                    ).widgetDownloadDeleteFilesHint,
                     style: resolveAppTextStyle(
                       context,
                       size: AppTextSize.s10,

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
@@ -125,8 +126,13 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
                       SizedBox(width: spacing.sm),
                       AppIconButton(
                         key: const Key('movie-player-scroll-lock-toggle'),
-                        tooltip:
-                            widget.isScrollLocked ? '锁定跟随播放位置' : '允许手动滚动缩略图',
+                        tooltip: widget.isScrollLocked
+                            ? AppLocalizations.of(
+                                context,
+                              ).widgetMediaScrollLockEnabled
+                            : AppLocalizations.of(
+                                context,
+                              ).widgetMediaScrollLockDisabled,
                         isSelected: widget.isScrollLocked,
                         selectedIconColor:
                             Theme.of(context).colorScheme.primary,
@@ -142,7 +148,13 @@ class _MoviePlayerThumbnailPanelState extends State<MoviePlayerThumbnailPanel> {
                         SizedBox(width: spacing.sm),
                         AppIconButton(
                           key: const Key('movie-player-clip-selection-toggle'),
-                          tooltip: widget.clipSelectionMode ? '退出切片圈选' : '圈选切片',
+                          tooltip: widget.clipSelectionMode
+                              ? AppLocalizations.of(
+                                  context,
+                                ).widgetMediaClipSelectionExit
+                              : AppLocalizations.of(
+                                  context,
+                                ).widgetMediaClipSelectionEnter,
                           isSelected: widget.clipSelectionMode,
                           selectedIconColor:
                               Theme.of(context).colorScheme.primary,

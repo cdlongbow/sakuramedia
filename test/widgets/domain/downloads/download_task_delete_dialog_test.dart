@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/domain/downloads/download_task_delete_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   for (final importStatus in ['failed', 'skipped']) {
@@ -16,6 +17,12 @@ void main() {
       late Future<bool?> dialogResult;
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: sakuraDesktopThemeData,
           home: Scaffold(
             body: Builder(
@@ -47,6 +54,12 @@ void main() {
     late Future<bool?> dialogResult;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraDesktopThemeData,
         home: Scaffold(
           body: Builder(
@@ -79,6 +92,12 @@ void main() {
     late Future<bool?> dialogResult;
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraDesktopThemeData,
         home: Scaffold(
           body: Builder(
@@ -213,6 +232,12 @@ void main() {
 
 Widget _dialogHost(Future<bool?> Function(BuildContext context) open) {
   return MaterialApp(
+    locale: const Locale('zh'),
+    localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ],
+    supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
     theme: sakuraDesktopThemeData,
     home: OKToast(
       child: Scaffold(

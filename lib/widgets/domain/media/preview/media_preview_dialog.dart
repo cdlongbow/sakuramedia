@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/media/presentation/providers/media_api_prov
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
@@ -186,7 +187,11 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         return;
       }
       setState(() {
-        _movieDetailErrorMessage = apiErrorMessage(error, fallback: '影片详情加载失败');
+        _movieDetailErrorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).widgetMediaMovieDetailLoadFailed,
+          l10n: AppLocalizations.of(context),
+        );
       });
     } finally {
       if (mounted) {
@@ -205,7 +210,9 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     if (widget.item.mediaId <= 0) {
       setState(() {
         _isLoadingMediaPoints = false;
-        _mediaPointsErrorMessage = '当前结果缺少媒体标识';
+        _mediaPointsErrorMessage = AppLocalizations.of(
+          context,
+        ).widgetMediaMissingMediaId;
       });
       return;
     }
@@ -235,7 +242,11 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         return;
       }
       setState(() {
-        _mediaPointsErrorMessage = apiErrorMessage(error, fallback: '标记信息加载失败');
+        _mediaPointsErrorMessage = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(context).widgetMediaMarksLoadFailed,
+          l10n: AppLocalizations.of(context),
+        );
       });
     } finally {
       if (mounted) {
@@ -326,6 +337,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     required double previewHeight,
   }) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final movieInfoSection = _buildMovieInfoSection(context);
     final actionsSection = MediaPreviewActionGrid(
       key: const Key('image-search-result-preview-actions'),
@@ -336,18 +348,20 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
       loadingItemCount: _loadingActionCount,
       actions: [
         if (ref.watch(imageSearchEnabledProvider)) MediaPreviewActionItem(
-          label: '相似图片',
+          label: l10n.widgetMediaActionSearchSimilar,
           icon: Icons.image_search_outlined,
           onTap: _canSearchSimilar ? _handleSearchSimilar : null,
         ),
         MediaPreviewActionItem(
-          label: '保存',
+          label: l10n.commonSave,
           icon: Icons.download_outlined,
           isLoading: _isSavingImage,
           onTap: _handleSaveToLocal,
         ),
         MediaPreviewActionItem(
-          label: _pointId == null ? '添加标记' : '删除标记',
+          label: _pointId == null
+              ? l10n.widgetMediaActionAddMark
+              : l10n.widgetMediaActionRemoveMark,
           icon: _pointId == null
               ? Icons.bookmark_add_outlined
               : Icons.bookmark_remove_outlined,
@@ -355,19 +369,19 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           onTap: _canTogglePoint ? _handleTogglePoint : null,
         ),
         MediaPreviewActionItem(
-          label: '加入合集',
+          label: l10n.widgetMediaActionAddToCollection,
           icon: Icons.collections_bookmark_outlined,
           visible: _canAddToCollection,
           onTap: _handleAddToCollection,
         ),
         MediaPreviewActionItem(
-          label: '播放',
+          label: l10n.widgetMediaActionPlay,
           icon: Icons.play_circle_outline_rounded,
           visible: _canPlay && !widget.useInlineNavigation,
           onTap: _canPlay ? _handlePlay : null,
         ),
         MediaPreviewActionItem(
-          label: '影片详情',
+          label: l10n.widgetMediaActionMovieDetail,
           icon: Icons.info_outline_rounded,
           visible:
               _canOpenMovieDetail &&
@@ -484,20 +498,28 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
   }
 
   String get _summaryText {
+    final l10n = AppLocalizations.of(context);
     final scoreText = widget.item.scoreText;
     final fragments = <String>[
-      if (widget.item.pointId != null && widget.item.mediaId <= 0) '来源已删除',
+      if (widget.item.pointId != null && widget.item.mediaId <= 0)
+        l10n.widgetMediaSourceDeleted,
     ];
     if (scoreText != null && scoreText.isNotEmpty) {
-      fragments.add('相似度 $scoreText');
+      fragments.add(l10n.widgetMediaSimilarityLabel(scoreText));
     }
     final movieNumber = widget.item.movieNumber;
     if (widget.item.isVideo) {
-      fragments.add('视频 #${widget.item.videoItemId}');
+      fragments.add(
+        l10n.widgetMediaVideoLabel('${widget.item.videoItemId}'),
+      );
     } else if (movieNumber != null && movieNumber.isNotEmpty) {
-      fragments.add('番号 $movieNumber');
+      fragments.add(l10n.widgetMediaMovieNumberLabel(movieNumber));
     }
-    fragments.add('时间点 ${formatMediaTimecode(widget.item.offsetSeconds)}');
+    fragments.add(
+      l10n.widgetMediaTimestampLabel(
+        formatMediaTimecode(widget.item.offsetSeconds),
+      ),
+    );
     return fragments.join(' | ');
   }
 
@@ -608,6 +630,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     if (_isSavingImage) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSavingImage = true);
     try {
       final result =
@@ -616,17 +639,23 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           ).saveImageFromUrl(
             imageUrl: widget.item.imageUrl,
             fileName: widget.item.fileName,
-            dialogTitle: '保存到本地',
+            dialogTitle: l10n.widgetMediaActionSaveToLocal,
           );
       if (mounted && result.status == ImageSaveStatus.success) {
-        showToast(result.message ?? '图片已保存');
+        showToast(result.message ?? l10n.widgetMediaImageSaved);
       }
       if (mounted && result.status == ImageSaveStatus.failed) {
-        showToast(result.message ?? '保存图片失败');
+        showToast(result.message ?? l10n.widgetMediaSaveImageFailed);
       }
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '保存图片失败'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.widgetMediaSaveImageFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -639,6 +668,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
     if (_isTogglingPoint || !_canTogglePoint) {
       return;
     }
+    final l10n = AppLocalizations.of(context);
     setState(() => _isTogglingPoint = true);
     try {
       final pointId = _pointId;
@@ -655,7 +685,7 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
         setState(() {
           _pointId = point.pointId;
         });
-        showToast('已添加标记');
+        showToast(l10n.widgetMediaMarkAdded);
       } else {
         await ref.read(mediaApiProvider).deleteMediaPoint(pointId: pointId);
         if (!mounted) {
@@ -665,14 +695,20 @@ class _MediaPreviewDialogState extends ConsumerState<MediaPreviewDialog> {
           _pointId = null;
         });
         widget.onPointRemoved?.call();
-        showToast('已删除标记');
+        showToast(l10n.widgetMediaMarkRemoved);
         if (widget.closeOnPointRemoved) {
           Navigator.of(context).pop();
         }
       }
     } catch (error) {
       if (mounted) {
-        showToast(apiErrorMessage(error, fallback: '更新标记失败'));
+        showToast(
+          apiErrorMessage(
+            error,
+            fallback: l10n.widgetMediaMarkUpdateFailed,
+            l10n: l10n,
+          ),
+        );
       }
     } finally {
       if (mounted) {

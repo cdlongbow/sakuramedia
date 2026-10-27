@@ -10,6 +10,7 @@ import 'package:sakuramedia/features/media_import/data/import_source_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/media_import/presentation/providers/media_import_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -285,8 +286,11 @@ class _MediaImportSourcePickerState
     widget.onSourceChanged(MediaImportSource(sourceRef: parentRef));
   }
 
-  String _browseErrorMessage(Object error) =>
-      apiErrorMessage(error, fallback: '浏览来源失败，请重试。');
+  String _browseErrorMessage(Object error) => apiErrorMessage(
+    error,
+    fallback: AppLocalizations.of(context).widgetMediaImportBrowseFailed,
+    l10n: AppLocalizations.of(context),
+  );
 
   void _retryBrowse() {
     final library = widget.selectedLibrary;
@@ -325,11 +329,15 @@ class _MediaImportSourcePickerState
         if (widget.sourceDisposition ==
             SourceDisposition.deleteAfterCommit) ...[
           SizedBox(height: context.appSpacing.md),
-          const AppNoticeCard(
-            key: Key('media-import-source-disposition-warning'),
+          AppNoticeCard(
+            key: const Key('media-import-source-disposition-warning'),
             leadingIcon: Icons.warning_amber_rounded,
-            title: '导入成功后将删除源文件',
-            description: '在媒体已成功入库后会将源文件删除!!!',
+            title: AppLocalizations.of(
+              context,
+            ).widgetMediaImportDeleteAfterCommitTitle,
+            description: AppLocalizations.of(
+              context,
+            ).widgetMediaImportDeleteAfterCommitDescription,
           ),
         ],
       ],
@@ -337,14 +345,17 @@ class _MediaImportSourcePickerState
   }
 
   Widget _buildPathBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final canGoUp = !_isBrowsing && _path.isNotEmpty;
     final pathText = _path.isEmpty
-        ? '选择来源'
+        ? l10n.widgetMediaImportSelectSource
         : _path.map((segment) => segment.name).join(' / ');
     final isMobile = AppPlatformScope.maybeOf(context) == AppPlatform.mobile;
     final selectButton = AppButton(
       key: const Key('media-import-picker-select-current-directory-button'),
-      label: _isCurrentDirectorySelected ? '已选择当前目录' : '选择当前目录',
+      label: _isCurrentDirectorySelected
+          ? l10n.widgetMediaImportCurrentDirectorySelected
+          : l10n.widgetMediaImportSelectCurrentDirectory,
       size: isMobile ? AppButtonSize.medium : AppButtonSize.small,
       isSelected: _isCurrentDirectorySelected,
       onPressed: !_isBrowsing && _parentRef != null
@@ -356,7 +367,7 @@ class _MediaImportSourcePickerState
         AppIconButton(
           key: const Key('media-import-picker-up-button'),
           icon: const Icon(Icons.arrow_upward_rounded),
-          tooltip: '上一级',
+          tooltip: l10n.widgetMediaImportGoUp,
           onPressed: canGoUp ? () => unawaited(_browseParent()) : null,
         ),
         SizedBox(width: context.appSpacing.sm),
@@ -417,7 +428,9 @@ class _MediaImportSourcePickerState
       );
     }
     if (_entries.isEmpty) {
-      return const AppEmptyState(message: '该来源下没有可导入的文件或目录');
+      return AppEmptyState(
+        message: AppLocalizations.of(context).widgetMediaImportEmptySource,
+      );
     }
     final showFooter =
         _page?.nextCursor != null || _loadMoreError != null || _isLoadingMore;
@@ -466,7 +479,9 @@ class _MediaImportSourcePickerState
             ),
           AppButton(
             key: const Key('media-import-picker-load-more-button'),
-            label: _loadMoreError == null ? '加载更多' : '重试加载',
+            label: _loadMoreError == null
+                ? AppLocalizations.of(context).widgetMediaImportLoadMore
+                : AppLocalizations.of(context).widgetMediaImportRetryLoad,
             size: AppButtonSize.small,
             onPressed: () => unawaited(_loadMore()),
           ),
@@ -476,6 +491,7 @@ class _MediaImportSourcePickerState
   }
 
   Widget _buildSourceDispositionSelector(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final dispositions = _supportedDispositions;
     final selectedDisposition = dispositions.contains(widget.sourceDisposition)
         ? widget.sourceDisposition
@@ -485,7 +501,7 @@ class _MediaImportSourcePickerState
       children: [
         AppSelectField<SourceDisposition>(
           key: const Key('media-import-picker-source-disposition-select'),
-          label: '导入方式',
+          label: l10n.widgetMediaImportDispositionLabel,
           value: selectedDisposition,
           items: dispositions
               .map(
@@ -512,11 +528,11 @@ class _MediaImportSourcePickerState
         ),
         if (selectedDisposition == SourceDisposition.inPlace) ...[
           SizedBox(height: context.appSpacing.md),
-          const AppNoticeCard(
-            key: Key('media-import-source-disposition-in-place-warning'),
+          AppNoticeCard(
+            key: const Key('media-import-source-disposition-in-place-warning'),
             leadingIcon: Icons.info_outline_rounded,
-            title: '源文件保留在原位置',
-            description: '移动、重命名或修改源文件会导致媒体失效；删除媒体记录不会删除源文件。',
+            title: l10n.widgetMediaImportKeepInPlaceTitle,
+            description: l10n.widgetMediaImportKeepInPlaceDescription,
           ),
         ],
       ],

@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/movies/presentation/controllers/listing/mov
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/rating_dimensions_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/rating/rating_dimensions_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
@@ -48,6 +49,7 @@ class RatedMoviesHeader extends ConsumerWidget {
     final selectedValue = args.filterState.dimensionSortId == null
         ? 'total'
         : 'dimension:${args.filterState.dimensionSortId}';
+    final l10n = AppLocalizations.of(context);
 
     return AppListHeader(
       informationSlots: [
@@ -57,7 +59,7 @@ class RatedMoviesHeader extends ConsumerWidget {
                 ? 'mobile-rated-movies-count'
                 : 'desktop-rated-movies-count',
           ),
-          label: '已评分 ${args.total} 部',
+          label: l10n.moviePageRatedCount(args.total),
         ),
       ],
       actionSlots: [
@@ -67,7 +69,8 @@ class RatedMoviesHeader extends ConsumerWidget {
             for (final dimension in dimensions) 'dimension:${dimension.id}',
           ],
           selectedField: selectedValue,
-          fieldLabelBuilder: (value) => _dimensionLabel(value, dimensions),
+          fieldLabelBuilder: (value) =>
+              _dimensionLabel(value, dimensions, l10n: l10n),
           onFieldChanged: (newValue) {
             final value = newValue!;
             if (value == 'total') {
@@ -103,7 +106,7 @@ class RatedMoviesHeader extends ConsumerWidget {
         ),
         AppTextButton(
           key: const Key('rated-movies-dimension-manage'),
-          label: '维度管理',
+          label: l10n.moviePageDimensionManage,
           icon: const Icon(Icons.tune_rounded),
           size: AppTextButtonSize.xSmall,
           onPressed: () => showRatingDimensionsDialog(context),
@@ -113,26 +116,35 @@ class RatedMoviesHeader extends ConsumerWidget {
   }
 }
 
-String _dimensionLabel(String value, List<RatingDimensionDto> dimensions) {
+String _dimensionLabel(
+  String value,
+  List<RatingDimensionDto> dimensions, {
+  required AppLocalizations l10n,
+}) {
   if (value == 'total') {
-    return '总分';
+    return l10n.moviePageDimensionTotal;
   }
   final dimensionId = int.tryParse(value.split(':').last);
   return dimensions
           .where((dimension) => dimension.id == dimensionId)
           .firstOrNull
           ?.name ??
-      '维度';
+      l10n.moviePageDimensionFallback;
 }
 
 /// 总分为已评维度的平均值，保留一位小数；列表接口已带 `my_score`，
 /// 缺失时才用维度分值兜底。
-String? ratedTotalLabel(MovieListItemDto movie) {
+String? ratedTotalLabel(
+  MovieListItemDto movie, {
+  required AppLocalizations l10n,
+}) {
   final score =
       movie.myScore ??
       (movie.myRatingValues.isEmpty
           ? null
           : movie.myRatingValues.values.reduce((a, b) => a + b) /
                 movie.myRatingValues.length);
-  return score == null ? null : '总分 ${score.toStringAsFixed(1)}';
+  return score == null
+      ? null
+      : l10n.moviePageTotalScore(score.toStringAsFixed(1));
 }

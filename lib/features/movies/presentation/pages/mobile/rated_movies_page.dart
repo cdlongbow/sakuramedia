@@ -4,6 +4,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/movie_summary_list_content.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/shared/rated_movies_header.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_summary_scope.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
@@ -21,10 +22,11 @@ class MobileRatedMoviesPage extends ConsumerWidget {
       surfaceColor: context.appColors.surfaceCard,
       contentKey: const Key('mobile-rated-movies-page'),
       sectionSpacing: context.appSpacing.md,
-      emptyMessage: '还没有评分的影片',
+      emptyMessage: AppLocalizations.of(context).moviePageEmptyNotRated,
       headerBuilder: (context, args) =>
           RatedMoviesHeader(args: args, isMobile: true),
-      trailingLabelForMovie: ratedTotalLabel,
+      trailingLabelForMovie: (movie) =>
+          ratedTotalLabel(movie, l10n: AppLocalizations.of(context)),
       onMovieTap: (context, movieNumber) =>
           MobileMovieDetailRouteData(movieNumber: movieNumber).push(context),
       bodyBuilder: (context, scrollController, sliver, onRefresh) =>
@@ -36,7 +38,8 @@ class MobileRatedMoviesPage extends ConsumerWidget {
             slivers: <Widget>[sliver],
           ),
       enableRefresh: true,
-      onRefreshFailure: (_) => showToast('刷新失败'),
+      onRefreshFailure: (context) =>
+          showToast(AppLocalizations.of(context).moviePageRefreshFailed),
     );
   }
 }

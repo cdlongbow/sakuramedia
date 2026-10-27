@@ -2936,5 +2936,270 @@
   "imageSearchIndexRebuildRequired": "The embedding space changed. Rebuild the image search index first.",
   "imageSearchNoSubscribedActors": "No subscribed actors",
   "imageSearchClose": "Close",
-  "imageSearchClearSelection": "Clear selection"
+  "imageSearchClearSelection": "Clear selection",
+  "moviePageRefreshFailed": "Failed to refresh",
+  "moviePageFilterTooltip": "Filter",
+  "moviePageMovieCount": "{count} movies",
+  "@moviePageMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageTagFilterCount": "Tags · {count}",
+  "@moviePageTagFilterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageEmptyNoMovies": "No movies yet, try searching for one",
+  "moviePageEmptyNoMatches": "No movies match the current filters",
+  "moviePageEmptyNotRated": "No rated movies yet",
+  "moviePageRatedCount": "{count} rated movies",
+  "@moviePageRatedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageDimensionManage": "Manage dimensions",
+  "moviePageDimensionTotal": "Overall",
+  "moviePageDimensionFallback": "Dimension",
+  "moviePageTotalScore": "Overall {score}",
+  "@moviePageTotalScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageSeriesFallbackName": "Series #{id}",
+  "@moviePageSeriesFallbackName": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSeriesTotalCount": "{count} movies in total",
+  "@moviePageSeriesTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSeriesSync": "Sync series movies",
+  "moviePageSeriesEmpty": "This series has no movies yet",
+  "moviePagePlaylistAdded": "Added to",
+  "moviePagePlaylistTotalCount": "{count} total",
+  "@moviePagePlaylistTotalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePagePlaylistAddAction": "Add to playlist",
+  "moviePagePlaylistManageAction": "Manage playlists",
+  "moviePagePlaylistUpdateFailed": "Failed to update playlist membership",
+  "moviePageWatchLabel": "Last watched at {position}",
+  "@moviePageWatchLabel": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageWatchLabelWithDate": "Last watched at {position} · {date}",
+  "@moviePageWatchLabelWithDate": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageWatchedAtDatePattern": "MM/dd/yyyy HH:mm",
+  "moviePageSectionRankings": "Rankings",
+  "moviePageSectionTags": "Tags",
+  "moviePageSectionMediaSources": "Media sources",
+  "moviePageSectionSubtitles": "Subtitles",
+  "moviePageSectionSubtitlesCount": "Subtitles · {count}",
+  "@moviePageSectionSubtitlesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageSectionClips": "Clips",
+  "moviePageSectionSimilarMovies": "Similar movies",
+  "moviePageMetaSeries": "Series",
+  "moviePageMetaMetadata": "Metadata",
+  "moviePageMetaNotIndexed": "{source} · Not indexed on JavDB yet",
+  "@moviePageMetaNotIndexed": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaWantWatch": "Want to watch · {count}",
+  "@moviePageMetaWantWatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaWatched": "Watched · {count}",
+  "@moviePageMetaWatched": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaReleased": "Released · {date}",
+  "@moviePageMetaReleased": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaDuration": "{minutes} min",
+  "@moviePageMetaDuration": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMetaStudio": "Studio · {name}",
+  "@moviePageMetaStudio": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMetaDirector": "Director · {name}",
+  "@moviePageMetaDirector": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageCollectionNotMatched": "No matching movie, collection type unchanged",
+  "moviePageMarkedAsCollection": "Marked as collection",
+  "moviePageMarkedAsSingle": "Marked as single",
+  "moviePageCollectionUpdateFailed": "Failed to update collection type",
+  "moviePageMediaDeleted": "Media file deleted",
+  "moviePageMediaDeleteFailed": "Failed to delete media file",
+  "moviePageMediaSourceLabel": "Media source {id}",
+  "@moviePageMediaSourceLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMediaLabel": "Media {id}",
+  "@moviePageMediaLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMediaDeleteTitle": "Delete media file",
+  "moviePageMediaDeleteConfirm": "Delete media \"{name}\"?",
+  "@moviePageMediaDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageMediaDeleteWarning": "This also deletes the media file and the SakuraMedia record, and cannot be undone.",
+  "moviePageSaveToLocal": "Save locally",
+  "moviePageImageSaved": "Image saved",
+  "moviePageImageSaveFailed": "Save failed. Please try again later.",
+  "moviePageImageLoadFailed": "Failed to load the image. Please try again later.",
+  "moviePageMarkAdded": "Marker added",
+  "moviePageMarkRemoved": "Marker removed",
+  "moviePageMarkUpdateFailed": "Failed to update the marker",
+  "moviePageActionSimilarImage": "Similar image",
+  "moviePageActionAddMark": "Add marker",
+  "moviePageActionRemoveMark": "Remove marker",
+  "moviePageActionPlay": "Play",
+  "moviePageUnsubscribeFailed": "Failed to unsubscribe from the movie",
+  "moviePageSubscribeFailed": "Failed to subscribe to the movie",
+  "moviePageFavoriteListNotReady": "The favorites playlist is not initialized yet",
+  "moviePageFavoriteRemoved": "Removed from favorites",
+  "moviePageFavoriteAdded": "Added to favorites",
+  "moviePageFavoriteRemoveFailed": "Failed to remove from favorites",
+  "moviePageFavoriteAddFailed": "Failed to add to favorites",
+  "moviePageBlacklistTitle": "Blacklist movie",
+  "moviePageBlacklistWarning": "Subscribed movies cannot be blacklisted. Unsubscribe first; blacklisted movies are hidden from regular lists and recommendations.",
+  "moviePageBlacklistConfirm": "Blacklist",
+  "moviePageBlacklistFailed": "Failed to blacklist the movie",
+  "moviePageBlacklisted": "Movie blacklisted",
+  "moviePageUnblacklisted": "Movie removed from blacklist",
+  "moviePageUnblacklistFailed": "Failed to remove the movie from blacklist",
+  "moviePageBlacklistLoadFailedTitle": "Failed to load blacklisted movies",
+  "moviePageBlacklistLoadFailed": "Failed to load blacklisted movies. Please try again later.",
+  "moviePageBlacklistHint": "Blacklisted movies are hidden from regular lists and recommendations. Right-click a movie to remove it from the blacklist.",
+  "moviePageBlacklistEmpty": "No blacklisted movies yet",
+  "moviePageUnblacklistAction": "Remove from blacklist",
+  "moviePageCastSessionLabel": "Casting · {device}",
+  "@moviePageCastSessionLabel": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
+  "moviePageDetailLoadFailed": "Movie details could not be loaded. Please try again later.",
+  "moviePageMergedPlayback": "Merged playback",
+  "moviePageMergedPlaybackSegments": "Merged playback · {count} segments",
+  "@moviePageMergedPlaybackSegments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageMergedNotEnoughSegments": "This media library does not have enough playable segments",
+  "moviePageMergedLoadFailed": "Failed to load merged playback. Please try again later.",
+  "moviePageEpisodePickerTitle": "Episodes · {count}",
+  "@moviePageEpisodePickerTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePagePlayerLoading": "Loading movie…",
+  "moviePagePlayerLoadFailedTitle": "Player failed to load",
+  "moviePagePlayerEmptyTitle": "No playable media",
+  "moviePagePlayerEmptyMessage": "This movie has no playable source yet. Please try again later.",
+  "moviePageMediaLibraryLabel": "Media library {id}",
+  "@moviePageMediaLibraryLabel": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "moviePageClipCreated": "Clip created"
 }

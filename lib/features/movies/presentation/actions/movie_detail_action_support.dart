@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/movies/presentation/actions/movie_detail_ac
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/mutation_events_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 class MovieDetailRemoteActionSpec {
   const MovieDetailRemoteActionSpec({
@@ -48,6 +49,7 @@ MovieSubscriptionEvents resolveMovieSubscriptionNotifier(BuildContext context) {
 MovieDetailRemoteActionSpec? movieDetailRemoteActionSpecFor({
   required MovieDetailActionType action,
   required String movieNumber,
+  required AppLocalizations l10n,
 }) {
   switch (action) {
     // 本地动作:只投屏,不发请求,由页面自行接管。
@@ -62,15 +64,15 @@ MovieDetailRemoteActionSpec? movieDetailRemoteActionSpecFor({
     case MovieDetailActionType.refreshMetadata:
       return MovieDetailRemoteActionSpec(
         request: (api) => api.refreshMovieMetadata(movieNumber: movieNumber),
-        successMessage: '影片元数据已刷新',
-        failureMessage: '刷新影片元数据失败',
+        successMessage: l10n.movieActionMovieMetadataRefreshed,
+        failureMessage: l10n.movieActionRefreshMovieMetadataFailed,
         resetPreview: true,
       );
     case MovieDetailActionType.recomputeHeat:
       return MovieDetailRemoteActionSpec(
         request: (api) => api.recomputeMovieHeat(movieNumber: movieNumber),
-        successMessage: '影片热度重算任务已提交，请在活动中心查看进度',
-        failureMessage: '计算影片热度失败',
+        successMessage: l10n.movieActionHeatRecomputeSubmitted,
+        failureMessage: l10n.movieActionRecomputeMovieHeatFailed,
       );
   }
 }
@@ -88,9 +90,11 @@ Future<bool> executeMovieDetailRemoteAction({
   required void Function(MovieDetailActionType? action) onActiveActionChanged,
   required void Function(MovieDetailApplyResult result) onMovieApplied,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final spec = movieDetailRemoteActionSpecFor(
     action: action,
     movieNumber: movieNumber,
+    l10n: l10n,
   );
   if (spec == null || isLocked) {
     return false;
@@ -116,7 +120,9 @@ Future<bool> executeMovieDetailRemoteAction({
     return true;
   } catch (error) {
     if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: spec.failureMessage));
+      showToast(
+        apiErrorMessage(error, fallback: spec.failureMessage, l10n: l10n),
+      );
     }
     return false;
   } finally {

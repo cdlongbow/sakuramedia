@@ -1265,5 +1265,157 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "movieActionDetailMenuTitle": "影片操作",
+  "movieActionSelect": "选择",
+  "movieActionSubscribeMovie": "订阅影片",
+  "movieActionUnsubscribeMovie": "取消订阅",
+  "movieActionMarkAsCollection": "标记为合集",
+  "movieActionMarkAsSingle": "标记为单体",
+  "movieActionMarkAsCollectionOrSingle": "标记为合集/单体",
+  "movieActionBlacklistMovie": "屏蔽影片",
+  "movieActionBlacklistMovieMessage": "已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。",
+  "movieActionBlacklistConfirm": "屏蔽",
+  "movieActionBlacklistMovieFailed": "屏蔽影片失败",
+  "movieActionMovieBlacklisted": "已屏蔽影片",
+  "movieActionCollectionStatusLoadFailed": "获取合集状态失败，请稍后重试",
+  "movieActionCollectionStatusUnmatched": "未匹配到影片，未更新合集状态",
+  "movieActionMovieMarkedAsCollection": "已将 {movieNumber} 标记为合集",
+  "@movieActionMovieMarkedAsCollection": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieActionMovieMarkedAsSingle": "已将 {movieNumber} 标记为单体",
+  "@movieActionMovieMarkedAsSingle": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieActionCollectionStatusUpdateFailed": "更新合集状态失败",
+  "movieActionExternalPlayerUnavailableInApp": "外部播放器不可用，已使用应用内播放",
+  "movieActionExternalPlayerUnavailable": "外部播放器不可用",
+  "movieActionMergedPlaybackUrlUnavailable": "无法获取合并播放地址",
+  "movieActionMergedPlaybackStartFailed": "合并播放启动失败，请稍后重试",
+  "movieActionSearchSimilarImages": "相似图片",
+  "movieActionSaveToLocal": "保存到本地",
+  "movieActionReadImageFailed": "读取图片失败，请稍后重试",
+  "movieActionImageSaved": "图片已保存",
+  "movieActionImageSaveFailed": "保存失败，请稍后重试",
+  "movieControllerClipRenamed": "已重命名",
+  "movieControllerClipRenameFailed": "重命名失败，请重试",
+  "movieControllerClipDeleteTitle": "删除切片",
+  "movieControllerClipDeleteMessage": "确认删除“{title}”？切片文件会被一并删除，该操作不可恢复。",
+  "@movieControllerClipDeleteMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "movieControllerClipDeleteMessageUnnamed": "确认删除该切片？切片文件会被一并删除，该操作不可恢复。",
+  "movieControllerClipDeleted": "已删除切片",
+  "movieControllerClipDeleteFailed": "删除失败，请重试",
+  "movieProviderSimilarMoviesLoadFailed": "相似影片暂时无法加载，请稍后重试",
+  "movieProviderMovieNotFound": "未找到该影片",
+  "movieProviderMovieDetailLoadFailed": "影片详情暂时无法加载，请稍后重试",
+  "movieProviderRetryLater": "请稍后重试。",
+  "movieProviderSubtitleFetchFailed": "字幕抓取失败",
+  "movieProviderPlayerLoadFailed": "播放器暂时无法加载，请稍后重试",
+  "movieProviderMagnetSearchFailed": "搜索资源失败，请稍后重试。",
+  "movieProviderSeriesImportReady": "准备就绪",
+  "movieProviderSeriesImportConnecting": "正在连接服务器...",
+  "movieProviderSeriesImportDisconnected": "连接意外断开，请重试",
+  "movieProviderSeriesImportSeriesNotFound": "库内系列不存在",
+  "movieProviderSeriesImportJavdbSeriesNotFound": "未能在 JAVDB 找到匹配的系列，请确认系列名称",
+  "movieProviderSubscribeMovieFailed": "订阅影片失败",
+  "movieProviderBatchSubscribeMoviesFailed": "批量订阅影片失败",
+  "movieProviderForceUnsubscribeBusy": "选中影片正在处理，请稍后重试",
+  "movieProviderReadMovieMediaFailed": "读取影片媒体失败",
+  "movieProviderReadMovieMediaForFailed": "读取 {movieNumber} 的媒体失败",
+  "@movieProviderReadMovieMediaForFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderReadingMediaList": "正在读取媒体清单：{current}/{total} 部",
+  "@movieProviderReadingMediaList": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderDeleteMovieMediaFailed": "删除 {movieNumber} 的媒体 {mediaId} 失败",
+  "@movieProviderDeleteMovieMediaFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      },
+      "mediaId": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderMediaDeletedProgress": "已删除 {deleted}/{total} 个媒体 · {movieNumber}",
+  "@movieProviderMediaDeletedProgress": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderRefreshMovieMediaFailed": "刷新 {movieNumber} 的媒体状态失败",
+  "@movieProviderRefreshMovieMediaFailed": {
+    "placeholders": {
+      "movieNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "movieProviderMediaClearedUnsubscribeFailed": "媒体已清理，但批量取消订阅失败",
+  "movieProviderMediaDeletedUnsubscribing": "已删除 {deleted}/{total} 个媒体，正在批量取消订阅…",
+  "@movieProviderMediaDeletedUnsubscribing": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "movieProviderForceUnsubscribeStopped": "{step}：{reason}。已停止操作，已删除 {deletedCount} 个媒体，删除操作无法回滚。",
+  "@movieProviderForceUnsubscribeStopped": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      },
+      "deletedCount": {
+        "type": "int"
+      }
+    }
+  },
+  "movieActionMovieMetadataRefreshed": "影片元数据已刷新",
+  "movieActionRefreshMovieMetadataFailed": "刷新影片元数据失败",
+  "movieActionHeatRecomputeSubmitted": "影片热度重算任务已提交，请在活动中心查看进度",
+  "movieActionRecomputeMovieHeatFailed": "计算影片热度失败"
 }

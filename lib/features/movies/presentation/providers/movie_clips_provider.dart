@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clip_mutation_events_provider.dart';
 import 'package:sakuramedia/features/clips/presentation/providers/clips_api_provider.dart';
@@ -93,7 +94,9 @@ class MovieClips extends _$MovieClips {
       state = state.copyWith(clips: clips, errorMessage: null);
     } catch (_) {
       if (_isDisposed) return;
-      state = state.copyWith(errorMessage: '切片暂时无法加载，请稍后重试');
+      state = state.copyWith(
+        errorMessage: ref.read(appLocalizationsProvider).errorClipLoadFailed,
+      );
     } finally {
       if (!_isDisposed) {
         state = state.copyWith(isLoading: false);

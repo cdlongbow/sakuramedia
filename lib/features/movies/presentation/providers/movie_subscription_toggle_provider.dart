@@ -1,6 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_subscription_batch_dto.dart';
@@ -35,24 +34,28 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
         skippedHasMediaNumbers: [],
       );
     }
+    final l10n = ref.read(appLocalizationsProvider);
     if (numbers.any(state.contains)) {
       return MovieSubscriptionBatchToggleResult.failed(
         requestedCount: numbers.length,
-        message: '选中影片正在处理，请稍后重试',
+        message: l10n.movieProviderForceUnsubscribeBusy,
       );
     }
     state = Set.unmodifiable({...state, ...numbers});
     var deletedCount = 0;
-    var step = '读取影片媒体失败';
+    var step = l10n.movieProviderReadMovieMediaFailed;
     try {
       final api = ref.read(moviesApiProvider);
       final mediaApi = ref.read(mediaApiProvider);
       final movies = <MovieDetailDto>[];
       for (final number in numbers) {
-        step = '读取 $number 的媒体失败';
+        step = l10n.movieProviderReadMovieMediaForFailed(number);
         onProgress?.call((
           value: null,
-          message: '正在读取媒体清单：${movies.length + 1}/${numbers.length} 部',
+          message: l10n.movieProviderReadingMediaList(
+            movies.length + 1,
+            numbers.length,
+          ),
         ));
         movies.add(await api.getMovieDetail(movieNumber: number));
       }
@@ -64,16 +67,27 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
         final number = movie.movieNumber;
         try {
           for (final media in movie.mediaItems) {
-            step = '删除 $number 的媒体 ${media.mediaId} 失败';
+            step = l10n.movieProviderDeleteMovieMediaFailed(
+              number,
+              media.mediaId,
+            );
             onProgress?.call((
               value: deletedCount / total,
-              message: '已删除 $deletedCount/$total 个媒体 · $number',
+              message: l10n.movieProviderMediaDeletedProgress(
+                deletedCount,
+                total,
+                number,
+              ),
             ));
             await mediaApi.deleteMedia(mediaId: media.mediaId);
             deletedCount++;
             onProgress?.call((
               value: deletedCount / total,
-              message: '已删除 $deletedCount/$total 个媒体 · $number',
+              message: l10n.movieProviderMediaDeletedProgress(
+                deletedCount,
+                total,
+                number,
+              ),
             ));
           }
         } catch (_) {
@@ -83,13 +97,16 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
           } catch (_) {}
           rethrow;
         }
-        step = '刷新 $number 的媒体状态失败';
+        step = l10n.movieProviderRefreshMovieMediaFailed(number);
         await _reportMediaState(number);
       }
-      step = '媒体已清理，但批量取消订阅失败';
+      step = l10n.movieProviderMediaClearedUnsubscribeFailed;
       onProgress?.call((
         value: 1,
-        message: '已删除 $deletedCount/$total 个媒体，正在批量取消订阅…',
+        message: l10n.movieProviderMediaDeletedUnsubscribing(
+          deletedCount,
+          total,
+        ),
       ));
       final response = await api.batchUnsubscribeMovies(
         movieNumbers: numbers.toList(),
@@ -121,7 +138,11 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
       );
       return MovieSubscriptionBatchToggleResult.failed(
         requestedCount: numbers.length,
-        message: '$step：$reason。已停止操作，已删除 $deletedCount 个媒体，删除操作无法回滚。',
+        message: l10n.movieProviderForceUnsubscribeStopped(
+          step,
+          reason,
+          deletedCount,
+        ),
       );
     } finally {
       if (ref.mounted) {
@@ -179,10 +200,13 @@ class MovieSubscriptionToggle extends _$MovieSubscriptionToggle {
       if (isMovieSubscriptionBlockedByMedia(error)) {
         return const MovieSubscriptionToggleResult.blockedByMedia();
       }
+      final l10n = ref.read(appLocalizationsProvider);
       return MovieSubscriptionToggleResult.failed(
         message: ref.apiErrorMessage(
           error,
-          fallback: subscribe ? '订阅影片失败' : '取消订阅影片失败',
+          fallback: subscribe
+              ? l10n.movieProviderSubscribeMovieFailed
+              : l10n.errorUnsubscribeMovieFailed,
         ),
       );
     } finally {

@@ -12,6 +12,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_toggle_result.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
@@ -70,6 +71,7 @@ Future<void> showMovieCollectionFeatureActionMenu({
     context,
     listen: false,
   ).read(moviesApiProvider);
+  final l10n = AppLocalizations.of(context);
   final deferLookup = onEnterSelection != null;
 
   _MovieCollectionStatusLookupResult? statusResult;
@@ -77,6 +79,7 @@ Future<void> showMovieCollectionFeatureActionMenu({
     statusResult = await _lookupCollectionStatus(
       moviesApi: moviesApi,
       movieNumber: movieNumber,
+      l10n: l10n,
     );
     if (!context.mounted) {
       return;
@@ -116,6 +119,7 @@ Future<void> showMovieCollectionFeatureActionMenu({
           await _lookupCollectionStatus(
             moviesApi: moviesApi,
             movieNumber: movieNumber,
+            l10n: l10n,
           );
       if (!context.mounted) {
         return;
@@ -150,6 +154,7 @@ Future<void> toggleMovieCollectionType({
   final statusResult = await _lookupCollectionStatus(
     moviesApi: moviesApi,
     movieNumber: movieNumber,
+    l10n: AppLocalizations.of(context),
   );
   if (!context.mounted) {
     return;
@@ -172,13 +177,15 @@ Future<void> blacklistMovie({
     context,
     listen: false,
   ).read(moviesApiProvider);
+  final l10n = AppLocalizations.of(context);
   final confirmed = await showAppConfirmDialog(
     context,
-    title: '屏蔽影片',
-    message: '已订阅影片无法屏蔽，请先取消订阅。屏蔽后将从正常列表和推荐中隐藏。',
-    confirmLabel: '屏蔽',
+    title: l10n.movieActionBlacklistMovie,
+    message: l10n.movieActionBlacklistMovieMessage,
+    confirmLabel: l10n.movieActionBlacklistConfirm,
+    cancelLabel: l10n.commonCancel,
     danger: true,
-    failureFallback: '屏蔽影片失败',
+    failureFallback: l10n.movieActionBlacklistMovieFailed,
     onConfirm: () => moviesApi.setMoviesBlacklisted(
       movieNumbers: <String>[movieNumber],
       isBlacklisted: true,
@@ -186,7 +193,7 @@ Future<void> blacklistMovie({
   );
   if (confirmed && context.mounted) {
     onBlacklisted?.call();
-    showToast('已屏蔽影片');
+    showToast(l10n.movieActionMovieBlacklisted);
   }
 }
 
@@ -231,6 +238,7 @@ Future<void> _handleToggleSubscriptionAction({
   required MoviesApi moviesApi,
 }) async {
   MovieSubscriptionToggleResult result;
+  final l10n = AppLocalizations.of(context);
   try {
     if (isSubscribed) {
       await moviesApi.unsubscribeMovie(
@@ -250,7 +258,10 @@ Future<void> _handleToggleSubscriptionAction({
       result = MovieSubscriptionToggleResult.failed(
         message: apiErrorMessage(
           error,
-          fallback: isSubscribed ? '取消订阅影片失败' : '订阅影片失败',
+          fallback: isSubscribed
+              ? l10n.errorUnsubscribeMovieFailed
+              : l10n.movieProviderSubscribeMovieFailed,
+          l10n: l10n,
         ),
       );
     }
@@ -281,8 +292,11 @@ Future<void> _handleCollectionTypeToggleAction({
   required MoviesApi moviesApi,
 }) async {
   final status = statusResult.status;
+  final l10n = AppLocalizations.of(context);
   if (status == null) {
-    showToast(statusResult.errorMessage ?? '获取合集状态失败，请稍后重试');
+    showToast(
+      statusResult.errorMessage ?? l10n.movieActionCollectionStatusLoadFailed,
+    );
     return;
   }
 
@@ -303,7 +317,7 @@ Future<void> _handleCollectionTypeToggleAction({
       return;
     }
     if (result.updatedCount <= 0) {
-      showToast('未匹配到影片，未更新合集状态');
+      showToast(l10n.movieActionCollectionStatusUnmatched);
       return;
     }
     ProviderScope.containerOf(context, listen: false)
@@ -314,20 +328,27 @@ Future<void> _handleCollectionTypeToggleAction({
         );
     showToast(
       targetCollectionType == MovieCollectionType.collection
-          ? '已将 $displayMovieNumber 标记为合集'
-          : '已将 $displayMovieNumber 标记为单体',
+          ? l10n.movieActionMovieMarkedAsCollection(displayMovieNumber)
+          : l10n.movieActionMovieMarkedAsSingle(displayMovieNumber),
     );
   } catch (error) {
     if (!context.mounted) {
       return;
     }
-    showToast(apiErrorMessage(error, fallback: '更新合集状态失败'));
+    showToast(
+      apiErrorMessage(
+        error,
+        fallback: l10n.movieActionCollectionStatusUpdateFailed,
+        l10n: l10n,
+      ),
+    );
   }
 }
 
 Future<_MovieCollectionStatusLookupResult> _lookupCollectionStatus({
   required MoviesApi moviesApi,
   required String movieNumber,
+  required AppLocalizations l10n,
 }) async {
   try {
     final status = await moviesApi.getMovieCollectionStatus(
@@ -336,7 +357,11 @@ Future<_MovieCollectionStatusLookupResult> _lookupCollectionStatus({
     return _MovieCollectionStatusLookupResult(status: status);
   } catch (error) {
     return _MovieCollectionStatusLookupResult(
-      errorMessage: apiErrorMessage(error, fallback: '获取合集状态失败，请稍后重试'),
+      errorMessage: apiErrorMessage(
+        error,
+        fallback: l10n.movieActionCollectionStatusLoadFailed,
+        l10n: l10n,
+      ),
     );
   }
 }
@@ -348,22 +373,25 @@ Future<_MovieCollectionFeatureMenuAction?> _showMovieCollectionFeatureMenu({
   required Offset globalPosition,
   required bool canEnterSelection,
 }) {
+  final l10n = AppLocalizations.of(context);
   return showAppActionMenu<_MovieCollectionFeatureMenuAction>(
     context: context,
     globalPosition: globalPosition,
     items: <AppMenuItem<_MovieCollectionFeatureMenuAction>>[
       if (canEnterSelection)
-        const AppMenuItem(
-          key: Key('movie-collection-feature-menu-select-item'),
+        AppMenuItem(
+          key: const Key('movie-collection-feature-menu-select-item'),
           value: _MovieCollectionFeatureMenuAction.enterSelection,
-          label: '选择',
+          label: l10n.movieActionSelect,
           icon: Icons.check_circle_outline,
         ),
       if (isSubscribed != null)
         AppMenuItem(
           key: const Key('movie-collection-feature-menu-subscription-item'),
           value: _MovieCollectionFeatureMenuAction.toggleSubscription,
-          label: isSubscribed ? '取消订阅' : '订阅影片',
+          label: isSubscribed
+              ? l10n.movieActionUnsubscribeMovie
+              : l10n.movieActionSubscribeMovie,
           icon: isSubscribed
               ? Icons.favorite_border_rounded
               : Icons.favorite_rounded,
@@ -373,15 +401,17 @@ Future<_MovieCollectionFeatureMenuAction?> _showMovieCollectionFeatureMenu({
         key: const Key('movie-collection-feature-menu-toggle-item'),
         value: _MovieCollectionFeatureMenuAction.toggleCollectionType,
         label: isCollection == null
-            ? '标记为合集/单体'
-            : (isCollection ? '标记为单体' : '标记为合集'),
+            ? l10n.movieActionMarkAsCollectionOrSingle
+            : (isCollection
+                  ? l10n.movieActionMarkAsSingle
+                  : l10n.movieActionMarkAsCollection),
         icon: Icons.category_outlined,
       ),
       if (isSubscribed != true)
-        const AppMenuItem(
-          key: Key('movie-collection-feature-menu-blacklist-item'),
+        AppMenuItem(
+          key: const Key('movie-collection-feature-menu-blacklist-item'),
           value: _MovieCollectionFeatureMenuAction.blacklist,
-          label: '屏蔽影片',
+          label: l10n.movieActionBlacklistMovie,
           icon: Icons.block_rounded,
           tone: AppTextTone.error,
         ),

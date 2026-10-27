@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart';
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/downloads/presentation/providers/downloads_api_provider.dart';
@@ -145,7 +146,9 @@ class MovieDetailMagnet extends _$MovieDetailMagnet {
       if (_isDisposed) return;
       state = state.copyWith(
         items: const <DownloadCandidateDto>[],
-        errorMessage: '搜索资源失败，请稍后重试。',
+        errorMessage: ref
+            .read(appLocalizationsProvider)
+            .movieProviderMagnetSearchFailed,
       );
     } finally {
       if (!_isDisposed) {

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart' show KeepAliveLink;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 
@@ -239,7 +240,9 @@ class MovieDetailThumbnail extends _$MovieDetailThumbnail {
       state = state.copyWith(
         allThumbnails: const <MovieMediaThumbnailDto>[],
         thumbnails: const <MovieMediaThumbnailDto>[],
-        errorMessage: '请稍后重试。',
+        errorMessage: ref
+            .read(appLocalizationsProvider)
+            .movieProviderRetryLater,
         activeIndex: null,
       );
     } finally {

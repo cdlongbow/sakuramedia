@@ -10,7 +10,7 @@ class SeriesImportState {
     this.isCompleted = false,
     this.hasFailed = false,
     this.hasNewMovies = false,
-    this.statusMessage = '准备就绪',
+    this.statusMessage = '',
     this.current,
     this.total,
     this.stats,

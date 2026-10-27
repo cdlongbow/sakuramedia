@@ -9,6 +9,7 @@ import 'package:sakuramedia/features/external_player/data/external_player_select
 import 'package:sakuramedia/features/external_player/presentation/providers/external_player_preference_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movies_api_provider.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/desktop_routes.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
@@ -101,7 +102,9 @@ Future<void> launchMoviePlayback(
   }
   if (!launched) {
     // 外部播放器不可用（可能已卸载），提示并回落到应用内播放。
-    showToast('外部播放器不可用，已使用应用内播放');
+    showToast(
+      AppLocalizations.of(context).movieActionExternalPlayerUnavailableInApp,
+    );
     _pushInAppPlayer(
       context,
       movieNumber: movieNumber,
@@ -145,7 +148,9 @@ Future<void> launchMovieMergedPlayback(
       baseUrl: container.read(sessionStoreProvider).baseUrl,
     );
     if (resolvedUrl == null || resolvedUrl.isEmpty) {
-      showToast('无法获取合并播放地址');
+      showToast(
+        AppLocalizations.of(context).movieActionMergedPlaybackUrlUnavailable,
+      );
       return;
     }
     final title = movie?.preferredTitle.trim() ?? '';
@@ -155,11 +160,20 @@ Future<void> launchMovieMergedPlayback(
       title: title.isEmpty ? movieNumber : title,
     );
     if (context.mounted && !launched) {
-      showToast('外部播放器不可用');
+      showToast(
+        AppLocalizations.of(context).movieActionExternalPlayerUnavailable,
+      );
     }
   } catch (error) {
     if (context.mounted) {
-      showToast(apiErrorMessage(error, fallback: '合并播放启动失败，请稍后重试'));
+      final l10n = AppLocalizations.of(context);
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.movieActionMergedPlaybackStartFailed,
+          l10n: l10n,
+        ),
+      );
     }
   }
 }

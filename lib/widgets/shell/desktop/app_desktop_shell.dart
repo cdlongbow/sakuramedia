@@ -9,6 +9,7 @@ import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/routes/desktop_top_bar_config.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_page_refresh_scope.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_sidebar_toggle_button.dart';
 import 'package:sakuramedia/widgets/shell/desktop/app_top_bar.dart';
@@ -95,10 +96,20 @@ class _AppDesktopShellState extends State<AppDesktopShell> {
   Future<void> _runRefresh(AppPageRefreshCallback callback) async {
     if (_isRefreshing) return;
     setState(() => _isRefreshing = true);
+    final l10n = appL10n(context);
     try {
       await callback();
     } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '刷新失败'));
+      if (!mounted) {
+        return;
+      }
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: l10n.shellRefreshFailed,
+          l10n: l10n,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isRefreshing = false);

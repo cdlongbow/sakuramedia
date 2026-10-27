@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 统一搜索输入：前置放大镜 + 有内容时显示清空按钮。
 ///
@@ -12,14 +13,14 @@ class AppSearchField extends StatelessWidget {
     super.key,
     required this.controller,
     this.fieldKey,
-    this.hintText = '搜索',
+    this.hintText,
     this.onChanged,
     this.clearKey,
   });
 
   final TextEditingController controller;
   final Key? fieldKey;
-  final String hintText;
+  final String? hintText;
   final ValueChanged<String>? onChanged;
 
   /// 清空按钮的测试锚点。
@@ -27,13 +28,14 @@ class AppSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return ValueListenableBuilder<TextEditingValue>(
       valueListenable: controller,
       builder: (context, value, _) {
         return AppTextField(
           fieldKey: fieldKey,
           controller: controller,
-          hintText: hintText,
+          hintText: hintText ?? l10n.baseSearchHint,
           textInputAction: TextInputAction.search,
           onChanged: onChanged,
           prefix: Icon(
@@ -45,7 +47,7 @@ class AppSearchField extends StatelessWidget {
               ? null
               : AppIconButton(
                   key: clearKey,
-                  tooltip: '清空',
+                  tooltip: l10n.baseClearSearch,
                   size: AppIconButtonSize.compact,
                   icon: const Icon(Icons.close_rounded),
                   onPressed: () {

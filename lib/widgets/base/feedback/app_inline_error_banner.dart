@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 enum AppInlineErrorTone {
   /// 中性提示：数据加载失败但页面可继续使用。
@@ -32,6 +33,7 @@ class AppInlineErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final isError = tone == AppInlineErrorTone.error;
     final foreground = isError
         ? context.appTextPalette.error
@@ -73,7 +75,7 @@ class AppInlineErrorBanner extends StatelessWidget {
               SizedBox(width: context.appSpacing.sm),
               AppButton(
                 key: retryKey,
-                label: '重试',
+                label: l10n.commonRetry,
                 size: AppButtonSize.xSmall,
                 variant: AppButtonVariant.secondary,
                 onPressed: () => unawaited(onRetry()),

@@ -4,6 +4,7 @@ import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
@@ -35,14 +36,15 @@ enum AppConfirmVariant {
 /// - [onConfirm] 传了 → 点确认后内部把确认按钮置 `isLoading`、禁用取消，
 ///   `await onConfirm()` 成功后 pop(true)；抛异常时 toast 兜底 + 恢复按钮状态、
 ///   **不 pop**。不传则保持旧行为：点确认立即 pop(true) 由 caller 自行调 API。
-/// - [failureFallback] 是 [onConfirm] 异常时 toast 的兜底文案（默认 `'操作失败'`），
-///   通过 `apiErrorMessage(error, fallback: failureFallback)` 解析后展示。
+/// - [failureFallback] 是 [onConfirm] 异常时 toast 的兜底文案（默认取当前语言的
+///   `baseActionFailed`），通过 `apiErrorMessage(error, fallback: failureFallback)`
+///   解析后展示。
 Future<bool> showAppConfirmDialog(
   BuildContext context, {
   required String title,
   required String message,
-  String confirmLabel = '确认',
-  String cancelLabel = '取消',
+  String? confirmLabel,
+  String? cancelLabel,
   bool danger = false,
   Key? dialogKey,
   Key? confirmKey,
@@ -50,20 +52,21 @@ Future<bool> showAppConfirmDialog(
   Widget? extraContent,
   AppConfirmVariant variant = AppConfirmVariant.auto,
   Future<void> Function()? onConfirm,
-  String failureFallback = '操作失败',
+  String? failureFallback,
 }) async {
+  final l10n = appL10n(context);
   final resolved = _resolveVariant(context, variant);
   Widget buildBody(BuildContext _) => _ConfirmBody(
     title: title,
     message: message,
-    confirmLabel: confirmLabel,
-    cancelLabel: cancelLabel,
+    confirmLabel: confirmLabel ?? l10n.baseConfirm,
+    cancelLabel: cancelLabel ?? l10n.commonCancel,
     danger: danger,
     confirmKey: confirmKey,
     cancelKey: cancelKey,
     extraContent: extraContent,
     onConfirm: onConfirm,
-    failureFallback: failureFallback,
+    failureFallback: failureFallback ?? l10n.baseActionFailed,
   );
 
   if (resolved == AppConfirmVariant.drawer) {
@@ -157,7 +160,13 @@ class _ConfirmBodyState extends State<_ConfirmBody> {
         return;
       }
       setState(() => _isConfirming = false);
-      showToast(apiErrorMessage(error, fallback: widget.failureFallback));
+      showToast(
+        apiErrorMessage(
+          error,
+          fallback: widget.failureFallback,
+          l10n: appL10n(context),
+        ),
+      );
     }
   }
 

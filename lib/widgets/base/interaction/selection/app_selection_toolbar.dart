@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 列表「多选态」通用操作条：`已选 N · Spacer · 全选/取消全选 · 批量动作… · 取消`。
 ///
@@ -23,7 +24,7 @@ class AppSelectionToolbar extends StatelessWidget {
     this.countKey,
     this.selectAllKey,
     this.exitKey,
-    this.exitLabel = '取消',
+    this.exitLabel,
   });
 
   /// 左侧计数文案，单位由调用方决定（`已选 3 部` / `已选 3 个`）。
@@ -46,10 +47,11 @@ class AppSelectionToolbar extends StatelessWidget {
   final Key? countKey;
   final Key? selectAllKey;
   final Key? exitKey;
-  final String exitLabel;
+  final String? exitLabel;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     return Row(
       children: [
@@ -74,7 +76,7 @@ class AppSelectionToolbar extends StatelessWidget {
         SizedBox(width: spacing.sm),
         AppTextButton(
           key: exitKey,
-          label: exitLabel,
+          label: exitLabel ?? l10n.commonCancel,
           size: AppTextButtonSize.small,
           onPressed: onExit,
         ),
@@ -104,7 +106,7 @@ class AppSelectionHeaderToolbar extends StatelessWidget {
     this.countKey,
     this.selectAllKey,
     this.exitKey,
-    this.exitLabel = '取消',
+    this.exitLabel,
   });
 
   final String countLabel;
@@ -115,7 +117,7 @@ class AppSelectionHeaderToolbar extends StatelessWidget {
   final Key? countKey;
   final Key? selectAllKey;
   final Key? exitKey;
-  final String exitLabel;
+  final String? exitLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -150,17 +152,18 @@ class AppSelectionEntryButton extends StatelessWidget {
   const AppSelectionEntryButton({
     super.key,
     required this.onPressed,
-    this.label = '选择',
+    this.label,
   });
 
   /// `null` 时禁用（列表为空、无可选项）。
   final VoidCallback? onPressed;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return AppTextButton(
-      label: label,
+      label: label ?? l10n.baseSelect,
       icon: const Icon(Icons.check_circle_outline, size: 16),
       size: AppTextButtonSize.small,
       onPressed: onPressed,

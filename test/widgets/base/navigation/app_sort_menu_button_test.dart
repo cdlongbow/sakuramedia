@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/shared/data/sort_direction.dart';
 import 'package:sakuramedia/l10n/app_localizations.dart';
@@ -7,6 +8,13 @@ import 'package:sakuramedia/widgets/base/navigation/app_list_header.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 enum _TestSortField { title, heat }
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
   Widget buildButton({
@@ -53,13 +61,10 @@ void main() {
     var selectedDirection = SortDirection.desc;
     await tester.pumpWidget(
       MaterialApp(
-        theme: sakuraThemeData,
         locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
+        localizationsDelegates: _testLocalizationsDelegates,
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
         home: Scaffold(
           body: Align(
             alignment: Alignment.topRight,
@@ -103,13 +108,10 @@ void main() {
     var selectedDirection = SortDirection.desc;
     await tester.pumpWidget(
       MaterialApp(
-        theme: sakuraThemeData,
         locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
+        localizationsDelegates: _testLocalizationsDelegates,
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
         home: Scaffold(
           body: SizedBox(
             height: 44,
@@ -148,13 +150,10 @@ void main() {
     var selectedDirection = SortDirection.desc;
     await tester.pumpWidget(
       MaterialApp(
-        theme: sakuraThemeData,
         locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
+        localizationsDelegates: _testLocalizationsDelegates,
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
         home: Scaffold(
           body: SizedBox(
             height: 44,
@@ -203,13 +202,10 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: sakuraThemeData,
         locale: const Locale('zh'),
-        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-          AppLocalizations.delegate,
-          ...GlobalMaterialLocalizations.delegates,
-        ],
+        localizationsDelegates: _testLocalizationsDelegates,
         supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+        theme: sakuraThemeData,
         home: Scaffold(
           body: AppListHeader(
             filterButtonKey: const Key('mobile-filter-trigger'),

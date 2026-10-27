@@ -5168,5 +5168,142 @@
   "widgetMoviePlayerDemuxerFormat": "解复用格式",
   "widgetMoviePlayerBuffer": "缓冲",
   "widgetMoviePlayerDownloadRate": "下载速率",
-  "widgetMoviePlayerSectionPlaybackChain": "播放链路"
+  "widgetMoviePlayerSectionPlaybackChain": "播放链路",
+  "baseSelectPlaceholder": "请选择",
+  "baseSearchHint": "搜索",
+  "baseClearSearch": "清空",
+  "baseShowPassword": "显示密码",
+  "baseHidePassword": "隐藏密码",
+  "baseFilterUsingDefault": "当前使用默认筛选",
+  "baseFilterUpdated": "筛选条件已更新",
+  "baseFilterReset": "重置",
+  "baseClose": "关闭",
+  "baseConfirm": "确认",
+  "baseEmptyData": "当前没有可展示的数据。",
+  "baseSortDefault": "默认",
+  "baseSortTooltip": "排序",
+  "baseSortTitle": "排序方式",
+  "baseFilterTooltip": "筛选",
+  "baseExitSelection": "退出选择",
+  "baseBatchCompleted": "已完成",
+  "baseBatchSummary": "成功 {succeeded} 个，失败 {failed} 个",
+  "@baseBatchSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "baseBatchProgress": "处理中 {current}/{total}",
+  "@baseBatchProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "baseActionFailed": "操作失败",
+  "baseFilterUpdateFailedTitle": "筛选结果更新失败",
+  "baseFilterUpdateFailedMessage": "暂时无法获取当前筛选结果，请稍后重试",
+  "baseFilterUpdateStale": "筛选结果更新失败，仍显示上一次结果",
+  "baseFilterResultsLoading": "筛选结果加载中",
+  "baseSelect": "选择",
+  "baseVideoLoading": "正在加载…",
+  "baseVideoBuffering": "正在缓冲…",
+  "baseVideoLoadingVideo": "正在加载视频…",
+  "baseResumePromptSemantic": "续播提示",
+  "baseResumeLastWatched": "上次看到",
+  "baseResumeContinue": "继续播放",
+  "baseResumeStartOver": "从头播放",
+  "baseExitFullscreen": "退出全屏",
+  "baseEnterFullscreen": "全屏",
+  "shellClientVersion": "客户端 {version}",
+  "@shellClientVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellServerVersion": "服务端 {version}",
+  "@shellServerVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellPluginUpdateCount": "{count} 个插件",
+  "@shellPluginUpdateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shellUpdatesAvailable": "发现可用更新",
+  "shellClientReleasePage": "客户端发布页",
+  "shellServerReleasePage": "服务端发布页",
+  "shellBrowserOpenFailedCopied": "无法打开浏览器，链接已复制",
+  "shellBrowserOpenFailed": "无法打开浏览器",
+  "shellOpenLink": "打开{label}",
+  "@shellOpenLink": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "shellSystemVersion": "系统版本",
+  "shellUpdateBadge": "有更新",
+  "shellClientLabel": "客户端",
+  "shellServerLabel": "服务端",
+  "shellVersionTooltipUpdate": "{version} · 有更新",
+  "@shellVersionTooltipUpdate": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellViewPluginUpdates": "查看插件更新",
+  "shellBack": "返回",
+  "shellImagePickFailed": "选择图片失败",
+  "shellCollapseSearch": "收起搜索",
+  "shellSearchHintExample": "如 SSNI-888、三上悠亚",
+  "shellThemeColor": "主题色",
+  "shellThemeModeSystem": "跟随系统 · 点击切换浅色",
+  "shellThemeModeLight": "浅色 · 点击切换深色",
+  "shellThemeModeDark": "深色 · 点击切换跟随系统",
+  "shellLogout": "退出登录",
+  "shellRefreshFailed": "刷新失败",
+  "shellNavOverview": "概览",
+  "shellNavFavorites": "我的收藏",
+  "shellNavRecentlyPlayed": "最近播放",
+  "shellNavRecentViews": "最近浏览",
+  "shellNavMyRatings": "我的评分",
+  "shellNavTags": "标签",
+  "shellNavMediaLibraries": "媒体库",
+  "shellNavDownloaders": "下载器",
+  "shellNavIndexers": "索引器",
+  "shellNavMediaManagement": "媒体管理",
+  "shellNavMediaImport": "资源导入",
+  "shellNavDownloadTasks": "下载任务",
+  "shellNavTaskCenter": "任务中心",
+  "shellNavSubscriptions": "订阅管理",
+  "shellNavSystemMaintenance": "系统维护",
+  "shellNavPlugins": "插件",
+  "shellNavExternalPlayer": "外部播放器",
+  "shellNavAppearance": "外观",
+  "shellNavAccountSecurity": "账号安全",
+  "shellNavNotifications": "消息",
+  "shellWindowClose": "关闭",
+  "shellWindowMinimize": "最小化",
+  "shellWindowFullscreen": "全屏"
 }

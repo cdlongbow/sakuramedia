@@ -1,8 +1,16 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/app_adaptive_card_grid.dart';
 import 'package:sakuramedia/widgets/base/layout/grids/grid_column_resolver.dart';
+
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
 
 void main() {
 
@@ -17,6 +25,9 @@ void main() {
     final items = List<int>.generate(200, (index) => index);
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: CustomScrollView(
@@ -68,6 +79,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: AppAdaptiveCardGrid<int>(

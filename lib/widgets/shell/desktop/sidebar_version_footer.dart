@@ -11,6 +11,7 @@ import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 import 'package:sakuramedia/widgets/shell/app_version_info_parts.dart';
@@ -59,10 +60,11 @@ class _SidebarVersionFooterState extends ConsumerState<SidebarVersionFooter> {
         updates.hasFrontendUpdate ||
         updates.hasBackendUpdate ||
         pluginUpdateCount > 0;
+    final l10n = appL10n(context);
     final oneLine =
         '${versionInfo.frontendVersionLabel} · ${versionInfo.backendVersionLabel}';
     final tooltip = hasUpdates
-        ? '${versionInfo.tooltipLabel} · 有更新'
+        ? l10n.shellVersionTooltipUpdate(versionInfo.tooltipLabel)
         : versionInfo.tooltipLabel;
 
     return AppAnchoredPopover(
@@ -175,6 +177,7 @@ class _VersionPopoverContent extends ConsumerWidget {
         updates.hasFrontendUpdate ||
         updates.hasBackendUpdate ||
         pluginUpdateCount > 0;
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
 
     return DecoratedBox(
@@ -201,7 +204,7 @@ class _VersionPopoverContent extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '系统版本',
+                      l10n.shellSystemVersion,
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s14,
@@ -210,8 +213,8 @@ class _VersionPopoverContent extends ConsumerWidget {
                     ),
                   ),
                   if (hasUpdates)
-                    const AppBadge(
-                      label: '有更新',
+                    AppBadge(
+                      label: l10n.shellUpdateBadge,
                       tone: AppBadgeTone.primary,
                       size: AppBadgeSize.compact,
                     ),
@@ -219,12 +222,12 @@ class _VersionPopoverContent extends ConsumerWidget {
               ),
               SizedBox(height: spacing.md),
               AppVersionRow(
-                label: '客户端',
+                label: l10n.shellClientLabel,
                 value: versionInfo.frontendVersionLabel,
               ),
               SizedBox(height: spacing.xs),
               AppVersionRow(
-                label: '服务端',
+                label: l10n.shellServerLabel,
                 value: versionInfo.backendVersionLabel,
               ),
               if (hasUpdates) ...[
@@ -241,7 +244,7 @@ class _VersionPopoverContent extends ConsumerWidget {
                   alignment: Alignment.centerRight,
                   child: AppButton(
                     key: const Key('sidebar-version-popover-go-plugins'),
-                    label: '查看插件更新',
+                    label: l10n.shellViewPluginUpdates,
                     variant: AppButtonVariant.primary,
                     size: AppButtonSize.small,
                     onPressed: onGoPlugins,

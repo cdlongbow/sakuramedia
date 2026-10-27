@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 /// 移动端底部抽屉/弹窗的「取消 + 确认」双按钮底栏。
 ///
@@ -12,8 +13,8 @@ class AppMobileConfirmActions extends StatelessWidget {
     super.key,
     required this.onCancel,
     required this.onConfirm,
-    this.cancelLabel = '取消',
-    this.confirmLabel = '确认',
+    this.cancelLabel,
+    this.confirmLabel,
     this.isDangerous = false,
     this.isLoading = false,
     this.cancelKey,
@@ -22,8 +23,8 @@ class AppMobileConfirmActions extends StatelessWidget {
 
   final VoidCallback? onCancel;
   final VoidCallback? onConfirm;
-  final String cancelLabel;
-  final String confirmLabel;
+  final String? cancelLabel;
+  final String? confirmLabel;
   final bool isDangerous;
   final bool isLoading;
   final Key? cancelKey;
@@ -31,12 +32,13 @@ class AppMobileConfirmActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Row(
       children: [
         Expanded(
           child: AppButton(
             key: cancelKey,
-            label: cancelLabel,
+            label: cancelLabel ?? l10n.commonCancel,
             onPressed: isLoading ? null : onCancel,
           ),
         ),
@@ -44,7 +46,7 @@ class AppMobileConfirmActions extends StatelessWidget {
         Expanded(
           child: AppButton(
             key: confirmKey,
-            label: confirmLabel,
+            label: confirmLabel ?? l10n.baseConfirm,
             variant:
                 isDangerous
                     ? AppButtonVariant.danger

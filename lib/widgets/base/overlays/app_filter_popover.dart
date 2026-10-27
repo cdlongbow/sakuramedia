@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 
 export 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart'
@@ -172,24 +173,27 @@ class AppFilterPanelFooter extends StatelessWidget {
     super.key,
     required this.isDefault,
     required this.onReset,
-    this.defaultLabel = '当前使用默认筛选',
-    this.activeLabel = '筛选条件已更新',
-    this.resetLabel = '重置',
+    this.defaultLabel,
+    this.activeLabel,
+    this.resetLabel,
   });
 
   final bool isDefault;
   final VoidCallback? onReset;
-  final String defaultLabel;
-  final String activeLabel;
-  final String resetLabel;
+  final String? defaultLabel;
+  final String? activeLabel;
+  final String? resetLabel;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          isDefault ? defaultLabel : activeLabel,
+          isDefault
+              ? (defaultLabel ?? l10n.baseFilterUsingDefault)
+              : (activeLabel ?? l10n.baseFilterUpdated),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -198,7 +202,7 @@ class AppFilterPanelFooter extends StatelessWidget {
           ),
         ),
         AppButton(
-          label: resetLabel,
+          label: resetLabel ?? l10n.baseFilterReset,
           size: AppButtonSize.xSmall,
           variant: AppButtonVariant.secondary,
           onPressed: isDefault ? null : onReset,

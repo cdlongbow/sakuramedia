@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 const Duration defaultPlaybackResumePromptTimeout = Duration(seconds: 8);
 
@@ -74,11 +75,12 @@ class _PlaybackResumePromptState extends State<PlaybackResumePrompt> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final componentTokens = context.appComponentTokens;
     return Semantics(
       container: true,
-      label: '续播提示',
+      label: l10n.baseResumePromptSemantic,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: context.appLayoutTokens.dialogWidthSm,
@@ -117,7 +119,7 @@ class _PlaybackResumePromptState extends State<PlaybackResumePrompt> {
                   child: Text.rich(
                     TextSpan(
                       children: [
-                        const TextSpan(text: '上次看到 '),
+                        TextSpan(text: '${l10n.baseResumeLastWatched} '),
                         TextSpan(
                           text: formatMediaTimecode(widget.position.inSeconds),
                           style: resolveAppTextStyle(
@@ -140,7 +142,7 @@ class _PlaybackResumePromptState extends State<PlaybackResumePrompt> {
                 ),
                 SizedBox(width: spacing.md),
                 AppButton(
-                  label: '继续播放',
+                  label: l10n.baseResumeContinue,
                   labelKey: const Key('playback-resume-continue-label'),
                   size: AppButtonSize.xSmall,
                   variant: AppButtonVariant.primary,
@@ -148,7 +150,7 @@ class _PlaybackResumePromptState extends State<PlaybackResumePrompt> {
                 ),
                 SizedBox(width: spacing.xs),
                 AppTextButton(
-                  label: '从头播放',
+                  label: l10n.baseResumeStartOver,
                   labelKey: const Key('playback-resume-start-over-label'),
                   size: AppTextButtonSize.xSmall,
                   onPressed: () => _resolve(widget.onStartOver),

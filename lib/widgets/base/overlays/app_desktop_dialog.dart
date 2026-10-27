@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 class AppDesktopDialog extends StatelessWidget {
   const AppDesktopDialog({
@@ -16,7 +17,7 @@ class AppDesktopDialog extends StatelessWidget {
     this.clipBehavior = Clip.antiAlias,
     this.showCloseButton = true,
     this.closeButtonKey,
-    this.closeButtonTooltip = '关闭',
+    this.closeButtonTooltip,
     this.closeButtonInset,
     this.closeButtonBackgroundColor,
     this.closeButtonIconColor,
@@ -38,7 +39,7 @@ class AppDesktopDialog extends StatelessWidget {
   final Clip clipBehavior;
   final bool showCloseButton;
   final Key? closeButtonKey;
-  final String closeButtonTooltip;
+  final String? closeButtonTooltip;
   final EdgeInsets? closeButtonInset;
   final Color? closeButtonBackgroundColor;
   final Color? closeButtonIconColor;
@@ -47,6 +48,7 @@ class AppDesktopDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final closeInset = closeButtonInset ?? EdgeInsets.all(spacing.sm);
     final resolvedContentPadding = EdgeInsets.all(spacing.xl);
@@ -75,7 +77,7 @@ class AppDesktopDialog extends StatelessWidget {
               right: closeInset.right,
               child: AppIconButton(
                 key: closeButtonKey,
-                tooltip: closeButtonTooltip,
+                tooltip: closeButtonTooltip ?? l10n.baseClose,
                 onPressed: onClose ?? () => Navigator.of(context).pop(),
                 backgroundColor: closeButtonBackgroundColor,
                 iconColor: closeButtonIconColor,

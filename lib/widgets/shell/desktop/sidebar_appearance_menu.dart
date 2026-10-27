@@ -6,6 +6,7 @@ import 'package:sakuramedia/app/providers/app_shell_providers.dart';
 import 'package:sakuramedia/app/providers/appearance_providers.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_anchored_popover.dart';
 
 /// 桌面侧栏底部的明暗模式切换 + 主题色小浮窗。
@@ -35,6 +36,7 @@ class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
 
     final appearance = ref.watch(appearanceProvider);
     final controller = ref.read(appearanceProvider.notifier);
+    final l10n = appL10n(context);
     final mode = appearance.themeMode;
     final themeColor = appearance.themeColor
         .forBrightness(Theme.of(context).brightness)
@@ -54,8 +56,8 @@ class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
           AppIconButton(
             key: const Key('sidebar-appearance-mode-toggle'),
             icon: Icon(_modeIcon(mode)),
-            tooltip: _modeTooltip(mode),
-            semanticLabel: _modeTooltip(mode),
+            tooltip: _modeTooltip(mode, l10n),
+            semanticLabel: _modeTooltip(mode, l10n),
             iconColor: context.appTextPalette.primary,
             onPressed: () =>
                 unawaited(controller.setThemeMode(_nextMode(mode))),
@@ -82,8 +84,8 @@ class _SidebarAppearanceMenuState extends ConsumerState<SidebarAppearanceMenu> {
                 ),
               ],
             ),
-            tooltip: '主题色',
-            semanticLabel: '主题色',
+            tooltip: l10n.shellThemeColor,
+            semanticLabel: l10n.shellThemeColor,
             iconColor: context.appTextPalette.primary,
             onPressed: toggle,
           ),
@@ -111,11 +113,11 @@ IconData _modeIcon(ThemeMode mode) {
   };
 }
 
-String _modeTooltip(ThemeMode mode) {
+String _modeTooltip(ThemeMode mode, AppLocalizations l10n) {
   return switch (mode) {
-    ThemeMode.system => '跟随系统 · 点击切换浅色',
-    ThemeMode.light => '浅色 · 点击切换深色',
-    ThemeMode.dark => '深色 · 点击切换跟随系统',
+    ThemeMode.system => l10n.shellThemeModeSystem,
+    ThemeMode.light => l10n.shellThemeModeLight,
+    ThemeMode.dark => l10n.shellThemeModeDark,
   };
 }
 
@@ -129,6 +131,7 @@ class _ThemeColorPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appearance = ref.watch(appearanceProvider);
     final controller = ref.read(appearanceProvider.notifier);
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
 
     return DecoratedBox(
@@ -152,7 +155,7 @@ class _ThemeColorPanel extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '主题色',
+                l10n.shellThemeColor,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,

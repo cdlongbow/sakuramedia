@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
@@ -9,7 +10,7 @@ class AppEmptyState extends StatelessWidget {
     this.icon,
     this.title,
     this.onRetry,
-    this.retryLabel = '重试',
+    this.retryLabel,
     this.retryKey,
   });
 
@@ -17,11 +18,12 @@ class AppEmptyState extends StatelessWidget {
   final IconData? icon;
   final String? title;
   final VoidCallback? onRetry;
-  final String retryLabel;
+  final String? retryLabel;
   final Key? retryKey;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final spacing = context.appSpacing;
     final iconColor = resolveAppTextToneColor(context, AppTextTone.secondary);
     return Padding(
@@ -69,7 +71,11 @@ class AppEmptyState extends StatelessWidget {
               ),
               if (onRetry != null) ...[
                 SizedBox(height: spacing.lg),
-                AppButton(key: retryKey, label: retryLabel, onPressed: onRetry),
+                AppButton(
+                  key: retryKey,
+                  label: retryLabel ?? l10n.commonRetry,
+                  onPressed: onRetry,
+                ),
               ],
             ],
           ),

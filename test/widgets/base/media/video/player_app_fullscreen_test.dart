@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -47,10 +48,7 @@ Future<void> _pumpHarness(
   await tester.pumpWidget(
     MaterialApp(
       locale: const Locale('zh'),
-      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
+      localizationsDelegates: _testLocalizationsDelegates,
       supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Scaffold(body: _FullscreenHarness(useDoubleTap: useDoubleTap)),
     ),
@@ -58,20 +56,24 @@ Future<void> _pumpHarness(
   await tester.pumpAndSettle();
 }
 
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
+
 void main() {
   group('PlayerAppFullscreenButton', () {
     testWidgets('falls back to media_kit fullscreen without scope', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          locale: Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
-          supportedLocales: <Locale>[Locale('zh'), Locale('en')],
-          home: Scaffold(body: PlayerAppFullscreenButton()),
+        MaterialApp(
+          locale: const Locale('zh'),
+          localizationsDelegates: _testLocalizationsDelegates,
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          home: const Scaffold(body: PlayerAppFullscreenButton()),
         ),
       );
       await tester.pumpAndSettle();
@@ -103,10 +105,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           locale: const Locale('zh'),
-          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
-            AppLocalizations.delegate,
-            ...GlobalMaterialLocalizations.delegates,
-          ],
+          localizationsDelegates: _testLocalizationsDelegates,
           supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           home: Scaffold(
             body: PlayerAppFullscreenScope(

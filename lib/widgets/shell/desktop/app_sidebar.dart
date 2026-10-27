@@ -6,6 +6,7 @@ import 'package:sakuramedia/features/activity/presentation/providers/notificatio
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/shell/desktop/sidebar_appearance_menu.dart';
 import 'package:sakuramedia/widgets/shell/desktop/sidebar_version_footer.dart';
@@ -24,6 +25,7 @@ class AppSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCompact = ref.watch(appShellSidebarCollapsedProvider);
+    final l10n = appL10n(context);
     final sidebarTokens = context.appSidebarTokens;
     final appColors = context.appColors;
     final useDesktopSidebarGlass = _useDesktopSidebarGlass;
@@ -115,7 +117,7 @@ class AppSidebar extends ConsumerWidget {
                     AppSidebarItem(
                       key: const Key('sidebar-logout-button'),
                       icon: Icons.logout_rounded,
-                      label: '退出登录',
+                      label: l10n.shellLogout,
                       selected: false,
                       onTap: () {
                         context.logOut();

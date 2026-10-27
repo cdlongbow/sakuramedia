@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/widgets/base/interaction/refresh/app_pull_refresh_notification.dart';
+import 'package:sakuramedia/widgets/base/l10n/app_l10n.dart';
 import 'package:sakuramedia/theme.dart';
 
 /// 服务端筛选请求中的结果区反馈。
@@ -105,6 +106,7 @@ class _AppFilterResultLoadingOverlayState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return NotificationListener<AppPullRefreshNotification>(
       onNotification: (notification) {
         _isPullRefreshing = notification.isRefreshing;
@@ -128,7 +130,7 @@ class _AppFilterResultLoadingOverlayState
                       ),
                 child: IgnorePointer(
                   child: Semantics(
-                    label: '筛选结果加载中',
+                    label: l10n.baseFilterResultsLoading,
                     liveRegion: true,
                     child: _FilterResultLoadingIndicator(
                       obscureContent: !widget.hasPreviousItems,

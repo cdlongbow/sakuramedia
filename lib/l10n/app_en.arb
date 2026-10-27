@@ -5015,5 +5015,142 @@
   "widgetMoviePlayerDemuxerFormat": "Demuxer format",
   "widgetMoviePlayerBuffer": "Buffer",
   "widgetMoviePlayerDownloadRate": "Download rate",
-  "widgetMoviePlayerSectionPlaybackChain": "Playback chain"
+  "widgetMoviePlayerSectionPlaybackChain": "Playback chain",
+  "baseSelectPlaceholder": "Select",
+  "baseSearchHint": "Search",
+  "baseClearSearch": "Clear",
+  "baseShowPassword": "Show password",
+  "baseHidePassword": "Hide password",
+  "baseFilterUsingDefault": "Using the default filters",
+  "baseFilterUpdated": "Filters updated",
+  "baseFilterReset": "Reset",
+  "baseClose": "Close",
+  "baseConfirm": "Confirm",
+  "baseEmptyData": "Nothing to show yet.",
+  "baseSortDefault": "Default",
+  "baseSortTooltip": "Sort",
+  "baseSortTitle": "Sort by",
+  "baseFilterTooltip": "Filter",
+  "baseExitSelection": "Exit selection",
+  "baseBatchCompleted": "Done",
+  "baseBatchSummary": "{succeeded} succeeded, {failed} failed",
+  "@baseBatchSummary": {
+    "placeholders": {
+      "succeeded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "baseBatchProgress": "Processing {current}/{total}",
+  "@baseBatchProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "baseActionFailed": "Action failed",
+  "baseFilterUpdateFailedTitle": "Failed to update filter results",
+  "baseFilterUpdateFailedMessage": "Could not load the current filter results. Please try again later.",
+  "baseFilterUpdateStale": "Failed to update the filter results, still showing the previous results",
+  "baseFilterResultsLoading": "Loading filter results",
+  "baseSelect": "Select",
+  "baseVideoLoading": "Loading…",
+  "baseVideoBuffering": "Buffering…",
+  "baseVideoLoadingVideo": "Loading video…",
+  "baseResumePromptSemantic": "Resume playback prompt",
+  "baseResumeLastWatched": "Last watched at",
+  "baseResumeContinue": "Resume",
+  "baseResumeStartOver": "Start over",
+  "baseExitFullscreen": "Exit full screen",
+  "baseEnterFullscreen": "Full screen",
+  "shellClientVersion": "Client {version}",
+  "@shellClientVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellServerVersion": "Server {version}",
+  "@shellServerVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellPluginUpdateCount": "{count} plugins",
+  "@shellPluginUpdateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shellUpdatesAvailable": "Updates available",
+  "shellClientReleasePage": "Client releases",
+  "shellServerReleasePage": "Server releases",
+  "shellBrowserOpenFailedCopied": "Could not open the browser, so the link was copied",
+  "shellBrowserOpenFailed": "Could not open the browser",
+  "shellOpenLink": "Open {label}",
+  "@shellOpenLink": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "shellSystemVersion": "System version",
+  "shellUpdateBadge": "Update",
+  "shellClientLabel": "Client",
+  "shellServerLabel": "Server",
+  "shellVersionTooltipUpdate": "{version} · update available",
+  "@shellVersionTooltipUpdate": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "shellViewPluginUpdates": "View plugin updates",
+  "shellBack": "Back",
+  "shellImagePickFailed": "Could not pick an image",
+  "shellCollapseSearch": "Collapse search",
+  "shellSearchHintExample": "e.g. SSNI-888",
+  "shellThemeColor": "Theme color",
+  "shellThemeModeSystem": "System · click for light",
+  "shellThemeModeLight": "Light · click for dark",
+  "shellThemeModeDark": "Dark · click for system",
+  "shellLogout": "Log out",
+  "shellRefreshFailed": "Refresh failed",
+  "shellNavOverview": "Overview",
+  "shellNavFavorites": "My favorites",
+  "shellNavRecentlyPlayed": "Recently played",
+  "shellNavRecentViews": "Recently viewed",
+  "shellNavMyRatings": "My ratings",
+  "shellNavTags": "Tags",
+  "shellNavMediaLibraries": "Media libraries",
+  "shellNavDownloaders": "Download clients",
+  "shellNavIndexers": "Indexers",
+  "shellNavMediaManagement": "Media management",
+  "shellNavMediaImport": "Resource import",
+  "shellNavDownloadTasks": "Download tasks",
+  "shellNavTaskCenter": "Task center",
+  "shellNavSubscriptions": "Subscriptions",
+  "shellNavSystemMaintenance": "System maintenance",
+  "shellNavPlugins": "Plugins",
+  "shellNavExternalPlayer": "External player",
+  "shellNavAppearance": "Appearance",
+  "shellNavAccountSecurity": "Account security",
+  "shellNavNotifications": "Notifications",
+  "shellWindowClose": "Close",
+  "shellWindowMinimize": "Minimize",
+  "shellWindowFullscreen": "Full screen"
 }

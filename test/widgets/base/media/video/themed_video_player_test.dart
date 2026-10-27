@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
@@ -21,6 +22,13 @@ class _FakeVideoController extends Fake implements VideoController {
   Future<void> get waitUntilFirstFrameRendered => Future.value();
 }
 
+/// 测试树的本地化 delegate：ARB 文案 + material_ui 的 Material/Cupertino 文案。
+const List<LocalizationsDelegate<dynamic>> _testLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+      AppLocalizations.delegate,
+      ...GlobalMaterialLocalizations.delegates,
+    ];
+
 void main() {
   Future<void> pumpPlayer(
     WidgetTester tester, {
@@ -42,6 +50,9 @@ void main() {
     addTearDown(controller.notifier.dispose);
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('zh'),
+        localizationsDelegates: _testLocalizationsDelegates,
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         home: ThemedVideoPlayer(
           videoController: controller,
           useTouchOptimizedControls: useTouchOptimizedControls,

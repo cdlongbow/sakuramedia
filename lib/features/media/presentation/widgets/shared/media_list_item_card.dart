@@ -39,7 +39,7 @@ class MediaListItemCard extends StatelessWidget {
     this.onRetryThumbnails,
     this.isRetryingThumbnails = false,
     this.canRetryThumbnails = true,
-    this.retryThumbnailsLabel = '重试缩略图',
+    this.retryThumbnailsLabel,
     this.onOpenActions,
     this.showUpdatedAt = false,
   });
@@ -60,7 +60,9 @@ class MediaListItemCard extends StatelessWidget {
   final VoidCallback? onRetryThumbnails;
   final bool isRetryingThumbnails;
   final bool canRetryThumbnails;
-  final String retryThumbnailsLabel;
+
+  /// 缩略图重试 / 重新生成的动作文案；不传时用当前语言的默认「重试缩略图」。
+  final String? retryThumbnailsLabel;
 
   /// 移动端「更多」入口：为 null 时不显示（选择态、无可用动作）。
   final VoidCallback? onOpenActions;
@@ -148,12 +150,12 @@ class _MediaListItemBody extends StatelessWidget {
   final VoidCallback? onRetryThumbnails;
   final bool isRetryingThumbnails;
   final bool canRetryThumbnails;
-  final String retryThumbnailsLabel;
+  final String? retryThumbnailsLabel;
   final VoidCallback? onOpenActions;
   final bool showUpdatedAt;
 
   /// 缩略图重试 / 重新生成：平铺图标动作；执行中换成小转圈。
-  Widget? _retryAction(BuildContext context) {
+  Widget? _retryAction(BuildContext context, AppLocalizations l10n) {
     final retry = onRetryThumbnails;
     if (retry == null) {
       return null;
@@ -161,17 +163,18 @@ class _MediaListItemBody extends StatelessWidget {
     if (isRetryingThumbnails) {
       return const AppInlineSpinner();
     }
+    final label = retryThumbnailsLabel ?? l10n.mediaListActionRetryThumbnails;
     return AppIconButton(
       key: Key('$keyPrefix-retry-thumbnails-${item.id}'),
       icon: const Icon(Icons.refresh_rounded),
-      tooltip: retryThumbnailsLabel,
-      semanticLabel: retryThumbnailsLabel,
+      tooltip: label,
+      semanticLabel: label,
       onPressed: canRetryThumbnails ? retry : null,
     );
   }
 
   /// 行操作（平铺图标）：行内「重试缩略图」+「迁移」+「删除」。
-  Widget? _actions(BuildContext context, Widget? retry) {
+  Widget? _actions(BuildContext context, Widget? retry, AppLocalizations l10n) {
     final spacing = context.appSpacing;
     final widgets = <Widget>[];
     if (retry != null) {
@@ -184,8 +187,8 @@ class _MediaListItemBody extends StatelessWidget {
             : AppIconButton(
                 key: Key('$keyPrefix-transfer-${item.id}'),
                 icon: const Icon(Icons.drive_file_move_outline),
-                tooltip: '迁移',
-                semanticLabel: '迁移到其它媒体库',
+                tooltip: l10n.mediaListActionTransfer,
+                semanticLabel: l10n.mediaListActionTransferToLibrary,
                 onPressed: canTransfer ? onTransfer : null,
               ),
       );
@@ -198,8 +201,8 @@ class _MediaListItemBody extends StatelessWidget {
                 key: Key('$keyPrefix-delete-${item.id}'),
                 icon: const Icon(Icons.delete_outline_rounded),
                 iconColor: context.appTextPalette.error,
-                tooltip: '删除',
-                semanticLabel: '删除',
+                tooltip: l10n.commonDelete,
+                semanticLabel: l10n.commonDelete,
                 onPressed: canDelete ? onDelete : null,
               ),
       );
@@ -225,7 +228,7 @@ class _MediaListItemBody extends StatelessWidget {
   ///
   /// 全局忙（其它条目正在删除 / 迁移 / 重置）时三类动作都不可用，入口与桌面端
   /// 被禁用的行内图标一致置灰，避免打开一张所有动作都点不动的操作表。
-  Widget _mobileActions() {
+  Widget _mobileActions(AppLocalizations l10n) {
     if (isDeleting || isTransferring || isRetryingThumbnails) {
       return const AppInlineSpinner();
     }
@@ -237,20 +240,21 @@ class _MediaListItemBody extends StatelessWidget {
       key: Key('$keyPrefix-row-actions-${item.id}'),
       icon: const Icon(Icons.more_horiz_rounded),
       size: AppIconButtonSize.compact,
-      tooltip: '更多操作',
-      semanticLabel: '更多操作',
+      tooltip: l10n.mediaListActionMore,
+      semanticLabel: l10n.mediaListActionMore,
       onPressed: hasAvailableAction ? onOpenActions : null,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final subtitle = item.displaySubtitle;
-    final retryAction = _retryAction(context);
+    final retryAction = _retryAction(context, l10n);
     final actions = mobile && onOpenActions != null
-        ? _mobileActions()
-        : _actions(context, retryAction);
+        ? _mobileActions(l10n)
+        : _actions(context, retryAction, l10n);
     final pathLine = MediaListItemPathLine(
       keyPrefix: keyPrefix,
       item: item,
@@ -349,12 +353,13 @@ class _MediaListItemHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     return Row(
       children: [
         Flexible(
           child: Text(
-            item.displayHeading,
+            item.displayHeading(l10n: l10n),
             key: Key('$keyPrefix-row-heading-${item.id}'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -371,15 +376,15 @@ class _MediaListItemHeading extends StatelessWidget {
         if (item.kind == MediaListItemKind.video) ...[
           SizedBox(width: spacing.sm),
           AppBadge(
-            label: item.kind.label,
+            label: item.kind.label(l10n: l10n),
             tone: AppBadgeTone.neutral,
             size: AppBadgeSize.compact,
           ),
         ],
         if (!item.valid) ...[
           SizedBox(width: spacing.sm),
-          const AppBadge(
-            label: '失效',
+          AppBadge(
+            label: l10n.mediaListInvalidBadge,
             tone: AppBadgeTone.error,
             size: AppBadgeSize.compact,
           ),

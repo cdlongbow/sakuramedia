@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/media/data/media_transfer_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
@@ -54,13 +55,14 @@ class _MediaTransferTargetDialogBodyState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '迁移媒体',
+          l10n.mediaListTransferTitle,
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s18,
@@ -70,7 +72,10 @@ class _MediaTransferTargetDialogBodyState
         ),
         SizedBox(height: spacing.lg),
         Text(
-          '将 ${widget.selectedCount} 项媒体从“${widget.candidates.sourceLibrary.name}”迁移到新的媒体库。',
+          l10n.mediaListTransferDescription(
+            widget.selectedCount,
+            widget.candidates.sourceLibrary.name,
+          ),
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s14,
@@ -80,7 +85,7 @@ class _MediaTransferTargetDialogBodyState
         SizedBox(height: spacing.lg),
         AppSelectField<int>(
           key: const Key('media-management-transfer-target-select'),
-          label: '目标媒体库',
+          label: l10n.mediaListTransferTargetLabel,
           value: _targetLibraryId,
           items: widget.candidates.targets
               .map(
@@ -102,7 +107,7 @@ class _MediaTransferTargetDialogBodyState
             borderRadius: context.appRadius.mdBorder,
           ),
           child: Text(
-            '迁移任务会先确认目标媒体可用，再更新媒体归属并清理源文件。部分文件可能被跳过，详细结果请在活动中心查看。',
+            l10n.mediaListTransferNotice,
             style: resolveAppTextStyle(
               context,
               size: AppTextSize.s12,
@@ -116,7 +121,7 @@ class _MediaTransferTargetDialogBodyState
             Expanded(
               child: AppButton(
                 key: const Key('media-management-transfer-cancel-button'),
-                label: '取消',
+                label: l10n.commonCancel,
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
@@ -124,7 +129,7 @@ class _MediaTransferTargetDialogBodyState
             Expanded(
               child: AppButton(
                 key: const Key('media-management-transfer-confirm-button'),
-                label: '确认迁移',
+                label: l10n.mediaListTransferConfirm,
                 variant: AppButtonVariant.danger,
                 icon: const Icon(Icons.drive_file_move_outline),
                 onPressed: () => Navigator.of(context).pop(_targetLibraryId),

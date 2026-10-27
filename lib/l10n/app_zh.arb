@@ -3353,5 +3353,395 @@
   "movieActionMovieMetadataRefreshed": "影片元数据已刷新",
   "movieActionRefreshMovieMetadataFailed": "刷新影片元数据失败",
   "movieActionHeatRecomputeSubmitted": "影片热度重算任务已提交，请在活动中心查看进度",
-  "movieActionRecomputeMovieHeatFailed": "计算影片热度失败"
+  "movieActionRecomputeMovieHeatFailed": "计算影片热度失败",
+  "mediaListTabList": "媒体列表",
+  "mediaListTabDuplicates": "重复媒体",
+  "mediaListTabVersions": "多版本影片",
+  "mediaListTabInvalid": "失效媒体",
+  "mediaListKindJav": "JAV 影片",
+  "mediaListKindUnknown": "未知归属",
+  "mediaListUnnamedMedia": "未命名媒体",
+  "mediaListSortFileSize": "文件大小",
+  "mediaListSortHeat": "热度",
+  "mediaListThumbnailPending": "待生成",
+  "mediaListThumbnailRetryWait": "等待重试",
+  "mediaListThumbnailFailed": "生成失败",
+  "mediaListThumbnailCompleted": "已完成",
+  "mediaListFilterTooltip": "筛选",
+  "mediaListFilterAll": "全部",
+  "mediaListFilterSectionSource": "归属",
+  "mediaListFilterSectionLibrary": "所属媒体库",
+  "mediaListFilterSectionThumbnail": "缩略图状态",
+  "mediaListFilterAllLibraries": "全部媒体库",
+  "mediaListFilterAllMedia": "全部媒体",
+  "mediaListInvalidBadge": "失效",
+  "mediaListUpdatedAt": "更新 {value}",
+  "@mediaListUpdatedAt": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListActionTransfer": "迁移",
+  "mediaListActionTransferToLibrary": "迁移到其它媒体库",
+  "mediaListActionMore": "更多操作",
+  "mediaListActionRetryThumbnails": "重试缩略图",
+  "mediaListActionRegenerateThumbnails": "重新生成缩略图",
+  "mediaListActionPlay": "播放",
+  "mediaListActionMovieDetail": "影片详情",
+  "mediaListRowActionDelete": "删除媒体",
+  "mediaListRowActionDeleteSubtitle": "删除该媒体及其文件，不可恢复",
+  "mediaListRowActionRetrySubtitle": "重新加入缩略图生成队列",
+  "mediaListRowActionRegenerateSubtitle": "删除已有缩略图并重新生成",
+  "mediaListSelectedItems": "已选 {count} 项",
+  "@mediaListSelectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectedRecords": "已选 {count} 条",
+  "@mediaListSelectedRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectedCopies": "已选 {count} 个",
+  "@mediaListSelectedCopies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListSelectAllLoaded": "全选本页",
+  "mediaListClearSelectAllLoaded": "取消全选本页",
+  "mediaListTotalItems": "共 {count} 条",
+  "@mediaListTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalItemsWithSelection": "共 {count} 条 · 已选 {selected} 项",
+  "@mediaListTotalItemsWithSelection": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "selected": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalGroups": "共 {count} 组",
+  "@mediaListTotalGroups": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalMovies": "共 {count} 部",
+  "@mediaListTotalMovies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTotalInvalidItems": "共 {count} 条失效媒体",
+  "@mediaListTotalInvalidItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListEnterSelection": "选择",
+  "mediaListExitSelection": "退出选择",
+  "mediaListRefreshing": "刷新中",
+  "mediaListClearSelection": "清空",
+  "mediaListBatchTransfer": "迁移（{count}）",
+  "@mediaListBatchTransfer": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListBatchDelete": "批量删除（{count}）",
+  "@mediaListBatchDelete": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListBatchDeleteSelected": "删除已选",
+  "mediaListBatchRetryThumbnails": "重试",
+  "mediaListBatchRegenerateThumbnails": "重新生成",
+  "mediaListBatchDeleteTitle": "批量删除媒体",
+  "mediaListBatchDeleteMessage": "将删除已选 {count} 项媒体及其对应文件，且不可恢复。请确认要继续吗？",
+  "@mediaListBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDeleteTitle": "删除媒体",
+  "mediaListDeleteMessage": "确认删除“{name}”及对应文件？该操作不可恢复。",
+  "@mediaListDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListDeleteSuccess": "媒体已删除",
+  "mediaListDeleteFailed": "删除媒体失败",
+  "mediaListTransferTitle": "迁移媒体",
+  "mediaListTransferDescription": "将 {count} 项媒体从“{library}”迁移到新的媒体库。",
+  "@mediaListTransferDescription": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "library": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListTransferTargetLabel": "目标媒体库",
+  "mediaListTransferNotice": "迁移任务会先确认目标媒体可用，再更新媒体归属并清理源文件。部分文件可能被跳过，详细结果请在活动中心查看。",
+  "mediaListTransferConfirm": "确认迁移",
+  "mediaListTransferNoTarget": "当前媒体库没有可用的迁移目标",
+  "mediaListTransferSubmitted": "迁移任务 #{id} 已提交，请在活动中心查看进度",
+  "@mediaListTransferSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListTransferSubmitFailed": "提交迁移任务失败，请稍后重试。",
+  "mediaListThumbnailRetryTitle": "重试缩略图",
+  "mediaListThumbnailRegenerateTitle": "重新生成缩略图",
+  "mediaListThumbnailBatchRegenerateMessage": "将删除已选 {count} 项现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？",
+  "@mediaListThumbnailBatchRegenerateMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailBatchRetryMessage": "将把已选 {count} 项重新加入缩略图生成队列。确认继续吗？",
+  "@mediaListThumbnailBatchRetryMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRegenerateConfirm": "重新生成",
+  "mediaListThumbnailSingleRegenerateMessage": "将删除该媒体现有的缩略图并重新生成，生成完成前缩略图将不可用。确认继续吗？",
+  "mediaListThumbnailResetRefreshFailed": "已重置 {count} 项，但列表刷新失败：{message}",
+  "@mediaListThumbnailResetRefreshFailed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListThumbnailNothingToRegenerate": "没有可重新生成的媒体",
+  "mediaListThumbnailNothingToRetry": "媒体已无可重试的失败状态",
+  "mediaListThumbnailRegenerateSubmitted": "已提交 {count} 项缩略图重新生成，生成完成后自动恢复",
+  "@mediaListThumbnailRegenerateSubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRetrySubmitted": "已重置 {count} 项缩略图，已重新加入生成队列",
+  "@mediaListThumbnailRetrySubmitted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListThumbnailRegenerateFailed": "重新生成缩略图失败，请稍后重试。",
+  "mediaListThumbnailRetryFailed": "重试缩略图失败，请稍后重试。",
+  "mediaListEmpty": "当前筛选下没有媒体记录。调整筛选条件或稍后再试。",
+  "mediaListDuplicateBatchDeleteTitle": "批量删除重复媒体",
+  "mediaListDuplicateBatchDeleteMessage": "将删除选中的 {count} 项媒体及对应文件，每组至少保留一个副本。确认继续？",
+  "@mediaListDuplicateBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateChanged": "重复媒体已变化，请重新选择，至少保留一个副本",
+  "mediaListDuplicateRemainingHint": "删除后该组还会保留 {count} 项媒体。",
+  "@mediaListDuplicateRemainingHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateNoLongerHint": "删除后该组将不再属于重复媒体。",
+  "mediaListDuplicateDeleteTitle": "删除重复媒体",
+  "mediaListDuplicateDeleteMessage": "确认删除“{name}”及对应文件？{hint}",
+  "@mediaListDuplicateDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "hint": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListDuplicateDeleteFailed": "删除重复媒体失败",
+  "mediaListDuplicateDeleted": "重复媒体已删除",
+  "mediaListDuplicateCopiesCount": "{count} 个副本",
+  "@mediaListDuplicateCopiesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListDuplicateDeleteItem": "删除此项",
+  "mediaListDuplicateSelectionHint": "请选择要删除的媒体，每组至少保留一个副本",
+  "mediaListDuplicateDescription": "按文件内容指纹聚合同一文件的媒体记录。删除前请确认至少保留一个可用副本。",
+  "mediaListDuplicateEmpty": "当前类型没有发现重复文件。",
+  "mediaListKeepAtLeastOne": "至少保留一个",
+  "mediaListSelectItem": "选择此项",
+  "mediaListVersionsBatchDeleteTitle": "批量删除影片版本",
+  "mediaListVersionsBatchDeleteMessage": "将删除选中的 {count} 个版本及对应文件，每部影片至少保留一个版本。确认继续？",
+  "@mediaListVersionsBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsChanged": "影片版本已变化，请重新选择，至少保留一个版本",
+  "mediaListVersionsDeleteTitle": "删除影片版本",
+  "mediaListVersionsDeleteMessage": "确认删除“{name}”及对应文件？删除后保留 {count} 个版本。",
+  "@mediaListVersionsDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsDeleteFailed": "删除影片版本失败",
+  "mediaListVersionsDeleted": "影片版本已删除",
+  "mediaListVersionsIncludeVr": "包含 VR",
+  "mediaListVersionsIncludeFc2": "包含 FC2",
+  "mediaListVersionsCount": "{count} 个版本",
+  "@mediaListVersionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListVersionsDeleteItem": "删除此版本",
+  "mediaListVersionsSelectionHint": "请选择要删除的版本，每部影片至少保留一个",
+  "mediaListVersionsEmpty": "暂无多版本影片",
+  "mediaListInvalidBatchDeleteTitle": "批量删除失效媒体",
+  "mediaListInvalidBatchDeleteMessage": "将删除已选 {count} 条失效媒体记录及对应文件，且不可恢复。缩略图会保留，供同一文件重新入库时复用。确认要继续吗？",
+  "@mediaListInvalidBatchDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaListInvalidDescription": "巡检标记为失效的媒体会出现在这里。确认是真实丢失的文件，可删除记录，jav影片会再次自动下载新的资源。",
+  "mediaListInvalidEmpty": "当前没有失效媒体",
+  "mediaListInvalidDeleteTitle": "删除失效媒体",
+  "mediaListInvalidDeleteMessage": "确认删除“{name}”的这条失效媒体记录及对应文件？该操作不可恢复，缩略图会保留用于同文件复用。",
+  "@mediaListInvalidDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mediaListInvalidDeleted": "失效媒体已删除",
+  "mediaListInvalidDeleteFailed": "删除失效媒体失败",
+  "mediaImportTitleJav": "JAV 影片导入",
+  "mediaImportTitleVideo": "视频导入",
+  "mediaImportDescriptionJav": "浏览存储中的目录，批量导入 JAV 影片。",
+  "mediaImportDescriptionVideo": "选择存储中的目录或视频文件，可同时加入合集。",
+  "mediaImportDescriptionSuffix": "导入进度和结果请前往任务中心查看。",
+  "mediaImportCreateAction": "新建导入",
+  "mediaImportTabJav": "JAV 影片",
+  "mediaImportTabVideo": "视频",
+  "mediaImportViewTasksAction": "查看导入任务",
+  "mediaImportTaskSubmitted": "导入任务 #{id} 已提交，请在任务中心查看进度",
+  "@mediaImportTaskSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaImportVideoTaskSubmitted": "视频导入任务 #{id} 已提交，请在任务中心查看进度",
+  "@mediaImportVideoTaskSubmitted": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaImportSubmitFailed": "提交导入任务失败，请稍后重试。",
+  "mediaImportPickerTitle": "新建媒体导入",
+  "mediaImportPickerSubmitAction": "开始导入",
+  "mediaImportDispositionKeep": "保留源文件",
+  "mediaImportDispositionDeleteAfterCommit": "导入成功后删除源文件",
+  "mediaImportDispositionInPlace": "原地导入（不复制文件）",
+  "mediaImportDispositionKeepDescription": "将源文件复制到媒体库中，导入后不会删除源文件",
+  "mediaImportDispositionDeleteAfterCommitDescription": "将源文件复制到媒体库中，导入成功后删除源文件",
+  "mediaImportDispositionInPlaceDescription": "不复制文件，媒体直接引用源文件当前位置",
+  "mediaImportFailureMovieNumberNotFound": "未识别番号",
+  "mediaImportFailureMetadataFetchFailed": "元数据获取失败",
+  "mediaImportFailureImageDownloadFailed": "封面下载失败",
+  "mediaImportFailureMetadataUpsertFailed": "元数据保存失败",
+  "mediaImportFailureMediaImportFailed": "文件导入失败",
+  "mediaImportFailureFileTooSmall": "文件过小",
+  "mediaImportFailureUnsupportedFormat": "不支持的格式",
+  "mediaImportFailureAlreadyIndexedPath": "已在库中",
+  "mediaImportFailureUnknownReason": "未知原因",
+  "mediaImportMetadataSearchFailed": "搜索元数据失败，请稍后重试。",
+  "mediaListBatchResetThumbnailsCount": "{label}（{count}）",
+  "@mediaListBatchResetThumbnailsCount": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

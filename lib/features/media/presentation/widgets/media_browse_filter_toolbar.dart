@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/presentation/media_browse_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart';
@@ -30,8 +31,9 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // 外层 Wrap 与 `MovieFilterToolbar` 对齐：`AppFilterTotalHeader` 把 leading
-    // 放进 Expanded，直接返回 AppFilterPopover 会让 trigger 被拉满一整行、
+    // 放进 Expanded，直接返回 AppFilterPopover 会把 trigger 被拉满一整行、
     // 面板宽度跟着 `trigger + panelExtraWidth` 撑到全宽、位置也就跑偏。
     // Wrap 允许子件按内在宽度排布，trigger 保持内容大小，面板自然对齐它。
     return Wrap(
@@ -41,7 +43,7 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
         SizedBox(
           height: context.appComponentTokens.mobileTopTabHeight,
           child: AppFilterPopover(
-            triggerLabel: filterState.triggerLabel,
+            triggerLabel: filterState.triggerLabel(l10n: l10n),
             panelKey: const Key('media-management-filter-panel'),
             scrollViewKey: const Key('media-management-filter-scroll-view'),
             panelExtraWidth: 240,
@@ -51,8 +53,8 @@ class MediaBrowseFilterToolbar extends StatelessWidget {
             triggerBuilder: (context, isOpen, toggle) => AppFilterEntryButton(
               key: const Key('media-management-filter-trigger'),
               icon: Icons.tune_rounded,
-              label: filterState.triggerLabel,
-              tooltip: '筛选',
+              label: filterState.triggerLabel(l10n: l10n),
+              tooltip: l10n.mediaListFilterTooltip,
               trailingIcon: isOpen
                   ? Icons.expand_less_rounded
                   : Icons.expand_more_rounded,
@@ -97,15 +99,19 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
   final List<MediaLibraryDto> libraries;
   final ValueChanged<MediaBrowseFilterState> onChanged;
 
-  static const List<_KindOption> _kindOptions = [
-    _KindOption(label: '全部', kind: null, itemKey: Key('media-kind-all')),
+  static List<_KindOption> _kindOptions(AppLocalizations l10n) => [
     _KindOption(
-      label: 'JAV 影片',
+      label: l10n.mediaListFilterAll,
+      kind: null,
+      itemKey: Key('media-kind-all'),
+    ),
+    _KindOption(
+      label: l10n.mediaListKindJav,
       kind: MediaListItemKind.jav,
       itemKey: Key('media-kind-jav'),
     ),
     _KindOption(
-      label: 'PornBox',
+      label: MediaListItemKind.video.label(l10n: l10n),
       kind: MediaListItemKind.video,
       itemKey: Key('media-kind-video'),
     ),
@@ -122,18 +128,19 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(text: '归属'),
+        _SectionTitle(text: l10n.mediaListFilterSectionSource),
         SizedBox(height: spacing.sm),
         Wrap(
           spacing: spacing.sm,
           runSpacing: spacing.sm,
           children: [
-            for (final option in _kindOptions)
+            for (final option in _kindOptions(l10n))
               AppTextButton(
                 key: option.itemKey,
                 label: option.label,
@@ -149,7 +156,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
           ],
         ),
         SizedBox(height: spacing.lg),
-        _SectionTitle(text: '所属媒体库'),
+        _SectionTitle(text: l10n.mediaListFilterSectionLibrary),
         SizedBox(height: spacing.sm),
         Wrap(
           spacing: spacing.sm,
@@ -157,7 +164,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
           children: [
             AppTextButton(
               key: const Key('media-library-filter-all'),
-              label: '全部媒体库',
+              label: l10n.mediaListFilterAllLibraries,
               size: AppTextButtonSize.xSmall,
               isSelected: filterState.libraryId == null,
               onPressed: () => onChanged(filterState.copyWith(libraryId: null)),
@@ -174,7 +181,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
           ],
         ),
         SizedBox(height: spacing.lg),
-        _SectionTitle(text: '缩略图状态'),
+        _SectionTitle(text: l10n.mediaListFilterSectionThumbnail),
         SizedBox(height: spacing.sm),
         Wrap(
           spacing: spacing.sm,
@@ -185,7 +192,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
                 key: Key(
                   'media-thumbnail-generation-filter-${filter?.name ?? 'all'}',
                 ),
-                label: filter?.label ?? '全部',
+                label: filter?.label(l10n: l10n) ?? l10n.mediaListFilterAll,
                 size: AppTextButtonSize.xSmall,
                 isSelected: filterState.thumbnailGenerationState == filter,
                 onPressed: () => onChanged(

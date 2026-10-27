@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary
 import 'package:sakuramedia/features/overview/presentation/widgets/service_health_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/storage_usage_card.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/watch_trend_card.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
@@ -82,23 +83,27 @@ class MobileSystemOverviewPage extends ConsumerWidget {
     String? indexedSpaceId,
     String? currentSpaceId,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final spaceMessage = indexedSpaceId == null
-        ? '无法确认历史索引使用的嵌入空间。'
-        : '嵌入空间已从「$indexedSpaceId」变更为「${currentSpaceId ?? '未知'}」。';
+        ? l10n.overviewImageSearchSpaceUnknown
+        : l10n.overviewImageSearchSpaceChanged(
+            indexedSpaceId,
+            currentSpaceId ?? l10n.commonUnknown,
+          );
     final confirmed = await showAppConfirmDialog(
       context,
-      title: '重建图搜索索引',
-      message: '$spaceMessage 这会清空现有图片索引并重新开始构建，确认继续吗？',
-      confirmLabel: '重建索引',
+      title: l10n.systemMaintenanceRebuildDialogTitle,
+      message: l10n.overviewRebuildIndexConfirm(spaceMessage),
+      confirmLabel: l10n.systemMaintenanceRebuildIndex,
       danger: true,
       dialogKey: const Key('mobile-image-search-reset-confirm-dialog'),
       confirmKey: const Key('mobile-image-search-reset-confirm'),
       cancelKey: const Key('mobile-image-search-reset-cancel'),
       onConfirm: notifier.resetImageSearch,
-      failureFallback: '重建图搜索索引失败',
+      failureFallback: l10n.systemMaintenanceRebuildFailed,
     );
     if (confirmed && context.mounted) {
-      showToast('图搜索索引已开始重建');
+      showToast(l10n.systemMaintenanceRebuildStarted);
     }
   }
 }

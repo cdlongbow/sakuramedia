@@ -27,6 +27,9 @@ Future<void> pumpWithProviders(
   ThemeData? theme,
   bool wrapInOkToast = true,
   Widget Function(Widget)? wrap,
+  Locale? locale,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale>? supportedLocales,
 }) async {
   var child = home;
   if (wrap != null) {
@@ -37,7 +40,13 @@ Future<void> pumpWithProviders(
       if (bundle != null) ...bundle.riverpodOverrides(),
       ...overrides,
     ],
-    child: MaterialApp(home: child, theme: theme),
+    child: MaterialApp(
+      home: child,
+      theme: theme,
+      locale: locale,
+      localizationsDelegates: localizationsDelegates,
+      supportedLocales: supportedLocales ?? const <Locale>[Locale('en', 'US')],
+    ),
   );
   if (wrapInOkToast) {
     app = OKToast(child: app);

@@ -65,6 +65,7 @@ class _DesktopSystemDiagnosticsPageState
     SystemDiagnosticsState diagnostics,
   ) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -74,7 +75,7 @@ class _DesktopSystemDiagnosticsPageState
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '组件诊断',
+                l10n.systemDiagnosticsComponentTitle,
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s20,
@@ -98,7 +99,7 @@ class _DesktopSystemDiagnosticsPageState
         SizedBox(width: spacing.md),
         AppButton(
           key: const Key('desktop-system-diagnostics-rerun'),
-          label: '重新检测',
+          label: l10n.systemDiagnosticsRerun,
           variant: AppButtonVariant.primary,
           icon: const Icon(Icons.refresh),
           isLoading: diagnostics.isRunning,

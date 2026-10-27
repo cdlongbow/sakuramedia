@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart' show Icons;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/app/language/providers/app_localizations_provider.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
@@ -24,6 +24,7 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/index
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/joytag_hints.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/media_library_hints.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/metadata_provider_hints.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 part 'system_diagnostics_controller.g.dart';
 
@@ -83,7 +84,9 @@ class SystemDiagnostics extends _$SystemDiagnostics {
     _indexerSettingsApi = ref.read(indexerSettingsApiProvider);
     _statusApi = ref.read(statusApiProvider);
     ref.onDispose(() => _disposed = true);
-    _categories = _buildInitialCategories();
+    _categories = _buildInitialCategories(
+      l10n: ref.read(appLocalizationsProvider),
+    );
     return _snapshot();
   }
 
@@ -109,41 +112,60 @@ class SystemDiagnostics extends _$SystemDiagnostics {
   /// 幂等：正在跑就直接 return。
   Future<void> runAll() async {
     if (_isRunning) return;
+    final l10n = ref.read(appLocalizationsProvider);
     _isRunning = true;
-    _categories = _buildInitialCategories(status: DiagnosticItemStatus.probing);
+    _categories = _buildInitialCategories(
+      l10n: l10n,
+      status: DiagnosticItemStatus.probing,
+    );
     _publish();
 
     // Stage A + Stage B 完全并发（独立项互不依赖）。
-    final mediaLibraryFuture = _probeMediaLibrary();
-    final javdbFuture = _probeMetadataProvider(_javdbItemKey);
-    final joyTagFuture = _probeJoyTag();
+    final mediaLibraryFuture = _probeMediaLibrary(l10n);
+    final javdbFuture = _probeMetadataProvider(_javdbItemKey, l10n);
+    final joyTagFuture = _probeJoyTag(l10n);
 
     final mediaLibrary = await mediaLibraryFuture;
-    _replaceItem('基础资源', mediaLibrary);
+    _replaceItem(l10n.diagnosticCategoryBasicResources, mediaLibrary);
     _publish();
 
     // Stage C：媒体库不通 → 索引器 blocked。
     if (mediaLibrary.status != DiagnosticItemStatus.healthy) {
-      _replaceCategoryItems('下载与检索链', <DiagnosticItemState>[
-        DiagnosticItemState.blocked(
-          kind: DiagnosticItemKind.indexer,
-          itemKey: _indexerItemKey,
-          displayName: '索引器',
-          blockedByLabel: '媒体库',
-        ),
-      ]);
+      _replaceCategoryItems(
+        l10n.diagnosticCategoryDownloadAndIndexing,
+        <DiagnosticItemState>[
+          DiagnosticItemState.blocked(
+            kind: DiagnosticItemKind.indexer,
+            itemKey: _indexerItemKey,
+            displayName: l10n.diagnosticItemIndexer,
+            blockedByLabel: l10n.diagnosticItemMediaLibrary,
+            summary: l10n.diagnosticBlockedWaiting(
+              l10n.diagnosticItemMediaLibrary,
+            ),
+          ),
+        ],
+      );
     } else {
-      final indexerItem = await _probeIndexer();
-      _replaceCategoryItems('下载与检索链', <DiagnosticItemState>[indexerItem]);
+      final indexerItem = await _probeIndexer(l10n);
+      _replaceCategoryItems(
+        l10n.diagnosticCategoryDownloadAndIndexing,
+        <DiagnosticItemState>[indexerItem],
+      );
     }
     _publish();
 
     // 收 stage B。
     final javdb = await javdbFuture;
-    _replaceCategoryItems('外部数据源', <DiagnosticItemState>[javdb]);
+    _replaceCategoryItems(
+      l10n.diagnosticCategoryExternalDataSources,
+      <DiagnosticItemState>[javdb],
+    );
 
     final joyTag = await joyTagFuture;
-    _replaceCategoryItems('智能能力', <DiagnosticItemState>[joyTag]);
+    _replaceCategoryItems(
+      l10n.diagnosticCategoryIntelligence,
+      <DiagnosticItemState>[joyTag],
+    );
 
     _isRunning = false;
     _lastRunAt = DateTime.now();
@@ -152,7 +174,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
 
   // --------- 单项探针 ---------
 
-  Future<DiagnosticItemState> _probeMediaLibrary() async {
+  Future<DiagnosticItemState> _probeMediaLibrary(AppLocalizations l10n) async {
     final started = DateTime.now();
     try {
       final libraries = await _mediaLibrariesApi.getLibraries();
@@ -161,34 +183,39 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         return _fromHint(
           kind: DiagnosticItemKind.mediaLibrary,
           itemKey: _mediaLibraryItemKey,
-          displayName: '媒体库',
+          displayName: l10n.diagnosticItemMediaLibrary,
           status: DiagnosticItemStatus.unhealthy,
-          hint: mediaLibraryEmptyHint,
+          hint: mediaLibraryEmptyHint(l10n),
           elapsedMs: elapsed,
-          summary: '尚未配置任何媒体库',
+          summary: l10n.diagnosticMediaLibraryNoneConfigured,
         );
       }
       return DiagnosticItemState.healthy(
         kind: DiagnosticItemKind.mediaLibrary,
         itemKey: _mediaLibraryItemKey,
-        displayName: '媒体库',
+        displayName: l10n.diagnosticItemMediaLibrary,
         elapsedMs: elapsed,
-        summary: _mediaLibrarySummary(libraries),
+        summary: _mediaLibrarySummary(libraries, l10n),
       );
     } catch (error) {
       // 请求本身失败 ≠ 没配媒体库，用另一份 hint，否则会误导用户去建媒体库。
       return _fromHint(
         kind: DiagnosticItemKind.mediaLibrary,
         itemKey: _mediaLibraryItemKey,
-        displayName: '媒体库',
+        displayName: l10n.diagnosticItemMediaLibrary,
         status: DiagnosticItemStatus.unhealthy,
-        hint: mediaLibraryProbeFailedHint,
-        summary: _shortenError(apiErrorMessage(error, fallback: '读取媒体库列表失败')),
+        hint: mediaLibraryProbeFailedHint(l10n),
+        summary: _shortenError(
+          ref.apiErrorMessage(
+            error,
+            fallback: l10n.diagnosticErrorMediaLibraryLoadFailed,
+          ),
+        ),
       );
     }
   }
 
-  Future<DiagnosticItemState> _probeIndexer() async {
+  Future<DiagnosticItemState> _probeIndexer(AppLocalizations l10n) async {
     try {
       final settings = await _indexerSettingsApi.getSettings();
       final clients = await _downloadClientsApi.getClients();
@@ -196,14 +223,15 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         settings: settings,
         existingClients: clients,
       );
+      final hints = indexerHints(l10n);
       if (hintKey != null) {
         return _fromHint(
           kind: DiagnosticItemKind.indexer,
           itemKey: _indexerItemKey,
-          displayName: '索引器',
+          displayName: l10n.diagnosticItemIndexer,
           status: DiagnosticItemStatus.unhealthy,
-          hint: indexerHints[hintKey] ?? indexerHints['torznab-request-error']!,
-          summary: _indexerSummary(hintKey, settings),
+          hint: hints[hintKey] ?? hints['torznab-request-error']!,
+          summary: _indexerSummary(hintKey, settings, l10n),
         );
       }
 
@@ -212,9 +240,9 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         return DiagnosticItemState.healthy(
           kind: DiagnosticItemKind.indexer,
           itemKey: _indexerItemKey,
-          displayName: '索引器',
+          displayName: l10n.diagnosticItemIndexer,
           elapsedMs: result.elapsedMs,
-          summary: _indexerConnectionSummary(result),
+          summary: _indexerConnectionSummary(result, l10n),
         );
       }
       final connectionHintKey = resolveIndexerConnectionHintKey(
@@ -223,29 +251,32 @@ class SystemDiagnostics extends _$SystemDiagnostics {
       return _fromHint(
         kind: DiagnosticItemKind.indexer,
         itemKey: _indexerItemKey,
-        displayName: '索引器',
+        displayName: l10n.diagnosticItemIndexer,
         status: DiagnosticItemStatus.unhealthy,
-        hint: indexerHints[connectionHintKey]!,
+        hint: hints[connectionHintKey]!,
         elapsedMs: result.elapsedMs,
-        summary: _indexerConnectionErrorSummary(result),
+        summary: _indexerConnectionErrorSummary(result, l10n),
       );
     } catch (_) {
       return _fromHint(
         kind: DiagnosticItemKind.indexer,
         itemKey: _indexerItemKey,
-        displayName: '索引器',
+        displayName: l10n.diagnosticItemIndexer,
         status: DiagnosticItemStatus.unhealthy,
-        hint: indexerHints['torznab-request-error']!,
-        summary: '索引器配置或连通性检测失败',
+        hint: indexerHints(l10n)['torznab-request-error']!,
+        summary: l10n.diagnosticIndexerConfigOrConnectionFailed,
       );
     }
   }
 
   /// 后端 `/metadata-providers/{provider}/test` 目前只支持 JavDB。
-  Future<DiagnosticItemState> _probeMetadataProvider(String provider) async {
+  Future<DiagnosticItemState> _probeMetadataProvider(
+    String provider,
+    AppLocalizations l10n,
+  ) async {
     const displayName = 'JavDB';
     const kind = DiagnosticItemKind.javdb;
-    final hints = javdbHints;
+    final hints = javdbHints(l10n);
     try {
       final result = await _statusApi.testMetadataProvider(provider);
       // 后端已经量过耗时（含内部重试），比前端在 await 两端掐表准。
@@ -255,7 +286,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
           itemKey: provider,
           displayName: displayName,
           elapsedMs: result.elapsedMs,
-          summary: _metadataProviderHealthySummary(result),
+          summary: _metadataProviderHealthySummary(result, l10n),
         );
       }
       final hintKey = resolveMetadataProviderHintKey(result.error);
@@ -266,7 +297,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         status: DiagnosticItemStatus.unhealthy,
         hint: hints[hintKey]!,
         elapsedMs: result.elapsedMs,
-        summary: _metadataProviderErrorSummary(result),
+        summary: _metadataProviderErrorSummary(result, l10n),
       );
     } catch (error) {
       // 后端探测端点本身挂了：这不是 JavDB 站点的问题，不能套站点文案。
@@ -277,13 +308,16 @@ class SystemDiagnostics extends _$SystemDiagnostics {
         status: DiagnosticItemStatus.unhealthy,
         hint: hints['probe-request-failed']!,
         summary: _shortenError(
-          apiErrorMessage(error, fallback: '$displayName 探测请求失败'),
+          ref.apiErrorMessage(
+            error,
+            fallback: l10n.diagnosticProbeRequestFailed(displayName),
+          ),
         ),
       );
     }
   }
 
-  Future<DiagnosticItemState> _probeJoyTag() async {
+  Future<DiagnosticItemState> _probeJoyTag(AppLocalizations l10n) async {
     final started = DateTime.now();
     final StatusImageSearchDto status;
     try {
@@ -292,18 +326,24 @@ class SystemDiagnostics extends _$SystemDiagnostics {
       return _fromHint(
         kind: DiagnosticItemKind.joyTag,
         itemKey: _joyTagItemKey,
-        displayName: '嵌入服务',
+        displayName: l10n.diagnosticItemEmbeddingService,
         status: DiagnosticItemStatus.unhealthy,
-        hint: joyTagHints['status-unavailable']!,
-        summary: _shortenError(apiErrorMessage(error, fallback: '检测请求失败')),
+        hint: joyTagHints(l10n)['status-unavailable']!,
+        summary: _shortenError(
+          ref.apiErrorMessage(
+            error,
+            fallback: l10n.diagnosticCheckRequestFailed,
+          ),
+        ),
       );
     }
-    if (!status.enabled) return DiagnosticItemState.disabled(
-      kind: DiagnosticItemKind.joyTag,
-      itemKey: _joyTagItemKey,
-      displayName: '嵌入服务',
-      summary: '未启用，可在高级设置中开启',
-    );
+    if (!status.enabled)
+      return DiagnosticItemState.disabled(
+        kind: DiagnosticItemKind.joyTag,
+        itemKey: _joyTagItemKey,
+        displayName: l10n.diagnosticItemEmbeddingService,
+        summary: l10n.diagnosticEmbeddingDisabledSummary,
+      );
     final elapsed = DateTime.now().difference(started).inMilliseconds;
     if (status.embeddingService.healthy) {
       final spaceId = status.embeddingService.spaceId;
@@ -311,24 +351,26 @@ class SystemDiagnostics extends _$SystemDiagnostics {
       return DiagnosticItemState.healthy(
         kind: DiagnosticItemKind.joyTag,
         itemKey: _joyTagItemKey,
-        displayName: '嵌入服务',
+        displayName: l10n.diagnosticItemEmbeddingService,
         elapsedMs: elapsed,
         summary: spaceId == null || spaceId.isEmpty
-            ? '嵌入模型加载正常'
+            ? l10n.diagnosticEmbeddingHealthySummary
             : dimension == null
-            ? '空间：$spaceId'
-            : '空间：$spaceId · $dimension 维',
+            ? l10n.diagnosticEmbeddingSpace(spaceId)
+            : l10n.diagnosticEmbeddingSpaceWithDimension(spaceId, dimension),
       );
     }
     return _fromHint(
       kind: DiagnosticItemKind.joyTag,
       itemKey: _joyTagItemKey,
-      displayName: '嵌入服务',
+      displayName: l10n.diagnosticItemEmbeddingService,
       status: DiagnosticItemStatus.unhealthy,
-      hint: joyTagHints['unhealthy']!,
+      hint: joyTagHints(l10n)['unhealthy']!,
       elapsedMs: elapsed,
       // 后端带了失败原因，直接透出去比"模型未就绪"有用。
-      summary: _shortenError(status.embeddingService.error ?? '模型未就绪'),
+      summary: _shortenError(
+        status.embeddingService.error ?? l10n.diagnosticEmbeddingModelNotReady,
+      ),
     );
   }
 
@@ -390,6 +432,7 @@ class SystemDiagnostics extends _$SystemDiagnostics {
   }
 
   List<DiagnosticCategoryState> _buildInitialCategories({
+    required AppLocalizations l10n,
     DiagnosticItemStatus status = DiagnosticItemStatus.notTested,
   }) {
     DiagnosticItemState make(DiagnosticItemKind kind, String key, String name) {
@@ -409,73 +452,103 @@ class SystemDiagnostics extends _$SystemDiagnostics {
 
     return <DiagnosticCategoryState>[
       DiagnosticCategoryState(
-        label: '基础资源',
+        label: l10n.diagnosticCategoryBasicResources,
         icon: Icons.folder_special_outlined,
         items: <DiagnosticItemState>[
-          make(DiagnosticItemKind.mediaLibrary, _mediaLibraryItemKey, '媒体库'),
+          make(
+            DiagnosticItemKind.mediaLibrary,
+            _mediaLibraryItemKey,
+            l10n.diagnosticItemMediaLibrary,
+          ),
         ],
       ),
       DiagnosticCategoryState(
-        label: '下载与检索链',
+        label: l10n.diagnosticCategoryDownloadAndIndexing,
         icon: Icons.download_outlined,
         items: <DiagnosticItemState>[
-          make(DiagnosticItemKind.indexer, _indexerItemKey, '索引器'),
+          make(
+            DiagnosticItemKind.indexer,
+            _indexerItemKey,
+            l10n.diagnosticItemIndexer,
+          ),
         ],
       ),
       DiagnosticCategoryState(
-        label: '外部数据源',
+        label: l10n.diagnosticCategoryExternalDataSources,
         icon: Icons.public,
         items: <DiagnosticItemState>[
           make(DiagnosticItemKind.javdb, _javdbItemKey, 'JavDB'),
         ],
       ),
       DiagnosticCategoryState(
-        label: '智能能力',
+        label: l10n.diagnosticCategoryIntelligence,
         icon: Icons.psychology_outlined,
         items: <DiagnosticItemState>[
-          make(DiagnosticItemKind.joyTag, _joyTagItemKey, '嵌入服务'),
+          make(
+            DiagnosticItemKind.joyTag,
+            _joyTagItemKey,
+            l10n.diagnosticItemEmbeddingService,
+          ),
         ],
       ),
     ];
   }
 
-  String _mediaLibrarySummary(List<MediaLibraryDto> libraries) {
+  String _mediaLibrarySummary(
+    List<MediaLibraryDto> libraries,
+    AppLocalizations l10n,
+  ) {
     if (libraries.length == 1) {
-      return '1 个可用（${libraries.first.name}）';
+      return l10n.diagnosticMediaLibraryOneAvailable(libraries.first.name);
     }
-    return '${libraries.length} 个可用';
+    return l10n.diagnosticMediaLibraryAvailable(libraries.length.toString());
   }
 
-  String _indexerSummary(String hintKey, IndexerSettingsDto settings) {
+  String _indexerSummary(
+    String hintKey,
+    IndexerSettingsDto settings,
+    AppLocalizations l10n,
+  ) {
     switch (hintKey) {
       case 'entries-empty':
-        return '尚未添加任何索引器条目';
+        return l10n.diagnosticIndexerNoneConfigured;
       case 'entry-url-invalid':
-        return '存在非法 tracker URL';
+        return l10n.diagnosticIndexerInvalidUrl;
       case 'entry-client-missing':
-        return '存在未绑定下载器的 entry';
+        return l10n.diagnosticIndexerClientMissing;
       case 'entry-client-stale':
-        return '存在绑定到已删除下载器的 entry';
+        return l10n.diagnosticIndexerClientStale;
       default:
-        return '配置存在问题';
+        return l10n.diagnosticIndexerConfigIssue;
     }
   }
 
-  String _indexerConnectionSummary(IndexerConnectionTestResultDto result) {
+  String _indexerConnectionSummary(
+    IndexerConnectionTestResultDto result,
+    AppLocalizations l10n,
+  ) {
     if (result.resultCount == 0) {
-      return '${result.indexersChecked} 个索引器已连接，测试查询未返回候选';
+      return l10n.diagnosticIndexerConnectedNoResults(
+        result.indexersChecked.toString(),
+      );
     }
-    return '${result.indexersChecked} 个索引器已连接，返回 ${result.resultCount} 条候选';
+    return l10n.diagnosticIndexerConnectedWithResults(
+      result.indexersChecked.toString(),
+      result.resultCount.toString(),
+    );
   }
 
-  String _indexerConnectionErrorSummary(IndexerConnectionTestResultDto result) {
+  String _indexerConnectionErrorSummary(
+    IndexerConnectionTestResultDto result,
+    AppLocalizations l10n,
+  ) {
     final message = result.error?.message ?? '';
     if (message.trim().isNotEmpty) {
       return _shortenError(message);
     }
     return result.error?.type == 'no_indexers_configured'
-        ? '尚未保存任何索引器条目'
-        : 'Torznab 连通性测试失败';
+        ? l10n.diagnosticIndexerNoneSaved
+        : l10n.diagnosticTorznabTestFailed;
   }
 
   String _shortenError(String message) {
@@ -500,21 +573,29 @@ class SystemDiagnostics extends _$SystemDiagnostics {
   }
 
   /// healthy 时把后端返回的实证数据摆出来，让"绿"是可验证的而不是一句"连通正常"。
-  String _metadataProviderHealthySummary(StatusMetadataProviderTestDto result) {
+  String _metadataProviderHealthySummary(
+    StatusMetadataProviderTestDto result,
+    AppLocalizations l10n,
+  ) {
     final number = result.movieNumber;
-    return number.isEmpty ? '连通正常' : '$number 抓取成功';
+    return number.isEmpty
+        ? l10n.indexerTestStatusHealthy
+        : l10n.diagnosticMetadataFetchSucceeded(number);
   }
 
-  String _metadataProviderErrorSummary(StatusMetadataProviderTestDto result) {
+  String _metadataProviderErrorSummary(
+    StatusMetadataProviderTestDto result,
+    AppLocalizations l10n,
+  ) {
     final error = result.error;
-    if (error == null) return '接口返回不健康';
+    if (error == null) return l10n.diagnosticMetadataEndpointUnhealthy;
     // not_found 的 message 里已经含番号，直接用；其余带上探测番号做定位。
     return _errorSummary(
       error.message,
       error.type,
       fallback: result.movieNumber.isEmpty
-          ? '探测失败'
-          : '${result.movieNumber} 探测失败',
+          ? l10n.diagnosticMetadataProbeFailed
+          : l10n.diagnosticMetadataProbeFailedFor(result.movieNumber),
     );
   }
 }

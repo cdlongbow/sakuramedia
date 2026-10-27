@@ -163,7 +163,7 @@ class DiagnosticItemState {
     required String itemKey,
     required String displayName,
     required String blockedByLabel,
-    String? summary,
+    required String summary,
   }) {
     assert(
       blockedByLabel.isNotEmpty,
@@ -175,7 +175,7 @@ class DiagnosticItemState {
       displayName: displayName,
       status: DiagnosticItemStatus.blocked,
       blockedByLabel: blockedByLabel,
-      summary: summary ?? '等待 $blockedByLabel 就绪',
+      summary: summary,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.
 import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_fix_target.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagnostic_hints.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 /// 索引器（Torznab）先校验静态配置，再进行真实搜索连通性检测。
 ///
@@ -11,36 +12,37 @@ const DiagnosticFixTarget _indexerTarget =
 
 /// `entries-empty`（前端读配置发现没条目）与 `no_indexers_configured`（后端发起
 /// 搜索时发现没条目）在用户眼里是同一件事，共用一条文案。
-const DiagnosticHint _noIndexersHint = DiagnosticHint(
-  cause: '还没有添加任何站点。',
-  fixHint: '在「索引器」页至少添加一个站点，并给它绑定一个下载器。',
+DiagnosticHint _noIndexersHint(AppLocalizations l10n) => DiagnosticHint(
+  cause: l10n.diagnosticHintIndexerEmptyCause,
+  fixHint: l10n.diagnosticHintIndexerEmptyFix,
   fixTarget: _indexerTarget,
 );
 
-const Map<String, DiagnosticHint> indexerHints = <String, DiagnosticHint>{
-  'entries-empty': _noIndexersHint,
-  'entry-url-invalid': DiagnosticHint(
-    cause: '有站点的地址是空的，或者格式不对。',
-    fixHint: '在「索引器」页检查每个站点的地址。',
-    fixTarget: _indexerTarget,
-  ),
-  'entry-client-missing': DiagnosticHint(
-    cause: '有站点没有绑定下载器。',
-    fixHint: '在「索引器」页给它选一个下载器。',
-    fixTarget: _indexerTarget,
-  ),
-  'entry-client-stale': DiagnosticHint(
-    cause: '有站点绑定的下载器已经被删了。',
-    fixHint: '在「索引器」页给它重新选一个下载器。',
-    fixTarget: _indexerTarget,
-  ),
-  'no-indexers-configured': _noIndexersHint,
-  'torznab-request-error': DiagnosticHint(
-    cause: '搜索测试失败了。',
-    fixHint: '确认索引器服务能访问，然后在「索引器」页核对各站点地址与 API Key。',
-    fixTarget: _indexerTarget,
-  ),
-};
+Map<String, DiagnosticHint> indexerHints(AppLocalizations l10n) =>
+    <String, DiagnosticHint>{
+      'entries-empty': _noIndexersHint(l10n),
+      'entry-url-invalid': DiagnosticHint(
+        cause: l10n.diagnosticHintIndexerInvalidUrlCause,
+        fixHint: l10n.diagnosticHintIndexerInvalidUrlFix,
+        fixTarget: _indexerTarget,
+      ),
+      'entry-client-missing': DiagnosticHint(
+        cause: l10n.diagnosticHintIndexerClientMissingCause,
+        fixHint: l10n.diagnosticHintIndexerClientMissingFix,
+        fixTarget: _indexerTarget,
+      ),
+      'entry-client-stale': DiagnosticHint(
+        cause: l10n.diagnosticHintIndexerClientStaleCause,
+        fixHint: l10n.diagnosticHintIndexerClientStaleFix,
+        fixTarget: _indexerTarget,
+      ),
+      'no-indexers-configured': _noIndexersHint(l10n),
+      'torznab-request-error': DiagnosticHint(
+        cause: l10n.diagnosticHintIndexerTestFailedCause,
+        fixHint: l10n.diagnosticHintIndexerTestFailedFix,
+        fixTarget: _indexerTarget,
+      ),
+    };
 
 /// 索引器静态校验结果。`null` 表示可继续执行在线连通性检测。
 ///

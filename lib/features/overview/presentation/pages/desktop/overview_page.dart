@@ -16,6 +16,7 @@ import 'package:sakuramedia/features/playlists/presentation/providers/system_pla
 import 'package:sakuramedia/features/recent_views/presentation/providers/recent_views_provider.dart';
 import 'package:sakuramedia/features/recent_views/presentation/widgets/recent_views_section.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/subscription_feedback.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
@@ -76,7 +77,7 @@ class DesktopOverviewPage extends ConsumerWidget {
       ]);
     } catch (_) {
       if (context.mounted) {
-        showToast('刷新失败');
+        showToast(AppLocalizations.of(context).overviewRefreshFailed);
       }
     }
   }
@@ -94,6 +95,7 @@ class DesktopOverviewPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final systemInfo = ref.watch(overviewSystemInfoProvider);
     final systemInfoNotifier = ref.read(overviewSystemInfoProvider.notifier);
     final latestAsync = ref.watch(movieSummaryProvider(_latestScope));
@@ -187,8 +189,8 @@ class DesktopOverviewPage extends ConsumerWidget {
                 ),
                 SliverToBoxAdapter(
                   child: AppSectionHeader(
-                    title: '最近添加',
-                    actionLabel: '更多',
+                    title: l10n.overviewRecentlyAdded,
+                    actionLabel: l10n.overviewMore,
                     actionKey: const Key('overview-latest-more'),
                     onActionTap: () => context.pushDesktopLatestMovies(),
                   ),
@@ -206,7 +208,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                     errorMessage: latestAsync.hasError && latest == null
                         ? _latestScope.initialLoadErrorText
                         : null,
-                    emptyMessage: '暂无入库影片，去搜索看看吧',
+                    emptyMessage: l10n.overviewNoLatestMovies,
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -214,8 +216,8 @@ class DesktopOverviewPage extends ConsumerWidget {
                 ),
                 SliverToBoxAdapter(
                   child: AppSectionHeader(
-                    title: '最近订阅',
-                    actionLabel: '更多',
+                    title: l10n.overviewRecentlySubscribed,
+                    actionLabel: l10n.overviewMore,
                     actionKey: const Key('overview-recently-subscribed-more'),
                     onActionTap: () =>
                         context.pushDesktopRecentlySubscribedMovies(),
@@ -238,7 +240,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                             recentlySubscribedAsync.value == null
                         ? _recentlySubscribedScope.initialLoadErrorText
                         : null,
-                    emptyMessage: '暂无订阅影片',
+                    emptyMessage: l10n.overviewNoSubscribedMovies,
                   ),
                 ),
                 if (recentPlaylist != null && recentScope != null) ...<Widget>[
@@ -247,9 +249,11 @@ class DesktopOverviewPage extends ConsumerWidget {
                   ),
                   SliverToBoxAdapter(
                     child: AppSectionHeader(
-                      title: '最近播放',
-                      trailingText: '${recentPlaylist.movieCount} 部',
-                      actionLabel: '更多',
+                      title: l10n.overviewRecentlyPlayed,
+                      trailingText: l10n.overviewMovieCount(
+                        formatCount(recentPlaylist.movieCount),
+                      ),
+                      actionLabel: l10n.overviewMore,
                       actionKey: const Key('overview-recent-played-more'),
                       onActionTap: () => context.pushDesktopPlaylistDetail(
                         playlistId: recentPlaylist.id,
@@ -274,7 +278,7 @@ class DesktopOverviewPage extends ConsumerWidget {
                               recentAsync?.value == null
                           ? recentScope.initialLoadErrorText
                           : null,
-                      emptyMessage: '还没有观看记录',
+                      emptyMessage: l10n.overviewNoWatchHistory,
                     ),
                   ),
                 ],

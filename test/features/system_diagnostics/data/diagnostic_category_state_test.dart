@@ -8,7 +8,12 @@ import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_sta
 DiagnosticItemState _item(DiagnosticItemStatus status, {String key = 'k'}) {
   switch (status) {
     case DiagnosticItemStatus.disabled:
-      return DiagnosticItemState(kind: DiagnosticItemKind.joyTag, itemKey: key, displayName: key, status: status);
+      return DiagnosticItemState(
+        kind: DiagnosticItemKind.joyTag,
+        itemKey: key,
+        displayName: key,
+        status: status,
+      );
     case DiagnosticItemStatus.notTested:
       return DiagnosticItemState.notTested(
         kind: DiagnosticItemKind.mediaLibrary,
@@ -47,6 +52,7 @@ DiagnosticItemState _item(DiagnosticItemStatus status, {String key = 'k'}) {
         itemKey: key,
         displayName: key,
         blockedByLabel: 'x',
+        summary: 's',
       );
   }
 }

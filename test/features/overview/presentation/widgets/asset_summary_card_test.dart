@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/asset_summary_card.dart';
 import 'package:sakuramedia/features/status/data/status_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_skeletonizer.dart';
 
@@ -250,6 +251,12 @@ Future<void> _pumpCard(WidgetTester tester, Widget card) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: sakuraThemeData,
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
       home: Scaffold(body: SingleChildScrollView(child: card)),
     ),
   );

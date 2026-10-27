@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -33,7 +34,7 @@ class OverviewCardErrorRow extends StatelessWidget {
         if (onRetry != null) ...[
           SizedBox(width: context.appSpacing.sm),
           AppTextButton(
-            label: '重试',
+            label: AppLocalizations.of(context).commonRetry,
             size: AppTextButtonSize.small,
             labelKey: retryKey,
             onPressed: onRetry,

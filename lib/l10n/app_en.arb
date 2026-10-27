@@ -1265,5 +1265,321 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "Installable plugins"
+  "pluginMarketInstallablePlugins": "Installable plugins",
+  "diagnosticCategoryBasicResources": "Core resources",
+  "diagnosticCategoryDownloadAndIndexing": "Downloads & indexing",
+  "diagnosticCategoryExternalDataSources": "External data sources",
+  "diagnosticCategoryIntelligence": "Intelligence",
+  "diagnosticItemMediaLibrary": "Media library",
+  "diagnosticItemIndexer": "Indexer",
+  "diagnosticItemEmbeddingService": "Embedding service",
+  "diagnosticStatusProbing": "Checking",
+  "diagnosticStatusHealthy": "Healthy",
+  "diagnosticStatusWarning": "Warning",
+  "diagnosticStatusUnhealthy": "Unhealthy",
+  "diagnosticStatusNotReady": "Not ready",
+  "diagnosticStatusBlockedBy": "Waiting for {blockedBy}",
+  "@diagnosticStatusBlockedBy": {
+    "placeholders": {
+      "blockedBy": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticCategoryAllHealthy": "All healthy",
+  "diagnosticCategoryHasWarnings": "Has warnings",
+  "diagnosticCategoryWaitingDependency": "Waiting for prerequisites",
+  "diagnosticCollapseDetails": "Hide details",
+  "diagnosticExpandDetails": "Show details",
+  "diagnosticDetailCause": "Possible cause",
+  "diagnosticDetailFix": "How to fix",
+  "diagnosticFixAction": "Fix it",
+  "diagnosticBlockedWaiting": "Waiting for {blockedBy} to be ready",
+  "@diagnosticBlockedWaiting": {
+    "placeholders": {
+      "blockedBy": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMediaLibraryNoneConfigured": "No media libraries configured yet",
+  "diagnosticErrorMediaLibraryLoadFailed": "Failed to load media libraries",
+  "diagnosticIndexerConfigOrConnectionFailed": "Indexer configuration or connectivity check failed",
+  "diagnosticEmbeddingDisabledSummary": "Disabled. You can enable it in advanced settings.",
+  "diagnosticEmbeddingHealthySummary": "Embedding model loaded",
+  "diagnosticEmbeddingSpace": "Space: {spaceId}",
+  "@diagnosticEmbeddingSpace": {
+    "placeholders": {
+      "spaceId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticEmbeddingSpaceWithDimension": "Space: {spaceId} · {dimension}D",
+  "@diagnosticEmbeddingSpaceWithDimension": {
+    "placeholders": {
+      "spaceId": {
+        "type": "String"
+      },
+      "dimension": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticEmbeddingModelNotReady": "Model not ready",
+  "diagnosticProbeRequestFailed": "{name} probe request failed",
+  "@diagnosticProbeRequestFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticCheckRequestFailed": "Check request failed",
+  "diagnosticMediaLibraryOneAvailable": "1 available ({name})",
+  "@diagnosticMediaLibraryOneAvailable": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMediaLibraryAvailable": "{count} available",
+  "@diagnosticMediaLibraryAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerNoneConfigured": "No indexers configured yet",
+  "diagnosticIndexerInvalidUrl": "One or more tracker URLs are invalid",
+  "diagnosticIndexerClientMissing": "One or more indexers have no download client",
+  "diagnosticIndexerClientStale": "One or more indexers are bound to a deleted download client",
+  "diagnosticIndexerConfigIssue": "Configuration issue",
+  "diagnosticIndexerConnectedNoResults": "Indexers connected: {count}; the test query returned no results",
+  "@diagnosticIndexerConnectedNoResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerConnectedWithResults": "Indexers connected: {count}; results returned: {results}",
+  "@diagnosticIndexerConnectedWithResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "results": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerNoneSaved": "No indexers saved yet",
+  "diagnosticTorznabTestFailed": "Torznab connectivity test failed",
+  "diagnosticMetadataFetchSucceeded": "Fetched {number} successfully",
+  "@diagnosticMetadataFetchSucceeded": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMetadataEndpointUnhealthy": "The endpoint reported an unhealthy status",
+  "diagnosticMetadataProbeFailed": "Probe failed",
+  "diagnosticMetadataProbeFailedFor": "Probe failed for {number}",
+  "@diagnosticMetadataProbeFailedFor": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticHintMediaLibraryEmptyCause": "No media library is configured yet.",
+  "diagnosticHintMediaLibraryEmptyFix": "Create one on the Media Library page and point it at the folder that stores your movies.",
+  "diagnosticHintMediaLibraryProbeFailedCause": "Failed to load the media library list; the backend did not respond correctly.",
+  "diagnosticHintBackendCheckRetryFix": "Make sure the backend is running, then run the check again.",
+  "diagnosticHintIndexerEmptyCause": "No sites have been added yet.",
+  "diagnosticHintIndexerEmptyFix": "Add at least one site on the Indexers page and bind it to a download client.",
+  "diagnosticHintIndexerInvalidUrlCause": "A site has an empty or malformed URL.",
+  "diagnosticHintIndexerInvalidUrlFix": "Check each site's URL on the Indexers page.",
+  "diagnosticHintIndexerClientMissingCause": "A site has no download client bound.",
+  "diagnosticHintIndexerClientMissingFix": "Select a download client for it on the Indexers page.",
+  "diagnosticHintIndexerClientStaleCause": "A site is bound to a download client that has been deleted.",
+  "diagnosticHintIndexerClientStaleFix": "Select a new download client for it on the Indexers page.",
+  "diagnosticHintIndexerTestFailedCause": "The search test failed.",
+  "diagnosticHintIndexerTestFailedFix": "Make sure the indexer service is reachable, then verify each site's URL and API key on the Indexers page.",
+  "diagnosticHintJoyTagUnhealthyCause": "The JoyTag inference service is not responding.",
+  "diagnosticHintJoyTagUnhealthyFix": "Check the embedding service logs on the machine running the backend.",
+  "diagnosticHintProbeRequestFailedCause": "The check request did not complete; the backend did not respond.",
+  "diagnosticHintJavdbNotFoundCause": "JavDB is reachable, but the test movie number could not be found.",
+  "diagnosticHintJavdbNotFoundFix": "Run the check again first. If it still fails, JavDB has likely changed and needs an adapter update.",
+  "diagnosticHintJavdbUnreachableCause": "JavDB cannot be reached.",
+  "diagnosticHintJavdbUnreachableFix": "Proxy routing is controlled by deployment environment variables: if HTTP_PROXY is set, add the JavDB domains to NO_PROXY, or allow direct connections in your transparent proxy rules. See the wiki FAQ on proxy configuration.",
+  "diagnosticHintJavdbUnexpectedCause": "An error occurred while fetching from JavDB.",
+  "diagnosticHintJavdbUnexpectedFix": "Check the backend logs, then run the check again.",
+  "overviewStatusUnavailable": "Unavailable",
+  "overviewStatusHealthy": "Healthy",
+  "overviewStatusAbnormal": "Unhealthy",
+  "overviewIndexSpaceReady": "Ready",
+  "overviewIndexSpaceRebuildRequired": "Rebuild required",
+  "overviewIndexSpaceUninitialized": "Not initialized",
+  "overviewRefreshFailed": "Refresh failed",
+  "overviewMore": "More",
+  "overviewRecentlyAdded": "Recently added",
+  "overviewRecentlySubscribed": "Recently subscribed",
+  "overviewRecentlyPlayed": "Recently played",
+  "overviewNoLatestMovies": "No movies in your library yet. Try a search.",
+  "overviewNoSubscribedMovies": "No subscribed movies yet",
+  "overviewMovieCount": "Movies: {count}",
+  "@overviewMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewNoWatchHistory": "No watch history yet",
+  "overviewOpenMenu": "Open menu",
+  "overviewTabMine": "Mine",
+  "overviewTabClips": "Clips",
+  "overviewTabDiscover": "Discover",
+  "overviewTabMoments": "Moments",
+  "overviewLatestMoviesLoadFailed": "Failed to load recently added movies. Please try again later.",
+  "overviewSearchHint": "e.g. SSNI-888, Yua Mikami",
+  "overviewPlaylists": "Playlists",
+  "overviewPlaylistsLoadFailed": "Playlists are temporarily unavailable. Please try again later.",
+  "overviewNoPlaylists": "No playlists yet",
+  "overviewImagePickFailed": "Failed to select image",
+  "overviewImageSearchSpaceUnknown": "Could not confirm which embedding space the existing index uses.",
+  "overviewImageSearchSpaceChanged": "The embedding space changed from “{indexed}” to “{current}”.",
+  "@overviewImageSearchSpaceChanged": {
+    "placeholders": {
+      "indexed": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewRebuildIndexConfirm": "{spaceMessage} This will clear the existing image index and start rebuilding it. Continue?",
+  "@overviewRebuildIndexConfirm": {
+    "placeholders": {
+      "spaceMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewServiceHealth": "Service health",
+  "overviewEmbeddingService": "Embedding service",
+  "overviewRebuild": "Rebuild",
+  "overviewExternalDataSources": "External data sources",
+  "overviewTesting": "Testing…",
+  "overviewTest": "Test",
+  "overviewWatchTrend": "Watch trend",
+  "overviewRangeLast7Days": "Last 7 days",
+  "overviewRangeLast7DaysShort": "7D",
+  "overviewRangeLast30Days": "Last 30 days",
+  "overviewRangeLast30DaysShort": "30D",
+  "overviewRangeLast90Days": "Last 90 days",
+  "overviewRangeLast90DaysShort": "90D",
+  "overviewRangeLastYear": "Last year",
+  "overviewRangeLastYearShort": "1Y",
+  "overviewRangeAllTime": "All time",
+  "overviewRangeAllTimeShort": "All",
+  "overviewWatchTrendSummary": "{period} · watched {count}",
+  "@overviewWatchTrendSummary": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewNoWatchHistoryInRange": "No watch history in this period",
+  "overviewStorageDistribution": "Storage distribution",
+  "overviewNoMediaLibraries": "No media libraries yet",
+  "overviewFiles": "Files: {count}",
+  "@overviewFiles": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewFilesAndSize": "Files: {count} · {size}",
+  "@overviewFilesAndSize": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewOther": "Other",
+  "overviewFree": "Free",
+  "overviewMediaAssets": "Media assets",
+  "overviewNoAssetData": "No media asset data yet",
+  "overviewMovies": "Movies",
+  "overviewMoviePlayableSubscribed": "Playable: {playable} · Subscribed: {subscribed}",
+  "@overviewMoviePlayableSubscribed": {
+    "placeholders": {
+      "playable": {
+        "type": "String"
+      },
+      "subscribed": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewMoviePlayable": "Playable: {playable}",
+  "@overviewMoviePlayable": {
+    "placeholders": {
+      "playable": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewActresses": "Actors",
+  "overviewSubscribedCount": "Subscribed: {count}",
+  "@overviewSubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewMediaFiles": "Media files",
+  "overviewLibraryCount": "Libraries: {count}",
+  "@overviewLibraryCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewTotalMediaSize": "Total media size",
+  "overviewThumbnails": "Thumbnails: {count}",
+  "@overviewThumbnails": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewCollectionsPrefix": "Collections: ",
+  "overviewPendingThumbnails": "Thumbnails pending",
+  "overviewPendingIndex": "Pending indexing",
+  "overviewVideoCollections": "Video collections",
+  "overviewClipCollections": "Clip collections",
+  "overviewMomentCollections": "Moment collections",
+  "overviewStatusLoadFailed": "Failed to load media assets. Please try again later.",
+  "overviewInsightsLoadFailed": "Failed to load statistics",
+  "overviewWatchTrendLoadFailed": "Failed to load watch trend"
 }

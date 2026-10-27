@@ -1265,5 +1265,321 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "diagnosticCategoryBasicResources": "基础资源",
+  "diagnosticCategoryDownloadAndIndexing": "下载与检索链",
+  "diagnosticCategoryExternalDataSources": "外部数据源",
+  "diagnosticCategoryIntelligence": "智能能力",
+  "diagnosticItemMediaLibrary": "媒体库",
+  "diagnosticItemIndexer": "索引器",
+  "diagnosticItemEmbeddingService": "嵌入服务",
+  "diagnosticStatusProbing": "检测中",
+  "diagnosticStatusHealthy": "正常",
+  "diagnosticStatusWarning": "告警",
+  "diagnosticStatusUnhealthy": "异常",
+  "diagnosticStatusNotReady": "未就绪",
+  "diagnosticStatusBlockedBy": "待 {blockedBy}",
+  "@diagnosticStatusBlockedBy": {
+    "placeholders": {
+      "blockedBy": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticCategoryAllHealthy": "全部正常",
+  "diagnosticCategoryHasWarnings": "存在告警",
+  "diagnosticCategoryWaitingDependency": "等待前置",
+  "diagnosticCollapseDetails": "收起详情",
+  "diagnosticExpandDetails": "展开详情",
+  "diagnosticDetailCause": "可能原因",
+  "diagnosticDetailFix": "怎么改",
+  "diagnosticFixAction": "去修复",
+  "diagnosticBlockedWaiting": "等待 {blockedBy} 就绪",
+  "@diagnosticBlockedWaiting": {
+    "placeholders": {
+      "blockedBy": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMediaLibraryNoneConfigured": "尚未配置任何媒体库",
+  "diagnosticErrorMediaLibraryLoadFailed": "读取媒体库列表失败",
+  "diagnosticIndexerConfigOrConnectionFailed": "索引器配置或连通性检测失败",
+  "diagnosticEmbeddingDisabledSummary": "未启用，可在高级设置中开启",
+  "diagnosticEmbeddingHealthySummary": "嵌入模型加载正常",
+  "diagnosticEmbeddingSpace": "空间：{spaceId}",
+  "@diagnosticEmbeddingSpace": {
+    "placeholders": {
+      "spaceId": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticEmbeddingSpaceWithDimension": "空间：{spaceId} · {dimension} 维",
+  "@diagnosticEmbeddingSpaceWithDimension": {
+    "placeholders": {
+      "spaceId": {
+        "type": "String"
+      },
+      "dimension": {
+        "type": "int"
+      }
+    }
+  },
+  "diagnosticEmbeddingModelNotReady": "模型未就绪",
+  "diagnosticProbeRequestFailed": "{name} 探测请求失败",
+  "@diagnosticProbeRequestFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticCheckRequestFailed": "检测请求失败",
+  "diagnosticMediaLibraryOneAvailable": "1 个可用（{name}）",
+  "@diagnosticMediaLibraryOneAvailable": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMediaLibraryAvailable": "{count} 个可用",
+  "@diagnosticMediaLibraryAvailable": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerNoneConfigured": "尚未添加任何索引器条目",
+  "diagnosticIndexerInvalidUrl": "存在非法 tracker URL",
+  "diagnosticIndexerClientMissing": "存在未绑定下载器的 entry",
+  "diagnosticIndexerClientStale": "存在绑定到已删除下载器的 entry",
+  "diagnosticIndexerConfigIssue": "配置存在问题",
+  "diagnosticIndexerConnectedNoResults": "{count} 个索引器已连接，测试查询未返回候选",
+  "@diagnosticIndexerConnectedNoResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerConnectedWithResults": "{count} 个索引器已连接，返回 {results} 条候选",
+  "@diagnosticIndexerConnectedWithResults": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "results": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticIndexerNoneSaved": "尚未保存任何索引器条目",
+  "diagnosticTorznabTestFailed": "Torznab 连通性测试失败",
+  "diagnosticMetadataFetchSucceeded": "{number} 抓取成功",
+  "@diagnosticMetadataFetchSucceeded": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticMetadataEndpointUnhealthy": "接口返回不健康",
+  "diagnosticMetadataProbeFailed": "探测失败",
+  "diagnosticMetadataProbeFailedFor": "{number} 探测失败",
+  "@diagnosticMetadataProbeFailedFor": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "diagnosticHintMediaLibraryEmptyCause": "还没有配置媒体库。",
+  "diagnosticHintMediaLibraryEmptyFix": "在「媒体库」页新建一个，指向存放影片的目录。",
+  "diagnosticHintMediaLibraryProbeFailedCause": "读取媒体库列表失败，后端没有正常响应。",
+  "diagnosticHintBackendCheckRetryFix": "确认后端正常后重新检测。",
+  "diagnosticHintIndexerEmptyCause": "还没有添加任何站点。",
+  "diagnosticHintIndexerEmptyFix": "在「索引器」页至少添加一个站点，并给它绑定一个下载器。",
+  "diagnosticHintIndexerInvalidUrlCause": "有站点的地址是空的，或者格式不对。",
+  "diagnosticHintIndexerInvalidUrlFix": "在「索引器」页检查每个站点的地址。",
+  "diagnosticHintIndexerClientMissingCause": "有站点没有绑定下载器。",
+  "diagnosticHintIndexerClientMissingFix": "在「索引器」页给它选一个下载器。",
+  "diagnosticHintIndexerClientStaleCause": "有站点绑定的下载器已经被删了。",
+  "diagnosticHintIndexerClientStaleFix": "在「索引器」页给它重新选一个下载器。",
+  "diagnosticHintIndexerTestFailedCause": "搜索测试失败了。",
+  "diagnosticHintIndexerTestFailedFix": "确认索引器服务能访问，然后在「索引器」页核对各站点地址与 API Key。",
+  "diagnosticHintJoyTagUnhealthyCause": "JoyTag 推理服务没有响应。",
+  "diagnosticHintJoyTagUnhealthyFix": "在部署后端的机器上查看嵌入服务日志。",
+  "diagnosticHintProbeRequestFailedCause": "检测请求没完成，后端没有响应。",
+  "diagnosticHintJavdbNotFoundCause": "JavDB 打得开，但搜不到测试用的番号。",
+  "diagnosticHintJavdbNotFoundFix": "先重新检测一次。还是失败就是 JavDB 改版了，需要等适配。",
+  "diagnosticHintJavdbUnreachableCause": "连不上 JavDB。",
+  "diagnosticHintJavdbUnreachableFix": "代理改由部署侧环境变量分流：若配置了 HTTP_PROXY，需在 NO_PROXY 排除 JavDB 相关域名，或让透明代理规则放行直连，详见 wiki「常见问题 · 代理配置」。",
+  "diagnosticHintJavdbUnexpectedCause": "JavDB 抓取时出错了。",
+  "diagnosticHintJavdbUnexpectedFix": "确认后端日志后重新检测。",
+  "overviewStatusUnavailable": "不可用",
+  "overviewStatusHealthy": "正常",
+  "overviewStatusAbnormal": "异常",
+  "overviewIndexSpaceReady": "就绪",
+  "overviewIndexSpaceRebuildRequired": "需重建",
+  "overviewIndexSpaceUninitialized": "未建立",
+  "overviewRefreshFailed": "刷新失败",
+  "overviewMore": "更多",
+  "overviewRecentlyAdded": "最近添加",
+  "overviewRecentlySubscribed": "最近订阅",
+  "overviewRecentlyPlayed": "最近播放",
+  "overviewNoLatestMovies": "暂无入库影片，去搜索看看吧",
+  "overviewNoSubscribedMovies": "暂无订阅影片",
+  "overviewMovieCount": "{count} 部",
+  "@overviewMovieCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewNoWatchHistory": "还没有观看记录",
+  "overviewOpenMenu": "打开菜单",
+  "overviewTabMine": "我的",
+  "overviewTabClips": "切片",
+  "overviewTabDiscover": "发现",
+  "overviewTabMoments": "时刻",
+  "overviewLatestMoviesLoadFailed": "最近添加影片加载失败，请稍后重试",
+  "overviewSearchHint": "如 SSNI-888、三上悠亚",
+  "overviewPlaylists": "播放列表",
+  "overviewPlaylistsLoadFailed": "播放列表暂时无法加载，请稍后重试",
+  "overviewNoPlaylists": "暂无播放列表",
+  "overviewImagePickFailed": "选择图片失败",
+  "overviewImageSearchSpaceUnknown": "无法确认历史索引使用的嵌入空间。",
+  "overviewImageSearchSpaceChanged": "嵌入空间已从「{indexed}」变更为「{current}」。",
+  "@overviewImageSearchSpaceChanged": {
+    "placeholders": {
+      "indexed": {
+        "type": "String"
+      },
+      "current": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewRebuildIndexConfirm": "{spaceMessage} 这会清空现有图片索引并重新开始构建，确认继续吗？",
+  "@overviewRebuildIndexConfirm": {
+    "placeholders": {
+      "spaceMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewServiceHealth": "服务健康",
+  "overviewEmbeddingService": "嵌入服务",
+  "overviewRebuild": "重建",
+  "overviewExternalDataSources": "外部数据源",
+  "overviewTesting": "检测中",
+  "overviewTest": "检测",
+  "overviewWatchTrend": "观看趋势",
+  "overviewRangeLast7Days": "近 7 天",
+  "overviewRangeLast7DaysShort": "7天",
+  "overviewRangeLast30Days": "近 30 天",
+  "overviewRangeLast30DaysShort": "30天",
+  "overviewRangeLast90Days": "近 90 天",
+  "overviewRangeLast90DaysShort": "90天",
+  "overviewRangeLastYear": "近一年",
+  "overviewRangeLastYearShort": "1年",
+  "overviewRangeAllTime": "全部时间",
+  "overviewRangeAllTimeShort": "全部",
+  "overviewWatchTrendSummary": "{period}看过 {count} 部",
+  "@overviewWatchTrendSummary": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      },
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewNoWatchHistoryInRange": "该区间暂无观看记录",
+  "overviewStorageDistribution": "存储分布",
+  "overviewNoMediaLibraries": "暂无媒体库",
+  "overviewFiles": "{count} 个文件",
+  "@overviewFiles": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewFilesAndSize": "{count} 个文件 · {size}",
+  "@overviewFilesAndSize": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewOther": "其他",
+  "overviewFree": "空闲",
+  "overviewMediaAssets": "媒体资产",
+  "overviewNoAssetData": "暂无媒体资产数据",
+  "overviewMovies": "影片",
+  "overviewMoviePlayableSubscribed": "可播放 {playable} · 已订阅 {subscribed}",
+  "@overviewMoviePlayableSubscribed": {
+    "placeholders": {
+      "playable": {
+        "type": "String"
+      },
+      "subscribed": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewMoviePlayable": "可播放 {playable}",
+  "@overviewMoviePlayable": {
+    "placeholders": {
+      "playable": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewActresses": "女优",
+  "overviewSubscribedCount": "已订阅 {count}",
+  "@overviewSubscribedCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewMediaFiles": "媒体文件",
+  "overviewLibraryCount": "{count} 个资源库",
+  "@overviewLibraryCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewTotalMediaSize": "媒体总量",
+  "overviewThumbnails": "缩略图 {count}",
+  "@overviewThumbnails": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewCollectionsPrefix": "合集：",
+  "overviewPendingThumbnails": "待生成缩略图",
+  "overviewPendingIndex": "待索引",
+  "overviewVideoCollections": "视频合集",
+  "overviewClipCollections": "片段合集",
+  "overviewMomentCollections": "时刻合集",
+  "overviewStatusLoadFailed": "媒体资产加载失败，请稍后重试",
+  "overviewInsightsLoadFailed": "统计数据加载失败",
+  "overviewWatchTrendLoadFailed": "观看趋势加载失败"
 }

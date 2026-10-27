@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_sta
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_fix_button.dart';
 import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/diagnostic_status_badge.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 
@@ -11,10 +12,7 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 /// - 顶行：状态徽章 + 名称/summary + 展开箭头
 /// - 展开区（AnimatedSize）：可能原因 / 怎么改 / 影响 三段 + 「去修复」按钮
 class DiagnosticItemTile extends StatefulWidget {
-  const DiagnosticItemTile({
-    super.key,
-    required this.item,
-  });
+  const DiagnosticItemTile({super.key, required this.item});
 
   final DiagnosticItemState item;
 
@@ -59,8 +57,9 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
   @override
   Widget build(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final item = widget.item;
-    final badgeLabel = _statusBadgeLabel(item.status);
+    final badgeLabel = _statusBadgeLabel(l10n, item);
 
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -101,7 +100,9 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
             size: AppIconButtonSize.mini,
             onPressed: () => setState(() => _expanded = !_expanded),
             icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-            tooltip: _expanded ? '收起详情' : '展开详情',
+            tooltip: _expanded
+                ? l10n.diagnosticCollapseDetails
+                : l10n.diagnosticExpandDetails,
           ),
       ],
     );
@@ -127,6 +128,7 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
 
   Widget _buildDetail(BuildContext context) {
     final spacing = context.appSpacing;
+    final l10n = AppLocalizations.of(context);
     final item = widget.item;
     final blocks = <Widget>[];
 
@@ -161,8 +163,8 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
       );
     }
 
-    addBlock('可能原因', item.cause);
-    addBlock('怎么改', item.fixHint);
+    addBlock(l10n.diagnosticDetailCause, item.cause);
+    addBlock(l10n.diagnosticDetailFix, item.fixHint);
 
     if (item.fixTarget != null) {
       blocks.add(
@@ -189,23 +191,25 @@ class _DiagnosticItemTileState extends State<DiagnosticItemTile> {
     );
   }
 
-  String _statusBadgeLabel(DiagnosticItemStatus status) {
-    switch (status) {
+  String _statusBadgeLabel(AppLocalizations l10n, DiagnosticItemState item) {
+    switch (item.status) {
       case DiagnosticItemStatus.disabled:
-        return '未启用';
+        return l10n.systemMaintenanceDisabled;
       case DiagnosticItemStatus.notTested:
-        return '未检测';
+        return l10n.systemDiagnosticsStatusNotChecked;
       case DiagnosticItemStatus.probing:
-        return '检测中';
+        return l10n.diagnosticStatusProbing;
       case DiagnosticItemStatus.healthy:
-        return '正常';
+        return l10n.diagnosticStatusHealthy;
       case DiagnosticItemStatus.warning:
-        return '告警';
+        return l10n.diagnosticStatusWarning;
       case DiagnosticItemStatus.unhealthy:
-        return '异常';
+        return l10n.diagnosticStatusUnhealthy;
       case DiagnosticItemStatus.blocked:
-        final by = widget.item.blockedByLabel;
-        return by == null || by.isEmpty ? '未就绪' : '待 $by';
+        final by = item.blockedByLabel;
+        return by == null || by.isEmpty
+            ? l10n.diagnosticStatusNotReady
+            : l10n.diagnosticStatusBlockedBy(by);
     }
   }
 

@@ -1265,5 +1265,305 @@
       }
     }
   },
-  "pluginMarketInstallablePlugins": "可安装插件"
+  "pluginMarketInstallablePlugins": "可安装插件",
+  "widgetMediaSortDefault": "默认排序",
+  "widgetMediaClipSelectionEnter": "圈选切片",
+  "widgetMediaClipSelectionExit": "退出切片圈选",
+  "widgetMediaThumbnailInterval": "缩略图时间间隔",
+  "widgetMediaThumbnailColumns": "缩略图列数",
+  "widgetMediaThumbnailSeconds": "{seconds} 秒",
+  "@widgetMediaThumbnailSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaThumbnailColumnCount": "{columns} 列",
+  "@widgetMediaThumbnailColumnCount": {
+    "placeholders": {
+      "columns": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaThumbnailSecondsCompact": "{seconds}秒",
+  "@widgetMediaThumbnailSecondsCompact": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaThumbnailColumnCountCompact": "{columns}列",
+  "@widgetMediaThumbnailColumnCountCompact": {
+    "placeholders": {
+      "columns": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaThumbnailLoadFailedTitle": "缩略图加载失败",
+  "widgetMediaThumbnailEmpty": "暂时还没有可用缩略图，可稍后重新加载。",
+  "widgetMediaThumbnailReload": "重新加载",
+  "widgetMediaClipStartBadge": "起",
+  "widgetMediaClipEndBadge": "终",
+  "widgetMediaScrollLockEnabled": "锁定跟随播放位置",
+  "widgetMediaScrollLockDisabled": "允许手动滚动缩略图",
+  "widgetMediaThumbnailPanelCollapse": "收起缩略图面板",
+  "widgetMediaThumbnailPanelExpand": "展开缩略图面板",
+  "widgetMediaClose": "关闭",
+  "widgetMediaActionSearchSimilar": "相似图片",
+  "widgetMediaActionSaveToLocal": "保存到本地",
+  "widgetMediaActionAddMark": "添加标记",
+  "widgetMediaActionRemoveMark": "删除标记",
+  "widgetMediaActionPlay": "播放",
+  "widgetMediaActionSetCover": "设为封面",
+  "widgetMediaActionAddToCollection": "加入合集",
+  "widgetMediaActionMovieDetail": "影片详情",
+  "widgetMediaImageSaved": "图片已保存",
+  "widgetMediaSaveFailed": "保存失败，请稍后重试",
+  "widgetMediaSaveImageFailed": "保存图片失败",
+  "widgetMediaMarkAdded": "已添加标记",
+  "widgetMediaMarkRemoved": "已删除标记",
+  "widgetMediaMarkUpdateFailed": "更新标记失败",
+  "widgetMediaPlaybackModeUnknown": "未确认",
+  "widgetMediaPlaybackModeDirect": "直连",
+  "widgetMediaPlaybackModeProxy": "后端代理",
+  "widgetMediaPlaybackInfoDismiss": "关闭播放信息",
+  "widgetMediaLoadFailed": "加载失败，请重试",
+  "widgetMediaVideo": "视频",
+  "widgetMediaNoPlayableMedia": "暂无可播放的媒体",
+  "widgetMediaMovieDetailLoadFailed": "影片详情加载失败",
+  "widgetMediaMissingMediaId": "当前结果缺少媒体标识",
+  "widgetMediaMarksLoadFailed": "标记信息加载失败",
+  "widgetMediaSourceDeleted": "来源已删除",
+  "widgetMediaSimilarityLabel": "相似度 {score}",
+  "@widgetMediaSimilarityLabel": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaVideoLabel": "视频 #{id}",
+  "@widgetMediaVideoLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaMovieNumberLabel": "番号 {number}",
+  "@widgetMediaMovieNumberLabel": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaTimestampLabel": "时间点 {time}",
+  "@widgetMediaTimestampLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaImportFailedSkippedTitle": "失败与跳过文件",
+  "widgetMediaImportSubtitlePendingFailures": "失败 {count} 个待处理",
+  "@widgetMediaImportSubtitlePendingFailures": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaImportSubtitleSkipped": "已跳过 {count} 个",
+  "@widgetMediaImportSubtitleSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaImportSubtitleAllProcessed": "{taskName} · 已全部处理",
+  "@widgetMediaImportSubtitleAllProcessed": {
+    "placeholders": {
+      "taskName": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaImportNoFailedOrSkippedFiles": "该任务没有失败或跳过的文件",
+  "widgetMediaImportFailedFilesHeader": "失败文件",
+  "widgetMediaImportSkipped": "已跳过",
+  "widgetMediaImportFailedItemsLoadFailed": "失败文件加载失败，请稍后重试",
+  "widgetMediaImportStatePending": "待处理",
+  "widgetMediaImportStateRetrying": "重试中",
+  "widgetMediaImportStateImported": "已导入",
+  "widgetMediaImportManualMatch": "手动匹配",
+  "widgetMediaImportRetryFailed": "重试失败：{error}",
+  "@widgetMediaImportRetryFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaImportRetrySubmitted": "重试任务已提交",
+  "widgetMediaImportSubmitRetryFailed": "提交重试失败，请稍后重试。",
+  "widgetMediaImportBackToFailedList": "返回失败文件列表",
+  "widgetMediaImportManualMatchTitle": "手动匹配元数据",
+  "widgetMediaImportNumberHint": "输入影片番号，如 ABC-001",
+  "widgetMediaImportSearchNumberTooltip": "搜索番号元数据",
+  "widgetMediaImportRetryWithMetadata": "用此元数据重试导入",
+  "widgetMediaImportSearchPrompt": "输入影片番号后搜索影片元数据。",
+  "widgetMediaImportNoCandidates": "没有找到匹配的影片",
+  "widgetMediaImportSourceErrors": "{sources}查询失败，结果可能不完整。",
+  "@widgetMediaImportSourceErrors": {
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetMediaImportDurationMinutes": "{minutes} 分钟",
+  "@widgetMediaImportDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetMediaImportBrowseFailed": "浏览来源失败，请重试。",
+  "widgetMediaImportDeleteAfterCommitTitle": "导入成功后将删除源文件",
+  "widgetMediaImportDeleteAfterCommitDescription": "在媒体已成功入库后会将源文件删除!!!",
+  "widgetMediaImportSelectSource": "选择来源",
+  "widgetMediaImportCurrentDirectorySelected": "已选择当前目录",
+  "widgetMediaImportSelectCurrentDirectory": "选择当前目录",
+  "widgetMediaImportGoUp": "上一级",
+  "widgetMediaImportEmptySource": "该来源下没有可导入的文件或目录",
+  "widgetMediaImportLoadMore": "加载更多",
+  "widgetMediaImportRetryLoad": "重试加载",
+  "widgetMediaImportDispositionLabel": "导入方式",
+  "widgetMediaImportKeepInPlaceTitle": "源文件保留在原位置",
+  "widgetMediaImportKeepInPlaceDescription": "移动、重命名或修改源文件会导致媒体失效；删除媒体记录不会删除源文件。",
+  "widgetMediaImportLibraryLoadFailed": "媒体库加载失败，请重试。",
+  "widgetMediaImportReloadLibraries": "重新加载媒体库",
+  "widgetMediaImportNoLibraries": "暂无媒体库，请先在系统设置中添加媒体库。",
+  "widgetMediaImportLibraryLabel": "导入到媒体库",
+  "widgetDownloadDeleteTitle": "删除下载任务",
+  "widgetDownloadDeleteMessage": "是否删除 {count} 个下载任务？",
+  "@widgetDownloadDeleteMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetDownloadDeleteFailure": "删除失败",
+  "widgetDownloadDeleteBlacklistNotice": "其中 {count} 个任务删除后，对应资源会加入资源黑名单，之后相同磁力/种子不会再次提交。",
+  "@widgetDownloadDeleteBlacklistNotice": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetDownloadDeleteFilesLabel": "同时删除下载器中的文件",
+  "widgetDownloadDeleteFilesHint": "不影响已导入媒体库的文件",
+  "widgetDownloadFilesTitle": "任务文件",
+  "widgetDownloadFilesLoadFailed": "任务文件读取失败，请稍后重试",
+  "widgetDownloadFilesEmpty": "该任务源内没有文件",
+  "widgetClipActionPlay": "播放",
+  "widgetClipActionMovie": "影片",
+  "widgetClipActionAddToCollection": "加入合集",
+  "widgetClipActionRename": "重命名",
+  "widgetClipActionRemoveFromCollection": "移出合集",
+  "widgetClipSelectionHintStart": "点击缩略图设为起点",
+  "widgetClipSelectionHintEnd": "起点 {start} · 点击设为终点",
+  "@widgetClipSelectionHintEnd": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetClipSelectionHintRange": "起点 {start} · 终点 {end} · 时长 {duration}",
+  "@widgetClipSelectionHintRange": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetClipSelectionClear": "清除",
+  "widgetClipSelectionCreate": "创建",
+  "widgetSearchHint": "如 SSNI-888、三上悠亚",
+  "widgetSearchTabMovies": "影片",
+  "widgetSearchTabActors": "女优",
+  "widgetSearchInputPrompt": "输入关键词开始搜索",
+  "widgetSearchLocalNoMovies": "本地库未找到匹配影片",
+  "widgetSearchOnlineNoMovie": "在线源未找到该番号或未成功入库",
+  "widgetSearchLocalNoMatchingMovies": "本地库中没有匹配该关键词的影片。",
+  "widgetSearchLocalNoActors": "本地库未找到匹配女优",
+  "widgetSearchOnlineNoActor": "在线源未找到匹配女优",
+  "widgetSearchLocalNoMatchingActors": "本地库中没有匹配该关键词的女优。",
+  "widgetSearchFetchExternal": "从外部数据源获取",
+  "widgetSearchDefaultTooltip": "搜索影片或女优",
+  "widgetSearchTextImageTooltip": "文字搜图",
+  "widgetSearchImageSearchTooltip": "以图搜图",
+  "widgetSearchOnlineToggleTooltip": "联网搜索",
+  "widgetCollectionMemberDeleteVideo": "删除视频",
+  "widgetCollectionMemberRemoveFromCollection": "移出合集",
+  "widgetCollectionMemberPlay": "播放",
+  "widgetCollectionMemberOpenMovie": "影片",
+  "widgetCollectionMemberThumbnails": "缩略图",
+  "widgetCollectionMemberAddToCollection": "加入合集",
+  "widgetCollectionPickerTitle": "加入合集",
+  "widgetCollectionPickerCreateAndAdd": "新建合集并加入",
+  "widgetCollectionPickerSearchHint": "搜索合集",
+  "widgetCollectionPickerClose": "关闭",
+  "widgetCollectionPickerLoadFailed": "合集加载失败",
+  "widgetCollectionPickerEmpty": "暂无合集，点击下方新建",
+  "widgetCollectionPickerNoMatch": "没有匹配的合集",
+  "widgetMomentActionPlay": "播放",
+  "widgetMomentActionMovie": "影片",
+  "widgetMomentActionAddToCollection": "加入合集",
+  "widgetMomentActionDelete": "删除",
+  "widgetPlaylistSortDefault": "最近触达",
+  "widgetRankingSortDefault": "默认（名次）",
+  "widgetVideoSortManual": "手动顺序",
+  "widgetTasteMatchedMovies": "关联 {count} 部",
+  "@widgetTasteMatchedMovies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTasteOpenActor": "查看女优「{name}」",
+  "@widgetTasteOpenActor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetTasteBasedOnMovies": "基于 {count} 部影片的播放与收藏",
+  "@widgetTasteBasedOnMovies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetTasteSourceHint": "来自你的播放、收藏与片单"
 }

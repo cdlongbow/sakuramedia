@@ -18,10 +18,12 @@ import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_thum
 import 'package:sakuramedia/features/videos/presentation/providers/videos_api_provider.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
+import 'package:sakuramedia/l10n/app_localizations_zh.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/shell/mobile/app_mobile_subpage_shell.dart';
 
 import '../../../../support/fake_http_client_adapter.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -120,10 +122,12 @@ void main() {
       );
 
       final movieActions = buildMediaThumbnailActionDescriptors(
+        l10n: AppLocalizationsZh(),
         thumbnail: thumbnail,
         point: null,
       );
       final videoActions = buildMediaThumbnailActionDescriptors(
+        l10n: AppLocalizationsZh(),
         thumbnail: thumbnail,
         point: null,
         canSetCover: true,
@@ -156,6 +160,7 @@ void main() {
     );
 
     final actions = buildMediaThumbnailActionDescriptors(
+      l10n: AppLocalizationsZh(),
       thumbnail: thumbnail,
       point: null,
     );
@@ -180,6 +185,12 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+                locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraThemeData,
         home: Scaffold(
           body: DesktopVideoActionsDialogBody(
@@ -197,6 +208,12 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+                locale: const Locale('zh'),
+        localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
         theme: sakuraMobileThemeData,
         home: Scaffold(
           body: MobileVideoActionsSheet(
@@ -270,6 +287,12 @@ Future<void> _pumpVideoThumbnailPage(
       ],
       child: OKToast(
         child: MaterialApp(
+                    locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
           theme: mobile ? sakuraMobileThemeData : sakuraThemeData,
           home: page,
         ),

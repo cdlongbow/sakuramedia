@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/moments/presentation/moment_listing_models.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -72,6 +73,7 @@ class MomentCard extends StatelessWidget {
   /// 悬停展开内容：单行「标签 + 类型 · 时刻位置（来源已删除时补提示）」，
   /// 下方一整行动作按钮（播放 / 影片 / 加入合集 / 删除，按回调是否为空显隐）。
   Widget _buildHoverInfo(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final spacing = context.appSpacing;
     final play = onPlay;
     final openMovie = onOpenMovie;
@@ -87,28 +89,28 @@ class MomentCard extends StatelessWidget {
           icon: Icons.play_arrow_rounded,
           onTap: play,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.widgetMomentActionPlay,
         ),
       if (openMovie != null)
         AppCoverHoverActionButton(
           key: Key('moment-card-movie-${item.pointId}'),
           icon: Icons.movie_outlined,
           onTap: openMovie,
-          tooltip: '影片',
+          tooltip: l10n.widgetMomentActionMovie,
         ),
       if (addToCollection != null)
         AppCoverHoverActionButton(
           key: Key('moment-card-add-collection-${item.pointId}'),
           icon: Icons.playlist_add_rounded,
           onTap: addToCollection,
-          tooltip: '加入合集',
+          tooltip: l10n.widgetMomentActionAddToCollection,
         ),
       if (delete != null)
         AppCoverHoverActionButton(
           key: Key('moment-card-delete-${item.pointId}'),
           icon: Icons.delete_outline_rounded,
           onTap: delete,
-          tooltip: '删除',
+          tooltip: l10n.widgetMomentActionDelete,
         ),
     ];
     return Column(

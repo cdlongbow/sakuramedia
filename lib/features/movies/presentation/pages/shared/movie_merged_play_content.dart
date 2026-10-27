@@ -22,6 +22,7 @@ import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart
 import 'package:sakuramedia/widgets/base/overlays/app_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/media/media_thumbnail_action_support.dart';
 import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/media/video/player_app_fullscreen.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
 import 'package:sakuramedia/widgets/domain/collections/playback/collection_play_split_layout.dart';
@@ -164,6 +165,7 @@ class _MovieMergedPlayContentState extends ConsumerState<MovieMergedPlayContent>
       globalPosition: globalPosition,
       items: buildImageActionMenuItems(
         buildMediaThumbnailActionDescriptors(
+          l10n: AppLocalizations.of(context),
           showSearchSimilar: ref.read(imageSearchEnabledProvider),
           thumbnail: thumbnail,
           point: point,

@@ -6,6 +6,7 @@ import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -85,7 +86,13 @@ class _MediaLibrarySelectorFieldState
       }
       setState(() {
         _isLoading = false;
-        _error = apiErrorMessage(error, fallback: '媒体库加载失败，请重试。');
+        _error = apiErrorMessage(
+          error,
+          fallback: AppLocalizations.of(
+            context,
+          ).widgetMediaImportLibraryLoadFailed,
+          l10n: AppLocalizations.of(context),
+        );
       });
     }
   }
@@ -104,6 +111,7 @@ class _MediaLibrarySelectorFieldState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator.adaptive());
     }
@@ -114,7 +122,7 @@ class _MediaLibrarySelectorFieldState
           SizedBox(height: context.appSpacing.sm),
           AppButton(
             key: const Key('media-import-library-retry-button'),
-            label: '重新加载媒体库',
+            label: l10n.widgetMediaImportReloadLibraries,
             size: AppButtonSize.small,
             onPressed: () => unawaited(_load()),
           ),
@@ -122,11 +130,11 @@ class _MediaLibrarySelectorFieldState
       );
     }
     if (_libraries.isEmpty) {
-      return const AppEmptyState(message: '暂无媒体库，请先在系统设置中添加媒体库。');
+      return AppEmptyState(message: l10n.widgetMediaImportNoLibraries);
     }
     return AppSelectField<int>(
       key: const Key('media-import-library-select'),
-      label: '导入到媒体库',
+      label: l10n.widgetMediaImportLibraryLabel,
       value: widget.selectedLibraryId,
       items: _libraries
           .map(

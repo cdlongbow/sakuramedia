@@ -13,6 +13,7 @@ import 'package:sakuramedia/features/downloads/presentation/manual_download_dial
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_placeholders.dart';
 import 'package:sakuramedia/features/movies/presentation/providers/movie_detail_magnet_provider.dart';
@@ -159,6 +160,7 @@ class _MovieDetailInspectorPanelState
       globalPosition: globalPosition,
       items: buildImageActionMenuItems(
         buildMediaThumbnailActionDescriptors(
+          l10n: AppLocalizations.of(context),
           showSearchSimilar: ref.read(imageSearchEnabledProvider),
           thumbnail: thumbnail,
           point: point,

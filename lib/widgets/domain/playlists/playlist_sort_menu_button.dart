@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sakuramedia/features/playlists/presentation/controllers/playlist_filter_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_sort_menu_button.dart';
 
 /// 播放列表影片列表的排序入口适配器。
@@ -38,7 +39,9 @@ class PlaylistSortMenuButton extends StatelessWidget {
       onDirectionChanged: (value) =>
           onChanged(filterState.copyWith(sortDirection: value)),
       allowDefaultOption: true,
-      defaultOptionLabel: '最近触达',
+      defaultOptionLabel: AppLocalizations.of(
+        context,
+      ).widgetPlaylistSortDefault,
       directionVisibleWhen: (field) => field != null,
       useDrawer: useDrawer,
       triggerKey: triggerKey,

@@ -6,11 +6,13 @@ import 'package:sakuramedia/core/network/providers/api_client_provider.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/presentation/providers/media_api_provider.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 
 List<AppImageActionDescriptor> buildMediaThumbnailActionDescriptors({
   required MovieMediaThumbnailDto thumbnail,
   required MediaPointDto? point,
+  required AppLocalizations l10n,
   bool canSearchSimilar = true,
   bool showSearchSimilar = true,
   bool canPlay = true,
@@ -20,18 +22,20 @@ List<AppImageActionDescriptor> buildMediaThumbnailActionDescriptors({
   return <AppImageActionDescriptor>[
     if (showSearchSimilar) AppImageActionDescriptor(
       type: AppImageActionType.searchSimilar,
-      label: '相似图片',
+      label: l10n.widgetMediaActionSearchSimilar,
       icon: Icons.image_search_outlined,
       enabled: canSearchSimilar,
     ),
-    const AppImageActionDescriptor(
+    AppImageActionDescriptor(
       type: AppImageActionType.saveToLocal,
-      label: '保存到本地',
+      label: l10n.widgetMediaActionSaveToLocal,
       icon: Icons.download_outlined,
     ),
     AppImageActionDescriptor(
       type: AppImageActionType.toggleMark,
-      label: point == null ? '添加标记' : '删除标记',
+      label: point == null
+          ? l10n.widgetMediaActionAddMark
+          : l10n.widgetMediaActionRemoveMark,
       icon: point == null
           ? Icons.bookmark_add_outlined
           : Icons.bookmark_remove_outlined,
@@ -39,14 +43,14 @@ List<AppImageActionDescriptor> buildMediaThumbnailActionDescriptors({
     ),
     AppImageActionDescriptor(
       type: AppImageActionType.play,
-      label: '播放',
+      label: l10n.widgetMediaActionPlay,
       icon: Icons.play_circle_outline_rounded,
       enabled: hasMedia && canPlay,
     ),
     if (canSetCover)
       AppImageActionDescriptor(
         type: AppImageActionType.setCover,
-        label: '设为封面',
+        label: l10n.widgetMediaActionSetCover,
         icon: Icons.image_outlined,
         enabled: hasMedia && thumbnail.thumbnailId > 0,
       ),
@@ -95,6 +99,7 @@ Future<void> handleMediaThumbnailAction({
   Future<void> Function()? onSetCover,
 }) async {
   final imageUrl = thumbnail.image.origin;
+  final l10n = AppLocalizations.of(context);
 
   switch (action) {
     case AppImageActionType.searchSimilar:
@@ -107,16 +112,16 @@ Future<void> handleMediaThumbnailAction({
           ).saveImageFromUrl(
             imageUrl: imageUrl,
             fileName: fileName,
-            dialogTitle: '保存到本地',
+            dialogTitle: l10n.widgetMediaActionSaveToLocal,
           );
       if (!context.mounted) {
         return;
       }
       if (result.status == ImageSaveStatus.success) {
-        showToast(result.message ?? '图片已保存');
+        showToast(result.message ?? l10n.widgetMediaImageSaved);
       }
       if (result.status == ImageSaveStatus.failed) {
-        showToast(result.message ?? '保存失败，请稍后重试');
+        showToast(result.message ?? l10n.widgetMediaSaveFailed);
       }
       break;
     case AppImageActionType.toggleMark:
@@ -132,7 +137,7 @@ Future<void> handleMediaThumbnailAction({
                 thumbnailId: thumbnail.thumbnailId,
               );
           if (context.mounted) {
-            showToast('已添加标记');
+            showToast(l10n.widgetMediaMarkAdded);
           }
         } else {
           await ref
@@ -141,12 +146,12 @@ Future<void> handleMediaThumbnailAction({
                 pointId: point.pointId,
               );
           if (context.mounted) {
-            showToast('已删除标记');
+            showToast(l10n.widgetMediaMarkRemoved);
           }
         }
       } catch (_) {
         if (context.mounted) {
-          showToast('更新标记失败');
+          showToast(l10n.widgetMediaMarkUpdateFailed);
         }
       }
       break;

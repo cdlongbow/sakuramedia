@@ -11,6 +11,7 @@ import 'package:sakuramedia/widgets/base/navigation/app_filter_entry_button.dart
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 
 import '../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -400,7 +401,16 @@ Future<void> _pumpMomentsApp(
     ProviderScope(
       overrides: bundle.riverpodOverrides(),
       child: OKToast(
-        child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
+        child: MaterialApp.router(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+          theme: sakuraThemeData,
+          routerConfig: router,
+        ),
       ),
     ),
   );

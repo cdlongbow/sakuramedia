@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_interactive_surface.dart';
@@ -138,11 +139,14 @@ class CollectionCoverCard extends StatelessWidget {
       globalPosition: globalPosition,
       items: [
         if (edit != null)
-          const AppMenuItem(value: _CollectionMenuAction.edit, label: '编辑'),
+          AppMenuItem(
+            value: _CollectionMenuAction.edit,
+            label: AppLocalizations.of(context).commonEdit,
+          ),
         if (delete != null)
-          const AppMenuItem(
+          AppMenuItem(
             value: _CollectionMenuAction.delete,
-            label: '删除',
+            label: AppLocalizations.of(context).commonDelete,
             tone: AppTextTone.error,
           ),
       ],

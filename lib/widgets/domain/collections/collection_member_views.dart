@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_context_menu_trigger.dart';
 import 'package:sakuramedia/widgets/base/interaction/app_cover_hover_info.dart';
@@ -32,11 +33,13 @@ Future<void> _showCollectionMemberContextMenu(
   VoidCallback? onOpenSource,
   String? openSourceLabel,
   VoidCallback? onDelete,
-  String deleteLabel = '删除视频',
+  String? deleteLabel,
 }) async {
   final openSource = onOpenSource;
   final label = openSourceLabel;
   final delete = onDelete;
+  final resolvedDeleteLabel =
+      deleteLabel ?? AppLocalizations.of(context).widgetCollectionMemberDeleteVideo;
   final action = await showAppActionMenu<_MemberMenuAction>(
     context: context,
     globalPosition: globalPosition,
@@ -53,7 +56,7 @@ Future<void> _showCollectionMemberContextMenu(
       if (delete != null)
         AppMenuItem(
           value: _MemberMenuAction.delete,
-          label: deleteLabel,
+          label: resolvedDeleteLabel,
           tone: AppTextTone.error,
         ),
     ],
@@ -93,7 +96,7 @@ class CollectionMemberCard extends StatelessWidget {
     required this.menuKey,
     this.onRemove,
     this.onDelete,
-    this.deleteLabel = '删除视频',
+    this.deleteLabel,
     this.onPlay,
     this.playButtonKey,
     this.subtitle,
@@ -127,8 +130,8 @@ class CollectionMemberCard extends StatelessWidget {
   /// 「删除本体」动作（如视频合集的「删除视频」）；为 `null` 时菜单不含该项。
   final VoidCallback? onDelete;
 
-  /// 「删除本体」菜单项文案（如切片合集传「删除切片」）；默认「删除视频」。
-  final String deleteLabel;
+  /// 「删除本体」菜单项文案（如切片合集传「删除切片」）；为空时用默认「删除视频」。
+  final String? deleteLabel;
 
   /// 切片风格悬停面板里的播放键回调；为 `null` 时不显示按钮。
   final VoidCallback? onPlay;
@@ -191,7 +194,9 @@ class CollectionMemberCard extends StatelessWidget {
         context,
         globalPosition: position,
         onRemove: remove,
-        removeLabel: '移出合集',
+        removeLabel: AppLocalizations.of(
+          context,
+        ).widgetCollectionMemberRemoveFromCollection,
         onOpenSource: onOpenSource,
         openSourceLabel: openSourceLabel,
         onDelete: onDelete,
@@ -214,7 +219,7 @@ class CollectionMemberCard extends StatelessWidget {
   Widget _buildHoverInfo(BuildContext context) {
     final spacing = context.appSpacing;
     final sub = subtitle?.trim();
-    final actions = _buildHoverActions();
+    final actions = _buildHoverActions(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -229,7 +234,10 @@ class CollectionMemberCard extends StatelessWidget {
   }
 
   /// 悬停动作行内容：按回调是否为空显隐，顺序与各动作弹窗一致。
-  List<Widget> _buildHoverActions() {
+  List<Widget> _buildHoverActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final resolvedDeleteLabel =
+        deleteLabel ?? l10n.widgetCollectionMemberDeleteVideo;
     return <Widget>[
       if (onPlay != null)
         AppCoverHoverActionButton(
@@ -237,42 +245,42 @@ class CollectionMemberCard extends StatelessWidget {
           icon: Icons.play_arrow_rounded,
           onTap: onPlay,
           primary: true,
-          tooltip: '播放',
+          tooltip: l10n.widgetCollectionMemberPlay,
         ),
       if (onOpenSource != null)
         AppCoverHoverActionButton(
           key: openSourceButtonKey,
           icon: Icons.movie_outlined,
           onTap: onOpenSource,
-          tooltip: openSourceLabel ?? '影片',
+          tooltip: openSourceLabel ?? l10n.widgetCollectionMemberOpenMovie,
         ),
       if (onThumbnails != null)
         AppCoverHoverActionButton(
           key: thumbnailsButtonKey,
           icon: Icons.photo_library_outlined,
           onTap: onThumbnails,
-          tooltip: '缩略图',
+          tooltip: l10n.widgetCollectionMemberThumbnails,
         ),
       if (onAddToCollection != null)
         AppCoverHoverActionButton(
           key: addToCollectionButtonKey,
           icon: Icons.playlist_add_rounded,
           onTap: onAddToCollection,
-          tooltip: '加入合集',
+          tooltip: l10n.widgetCollectionMemberAddToCollection,
         ),
       if (onRemove != null)
         AppCoverHoverActionButton(
           key: removeButtonKey,
           icon: Icons.playlist_remove_rounded,
           onTap: onRemove,
-          tooltip: '移出合集',
+          tooltip: l10n.widgetCollectionMemberRemoveFromCollection,
         ),
       if (onDelete != null)
         AppCoverHoverActionButton(
           key: deleteButtonKey,
           icon: Icons.delete_outline_rounded,
           onTap: onDelete,
-          tooltip: deleteLabel,
+          tooltip: resolvedDeleteLabel,
         ),
     ];
   }

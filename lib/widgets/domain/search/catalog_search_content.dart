@@ -4,6 +4,7 @@ import 'package:sakuramedia/widgets/base/layout/scrolling/app_fixed_header_layou
 import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/search/presentation/providers/catalog_search_state.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
@@ -58,6 +59,7 @@ class CatalogSearchContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Material(
       color: surfaceColor,
       child: AppFixedHeaderLayout(
@@ -70,7 +72,7 @@ class CatalogSearchContent extends StatelessWidget {
               searchButtonKey: const Key('catalog-search-page-submit'),
               onlineToggleKey: const Key('catalog-search-page-online-toggle'),
               controller: textController,
-              hintText: '如 SSNI-888、三上悠亚',
+              hintText: l10n.widgetSearchHint,
               showOnlineToggle: true,
               isOnlineSearchEnabled: useOnlineSearch,
               onOnlineSearchToggle: onOnlineSearchToggle,
@@ -81,9 +83,9 @@ class CatalogSearchContent extends StatelessWidget {
             AppTabBar(
               controller: tabController,
               onTap: onTabSelected,
-              tabs: const [
-                Tab(text: '影片'),
-                Tab(text: '女优'),
+              tabs: [
+                Tab(text: l10n.widgetSearchTabMovies),
+                Tab(text: l10n.widgetSearchTabActors),
               ],
             ),
             SizedBox(height: context.appSpacing.lg),
@@ -109,9 +111,10 @@ class CatalogSearchContent extends StatelessWidget {
   }
 
   Widget _buildBodySliver(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (state.query.isEmpty && !state.isLoading) {
-      return const SliverToBoxAdapter(
-        child: AppEmptyState(message: '输入关键词开始搜索'),
+      return SliverToBoxAdapter(
+        child: AppEmptyState(message: l10n.widgetSearchInputPrompt),
       );
     }
 
@@ -134,13 +137,13 @@ class CatalogSearchContent extends StatelessWidget {
         if (!state.isOnlineSearchActive &&
             state.movieResults.isEmpty &&
             onFallbackToOnlineSearch != null) {
-          return _buildLocalEmptyFallback('本地库未找到匹配影片');
+          return _buildLocalEmptyFallback(l10n.widgetSearchLocalNoMovies);
         }
         return MovieSummarySliver(
           items: state.movieResults,
           emptyMessage: state.isOnlineSearchActive
-              ? '在线源未找到该番号或未成功入库'
-              : '本地库中没有匹配该关键词的影片。',
+              ? l10n.widgetSearchOnlineNoMovie
+              : l10n.widgetSearchLocalNoMatchingMovies,
           onMovieTap: onMovieTap,
           onMovieMenuRequest: onMovieMenuRequest,
           onMovieToggleCollectionType: onMovieToggleCollectionType,
@@ -153,13 +156,13 @@ class CatalogSearchContent extends StatelessWidget {
         if (!state.isOnlineSearchActive &&
             state.actorResults.isEmpty &&
             onFallbackToOnlineSearch != null) {
-          return _buildLocalEmptyFallback('本地库未找到匹配女优');
+          return _buildLocalEmptyFallback(l10n.widgetSearchLocalNoActors);
         }
         return ActorSummarySliver(
           items: state.actorResults,
           emptyMessage: state.isOnlineSearchActive
-              ? '在线源未找到匹配女优'
-              : '本地库中没有匹配该关键词的女优。',
+              ? l10n.widgetSearchOnlineNoActor
+              : l10n.widgetSearchLocalNoMatchingActors,
           onActorTap: onActorTap,
           onActorSubscriptionTap: onActorSubscriptionTap,
           isActorSubscriptionUpdating: (actor) =>
@@ -238,7 +241,9 @@ class _CatalogSearchOnlineFallback extends StatelessWidget {
             AppButton(
               key: const Key('catalog-search-online-fallback'),
               variant: AppButtonVariant.primary,
-              label: '从外部数据源获取',
+              label: AppLocalizations.of(
+                context,
+              ).widgetSearchFetchExternal,
               onPressed: onPressed,
             ),
           ],

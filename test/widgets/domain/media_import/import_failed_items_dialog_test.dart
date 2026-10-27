@@ -14,6 +14,7 @@ import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/media_import/import_failed_items_dialog.dart';
 
 import '../../../support/test_api_bundle.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 Map<String, dynamic> _failedItemJson({
   String id = 'failure-1',
@@ -145,6 +146,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraDesktopThemeData,
             home: const _DialogLauncher(),
           ),
@@ -262,6 +269,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraDesktopThemeData,
             home: const _DialogLauncher(),
           ),
@@ -333,6 +346,12 @@ void main() {
         overrides: bundle.riverpodOverrides(),
         child: OKToast(
           child: MaterialApp(
+            locale: const Locale('zh'),
+            localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+              AppLocalizations.delegate,
+              ...GlobalMaterialLocalizations.delegates,
+            ],
+            supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
             theme: sakuraMobileThemeData,
             home: const AppPlatformScope(
               platform: AppPlatform.mobile,

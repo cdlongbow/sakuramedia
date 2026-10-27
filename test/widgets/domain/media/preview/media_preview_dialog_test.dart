@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/widgets/domain/media/preview/media_preview_dialog.dart';
+import 'package:sakuramedia/l10n/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -11,7 +12,13 @@ void main() {
 
   Widget buildHost({AppPlatform? platform}) {
     final app = MaterialApp(
-      home: Scaffold(
+      locale: const Locale('zh'),
+      localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+        AppLocalizations.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+home: Scaffold(
         body: Center(
           child: Builder(
             builder:
@@ -82,7 +89,13 @@ void main() {
       AppPlatformScope(
         platform: AppPlatform.mobile,
         child: MaterialApp(
-          home: Scaffold(
+          locale: const Locale('zh'),
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
+          supportedLocales: const <Locale>[Locale('zh'), Locale('en')],
+home: Scaffold(
             body: Center(
               child: Builder(
                 builder:
